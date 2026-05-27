@@ -347,26 +347,39 @@ export const commands = [
     permissions: [PermissionFlagsBits.ManageMessages],
     options: [
       {
-        name: 'channel',
-        description: 'Target text channel',
-        type: 7,
-        required: true
-      },
-      {
         name: 'message',
         description: 'The text message to send',
         type: 3,
         required: true
+      },
+      {
+        name: 'channel',
+        description: 'Optional target text channel',
+        type: 7,
+        required: false
       }
     ],
     async executePrefix(message, args) {
-      const channel = message.mentions.channels.first();
-      if (!channel) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please mention a text channel (e.g. `!say #general Hello!`)')] });
+      if (args.length === 0) {
+        return message.reply({ embeds: [embed.warn('Command Error', 'Please enter a message to send. Usage: `!say [#channel or id] <message>`')] });
       }
 
-      const text = args.slice(1).join(' ');
-      if (!text) {
+      let channel = null;
+      let text = '';
+
+      // Try to parse the first argument as a channel mention or ID
+      const firstArg = args[0].replace(/[<#>]/g, '');
+      const possibleChannel = message.guild.channels.cache.get(firstArg);
+
+      if (possibleChannel && possibleChannel.type === ChannelType.GuildText) {
+        channel = possibleChannel;
+        text = args.slice(1).join(' ');
+      } else {
+        channel = message.channel;
+        text = args.join(' ');
+      }
+
+      if (!text.trim()) {
         return message.reply({ embeds: [embed.warn('Command Error', 'Please enter a message to send.')] });
       }
 
@@ -374,10 +387,10 @@ export const commands = [
       await message.react('✅').catch(() => null);
     },
     async executeSlash(interaction) {
-      const channel = interaction.options.getChannel('channel');
       const text = interaction.options.getString('message');
+      const channel = interaction.options.getChannel('channel') || interaction.channel;
 
-      if (channel.type !== ChannelType.GuildText) {
+      if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.PublicThread && channel.type !== ChannelType.PrivateThread) {
         return interaction.reply({ embeds: [embed.warn('Command Error', 'Target channel must be a text channel.')], ephemeral: true });
       }
 
