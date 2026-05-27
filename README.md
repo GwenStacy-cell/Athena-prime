@@ -58,10 +58,11 @@ Welcome to **Medusa Prime**, a powerful, state-of-the-art moderation, Anti-Nuke,
    DEFAULT_PREFIX=!
    ```
 
-### Step 4: Install & Start!
+### Step 4: Install, Deploy Commands & Start!
 1. Open your terminal in the bot's folder and run:
    ```bash
    npm install
+   npm run deploy
    npm start
    ```
 

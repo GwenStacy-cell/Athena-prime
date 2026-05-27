@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "deploy": "node deploy-commands.js"
   },
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
