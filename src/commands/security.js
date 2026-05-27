@@ -513,7 +513,8 @@ export const commands = [
       const responseMsg = await message.reply({ embeds: [embed.info('Updating Avatar', 'Attempting to configure guild-specific member avatar...')] });
 
       try {
-        await message.guild.members.me.edit({ avatar: url });
+        const buffer = await getImageBuffer(url);
+        await message.guild.members.me.edit({ avatar: buffer });
         await responseMsg.edit({ embeds: [embed.success('Avatar Configured', 'Successfully updated the bot\'s server-specific avatar.')] });
       } catch (err) {
         console.error(err);
@@ -534,7 +535,8 @@ export const commands = [
       await interaction.deferReply();
 
       try {
-        await interaction.guild.members.me.edit({ avatar: url });
+        const buffer = await getImageBuffer(url);
+        await interaction.guild.members.me.edit({ avatar: buffer });
         await interaction.editReply({ embeds: [embed.success('Avatar Configured', 'Successfully updated the bot\'s server-specific avatar.')] });
       } catch (err) {
         console.error(err);
@@ -577,7 +579,8 @@ export const commands = [
       const responseMsg = await message.reply({ embeds: [embed.info('Updating Banner', 'Attempting to configure guild-specific member banner...')] });
 
       try {
-        await message.guild.members.me.edit({ banner: url });
+        const buffer = await getImageBuffer(url);
+        await message.guild.members.me.edit({ banner: buffer });
         await responseMsg.edit({ embeds: [embed.success('Banner Configured', 'Successfully updated the bot\'s server-specific banner.')] });
       } catch (err) {
         console.error(err);
@@ -598,7 +601,8 @@ export const commands = [
       await interaction.deferReply();
 
       try {
-        await interaction.guild.members.me.edit({ banner: url });
+        const buffer = await getImageBuffer(url);
+        await interaction.guild.members.me.edit({ banner: buffer });
         await interaction.editReply({ embeds: [embed.success('Banner Configured', 'Successfully updated the bot\'s server-specific banner.')] });
       } catch (err) {
         console.error(err);
@@ -624,6 +628,20 @@ async function isBotOwnerOnly(user) {
     console.error(error);
   }
   return false;
+}
+
+/**
+ * Helper to fetch a media link URL and convert it into a Buffer for Discord API uploads
+ */
+async function getImageBuffer(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP fetch failed with status: ${response.status} ${response.statusText}`);
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    throw new Error(`Failed to resolve image buffer from media link: ${error.message}`);
+  }
 }
 
 // ==========================================
