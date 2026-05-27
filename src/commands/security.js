@@ -586,8 +586,11 @@ export const commands = [
 
       try {
         const buffer = await getImageBuffer(url);
-        await message.client.user.setBanner(buffer);
-        await responseMsg.edit({ embeds: [embed.success('Banner Configured', "Successfully updated the bot's banner.")] });
+        const dataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+        await message.client.rest.patch(`/guilds/${message.guild.id}/members/@me`, {
+          body: { banner: dataUri }
+        });
+        await responseMsg.edit({ embeds: [embed.success('Banner Configured', "Successfully updated the bot's server-specific banner.")] });
       } catch (err) {
         console.error(err);
         await responseMsg.edit({ embeds: [embed.danger('Update Failed', `Could not update banner: ${err.message}`)] });
@@ -608,8 +611,11 @@ export const commands = [
 
       try {
         const buffer = await getImageBuffer(url);
-        await interaction.client.user.setBanner(buffer);
-        await interaction.editReply({ embeds: [embed.success('Banner Configured', "Successfully updated the bot's banner.")] });
+        const dataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+        await interaction.client.rest.patch(`/guilds/${interaction.guild.id}/members/@me`, {
+          body: { banner: dataUri }
+        });
+        await interaction.editReply({ embeds: [embed.success('Banner Configured', "Successfully updated the bot's server-specific banner.")] });
       } catch (err) {
         console.error(err);
         await interaction.editReply({ embeds: [embed.danger('Update Failed', `Could not update banner: ${err.message}`)] });
