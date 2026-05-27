@@ -435,10 +435,16 @@ export const commands = [
         return message.reply({ embeds: [embed.danger('Permission Denied', 'This command is restricted to the Bot Owner and the Server Owner.')] });
       }
 
-      let channel = message.mentions.channels.filter(c => c.type === ChannelType.GuildVoice).first();
+      let channelId = args[0]?.replace(/[<#&>]/g, '');
+      let channel = null;
+      if (channelId) {
+        channel = await message.guild.channels.fetch(channelId).catch(() => null);
+      }
+      if (!channel) {
+        channel = message.mentions.channels.filter(c => c.type === ChannelType.GuildVoice).first();
+      }
       if (!channel && args[0]) {
-        channel = message.guild.channels.cache.get(args[0]) || 
-                  message.guild.channels.cache.find(c => c.name.toLowerCase() === args.join(' ').toLowerCase() && c.type === ChannelType.GuildVoice);
+        channel = message.guild.channels.cache.find(c => c.name.toLowerCase() === args.join(' ').toLowerCase() && c.type === ChannelType.GuildVoice);
       }
       if (!channel) {
         channel = message.member?.voice?.channel;
@@ -507,7 +513,7 @@ export const commands = [
       const responseMsg = await message.reply({ embeds: [embed.info('Updating Avatar', 'Attempting to configure guild-specific member avatar...')] });
 
       try {
-        await message.guild.members.me.setAvatar(url);
+        await message.guild.members.me.edit({ avatar: url });
         await responseMsg.edit({ embeds: [embed.success('Avatar Configured', 'Successfully updated the bot\'s server-specific avatar.')] });
       } catch (err) {
         console.error(err);
@@ -528,7 +534,7 @@ export const commands = [
       await interaction.deferReply();
 
       try {
-        await interaction.guild.members.me.setAvatar(url);
+        await interaction.guild.members.me.edit({ avatar: url });
         await interaction.editReply({ embeds: [embed.success('Avatar Configured', 'Successfully updated the bot\'s server-specific avatar.')] });
       } catch (err) {
         console.error(err);
@@ -540,23 +546,64 @@ export const commands = [
   // --- SETGUILDBANNER COMMAND ---
   {
     name: 'setguildbanner',
-    description: "Informs about Discord's platform limitations regarding server-specific bot banners.",
+    description: "Sets the bot's custom server-specific guild member banner.",
     category: 'security',
     permissions: [],
-    options: [],
-    async executePrefix(message) {
-      const infoEmbed = embed.info(
-        'Platform Limitation Notice',
-        `Discord's profile system supports server-specific member avatars (**\`!setguildavatar\`**), but **do not support server-specific profile banners** for users or bots. Profile banners can only be customized globally.\n\nTo ensure Medusa Prime's appearance remains unchanged in other guilds, global banner modifications are restricted.`
-      );
-      await message.reply({ embeds: [infoEmbed] });
+    options: [
+      {
+        name: 'url',
+        description: 'Direct image URL',
+        type: 3, // String
+        required: false
+      },
+      {
+        name: 'image',
+        description: 'Attach image file',
+        type: 11, // Attachment
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', 'This command is restricted to the Bot Owner and the Server Owner.')] });
+      }
+
+      const url = args[0] || message.attachments.first()?.url;
+      if (!url) {
+        return message.reply({ embeds: [embed.warn('Command Error', 'Please provide a direct image URL or attach an image.')] });
+      }
+
+      const responseMsg = await message.reply({ embeds: [embed.info('Updating Banner', 'Attempting to configure guild-specific member banner...')] });
+
+      try {
+        await message.guild.members.me.edit({ banner: url });
+        await responseMsg.edit({ embeds: [embed.success('Banner Configured', 'Successfully updated the bot\'s server-specific banner.')] });
+      } catch (err) {
+        console.error(err);
+        await responseMsg.edit({ embeds: [embed.danger('Update Failed', `Could not update banner: ${err.message}`)] });
+      }
     },
     async executeSlash(interaction) {
-      const infoEmbed = embed.info(
-        'Platform Limitation Notice',
-        `Discord's profile system supports server-specific member avatars (**\`setguildavatar\`**), but **do not support server-specific profile banners** for users or bots. Profile banners can only be customized globally.\n\nTo ensure Medusa Prime's appearance remains unchanged in other guilds, global banner modifications are restricted.`
-      );
-      await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
+      const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', 'This command is restricted to the Bot Owner and the Server Owner.')], ephemeral: true });
+      }
+
+      const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
+      if (!url) {
+        return interaction.reply({ embeds: [embed.warn('Command Error', 'Please provide a direct image URL or attach an image.')], ephemeral: true });
+      }
+
+      await interaction.deferReply();
+
+      try {
+        await interaction.guild.members.me.edit({ banner: url });
+        await interaction.editReply({ embeds: [embed.success('Banner Configured', 'Successfully updated the bot\'s server-specific banner.')] });
+      } catch (err) {
+        console.error(err);
+        await interaction.editReply({ embeds: [embed.danger('Update Failed', `Could not update banner: ${err.message}`)] });
+      }
     }
   }
 ];
@@ -735,7 +782,7 @@ export async function executeUnquarantine(guild, targetMember, moderator) {
     ));
 
     const responseEmbed = embed.success(
-      'Quarantine Deactivated',
+      'Quarantine Lifted',
       `Successfully restored **${targetMember.user.tag}** and recovered their original role structure.`,
       [
         { name: 'User', value: `${targetMember}`, inline: true },

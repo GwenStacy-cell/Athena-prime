@@ -104,7 +104,7 @@ Welcome to **Medusa Prime**, a powerful, state-of-the-art moderation, Anti-Nuke,
 | **`antinuke`** | `!antinuke <enable all\|disable all\|config>`| Toggles all shields, or opens buttons console! | Administrator |
 | **`sethomevc`** | `!sethomevc [channel]` | Set Bot Home VC (forces bot to join and stay connected to it). | Bot/Server Owner |
 | **`setguildavatar`**| `!setguildavatar <url\|attached image>`| Set the bot's custom server-specific avatar. | Bot/Server Owner |
-| **`setguildbanner`**| `!setguildbanner` | Informs about Discord's platform limitations regarding server-specific banners. | Bot/Server Owner |
+| **`setguildbanner`**| `!setguildbanner <url\|attached image>`| Set the bot's custom server-specific banner. | Bot/Server Owner |
 
 ---
 

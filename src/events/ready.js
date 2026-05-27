@@ -25,7 +25,7 @@ export default {
     // Set custom rich activity presence
     client.user.setPresence({
       activities: [{ name: '🛡️ Server Security | !help', type: ActivityType.Watching }],
-      status: 'dnd' // Do Not Disturb looks professional and serious for a security bot
+      status: 'online'
     });
 
     // Sync slash commands globally
