@@ -1,0 +1,33 @@
+{
+  "name": "discord-security-bot",
+  "version": "1.0.0",
+  "description": "A powerful Discord security and moderation bot featuring state-preserving quarantine, anti-spam, raid protection, and advanced colored embeds.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "security",
+    "moderation",
+    "quarantine",
+    "anti-spam",
+    "anti-raid"
+  ],
+  "author": "Antigravity AI",
+  "license": "ISC"
+}

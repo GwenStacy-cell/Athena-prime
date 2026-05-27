@@ -1,0 +1,16 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local configuration credentials (DO NOT LEAK YOUR DISCORD TOKEN!)
+.env
+
+# Local persistent database (keep backups separate)
+data/
+data/db.json
+
+# Operating System files
+.DS_Store
+Thumbs.db

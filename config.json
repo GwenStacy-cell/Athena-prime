@@ -1,0 +1,27 @@
+{
+  "colors": {
+    "success": "#00ffaa",
+    "warning": "#ffaa00",
+    "danger": "#ff3333",
+    "neutral": "#3b82f6",
+    "raid": "#8b5cf6",
+    "dark": "#2f3136"
+  },
+  "antiSpam": {
+    "enabled": true,
+    "maxMessages": 5,
+    "intervalMs": 3000,
+    "warnThreshold": 3,
+    "punishment": "quarantine"
+  },
+  "antiInvite": {
+    "enabled": true,
+    "deleteInvites": true,
+    "warnUser": true
+  },
+  "defaultRoles": {
+    "quarantineRoleName": "Quarantined",
+    "quarantineChannelName": "quarantine-zone",
+    "logChannelName": "security-logs"
+  }
+}
