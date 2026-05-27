@@ -57,9 +57,12 @@ class Database {
         muteRoleId: null,
         quarantineRoleId: null,
         quarantineChannelId: null,
+        quarantineVcId: null,
         antiSpamEnabled: true,
         raidMode: false,
         antiNukeEnabled: true,
+        antiNukePunishment: 'ban', // default is 'ban'
+        antiNukeThreshold: 1, // default is 1 action
         maxWarnings: 3,
         blacklistWords: [],
         whitelist: [],
@@ -80,6 +83,9 @@ class Database {
       if (cfg.blacklistWords === undefined) { cfg.blacklistWords = []; updated = true; }
       if (cfg.whitelist === undefined) { cfg.whitelist = []; updated = true; }
       if (cfg.autonick === undefined) { cfg.autonick = { enabled: false, prefix: '', suffix: '' }; updated = true; }
+      if (cfg.quarantineVcId === undefined) { cfg.quarantineVcId = null; updated = true; }
+      if (cfg.antiNukePunishment === undefined) { cfg.antiNukePunishment = 'ban'; updated = true; }
+      if (cfg.antiNukeThreshold === undefined) { cfg.antiNukeThreshold = 1; updated = true; }
 
       if (updated) this.save();
     }
@@ -191,14 +197,15 @@ class Database {
     return this.cache.quarantines[guildId][userId] || null;
   }
 
-  addQuarantine(guildId, userId, roles, reason) {
+  addQuarantine(guildId, userId, roles, reason, previousVoiceChannelId = null) {
     if (!this.cache.quarantines[guildId]) {
       this.cache.quarantines[guildId] = {};
     }
     this.cache.quarantines[guildId][userId] = {
       roles,
       quarantinedAt: Date.now(),
-      reason
+      reason,
+      previousVoiceChannelId
     };
     this.save();
   }

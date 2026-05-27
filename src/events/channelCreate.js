@@ -2,9 +2,9 @@ import { AuditLogEvent } from 'discord.js';
 import { checkAntiNuke } from '../utils/antinuke.js';
 
 export default {
-  name: 'channelDelete',
+  name: 'channelCreate',
   async execute(channel) {
     if (!channel.guild) return;
-    await checkAntiNuke(channel.guild, 'Channel Deletion', AuditLogEvent.ChannelDelete, null, channel);
+    await checkAntiNuke(channel.guild, 'Channel Creation', AuditLogEvent.ChannelCreate, channel.id);
   }
 };

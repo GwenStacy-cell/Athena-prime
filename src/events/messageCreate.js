@@ -198,7 +198,27 @@ export default {
     }
 
     // ==========================================
-    // 3. COMMAND ENGINE (PREFIX PARSER)
+    // 3. PREFIX-LESS COMMANDS: PING
+    // ==========================================
+    if (message.content.toLowerCase().trim() === 'ping') {
+      const response = await message.reply('Pinging WebSocket...');
+      const pingMs = response.createdTimestamp - message.createdTimestamp;
+      const apiMs = Math.round(message.client.ws.ping);
+      
+      const pingEmbed = embed.info(
+        'Pong! Latency Report',
+        `📡 Gateway Connection details:`,
+        [
+          { name: 'Bot Latency', value: `**${pingMs}ms**`, inline: true },
+          { name: 'Discord API Gateway', value: `**${apiMs}ms**`, inline: true }
+        ]
+      );
+      await response.edit({ content: null, embeds: [pingEmbed] });
+      return;
+    }
+
+    // ==========================================
+    // 4. COMMAND ENGINE (PREFIX PARSER)
     // ==========================================
     const prefix = dbConfig.prefix;
     if (!message.content.startsWith(prefix)) return;

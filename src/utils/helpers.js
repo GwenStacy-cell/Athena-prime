@@ -95,7 +95,7 @@ export async function getOrCreateQuarantineRole(guild) {
         name: 'Quarantined',
         color: '#ff3333',
         hoist: true,
-        reason: 'Sentinel automatic quarantine role creation',
+        reason: 'Medusa Prime automatic quarantine role creation',
         permissions: [] // Zero global permissions
       }).catch(() => null);
     }

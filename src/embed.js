@@ -49,7 +49,7 @@ export const embed = {
     }
 
     builder.setFooter({
-      text: footerText || '🛡️ Sentinel Anti-Raid & Security',
+      text: footerText || 'Medusa Unbypassable Security',
       iconURL: 'https://img.icons8.com/color/48/shield.png' // Nice visual touch
     });
 

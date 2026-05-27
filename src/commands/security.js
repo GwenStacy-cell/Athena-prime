@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 import { 
@@ -360,6 +360,57 @@ export const commands = [
       const result = await handleConfig(interaction.guild, interaction.member, setting, value);
       await interaction.reply({ embeds: [result.embed] });
     }
+  },
+
+  // --- ANTINUKE COMMAND ---
+  {
+    name: 'antinuke',
+    description: 'Enables, disables, or configures the Anti-Nuke protections panel with buttons.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      {
+        name: 'subcommand',
+        description: 'Choose antinuke subcommand action',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Enable All Protections', value: 'enable_all' },
+          { name: 'Disable All Protections', value: 'disable_all' },
+          { name: 'Open Config Panel', value: 'config' }
+        ]
+      }
+    ],
+    async executePrefix(message, args) {
+      const sub = args.join(' ').toLowerCase();
+
+      if (sub === 'enable all' || sub === 'enable_all') {
+        const result = await handleAntinukeToggleAll(message.guild, message.member, true);
+        await message.reply({ embeds: [result.embed] });
+      } else if (sub === 'disable all' || sub === 'disable_all') {
+        const result = await handleAntinukeToggleAll(message.guild, message.member, false);
+        await message.reply({ embeds: [result.embed] });
+      } else if (sub === 'config') {
+        const panel = await getAntinukeConfigPanel(message.guild);
+        await message.reply({ embeds: [panel.embed], components: panel.components });
+      } else {
+        await message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!antinuke enable all`, `!antinuke disable all`, or `!antinuke config`')] });
+      }
+    },
+    async executeSlash(interaction) {
+      const sub = interaction.options.getString('subcommand');
+
+      if (sub === 'enable_all') {
+        const result = await handleAntinukeToggleAll(interaction.guild, interaction.member, true);
+        await interaction.reply({ embeds: [result.embed] });
+      } else if (sub === 'disable_all') {
+        const result = await handleAntinukeToggleAll(interaction.guild, interaction.member, false);
+        await interaction.reply({ embeds: [result.embed] });
+      } else if (sub === 'config') {
+        const panel = await getAntinukeConfigPanel(interaction.guild);
+        await interaction.reply({ embeds: [panel.embed], components: panel.components });
+      }
+    }
   }
 ];
 
@@ -391,12 +442,24 @@ export async function executeQuarantine(guild, targetMember, moderator, reason) 
       return { success: false, message: 'Could not create or locate the quarantine-zone channel.' };
     }
 
+    // Capture target voice state
+    const prevVoiceChannelId = targetMember.voice.channelId || null;
+
     // 4. Save original roles to DB (filter out managed integration roles and @everyone)
     const roleIdsToSave = targetMember.roles.cache
       .filter(r => !r.managed && r.id !== guild.id)
       .map(r => r.id);
 
-    db.addQuarantine(guild.id, targetMember.id, roleIdsToSave, reason);
+    db.addQuarantine(guild.id, targetMember.id, roleIdsToSave, reason, prevVoiceChannelId);
+
+    // If target is connected to voice and quarantineVcId is set, drag them to the isolated VC
+    const config = db.getGuildConfig(guild.id);
+    if (prevVoiceChannelId && config.quarantineVcId) {
+      const qvc = await guild.channels.fetch(config.quarantineVcId).catch(() => null);
+      if (qvc) {
+        await targetMember.voice.setChannel(qvc, 'Quarantine Isolation Voice Movement').catch(() => null);
+      }
+    }
 
     // 5. Strip all roles and add quarantine role (preserving managed roles to avoid API crash)
     const managedRoles = targetMember.roles.cache.filter(r => r.managed).map(r => r.id);
@@ -475,6 +538,14 @@ export async function executeUnquarantine(guild, targetMember, moderator) {
     const restoreRoles = [...new Set([...savedRoleIds, ...managedRoleIds])].filter(id => id !== quarantineRole?.id);
 
     await targetMember.roles.set(restoreRoles, `Unquarantined by ${moderator.user?.tag || 'System'}`);
+
+    // If target was in voice before quarantine, and is currently connected to voice, restore their channel position
+    if (record.previousVoiceChannelId && targetMember.voice.channelId) {
+      const prevVc = await guild.channels.fetch(record.previousVoiceChannelId).catch(() => null);
+      if (prevVc) {
+        await targetMember.voice.setChannel(prevVc, 'Quarantine Release Voice Restoration').catch(() => null);
+      }
+    }
 
     // Remove DB entry
     db.removeQuarantine(guild.id, targetMember.id);
@@ -716,4 +787,105 @@ async function handleConfig(guild, moderator, setting, value) {
   }
 
   return { embed: embed.warn('Config Error', 'Unknown configuration option.') };
+}
+
+export async function getAntinukeConfigPanel(guild) {
+  const config = db.getGuildConfig(guild.id);
+
+  const blacklistState = config.blacklistWords && config.blacklistWords.length > 0;
+  const spamState = config.antiSpamEnabled;
+  const inviteState = config.antiInviteEnabled !== false;
+  const nukeState = config.antiNukeEnabled;
+
+  const fields = [
+    { name: '🛡️ Anti-Nuke Shield', value: nukeState ? '🟢 **ENABLED**' : '🔴 **DISABLED**', inline: true },
+    { name: '⚡ Anti-Spam Filter', value: spamState ? '🟢 **ENABLED**' : '🔴 **DISABLED**', inline: true },
+    { name: '🔗 Anti-Invite Blocker', value: inviteState ? '🟢 **ENABLED**' : '🔴 **DISABLED**', inline: true },
+    { name: '📝 Word Filter (Swears)', value: blacklistState ? `🟢 **ENABLED** (${config.blacklistWords.length} Words)` : '🔴 **DISABLED**', inline: true },
+    { name: '🛡️ Nuke Punishment', value: `\`${config.antiNukePunishment.toUpperCase()}\``, inline: true },
+    { name: '🚨 Warning Ceiling', value: `\`${config.maxWarnings} Warnings\``, inline: true }
+  ];
+
+  const panelEmbed = embed.info(
+    'Medusa Prime Defense Panel',
+    'Administrators can click the button switches below to toggle active protections dynamically.',
+    fields
+  );
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('toggle_antinuke')
+      .setLabel(`Anti-Nuke: ${nukeState ? 'ON' : 'OFF'}`)
+      .setStyle(nukeState ? ButtonStyle.Success : ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId('toggle_spam')
+      .setLabel(`Anti-Spam: ${spamState ? 'ON' : 'OFF'}`)
+      .setStyle(spamState ? ButtonStyle.Success : ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId('toggle_invite')
+      .setLabel(`Anti-Invite: ${inviteState ? 'ON' : 'OFF'}`)
+      .setStyle(inviteState ? ButtonStyle.Success : ButtonStyle.Danger)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('toggle_blacklist_filter')
+      .setLabel(`Word Filter: ${blacklistState ? 'ON' : 'OFF'}`)
+      .setStyle(blacklistState ? ButtonStyle.Success : ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId('cycle_punishment')
+      .setLabel(`Punishment: ${config.antiNukePunishment.toUpperCase()}`)
+      .setStyle(ButtonStyle.Primary)
+  );
+
+  return { embed: panelEmbed, components: [row1, row2] };
+}
+
+export async function handleAntinukeToggleAll(guild, moderator, enable) {
+  const updates = {
+    antiNukeEnabled: enable,
+    antiSpamEnabled: enable,
+    antiInviteEnabled: enable,
+    autonick: {
+      enabled: enable,
+      prefix: enable ? '[Guest]' : '',
+      suffix: ''
+    }
+  };
+
+  db.updateGuildConfig(guild.id, updates);
+
+  // If enabling all, ensure word blacklist is active
+  if (enable) {
+    const config = db.getGuildConfig(guild.id);
+    if (!config.blacklistWords || config.blacklistWords.length === 0) {
+      db.addBlacklistWord(guild.id, 'hack');
+      db.addBlacklistWord(guild.id, 'nuke');
+      db.addBlacklistWord(guild.id, 'spam');
+    }
+  } else {
+    // If disabling all, empty blacklist words as well to disable word filter
+    db.updateGuildConfig(guild.id, { blacklistWords: [] });
+  }
+
+  const resEmbed = enable
+    ? embed.success(
+        'Hyper-Defense Shields ENGAGED',
+        '🚨 All Medusa Prime protective filters are now **ACTIVE**.\nSwear words scanner, Anti-Invite blocks, Anti-Spam limits, Autonick joins, and Anti-Nuke restorations are fully armed!',
+        [{ name: 'Enforced by', value: `${moderator}` }]
+      )
+    : embed.warn(
+        'Hyper-Defense Shields DISENGAGED',
+        '🛡️ Medusa Prime protective filters have been **DEACTIVATED** server-wide.',
+        [{ name: 'Lifted by', value: `${moderator}` }]
+      );
+
+  logToSecurityChannel(guild, embed.log(
+    'Hyper-Defense Toggle All',
+    `Administrator **${moderator.user.tag}** toggled all shields **${enable ? 'ON' : 'OFF'}**.`,
+    [],
+    enable ? 'success' : 'warning'
+  ));
+
+  return { embed: resEmbed };
 }

@@ -1,4 +1,4 @@
-import { PermissionFlagsBits } from 'discord.js';
+import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 
@@ -34,8 +34,8 @@ export const commands = [
         'Pong! Latency Report',
         `📡 Gateway Connection details:`,
         [
-          { name: 'Bot Latency', value: `\`${pingMs}ms\``, inline: true },
-          { name: 'Discord API Gateway', value: `\`${apiMs}ms\``, inline: true }
+          { name: 'Bot Latency', value: `**${pingMs}ms**`, inline: true },
+          { name: 'Discord API Gateway', value: `**${apiMs}ms**`, inline: true }
         ]
       );
       await response.edit({ content: null, embeds: [pingEmbed] });
@@ -49,8 +49,8 @@ export const commands = [
         'Pong! Latency Report',
         `📡 Gateway Connection details:`,
         [
-          { name: 'Bot Latency', value: `\`${pingMs}ms\``, inline: true },
-          { name: 'Discord API Gateway', value: `\`${apiMs}ms\``, inline: true }
+          { name: 'Bot Latency', value: `**${pingMs}ms**`, inline: true },
+          { name: 'Discord API Gateway', value: `**${apiMs}ms**`, inline: true }
         ]
       );
       await interaction.editReply({ content: null, embeds: [pingEmbed] });
@@ -60,7 +60,7 @@ export const commands = [
   // --- SETUP COMMAND ---
   {
     name: 'setup',
-    description: 'Configures bot logs channel, mute roles, or settings.',
+    description: 'Configures bot logs channel, quarantine voice, or settings.',
     category: 'utility',
     permissions: [PermissionFlagsBits.Administrator],
     options: [
@@ -71,32 +71,48 @@ export const commands = [
         required: false
       },
       {
+        name: 'quarantinevc',
+        description: 'Designate the Voice Channel for isolating quarantined users',
+        type: 7, // Channel
+        required: false
+      },
+      {
         name: 'quarantinerole',
         description: 'Designate an existing role as the Quarantine role',
         type: 8, // Role
         required: false
       }
     ],
-    async executePrefix(message) {
+    async executePrefix(message, args) {
       const channel = message.mentions.channels.first();
       const role = message.mentions.roles.first();
+      
+      // Resolve first mentioned or matched voice channel in args
+      const voiceChannel = message.guild.channels.cache.find(
+        c => c.type === ChannelType.GuildVoice && 
+        args.some(arg => arg.includes(c.id) || arg.toLowerCase() === c.name.toLowerCase())
+      );
 
-      if (!channel && !role) {
-        return message.reply({ embeds: [embed.warn('Setup Info', 'Usage: `!setup <#logChannel>` or `!setup <@quarantineRole>`')] });
+      if (!channel && !role && !voiceChannel) {
+        return message.reply({ embeds: [embed.warn('Setup Info', 'Usage: `!setup <#logChannel>` or `!setup <quarantineVoiceChannelName>` or `!setup <@quarantineRole>`')] });
       }
 
-      const result = await handleSetup(message.guild, channel, role);
+      const result = await handleSetup(message.guild, channel, role, voiceChannel);
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
       const channel = interaction.options.getChannel('logchannel');
+      const voiceChannel = interaction.options.getChannel('quarantinevc');
       const role = interaction.options.getRole('quarantinerole');
 
-      if (!channel && !role) {
-        return interaction.reply({ embeds: [embed.warn('Setup Help', 'Specify a channel or a role parameter to update.')], ephemeral: true });
+      if (channel && channel.type !== ChannelType.GuildText) {
+        return interaction.reply({ embeds: [embed.warn('Command Error', 'Logs channel must be a text channel.')], ephemeral: true });
+      }
+      if (voiceChannel && voiceChannel.type !== ChannelType.GuildVoice) {
+        return interaction.reply({ embeds: [embed.warn('Command Error', 'Quarantine VC must be a voice channel.')], ephemeral: true });
       }
 
-      const result = await handleSetup(interaction.guild, channel, role);
+      const result = await handleSetup(interaction.guild, channel, role, voiceChannel);
       await interaction.reply({ embeds: [result.embed] });
     }
   }
@@ -112,50 +128,60 @@ async function getHelpEmbed(guild) {
 
   const fields = [
     {
-      name: '🛡️ Security & Anti-Raid',
+      name: '🛡️ Security & Hyper-Defense Shield',
       value: 
-        `\`${p}quarantine <@user> [reason]\` / \`/quarantine\` - Strips roles & isolates member.\n` +
-        `\`${p}unquarantine <@user>\` / \`/unquarantine\` - Restores member's original roles.\n` +
-        `\`${p}lockdown [on/off]\` / \`/lockdown\` - Locks or unlocks writing in channel.\n` +
-        `\`${p}raidmode [on/off]\` / \`/raidmode\` - Autolocks server (auto-quarantines new joins).\n`
+        `\`${p}antinuke <enable all|disable all|config>\` - Toggle all shields, or launch **button panel config**!\n` +
+        `\`${p}quarantine <@user> [reason]\` / \`/quarantine\` - Strips roles & isolates target in text/voice VC.\n` +
+        `\`${p}unquarantine <@user>\` / \`/unquarantine\` - Recovers target roles & moves to previous Voice VC.\n` +
+        `\`${p}whitelist <add|remove|list> [user]\` - Manage whitelisted admins (immune to nuke/spam/filters).\n` +
+        `\`${p}blacklist <add|remove|list> [phrase]\` - Manage blacklisted words (purges & warns automatically).\n` +
+        `\`${p}autonick <on|off> [prefix] [suffix]\` - Auto-format nicknames of newly joining members.\n` +
+        `\`${p}lockdown [on|off]\` / \`/lockdown\` - Toggle writing restrictions for everyone in text channel.\n` +
+        `\`${p}raidmode [on|off]\` / \`/raidmode\` - Auto-isolate joining members immediately.`
     },
     {
-      name: '🔨 Moderation Commands',
+      name: '🔨 Moderation & Server Management',
       value: 
-        `\`${p}muteall [text|voice]\` / \`/muteall\` - Mute text channel or voice members.\n` +
-        `\`${p}unmuteall [text|voice]\` / \`/unmuteall\` - Unmute text channel or voice members.\n` +
-        `\`${p}warn <@user> <reason>\` / \`/warn\` - Warm member. DM alert. 3 warns = auto-quarantine.\n` +
-        `\`${p}warnings <@user>\` / \`/warnings\` - View user's warnings history.\n` +
-        `\`${p}clearwarns <@user>\` / \`/clearwarns\` - Clear user warnings.\n` +
-        `\`${p}timeout <@user> <duration> [reason]\` / \`/timeout\` - Places user on timeout.\n` +
-        `\`${p}kick <@user> [reason]\` / \`/kick\` - Kicks user from guild.\n` +
-        `\`${p}ban <@user> [reason]\` / \`/ban\` - Bans user permanently.\n`
+        `\`${p}say <#channel> <message>\` - Dispatches bot raw text messages.\n` +
+        `\`${p}announce <#channel> <title> | <message>\` - Publishes styled announcement card embeds.\n` +
+        `\`${p}createrole <name> [color]\` - Creates server role with specific color code.\n` +
+        `\`${p}deleterole <@role>\` - Safely deletes role from server.\n` +
+        `\`${p}muteall [text|voice]\` / \`/muteall\` - Locks writing or mutes voice VC members.\n` +
+        `\`${p}unmuteall [text|voice]\` / \`/unmuteall\` - Restores chat or unmutes voice VC members.\n` +
+        `\`${p}warn <@user> <reason>\` - Warm target in active chat (3 warns = auto quarantine).\n` +
+        `\`${p}warnings <@user>\` / \`clearwarns <@user>\` - View or wipe warnings histories.\n` +
+        `\`${p}timeout <@user> <dur> [reason]\` / \`kick <@user>\` / \`ban <@user>\` - Timeout/Kick/Ban target.`
     },
     {
       name: '⚙️ Utilities',
       value: 
-        `\`${p}setup\` - Configure security parameters manually.\n` +
-        `\`${p}ping\` - Check latency metrics.\n` +
-        `\`${p}help\` - Displays this detailed reference menu.`
+        `\`${p}setup [logchannel] [quarantinevc] [quarantinerole]\` - Dynamic bindings configurations.\n` +
+        `\`ping\` / \`${p}ping\` - Latencies checks (Prefix-less supported, bold speed MS).\n` +
+        `\`${p}help\` - Displays this comprehensive commands console.`
     }
   ];
 
   const helpEmbed = embed.info(
-    'Sentinel Security Bot - Commands Hub',
-    `Welcome to the advanced Security Panel. All commands are supported as **both** traditional text prefixes and modern Slash interactions.`,
+    'Medusa Prime - Help Commands Console',
+    `Welcome to the Medusa Hyper-Defense hub. All commands are supported as **both** traditional text prefixes and modern Slash interactions.`,
     fields
   );
   
   return { embed: helpEmbed };
 }
 
-async function handleSetup(guild, channel, role) {
+async function handleSetup(guild, channel, role, voiceChannel) {
   const updates = {};
   const fields = [];
 
   if (channel) {
     updates.logChannel = channel.id;
     fields.push({ name: 'Security Logs Channel', value: `${channel} (ID: ${channel.id})` });
+  }
+
+  if (voiceChannel) {
+    updates.quarantineVcId = voiceChannel.id;
+    fields.push({ name: 'Quarantine Voice Channel', value: `${voiceChannel} (ID: ${voiceChannel.id})` });
   }
 
   if (role) {

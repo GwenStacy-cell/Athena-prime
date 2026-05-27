@@ -8,7 +8,7 @@ dotenv.config();
 
 // Print boot header
 console.log(chalk.blue.bold('\n============================================='));
-console.log(chalk.blue.bold('🛡️   Sentinel Security - Initializing...   🛡️'));
+console.log(chalk.blue.bold('🛡️   Medusa Prime - Initializing...   🛡️'));
 console.log(chalk.blue.bold('=============================================\n'));
 
 const token = process.env.DISCORD_TOKEN;
@@ -44,6 +44,10 @@ import channelDeleteEvent from './src/events/channelDelete.js';
 import roleDeleteEvent from './src/events/roleDelete.js';
 import guildMemberBanAddEvent from './src/events/guildMemberBanAdd.js';
 import guildMemberRemoveEvent from './src/events/guildMemberRemove.js';
+import channelCreateEvent from './src/events/channelCreate.js';
+import roleCreateEvent from './src/events/roleCreate.js';
+import guildUpdateEvent from './src/events/guildUpdate.js';
+import guildMemberUpdateEvent from './src/events/guildMemberUpdate.js';
 
 const events = [
   readyEvent,
@@ -53,7 +57,11 @@ const events = [
   channelDeleteEvent,
   roleDeleteEvent,
   guildMemberBanAddEvent,
-  guildMemberRemoveEvent
+  guildMemberRemoveEvent,
+  channelCreateEvent,
+  roleCreateEvent,
+  guildUpdateEvent,
+  guildMemberUpdateEvent
 ];
 
 // Register Events
@@ -81,7 +89,7 @@ const PORT = process.env.PORT || null;
 if (PORT) {
   http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.write('🛡️ Sentinel Security Bot is actively online and running!');
+    res.write('🛡️ Medusa Prime Bot is actively online and running!');
     res.end();
   }).listen(PORT, () => {
     console.log(chalk.green(`🌐 Health Check Server: Listening on port ${PORT}`));
