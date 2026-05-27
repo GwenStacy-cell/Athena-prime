@@ -48,6 +48,7 @@ import channelCreateEvent from './src/events/channelCreate.js';
 import roleCreateEvent from './src/events/roleCreate.js';
 import guildUpdateEvent from './src/events/guildUpdate.js';
 import guildMemberUpdateEvent from './src/events/guildMemberUpdate.js';
+import voiceStateUpdateEvent from './src/events/voiceStateUpdate.js';
 
 const events = [
   readyEvent,
@@ -61,7 +62,8 @@ const events = [
   channelCreateEvent,
   roleCreateEvent,
   guildUpdateEvent,
-  guildMemberUpdateEvent
+  guildMemberUpdateEvent,
+  voiceStateUpdateEvent
 ];
 
 // Register Events

@@ -102,6 +102,9 @@ Welcome to **Medusa Prime**, a powerful, state-of-the-art moderation, Anti-Nuke,
 | **`config`** | `!config <setting> <value>` | Toggle: `antinuke`, `antispam`, `antiinvite`, `maxwarnings`. | Administrator |
 | **`setup`** | `!setup [logchannel] [quarantinevc]`| Configures logs channel & Quarantine Voice Channel. | Administrator |
 | **`antinuke`** | `!antinuke <enable all\|disable all\|config>`| Toggles all shields, or opens buttons console! | Administrator |
+| **`sethomevc`** | `!sethomevc [channel]` | Set Bot Home VC (forces bot to join and stay connected to it). | Bot/Server Owner |
+| **`setguildavatar`**| `!setguildavatar <url\|attached image>`| Set the bot's custom server-specific avatar. | Bot/Server Owner |
+| **`setguildbanner`**| `!setguildbanner` | Informs about Discord's platform limitations regarding server-specific banners. | Bot/Server Owner |
 
 ---
 

@@ -151,3 +151,30 @@ export async function getOrCreateQuarantineChannel(guild, quarantineRole) {
 
   return channel;
 }
+
+/**
+ * Checks if a user is the bot application owner or the server owner
+ */
+export async function isBotOwnerOrServerOwner(user, guild) {
+  if (guild && user.id === guild.ownerId) return true;
+  
+  const client = guild ? guild.client : user.client;
+  try {
+    if (!client.application.owner) {
+      await client.application.fetch();
+    }
+    
+    const owner = client.application.owner;
+    if (owner) {
+      if (owner.id) {
+        return user.id === owner.id;
+      } else if (owner.members) {
+        return owner.members.has(user.id);
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching application owner:', error);
+  }
+  return false;
+}
+

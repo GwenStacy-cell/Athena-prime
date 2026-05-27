@@ -136,6 +136,9 @@ async function getHelpEmbed(guild) {
         `\`${p}whitelist <add|remove|list> [user]\` - Manage whitelisted admins (immune to nuke/spam/filters).\n` +
         `\`${p}blacklist <add|remove|list> [phrase]\` - Manage blacklisted words (purges & warns automatically).\n` +
         `\`${p}autonick <on|off> [prefix] [suffix]\` - Auto-format nicknames of newly joining members.\n` +
+        `\`${p}sethomevc [channel]\` - Set Bot Home VC (forces bot to join and stay connected to it).\n` +
+        `\`${p}setguildavatar <url|attached image>\` - Set the bot's custom server-specific avatar.\n` +
+        `\`${p}setguildbanner\` - Informs about Discord platform banner limitations.\n` +
         `\`${p}lockdown [on|off]\` / \`/lockdown\` - Toggle writing restrictions for everyone in text channel.\n` +
         `\`${p}raidmode [on|off]\` / \`/raidmode\` - Auto-isolate joining members immediately.`
     },

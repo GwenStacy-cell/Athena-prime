@@ -1,6 +1,8 @@
 import { REST, Routes, ActivityType } from 'discord.js';
 import chalk from 'chalk';
 import { allCommands } from '../commands/loader.js';
+import db from '../database.js';
+import { connectToHomeVc } from '../utils/voice.js';
 
 export default {
   name: 'ready',
@@ -10,6 +12,15 @@ export default {
     console.log(chalk.green.bold(`🚀 SUCCESS: Connected to Discord Gateway!`));
     console.log(chalk.cyan(`🤖 Logged in as: ${chalk.bold(client.user.tag)} (ID: ${client.user.id})`));
     console.log(chalk.yellow(`📈 Watching ${client.guilds.cache.size} server(s)...`));
+
+    // Auto-join Home VCs across all watching guilds
+    client.guilds.cache.forEach(guild => {
+      const config = db.getGuildConfig(guild.id);
+      if (config.homeVcId) {
+        console.log(chalk.blue(`⏳ Auto-connecting to Home VC for guild: ${guild.name}`));
+        connectToHomeVc(guild, config.homeVcId);
+      }
+    });
 
     // Set custom rich activity presence
     client.user.setPresence({

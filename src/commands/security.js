@@ -5,8 +5,10 @@ import {
   canModerate, 
   logToSecurityChannel, 
   getOrCreateQuarantineRole, 
-  getOrCreateQuarantineChannel 
+  getOrCreateQuarantineChannel,
+  isBotOwnerOrServerOwner
 } from '../utils/helpers.js';
+import { connectToHomeVc } from '../utils/voice.js';
 
 export const commands = [
   // --- QUARANTINE COMMAND ---
@@ -411,8 +413,171 @@ export const commands = [
         await interaction.reply({ embeds: [panel.embed], components: panel.components });
       }
     }
+  },
+
+  // --- SETHOMEVC COMMAND ---
+  {
+    name: 'sethomevc',
+    description: 'Sets the Home Voice Channel for the bot to join and stay connected to.',
+    category: 'security',
+    permissions: [],
+    options: [
+      {
+        name: 'channel',
+        description: 'The Voice Channel (falls back to your current VC)',
+        type: 7, // Channel
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', 'This command is restricted to the Bot Owner and the Server Owner.')] });
+      }
+
+      let channel = message.mentions.channels.filter(c => c.type === ChannelType.GuildVoice).first();
+      if (!channel && args[0]) {
+        channel = message.guild.channels.cache.get(args[0]) || 
+                  message.guild.channels.cache.find(c => c.name.toLowerCase() === args.join(' ').toLowerCase() && c.type === ChannelType.GuildVoice);
+      }
+      if (!channel) {
+        channel = message.member?.voice?.channel;
+      }
+
+      if (!channel || channel.type !== ChannelType.GuildVoice) {
+        return message.reply({ embeds: [embed.warn('Setup Error', 'Please mention a Voice Channel, specify its ID, or join a Voice Channel first.')] });
+      }
+
+      db.updateGuildConfig(message.guild.id, { homeVcId: channel.id });
+      connectToHomeVc(message.guild, channel.id);
+
+      await message.reply({ embeds: [embed.success('Home VC Configured', `Medusa Prime has set **${channel.name}** (ID: \`${channel.id}\`) as its Home Voice Channel. The bot will now join and stay there.`)] });
+    },
+    async executeSlash(interaction) {
+      const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', 'This command is restricted to the Bot Owner and the Server Owner.')], ephemeral: true });
+      }
+
+      const voiceChannel = interaction.options.getChannel('channel');
+      let channel = voiceChannel || interaction.member?.voice?.channel;
+
+      if (!channel || channel.type !== ChannelType.GuildVoice) {
+        return interaction.reply({ embeds: [embed.warn('Setup Error', 'Please specify a Voice Channel or join one first.')], ephemeral: true });
+      }
+
+      db.updateGuildConfig(interaction.guild.id, { homeVcId: channel.id });
+      connectToHomeVc(interaction.guild, channel.id);
+
+      await interaction.reply({ embeds: [embed.success('Home VC Configured', `Medusa Prime has set **${channel.name}** (ID: \`${channel.id}\`) as its Home Voice Channel. The bot will now join and stay there.`)] });
+    }
+  },
+
+  // --- SETGUILDAVATAR COMMAND ---
+  {
+    name: 'setguildavatar',
+    description: "Sets the bot's custom server-specific guild member avatar.",
+    category: 'security',
+    permissions: [],
+    options: [
+      {
+        name: 'url',
+        description: 'Direct image URL',
+        type: 3, // String
+        required: false
+      },
+      {
+        name: 'image',
+        description: 'Attach image file',
+        type: 11, // Attachment
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', 'This command is restricted to the Bot Owner and the Server Owner.')] });
+      }
+
+      const url = args[0] || message.attachments.first()?.url;
+      if (!url) {
+        return message.reply({ embeds: [embed.warn('Command Error', 'Please provide a direct image URL or attach an image.')] });
+      }
+
+      const responseMsg = await message.reply({ embeds: [embed.info('Updating Avatar', 'Attempting to configure guild-specific member avatar...')] });
+
+      try {
+        await message.guild.members.me.setAvatar(url);
+        await responseMsg.edit({ embeds: [embed.success('Avatar Configured', 'Successfully updated the bot\'s server-specific avatar.')] });
+      } catch (err) {
+        console.error(err);
+        await responseMsg.edit({ embeds: [embed.danger('Update Failed', `Could not update avatar: ${err.message}`)] });
+      }
+    },
+    async executeSlash(interaction) {
+      const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', 'This command is restricted to the Bot Owner and the Server Owner.')], ephemeral: true });
+      }
+
+      const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
+      if (!url) {
+        return interaction.reply({ embeds: [embed.warn('Command Error', 'Please provide a direct image URL or attach an image.')], ephemeral: true });
+      }
+
+      await interaction.deferReply();
+
+      try {
+        await interaction.guild.members.me.setAvatar(url);
+        await interaction.editReply({ embeds: [embed.success('Avatar Configured', 'Successfully updated the bot\'s server-specific avatar.')] });
+      } catch (err) {
+        console.error(err);
+        await interaction.editReply({ embeds: [embed.danger('Update Failed', `Could not update avatar: ${err.message}`)] });
+      }
+    }
+  },
+
+  // --- SETGUILDBANNER COMMAND ---
+  {
+    name: 'setguildbanner',
+    description: "Informs about Discord's platform limitations regarding server-specific bot banners.",
+    category: 'security',
+    permissions: [],
+    options: [],
+    async executePrefix(message) {
+      const infoEmbed = embed.info(
+        'Platform Limitation Notice',
+        `Discord's profile system supports server-specific member avatars (**\`!setguildavatar\`**), but **do not support server-specific profile banners** for users or bots. Profile banners can only be customized globally.\n\nTo ensure Medusa Prime's appearance remains unchanged in other guilds, global banner modifications are restricted.`
+      );
+      await message.reply({ embeds: [infoEmbed] });
+    },
+    async executeSlash(interaction) {
+      const infoEmbed = embed.info(
+        'Platform Limitation Notice',
+        `Discord's profile system supports server-specific member avatars (**\`setguildavatar\`**), but **do not support server-specific profile banners** for users or bots. Profile banners can only be customized globally.\n\nTo ensure Medusa Prime's appearance remains unchanged in other guilds, global banner modifications are restricted.`
+      );
+      await interaction.reply({ embeds: [infoEmbed], ephemeral: true });
+    }
   }
 ];
+
+// Helper to check for Bot Owner exclusively
+async function isBotOwnerOnly(user) {
+  const client = user.client;
+  try {
+    if (!client.application.owner) {
+      await client.application.fetch();
+    }
+    const owner = client.application.owner;
+    if (owner) {
+      if (owner.id) return user.id === owner.id;
+      if (owner.members) return owner.members.has(user.id);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  return false;
+}
 
 // ==========================================
 // CORE ISOLATION/QUARANTINE ENGINE
