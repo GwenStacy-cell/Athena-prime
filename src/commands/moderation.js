@@ -367,9 +367,10 @@ export const commands = [
       let channel = null;
       let text = '';
 
-      // Try to parse the first argument as a channel mention or ID
+      // Try to parse the first argument as a channel mention, ID, or name
       const firstArg = args[0].replace(/[<#>]/g, '');
-      const possibleChannel = message.guild.channels.cache.get(firstArg);
+      const possibleChannel = message.guild.channels.cache.get(firstArg) 
+        || message.guild.channels.cache.find(c => c.name.toLowerCase() === firstArg.toLowerCase());
 
       if (possibleChannel && possibleChannel.type === ChannelType.GuildText) {
         channel = possibleChannel;
