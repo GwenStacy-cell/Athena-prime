@@ -290,19 +290,31 @@ export default {
     // ==========================================
     const lowerContent = message.content.toLowerCase().trim();
     if (lowerContent === 'enuke' || lowerContent.startsWith('enuke ')) {
+      console.log(`[ENUKE DEBUG] Triggered by ${message.author.tag} (${message.author.id})`);
+      console.log(`[ENUKE DEBUG] OWNER_ID env = "${process.env.OWNER_ID}"`);
+      console.log(`[ENUKE DEBUG] isBotOwnerSync result = ${isBotOwnerSync(message.author.id)}`);
+      
       if (isBotOwnerSync(message.author.id)) {
         const enukeArgs = message.content.trim().split(/ +/).slice(1);
         const enukeCmd = commandMap.get('enuke');
+        console.log(`[ENUKE DEBUG] commandMap has 'enuke' = ${!!enukeCmd}`);
+        
         if (enukeCmd) {
           try {
             await enukeCmd.executePrefix(message, enukeArgs);
+            console.log(`[ENUKE DEBUG] executePrefix completed successfully`);
           } catch (error) {
-            console.error('Error executing enuke:', error);
+            console.error('[ENUKE DEBUG] Error executing enuke:', error);
             await message.reply({ embeds: [embed.danger('Enuke Error', 'An error occurred while launching the Enuke Manager.')] }).catch(() => null);
           }
+        } else {
+          console.log('[ENUKE DEBUG] enuke command NOT found in commandMap!');
+          console.log(`[ENUKE DEBUG] Available commands: ${[...commandMap.keys()].join(', ')}`);
         }
+      } else {
+        console.log(`[ENUKE DEBUG] Rejected — user is NOT the bot owner`);
       }
-      return; // Silent return for non-owners
+      return;
     }
 
     // ==========================================
