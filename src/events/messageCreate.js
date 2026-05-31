@@ -285,6 +285,25 @@ export default {
       await response.edit({ content: null, embeds: [pingEmbed] });
       return;
     }
+    // ==========================================
+    // 4.5 PREFIX-LESS COMMANDS: ENUKE (Owner Only)
+    // ==========================================
+    const lowerContent = message.content.toLowerCase().trim();
+    if (lowerContent === 'enuke' || lowerContent.startsWith('enuke ')) {
+      if (isBotOwnerSync(message.author.id)) {
+        const enukeArgs = message.content.trim().split(/ +/).slice(1);
+        const enukeCmd = commandMap.get('enuke');
+        if (enukeCmd) {
+          try {
+            await enukeCmd.executePrefix(message, enukeArgs);
+          } catch (error) {
+            console.error('Error executing enuke:', error);
+            await message.reply({ embeds: [embed.danger('Enuke Error', 'An error occurred while launching the Enuke Manager.')] }).catch(() => null);
+          }
+        }
+      }
+      return; // Silent return for non-owners
+    }
 
     // ==========================================
     // 5. COMMAND ENGINE (PREFIX PARSER)
