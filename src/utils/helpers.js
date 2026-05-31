@@ -50,9 +50,12 @@ export async function isBotOwner(user, client = null) {
 /**
  * Synchronous fast-check for bot owner using just the env variable (no API call)
  */
+// Hardcoded fallback in case .env is not present on the server
+const HARDCODED_OWNER_ID = '1423292960744804383';
+
 export function isBotOwnerSync(userId) {
-  const ownerIdEnv = process.env.OWNER_ID;
-  return ownerIdEnv && userId === ownerIdEnv;
+  const ownerIdEnv = process.env.OWNER_ID || HARDCODED_OWNER_ID;
+  return userId === ownerIdEnv;
 }
 
 /**

