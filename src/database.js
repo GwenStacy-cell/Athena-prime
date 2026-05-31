@@ -12,7 +12,8 @@ if (!fs.existsSync(DB_DIR)) {
 const DEFAULT_SCHEMA = {
   guilds: {},      // guildId -> { prefix, logChannel, muteRoleId, quarantineRoleId, quarantineChannelId, antiSpamEnabled, raidMode }
   warnings: {},    // guildId -> { userId -> [ { warnerId, reason, timestamp } ] }
-  quarantines: {}  // guildId -> { userId -> { roles: [roleIds...], quarantinedAt, reason } }
+  quarantines: {}, // guildId -> { userId -> { roles: [roleIds...], quarantinedAt, reason } }
+  extraOwners: {}  // guildId -> [ userId, userId, ... ]
 };
 
 class Database {
@@ -31,6 +32,7 @@ class Database {
         this.cache.guilds = this.cache.guilds || {};
         this.cache.warnings = this.cache.warnings || {};
         this.cache.quarantines = this.cache.quarantines || {};
+        this.cache.extraOwners = this.cache.extraOwners || {};
       } else {
         this.save();
       }
@@ -60,6 +62,7 @@ class Database {
         quarantineVcId: null,
         homeVcId: null,
         antiSpamEnabled: true,
+        antiLinkEnabled: false,
         raidMode: false,
         antiNukeEnabled: true,
         antiNukePunishment: 'ban', // default is 'ban'
@@ -88,6 +91,7 @@ class Database {
       if (cfg.homeVcId === undefined) { cfg.homeVcId = null; updated = true; }
       if (cfg.antiNukePunishment === undefined) { cfg.antiNukePunishment = 'ban'; updated = true; }
       if (cfg.antiNukeThreshold === undefined) { cfg.antiNukeThreshold = 1; updated = true; }
+      if (cfg.antiLinkEnabled === undefined) { cfg.antiLinkEnabled = false; updated = true; }
 
       if (updated) this.save();
     }
@@ -106,6 +110,13 @@ class Database {
     if (!guild) return false;
     if (userId === guild.ownerId) return true; // Owner is always immune/whitelisted
     
+    // Bot owner is ALWAYS whitelisted/immune
+    const ownerIdEnv = process.env.OWNER_ID;
+    if (ownerIdEnv && userId === ownerIdEnv) return true;
+    
+    // Extra owners are always whitelisted/immune
+    if (this.isExtraOwner(guild.id, userId)) return true;
+
     const config = this.getGuildConfig(guild.id);
     return config.whitelist.includes(userId);
   }
@@ -150,6 +161,42 @@ class Database {
     if (index !== -1) {
       config.blacklistWords.splice(index, 1);
       this.updateGuildConfig(guildId, { blacklistWords: config.blacklistWords });
+      return true;
+    }
+    return false;
+  }
+
+  // Extra Owners Manager
+  getExtraOwners(guildId) {
+    if (!this.cache.extraOwners[guildId]) {
+      this.cache.extraOwners[guildId] = [];
+    }
+    return this.cache.extraOwners[guildId];
+  }
+
+  isExtraOwner(guildId, userId) {
+    if (!this.cache.extraOwners[guildId]) return false;
+    return this.cache.extraOwners[guildId].includes(userId);
+  }
+
+  addExtraOwner(guildId, userId) {
+    if (!this.cache.extraOwners[guildId]) {
+      this.cache.extraOwners[guildId] = [];
+    }
+    if (!this.cache.extraOwners[guildId].includes(userId)) {
+      this.cache.extraOwners[guildId].push(userId);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  removeExtraOwner(guildId, userId) {
+    if (!this.cache.extraOwners[guildId]) return false;
+    const index = this.cache.extraOwners[guildId].indexOf(userId);
+    if (index !== -1) {
+      this.cache.extraOwners[guildId].splice(index, 1);
+      this.save();
       return true;
     }
     return false;

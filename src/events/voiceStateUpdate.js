@@ -18,7 +18,7 @@ export default {
 
     // If bot was moved or disconnected from home VC
     if (newState.channelId !== homeVcId) {
-      console.log(`[Medusa Prime] Bot voice state changed in guild ${guild.name} (${guild.id}). Restoring connection to home VC: ${homeVcId}`);
+      console.log(`[Athena Prime] Bot voice state changed in guild ${guild.name} (${guild.id}). Restoring connection to home VC: ${homeVcId}`);
       
       // Delay slightly to allow voice connection states to clean up properly
       setTimeout(() => {

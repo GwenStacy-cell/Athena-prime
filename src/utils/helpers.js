@@ -22,12 +22,108 @@ export function parseDuration(str) {
 }
 
 /**
- * Validates if the moderator has sufficient permission to moderate the target
+ * Checks if a user is the hardcoded bot owner (from OWNER_ID env) or the application owner
+ */
+export async function isBotOwner(user, client = null) {
+  const resolvedClient = client || user.client;
+  
+  // Check hardcoded OWNER_ID first (fastest)
+  const ownerIdEnv = process.env.OWNER_ID;
+  if (ownerIdEnv && user.id === ownerIdEnv) return true;
+
+  // Check application owner
+  try {
+    if (!resolvedClient.application.owner) {
+      await resolvedClient.application.fetch();
+    }
+    const owner = resolvedClient.application.owner;
+    if (owner) {
+      if (owner.id) return user.id === owner.id;
+      if (owner.members) return owner.members.has(user.id);
+    }
+  } catch (error) {
+    console.error('Error checking bot owner:', error);
+  }
+  return false;
+}
+
+/**
+ * Synchronous fast-check for bot owner using just the env variable (no API call)
+ */
+export function isBotOwnerSync(userId) {
+  const ownerIdEnv = process.env.OWNER_ID;
+  return ownerIdEnv && userId === ownerIdEnv;
+}
+
+/**
+ * Checks if a user is an extra owner (added by bot owner or server owner)
+ */
+export function isExtraOwner(guildId, userId) {
+  return db.isExtraOwner(guildId, userId);
+}
+
+/**
+ * Checks if a user is authorized to use bot commands.
+ * Authorized users: bot owner, server owner, extra owners.
+ * Returns true if authorized.
+ */
+export async function isAuthorized(user, guild) {
+  // Bot owner is always authorized
+  if (isBotOwnerSync(user.id)) return true;
+  
+  // Server owner is always authorized
+  if (guild && user.id === guild.ownerId) return true;
+
+  // Extra owners are authorized
+  if (guild && db.isExtraOwner(guild.id, user.id)) return true;
+
+  // Fall back to async bot owner check (application owner)
+  const isOwner = await isBotOwner(user);
+  if (isOwner) return true;
+
+  return false;
+}
+
+/**
+ * Checks if a user is immune to all moderation/security actions.
+ * Immune users: bot owner, extra owners.
+ * Server owner immunity is handled separately by canModerate().
+ */
+export async function isImmune(user, guild) {
+  // Bot owner is always immune
+  if (isBotOwnerSync(user.id)) return true;
+
+  // Extra owners are immune
+  if (guild && db.isExtraOwner(guild.id, user.id)) return true;
+
+  // Async bot owner check
+  const isOwner = await isBotOwner(user);
+  if (isOwner) return true;
+
+  return false;
+}
+
+/**
+ * Validates if the moderator has sufficient permission to moderate the target.
+ * Bot owner and extra owners CANNOT be moderated.
  */
 export function canModerate(moderator, target) {
   if (moderator.id === target.id) return false;
-  if (moderator.guild.ownerId === target.id) return false; // Owner is unmoderatable
-  if (moderator.id === moderator.guild.ownerId) return true; // Owner can moderate anyone
+  
+  // Bot owner is UNMODERATABLE
+  if (isBotOwnerSync(target.id)) return false;
+  if (isBotOwnerSync(target.user?.id || target.id)) return false;
+  
+  // Extra owners are UNMODERATABLE
+  if (target.guild && isExtraOwner(target.guild.id, target.id)) return false;
+  
+  // Server owner is unmoderatable
+  if (moderator.guild.ownerId === target.id) return false;
+  
+  // Owner can moderate anyone
+  if (moderator.id === moderator.guild.ownerId) return true;
+  if (isBotOwnerSync(moderator.id)) return true;
+  if (moderator.guild && isExtraOwner(moderator.guild.id, moderator.id)) return true;
   
   // Compare role positions
   return moderator.roles.highest.position > target.roles.highest.position;
@@ -54,7 +150,7 @@ export async function logToSecurityChannel(guild, embedObject) {
         channel = await guild.channels.create({
           name: 'security-logs',
           type: ChannelType.GuildText,
-          topic: '🛡️ Automated security audits and moderation records',
+          topic: '🛡️ Automated security audits and moderation records — Athena Prime',
           permissionOverwrites: [
             {
               id: guild.roles.everyone.id,
@@ -95,7 +191,7 @@ export async function getOrCreateQuarantineRole(guild) {
         name: 'Quarantined',
         color: '#ff3333',
         hoist: true,
-        reason: 'Medusa Prime automatic quarantine role creation',
+        reason: 'Athena Prime automatic quarantine role creation',
         permissions: [] // Zero global permissions
       }).catch(() => null);
     }
@@ -126,7 +222,7 @@ export async function getOrCreateQuarantineChannel(guild, quarantineRole) {
       channel = await guild.channels.create({
         name: 'quarantine-zone',
         type: ChannelType.GuildText,
-        topic: '🔒 Under Investigation - Restricted Access Area',
+        topic: '🔒 Under Investigation - Restricted Access Area — Athena Prime',
         permissionOverwrites: [
           {
             id: guild.roles.everyone.id,
@@ -157,6 +253,12 @@ export async function getOrCreateQuarantineChannel(guild, quarantineRole) {
  */
 export async function isBotOwnerOrServerOwner(user, guild) {
   if (guild && user.id === guild.ownerId) return true;
+
+  // Check hardcoded OWNER_ID
+  if (isBotOwnerSync(user.id)) return true;
+
+  // Check extra owners
+  if (guild && isExtraOwner(guild.id, user.id)) return true;
   
   const client = guild ? guild.client : user.client;
   try {
@@ -178,3 +280,67 @@ export async function isBotOwnerOrServerOwner(user, guild) {
   return false;
 }
 
+/**
+ * Levenshtein distance for fuzzy command matching
+ */
+export function levenshteinDistance(a, b) {
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b[i - 1] === a[j - 1]) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+/**
+ * Find closest matching command name using fuzzy matching
+ */
+export function findClosestCommand(input, commandNames, maxDistance = 3) {
+  let closest = null;
+  let bestDistance = Infinity;
+
+  for (const name of commandNames) {
+    const dist = levenshteinDistance(input.toLowerCase(), name.toLowerCase());
+    if (dist < bestDistance && dist <= maxDistance) {
+      bestDistance = dist;
+      closest = name;
+    }
+  }
+
+  return closest;
+}
+
+/**
+ * Get the owner's presence status string and emoji
+ */
+export function getPresenceStatus(guild, ownerId) {
+  try {
+    const member = guild.members.cache.get(ownerId);
+    if (!member) return { text: 'UNKNOWN', emoji: '❓' };
+
+    const presence = member.presence;
+    if (!presence) return { text: 'OFFLINE', emoji: '⚫' };
+
+    switch (presence.status) {
+      case 'online': return { text: 'ONLINE', emoji: '🟢' };
+      case 'idle': return { text: 'IDLE', emoji: '🟡' };
+      case 'dnd': return { text: 'DO NOT DISTURB', emoji: '🔴' };
+      case 'offline': return { text: 'OFFLINE', emoji: '⚫' };
+      default: return { text: 'UNKNOWN', emoji: '❓' };
+    }
+  } catch {
+    return { text: 'UNKNOWN', emoji: '❓' };
+  }
+}

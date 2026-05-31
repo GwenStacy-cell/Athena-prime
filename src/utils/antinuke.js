@@ -1,7 +1,7 @@
 import { AuditLogEvent, PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
-import { logToSecurityChannel } from './helpers.js';
+import { logToSecurityChannel, isBotOwnerSync } from './helpers.js';
 import { executeQuarantine } from '../commands/security.js';
 
 /**
@@ -38,6 +38,10 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
     if (db.isWhitelisted(guild, executor.id)) {
       return; // Fully immune!
     }
+
+    // Bot owner and extra owners are always immune
+    if (isBotOwnerSync(executor.id)) return;
+    if (db.isExtraOwner(guild.id, executor.id)) return;
 
     // 2. Determine and apply punishment dynamically (default is ban)
     const punishment = config.antiNukePunishment || 'ban';
@@ -182,7 +186,7 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
     );
     await logToSecurityChannel(guild, nukeEmbed);
 
-    // 5. COMPLAINT TO SERVER OWNER (CRITICAL: User specific request!)
+    // 5. COMPLAINT TO SERVER OWNER
     try {
       const owner = await guild.members.fetch(guild.ownerId).catch(() => null);
       if (owner) {
@@ -240,6 +244,10 @@ export async function checkAntiNukeMemberUpdate(oldMember, newMember) {
 
       // Check if executor is whitelisted/owner
       if (db.isWhitelisted(guild, executor.id)) return;
+
+      // Bot owner and extra owners are always immune
+      if (isBotOwnerSync(executor.id)) return;
+      if (db.isExtraOwner(guild.id, executor.id)) return;
 
       // Unauthorized grant!
       const executorMember = await guild.members.fetch(executor.id).catch(() => null);

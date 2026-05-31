@@ -1,11 +1,15 @@
 {
+  "botName": "Athena Prime",
+  "footerText": "Athena Prime Security",
   "colors": {
     "success": "#00ffaa",
     "warning": "#ffaa00",
     "danger": "#ff3333",
     "neutral": "#3b82f6",
     "raid": "#8b5cf6",
-    "dark": "#2f3136"
+    "dark": "#2f3136",
+    "owner": "#FFD700",
+    "security": "#00e5ff"
   },
   "antiSpam": {
     "enabled": true,
@@ -17,6 +21,11 @@
   "antiInvite": {
     "enabled": true,
     "deleteInvites": true,
+    "warnUser": true
+  },
+  "antiLink": {
+    "enabled": false,
+    "deleteLinks": true,
     "warnUser": true
   },
   "defaultRoles": {

@@ -5,7 +5,7 @@ import db from '../database.js';
 import embed from '../embed.js';
 import commandMap from '../commands/loader.js';
 import { executeQuarantine } from '../commands/security.js';
-import { canModerate, logToSecurityChannel } from '../utils/helpers.js';
+import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
 
 // Safely load config
 const configPath = path.resolve('config.json');
@@ -38,6 +38,43 @@ export default {
 
     // Load server configurations
     const dbConfig = db.getGuildConfig(guildId);
+
+    // ==========================================
+    // 0. OWNER MENTION DETECTION
+    // ==========================================
+    const ownerId = process.env.OWNER_ID;
+    if (ownerId && userId !== ownerId && message.mentions.has(ownerId)) {
+      try {
+        const presence = getPresenceStatus(message.guild, ownerId);
+
+        const ownerEmbed = embed.owner(
+          'You tagged my Master !',
+          `<@${userId}>\n\nYour ping has been forwarded through direct messages.\nAwait his arrival.`,
+          [
+            { name: 'Status', value: `${presence.emoji} **${presence.text}**`, inline: true }
+          ]
+        );
+        await message.reply({ embeds: [ownerEmbed] }).catch(() => null);
+
+        // DM the owner
+        const ownerUser = await message.client.users.fetch(ownerId).catch(() => null);
+        if (ownerUser) {
+          const dmEmbed = embed.info(
+            '🔔 You were tagged!',
+            null,
+            [
+              { name: 'Tagger', value: `${message.author.tag} (<@${userId}>)`, inline: true },
+              { name: 'Server', value: `${message.guild.name}`, inline: true },
+              { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
+              { name: 'Message Link', value: `[Jump to Message](https://discord.com/channels/${guildId}/${message.channel.id}/${message.id})` }
+            ]
+          );
+          await ownerUser.send({ embeds: [dmEmbed] }).catch(() => null);
+        }
+      } catch (error) {
+        console.error('Error in owner mention detection:', error);
+      }
+    }
 
     // Whitelisted users and owner are immune to all auto-moderation filters
     const isImmune = db.isWhitelisted(message.guild, userId);
@@ -73,6 +110,38 @@ export default {
           'warning'
         ));
         
+        return;
+      }
+    }
+
+    // ==========================================
+    // 1.5. AUTO-MODERATION: ANTI-LINK
+    // ==========================================
+    if (!isImmune && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+      const linkRegex = /https?:\/\/[^\s]+/gi;
+      if (linkRegex.test(message.content)) {
+        await message.delete().catch(() => null);
+
+        const warnEmbed = embed.warn(
+          'Link Deleted',
+          `${message.author}, posting links is not allowed in this server.`
+        );
+        const alertMsg = await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
+        if (alertMsg) {
+          setTimeout(() => alertMsg.delete().catch(() => null), 6000);
+        }
+
+        logToSecurityChannel(message.guild, embed.log(
+          'Link Filtered',
+          `Deleted message containing a URL from member.`,
+          [
+            { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
+            { name: 'Channel', value: `${message.channel}`, inline: true },
+            { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
+          ],
+          'warning'
+        ));
+
         return;
       }
     }
@@ -198,7 +267,7 @@ export default {
     }
 
     // ==========================================
-    // 3. PREFIX-LESS COMMANDS: PING
+    // 4. PREFIX-LESS COMMANDS: PING
     // ==========================================
     if (message.content.toLowerCase().trim() === 'ping') {
       const response = await message.reply('Pinging WebSocket...');
@@ -218,7 +287,7 @@ export default {
     }
 
     // ==========================================
-    // 4. COMMAND ENGINE (PREFIX PARSER)
+    // 5. COMMAND ENGINE (PREFIX PARSER)
     // ==========================================
     const prefix = dbConfig.prefix;
     if (!message.content.startsWith(prefix)) return;
@@ -227,7 +296,24 @@ export default {
     const commandName = args.shift().toLowerCase();
 
     const cmd = commandMap.get(commandName);
-    if (!cmd) return;
+
+    // Intelligent command error correction with fuzzy matching
+    if (!cmd) {
+      const closest = findClosestCommand(commandName, [...commandMap.keys()]);
+      if (closest) {
+        const suggestEmbed = embed.warn(
+          'Unknown Command',
+          `${message.author} ❌ Command \`${prefix}${commandName}\` not found.\n\n💡 Did you mean: \`${prefix}${closest}\`?\n\nUse \`${prefix}help\` for all commands.`
+        );
+        return message.reply({ embeds: [suggestEmbed] }).catch(() => null);
+      } else {
+        const notFoundEmbed = embed.warn(
+          'Unknown Command',
+          `${message.author} ❌ Command \`${prefix}${commandName}\` does not exist.\n\nUse \`${prefix}help\` for all available commands.`
+        );
+        return message.reply({ embeds: [notFoundEmbed] }).catch(() => null);
+      }
+    }
 
     // Verify moderator permissions
     if (cmd.permissions && cmd.permissions.length > 0) {

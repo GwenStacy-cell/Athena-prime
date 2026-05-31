@@ -1,7 +1,7 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
-import { parseDuration, canModerate, logToSecurityChannel } from '../utils/helpers.js';
+import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';
 import { executeQuarantine } from './security.js'; // We will implement security.js next
 
 export const commands = [
@@ -112,7 +112,7 @@ export const commands = [
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please mention a valid member to warn.')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member to warn.\n\n**Usage:** \`!warn <@user> <reason>\``)] });
       }
       
       const reason = args.slice(1).join(' ') || 'No reason provided';
@@ -125,7 +125,7 @@ export const commands = [
       
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', 'Member not found in this server.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found in this server.`)], ephemeral: true });
       }
 
       const result = await handleWarn(interaction.guild, interaction.member, target, reason);
@@ -157,7 +157,7 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', 'Member not found.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
       }
 
       const result = await handleWarnings(interaction.guild, target);
@@ -182,7 +182,7 @@ export const commands = [
     async executePrefix(message) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please mention a valid member to clear warnings.')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member to clear warnings.\n\n**Usage:** \`!clearwarns <@user>\``)] });
       }
       const result = await handleClearWarns(message.guild, message.member, target);
       await message.reply({ embeds: [result.embed] });
@@ -192,7 +192,7 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', 'Member not found.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
       }
 
       const result = await handleClearWarns(interaction.guild, interaction.member, target);
@@ -229,10 +229,13 @@ export const commands = [
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please mention a valid member.')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member.\n\n**Usage:** \`!timeout <@user> <duration> [reason]\``)] });
       }
       
       const durationStr = args[1];
+      if (!durationStr) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a duration.\n\n**Usage:** \`!timeout <@user> <10m|2h|1d> [reason]\``)] });
+      }
       const reason = args.slice(2).join(' ') || 'No reason provided';
 
       const result = await handleTimeout(message.guild, message.member, target, durationStr, reason);
@@ -245,7 +248,7 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', 'Member not found.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
       }
 
       const result = await handleTimeout(interaction.guild, interaction.member, target, durationStr, reason);
@@ -276,7 +279,7 @@ export const commands = [
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please mention a valid member.')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member.\n\n**Usage:** \`!kick <@user> [reason]\``)] });
       }
       const reason = args.slice(1).join(' ') || 'No reason provided';
       const result = await handleKick(message.guild, message.member, target, reason);
@@ -288,7 +291,7 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', 'Member not found.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
       }
 
       const result = await handleKick(interaction.guild, interaction.member, target, reason);
@@ -319,7 +322,7 @@ export const commands = [
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please mention a valid member.')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member.\n\n**Usage:** \`!ban <@user> [reason]\``)] });
       }
       const reason = args.slice(1).join(' ') || 'No reason provided';
       const result = await handleBan(message.guild, message.member, target, reason);
@@ -331,7 +334,7 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', 'Member not found.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
       }
 
       const result = await handleBan(interaction.guild, interaction.member, target, reason);
@@ -361,7 +364,7 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (args.length === 0) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please enter a message to send. Usage: `!say [#channel or id] <message>`')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please enter a message to send.\n\n**Usage:** \`!say [#channel or id] <message>\``)] });
       }
 
       let channel = null;
@@ -381,7 +384,7 @@ export const commands = [
       }
 
       if (!text.trim()) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please enter a message to send.')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please enter a message to send.`)] });
       }
 
       await channel.send(text);
@@ -392,7 +395,7 @@ export const commands = [
       const channel = interaction.options.getChannel('channel') || interaction.channel;
 
       if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.PublicThread && channel.type !== ChannelType.PrivateThread) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', 'Target channel must be a text channel.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target channel must be a text channel.`)], ephemeral: true });
       }
 
       await channel.send(text);
@@ -429,7 +432,7 @@ export const commands = [
     async executePrefix(message, args) {
       const channel = message.mentions.channels.first();
       if (!channel) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!announce #channel Title | Message`')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!announce #channel Title | Message\``)] });
       }
 
       const remainder = args.slice(1).join(' ');
@@ -438,7 +441,7 @@ export const commands = [
       const text = parts[1]?.trim();
 
       if (!title || !text) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please separate the Title and Message with a `|` (e.g. `!announce #general Server Update | We have added security logs!`)')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please separate the Title and Message with a \`|\` (e.g. \`!announce #general Server Update | We have added security logs!\`)`)] });
       }
 
       const announceEmbed = embed.success(title, text);
@@ -451,7 +454,7 @@ export const commands = [
       const text = interaction.options.getString('message');
 
       if (channel.type !== ChannelType.GuildText) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', 'Target channel must be a text channel.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target channel must be a text channel.`)], ephemeral: true });
       }
 
       const announceEmbed = embed.success(title, text);
@@ -483,7 +486,7 @@ export const commands = [
     async executePrefix(message, args) {
       const name = args[0];
       if (!name) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please specify a name for the role.')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a name for the role.\n\n**Usage:** \`!createrole <name> [#color]\``)] });
       }
       const color = args[1];
       const result = await handleCreateRole(message.guild, message.member, name, color);
@@ -514,7 +517,7 @@ export const commands = [
     async executePrefix(message) {
       const role = message.mentions.roles.first();
       if (!role) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Please mention the role you want to delete.')] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention the role you want to delete.\n\n**Usage:** \`!deleterole <@role>\``)] });
       }
       const result = await handleDeleteRole(message.guild, message.member, role);
       await message.reply({ embeds: [result.embed] });
@@ -522,6 +525,108 @@ export const commands = [
     async executeSlash(interaction) {
       const role = interaction.options.getRole('role');
       const result = await handleDeleteRole(interaction.guild, interaction.member, role);
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- PURGE COMMAND ---
+  {
+    name: 'purge',
+    description: 'Bulk deletes a specified number of messages from the channel (1-100).',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.ManageMessages],
+    options: [
+      {
+        name: 'amount',
+        description: 'Number of messages to delete (1-100)',
+        type: 4, // Integer
+        required: true,
+        min_value: 1,
+        max_value: 100
+      }
+    ],
+    async executePrefix(message, args) {
+      const amount = parseInt(args[0]);
+      if (!amount || isNaN(amount) || amount < 1 || amount > 100) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a number between 1-100.\n\n**Usage:** \`!purge <1-100>\``)] });
+      }
+      const result = await handlePurge(message.guild, message.channel, message.member, amount, message);
+      if (result.embed) {
+        const reply = await message.channel.send({ embeds: [result.embed] });
+        setTimeout(() => reply.delete().catch(() => null), 5000);
+      }
+    },
+    async executeSlash(interaction) {
+      const amount = interaction.options.getInteger('amount');
+      const result = await handlePurge(interaction.guild, interaction.channel, interaction.member, amount);
+      await interaction.reply({ embeds: [result.embed], ephemeral: true });
+    }
+  },
+
+  // --- SLOWMODE COMMAND ---
+  {
+    name: 'slowmode',
+    description: 'Sets the channel slowmode rate limit (0 to disable).',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.ManageChannels],
+    options: [
+      {
+        name: 'seconds',
+        description: 'Slowmode delay in seconds (0 = off, max 21600)',
+        type: 4, // Integer
+        required: true,
+        min_value: 0,
+        max_value: 21600
+      }
+    ],
+    async executePrefix(message, args) {
+      const seconds = parseInt(args[0]);
+      if (isNaN(seconds) || seconds < 0 || seconds > 21600) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify seconds between 0-21600.\n\n**Usage:** \`!slowmode <seconds>\` (0 = off)`)] });
+      }
+      const result = await handleSlowmode(message.guild, message.channel, message.member, seconds);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const seconds = interaction.options.getInteger('seconds');
+      const result = await handleSlowmode(interaction.guild, interaction.channel, interaction.member, seconds);
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- UNBAN COMMAND ---
+  {
+    name: 'unban',
+    description: 'Unbans a user from the server by their User ID.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.BanMembers],
+    options: [
+      {
+        name: 'userid',
+        description: 'The User ID to unban',
+        type: 3, // String
+        required: true
+      },
+      {
+        name: 'reason',
+        description: 'Reason for unban',
+        type: 3,
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const userId = args[0];
+      if (!userId) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a User ID.\n\n**Usage:** \`!unban <userId> [reason]\``)] });
+      }
+      const reason = args.slice(1).join(' ') || 'No reason provided';
+      const result = await handleUnban(message.guild, message.member, userId, reason);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const userId = interaction.options.getString('userid');
+      const reason = interaction.options.getString('reason') || 'No reason provided';
+      const result = await handleUnban(interaction.guild, interaction.member, userId, reason);
       await interaction.reply({ embeds: [result.embed] });
     }
   }
@@ -590,6 +695,11 @@ async function handleUnmuteAll(guild, channel, moderator, type) {
 }
 
 async function handleWarn(guild, moderator, target, reason) {
+  // Owner immunity check
+  if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
+    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };
+  }
+
   if (!canModerate(moderator, target)) {
     return { embed: embed.danger('Permission Denied', `You do not have enough power to warn **${target.user.tag}**.`) };
   }
@@ -692,6 +802,11 @@ async function handleClearWarns(guild, moderator, target) {
 }
 
 async function handleTimeout(guild, moderator, target, durationStr, reason) {
+  // Owner immunity check
+  if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
+    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };
+  }
+
   if (!canModerate(moderator, target)) {
     return { embed: embed.danger('Permission Denied', `You do not have enough power to timeout **${target.user.tag}**.`) };
   }
@@ -737,6 +852,11 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
 }
 
 async function handleKick(guild, moderator, target, reason) {
+  // Owner immunity check
+  if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
+    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };
+  }
+
   if (!canModerate(moderator, target)) {
     return { embed: embed.danger('Permission Denied', `You do not have enough power to kick **${target.user.tag}**.`) };
   }
@@ -778,6 +898,11 @@ async function handleKick(guild, moderator, target, reason) {
 }
 
 async function handleBan(guild, moderator, target, reason) {
+  // Owner immunity check
+  if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
+    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };
+  }
+
   if (!canModerate(moderator, target)) {
     return { embed: embed.danger('Permission Denied', `You do not have enough power to ban **${target.user.tag}**.`) };
   }
@@ -890,3 +1015,102 @@ async function handleDeleteRole(guild, moderator, role) {
   }
 }
 
+async function handlePurge(guild, channel, moderator, amount, triggerMessage = null) {
+  try {
+    // Delete the trigger message first if it exists (prefix command)
+    if (triggerMessage) {
+      await triggerMessage.delete().catch(() => null);
+    }
+
+    const deleted = await channel.bulkDelete(amount, true);
+
+    const resEmbed = embed.success('Messages Purged', `Successfully deleted **${deleted.size}** messages from this channel.`, [
+      { name: 'Requested', value: `\`${amount}\``, inline: true },
+      { name: 'Deleted', value: `\`${deleted.size}\``, inline: true },
+      { name: 'Moderator', value: `${moderator}`, inline: true }
+    ]);
+
+    logToSecurityChannel(guild, embed.log(
+      'Messages Purged',
+      `Moderator bulk-deleted messages.`,
+      [
+        { name: 'Channel', value: `#${channel.name}`, inline: true },
+        { name: 'Count', value: `${deleted.size}`, inline: true },
+        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
+      ],
+      'warning'
+    ));
+
+    return { embed: resEmbed };
+  } catch (error) {
+    console.error(error);
+    return { embed: embed.danger('Purge Failed', 'Failed to delete messages. Messages older than 14 days cannot be bulk deleted.') };
+  }
+}
+
+async function handleSlowmode(guild, channel, moderator, seconds) {
+  try {
+    await channel.setRateLimitPerUser(seconds, `Slowmode set by ${moderator.user.tag}`);
+
+    const resEmbed = seconds === 0
+      ? embed.success('Slowmode Disabled', `Slowmode has been disabled in **#${channel.name}**.`)
+      : embed.success('Slowmode Configured', `Slowmode set to **${seconds} seconds** in **#${channel.name}**.`, [
+          { name: 'Channel', value: `${channel}`, inline: true },
+          { name: 'Rate Limit', value: `\`${seconds}s\``, inline: true }
+        ]);
+
+    logToSecurityChannel(guild, embed.log(
+      'Slowmode Updated',
+      `Moderator adjusted channel slowmode.`,
+      [
+        { name: 'Channel', value: `#${channel.name}`, inline: true },
+        { name: 'Seconds', value: `${seconds}`, inline: true },
+        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
+      ],
+      seconds === 0 ? 'success' : 'warning'
+    ));
+
+    return { embed: resEmbed };
+  } catch (error) {
+    console.error(error);
+    return { embed: embed.danger('Slowmode Failed', 'Failed to set slowmode. Ensure I have Manage Channel permissions.') };
+  }
+}
+
+async function handleUnban(guild, moderator, userId, reason) {
+  try {
+    // Validate userId format
+    if (!/^\d{17,20}$/.test(userId)) {
+      return { embed: embed.warn('Invalid User ID', `\`${userId}\` is not a valid Discord User ID. IDs are 17-20 digit numbers.`) };
+    }
+
+    const ban = await guild.bans.fetch(userId).catch(() => null);
+    if (!ban) {
+      return { embed: embed.warn('Not Banned', `User ID \`${userId}\` is not currently banned from this server.`) };
+    }
+
+    await guild.bans.remove(userId, `${reason} - by ${moderator.user.tag}`);
+
+    const resEmbed = embed.success('User Unbanned', `Successfully unbanned **${ban.user.tag}** (ID: \`${userId}\`).`, [
+      { name: 'User', value: `${ban.user.tag}`, inline: true },
+      { name: 'Moderator', value: `${moderator}`, inline: true },
+      { name: 'Reason', value: reason }
+    ]);
+
+    logToSecurityChannel(guild, embed.log(
+      'User Unbanned',
+      `Moderator unbanned a user.`,
+      [
+        { name: 'Target', value: `${ban.user.tag} (${userId})`, inline: true },
+        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+        { name: 'Reason', value: reason }
+      ],
+      'success'
+    ));
+
+    return { embed: resEmbed };
+  } catch (error) {
+    console.error(error);
+    return { embed: embed.danger('Unban Failed', 'An error occurred while unbanning the user.') };
+  }
+}

@@ -9,9 +9,12 @@ export default {
   once: true,
   async execute(client) {
     // Beautiful colored console log
-    console.log(chalk.green.bold(`🚀 SUCCESS: Connected to Discord Gateway!`));
+    console.log(chalk.hex('#FFD700').bold(`🚀 SUCCESS: Connected to Discord Gateway!`));
     console.log(chalk.cyan(`🤖 Logged in as: ${chalk.bold(client.user.tag)} (ID: ${client.user.id})`));
     console.log(chalk.yellow(`📈 Watching ${client.guilds.cache.size} server(s)...`));
+
+    // Store boot timestamp for uptime tracking
+    client.bootTimestamp = Date.now();
 
     // Auto-join Home VCs across all watching guilds
     client.guilds.cache.forEach(guild => {
@@ -24,7 +27,7 @@ export default {
 
     // Set custom rich activity presence
     client.user.setPresence({
-      activities: [{ name: '🛡️ Server Security | !help', type: ActivityType.Watching }],
+      activities: [{ name: '🛡️ Athena Prime Security | !help', type: ActivityType.Watching }],
       status: 'online'
     });
 
@@ -52,7 +55,10 @@ export default {
         { body: slashData }
       );
 
-      console.log(chalk.green.bold(`✅ Successfully synced all ${slashData.length} Slash Commands with Discord Gateway.`));
+      console.log(chalk.hex('#FFD700').bold(`✅ Successfully synced all ${slashData.length} Slash Commands with Discord Gateway.`));
+      console.log(chalk.hex('#FFD700').bold('\n============================================='));
+      console.log(chalk.hex('#FFD700').bold('🛡️  Athena Prime — God Level Security  🛡️'));
+      console.log(chalk.hex('#FFD700').bold('=============================================\n'));
     } catch (error) {
       console.error(chalk.red('❌ Error registering Slash Commands:'), error);
     }

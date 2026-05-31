@@ -8,7 +8,7 @@ export function connectToHomeVc(guild, channelId) {
 
   const channel = guild.channels.cache.get(channelId);
   if (!channel) {
-    console.error(`[Medusa Prime] Home Voice Channel ${channelId} not found in guild ${guild.name}`);
+    console.error(`[Athena Prime] Home Voice Channel ${channelId} not found in guild ${guild.name}`);
     return null;
   }
 
@@ -21,10 +21,10 @@ export function connectToHomeVc(guild, channelId) {
       selfDeaf: true // Quiet, professional deafen
     });
 
-    console.log(`[Medusa Prime] Joined Home VC "${channel.name}" in guild "${guild.name}"`);
+    console.log(`[Athena Prime] Joined Home VC "${channel.name}" in guild "${guild.name}"`);
     return connection;
   } catch (error) {
-    console.error(`[Medusa Prime] Failed to join Home VC in guild ${guild.name}:`, error);
+    console.error(`[Athena Prime] Failed to join Home VC in guild ${guild.name}:`, error);
     return null;
   }
 }

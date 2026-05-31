@@ -12,14 +12,19 @@ export default {
     // ==========================================
     if (interaction.isChatInputCommand()) {
       const cmd = commandMap.get(interaction.commandName);
-      if (!cmd) return;
+      if (!cmd) {
+        return interaction.reply({
+          embeds: [embed.warn('Unknown Command', `${interaction.user} ❌ The command \`/${interaction.commandName}\` was not recognized.\n\nUse \`/help\` to see all available commands.`)],
+          ephemeral: true
+        });
+      }
 
       // Verify permissions
       if (cmd.permissions && cmd.permissions.length > 0) {
         const hasPerms = cmd.permissions.every(perm => interaction.member.permissions.has(perm));
         if (!hasPerms) {
           return interaction.reply({
-            embeds: [embed.danger('Access Denied', '🛡️ You do not possess the required permissions to execute this security command.')],
+            embeds: [embed.danger('Access Denied', `${interaction.user} 🛡️ You do not possess the required permissions to execute this security command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)],
             ephemeral: true
           });
         }
@@ -31,7 +36,7 @@ export default {
         console.error(`Error executing command ${cmd.name} via Slash:`, error);
         const errEmbed = embed.danger(
           'Execution Error', 
-          'An unexpected error occurred while executing this slash command.'
+          `${interaction.user} An unexpected error occurred while executing \`/${cmd.name}\`.\n\n**Tip:** Check that all required options are filled in correctly. Use \`/help\` for command usage.`
         );
 
         if (interaction.replied || interaction.deferred) {

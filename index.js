@@ -7,9 +7,9 @@ import http from 'http';
 dotenv.config();
 
 // Print boot header
-console.log(chalk.blue.bold('\n============================================='));
-console.log(chalk.blue.bold('🛡️   Medusa Prime - Initializing...   🛡️'));
-console.log(chalk.blue.bold('=============================================\n'));
+console.log(chalk.hex('#FFD700').bold('\n============================================='));
+console.log(chalk.hex('#FFD700').bold('🛡️   Athena Prime - Initializing...   🛡️'));
+console.log(chalk.hex('#FFD700').bold('=============================================\n'));
 
 const token = process.env.DISCORD_TOKEN;
 if (!token || token === 'YOUR_BOT_TOKEN_HERE') {
@@ -25,7 +25,8 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,        // Privileged Intent
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,      // Privileged Intent
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildPresences       // Privileged Intent (for owner status detection)
   ],
   partials: [
     Partials.User,
@@ -91,7 +92,7 @@ const PORT = process.env.PORT || null;
 if (PORT) {
   http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.write('🛡️ Medusa Prime Bot is actively online and running!');
+    res.write('🛡️ Athena Prime Bot is actively online and running!');
     res.end();
   }).listen(PORT, () => {
     console.log(chalk.green(`🌐 Health Check Server: Listening on port ${PORT}`));

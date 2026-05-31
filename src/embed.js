@@ -5,13 +5,17 @@ import path from 'path';
 // Safely load config
 const configPath = path.resolve('config.json');
 let config = {
+  botName: 'Athena Prime',
+  footerText: 'Athena Prime Security',
   colors: {
     success: '#00ffaa',
     warning: '#ffaa00',
     danger: '#ff3333',
     neutral: '#3b82f6',
     raid: '#8b5cf6',
-    dark: '#2f3136'
+    dark: '#2f3136',
+    owner: '#FFD700',
+    security: '#00e5ff'
   }
 };
 try {
@@ -23,6 +27,7 @@ try {
 }
 
 const colors = config.colors;
+const FOOTER_TEXT = config.footerText || 'Athena Prime Security';
 
 /**
  * Embed utility to construct state-of-the-art beautiful coloured replies
@@ -49,7 +54,7 @@ export const embed = {
     }
 
     builder.setFooter({
-      text: footerText || 'Medusa Unbypassable Security',
+      text: footerText || FOOTER_TEXT,
       iconURL: 'https://img.icons8.com/color/48/shield.png' // Nice visual touch
     });
 
@@ -104,6 +109,30 @@ export const embed = {
       title: `🔒 ${title}`,
       description,
       color: colors.raid,
+      fields
+    });
+  },
+
+  /**
+   * Gold/Amber embed for owner-related responses (e.g., "You tagged my Master!")
+   */
+  owner(title, description, fields = []) {
+    return this.build({
+      title: `👑 ${title}`,
+      description,
+      color: colors.owner || '#FFD700',
+      fields
+    });
+  },
+
+  /**
+   * Security status embed with cyan accent
+   */
+  security(title, description, fields = []) {
+    return this.build({
+      title: `🛡️ ${title}`,
+      description,
+      color: colors.security || '#00e5ff',
       fields
     });
   },
