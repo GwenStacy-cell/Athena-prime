@@ -150,8 +150,8 @@ export default {
     // 2. AUTO-MODERATION: WORD BLACKLIST FILTER
     // ==========================================
     if (!isImmune && dbConfig.blacklistWords && dbConfig.blacklistWords.length > 0 && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      const lowerContent = message.content.toLowerCase();
-      const matchedWord = dbConfig.blacklistWords.find(word => lowerContent.includes(word));
+      const msgLower = message.content.toLowerCase();
+      const matchedWord = dbConfig.blacklistWords.find(word => msgLower.includes(word));
       
       if (matchedWord) {
         await message.delete().catch(() => null);
@@ -288,8 +288,8 @@ export default {
     // ==========================================
     // 4.5 PREFIX-LESS COMMANDS: ENUKE (Owner Only)
     // ==========================================
-    const lowerContent = message.content.toLowerCase().trim();
-    if (lowerContent === 'enuke' || lowerContent.startsWith('enuke ')) {
+    const enukeCheck = message.content.toLowerCase().trim();
+    if (enukeCheck === 'enuke' || enukeCheck.startsWith('enuke ')) {
       console.log(`[ENUKE DEBUG] Triggered by ${message.author.tag} (${message.author.id})`);
       console.log(`[ENUKE DEBUG] OWNER_ID env = "${process.env.OWNER_ID}"`);
       console.log(`[ENUKE DEBUG] isBotOwnerSync result = ${isBotOwnerSync(message.author.id)}`);
