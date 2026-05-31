@@ -35,18 +35,20 @@ export default {
     try {
       console.log(chalk.blue('⏳ Syncing slash commands globally...'));
 
-      const slashData = allCommands.map(cmd => {
-        // Map options and build proper REST format
-        return {
-          name: cmd.name,
-          description: cmd.description,
-          options: cmd.options || [],
-          // Convert bigint permissions to string format for REST API
-          default_member_permissions: cmd.permissions && cmd.permissions.length > 0 
-            ? cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
-            : null
-        };
-      });
+      const slashData = allCommands
+        .filter(cmd => !cmd.hidden) // Skip hidden commands (e.g., enuke — prefix only)
+        .map(cmd => {
+          // Map options and build proper REST format
+          return {
+            name: cmd.name,
+            description: cmd.description,
+            options: cmd.options || [],
+            // Convert bigint permissions to string format for REST API
+            default_member_permissions: cmd.permissions && cmd.permissions.length > 0 
+              ? cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
+              : null
+          };
+        });
 
       const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN || client.token);
 

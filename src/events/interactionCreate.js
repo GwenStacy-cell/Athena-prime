@@ -3,6 +3,7 @@ import commandMap from '../commands/loader.js';
 import embed from '../embed.js';
 import db from '../database.js';
 import { getAntinukeConfigPanel } from '../commands/security.js';
+import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
 
 export default {
   name: 'interactionCreate',
@@ -49,9 +50,41 @@ export default {
     }
 
     // ==========================================
-    // 2. INTERACTIVE COMPONENT BUTTON CLICKS
+    // 2. MODAL SUBMISSIONS
+    // ==========================================
+    if (interaction.isModalSubmit()) {
+      // Enuke Manager modal
+      if (interaction.customId.startsWith('enuke_modal_')) {
+        try {
+          await handleEnukeModal(interaction);
+        } catch (error) {
+          console.error('Error handling Enuke modal:', error);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ An error occurred during the nuke sequence.', ephemeral: true }).catch(() => null);
+          }
+        }
+        return;
+      }
+    }
+
+    // ==========================================
+    // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton()) {
+      // Enuke Manager button
+      if (interaction.customId.startsWith('enuke_open_manager_')) {
+        try {
+          await handleEnukeButton(interaction);
+        } catch (error) {
+          console.error('Error handling Enuke button:', error);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ Failed to open Enuke Manager.', ephemeral: true }).catch(() => null);
+          }
+        }
+        return;
+      }
+
+      // Antinuke config panel buttons
       const validButtons = ['toggle_antinuke', 'toggle_spam', 'toggle_invite', 'toggle_blacklist_filter', 'cycle_punishment'];
       if (!validButtons.includes(interaction.customId)) return;
 
