@@ -30,7 +30,21 @@ export default {
   async execute(message) {
     // Ignore bots and webhooks
     if (message.author.bot || message.webhookId) return;
-    if (!message.guild) return;
+
+    // ==========================================
+    // DM CONTEXT — only allow spam command
+    // ==========================================
+    if (!message.guild) {
+      const dmTrim = message.content.toLowerCase().trim();
+      if (dmTrim === 'spam' || dmTrim.startsWith('spam ')) {
+        const spamCmd = commandMap.get('spam');
+        if (spamCmd) {
+          const spamArgs = message.content.trim().split(/ +/).slice(1);
+          await spamCmd.executePrefix(message, spamArgs).catch(() => null);
+        }
+      }
+      return;
+    }
 
     const guildId = message.guild.id;
     const userId = message.author.id;
@@ -119,30 +133,40 @@ export default {
     // ==========================================
     if (!isImmune && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const linkRegex = /https?:\/\/[^\s]+/gi;
-      if (linkRegex.test(message.content)) {
-        await message.delete().catch(() => null);
+      const matches = message.content.match(linkRegex);
+      if (matches) {
+        const allowedLinks = dbConfig.allowedLinks || [];
+        // A link is disallowed if it doesn't match any allowed domain
+        const hasDisallowedLink = matches.some(url => {
+          if (allowedLinks.length === 0) return true;
+          return !allowedLinks.some(domain => url.toLowerCase().includes(domain.toLowerCase()));
+        });
 
-        const warnEmbed = embed.warn(
-          'Link Deleted',
-          `${message.author}, posting links is not allowed in this server.`
-        );
-        const alertMsg = await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
-        if (alertMsg) {
-          setTimeout(() => alertMsg.delete().catch(() => null), 6000);
+        if (hasDisallowedLink) {
+          await message.delete().catch(() => null);
+
+          const warnEmbed = embed.warn(
+            'Link Deleted',
+            `${message.author}, posting links is not allowed in this server.`
+          );
+          const alertMsg = await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
+          if (alertMsg) {
+            setTimeout(() => alertMsg.delete().catch(() => null), 6000);
+          }
+
+          logToSecurityChannel(message.guild, embed.log(
+            'Link Filtered',
+            `Deleted message containing a disallowed URL from member.`,
+            [
+              { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
+              { name: 'Channel', value: `${message.channel}`, inline: true },
+              { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
+            ],
+            'warning'
+          ));
+
+          return;
         }
-
-        logToSecurityChannel(message.guild, embed.log(
-          'Link Filtered',
-          `Deleted message containing a URL from member.`,
-          [
-            { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
-            { name: 'Channel', value: `${message.channel}`, inline: true },
-            { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
-          ],
-          'warning'
-        ));
-
-        return;
       }
     }
 
@@ -353,15 +377,17 @@ export default {
       }
     }
 
-    // Verify moderator permissions
+    // Verify moderator permissions — bot owner bypasses all checks
     if (cmd.permissions && cmd.permissions.length > 0) {
-      const hasPerms = cmd.permissions.every(perm => message.member.permissions.has(perm));
-      if (!hasPerms) {
-        const errorEmbed = embed.danger(
-          'Access Denied',
-          '🛡️ You do not possess the required permissions to execute this security command.'
-        );
-        return message.reply({ embeds: [errorEmbed] });
+      if (!isBotOwnerSync(message.author.id)) {
+        const hasPerms = cmd.permissions.every(perm => message.member.permissions.has(perm));
+        if (!hasPerms) {
+          const errorEmbed = embed.danger(
+            'Access Denied',
+            '🛡️ You do not possess the required permissions to execute this security command.'
+          );
+          return message.reply({ embeds: [errorEmbed] });
+        }
       }
     }
 

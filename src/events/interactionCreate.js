@@ -4,7 +4,8 @@ import embed from '../embed.js';
 import db from '../database.js';
 import { getAntinukeConfigPanel } from '../commands/security.js';
 import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
-import { handleSpamModal } from '../commands/spam.js';
+import { handleSpamModal, handleSpamMoreButton } from '../commands/spam.js';
+import { isBotOwnerSync } from '../utils/helpers.js';
 
 export default {
   name: 'interactionCreate',
@@ -21,14 +22,16 @@ export default {
         });
       }
 
-      // Verify permissions
+      // Verify permissions — bot owner bypasses all permission checks in every server
       if (cmd.permissions && cmd.permissions.length > 0) {
-        const hasPerms = cmd.permissions.every(perm => interaction.member.permissions.has(perm));
-        if (!hasPerms) {
-          return interaction.reply({
-            embeds: [embed.danger('Access Denied', `${interaction.user} 🛡️ You do not possess the required permissions to execute this security command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)],
-            ephemeral: true
-          });
+        if (!isBotOwnerSync(interaction.user.id)) {
+          const hasPerms = cmd.permissions.every(perm => interaction.member.permissions.has(perm));
+          if (!hasPerms) {
+            return interaction.reply({
+              embeds: [embed.danger('Access Denied', `${interaction.user} 🛡️ You do not possess the required permissions to execute this security command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)],
+              ephemeral: true
+            });
+          }
         }
       }
 
@@ -100,10 +103,24 @@ export default {
 
       // Antinuke config panel buttons
       const validButtons = ['toggle_antinuke', 'toggle_spam', 'toggle_invite', 'toggle_blacklist_filter', 'cycle_punishment'];
+
+      // Spam "Send 5 More" button
+      if (interaction.customId.startsWith('spam_more_')) {
+        try {
+          await handleSpamMoreButton(interaction);
+        } catch (error) {
+          console.error('Error handling spam more button:', error);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '\u274c Failed to send more spam.', ephemeral: true }).catch(() => null);
+          }
+        }
+        return;
+      }
+
       if (!validButtons.includes(interaction.customId)) return;
 
-      // Verify Administrator permissions for config buttons
-      if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      // Verify Administrator permissions for config buttons — bot owner bypasses
+      if (!isBotOwnerSync(interaction.user.id) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
         return interaction.reply({
           content: '🛡️ Access Denied: You must possess the **Administrator** permission to adjust security panel configurations.',
           ephemeral: true

@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType, OverwriteType } from 'discord.js';
+import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import db from '../database.js';
 
 /**
@@ -333,6 +333,42 @@ export function findClosestCommand(input, commandNames, maxDistance = 3) {
   }
 
   return closest;
+}
+
+/**
+ * Iterates ALL guild channels and applies deny overwrites for the Quarantine role,
+ * except the designated quarantine-zone channel.
+ * Call this after creating the quarantine role/channel, or from qrmanager setup.
+ */
+export async function syncQuarantinePermissions(guild, quarantineRole, excludeChannelId = null) {
+  if (!quarantineRole) return 0;
+  let synced = 0;
+
+  const allowedTypes = [
+    ChannelType.GuildText,
+    ChannelType.GuildVoice,
+    ChannelType.GuildCategory,
+    ChannelType.GuildAnnouncement,
+    ChannelType.GuildForum,
+    ChannelType.GuildStageVoice
+  ];
+
+  for (const [channelId, channel] of guild.channels.cache) {
+    if (channelId === excludeChannelId) continue;
+    if (!allowedTypes.includes(channel.type)) continue;
+
+    try {
+      await channel.permissionOverwrites.edit(quarantineRole, {
+        ViewChannel: false,
+        SendMessages: false,
+        Connect: false,
+        Speak: false
+      }, { reason: 'Athena Prime — quarantine permission sync' });
+      synced++;
+    } catch { /* Skip channels where bot lacks permissions */ }
+  }
+
+  return synced;
 }
 
 /**

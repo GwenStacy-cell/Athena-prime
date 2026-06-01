@@ -9,9 +9,14 @@ import {
   isBotOwnerOrServerOwner,
   isBotOwnerOrServerOwnerStrict,
   isBotOwnerSync,
-  isExtraOwner
+  isExtraOwner,
+  syncQuarantinePermissions
 } from '../utils/helpers.js';
-import { connectToHomeVc } from '../utils/voice.js';
+import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
+
+// Toggle emoji constants — used throughout all security/config embeds
+const TOGGLE_ON  = '<:toggleon:1503046689450360965>';
+const TOGGLE_OFF = '<:toggleoff:1504207083673878739>';
 
 export const commands = [
   // --- QUARANTINE COMMAND ---
@@ -764,6 +769,184 @@ export const commands = [
       const result = await getUserInfoEmbed(interaction.guild, target);
       await interaction.reply({ embeds: [result.embed] });
     }
+  },
+
+  // --- SECURITY COMMAND --- Enable/Disable ALL shields at once
+  {
+    name: 'security',
+    description: 'Enables or disables ALL Athena Prime security features at once. (Bot Owner / Server Owner only)',
+    category: 'security',
+    permissions: [],
+    options: [
+      {
+        name: 'action',
+        description: 'Choose to enable or disable all security features',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Enable All Security', value: 'enable_all' },
+          { name: 'Disable All Security', value: 'disable_all' }
+        ]
+      }
+    ],
+    async executePrefix(message, args) {
+      const allowed = isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId;
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can use this command.')] });
+      }
+      const sub = args.join(' ').toLowerCase().trim();
+      const enable = (sub === 'enable all' || sub === 'enable_all');
+      const disable = (sub === 'disable all' || sub === 'disable_all');
+      if (!enable && !disable) {
+        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!security enable all\` or \`!security disable all\``)] });
+      }
+      const result = await handleSecurityToggleAll(message.guild, message.member, enable);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const allowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can use this command.')], ephemeral: true });
+      }
+      const action = interaction.options.getString('action');
+      const result = await handleSecurityToggleAll(interaction.guild, interaction.member, action === 'enable_all');
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- QRMANAGER COMMAND --- Quarantine system setup and repair
+  {
+    name: 'qrmanager',
+    description: 'Quarantine system manager — fix permissions, set role/channel/VC. (Admin only)',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      {
+        name: 'action',
+        description: 'What to do',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Setup & Fix All Permissions', value: 'setup' },
+          { name: 'Set Quarantine Role',         value: 'setrole' },
+          { name: 'Set Quarantine Text Channel', value: 'setchannel' },
+          { name: 'Set Quarantine Voice Channel', value: 'setvc' },
+          { name: 'View Status',                 value: 'status' }
+        ]
+      },
+      {
+        name: 'role',
+        description: 'Role to set as quarantine role (for setrole)',
+        type: 8,
+        required: false
+      },
+      {
+        name: 'channel',
+        description: 'Channel to set (for setchannel or setvc)',
+        type: 7,
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const action = args[0]?.toLowerCase();
+      if (!action) return message.reply({ embeds: [embed.warn('Usage', 'Usage: `!qrmanager setup|setrole|setchannel|setvc|status`')] });
+      const result = await handleQrManager(message.guild, message.member, action, null, null);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      await interaction.deferReply();
+      const action = interaction.options.getString('action');
+      const role = interaction.options.getRole('role');
+      const channel = interaction.options.getChannel('channel');
+      const result = await handleQrManager(interaction.guild, interaction.member, action, role, channel);
+      await interaction.editReply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- DEAFEN COMMAND --- Toggle bot’s own deafen status in VC
+  {
+    name: 'deafen',
+    description: "Toggles the bot's own server-deafen status in voice. (Bot Owner / Server Owner only)",
+    category: 'security',
+    permissions: [],
+    options: [
+      {
+        name: 'status',
+        description: 'Deafen or undeafen the bot',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Deafen Bot',   value: 'deafen' },
+          { name: 'Undeafen Bot', value: 'undeafen' }
+        ]
+      }
+    ],
+    async executePrefix(message, args) {
+      const allowed = isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId;
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can control the bot\'s deafen state.')] });
+      }
+      const status = args[0]?.toLowerCase();
+      if (status !== 'deafen' && status !== 'undeafen') {
+        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!deafen deafen\` or \`!deafen undeafen\``)] });
+      }
+      const result = await handleDeafen(message.guild, status === 'deafen');
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const allowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can control the bot\'s deafen state.')], ephemeral: true });
+      }
+      const status = interaction.options.getString('status');
+      const result = await handleDeafen(interaction.guild, status === 'deafen');
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- LINKSALLOW COMMAND --- Whitelist domains from anti-link filter
+  {
+    name: 'linksallow',
+    description: 'Whitelist specific domains that bypass the anti-link filter (e.g. youtube, tenor). (Admin only)',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      {
+        name: 'action',
+        description: 'What to do',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Add Domain',    value: 'add' },
+          { name: 'Remove Domain', value: 'remove' },
+          { name: 'List Domains',  value: 'list' }
+        ]
+      },
+      {
+        name: 'domain',
+        description: 'Domain to add/remove (e.g. youtube.com, tenor.com, giphy.com)',
+        type: 3,
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const action = args[0]?.toLowerCase();
+      const domain = args.slice(1).join(' ').trim();
+      if (!action || (action !== 'list' && !domain)) {
+        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!linksallow add <domain>\`, \`!linksallow remove <domain>\`, \`!linksallow list\``)] });
+      }
+      const result = await handleLinksAllow(message.guild, action, domain);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const action = interaction.options.getString('action');
+      const domain = interaction.options.getString('domain');
+      if (action !== 'list' && !domain) {
+        return interaction.reply({ embeds: [embed.warn('Missing Domain', 'Please provide a domain name.')], ephemeral: true });
+      }
+      const result = await handleLinksAllow(interaction.guild, action, domain);
+      await interaction.reply({ embeds: [result.embed] });
+    }
   }
 ];
 
@@ -831,6 +1014,15 @@ export async function executeQuarantine(guild, targetMember, moderator, reason) 
     if (!quarantineChannel) {
       return { success: false, message: 'Could not create or locate the quarantine-zone channel.' };
     }
+
+    // Ensure the quarantine channel explicitly allows the quarantine role to view + chat
+    // (needed because syncQuarantinePermissions denies it on all channels)
+    await quarantineChannel.permissionOverwrites.edit(quarantineRole, {
+      ViewChannel:  true,
+      SendMessages: true,
+      Connect:      false, // no VC in text channel — just text
+      ReadMessageHistory: true
+    }, { reason: 'Quarantine zone access grant' }).catch(() => null);
 
     // Capture target voice state
     const prevVoiceChannelId = targetMember.voice.channelId || null;
@@ -1106,7 +1298,7 @@ async function handleAutonick(guild, moderator, status, prefix, suffix) {
   db.updateGuildConfig(guild.id, updates);
 
   const fields = [
-    { name: 'Autonick Status', value: enabled ? '🟢 ENABLED' : '🔴 DISABLED', inline: true }
+    { name: 'Autonick Status', value: enabled ? `${TOGGLE_ON} ENABLED` : `${TOGGLE_OFF} DISABLED`, inline: true }
   ];
   if (enabled) {
     if (prefix) fields.push({ name: 'Appended Prefix', value: `\`${prefix}\``, inline: true });
@@ -1159,19 +1351,19 @@ async function handleConfig(guild, moderator, setting, value) {
   if (setting === 'antinuke') {
     updates.antiNukeEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
-    const modeDesc = enabled ? '🟢 ACTIVE (Rapid deletions or bans will trigger instant quarantine)' : '🔴 DEACTIVATED';
+    const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE (Rapid deletions or bans trigger instant quarantine)` : `${TOGGLE_OFF} DEACTIVATED`;
     logToSecurityChannel(guild, embed.log('Config Anti-Nuke Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Nuke to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
     return { embed: embed.success('Anti-Nuke Configured', `Anti-Nuke server protections are now **${modeDesc}**.`) };
   } else if (setting === 'antispam') {
     updates.antiSpamEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
-    const modeDesc = enabled ? '🟢 ACTIVE' : '🔴 DEACTIVATED';
+    const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
     logToSecurityChannel(guild, embed.log('Config Anti-Spam Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Spam to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
     return { embed: embed.success('Anti-Spam Configured', `Automated rate-limit filters are now **${modeDesc}**.`) };
   } else if (setting === 'antiinvite') {
     updates.antiInviteEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
-    const modeDesc = enabled ? '🟢 ACTIVE' : '🔴 DEACTIVATED';
+    const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
     logToSecurityChannel(guild, embed.log('Config Anti-Invite Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Invite to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
     return { embed: embed.success('Anti-Invite Configured', `Discord invite link auto-mod is now **${modeDesc}**.`) };
   }
@@ -1188,12 +1380,12 @@ export async function getAntinukeConfigPanel(guild) {
   const nukeState = config.antiNukeEnabled;
 
   const fields = [
-    { name: '🛡️ Anti-Nuke Shield', value: nukeState ? '🟢 **ENABLED**' : '🔴 **DISABLED**', inline: true },
-    { name: '⚡ Anti-Spam Filter', value: spamState ? '🟢 **ENABLED**' : '🔴 **DISABLED**', inline: true },
-    { name: '🔗 Anti-Invite Blocker', value: inviteState ? '🟢 **ENABLED**' : '🔴 **DISABLED**', inline: true },
-    { name: '📝 Word Filter (Swears)', value: blacklistState ? `🟢 **ENABLED** (${config.blacklistWords.length} Words)` : '🔴 **DISABLED**', inline: true },
-    { name: '🛡️ Nuke Punishment', value: `\`${config.antiNukePunishment.toUpperCase()}\``, inline: true },
-    { name: '🚨 Warning Ceiling', value: `\`${config.maxWarnings} Warnings\``, inline: true }
+    { name: '🛡️ Anti-Nuke Shield',      value: nukeState     ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
+    { name: '⚡ Anti-Spam Filter',      value: spamState     ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
+    { name: '🔗 Anti-Invite Blocker', value: inviteState   ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
+    { name: '📝 Word Filter (Swears)',  value: blacklistState ? `${TOGGLE_ON} **ENABLED** (${config.blacklistWords.length} Words)` : `${TOGGLE_OFF} **DISABLED**`, inline: true },
+    { name: '🛡️ Nuke Punishment',     value: `\`${config.antiNukePunishment.toUpperCase()}\``,                                                              inline: true },
+    { name: '🚨 Warning Ceiling',      value: `\`${config.maxWarnings} Warnings\``,                                                                              inline: true }
   ];
 
   const panelEmbed = embed.info(
@@ -1205,23 +1397,27 @@ export async function getAntinukeConfigPanel(guild) {
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('toggle_antinuke')
-      .setLabel(`Anti-Nuke: ${nukeState ? 'ON' : 'OFF'}`)
-      .setStyle(nukeState ? ButtonStyle.Success : ButtonStyle.Danger),
+      .setLabel(`Anti-Nuke ${nukeState ? 'ON' : 'OFF'}`)
+      .setEmoji(nukeState ? { id: '1503046689450360965', name: 'toggleon' } : { id: '1504207083673878739', name: 'toggleoff' })
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_spam')
-      .setLabel(`Anti-Spam: ${spamState ? 'ON' : 'OFF'}`)
-      .setStyle(spamState ? ButtonStyle.Success : ButtonStyle.Danger),
+      .setLabel(`Anti-Spam ${spamState ? 'ON' : 'OFF'}`)
+      .setEmoji(spamState ? { id: '1503046689450360965', name: 'toggleon' } : { id: '1504207083673878739', name: 'toggleoff' })
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_invite')
-      .setLabel(`Anti-Invite: ${inviteState ? 'ON' : 'OFF'}`)
-      .setStyle(inviteState ? ButtonStyle.Success : ButtonStyle.Danger)
+      .setLabel(`Anti-Invite ${inviteState ? 'ON' : 'OFF'}`)
+      .setEmoji(inviteState ? { id: '1503046689450360965', name: 'toggleon' } : { id: '1504207083673878739', name: 'toggleoff' })
+      .setStyle(ButtonStyle.Secondary)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('toggle_blacklist_filter')
-      .setLabel(`Word Filter: ${blacklistState ? 'ON' : 'OFF'}`)
-      .setStyle(blacklistState ? ButtonStyle.Success : ButtonStyle.Danger),
+      .setLabel(`Word Filter ${blacklistState ? 'ON' : 'OFF'}`)
+      .setEmoji(blacklistState ? { id: '1503046689450360965', name: 'toggleon' } : { id: '1504207083673878739', name: 'toggleoff' })
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('cycle_punishment')
       .setLabel(`Punishment: ${config.antiNukePunishment.toUpperCase()}`)
@@ -1232,20 +1428,16 @@ export async function getAntinukeConfigPanel(guild) {
 }
 
 export async function handleAntinukeToggleAll(guild, moderator, enable) {
+  // NOTE: autonick is intentionally NOT touched — it must be enabled manually by server owner
   const updates = {
-    antiNukeEnabled: enable,
-    antiSpamEnabled: enable,
+    antiNukeEnabled:   enable,
+    antiSpamEnabled:   enable,
     antiInviteEnabled: enable,
-    autonick: {
-      enabled: enable,
-      prefix: enable ? '[Guest]' : '',
-      suffix: ''
-    }
+    antiLinkEnabled:   enable
   };
 
   db.updateGuildConfig(guild.id, updates);
 
-  // If enabling all, ensure word blacklist is active
   if (enable) {
     const config = db.getGuildConfig(guild.id);
     if (!config.blacklistWords || config.blacklistWords.length === 0) {
@@ -1254,24 +1446,33 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
       db.addBlacklistWord(guild.id, 'spam');
     }
   } else {
-    // If disabling all, empty blacklist words as well to disable word filter
     db.updateGuildConfig(guild.id, { blacklistWords: [] });
   }
 
   const resEmbed = enable
     ? embed.success(
-        'Hyper-Defense Shields ENGAGED',
-        '🚨 All Athena Prime protective filters are now **ACTIVE**.\nSwear words scanner, Anti-Invite blocks, Anti-Spam limits, Autonick joins, and Anti-Nuke restorations are fully armed!',
-        [{ name: 'Enforced by', value: `${moderator}` }]
+        'All Security Shields ENGAGED',
+        `🚨 All Athena Prime protective filters are now **ACTIVE**.
+Anti-Nuke, Anti-Spam, Anti-Invite, Anti-Link, and Word Filter are fully armed!
+
+*(Use \'antinuke config\' or individual commands to fine-tune)*`,
+        [
+          { name: '🛡️ Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '⚡ Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '🔗 Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '🌐 Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '📝 Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: 'Enforced by', value: `${moderator}`, inline: true }
+        ]
       )
     : embed.warn(
-        'Hyper-Defense Shields DISENGAGED',
-        '🛡️ Athena Prime protective filters have been **DEACTIVATED** server-wide.',
+        'All Security Shields DISENGAGED',
+        `🛡️ Athena Prime protective filters have been **DEACTIVATED** server-wide.`,
         [{ name: 'Lifted by', value: `${moderator}` }]
       );
 
   logToSecurityChannel(guild, embed.log(
-    'Hyper-Defense Toggle All',
+    'Toggle All Security',
     `Administrator **${moderator.user.tag}** toggled all shields **${enable ? 'ON' : 'OFF'}**.`,
     [],
     enable ? 'success' : 'warning'
@@ -1321,10 +1522,12 @@ async function handleAntiLink(guild, moderator, mode) {
   const enabled = mode === 'on';
   db.updateGuildConfig(guild.id, { antiLinkEnabled: enabled });
 
-  const modeDesc = enabled ? '🟢 ACTIVE' : '🔴 DEACTIVATED';
+  const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
   const resEmbed = embed.success(
     'Anti-Link Configured',
-    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'All external links from non-moderators will be automatically deleted.' : 'Users can freely share external links.'}`,
+    `External URL auto-mod filter is now **${modeDesc}**.
+
+${enabled ? 'All external links from non-moderators will be deleted. Use `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
     [{ name: 'Changed by', value: `${moderator}` }]
   );
 
@@ -1352,11 +1555,11 @@ async function getServerInfoEmbed(guild) {
   const boostCount = guild.premiumSubscriptionCount || 0;
   const createdAt = `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>`;
 
-  const antiNukeStatus = config.antiNukeEnabled ? '🟢 ON' : '🔴 OFF';
-  const antiSpamStatus = config.antiSpamEnabled ? '🟢 ON' : '🔴 OFF';
-  const antiInviteStatus = (config.antiInviteEnabled !== false) ? '🟢 ON' : '🔴 OFF';
-  const antiLinkStatus = config.antiLinkEnabled ? '🟢 ON' : '🔴 OFF';
-  const raidModeStatus = config.raidMode ? '🚨 ENGAGED' : '🟢 STANDBY';
+  const antiNukeStatus   = config.antiNukeEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const antiSpamStatus   = config.antiSpamEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const antiInviteStatus = (config.antiInviteEnabled !== false) ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const raidModeStatus   = config.raidMode                      ? '🚨 ENGAGED' : `${TOGGLE_ON} STANDBY`;
 
   const fields = [
     { name: '👑 Owner', value: `${ownerTag}`, inline: true },
@@ -1427,4 +1630,209 @@ async function getUserInfoEmbed(guild, member) {
   userEmbed.setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }));
 
   return { embed: userEmbed };
+}
+
+// ==========================================
+// SECURITY TOGGLE ALL — Bot Owner / Server Owner only
+// Enables/disables ALL security features except autonick
+// ==========================================
+async function handleSecurityToggleAll(guild, moderator, enable) {
+  db.updateGuildConfig(guild.id, {
+    antiNukeEnabled:   enable,
+    antiSpamEnabled:   enable,
+    antiInviteEnabled: enable,
+    antiLinkEnabled:   enable
+    // autonick intentionally NOT touched — must be enabled manually
+  });
+
+  if (enable) {
+    const config = db.getGuildConfig(guild.id);
+    if (!config.blacklistWords || config.blacklistWords.length === 0) {
+      db.addBlacklistWord(guild.id, 'hack');
+      db.addBlacklistWord(guild.id, 'nuke');
+      db.addBlacklistWord(guild.id, 'spam');
+    }
+  } else {
+    db.updateGuildConfig(guild.id, { blacklistWords: [] });
+  }
+
+  const resEmbed = enable
+    ? embed.success(
+        'All Security Shields ENGAGED 🚨',
+        `All Athena Prime protective layers are now **ACTIVE**.\nAnti-Nuke, Anti-Spam, Anti-Invite, Anti-Link, and Word Filter are fully armed!\n\n*(Use individual commands like \`antinuke config\` or \`linksallow\` to fine-tune)*`,
+        [
+          { name: '🛡️ Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '⚡ Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '🔗 Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '🌐 Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '📝 Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: 'Enabled by',    value: `${moderator}`,    inline: true }
+        ]
+      )
+    : embed.warn(
+        'All Security Shields DISENGAGED',
+        `🛡️ All Athena Prime protective filters have been **DEACTIVATED** server-wide.`,
+        [{ name: 'Disabled by', value: `${moderator}` }]
+      );
+
+  logToSecurityChannel(guild, embed.log(
+    'Security Toggle All',
+    `**${moderator.user.tag}** toggled all security shields **${enable ? 'ON' : 'OFF'}**.`,
+    [],
+    enable ? 'success' : 'warning'
+  ));
+
+  return { embed: resEmbed };
+}
+
+// ==========================================
+// QRMANAGER — Quarantine system setup & repair
+// ==========================================
+async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
+  const config = db.getGuildConfig(guild.id);
+
+  if (action === 'setup') {
+    // Create/resolve quarantine role + channel
+    const qRole = await getOrCreateQuarantineRole(guild);
+    if (!qRole) return { embed: embed.danger('Setup Failed', 'Could not create or find the Quarantine role. Check bot permissions.') };
+
+    const qChannel = await getOrCreateQuarantineChannel(guild, qRole);
+
+    // Sync deny overwrites on ALL channels (except quarantine-zone)
+    const synced = await syncQuarantinePermissions(guild, qRole, qChannel?.id || null);
+
+    const fields = [
+      { name: '🔒 Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : '❌ Not Created', inline: true },
+      { name: '💬 Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : '❌ Not Created', inline: true },
+      { name: '🔢 Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
+    ];
+
+    const vc = config.quarantineVcId ? await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
+    if (vc) fields.push({ name: '🔊 Quarantine VC', value: `<#${vc.id}>`, inline: true });
+
+    return {
+      embed: embed.success(
+        'Quarantine System Fixed ✅',
+        `The quarantine role and channel have been set up.\nDeny overwrites applied to **${synced}** channels — quarantined users will only see the quarantine zone.`,
+        fields
+      )
+    };
+  }
+
+  if (action === 'setrole') {
+    if (!roleArg) return { embed: embed.warn('Missing Role', 'Please specify a role using the `role` option.') };
+    db.updateGuildConfig(guild.id, { quarantineRoleId: roleArg.id });
+    const qChannelId = db.getGuildConfig(guild.id).quarantineChannelId;
+    await syncQuarantinePermissions(guild, roleArg, qChannelId);
+    return { embed: embed.success('Quarantine Role Set', `Set <@&${roleArg.id}> as the quarantine role and synced deny overwrites across all channels.`) };
+  }
+
+  if (action === 'setchannel') {
+    if (!channelArg) return { embed: embed.warn('Missing Channel', 'Please specify a text channel using the `channel` option.') };
+    db.updateGuildConfig(guild.id, { quarantineChannelId: channelArg.id });
+    return { embed: embed.success('Quarantine Channel Set', `Set <#${channelArg.id}> as the quarantine text zone.\nQuarantined users will be able to view and chat here.`) };
+  }
+
+  if (action === 'setvc') {
+    if (!channelArg) return { embed: embed.warn('Missing VC', 'Please specify a voice channel using the `channel` option.') };
+    db.updateGuildConfig(guild.id, { quarantineVcId: channelArg.id });
+    return { embed: embed.success('Quarantine VC Set', `Set <#${channelArg.id}> as the quarantine voice channel.\nWhen a member is quarantined they will be moved here (if they are in a VC). On unquarantine they are returned to their previous VC.`) };
+  }
+
+  if (action === 'status') {
+    const updatedConfig = db.getGuildConfig(guild.id);
+    const role    = updatedConfig.quarantineRoleId    ? await guild.roles.fetch(updatedConfig.quarantineRoleId).catch(() => null)       : null;
+    const channel = updatedConfig.quarantineChannelId ? await guild.channels.fetch(updatedConfig.quarantineChannelId).catch(() => null) : null;
+    const vc      = updatedConfig.quarantineVcId      ? await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null)      : null;
+
+    return {
+      embed: embed.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
+        { name: '🔒 Quarantine Role',    value: role    ? `<@&${role.id}>`   : '❌ Not Set — run `/qrmanager setup`', inline: true },
+        { name: '💬 Quarantine Channel', value: channel ? `<#${channel.id}>` : '❌ Not Set — run `/qrmanager setup`', inline: true },
+        { name: '🔊 Quarantine VC',      value: vc      ? `<#${vc.id}>`      : '⚠️ Not Set — use `/qrmanager setvc`', inline: true }
+      ])
+    };
+  }
+
+  return { embed: embed.warn('Unknown Action', 'Valid actions: `setup`, `setrole`, `setchannel`, `setvc`, `status`') };
+}
+
+// ==========================================
+// DEAFEN — Toggle bot's own deafen status in VC
+// ==========================================
+async function handleDeafen(guild, deaf) {
+  const result = await toggleBotDeafen(guild, deaf);
+  if (!result.success) {
+    return {
+      embed: embed.warn(
+        deaf ? 'Cannot Deafen' : 'Cannot Undeafen',
+        result.message || 'The bot must be in a voice channel.'
+      )
+    };
+  }
+  return {
+    embed: embed.success(
+      deaf ? '🔇 Bot Deafened' : '🔊 Bot Undeafened',
+      deaf
+        ? 'The bot is now **server deafened** and will not process incoming audio.'
+        : 'The bot is now **undeafened** and can hear audio in the voice channel.'
+    )
+  };
+}
+
+// ==========================================
+// LINKSALLOW — Per-guild domain whitelist for anti-link filter
+// ==========================================
+async function handleLinksAllow(guild, action, domain) {
+  if (action === 'add') {
+    // Normalize: strip protocol and path, keep domain only
+    const cleanDomain = (domain || '')
+      .replace(/^https?:\/\//i, '')
+      .replace(/\/.*$/, '')
+      .trim()
+      .toLowerCase();
+
+    if (!cleanDomain) return { embed: embed.warn('Invalid Domain', 'Please provide a valid domain (e.g. `youtube.com`).') };
+
+    const added = db.addAllowedLink(guild.id, cleanDomain);
+    if (added) {
+      return {
+        embed: embed.success('Domain Allowed', `Added **\`${cleanDomain}\`** to the allowed links list.\nLinks containing this domain will bypass the anti-link filter.`)
+      };
+    }
+    return { embed: embed.info('Already Allowed', `**\`${cleanDomain}\`** is already in the allowed list.`) };
+  }
+
+  if (action === 'remove') {
+    const cleanDomain = (domain || '')
+      .replace(/^https?:\/\//i, '')
+      .replace(/\/.*$/, '')
+      .trim()
+      .toLowerCase();
+
+    const removed = db.removeAllowedLink(guild.id, cleanDomain);
+    if (removed) {
+      return { embed: embed.success('Domain Removed', `Removed **\`${cleanDomain}\`** from the allowed list.`) };
+    }
+    return { embed: embed.warn('Not Found', `**\`${cleanDomain}\`** is not in the allowed list.`) };
+  }
+
+  // list
+  const list = db.getAllowedLinks(guild.id);
+  if (list.length === 0) {
+    return {
+      embed: embed.info(
+        'No Allowed Domains',
+        'No domains are whitelisted yet.\n\nAdd one with `/linksallow add <domain>` (e.g. `youtube.com`, `tenor.com`, `giphy.com`).\nThese domains will not be blocked by the anti-link filter.'
+      )
+    };
+  }
+
+  const formatted = list.map((d, i) => `${i + 1}. \`${d}\``).join('\n');
+  return {
+    embed: embed.info(
+      'Allowed Link Domains',
+      `These domains bypass the anti-link filter:\n\n${formatted}\n\n*Use \`/linksallow remove <domain>\` to remove any.*`
+    )
+  };
 }

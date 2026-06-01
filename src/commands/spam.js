@@ -12,8 +12,17 @@ import db from '../database.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 
 // ==========================================
+// SPAM MORE CACHE
+// Stores pending "Send 5 More" button data
+// key: customId -> { text, channelId, requesterId }
+// Auto-expires after 10 minutes
+// ==========================================
+export const spamMoreCache = new Map();
+
+// ==========================================
 // SPAM COMMAND — Anonymous message spammer
 // Only accessible to permitted users (set by bot owner)
+// Also works in DMs via User App
 // ==========================================
 
 export const commands = [
@@ -23,14 +32,14 @@ export const commands = [
   // ─────────────────────────────────────────
   {
     name: 'spam',
-    description: '📨 Send a message 5 times anonymously. (Permitted users only)',
+    description: '📨 Send a message anonymously. (Permitted users only)',
     category: 'owner',
     hidden: false,
     permissions: [],
     options: [
       {
         name: 'message',
-        description: 'The message to spam (sent 5 times anonymously)',
+        description: 'The message to spam (sent anonymously)',
         type: ApplicationCommandOptionType.String,
         required: false
       },
@@ -54,22 +63,46 @@ export const commands = [
 
       const text = args.join(' ').trim();
       if (!text) {
-        return message.reply({
+        await message.reply({
           embeds: [embed.warn('Spam Usage',
             `${message.author} 📨 **Usage:** \`spam <your message>\`\n\n` +
             `**Example:** \`spam Hello everyone!\`\n` +
-            `The message will be sent **5 times anonymously** using a webhook.\n\n` +
+            `The message will be sent **5 times** anonymously.\n\n` +
             `**Tip:** You can also use the slash command \`/spam\` with a modal input.`
-          )],
-          flags: 64 // ephemeral-like — actually just reply
+          )]
         }).catch(() => null);
+        return;
       }
 
-      // Delete the trigger message so no one knows who sent it
-      await message.delete().catch(() => null);
+      const isGuild = !!message.guild;
 
-      // Execute spam
-      await executeSpam(message.channel, text, 5);
+      // In guild: delete trigger message so no one knows who sent it
+      if (isGuild) {
+        await message.delete().catch(() => null);
+      }
+
+      // Execute spam and get the "Send 5 More" button
+      const { row } = await executeSpam(message.channel, text, 5, userId);
+
+      // Send "Send 5 More" button
+      if (row) {
+        if (isGuild) {
+          // In guild — DM the button to the user so it's private
+          try {
+            const dmChannel = await message.author.createDM();
+            await dmChannel.send({
+              embeds: [embed.success('Spam Deployed 📨', `Your message has been sent **5x** anonymously in the server.\nPress below to send **5 more**.`)],
+              components: [row]
+            }).catch(() => null);
+          } catch { /* DMs may be closed — silently ignore */ }
+        } else {
+          // In DM — send button directly in the DM channel
+          await message.channel.send({
+            embeds: [embed.success('Spam Deployed 📨', `Message sent **5x**.\nPress below to send **5 more**.`)],
+            components: [row]
+          }).catch(() => null);
+        }
+      }
     },
 
     async executeSlash(interaction) {
@@ -118,7 +151,16 @@ export const commands = [
 
       // Has text — execute immediately
       await interaction.reply({ content: '📨 Spamming...', ephemeral: true });
-      await executeSpam(interaction.channel, text, count);
+      const { row } = await executeSpam(interaction.channel, text, count, userId);
+
+      // Send "Send 5 More" button as ephemeral followup (only visible to the triggering user)
+      if (row) {
+        await interaction.followUp({
+          embeds: [embed.success('Spam Deployed 📨', `Message sent **${count}x** anonymously.\nPress below to send **5 more**.`)],
+          components: [row],
+          ephemeral: true
+        }).catch(() => null);
+      }
     }
   },
 
@@ -158,7 +200,6 @@ export const commands = [
 
       const added = db.addSpamPermit(targetId);
       if (added) {
-        // Try to fetch user to show their tag
         let userTag = `\`${targetId}\``;
         try {
           const user = await message.client.users.fetch(targetId);
@@ -390,42 +431,99 @@ export async function handleSpamModal(interaction) {
   }
 
   await interaction.reply({ content: `📨 Spamming ${finalCount}x anonymously...`, ephemeral: true });
-  await executeSpam(interaction.channel, text, finalCount);
+  const { row } = await executeSpam(interaction.channel, text, finalCount, userId);
+
+  if (row) {
+    await interaction.followUp({
+      embeds: [embed.success('Spam Deployed 📨', `Message sent **${finalCount}x** anonymously.\nPress below to send **5 more**.`)],
+      components: [row],
+      ephemeral: true
+    }).catch(() => null);
+  }
 }
 
 // ─────────────────────────────────────────
-// CORE SPAM ENGINE — sends message via webhook (anonymous)
+// SPAM MORE BUTTON HANDLER — called from interactionCreate
+// Triggered when user clicks the "Send 5 More" button
+// Only the user who triggered spam can click this
 // ─────────────────────────────────────────
-async function executeSpam(channel, text, count) {
+export async function handleSpamMoreButton(interaction) {
+  const customId = interaction.customId; // spam_more_<userId>_<timestamp>
+  const parts = customId.split('_');
+  // parts[0]=spam, parts[1]=more, parts[2]=userId, parts[3]=timestamp
+  const buttonOwnerId = parts[2];
+
+  if (interaction.user.id !== buttonOwnerId) {
+    return interaction.reply({ content: '❌ This button is not for you.', ephemeral: true });
+  }
+
+  const cacheEntry = spamMoreCache.get(customId);
+  if (!cacheEntry) {
+    return interaction.reply({ content: '❌ This spam session has expired (10 min timeout).', ephemeral: true });
+  }
+
+  await interaction.reply({ content: '📨 Sending 5 more...', ephemeral: true });
+
   try {
-    // Use webhook for true anonymity — the message won't be from Athena Prime
-    let webhook;
-    const existingWebhooks = await channel.fetchWebhooks().catch(() => null);
-
-    if (existingWebhooks) {
-      webhook = existingWebhooks.find(wh => wh.name === 'Athena Relay');
+    const channel = await interaction.client.channels.fetch(cacheEntry.channelId).catch(() => null);
+    if (channel) {
+      const { row: newRow } = await executeSpam(channel, cacheEntry.text, 5, interaction.user.id);
+      if (newRow) {
+        await interaction.followUp({
+          embeds: [embed.success('Spam Deployed 📨', `5 more sent! Press again to send **5 more**.`)],
+          components: [newRow],
+          ephemeral: true
+        }).catch(() => null);
+      }
     }
+  } catch (error) {
+    console.error('[SpamMore] Error:', error);
+  }
+}
 
-    if (!webhook) {
-      webhook = await channel.createWebhook({
-        name: 'Athena Relay',
-        reason: 'Spam relay webhook'
-      }).catch(() => null);
-    }
+// ─────────────────────────────────────────
+// CORE SPAM ENGINE
+// Sends messages via webhook (guild) or direct send (DM)
+// Returns a "Send 5 More" button row for the caller
+// ─────────────────────────────────────────
+async function executeSpam(channel, text, count, requesterId) {
+  const isGuildChannel = !!channel.guild;
 
-    if (webhook) {
-      // Send via webhook — completely anonymous, looks like a generic user
-      for (let i = 0; i < count; i++) {
-        await webhook.send({
-          content: text,
-          username: 'Message',
-          avatarURL: 'https://cdn.discordapp.com/embed/avatars/0.png'
-        });
-        // Small delay to avoid rate limiting
-        await new Promise(r => setTimeout(r, 300));
+  try {
+    if (isGuildChannel) {
+      // Use webhook for true anonymity — messages won't appear from Athena Prime
+      let webhook;
+      const existingWebhooks = await channel.fetchWebhooks().catch(() => null);
+
+      if (existingWebhooks) {
+        webhook = existingWebhooks.find(wh => wh.name === 'Athena Relay');
+      }
+
+      if (!webhook) {
+        webhook = await channel.createWebhook({
+          name: 'Athena Relay',
+          reason: 'Spam relay webhook'
+        }).catch(() => null);
+      }
+
+      if (webhook) {
+        for (let i = 0; i < count; i++) {
+          await webhook.send({
+            content: text,
+            username: 'Message',
+            avatarURL: 'https://cdn.discordapp.com/embed/avatars/0.png'
+          });
+          await new Promise(r => setTimeout(r, 300));
+        }
+      } else {
+        // Fallback: send via bot if webhook creation failed
+        for (let i = 0; i < count; i++) {
+          await channel.send(text).catch(() => null);
+          await new Promise(r => setTimeout(r, 300));
+        }
       }
     } else {
-      // Fallback: send via bot if webhook creation failed
+      // DM channel — no webhook support, send directly
       for (let i = 0; i < count; i++) {
         await channel.send(text).catch(() => null);
         await new Promise(r => setTimeout(r, 300));
@@ -434,4 +532,18 @@ async function executeSpam(channel, text, count) {
   } catch (error) {
     console.error('[SPAM] Error executing spam:', error);
   }
+
+  // Create "Send 5 More" button and cache it with a 10-minute TTL
+  const buttonId = `spam_more_${requesterId}_${Date.now()}`;
+  spamMoreCache.set(buttonId, { text, channelId: channel.id, requesterId });
+  setTimeout(() => spamMoreCache.delete(buttonId), 600000);
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(buttonId)
+      .setLabel('📨 Send 5 More')
+      .setStyle(ButtonStyle.Primary)
+  );
+
+  return { buttonId, row };
 }

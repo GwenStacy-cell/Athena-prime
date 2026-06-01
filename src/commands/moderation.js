@@ -8,41 +8,16 @@ export const commands = [
   // --- MUTEALL COMMAND ---
   {
     name: 'muteall',
-    description: 'Mutes all members in the text channel or your current voice channel.',
+    description: 'Voice-mutes all members in your current voice channel.',
     category: 'moderation',
-    permissions: [PermissionFlagsBits.MuteMembers, PermissionFlagsBits.ManageChannels],
-    options: [
-      {
-        name: 'type',
-        description: 'Mute text chat or voice chat (defaults to voice if in channel, otherwise text)',
-        type: 3, // String
-        required: false,
-        choices: [
-          { name: 'Text Chat', value: 'text' },
-          { name: 'Voice Chat', value: 'voice' }
-        ]
-      }
-    ],
-    async executePrefix(message, args) {
-      const typeArg = args[0]?.toLowerCase();
-      let type = 'text';
-
-      if (typeArg === 'voice' || typeArg === 'text') {
-        type = typeArg;
-      } else if (message.member.voice.channel) {
-        type = 'voice';
-      }
-
-      const result = await handleMuteAll(message.guild, message.channel, message.member, type);
+    permissions: [PermissionFlagsBits.MuteMembers],
+    options: [],
+    async executePrefix(message) {
+      const result = await handleMuteAll(message.guild, message.member);
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      let type = interaction.options.getString('type');
-      if (!type) {
-        type = interaction.member.voice.channel ? 'voice' : 'text';
-      }
-
-      const result = await handleMuteAll(interaction.guild, interaction.channel, interaction.member, type);
+      const result = await handleMuteAll(interaction.guild, interaction.member);
       await interaction.reply({ embeds: [result.embed] });
     }
   },
@@ -50,41 +25,16 @@ export const commands = [
   // --- UNMUTEALL COMMAND ---
   {
     name: 'unmuteall',
-    description: 'Unmutes all members in the text channel or your current voice channel.',
+    description: 'Voice-unmutes all members in your current voice channel.',
     category: 'moderation',
-    permissions: [PermissionFlagsBits.MuteMembers, PermissionFlagsBits.ManageChannels],
-    options: [
-      {
-        name: 'type',
-        description: 'Unmute text chat or voice chat (defaults to voice if in channel, otherwise text)',
-        type: 3,
-        required: false,
-        choices: [
-          { name: 'Text Chat', value: 'text' },
-          { name: 'Voice Chat', value: 'voice' }
-        ]
-      }
-    ],
-    async executePrefix(message, args) {
-      const typeArg = args[0]?.toLowerCase();
-      let type = 'text';
-
-      if (typeArg === 'voice' || typeArg === 'text') {
-        type = typeArg;
-      } else if (message.member.voice.channel) {
-        type = 'voice';
-      }
-
-      const result = await handleUnmuteAll(message.guild, message.channel, message.member, type);
+    permissions: [PermissionFlagsBits.MuteMembers],
+    options: [],
+    async executePrefix(message) {
+      const result = await handleUnmuteAll(message.guild, message.member);
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      let type = interaction.options.getString('type');
-      if (!type) {
-        type = interaction.member.voice.channel ? 'voice' : 'text';
-      }
-
-      const result = await handleUnmuteAll(interaction.guild, interaction.channel, interaction.member, type);
+      const result = await handleUnmuteAll(interaction.guild, interaction.member);
       await interaction.reply({ embeds: [result.embed] });
     }
   },
@@ -320,13 +270,32 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const target = message.mentions.members.first();
-      if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member.\n\n**Usage:** \`!ban <@user> [reason]\``)] });
+      // Accept @mention or raw user ID (works for non-members too)
+      let target = message.mentions.members.first();
+      let targetId = null;
+
+      if (!target && args[0]) {
+        targetId = args[0].replace(/[<@!>]/g, '').trim();
+        if (/^\d{17,20}$/.test(targetId)) {
+          target = await message.guild.members.fetch(targetId).catch(() => null);
+        } else {
+          return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a member or provide a valid User ID.\n\n**Usage:** \`!ban <@user or userId> [reason]\``)] });
+        }
       }
+
+      if (!target && !targetId) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a member or provide a User ID.\n\n**Usage:** \`!ban <@user or userId> [reason]\``)] });
+      }
+
       const reason = args.slice(1).join(' ') || 'No reason provided';
-      const result = await handleBan(message.guild, message.member, target, reason);
-      await message.reply({ embeds: [result.embed] });
+
+      if (target) {
+        const result = await handleBan(message.guild, message.member, target, reason);
+        await message.reply({ embeds: [result.embed] });
+      } else {
+        const result = await handleBanById(message.guild, message.member, targetId, reason);
+        await message.reply({ embeds: [result.embed] });
+      }
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -334,7 +303,9 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
+        // Not in server — ban by user ID directly
+        const result = await handleBanById(interaction.guild, interaction.member, targetUser.id, reason, targetUser);
+        return interaction.reply({ embeds: [result.embed] });
       }
 
       const result = await handleBan(interaction.guild, interaction.member, target, reason);
@@ -597,13 +568,13 @@ export const commands = [
   // --- UNBAN COMMAND ---
   {
     name: 'unban',
-    description: 'Unbans a user from the server by their User ID.',
+    description: 'Unbans a user from the server by User ID or @mention.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.BanMembers],
     options: [
       {
         name: 'userid',
-        description: 'The User ID to unban',
+        description: 'The User ID to unban (or paste @mention — digits will be parsed)',
         type: 3, // String
         required: true
       },
@@ -615,19 +586,53 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const userId = args[0];
-      if (!userId) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a User ID.\n\n**Usage:** \`!unban <userId> [reason]\``)] });
+      const rawArg = args[0];
+      if (!rawArg) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a User ID or @mention.\n\n**Usage:** \`!unban <userId or @mention> [reason]\``)] });
       }
+      // Strip mention characters to get a raw ID
+      const userId = rawArg.replace(/[<@!>]/g, '').trim();
       const reason = args.slice(1).join(' ') || 'No reason provided';
       const result = await handleUnban(message.guild, message.member, userId, reason);
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      const userId = interaction.options.getString('userid');
+      // Strip mention chars from the typed value just in case
+      const userId = interaction.options.getString('userid').replace(/[<@!>]/g, '').trim();
       const reason = interaction.options.getString('reason') || 'No reason provided';
       const result = await handleUnban(interaction.guild, interaction.member, userId, reason);
       await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- UNBANALL COMMAND ---
+  {
+    name: 'unbanall',
+    description: 'Removes ALL active bans from the server. (Bot Owner, Server Owner, Extra Owners only)',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.BanMembers],
+    options: [],
+    async executePrefix(message) {
+      const allowed = isBotOwnerSync(message.author.id) ||
+                      message.author.id === message.guild.ownerId ||
+                      isExtraOwner(message.guild.id, message.author.id);
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Access Denied', `${message.author} 🛡️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)] });
+      }
+      const sentMsg = await message.reply({ embeds: [embed.info('Processing…', 'Fetching ban list and removing bans, please wait.')] });
+      const result = await handleUnbanAll(message.guild, message.member);
+      await sentMsg.edit({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const allowed = isBotOwnerSync(interaction.user.id) ||
+                      interaction.user.id === interaction.guild.ownerId ||
+                      isExtraOwner(interaction.guild.id, interaction.user.id);
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', `${interaction.user} 🛡️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)], ephemeral: true });
+      }
+      await interaction.deferReply();
+      const result = await handleUnbanAll(interaction.guild, interaction.member);
+      await interaction.editReply({ embeds: [result.embed] });
     }
   }
 ];
@@ -636,62 +641,40 @@ export const commands = [
 // CORE EXECUTION HANDLERS (DRY APPROACH)
 // ==========================================
 
-async function handleMuteAll(guild, channel, moderator, type) {
-  if (type === 'voice') {
-    const vc = moderator.voice.channel;
-    if (!vc) {
-      return { embed: embed.warn('MuteAll Failed', 'You must be in a voice channel to use `muteall voice`.') };
-    }
-
-    let mutedCount = 0;
-    for (const m of vc.members.values()) {
-      if (m.id !== moderator.id && canModerate(moderator, m)) {
-        await m.voice.setMute(true, `MuteAll by ${moderator.user.tag}`).catch(() => null);
-        mutedCount++;
-      }
-    }
-
-    const resEmbed = embed.danger('Voice Mute Completed', `Successfully muted **${mutedCount}** members in voice channel **${vc.name}**.`);
-    logToSecurityChannel(guild, embed.log('MuteAll Voice Channel', `Moderator **${moderator.user.tag}** muted all **${mutedCount}** members in **${vc.name}**.`, [], 'warning'));
-    return { embed: resEmbed };
-  } else {
-    // Text Channel lockdown override
-    await channel.permissionOverwrites.edit(guild.roles.everyone, {
-      SendMessages: false
-    }, { reason: `MuteAll text by ${moderator.user.tag}` });
-
-    const resEmbed = embed.danger('Channel Locked Down', `This channel **#${channel.name}** has been locked down. Non-moderators are muted.`);
-    logToSecurityChannel(guild, embed.log('MuteAll Text Channel', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
-    return { embed: resEmbed };
+async function handleMuteAll(guild, moderator) {
+  const vc = moderator.voice.channel;
+  if (!vc) {
+    return { embed: embed.warn('MuteAll Failed', 'You must be in a **voice channel** to use this command.') };
   }
+
+  let mutedCount = 0;
+  for (const m of vc.members.values()) {
+    if (m.id !== moderator.id && canModerate(moderator, m)) {
+      await m.voice.setMute(true, `MuteAll by ${moderator.user.tag}`).catch(() => null);
+      mutedCount++;
+    }
+  }
+
+  const resEmbed = embed.danger('Voice Mute Completed', `Successfully server-muted **${mutedCount}** member(s) in **${vc.name}**.`);
+  logToSecurityChannel(guild, embed.log('MuteAll Voice Channel', `Moderator **${moderator.user.tag}** muted all **${mutedCount}** members in **${vc.name}**.`, [], 'warning'));
+  return { embed: resEmbed };
 }
 
-async function handleUnmuteAll(guild, channel, moderator, type) {
-  if (type === 'voice') {
-    const vc = moderator.voice.channel;
-    if (!vc) {
-      return { embed: embed.warn('UnmuteAll Failed', 'You must be in a voice channel to use `unmuteall voice`.') };
-    }
-
-    let unmutedCount = 0;
-    for (const m of vc.members.values()) {
-      await m.voice.setMute(false, `UnmuteAll by ${moderator.user.tag}`).catch(() => null);
-      unmutedCount++;
-    }
-
-    const resEmbed = embed.success('Voice Unmute Completed', `Successfully unmuted **${unmutedCount}** members in voice channel **${vc.name}**.`);
-    logToSecurityChannel(guild, embed.log('UnmuteAll Voice Channel', `Moderator **${moderator.user.tag}** unmuted all **${unmutedCount}** members in **${vc.name}**.`, [], 'success'));
-    return { embed: resEmbed };
-  } else {
-    // Revert Text override
-    await channel.permissionOverwrites.edit(guild.roles.everyone, {
-      SendMessages: null
-    }, { reason: `UnmuteAll text by ${moderator.user.tag}` });
-
-    const resEmbed = embed.success('Channel Unlocked', `This channel **#${channel.name}** has been unlocked. Users can chat now.`);
-    logToSecurityChannel(guild, embed.log('UnmuteAll Text Channel', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
-    return { embed: resEmbed };
+async function handleUnmuteAll(guild, moderator) {
+  const vc = moderator.voice.channel;
+  if (!vc) {
+    return { embed: embed.warn('UnmuteAll Failed', 'You must be in a **voice channel** to use this command.') };
   }
+
+  let unmutedCount = 0;
+  for (const m of vc.members.values()) {
+    await m.voice.setMute(false, `UnmuteAll by ${moderator.user.tag}`).catch(() => null);
+    unmutedCount++;
+  }
+
+  const resEmbed = embed.success('Voice Unmute Completed', `Successfully removed server-mute from **${unmutedCount}** member(s) in **${vc.name}**.`);
+  logToSecurityChannel(guild, embed.log('UnmuteAll Voice Channel', `Moderator **${moderator.user.tag}** unmuted all **${unmutedCount}** members in **${vc.name}**.`, [], 'success'));
+  return { embed: resEmbed };
 }
 
 async function handleWarn(guild, moderator, target, reason) {
@@ -1112,5 +1095,86 @@ async function handleUnban(guild, moderator, userId, reason) {
   } catch (error) {
     console.error(error);
     return { embed: embed.danger('Unban Failed', 'An error occurred while unbanning the user.') };
+  }
+}
+
+// ==========================================
+// BAN BY ID — for users not in the server
+// ==========================================
+async function handleBanById(guild, moderator, userId, reason, userObj = null) {
+  // Protection check
+  if (isBotOwnerSync(userId) || isExtraOwner(guild.id, userId)) {
+    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be banned.') };
+  }
+
+  if (!isBotOwnerSync(moderator.id) && !moderator.permissions.has(PermissionFlagsBits.BanMembers)) {
+    return { embed: embed.danger('Permission Denied', 'You need the **Ban Members** permission to use this command.') };
+  }
+
+  try {
+    const existingBan = await guild.bans.fetch(userId).catch(() => null);
+    if (existingBan) {
+      return { embed: embed.warn('Already Banned', `User \`${userId}\` is already banned from this server.`) };
+    }
+
+    await guild.bans.create(userId, { reason: `${reason} — by ${moderator.user.tag}` });
+
+    const displayName = userObj ? `**${userObj.tag}**` : `\`${userId}\``;
+    const resEmbed = embed.danger('User Banned', `Successfully banned ${displayName}.`, [
+      { name: 'User ID', value: `\`${userId}\``, inline: true },
+      { name: 'Reason', value: reason, inline: true },
+      { name: 'Banned by', value: `${moderator}`, inline: true }
+    ]);
+
+    logToSecurityChannel(guild, embed.log('Member Banned by ID', `Moderator banned a user not currently in the server.`, [
+      { name: 'Target', value: `${userObj ? userObj.tag : 'Unknown'} (\`${userId}\`)`, inline: true },
+      { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+      { name: 'Reason', value: reason }
+    ], 'danger'));
+
+    return { embed: resEmbed };
+  } catch (error) {
+    console.error(error);
+    return { embed: embed.danger('Ban Failed', `Could not ban user \`${userId}\`: ${error.message}`) };
+  }
+}
+
+// ==========================================
+// UNBAN ALL — mass unban
+// ==========================================
+async function handleUnbanAll(guild, moderator) {
+  try {
+    const bans = await guild.bans.fetch();
+    if (bans.size === 0) {
+      return { embed: embed.info('No Bans', 'There are no banned users in this server to remove.') };
+    }
+
+    let unbanned = 0;
+    let failed = 0;
+
+    for (const [userId] of bans) {
+      try {
+        await guild.bans.remove(userId, `UnbanAll by ${moderator.user.tag}`);
+        unbanned++;
+        await new Promise(r => setTimeout(r, 250)); // rate-limit friendly
+      } catch { failed++; }
+    }
+
+    const resEmbed = embed.success('All Bans Cleared', `Processed **${bans.size}** ban(s).`, [
+      { name: '\u2705 Unbanned', value: `\`${unbanned}\``, inline: true },
+      { name: '\u274c Failed', value: `\`${failed}\``, inline: true },
+      { name: 'Executed by', value: `${moderator}`, inline: true }
+    ]);
+
+    logToSecurityChannel(guild, embed.log('UnbanAll Executed', 'A mass unban operation was performed.', [
+      { name: 'Total Processed', value: `${bans.size}`, inline: true },
+      { name: 'Unbanned', value: `${unbanned}`, inline: true },
+      { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
+    ], 'success'));
+
+    return { embed: resEmbed };
+  } catch (error) {
+    console.error(error);
+    return { embed: embed.danger('UnbanAll Failed', `An error occurred: ${error.message}`) };
   }
 }

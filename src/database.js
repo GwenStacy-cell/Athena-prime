@@ -15,6 +15,7 @@ const DEFAULT_SCHEMA = {
   quarantines: {}, // guildId -> { userId -> { roles: [roleIds...], quarantinedAt, reason } }
   extraOwners: {}, // guildId -> [ userId, userId, ... ]
   spamPermitted: []// global list of userIds permitted to use the spam command
+  // allowedLinks is stored per-guild inside guilds[guildId].allowedLinks
 };
 
 class Database {
@@ -65,6 +66,7 @@ class Database {
         homeVcId: null,
         antiSpamEnabled: true,
         antiLinkEnabled: false,
+        antiInviteEnabled: true,
         raidMode: false,
         antiNukeEnabled: true,
         antiNukePunishment: 'ban', // default is 'ban'
@@ -72,6 +74,7 @@ class Database {
         maxWarnings: 3,
         blacklistWords: [],
         whitelist: [],
+        allowedLinks: [],
         autonick: {
           enabled: false,
           prefix: '',
@@ -94,6 +97,8 @@ class Database {
       if (cfg.antiNukePunishment === undefined) { cfg.antiNukePunishment = 'ban'; updated = true; }
       if (cfg.antiNukeThreshold === undefined) { cfg.antiNukeThreshold = 1; updated = true; }
       if (cfg.antiLinkEnabled === undefined) { cfg.antiLinkEnabled = false; updated = true; }
+      if (cfg.antiInviteEnabled === undefined) { cfg.antiInviteEnabled = true; updated = true; }
+      if (cfg.allowedLinks === undefined) { cfg.allowedLinks = []; updated = true; }
 
       if (updated) this.save();
     }
@@ -303,6 +308,41 @@ class Database {
 
   getSpamPermitted() {
     return this.cache.spamPermitted || [];
+  }
+
+  // ==========================================
+  // ALLOWED LINKS SYSTEM (per guild)
+  // Domains that bypass the anti-link filter
+  // ==========================================
+
+  addAllowedLink(guildId, domain) {
+    const config = this.getGuildConfig(guildId);
+    const clean = domain.trim().toLowerCase();
+    if (!config.allowedLinks) config.allowedLinks = [];
+    if (!config.allowedLinks.includes(clean)) {
+      config.allowedLinks.push(clean);
+      this.updateGuildConfig(guildId, { allowedLinks: config.allowedLinks });
+      return true;
+    }
+    return false;
+  }
+
+  removeAllowedLink(guildId, domain) {
+    const config = this.getGuildConfig(guildId);
+    const clean = domain.trim().toLowerCase();
+    if (!config.allowedLinks) return false;
+    const idx = config.allowedLinks.indexOf(clean);
+    if (idx !== -1) {
+      config.allowedLinks.splice(idx, 1);
+      this.updateGuildConfig(guildId, { allowedLinks: config.allowedLinks });
+      return true;
+    }
+    return false;
+  }
+
+  getAllowedLinks(guildId) {
+    const config = this.getGuildConfig(guildId);
+    return config.allowedLinks || [];
   }
 }
 
