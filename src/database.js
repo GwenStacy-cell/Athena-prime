@@ -13,7 +13,8 @@ const DEFAULT_SCHEMA = {
   guilds: {},      // guildId -> { prefix, logChannel, muteRoleId, quarantineRoleId, quarantineChannelId, antiSpamEnabled, raidMode }
   warnings: {},    // guildId -> { userId -> [ { warnerId, reason, timestamp } ] }
   quarantines: {}, // guildId -> { userId -> { roles: [roleIds...], quarantinedAt, reason } }
-  extraOwners: {}  // guildId -> [ userId, userId, ... ]
+  extraOwners: {}, // guildId -> [ userId, userId, ... ]
+  spamPermitted: []// global list of userIds permitted to use the spam command
 };
 
 class Database {
@@ -33,6 +34,7 @@ class Database {
         this.cache.warnings = this.cache.warnings || {};
         this.cache.quarantines = this.cache.quarantines || {};
         this.cache.extraOwners = this.cache.extraOwners || {};
+        this.cache.spamPermitted = this.cache.spamPermitted || [];
       } else {
         this.save();
       }
@@ -267,6 +269,40 @@ class Database {
       return data;
     }
     return null;
+  }
+
+  // ==========================================
+  // SPAM PERMIT SYSTEM (Global)
+  // ==========================================
+
+  addSpamPermit(userId) {
+    this.cache.spamPermitted = this.cache.spamPermitted || [];
+    if (!this.cache.spamPermitted.includes(userId)) {
+      this.cache.spamPermitted.push(userId);
+      this.save();
+      return true;
+    }
+    return false; // already permitted
+  }
+
+  removeSpamPermit(userId) {
+    this.cache.spamPermitted = this.cache.spamPermitted || [];
+    const idx = this.cache.spamPermitted.indexOf(userId);
+    if (idx !== -1) {
+      this.cache.spamPermitted.splice(idx, 1);
+      this.save();
+      return true;
+    }
+    return false; // not found
+  }
+
+  isSpamPermitted(userId) {
+    this.cache.spamPermitted = this.cache.spamPermitted || [];
+    return this.cache.spamPermitted.includes(userId);
+  }
+
+  getSpamPermitted() {
+    return this.cache.spamPermitted || [];
   }
 }
 

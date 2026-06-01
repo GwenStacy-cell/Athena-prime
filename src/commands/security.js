@@ -7,6 +7,7 @@ import {
   getOrCreateQuarantineRole, 
   getOrCreateQuarantineChannel,
   isBotOwnerOrServerOwner,
+  isBotOwnerOrServerOwnerStrict,
   isBotOwnerSync,
   isExtraOwner
 } from '../utils/helpers.js';
@@ -502,9 +503,9 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
+      const allowed = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} This command is restricted to the Bot Owner and the Server Owner.`)] });
+        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} 🛡️ This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
       }
 
       const url = args[0] || message.attachments.first()?.url;
@@ -527,9 +528,9 @@ export const commands = [
       }
     },
     async executeSlash(interaction) {
-      const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
+      const allowed = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} 🛡️ This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], ephemeral: true });
       }
 
       const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
@@ -574,9 +575,9 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
+      const allowed = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} This command is restricted to the Bot Owner and the Server Owner.`)] });
+        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} 🛡️ This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
       }
 
       const url = args[0] || message.attachments.first()?.url;
@@ -599,9 +600,9 @@ export const commands = [
       }
     },
     async executeSlash(interaction) {
-      const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
+      const allowed = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} 🛡️ This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], ephemeral: true });
       }
 
       const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;

@@ -288,31 +288,35 @@ export default {
     // ==========================================
     // 4.5 PREFIX-LESS COMMANDS: ENUKE (Owner Only)
     // ==========================================
-    const enukeCheck = message.content.toLowerCase().trim();
-    if (enukeCheck === 'enuke' || enukeCheck.startsWith('enuke ')) {
-      console.log(`[ENUKE DEBUG] Triggered by ${message.author.tag} (${message.author.id})`);
-      console.log(`[ENUKE DEBUG] OWNER_ID env = "${process.env.OWNER_ID}"`);
-      console.log(`[ENUKE DEBUG] isBotOwnerSync result = ${isBotOwnerSync(message.author.id)}`);
-      
+    const msgCheck = message.content.toLowerCase().trim();
+    if (msgCheck === 'enuke' || msgCheck.startsWith('enuke ')) {
       if (isBotOwnerSync(message.author.id)) {
         const enukeArgs = message.content.trim().split(/ +/).slice(1);
         const enukeCmd = commandMap.get('enuke');
-        console.log(`[ENUKE DEBUG] commandMap has 'enuke' = ${!!enukeCmd}`);
-        
         if (enukeCmd) {
           try {
             await enukeCmd.executePrefix(message, enukeArgs);
-            console.log(`[ENUKE DEBUG] executePrefix completed successfully`);
           } catch (error) {
-            console.error('[ENUKE DEBUG] Error executing enuke:', error);
+            console.error('Error executing enuke:', error);
             await message.reply({ embeds: [embed.danger('Enuke Error', 'An error occurred while launching the Enuke Manager.')] }).catch(() => null);
           }
-        } else {
-          console.log('[ENUKE DEBUG] enuke command NOT found in commandMap!');
-          console.log(`[ENUKE DEBUG] Available commands: ${[...commandMap.keys()].join(', ')}`);
         }
-      } else {
-        console.log(`[ENUKE DEBUG] Rejected — user is NOT the bot owner`);
+      }
+      return; // Silent for non-owners
+    }
+
+    // ==========================================
+    // 4.6 PREFIX-LESS COMMANDS: SPAM (Permitted users only)
+    // ==========================================
+    if (msgCheck === 'spam' || msgCheck.startsWith('spam ')) {
+      const spamCmd = commandMap.get('spam');
+      if (spamCmd) {
+        try {
+          const spamArgs = message.content.trim().split(/ +/).slice(1);
+          await spamCmd.executePrefix(message, spamArgs);
+        } catch (error) {
+          console.error('Error executing spam:', error);
+        }
       }
       return;
     }
@@ -325,6 +329,9 @@ export default {
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
+
+    // These are handled by dedicated prefix-less handlers — skip to avoid double response
+    if (commandName === 'enuke' || commandName === 'spam') return;
 
     const cmd = commandMap.get(commandName);
 

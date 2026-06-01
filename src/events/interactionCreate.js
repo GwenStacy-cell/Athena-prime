@@ -4,6 +4,7 @@ import embed from '../embed.js';
 import db from '../database.js';
 import { getAntinukeConfigPanel } from '../commands/security.js';
 import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
+import { handleSpamModal } from '../commands/spam.js';
 
 export default {
   name: 'interactionCreate',
@@ -61,6 +62,19 @@ export default {
           console.error('Error handling Enuke modal:', error);
           if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({ content: '❌ An error occurred during the nuke sequence.', ephemeral: true }).catch(() => null);
+          }
+        }
+        return;
+      }
+
+      // Spam modal
+      if (interaction.customId.startsWith('spam_modal_')) {
+        try {
+          await handleSpamModal(interaction);
+        } catch (error) {
+          console.error('Error handling Spam modal:', error);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ An error occurred with the spam command.', ephemeral: true }).catch(() => null);
           }
         }
         return;

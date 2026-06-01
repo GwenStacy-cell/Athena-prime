@@ -284,6 +284,16 @@ export async function isBotOwnerOrServerOwner(user, guild) {
 }
 
 /**
+ * STRICT version — only bot owner OR server owner. Extra owners are NOT included.
+ * Used for sensitive commands like setguildavatar and setguildbanner.
+ */
+export function isBotOwnerOrServerOwnerStrict(userId, guild) {
+  if (isBotOwnerSync(userId)) return true;
+  if (guild && userId === guild.ownerId) return true;
+  return false;
+}
+
+/**
  * Levenshtein distance for fuzzy command matching
  */
 export function levenshteinDistance(a, b) {
