@@ -18,8 +18,13 @@ if (!clientId || clientId === 'your_bot_client_id') {
   process.exit(1);
 }
 
+// Commands that should be available in DMs via User App install
+const USER_APP_COMMANDS = ['spam', 'spampermit', 'spamrevoke', 'spamlist'];
+
 // Map the commands to the JSON structure required by Discord APIs
 const slashData = allCommands.map(cmd => {
+  const isUserApp = USER_APP_COMMANDS.includes(cmd.name);
+
   return {
     name: cmd.name,
     description: cmd.description,
@@ -27,7 +32,11 @@ const slashData = allCommands.map(cmd => {
     // Convert permissions to string format for Discord gateway payload
     default_member_permissions: cmd.permissions && cmd.permissions.length > 0 
       ? cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
-      : null
+      : null,
+    // integration_types: 0 = Guild Install, 1 = User Install
+    integration_types: isUserApp ? [0, 1] : [0],
+    // contexts: 0 = Guild, 1 = Bot DM, 2 = Private Channel (group DM)
+    contexts: isUserApp ? [0, 1, 2] : [0]
   };
 });
 
