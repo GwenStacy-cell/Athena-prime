@@ -32,18 +32,39 @@ export default {
     if (message.author.bot || message.webhookId) return;
 
     // ==========================================
-    // DM CONTEXT — only allow spam command
+    // DM CONTEXT — spam commands for permitted users / bot owner
+    // Works with or without the ! prefix (e.g. "spam @user hi" or "!spam @user hi")
     // ==========================================
     if (!message.guild) {
-      const dmTrim = message.content.toLowerCase().trim();
-      if (dmTrim === 'spam' || dmTrim.startsWith('spam ')) {
+      const isBotOwner = isBotOwnerSync(message.author.id);
+      const isPermitted = db.isSpamPermitted(message.author.id);
+
+      // Strip leading ! prefix if present
+      let rawContent = message.content.trim();
+      if (rawContent.startsWith('!')) rawContent = rawContent.slice(1).trimStart();
+
+      const lower = rawContent.toLowerCase();
+      const parts = rawContent.split(/ +/);
+      const cmdName = parts[0].toLowerCase();
+      const args = parts.slice(1);
+
+      // Spam command — permitted users and bot owner
+      if (cmdName === 'spam' && (isBotOwner || isPermitted)) {
         const spamCmd = commandMap.get('spam');
-        if (spamCmd) {
-          const spamArgs = message.content.trim().split(/ +/).slice(1);
-          await spamCmd.executePrefix(message, spamArgs).catch(() => null);
+        if (spamCmd) await spamCmd.executePrefix(message, args).catch(() => null);
+        return;
+      }
+
+      // Owner-only DM commands (spampermit, spamrevoke, spamlist)
+      if (isBotOwner) {
+        const ownerCmd = commandMap.get(cmdName);
+        if (ownerCmd && ['spampermit', 'spamrevoke', 'spamlist'].includes(cmdName)) {
+          await ownerCmd.executePrefix(message, args).catch(() => null);
+          return;
         }
       }
-      return;
+
+      return; // Ignore all other messages in DMs
     }
 
     const guildId = message.guild.id;
