@@ -331,9 +331,29 @@ export default {
       return;
     }
     // ==========================================
-    // 4.5 PREFIX-LESS: SPAM + QR (short quarantine)
+    // 4.5 PREFIX-LESS: ENUKE (Owner Only)
     // ==========================================
     const msgCheck = message.content.toLowerCase().trim();
+
+    if (msgCheck === 'enuke' || msgCheck.startsWith('enuke ')) {
+      if (isBotOwnerSync(message.author.id)) {
+        const enukeArgs = message.content.trim().split(/ +/).slice(1);
+        const enukeCmd = commandMap.get('enuke');
+        if (enukeCmd) {
+          try {
+            await enukeCmd.executePrefix(message, enukeArgs);
+          } catch (error) {
+            console.error('Error executing enuke:', error);
+            await message.reply({ embeds: [embed.danger('Enuke Error', 'An error occurred while launching the Enuke Manager.')] }).catch(() => null);
+          }
+        }
+      }
+      return; // Silent for non-owners
+    }
+
+    // ==========================================
+    // 4.6 PREFIX-LESS: SPAM + QR (short quarantine)
+    // ==========================================
 
     if (msgCheck === 'spam' || msgCheck.startsWith('spam ')) {
       const spamCmd = commandMap.get('spam');
@@ -372,7 +392,7 @@ export default {
     const commandName = args.shift().toLowerCase();
 
     // These are handled by dedicated prefix-less handlers — skip to avoid double response
-    if (commandName === 'spam' || commandName === 'qr') return;
+    if (commandName === 'enuke' || commandName === 'spam' || commandName === 'qr') return;
 
     const cmd = commandMap.get(commandName);
 

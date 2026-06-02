@@ -11,7 +11,7 @@ export const commands = [
     description: 'Opens the Enuke Manager — server wipe sequencer. Bot Owner only.',
     category: 'owner',
     permissions: [],
-    // No slash command — too dangerous. Hidden from help.
+    slashHidden: true,  // Never register as slash command — prefix only
     hidden: true,
     async executePrefix(message, args) {
       // ABSOLUTE OWNER-ONLY GATE

@@ -22,7 +22,9 @@ if (!clientId || clientId === 'your_bot_client_id') {
 const USER_APP_COMMANDS = ['spam', 'spampermit', 'spamrevoke', 'spamlist'];
 
 // Map the commands to the JSON structure required by Discord APIs
-const slashData = allCommands.map(cmd => {
+const slashData = allCommands
+  .filter(cmd => !cmd.slashHidden)   // exclude prefix-only commands like enuke
+  .map(cmd => {
   const isUserApp = USER_APP_COMMANDS.includes(cmd.name);
 
   return {
