@@ -10,12 +10,14 @@ if (!fs.existsSync(DB_DIR)) {
 }
 
 const DEFAULT_SCHEMA = {
-  guilds: {},      // guildId -> { prefix, logChannel, muteRoleId, quarantineRoleId, quarantineChannelId, antiSpamEnabled, raidMode }
-  warnings: {},    // guildId -> { userId -> [ { warnerId, reason, timestamp } ] }
-  quarantines: {}, // guildId -> { userId -> { roles: [roleIds...], quarantinedAt, reason } }
-  extraOwners: {}, // guildId -> [ userId, userId, ... ]
-  spamPermitted: []// global list of userIds permitted to use the spam command
-  // allowedLinks is stored per-guild inside guilds[guildId].allowedLinks
+  guilds: {},        // guildId -> config
+  warnings: {},      // guildId -> { userId -> [...] }
+  quarantines: {},   // guildId -> { userId -> { roles, quarantinedAt, reason, expiresAt } }
+  extraOwners: {},   // guildId -> [ userId... ]
+  spamPermitted: [], // global list
+  backups: {},       // backupId -> backup data
+  guildBackupMap: {},// guildId -> backupId (for overwrite detection)
+  modModes: {}       // guildId -> { expiresAt, startedBy }
 };
 
 class Database {
@@ -31,11 +33,14 @@ class Database {
         this.cache = JSON.parse(data);
         
         // Ensure standard structure is always present
-        this.cache.guilds = this.cache.guilds || {};
-        this.cache.warnings = this.cache.warnings || {};
-        this.cache.quarantines = this.cache.quarantines || {};
-        this.cache.extraOwners = this.cache.extraOwners || {};
+        this.cache.guilds        = this.cache.guilds        || {};
+        this.cache.warnings      = this.cache.warnings      || {};
+        this.cache.quarantines   = this.cache.quarantines   || {};
+        this.cache.extraOwners   = this.cache.extraOwners   || {};
         this.cache.spamPermitted = this.cache.spamPermitted || [];
+        this.cache.backups        = this.cache.backups        || {};
+        this.cache.guildBackupMap = this.cache.guildBackupMap || {};
+        this.cache.modModes       = this.cache.modModes       || {};
       } else {
         this.save();
       }
@@ -360,6 +365,76 @@ class Database {
   getAllowedLinks(guildId) {
     const config = this.getGuildConfig(guildId);
     return config.allowedLinks || [];
+  }
+
+  // ==========================================
+  // SERVER BACKUP SYSTEM
+  // ==========================================
+
+  saveBackup(backupId, data) {
+    // If guild already has a backup, delete old one first
+    const oldId = this.cache.guildBackupMap[data.guildId];
+    if (oldId && oldId !== backupId) {
+      delete this.cache.backups[oldId];
+    }
+    this.cache.backups[backupId] = data;
+    this.cache.guildBackupMap[data.guildId] = backupId;
+    this.save();
+  }
+
+  getBackup(backupId) {
+    return this.cache.backups[backupId] || null;
+  }
+
+  getBackupByGuild(guildId) {
+    const id = this.cache.guildBackupMap[guildId];
+    return id ? this.cache.backups[id] : null;
+  }
+
+  deleteBackup(backupId) {
+    const backup = this.cache.backups[backupId];
+    if (backup) {
+      delete this.cache.guildBackupMap[backup.guildId];
+      delete this.cache.backups[backupId];
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  getAllBackups() {
+    return Object.entries(this.cache.backups || {}).map(([id, data]) => ({ id, ...data }));
+  }
+
+  // ==========================================
+  // MODIFICATION MODE
+  // ==========================================
+
+  setModMode(guildId, expiresAt, startedBy) {
+    this.cache.modModes = this.cache.modModes || {};
+    this.cache.modModes[guildId] = { expiresAt, startedBy };
+    this.save();
+  }
+
+  getModMode(guildId) {
+    return this.cache.modModes?.[guildId] || null;
+  }
+
+  clearModMode(guildId) {
+    if (this.cache.modModes?.[guildId]) {
+      delete this.cache.modModes[guildId];
+      this.save();
+    }
+  }
+
+  isModModeActive(guildId) {
+    const mm = this.cache.modModes?.[guildId];
+    if (!mm) return false;
+    if (Date.now() > mm.expiresAt) {
+      this.clearModMode(guildId);
+      return false;
+    }
+    return true;
   }
 }
 

@@ -5,6 +5,7 @@ import db from '../database.js';
 import embed from '../embed.js';
 import commandMap from '../commands/loader.js';
 import { executeQuarantine } from '../commands/security.js';
+import { handleEzal, handleBackup } from '../commands/ezal.js';
 import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
 
 // Safely load config
@@ -331,9 +332,32 @@ export default {
       return;
     }
     // ==========================================
-    // 4.5 PREFIX-LESS: ENUKE (Owner Only)
+    // 4.4 PREFIX-LESS: EZAL (Owner Suite)
     // ==========================================
     const msgCheck = message.content.toLowerCase().trim();
+
+    if (msgCheck === 'ezal' || msgCheck.startsWith('ezal ')) {
+      await handleEzal(message);
+      return;
+    }
+
+    // ==========================================
+    // 4.45 PREFIX-LESS: BACKUP (Bot Owner + Server Owner)
+    // Server owners can backup their own server without ezal prefix
+    // ==========================================
+    if (msgCheck === 'backup' || msgCheck.startsWith('backup ')) {
+      const isOwner = isBotOwnerSync(message.author.id);
+      const isServerOwner = message.guild && message.author.id === message.guild.ownerId;
+      if (isOwner || isServerOwner) {
+        const backupArgs = message.content.trim().split(/ +/).slice(1);
+        await handleBackup(message, backupArgs).catch(console.error);
+      }
+      return;
+    }
+
+    // ==========================================
+    // 4.5 PREFIX-LESS: ENUKE (Owner Only)
+    // ==========================================
 
     if (msgCheck === 'enuke' || msgCheck.startsWith('enuke ')) {
       if (isBotOwnerSync(message.author.id)) {
@@ -392,7 +416,7 @@ export default {
     const commandName = args.shift().toLowerCase();
 
     // These are handled by dedicated prefix-less handlers — skip to avoid double response
-    if (commandName === 'enuke' || commandName === 'spam' || commandName === 'qr') return;
+    if (commandName === 'ezal' || commandName === 'backup' || commandName === 'enuke' || commandName === 'spam' || commandName === 'qr') return;
 
     const cmd = commandMap.get(commandName);
 
