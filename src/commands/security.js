@@ -947,6 +947,45 @@ export const commands = [
       const result = await handleLinksAllow(interaction.guild, action, domain);
       await interaction.reply({ embeds: [result.embed] });
     }
+  },
+
+  // --- MASSQUARANTINE COMMAND ---
+  {
+    name: 'massquarantine',
+    description: 'Quarantine ALL members who have a specific role at once. (Admin only)',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      {
+        name: 'role',
+        description: 'The role whose members will all be quarantined',
+        type: 8,
+        required: true
+      },
+      {
+        name: 'reason',
+        description: 'Reason for mass quarantine (shown in logs and DMs)',
+        type: 3,
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const role = message.mentions.roles.first();
+      if (!role) {
+        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!massquarantine <@role> [reason]\``)] });
+      }
+      const reason = args.slice(1).join(' ').trim() || 'Mass quarantine by administrator';
+      const statusMsg = await message.reply({ embeds: [embed.info('Mass Quarantine Started', `⏳ Quarantining all members with role <@&${role.id}>...`)] });
+      const result = await handleMassQuarantine(message.guild, message.member, role, reason);
+      await statusMsg.edit({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      await interaction.deferReply();
+      const role = interaction.options.getRole('role');
+      const reason = interaction.options.getString('reason') || 'Mass quarantine by administrator';
+      const result = await handleMassQuarantine(interaction.guild, interaction.member, role, reason);
+      await interaction.editReply({ embeds: [result.embed] });
+    }
   }
 ];
 
@@ -1086,7 +1125,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason) 
     ));
 
     const responseEmbed = embed.danger(
-      'Quarantine Activated',
+      'User Quarantined',
       `Successfully quarantined **${targetMember.user.tag}**.`,
       [
         { name: 'Member', value: `${targetMember}`, inline: true },
@@ -1833,6 +1872,84 @@ async function handleLinksAllow(guild, action, domain) {
     embed: embed.info(
       'Allowed Link Domains',
       `These domains bypass the anti-link filter:\n\n${formatted}\n\n*Use \`/linksallow remove <domain>\` to remove any.*`
+    )
+  };
+}
+
+// ==========================================
+// MASS QUARANTINE — Quarantine all members with a specific role
+// Skips: bot owner, server owner, extra owners, whitelisted, already quarantined
+// ==========================================
+async function handleMassQuarantine(guild, moderator, targetRole, reason) {
+  // Safety guard — prevent quarantining @everyone
+  if (targetRole.id === guild.id) {
+    return { embed: embed.danger('Blocked', 'You cannot mass quarantine the `@everyone` role.') };
+  }
+
+  // Fetch all members (ensure cache is populated)
+  await guild.members.fetch().catch(() => null);
+
+  // Collect eligible targets
+  const targets = targetRole.members.filter(member => {
+    if (member.id === guild.client.user.id)                     return false; // Skip bot itself
+    if (isBotOwnerSync(member.id))                              return false; // Skip bot owner
+    if (member.id === guild.ownerId)                            return false; // Skip server owner
+    if (db.isExtraOwner(guild.id, member.id))                   return false; // Skip extra owners
+    if (db.isWhitelisted(guild, member.id))                     return false; // Skip whitelisted
+    if (db.getQuarantine(guild.id, member.id))                  return false; // Skip already quarantined
+    return true;
+  });
+
+  if (targets.size === 0) {
+    return {
+      embed: embed.warn(
+        'No Eligible Targets',
+        `No members with <@&${targetRole.id}> can be quarantined.\n\nAll members are either already quarantined, protected (owner/extra owner/whitelisted), or the role is empty.`
+      )
+    };
+  }
+
+  let success = 0;
+  let failed  = 0;
+  let skipped = 0;
+
+  for (const [, member] of targets) {
+    const result = await executeQuarantine(guild, member, moderator, reason);
+    if (result.success)            success++;
+    else if (result.message?.includes('already quarantined')) skipped++;
+    else                           failed++;
+
+    // 600ms delay between each to avoid Discord rate limits
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  const total = targets.size;
+
+  logToSecurityChannel(guild, embed.log(
+    'Mass Quarantine Executed',
+    `**${moderator.user.tag}** mass-quarantined all members with role <@&${targetRole.id}>.`,
+    [
+      { name: '🎯 Role',       value: `<@&${targetRole.id}>`, inline: true },
+      { name: '✅ Quarantined', value: `\`${success}\``,       inline: true },
+      { name: '❌ Failed',      value: `\`${failed}\``,        inline: true },
+      { name: '⏭️ Skipped',    value: `\`${skipped}\``,       inline: true },
+      { name: '📋 Reason',     value: reason }
+    ],
+    'danger'
+  ));
+
+  return {
+    embed: embed.danger(
+      '🔒 Mass Quarantine Complete',
+      `All targeted members with <@&${targetRole.id}> have been processed.`,
+      [
+        { name: '🎯 Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
+        { name: '✅ Quarantined',  value: `\`${success}\``,  inline: true },
+        { name: '❌ Failed',       value: `\`${failed}\``,   inline: true },
+        { name: '⏭️ Skipped',     value: `\`${skipped}\``,  inline: true },
+        { name: '📋 Reason',       value: reason,             inline: false },
+        { name: '🔨 Executed By',  value: `${moderator}`,    inline: true }
+      ]
     )
   };
 }
