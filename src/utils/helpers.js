@@ -342,6 +342,14 @@ export function findClosestCommand(input, commandNames, maxDistance = 3) {
  */
 export async function syncQuarantinePermissions(guild, quarantineRole, excludeChannelId = null) {
   if (!quarantineRole) return 0;
+
+  // Collect ALL channel IDs that the quarantine role should be allowed to see
+  // excludeChannelId is the quarantine TEXT channel
+  const config = db.getGuildConfig(guild.id);
+  const allowedChannelIds = new Set();
+  if (excludeChannelId) allowedChannelIds.add(excludeChannelId);
+  if (config.quarantineVcId) allowedChannelIds.add(config.quarantineVcId);
+
   let synced = 0;
 
   const allowedTypes = [
@@ -354,18 +362,37 @@ export async function syncQuarantinePermissions(guild, quarantineRole, excludeCh
   ];
 
   for (const [channelId, channel] of guild.channels.cache) {
-    if (channelId === excludeChannelId) continue;
     if (!allowedTypes.includes(channel.type)) continue;
 
     try {
-      await channel.permissionOverwrites.edit(quarantineRole, {
-        ViewChannel: false,
-        SendMessages: false,
-        Connect: false,
-        Speak: false
-      }, { reason: 'Athena Prime — quarantine permission sync' });
+      if (allowedChannelIds.has(channelId)) {
+        // Quarantine zone channels — grant access
+        if (channel.type === ChannelType.GuildVoice || channel.type === ChannelType.GuildStageVoice) {
+          await channel.permissionOverwrites.edit(quarantineRole, {
+            ViewChannel:  true,
+            Connect:      true,
+            Speak:        false, // can hear but not speak by default
+            SendMessages: false
+          }, { reason: 'Athena Prime — quarantine VC access grant' });
+        } else {
+          await channel.permissionOverwrites.edit(quarantineRole, {
+            ViewChannel:      true,
+            SendMessages:     true,
+            ReadMessageHistory: true,
+            Connect:          false
+          }, { reason: 'Athena Prime — quarantine text access grant' });
+        }
+      } else {
+        // All other channels — fully deny
+        await channel.permissionOverwrites.edit(quarantineRole, {
+          ViewChannel:  false,
+          SendMessages: false,
+          Connect:      false,
+          Speak:        false
+        }, { reason: 'Athena Prime — quarantine permission sync' });
+      }
       synced++;
-    } catch { /* Skip channels where bot lacks permissions */ }
+    } catch { /* Skip channels where bot lacks manage permissions */ }
   }
 
   return synced;

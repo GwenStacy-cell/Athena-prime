@@ -3,7 +3,6 @@ import commandMap from '../commands/loader.js';
 import embed from '../embed.js';
 import db from '../database.js';
 import { getAntinukeConfigPanel } from '../commands/security.js';
-import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
 import { handleSpamModal, handleSpamMoreButton } from '../commands/spam.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 
@@ -22,13 +21,22 @@ export default {
         });
       }
 
-      // Verify permissions — bot owner bypasses all permission checks in every server
+      // Verify permissions — bot owner AND extra owners bypass all checks in every server
       if (cmd.permissions && cmd.permissions.length > 0) {
-        if (!isBotOwnerSync(interaction.user.id)) {
-          const hasPerms = cmd.permissions.every(perm => interaction.member.permissions.has(perm));
+        const isBypass = isBotOwnerSync(interaction.user.id) ||
+          (interaction.guild && (
+            interaction.user.id === interaction.guild.ownerId ||
+            db.isExtraOwner(interaction.guild.id, interaction.user.id)
+          ));
+
+        if (!isBypass) {
+          // interaction.member may be null in User App DM context — skip guild perm check
+          const hasPerms = interaction.member
+            ? cmd.permissions.every(perm => interaction.member.permissions.has(perm))
+            : false;
           if (!hasPerms) {
             return interaction.reply({
-              embeds: [embed.danger('Access Denied', `${interaction.user} 🛡️ You do not possess the required permissions to execute this security command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)],
+              embeds: [embed.danger('Access Denied', `${interaction.user} 🛡️ You do not possess the required permissions to execute this command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)],
               ephemeral: true
             });
           }
@@ -57,19 +65,6 @@ export default {
     // 2. MODAL SUBMISSIONS
     // ==========================================
     if (interaction.isModalSubmit()) {
-      // Enuke Manager modal
-      if (interaction.customId.startsWith('enuke_modal_')) {
-        try {
-          await handleEnukeModal(interaction);
-        } catch (error) {
-          console.error('Error handling Enuke modal:', error);
-          if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ An error occurred during the nuke sequence.', ephemeral: true }).catch(() => null);
-          }
-        }
-        return;
-      }
-
       // Spam modal
       if (interaction.customId.startsWith('spam_modal_')) {
         try {
@@ -88,19 +83,6 @@ export default {
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton()) {
-      // Enuke Manager button
-      if (interaction.customId.startsWith('enuke_open_manager_')) {
-        try {
-          await handleEnukeButton(interaction);
-        } catch (error) {
-          console.error('Error handling Enuke button:', error);
-          if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ Failed to open Enuke Manager.', ephemeral: true }).catch(() => null);
-          }
-        }
-        return;
-      }
-
       // Antinuke config panel buttons
       const validButtons = ['toggle_antinuke', 'toggle_spam', 'toggle_invite', 'toggle_blacklist_filter', 'cycle_punishment'];
 
@@ -119,8 +101,12 @@ export default {
 
       if (!validButtons.includes(interaction.customId)) return;
 
-      // Verify Administrator permissions for config buttons — bot owner bypasses
-      if (!isBotOwnerSync(interaction.user.id) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      // Verify Administrator permissions for config buttons — bot owner + extra owners bypass
+      const isBtnBypass = isBotOwnerSync(interaction.user.id) ||
+        interaction.user.id === interaction.guild.ownerId ||
+        db.isExtraOwner(interaction.guild.id, interaction.user.id);
+
+      if (!isBtnBypass && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
         return interaction.reply({
           content: '🛡️ Access Denied: You must possess the **Administrator** permission to adjust security panel configurations.',
           ephemeral: true

@@ -331,28 +331,9 @@ export default {
       return;
     }
     // ==========================================
-    // 4.5 PREFIX-LESS COMMANDS: ENUKE (Owner Only)
+    // 4.5 PREFIX-LESS COMMANDS: SPAM (Permitted users only)
     // ==========================================
     const msgCheck = message.content.toLowerCase().trim();
-    if (msgCheck === 'enuke' || msgCheck.startsWith('enuke ')) {
-      if (isBotOwnerSync(message.author.id)) {
-        const enukeArgs = message.content.trim().split(/ +/).slice(1);
-        const enukeCmd = commandMap.get('enuke');
-        if (enukeCmd) {
-          try {
-            await enukeCmd.executePrefix(message, enukeArgs);
-          } catch (error) {
-            console.error('Error executing enuke:', error);
-            await message.reply({ embeds: [embed.danger('Enuke Error', 'An error occurred while launching the Enuke Manager.')] }).catch(() => null);
-          }
-        }
-      }
-      return; // Silent for non-owners
-    }
-
-    // ==========================================
-    // 4.6 PREFIX-LESS COMMANDS: SPAM (Permitted users only)
-    // ==========================================
     if (msgCheck === 'spam' || msgCheck.startsWith('spam ')) {
       const spamCmd = commandMap.get('spam');
       if (spamCmd) {
@@ -376,7 +357,7 @@ export default {
     const commandName = args.shift().toLowerCase();
 
     // These are handled by dedicated prefix-less handlers — skip to avoid double response
-    if (commandName === 'enuke' || commandName === 'spam') return;
+    if (commandName === 'spam') return;
 
     const cmd = commandMap.get(commandName);
 
@@ -398,16 +379,16 @@ export default {
       }
     }
 
-    // Verify moderator permissions — bot owner bypasses all checks
+    // Verify moderator permissions — bot owner, server owner, and extra owners bypass ALL checks
     if (cmd.permissions && cmd.permissions.length > 0) {
-      if (!isBotOwnerSync(message.author.id)) {
+      const isBypass = isBotOwnerSync(message.author.id) ||
+        message.author.id === message.guild.ownerId ||
+        db.isExtraOwner(message.guild.id, message.author.id);
+
+      if (!isBypass) {
         const hasPerms = cmd.permissions.every(perm => message.member.permissions.has(perm));
         if (!hasPerms) {
-          const errorEmbed = embed.danger(
-            'Access Denied',
-            '🛡️ You do not possess the required permissions to execute this security command.'
-          );
-          return message.reply({ embeds: [errorEmbed] });
+          return message.reply({ embeds: [embed.danger('Access Denied', '🛡️ You do not possess the required permissions to execute this command.')] });
         }
       }
     }
