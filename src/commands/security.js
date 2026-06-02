@@ -18,11 +18,85 @@ import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 const TOGGLE_ON  = '<:toggleon:1503046689450360965>';
 const TOGGLE_OFF = '<:toggleoff:1504207083673878739>';
 
+// ==========================================
+// AUTO-UNQUARANTINE TIMER MAP
+// key: `${guildId}-${userId}` -> setTimeout handle
+// ==========================================
+export const autoUnquarantineTimers = new Map();
+
+/**
+ * Parse a duration string into milliseconds.
+ * Supports: 30s, 5m, 2h, 1d, or combos like 1h30m
+ * Bare number = minutes. Default = 5 minutes.
+ */
+export function parseDuration(str) {
+  if (!str) return 5 * 60 * 1000; // default 5m
+  str = String(str).trim().toLowerCase();
+
+  // Bare number → minutes
+  if (/^\d+$/.test(str)) return Math.min(parseInt(str), 10080) * 60 * 1000;
+
+  let ms = 0;
+  const regex = /(\d+)([smhd])/g;
+  let match;
+  while ((match = regex.exec(str)) !== null) {
+    const val = parseInt(match[1]);
+    switch (match[2]) {
+      case 's': ms += val * 1000;         break;
+      case 'm': ms += val * 60 * 1000;    break;
+      case 'h': ms += val * 3600 * 1000;  break;
+      case 'd': ms += val * 86400 * 1000; break;
+    }
+  }
+  // Cap at 7 days
+  return ms > 0 ? Math.min(ms, 7 * 86400 * 1000) : 5 * 60 * 1000;
+}
+
+/** Format ms into human-readable string e.g. "5m", "1h 30m" */
+function formatDuration(ms) {
+  const parts = [];
+  const d = Math.floor(ms / 86400000); if (d) parts.push(`${d}d`);
+  const h = Math.floor((ms % 86400000) / 3600000); if (h) parts.push(`${h}h`);
+  const m = Math.floor((ms % 3600000) / 60000); if (m) parts.push(`${m}m`);
+  const s = Math.floor((ms % 60000) / 1000); if (s && parts.length === 0) parts.push(`${s}s`);
+  return parts.join(' ') || '5m';
+}
+
+/**
+ * Schedule an auto-unquarantine for a user.
+ * Clears any existing timer for this user first.
+ */
+export function scheduleAutoUnquarantine(client, guildId, userId, durationMs) {
+  const key = `${guildId}-${userId}`;
+  // Clear existing timer if any
+  if (autoUnquarantineTimers.has(key)) {
+    clearTimeout(autoUnquarantineTimers.get(key));
+  }
+  const handle = setTimeout(async () => {
+    autoUnquarantineTimers.delete(key);
+    try {
+      const guild = await client.guilds.fetch(guildId).catch(() => null);
+      if (!guild) return;
+      const member = await guild.members.fetch(userId).catch(() => null);
+      if (!member) return;
+      const botMember = guild.members.me;
+      await executeUnquarantine(guild, member, botMember);
+      logToSecurityChannel(guild, embed.info(
+        'Auto-Unquarantine',
+        `⏰ <@${userId}>'s quarantine duration expired — automatically released.`
+      ));
+    } catch (err) {
+      console.error('[AutoUnquarantine]', err);
+    }
+  }, durationMs);
+  autoUnquarantineTimers.set(key, handle);
+}
+
 export const commands = [
   // --- QUARANTINE COMMAND ---
   {
     name: 'quarantine',
-    description: 'Strips a user of all roles, isolates them in the quarantine channel, and DMs them.',
+    description: 'Isolates a user — strips roles, moves to quarantine VC, DMs them. Default duration: 5m.',
     category: 'security',
     permissions: [PermissionFlagsBits.ModerateMembers],
     options: [
@@ -31,6 +105,12 @@ export const commands = [
         description: 'The member to quarantine',
         type: 6,
         required: true
+      },
+      {
+        name: 'duration',
+        description: 'Duration e.g. 5m, 1h, 30s, 1d (default: 5m, max: 7d)',
+        type: 3,
+        required: false
       },
       {
         name: 'reason',
@@ -42,33 +122,70 @@ export const commands = [
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member to quarantine.\n\n**Usage:** \`!quarantine <@user> [reason]\``)] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} **Usage:** \`!quarantine <@user> [duration] [reason]\`\n\nExamples: \`!qr @user 10m spam\` / \`!qr @user 1h\``)] });
       }
-      
-      const reason = args.slice(1).join(' ') || 'No reason provided';
-      const result = await executeQuarantine(message.guild, target, message.member, reason);
-      
-      if (result.success) {
-        await message.reply({ embeds: [result.embed] });
-      } else {
-        await message.reply({ embeds: [embed.danger('Quarantine Failed', result.message)] });
+      // args[0] = mention, args[1] could be duration or start of reason
+      let remaining = args.slice(1);
+      let durationMs = 5 * 60 * 1000; // default 5m
+      if (remaining[0] && /^[\d]+[smhd]?$/i.test(remaining[0])) {
+        durationMs = parseDuration(remaining[0]);
+        remaining = remaining.slice(1);
       }
+      const reason = remaining.join(' ').trim() || 'No reason provided';
+      const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
+      if (result.success) await message.reply({ embeds: [result.embed] });
+      else await message.reply({ embeds: [embed.danger('Quarantine Failed', result.message)] });
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
+      const durationStr = interaction.options.getString('duration') || '5m';
       const reason = interaction.options.getString('reason') || 'No reason provided';
+      const durationMs = parseDuration(durationStr);
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
-      }
+      if (!target) return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
 
-      const result = await executeQuarantine(interaction.guild, target, interaction.member, reason);
-      if (result.success) {
-        await interaction.reply({ embeds: [result.embed] });
-      } else {
-        await interaction.reply({ embeds: [embed.danger('Quarantine Failed', result.message)], ephemeral: true });
+      const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
+      if (result.success) await interaction.reply({ embeds: [result.embed] });
+      else await interaction.reply({ embeds: [embed.danger('Quarantine Failed', result.message)], ephemeral: true });
+    }
+  },
+
+  // --- QR SHORT ALIAS ---
+  {
+    name: 'qr',
+    description: 'Short alias for quarantine. Usage: /qr @user [duration] [reason]',
+    category: 'security',
+    permissions: [PermissionFlagsBits.ModerateMembers],
+    options: [
+      { name: 'user',     description: 'Member to quarantine', type: 6, required: true },
+      { name: 'duration', description: 'Duration e.g. 5m 1h 1d (default 5m)', type: 3, required: false },
+      { name: 'reason',   description: 'Reason',               type: 3, required: false }
+    ],
+    async executePrefix(message, args) {
+      const target = message.mentions.members.first();
+      if (!target) return message.reply({ embeds: [embed.warn('Usage', `${message.author} **Usage:** \`!qr <@user> [duration] [reason]\``)] });
+      let remaining = args.slice(1);
+      let durationMs = 5 * 60 * 1000;
+      if (remaining[0] && /^[\d]+[smhd]?$/i.test(remaining[0])) {
+        durationMs = parseDuration(remaining[0]);
+        remaining = remaining.slice(1);
       }
+      const reason = remaining.join(' ').trim() || 'No reason provided';
+      const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
+      if (result.success) await message.reply({ embeds: [result.embed] });
+      else await message.reply({ embeds: [embed.danger('Quarantine Failed', result.message)] });
+    },
+    async executeSlash(interaction) {
+      const targetUser = interaction.options.getUser('user');
+      const durationStr = interaction.options.getString('duration') || '5m';
+      const reason = interaction.options.getString('reason') || 'No reason provided';
+      const durationMs = parseDuration(durationStr);
+      const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+      if (!target) return interaction.reply({ embeds: [embed.warn('Error', 'Member not found.')], ephemeral: true });
+      const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
+      if (result.success) await interaction.reply({ embeds: [result.embed] });
+      else await interaction.reply({ embeds: [embed.danger('Quarantine Failed', result.message)], ephemeral: true });
     }
   },
 
@@ -986,6 +1103,25 @@ export const commands = [
       const result = await handleMassQuarantine(interaction.guild, interaction.member, role, reason);
       await interaction.editReply({ embeds: [result.embed] });
     }
+  },
+
+  // --- MASSUNQUARANTINE COMMAND ---
+  {
+    name: 'massunquarantine',
+    description: 'Release ALL currently quarantined members in this server at once. (Admin only)',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [],
+    async executePrefix(message) {
+      const statusMsg = await message.reply({ embeds: [embed.info('Mass Unquarantine Started', '⏳ Releasing all quarantined members...')] });
+      const result = await handleMassUnquarantine(message.guild, message.member, message.client);
+      await statusMsg.edit({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      await interaction.deferReply();
+      const result = await handleMassUnquarantine(interaction.guild, interaction.member, interaction.client);
+      await interaction.editReply({ embeds: [result.embed] });
+    }
   }
 ];
 
@@ -1025,7 +1161,7 @@ async function getImageBuffer(url) {
 // CORE ISOLATION/QUARANTINE ENGINE
 // ==========================================
 
-export async function executeQuarantine(guild, targetMember, moderator, reason) {
+export async function executeQuarantine(guild, targetMember, moderator, reason, durationMs = null, client = null) {
   // Owner immunity check
   if (isBotOwnerSync(targetMember.id) || isExtraOwner(guild.id, targetMember.id)) {
     return { success: false, message: '🛡️ This user is protected by **Athena Prime** and cannot be quarantined.' };
@@ -1071,7 +1207,8 @@ export async function executeQuarantine(guild, targetMember, moderator, reason) 
       .filter(r => !r.managed && r.id !== guild.id)
       .map(r => r.id);
 
-    db.addQuarantine(guild.id, targetMember.id, roleIdsToSave, reason, prevVoiceChannelId);
+    const expiresAt = durationMs ? Date.now() + durationMs : null;
+    db.addQuarantine(guild.id, targetMember.id, roleIdsToSave, reason, prevVoiceChannelId, expiresAt);
 
     // If target is connected to voice and quarantineVcId is set, drag them to the isolated VC
     const config = db.getGuildConfig(guild.id);
@@ -1088,14 +1225,21 @@ export async function executeQuarantine(guild, targetMember, moderator, reason) 
     
     await targetMember.roles.set(newRoles, `Quarantined by ${moderator.user?.tag || 'System'} | Reason: ${reason}`);
 
-    // 6. DM target user
+    // 6. Schedule auto-unquarantine if duration set
+    if (durationMs && client) {
+      scheduleAutoUnquarantine(client, guild.id, targetMember.id, durationMs);
+    }
+
+    // 7. DM target user
+    const durationLabel = durationMs ? formatDuration(durationMs) : 'Until manually lifted';
     const dmEmbed = embed.danger(
       'Server Isolation Notice',
       `⚠️ You have been placed under **Quarantine** in **${guild.name}**.`,
       [
         { name: 'Reason', value: reason },
-        { name: 'Assigned By', value: `${moderator.user?.tag || 'Automated System'}` },
-        { name: 'Instructions', value: `Your access to the rest of the server has been restricted. Please navigate to the designated quarantine channel: <#${quarantineChannel.id}> to resolve this matter with the moderation staff.` }
+        { name: 'Duration', value: durationLabel, inline: true },
+        { name: 'Assigned By', value: `${moderator.user?.tag || 'Automated System'}`, inline: true },
+        { name: 'Instructions', value: `Your access to the rest of the server has been restricted. Please navigate to <#${quarantineChannel.id}> to resolve this matter.` }
       ]
     );
     await targetMember.send({ embeds: [dmEmbed] }).catch(() => null);
@@ -1124,14 +1268,17 @@ export async function executeQuarantine(guild, targetMember, moderator, reason) 
       'danger'
     ));
 
+
+
     const responseEmbed = embed.danger(
       'User Quarantined',
       `Successfully quarantined **${targetMember.user.tag}**.`,
       [
-        { name: 'Member', value: `${targetMember}`, inline: true },
-        { name: 'Enforced by', value: `${moderator}`, inline: true },
-        { name: 'Channel', value: `<#${quarantineChannel.id}>`, inline: true },
-        { name: 'Reason', value: reason }
+        { name: 'Member',      value: `${targetMember}`,           inline: true },
+        { name: 'Enforced by', value: `${moderator}`,              inline: true },
+        { name: 'Duration',    value: durationLabel,               inline: true },
+        { name: 'Channel',     value: `<#${quarantineChannel.id}>`, inline: true },
+        { name: 'Reason',      value: reason }
       ]
     );
 
@@ -1920,7 +2067,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
     else                           failed++;
 
     // 600ms delay between each to avoid Discord rate limits
-    await new Promise(r => setTimeout(r, 600));
+
   }
 
   const total = targets.size;
@@ -1949,6 +2096,65 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
         { name: '⏭️ Skipped',     value: `\`${skipped}\``,  inline: true },
         { name: '📋 Reason',       value: reason,             inline: false },
         { name: '🔨 Executed By',  value: `${moderator}`,    inline: true }
+      ]
+    )
+  };
+}
+
+// ==========================================
+// MASS UNQUARANTINE — Release all quarantined members in a guild
+// ==========================================
+async function handleMassUnquarantine(guild, moderator, client) {
+  const quarantined = db.getQuarantinedInGuild(guild.id);
+
+  if (!quarantined || quarantined.length === 0) {
+    return { embed: embed.info('Nothing to Release', 'There are no quarantined members in this server.') };
+  }
+
+  let success = 0;
+  let failed  = 0;
+
+  for (const { userId } of quarantined) {
+    try {
+      // Cancel any pending auto-unquarantine timer
+      const key = `${guild.id}-${userId}`;
+      if (autoUnquarantineTimers.has(key)) {
+        clearTimeout(autoUnquarantineTimers.get(key));
+        autoUnquarantineTimers.delete(key);
+      }
+
+      const member = await guild.members.fetch(userId).catch(() => null);
+      if (!member) {
+        db.removeQuarantine(guild.id, userId);
+        success++;
+        continue;
+      }
+
+      const result = await executeUnquarantine(guild, member, moderator);
+      if (result.success) success++;
+      else failed++;
+    } catch { failed++; }
+
+  }
+
+  logToSecurityChannel(guild, embed.log(
+    'Mass Unquarantine Executed',
+    `**${moderator.user.tag}** released all quarantined members.`,
+    [
+      { name: '✅ Released', value: `\`${success}\``, inline: true },
+      { name: '❌ Failed',   value: `\`${failed}\``,  inline: true }
+    ],
+    'success'
+  ));
+
+  return {
+    embed: embed.success(
+      '🔓 Mass Unquarantine Complete',
+      `All quarantined members have been processed.`,
+      [
+        { name: '✅ Released',     value: `\`${success}\``, inline: true },
+        { name: '❌ Failed',        value: `\`${failed}\``,  inline: true },
+        { name: '🔨 Executed By', value: `${moderator}`,    inline: true }
       ]
     )
   };

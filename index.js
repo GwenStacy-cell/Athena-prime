@@ -50,6 +50,8 @@ import roleCreateEvent from './src/events/roleCreate.js';
 import guildUpdateEvent from './src/events/guildUpdate.js';
 import guildMemberUpdateEvent from './src/events/guildMemberUpdate.js';
 import voiceStateUpdateEvent from './src/events/voiceStateUpdate.js';
+import { scheduleAutoUnquarantine } from './src/commands/security.js';
+import db from './src/database.js';
 
 const events = [
   readyEvent,
@@ -105,4 +107,35 @@ client.login(token).catch(err => {
   console.error(chalk.red.bold('\n❌ Connection Failed: Invalid token or network blockage!'));
   console.error(err);
   process.exit(1);
+});
+
+// Restore auto-unquarantine timers after bot is ready
+client.once('ready', async () => {
+  const all = db.getAllQuarantinedUsers();
+  let restored = 0;
+  for (const record of all) {
+    if (!record.expiresAt) continue; // permanent quarantine, skip
+    const remaining = record.expiresAt - Date.now();
+    if (remaining <= 0) {
+      // Already expired while bot was offline — unquarantine now
+      try {
+        const guild = client.guilds.cache.get(record.guildId);
+        if (guild) {
+          const member = await guild.members.fetch(record.userId).catch(() => null);
+          if (member) {
+            const { executeUnquarantine } = await import('./src/commands/security.js');
+            await executeUnquarantine(guild, member, guild.members.me);
+          } else {
+            db.removeQuarantine(record.guildId, record.userId);
+          }
+        }
+      } catch { /* ignore */ }
+    } else {
+      scheduleAutoUnquarantine(client, record.guildId, record.userId, remaining);
+      restored++;
+    }
+  }
+  if (restored > 0) {
+    console.log(chalk.cyan(`⏰ Restored ${restored} auto-unquarantine timer(s) from database.`));
+  }
 });

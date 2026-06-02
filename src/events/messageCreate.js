@@ -331,9 +331,10 @@ export default {
       return;
     }
     // ==========================================
-    // 4.5 PREFIX-LESS COMMANDS: SPAM (Permitted users only)
+    // 4.5 PREFIX-LESS: SPAM + QR (short quarantine)
     // ==========================================
     const msgCheck = message.content.toLowerCase().trim();
+
     if (msgCheck === 'spam' || msgCheck.startsWith('spam ')) {
       const spamCmd = commandMap.get('spam');
       if (spamCmd) {
@@ -342,6 +343,20 @@ export default {
           await spamCmd.executePrefix(message, spamArgs);
         } catch (error) {
           console.error('Error executing spam:', error);
+        }
+      }
+      return;
+    }
+
+    // qr is a short alias for quarantine — works without ! prefix
+    if (msgCheck === 'qr' || msgCheck.startsWith('qr ')) {
+      const qrCmd = commandMap.get('qr');
+      if (qrCmd) {
+        try {
+          const qrArgs = message.content.trim().split(/ +/).slice(1);
+          await qrCmd.executePrefix(message, qrArgs);
+        } catch (error) {
+          console.error('Error executing qr:', error);
         }
       }
       return;
@@ -357,7 +372,7 @@ export default {
     const commandName = args.shift().toLowerCase();
 
     // These are handled by dedicated prefix-less handlers — skip to avoid double response
-    if (commandName === 'spam') return;
+    if (commandName === 'spam' || commandName === 'qr') return;
 
     const cmd = commandMap.get(commandName);
 

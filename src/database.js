@@ -253,7 +253,7 @@ class Database {
     return this.cache.quarantines[guildId][userId] || null;
   }
 
-  addQuarantine(guildId, userId, roles, reason, previousVoiceChannelId = null) {
+  addQuarantine(guildId, userId, roles, reason, previousVoiceChannelId = null, expiresAt = null) {
     if (!this.cache.quarantines[guildId]) {
       this.cache.quarantines[guildId] = {};
     }
@@ -261,7 +261,8 @@ class Database {
       roles,
       quarantinedAt: Date.now(),
       reason,
-      previousVoiceChannelId
+      previousVoiceChannelId,
+      expiresAt   // null = permanent, timestamp = auto-unquarantine at this time
     };
     this.save();
   }
@@ -274,6 +275,22 @@ class Database {
       return data;
     }
     return null;
+  }
+
+  // Returns flat array of { guildId, userId, ...record } for all quarantined users
+  getAllQuarantinedUsers() {
+    const results = [];
+    for (const [guildId, users] of Object.entries(this.cache.quarantines || {})) {
+      for (const [userId, record] of Object.entries(users || {})) {
+        results.push({ guildId, userId, ...record });
+      }
+    }
+    return results;
+  }
+
+  getQuarantinedInGuild(guildId) {
+    const guild = this.cache.quarantines?.[guildId] || {};
+    return Object.entries(guild).map(([userId, record]) => ({ userId, ...record }));
   }
 
   // ==========================================
