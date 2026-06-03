@@ -154,40 +154,43 @@ export default {
     // 1.5. AUTO-MODERATION: ANTI-LINK
     // ==========================================
     if (!isImmune && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      const linkRegex = /https?:\/\/[^\s]+/gi;
-      const matches = message.content.match(linkRegex);
-      if (matches) {
-        const allowedLinks = dbConfig.allowedLinks || [];
-        // A link is disallowed if it doesn't match any allowed domain
-        const hasDisallowedLink = matches.some(url => {
-          if (allowedLinks.length === 0) return true;
-          return !allowedLinks.some(domain => url.toLowerCase().includes(domain.toLowerCase()));
-        });
+      // allowAllLinks = true means admin has disabled the filter for all links
+      if (dbConfig.allowAllLinks !== true) {
+        const linkRegex = /https?:\/\/[^\s]+/gi;
+        const matches = message.content.match(linkRegex);
+        if (matches) {
+          const allowedLinks = dbConfig.allowedLinks || [];
+          // A link is disallowed if it doesn't match any allowed domain
+          const hasDisallowedLink = matches.some(url => {
+            if (allowedLinks.length === 0) return true;
+            return !allowedLinks.some(domain => url.toLowerCase().includes(domain.toLowerCase()));
+          });
 
-        if (hasDisallowedLink) {
-          await message.delete().catch(() => null);
+          if (hasDisallowedLink) {
+            await message.delete().catch(() => null);
 
-          const warnEmbed = embed.warn(
-            'Link Deleted',
-            `${message.author}, posting links is not allowed in this server.`
-          );
-          const alertMsg = await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
-          if (alertMsg) {
-            setTimeout(() => alertMsg.delete().catch(() => null), 6000);
+            const warnEmbed = embed.warn(
+              'Link Deleted',
+              `${message.author}, posting links is not allowed in this server.`
+            );
+            const alertMsg = await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
+            if (alertMsg) {
+              setTimeout(() => alertMsg.delete().catch(() => null), 6000);
+            }
+
+            logToSecurityChannel(message.guild, embed.log(
+              'Link Filtered',
+              `Deleted message containing a disallowed URL from member.`,
+              [
+                { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
+                { name: 'Channel', value: `${message.channel}`, inline: true },
+                { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
+              ],
+              'warning'
+            ));
+
+            return;
           }
-
-          logToSecurityChannel(message.guild, embed.log(
-            'Link Filtered',
-            `Deleted message containing a disallowed URL from member.`,
-            [
-              { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
-              { name: 'Channel', value: `${message.channel}`, inline: true },
-              { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
-            ],
-            'warning'
-          ));
-
-          return;
         }
       }
     }

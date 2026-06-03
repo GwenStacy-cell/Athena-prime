@@ -390,7 +390,6 @@ export const commands = [
       await interaction.reply({ embeds: [result.embed] });
     }
   },
-
   // --- AUTONICK COMMAND ---
   {
     name: 'autonick',
@@ -1024,7 +1023,7 @@ export const commands = [
   // --- LINKSALLOW COMMAND --- Whitelist domains from anti-link filter
   {
     name: 'linksallow',
-    description: 'Whitelist specific domains that bypass the anti-link filter (e.g. youtube, tenor). (Admin only)',
+    description: 'Whitelist domains or allow ALL links. (Admin only)',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
     options: [
@@ -1034,14 +1033,16 @@ export const commands = [
         type: 3,
         required: true,
         choices: [
-          { name: 'Add Domain',    value: 'add' },
-          { name: 'Remove Domain', value: 'remove' },
-          { name: 'List Domains',  value: 'list' }
+          { name: 'Add Domain',        value: 'add' },
+          { name: 'Remove Domain',     value: 'remove' },
+          { name: 'List Domains',      value: 'list' },
+          { name: 'Allow ALL Links',   value: 'allowall' },
+          { name: 'Disallow All Links (reset)', value: 'disallowall' }
         ]
       },
       {
         name: 'domain',
-        description: 'Domain to add/remove (e.g. youtube.com, tenor.com, giphy.com)',
+        description: 'Domain to add/remove (e.g. youtube.com, tenor.com)',
         type: 3,
         required: false
       }
@@ -1049,8 +1050,11 @@ export const commands = [
     async executePrefix(message, args) {
       const action = args[0]?.toLowerCase();
       const domain = args.slice(1).join(' ').trim();
-      if (!action || (action !== 'list' && !domain)) {
-        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!linksallow add <domain>\`, \`!linksallow remove <domain>\`, \`!linksallow list\``)] });
+      const nodomainActions = ['list', 'allowall', 'disallowall'];
+      if (!action || (!nodomainActions.includes(action) && !domain)) {
+        return message.reply({ embeds: [embed.warn('Usage',
+          `${message.author} \`!linksallow add <domain>\` / \`!linksallow remove <domain>\` / \`!linksallow list\` / \`!linksallow allowall\` / \`!linksallow disallowall\``
+        )] });
       }
       const result = await handleLinksAllow(message.guild, action, domain);
       await message.reply({ embeds: [result.embed] });
@@ -1058,7 +1062,8 @@ export const commands = [
     async executeSlash(interaction) {
       const action = interaction.options.getString('action');
       const domain = interaction.options.getString('domain');
-      if (action !== 'list' && !domain) {
+      const nodomainActions = ['list', 'allowall', 'disallowall'];
+      if (!nodomainActions.includes(action) && !domain) {
         return interaction.reply({ embeds: [embed.warn('Missing Domain', 'Please provide a domain name.')], ephemeral: true });
       }
       const result = await handleLinksAllow(interaction.guild, action, domain);
@@ -1970,6 +1975,27 @@ async function handleDeafen(guild, deaf) {
 // LINKSALLOW — Per-guild domain whitelist for anti-link filter
 // ==========================================
 async function handleLinksAllow(guild, action, domain) {
+  if (action === 'allowall') {
+    db.updateGuildConfig(guild.id, { allowAllLinks: true });
+    return {
+      embed: embed.success(
+        '🔓 All Links Allowed',
+        'The anti-link filter has been **completely disabled** for this server.\n\nAll users can now post any link freely.\n\nUse `/linksallow disallowall` to re-enable the filter.',
+        [{ name: '⚠️ Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
+      )
+    };
+  }
+
+  if (action === 'disallowall') {
+    db.updateGuildConfig(guild.id, { allowAllLinks: false });
+    return {
+      embed: embed.warn(
+        '🔒 Anti-Link Filter Restored',
+        'The anti-link filter is **active** again.\n\nOnly whitelisted domains are allowed. Use `/linksallow add <domain>` to whitelist specific domains.'
+      )
+    };
+  }
+
   if (action === 'add') {
     // Normalize: strip protocol and path, keep domain only
     const cleanDomain = (domain || '')
@@ -2004,7 +2030,19 @@ async function handleLinksAllow(guild, action, domain) {
   }
 
   // list
-  const list = db.getAllowedLinks(guild.id);
+  const config   = db.getGuildConfig(guild.id);
+  const allOpen  = config.allowAllLinks === true;
+  const list     = db.getAllowedLinks(guild.id);
+
+  if (allOpen) {
+    return {
+      embed: embed.info(
+        '🔓 All Links Allowed',
+        'The anti-link filter is currently **fully disabled** — all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
+      )
+    };
+  }
+
   if (list.length === 0) {
     return {
       embed: embed.info(
