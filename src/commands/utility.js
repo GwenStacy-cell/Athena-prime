@@ -250,6 +250,13 @@ async function getHelpEmbed(guild) {
         `\`${p}spamlist\` — List all permitted spam users *(Bot Owner only)*`
     },
     {
+      name: '🌀 VC Drag',
+      value:
+        `\`${p}vcdrag <@user> [interval]\` — Drag a user through all VCs endlessly (interval in seconds, default 2)\n` +
+        `\`${p}vcdragstop <@user>\` — Stop the drag session for a user\n` +
+        `\`${p}vcdraglist\` — Show all currently active drag sessions in the server`
+    },
+    {
       name: '⚙️ Utilities',
       value:
         `\`${p}status\` — Athena Prime health & live security overview\n` +
