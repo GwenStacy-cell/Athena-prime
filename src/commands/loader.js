@@ -5,6 +5,7 @@ import { commands as enukeCmds } from './enuke.js';
 import { commands as spamCmds } from './spam.js';
 import { commands as modmodeCmds } from './modmode.js';
 import { commands as vcdragCmds } from './vcdrag.js';
+import { commands as triggerCmds } from './trigger.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -13,7 +14,8 @@ export const allCommands = [
   ...enukeCmds,
   ...spamCmds,
   ...modmodeCmds,
-  ...vcdragCmds
+  ...vcdragCmds,
+  ...triggerCmds
 ];
 
 export const commandMap = new Map();

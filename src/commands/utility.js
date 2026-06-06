@@ -257,6 +257,13 @@ async function getHelpEmbed(guild) {
         `\`${p}vcdraglist\` — Show all currently active drag sessions in the server`
     },
     {
+      name: '🤖 Auto-Responder (Triggers)',
+      value:
+        `\`${p}trigger create <match> | <response>\` — Add a custom trigger response\n` +
+        `\`${p}trigger remove <match>\` — Delete a trigger\n` +
+        `\`${p}trigger list\` — Show all active triggers in the server`
+    },
+    {
       name: '⚙️ Utilities',
       value:
         `\`${p}status\` — Athena Prime health & live security overview\n` +

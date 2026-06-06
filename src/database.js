@@ -17,7 +17,8 @@ const DEFAULT_SCHEMA = {
   spamPermitted: [], // global list
   backups: {},       // backupId -> backup data
   guildBackupMap: {},// guildId -> backupId (for overwrite detection)
-  modModes: {}       // guildId -> { expiresAt, startedBy }
+  modModes: {},      // guildId -> { expiresAt, startedBy }
+  triggers: {}       // guildId -> [ {match, response} ]
 };
 
 class Database {
@@ -41,6 +42,7 @@ class Database {
         this.cache.backups        = this.cache.backups        || {};
         this.cache.guildBackupMap = this.cache.guildBackupMap || {};
         this.cache.modModes       = this.cache.modModes       || {};
+        this.cache.triggers       = this.cache.triggers       || {};
       } else {
         this.save();
       }
@@ -435,6 +437,43 @@ class Database {
       return false;
     }
     return true;
+  }
+
+  // ==========================================
+  // TRIGGERS (Auto-Responder)
+  // ==========================================
+
+  getTriggers(guildId) {
+    if (!this.cache.triggers) this.cache.triggers = {};
+    return this.cache.triggers[guildId] || [];
+  }
+
+  addTrigger(guildId, match, response) {
+    if (!this.cache.triggers) this.cache.triggers = {};
+    if (!this.cache.triggers[guildId]) this.cache.triggers[guildId] = [];
+
+    const exists = this.cache.triggers[guildId].find(t => t.match.toLowerCase() === match.toLowerCase());
+    if (exists) return false;
+
+    this.cache.triggers[guildId].push({ match, response });
+    this.save();
+    return true;
+  }
+
+  removeTrigger(guildId, match) {
+    if (!this.cache.triggers) return false;
+    if (!this.cache.triggers[guildId]) return false;
+
+    const initialLength = this.cache.triggers[guildId].length;
+    this.cache.triggers[guildId] = this.cache.triggers[guildId].filter(
+      t => t.match.toLowerCase() !== match.toLowerCase()
+    );
+
+    if (this.cache.triggers[guildId].length !== initialLength) {
+      this.save();
+      return true;
+    }
+    return false;
   }
 }
 

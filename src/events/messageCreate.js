@@ -316,6 +316,23 @@ export default {
     }
 
     // ==========================================
+    // 3.5. AUTO-RESPONDER TRIGGERS
+    // ==========================================
+    // Do not trigger on prefix commands (avoids overlapping logic)
+    const prefix = dbConfig.prefix || '!';
+    if (!message.content.startsWith(prefix) && !isImmune) {
+      const msgLowerForTriggers = message.content.toLowerCase();
+      const triggers = db.getTriggers(guildId);
+      
+      for (const t of triggers) {
+        if (msgLowerForTriggers.includes(t.match.toLowerCase())) {
+          await message.channel.send(t.response).catch(() => null);
+          break; // Reply only once per message
+        }
+      }
+    }
+
+    // ==========================================
     // 4. PREFIX-LESS COMMANDS: PING
     // ==========================================
     if (message.content.toLowerCase().trim() === 'ping') {
@@ -412,7 +429,6 @@ export default {
     // ==========================================
     // 5. COMMAND ENGINE (PREFIX PARSER)
     // ==========================================
-    const prefix = dbConfig.prefix;
     if (!message.content.startsWith(prefix)) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/);
