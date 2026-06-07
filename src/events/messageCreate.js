@@ -328,14 +328,11 @@ export default {
         if (msgLowerForTriggers.includes(t.match.toLowerCase())) {
           const responseText = t.response.trim();
           const isUrl = /^https?:\/\/[^\s]+$/i.test(responseText);
-          const isMedia = /\.(png|jpg|jpeg|gif|webp|mp4|mov|webm)(\?.*)?$/i.test(responseText);
+          const isMediaOrGif = /\.(png|jpg|jpeg|gif|webp|mp4|mov|webm)(\?.*)?$/i.test(responseText) || /tenor\.com|giphy\.com|imgur\.com/i.test(responseText);
 
-          if (isUrl && isMedia) {
-            try {
-              await message.channel.send({ files: [{ attachment: responseText }] });
-            } catch (err) {
-              await message.channel.send(responseText).catch(() => null);
-            }
+          if (isUrl && isMediaOrGif) {
+            // Send as a masked markdown link to hide the raw text while forcing an autoplaying unfurl
+            await message.channel.send(`[\u200B](${responseText})`).catch(() => null);
           } else {
             await message.channel.send(responseText).catch(() => null);
           }
