@@ -341,12 +341,15 @@ export const commands = [
       let channel = null;
       let text = '';
 
+      // Accept GuildText AND GuildAnnouncement (news channels)
+      const sendableTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread];
+
       // Try to parse the first argument as a channel mention, ID, or name
       const firstArg = args[0].replace(/[<#>]/g, '');
-      const possibleChannel = message.guild.channels.cache.get(firstArg) 
+      const possibleChannel = message.guild.channels.cache.get(firstArg)
         || message.guild.channels.cache.find(c => c.name.toLowerCase() === firstArg.toLowerCase());
 
-      if (possibleChannel && possibleChannel.type === ChannelType.GuildText) {
+      if (possibleChannel && sendableTypes.includes(possibleChannel.type)) {
         channel = possibleChannel;
         text = args.slice(1).join(' ');
       } else {
@@ -358,21 +361,45 @@ export const commands = [
         return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please enter a message to send.`)] });
       }
 
-      await channel.send(text);
-      await message.react('✅').catch(() => null);
+      // Check bot has permission to send in the target channel
+      const botMember = message.guild.members.me;
+      if (!channel.permissionsFor(botMember).has(PermissionFlagsBits.SendMessages)) {
+        return message.reply({ embeds: [embed.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}. Grant me access to that channel first.`)] });
+      }
+
+      try {
+        await channel.send(text);
+        await message.react('✅').catch(() => null);
+      } catch (err) {
+        await message.reply({ embeds: [embed.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)] }).catch(() => null);
+      }
     },
     async executeSlash(interaction) {
       const text = interaction.options.getString('message');
       const channel = interaction.options.getChannel('channel') || interaction.channel;
 
-      if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.PublicThread && channel.type !== ChannelType.PrivateThread) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target channel must be a text channel.`)], ephemeral: true });
+      // Accept GuildText, GuildAnnouncement (news), threads
+      const sendableTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread];
+
+      if (!sendableTypes.includes(channel.type)) {
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target must be a text channel, announcement channel, or thread.`)], ephemeral: true });
       }
 
-      await channel.send(text);
-      await interaction.reply({ embeds: [embed.success('Message Dispatched', `Message successfully sent to ${channel}.`)], ephemeral: true });
+      // Check bot has permission to send in the target channel
+      const botMember = interaction.guild.members.me;
+      if (!channel.permissionsFor(botMember).has(PermissionFlagsBits.SendMessages)) {
+        return interaction.reply({ embeds: [embed.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}.\n\nGrant me access to that channel first.`)], ephemeral: true });
+      }
+
+      try {
+        await channel.send(text);
+        await interaction.reply({ embeds: [embed.success('Message Dispatched', `Message successfully sent to ${channel}.`)], ephemeral: true });
+      } catch (err) {
+        await interaction.reply({ embeds: [embed.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)], ephemeral: true }).catch(() => null);
+      }
     }
   },
+
 
   // --- ANNOUNCE COMMAND ---
   {
