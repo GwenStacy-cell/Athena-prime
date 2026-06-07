@@ -369,7 +369,7 @@ export const commands = [
 
       try {
         await channel.send(text);
-        await message.react('✅').catch(() => null);
+        await message.delete().catch(() => null);
       } catch (err) {
         await message.reply({ embeds: [embed.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)] }).catch(() => null);
       }
