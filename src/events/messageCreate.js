@@ -335,22 +335,14 @@ export default {
           }
 
           const isUrl = /^https?:\/\/[^\s]+$/i.test(responseText);
-          const isTenorOrGiphy = /tenor\.com|giphy\.com|imgur\.com/i.test(responseText);
 
           if (isUrl) {
-            // Convert Tenor/Imgur/Giphy .mp4 to .gif so Discord can embed it and auto-play
-            if (/\.mp4(\?.*)?$/i.test(responseText) && isTenorOrGiphy) {
-              responseText = responseText.replace(/\.mp4(\?.*)?$/i, '.gif$1');
-            }
-
             if (/\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(responseText)) {
               // Standard images sent as invisible embeds to hide the URL text
               const e = new EmbedBuilder().setImage(responseText).setColor(0x2b2d31);
               await message.channel.send({ embeds: [e] }).catch(() => null);
-            } else if (isTenorOrGiphy) {
-              // If it's a tenor/giphy page link (not media file), Discord hides it automatically natively
-              await message.channel.send(responseText).catch(() => null);
             } else {
+              // If it's a tenor/giphy page link, or an .mp4, send the raw link and let Discord unfurl it
               await message.channel.send(responseText).catch(() => null);
             }
           } else {
