@@ -10,6 +10,31 @@ import {
 import db from '../database.js';
 import embed from '../embed.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
+import fs from 'fs';
+import path from 'path';
+
+// Load emoji map (populated by upload-jtc-emojis.mjs)
+const EMOJI_MAP_PATH = path.resolve('assets/jtc-emoji-map.json');
+let emojiMap = {};
+try {
+  if (fs.existsSync(EMOJI_MAP_PATH)) {
+    emojiMap = JSON.parse(fs.readFileSync(EMOJI_MAP_PATH, 'utf8'));
+    console.log(`[JTC] Loaded ${Object.keys(emojiMap).length} custom emojis from emoji map.`);
+  }
+} catch { /* use text emoji fallback */ }
+
+// Get emoji object for a given key (custom or text fallback)
+function getEmoji(key) {
+  if (emojiMap[key]?.id) return { id: emojiMap[key].id, name: emojiMap[key].name };
+  // Fallback text emoji
+  const fallbacks = {
+    name: '✏️', limit: '👥', status: '💬', game: '🎮', lfm: '🔍',
+    bitrate: '🎚️', region: '🌍', text: '#️⃣', nsfw: '⚠️', claim: '👑',
+    lock: '🔒', unlock: '🔓', ghost: '👻', unghost: '👁️',
+    permit: '✅', reject: '🚫', invite: '📨', transfer: '⭐'
+  };
+  return fallbacks[key] || '❔';
+}
 
 // ==========================================
 // CONTROL PANEL BUILDER (VoiceMaster style)
@@ -34,14 +59,16 @@ export function buildControlPanel(vcChannel, ownerMember) {
     .setCustomId('jtc_settings_menu')
     .setPlaceholder('Channel Settings')
     .addOptions([
-      { label: 'Name', description: 'Change the channel name', value: 'jtc_name', emoji: '✏️' },
-      { label: 'Limit', description: 'Change the channel user limit', value: 'jtc_limit', emoji: '👥' },
-      { label: 'Status', description: 'Set a custom channel status', value: 'jtc_status', emoji: '💬' },
-      { label: 'Bitrate', description: 'Change the channel bitrate', value: 'jtc_bitrate', emoji: '🎚️' },
-      { label: 'Region', description: 'Change the channel voice region', value: 'jtc_region', emoji: '🌍' },
-      { label: 'NSFW', description: 'Toggle NSFW on your channel', value: 'jtc_nsfw', emoji: '⚠️' },
-      { label: 'Claim', description: 'Claim ownership of the channel', value: 'jtc_claim', emoji: '⚡' },
-      { label: 'Info', description: 'Show your channel details', value: 'jtc_info', emoji: 'ℹ️' }
+      { label: 'Name', description: 'Change the channel name', value: 'jtc_name', emoji: getEmoji('name') },
+      { label: 'Limit', description: 'Change the channel user limit', value: 'jtc_limit', emoji: getEmoji('limit') },
+      { label: 'Status', description: 'Set a custom channel status', value: 'jtc_status', emoji: getEmoji('status') },
+      { label: 'Game', description: 'Set channel name to the game you are playing', value: 'jtc_game', emoji: getEmoji('game') },
+      { label: 'LFM', description: 'Post a Looking For Members message', value: 'jtc_lfm', emoji: getEmoji('lfm') },
+      { label: 'Bitrate', description: 'Change the channel bitrate', value: 'jtc_bitrate', emoji: getEmoji('bitrate') },
+      { label: 'Region', description: 'Change the channel voice region', value: 'jtc_region', emoji: getEmoji('region') },
+      { label: 'Text', description: 'Create a temporary text channel', value: 'jtc_text', emoji: getEmoji('text') },
+      { label: 'NSFW', description: 'Toggle NSFW on your channel', value: 'jtc_nsfw', emoji: getEmoji('nsfw') },
+      { label: 'Claim', description: 'Claim ownership of the channel', value: 'jtc_claim', emoji: getEmoji('claim') }
     ]);
 
   // ── Channel Permissions Dropdown ──
@@ -49,14 +76,14 @@ export function buildControlPanel(vcChannel, ownerMember) {
     .setCustomId('jtc_perms_menu')
     .setPlaceholder('Channel Permissions')
     .addOptions([
-      { label: 'Lock', description: 'Prevent others from joining', value: 'jtc_lock', emoji: '🔒' },
-      { label: 'Unlock', description: 'Reopen the channel to everyone', value: 'jtc_unlock', emoji: '🔓' },
-      { label: 'Ghost', description: 'Make your channel invisible to others', value: 'jtc_ghost', emoji: '👻' },
-      { label: 'Unghost', description: 'Make your channel visible again', value: 'jtc_unghost', emoji: '👁️' },
-      { label: 'Permit', description: 'Permit a user/role to access the channel', value: 'jtc_permit', emoji: '✅' },
-      { label: 'Reject', description: 'Reject/kick a user from the channel', value: 'jtc_reject', emoji: '🚫' },
-      { label: 'Invite', description: 'Send a user a DM invite to join', value: 'jtc_invite', emoji: '📨' },
-      { label: 'Transfer', description: 'Transfer ownership to another user', value: 'jtc_transfer', emoji: '👑' }
+      { label: 'Lock', description: 'Prevent others from joining', value: 'jtc_lock', emoji: getEmoji('lock') },
+      { label: 'Unlock', description: 'Reopen the channel to everyone', value: 'jtc_unlock', emoji: getEmoji('unlock') },
+      { label: 'Ghost', description: 'Make your channel invisible to others', value: 'jtc_ghost', emoji: getEmoji('ghost') },
+      { label: 'Unghost', description: 'Make your channel visible again', value: 'jtc_unghost', emoji: getEmoji('unghost') },
+      { label: 'Permit', description: 'Permit a user/role to access the channel', value: 'jtc_permit', emoji: getEmoji('permit') },
+      { label: 'Reject', description: 'Reject/kick a user from the channel', value: 'jtc_reject', emoji: getEmoji('reject') },
+      { label: 'Invite', description: 'Send a user a DM invite to join', value: 'jtc_invite', emoji: getEmoji('invite') },
+      { label: 'Transfer', description: 'Transfer ownership to another user', value: 'jtc_transfer', emoji: getEmoji('transfer') }
     ]);
 
   const row1 = new ActionRowBuilder().addComponents(settingsMenu);
@@ -145,6 +172,53 @@ export async function handleJtcSelectMenu(interaction) {
     const current = vcChannel.nsfw;
     await vcChannel.setNSFW(!current).catch(() => null);
     return interaction.reply({ embeds: [current ? embed.success('NSFW Disabled', 'Your channel is no longer marked NSFW.') : embed.warn('NSFW Enabled ⚠️', 'Your channel has been marked as NSFW.')] });
+  }
+
+  // ── GAME — set channel name to game owner is playing ──
+  if (value === 'jtc_game') {
+    const ownerMember = await guild.members.fetch(jtcData.ownerId).catch(() => null);
+    const activity = ownerMember?.presence?.activities?.find(a => a.type === 0); // 0 = Playing
+    if (!activity) {
+      return interaction.reply({ embeds: [embed.warn('No Game Detected', 'You must be playing a game with rich presence enabled for this to work.')], ephemeral: true });
+    }
+    await vcChannel.setName(activity.name).catch(() => null);
+    return interaction.reply({ embeds: [embed.success('Game Set 🎮', `Channel renamed to **${activity.name}**.`)] });
+  }
+
+  // ── LFM — post Looking For Members message ──
+  if (value === 'jtc_lfm') {
+    const lfmEmbed = new EmbedBuilder()
+      .setColor(0xFFD700)
+      .setTitle('🔍 Looking for Members!')
+      .setDescription(`**${member.displayName}** is looking for members to join their voice channel!\n\n**Channel:** ${vcChannel}\n**Slots Available:** ${vcChannel.userLimit === 0 ? 'Unlimited' : vcChannel.userLimit - vcChannel.members.size}`)
+      .setFooter({ text: 'Join their channel to play together!' })
+      .setTimestamp();
+    await interaction.channel.send({ embeds: [lfmEmbed] }).catch(() => null);
+    return interaction.reply({ embeds: [embed.success('LFM Posted 🔍', 'Your Looking for Members message has been posted in this channel.')], ephemeral: true });
+  }
+
+  // ── TEXT — create a temp text channel linked to VC ──
+  if (value === 'jtc_text') {
+    const jtcCfg = db.getJtcConfig(guild.id);
+    const existing = guild.channels.cache.find(c => c.name === `${vcChannel.name}-text` && c.parentId === (jtcCfg?.categoryId || vcChannel.parentId));
+    if (existing) {
+      return interaction.reply({ embeds: [embed.warn('Already Exists', `A text channel already exists: ${existing}`)], ephemeral: true });
+    }
+    const textCh = await guild.channels.create({
+      name: `${vcChannel.name.toLowerCase().replace(/\s+/g, '-')}-text`,
+      type: ChannelType.GuildText,
+      parent: jtcCfg?.categoryId || vcChannel.parentId || null,
+      permissionOverwrites: [
+        { id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] },
+        { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ManageChannels] }
+      ],
+      reason: `JTC Temp Text for ${member.user.tag}`
+    });
+    // Grant access to all current VC members
+    for (const [, m] of vcChannel.members) {
+      await textCh.permissionOverwrites.edit(m.id, { ViewChannel: true, SendMessages: true }).catch(() => null);
+    }
+    return interaction.reply({ embeds: [embed.success('Text Channel Created #️⃣', `Temporary text channel created: ${textCh}\n\nIt is only visible to members in your voice channel.`)] });
   }
 
   // ── MODAL-BASED ACTIONS ──
