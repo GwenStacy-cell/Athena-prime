@@ -489,9 +489,9 @@ class Database {
     return this.cache.jtc[guildId] || null;
   }
 
-  setJtcConfig(guildId, lobbyChannelId, categoryId) {
+  setJtcConfig(guildId, lobbyChannelId, categoryId, panelChannelId = null) {
     if (!this.cache.jtc) this.cache.jtc = {};
-    this.cache.jtc[guildId] = { lobbyChannelId, categoryId };
+    this.cache.jtc[guildId] = { lobbyChannelId, categoryId, panelChannelId };
     this.save();
   }
 

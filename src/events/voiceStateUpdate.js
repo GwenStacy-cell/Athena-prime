@@ -71,9 +71,16 @@ export default {
         // Register in database
         db.addJtcChannel(tempChannel.id, member.id, guild.id);
 
-        // Send control panel to the VC text chat (Discord adds text chat to VCs)
+        // Send control panel — to configured panel channel or the VC text chat
         const panel = buildControlPanel(tempChannel, member);
-        await tempChannel.send(panel).catch(() => null);
+        const jtcCfg = db.getJtcConfig(guild.id);
+        if (jtcCfg?.panelChannelId) {
+          const panelCh = guild.channels.cache.get(jtcCfg.panelChannelId);
+          if (panelCh) await panelCh.send(panel).catch(() => null);
+          else await tempChannel.send(panel).catch(() => null);
+        } else {
+          await tempChannel.send(panel).catch(() => null);
+        }
 
       } catch (err) {
         console.error('[JTC] Failed to create temp channel:', err);

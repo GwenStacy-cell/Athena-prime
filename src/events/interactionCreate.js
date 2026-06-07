@@ -6,7 +6,7 @@ import { getAntinukeConfigPanel } from '../commands/security.js';
 import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
 import { handleSpamModal, handleSpamMoreButton } from '../commands/spam.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
-import { handleJtcButton, handleJtcModal, handleJtcLimitSelect, handleJtcBitrateSelect } from '../commands/jtc.js';
+import { handleJtcSelectMenu, handleJtcModal } from '../commands/jtc.js';
 
 export default {
   name: 'interactionCreate',
@@ -200,6 +200,22 @@ export default {
       // Re-compile layout and update message
       const panel = await getAntinukeConfigPanel(interaction.guild);
       await interaction.update({ embeds: [panel.embed], components: panel.components });
+    }
+
+    // ==========================================
+    // 4. STRING SELECT MENU (JTC Dropdowns)
+    // ==========================================
+    if (interaction.isStringSelectMenu()) {
+      if (interaction.customId === 'jtc_settings_menu' || interaction.customId === 'jtc_perms_menu') {
+        try {
+          await handleJtcSelectMenu(interaction);
+        } catch (err) {
+          console.error('[JTC SelectMenu]', err);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ An error occurred.', ephemeral: true }).catch(() => null);
+          }
+        }
+      }
     }
   }
 };
