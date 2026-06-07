@@ -101,6 +101,20 @@ async function restoreGuild(guild, backupData, statusCallback) {
   let created = 0;
   let failed  = 0;
 
+  await statusCallback('🧹 **Wiping** existing channels and roles...');
+
+  // --- Wipe Existing Channels ---
+  for (const channel of guild.channels.cache.values()) {
+    try { await channel.delete('Athena Prime — Backup Restore Wipe'); } catch {}
+  }
+
+  // --- Wipe Existing Roles ---
+  for (const role of guild.roles.cache.values()) {
+    if (role.id !== guild.id && !role.managed && role.editable) {
+      try { await role.delete('Athena Prime — Backup Restore Wipe'); } catch {}
+    }
+  }
+
   await statusCallback('🔄 Restoring **roles**...');
 
   // --- Restore Roles ---
@@ -258,8 +272,8 @@ async function handleRestore(message, args) {
   if (!targetGuild) return message.reply({ embeds: [embed.danger('Guild Not Found', 'Could not find the target server. Provide a valid server ID as the second argument.')] });
 
   const confirmMsg = await message.reply({ embeds: [embed.warn(
-    '⚠️ Confirm Restore',
-    `You are about to restore backup \`${backupId}\` (**${backupData.guildName}**) into **${targetGuild.name}**.\n\nThis will **add** all backed-up roles and channels on top of existing ones.\n\nType \`CONFIRM\` within 15 seconds to proceed.`
+    '⚠️ Confirm Destructive Restore',
+    `You are about to restore backup \`${backupId}\` (**${backupData.guildName}**) into **${targetGuild.name}**.\n\n🚨 **WARNING: This will WIPE AND DELETE ALL EXISTING CHANNELS AND ROLES** in the target server before restoring the backup.\n\nType \`CONFIRM\` within 15 seconds to proceed.`
   )] });
 
   const filter = m => m.author.id === message.author.id && m.content === 'CONFIRM';
