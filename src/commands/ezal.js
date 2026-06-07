@@ -103,18 +103,25 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
 
   await statusCallback('**Wiping** existing channels and roles...');
 
+  // Fetch everything to ensure cache isn't empty
+  const channels = await guild.channels.fetch().catch(() => new Map());
+  const roles = await guild.roles.fetch().catch(() => new Map());
+
   // --- Wipe Existing Channels ---
-  for (const channel of guild.channels.cache.values()) {
-    if (channel.id === excludeChannelId) continue;
-    try { await channel.delete('Athena Prime — Backup Restore Wipe'); } catch {}
+  const channelDeletions = [];
+  for (const channel of channels.values()) {
+    if (!channel || channel.id === excludeChannelId) continue;
+    channelDeletions.push(channel.delete('Athena Prime — Backup Restore Wipe').catch(() => null));
   }
+  await Promise.allSettled(channelDeletions);
 
   // --- Wipe Existing Roles ---
-  for (const role of guild.roles.cache.values()) {
-    if (role.id !== guild.id && !role.managed && role.editable) {
-      try { await role.delete('Athena Prime — Backup Restore Wipe'); } catch {}
-    }
+  const roleDeletions = [];
+  for (const role of roles.values()) {
+    if (!role || role.id === guild.id || role.managed || !role.editable) continue;
+    roleDeletions.push(role.delete('Athena Prime — Backup Restore Wipe').catch(() => null));
   }
+  await Promise.allSettled(roleDeletions);
 
   await statusCallback('Restoring **roles**...');
 
