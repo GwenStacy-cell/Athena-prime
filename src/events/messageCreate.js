@@ -326,7 +326,19 @@ export default {
       
       for (const t of triggers) {
         if (msgLowerForTriggers.includes(t.match.toLowerCase())) {
-          await message.channel.send(t.response).catch(() => null);
+          const responseText = t.response.trim();
+          const isUrl = /^https?:\/\/[^\s]+$/i.test(responseText);
+          const isMedia = /\.(png|jpg|jpeg|gif|webp|mp4|mov|webm)(\?.*)?$/i.test(responseText);
+
+          if (isUrl && isMedia) {
+            try {
+              await message.channel.send({ files: [{ attachment: responseText }] });
+            } catch (err) {
+              await message.channel.send(responseText).catch(() => null);
+            }
+          } else {
+            await message.channel.send(responseText).catch(() => null);
+          }
           break; // Reply only once per message
         }
       }
