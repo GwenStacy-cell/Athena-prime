@@ -1,4 +1,4 @@
-import { PermissionFlagsBits } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
 import db from '../database.js';
@@ -326,13 +326,28 @@ export default {
       
       for (const t of triggers) {
         if (msgLowerForTriggers.includes(t.match.toLowerCase())) {
-          const responseText = t.response.trim();
-          const isUrl = /^https?:\/\/[^\s]+$/i.test(responseText);
-          const isMediaOrGif = /\.(png|jpg|jpeg|gif|webp|mp4|mov|webm)(\?.*)?$/i.test(responseText) || /tenor\.com|giphy\.com|imgur\.com/i.test(responseText);
+          let responseText = t.response.trim();
 
-          if (isUrl && isMediaOrGif) {
-            // Send as a masked markdown link to hide the raw text while forcing an autoplaying unfurl
-            await message.channel.send(`[\u200B](${responseText})`).catch(() => null);
+          // Check if it's a Tenor MP4/GIF direct link (often wrapped in Discord proxies)
+          const tenorMatch = responseText.match(/media\.tenor\.com\/([^/]+)\/([^/]+)\.(mp4|gif)/i);
+          if (tenorMatch) {
+            // Reconstruct the Tenor webpage URL which Discord natively parses without showing the URL or video controls
+            responseText = `https://tenor.com/view/${tenorMatch[2]}-${tenorMatch[1]}`;
+          }
+
+          const isUrl = /^https?:\/\/[^\s]+$/i.test(responseText);
+          const isTenorOrGiphy = /tenor\.com|giphy\.com/i.test(responseText);
+
+          if (isUrl) {
+            if (isTenorOrGiphy) {
+              await message.channel.send(responseText).catch(() => null);
+            } else if (/\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(responseText)) {
+              // Standard images sent as invisible embeds to hide the URL text
+              const e = new EmbedBuilder().setImage(responseText).setColor(0x2b2d31);
+              await message.channel.send({ embeds: [e] }).catch(() => null);
+            } else {
+              await message.channel.send(responseText).catch(() => null);
+            }
           } else {
             await message.channel.send(responseText).catch(() => null);
           }
