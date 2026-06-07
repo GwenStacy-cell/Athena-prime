@@ -328,23 +328,28 @@ export default {
         if (msgLowerForTriggers.includes(t.match.toLowerCase())) {
           let responseText = t.response.trim();
 
-          // Check if it's a Tenor MP4/GIF direct link (often wrapped in Discord proxies)
-          const tenorMatch = responseText.match(/media\.tenor\.com\/([^/]+)\/([^/]+)\.(mp4|gif)/i);
-          if (tenorMatch) {
-            // Reconstruct the Tenor webpage URL which Discord natively parses without showing the URL or video controls
-            responseText = `https://tenor.com/view/${tenorMatch[2]}-${tenorMatch[1]}`;
+          // Extract original URL from Discord proxy link if needed
+          const proxyMatch = responseText.match(/https\/([^\s]+)/i);
+          if (responseText.includes('discordapp.net/external') && proxyMatch) {
+            responseText = 'https://' + proxyMatch[1];
           }
 
           const isUrl = /^https?:\/\/[^\s]+$/i.test(responseText);
-          const isTenorOrGiphy = /tenor\.com|giphy\.com/i.test(responseText);
+          const isTenorOrGiphy = /tenor\.com|giphy\.com|imgur\.com/i.test(responseText);
 
           if (isUrl) {
-            if (isTenorOrGiphy) {
-              await message.channel.send(responseText).catch(() => null);
-            } else if (/\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(responseText)) {
+            // Convert Tenor/Imgur/Giphy .mp4 to .gif so Discord can embed it and auto-play
+            if (/\.mp4(\?.*)?$/i.test(responseText) && isTenorOrGiphy) {
+              responseText = responseText.replace(/\.mp4(\?.*)?$/i, '.gif$1');
+            }
+
+            if (/\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(responseText)) {
               // Standard images sent as invisible embeds to hide the URL text
               const e = new EmbedBuilder().setImage(responseText).setColor(0x2b2d31);
               await message.channel.send({ embeds: [e] }).catch(() => null);
+            } else if (isTenorOrGiphy) {
+              // If it's a tenor/giphy page link (not media file), Discord hides it automatically natively
+              await message.channel.send(responseText).catch(() => null);
             } else {
               await message.channel.send(responseText).catch(() => null);
             }
