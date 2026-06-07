@@ -344,10 +344,11 @@ export const commands = [
       // Accept GuildText AND GuildAnnouncement (news channels)
       const sendableTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread];
 
-      // Try to parse the first argument as a channel mention, ID, or name
+      // Try to parse the first argument as a channel mention or ID
       const firstArg = args[0].replace(/[<#>]/g, '');
-      const possibleChannel = message.guild.channels.cache.get(firstArg)
-        || message.guild.channels.cache.find(c => c.name.toLowerCase() === firstArg.toLowerCase());
+      // Look globally across all servers the bot is in
+      const possibleChannel = message.client.channels.cache.get(firstArg)
+        || (message.guild && message.guild.channels.cache.find(c => c.name.toLowerCase() === firstArg.toLowerCase()));
 
       if (possibleChannel && sendableTypes.includes(possibleChannel.type)) {
         channel = possibleChannel;
