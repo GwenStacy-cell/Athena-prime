@@ -119,15 +119,25 @@ export default {
 
         // ── Send panel to VC text chat (delayed to let Discord init the channel) ──
         setTimeout(async () => {
-          try {
-            const freshChannel = guild.channels.cache.get(tempChannel.id);
-            if (!freshChannel) { console.warn('[JTC] VC channel gone before panel send'); return; }
-            await freshChannel.send(vcPanel);
-            console.log(`[JTC] ✅ Sent panel to VC text: ${freshChannel.name}`);
-          } catch (e) {
-            console.error(`[JTC] ❌ VC text send failed: ${e.message}`);
-          }
-        }, 2000); // 2 second delay for Discord to fully init the VC text
+          let attempt = 0;
+          const sendPanel = async () => {
+            try {
+              const freshChannel = await guild.channels.fetch(tempChannel.id).catch(() => null);
+              if (!freshChannel) { console.warn('[JTC] VC channel gone before panel send'); return; }
+              await freshChannel.send(vcPanel);
+              console.log(`[JTC] ✅ Sent panel to VC text: ${freshChannel.name}`);
+            } catch (e) {
+              attempt++;
+              if (attempt < 3) {
+                console.warn(`[JTC] ⚠️ VC text send failed (attempt ${attempt}): ${e.message}, retrying in 2s...`);
+                setTimeout(sendPanel, 2000);
+              } else {
+                console.error(`[JTC] ❌ VC text send failed after 3 attempts: ${e.message}`);
+              }
+            }
+          };
+          sendPanel();
+        }, 3000); // 3 second initial delay
 
       } catch (err) {
         console.error('[JTC] Failed to create temp channel:', err);
