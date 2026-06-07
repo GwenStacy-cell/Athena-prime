@@ -31,10 +31,10 @@ const slashData = allCommands
     name: cmd.name,
     description: cmd.description,
     options: cmd.options || [],
-    // Convert permissions to string format for Discord gateway payload
-    default_member_permissions: cmd.permissions && cmd.permissions.length > 0 
-      ? cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
-      : null,
+    // Do NOT set default_member_permissions — setting it causes Discord to hide
+    // the command client-side from users who lack it, breaking bot owner bypass.
+    // All permission enforcement is handled inside the bot's own code.
+    default_member_permissions: null,
     // integration_types: 0 = Guild Install, 1 = User Install
     integration_types: isUserApp ? [0, 1] : [0],
     // contexts: 0 = Guild, 1 = Bot DM, 2 = Private Channel (group DM)
