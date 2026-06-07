@@ -491,7 +491,17 @@ class Database {
 
   setJtcConfig(guildId, lobbyChannelId, categoryId, panelChannelId = null) {
     if (!this.cache.jtc) this.cache.jtc = {};
-    this.cache.jtc[guildId] = { lobbyChannelId, categoryId, panelChannelId };
+    // Preserve existing panelMessageId if panel channel hasn't changed
+    const existing = this.cache.jtc[guildId];
+    const sameChannel = existing?.panelChannelId === panelChannelId;
+    const panelMessageId = (sameChannel ? existing?.panelMessageId : null) || null;
+    this.cache.jtc[guildId] = { lobbyChannelId, categoryId, panelChannelId, panelMessageId };
+    this.save();
+  }
+
+  setPanelMessageId(guildId, messageId) {
+    if (!this.cache.jtc?.[guildId]) return;
+    this.cache.jtc[guildId].panelMessageId = messageId;
     this.save();
   }
 

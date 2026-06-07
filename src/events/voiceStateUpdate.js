@@ -2,7 +2,7 @@ import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
 import { connectToHomeVc } from '../utils/voice.js';
-import { buildControlPanel } from '../commands/jtc.js';
+import { buildControlPanel, buildSharedPanel } from '../commands/jtc.js';
 
 export default {
   name: 'voiceStateUpdate',
@@ -38,12 +38,11 @@ export default {
     const jtcConfig = db.getJtcConfig(guild.id);
 
     if (jtcConfig && newState.channelId === jtcConfig.lobbyChannelId) {
-      // User joined the JTC lobby — create their personal channel
       const member = newState.member;
       if (!member) return;
 
       try {
-        // Create the temp voice channel in the same category
+        // Create the temp voice channel
         const tempChannel = await guild.channels.create({
           name: `${member.displayName}'s Room`,
           type: ChannelType.GuildVoice,
@@ -51,15 +50,15 @@ export default {
           permissionOverwrites: [
             {
               id: guild.roles.everyone,
-              allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.Speak, PermissionFlagsBits.ViewChannel]
+              allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.Speak, PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
             },
             {
               id: member.id,
-              allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.Speak, PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.MuteMembers, PermissionFlagsBits.DeafenMembers]
+              allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.Speak, PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.MuteMembers, PermissionFlagsBits.DeafenMembers, PermissionFlagsBits.SendMessages]
             },
             {
               id: client.user.id,
-              allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.MoveMembers, PermissionFlagsBits.ViewChannel]
+              allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.MoveMembers, PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
             }
           ],
           reason: `JTC: Created by ${member.user.tag}`
@@ -71,21 +70,39 @@ export default {
         // Register in database
         db.addJtcChannel(tempChannel.id, member.id, guild.id);
 
-        // Always send control panel to the VC text chat
-        const panel = buildControlPanel(tempChannel, member);
-        await tempChannel.send(panel).catch(() => null);
+        // ── Send VC-specific panel to the VC text chat ──
+        const vcPanel = buildControlPanel(tempChannel, member);
+        await tempChannel.send(vcPanel).catch(e => console.error('[JTC] Could not send to VC text:', e.message));
 
-        // Additionally send to the configured panel channel (if set)
-        const jtcCfg = db.getJtcConfig(guild.id);
-        if (jtcCfg?.panelChannelId) {
-          const panelCh = guild.channels.cache.get(jtcCfg.panelChannelId);
-          if (panelCh) await panelCh.send(panel).catch(() => null);
+        // ── Interface channel: ONE persistent panel, never duplicated ──
+        const freshCfg = db.getJtcConfig(guild.id);
+        if (freshCfg?.panelChannelId) {
+          const panelCh = guild.channels.cache.get(freshCfg.panelChannelId);
+          if (panelCh) {
+            // Try to find the stored panel message
+            let existingMsg = null;
+            if (freshCfg.panelMessageId) {
+              existingMsg = await panelCh.messages.fetch(freshCfg.panelMessageId).catch(() => null);
+            }
+
+            if (!existingMsg) {
+              // No panel exists yet — create ONE and store its ID
+              const sharedPanel = buildSharedPanel();
+              const sentMsg = await panelCh.send(sharedPanel).catch(() => null);
+              if (sentMsg) {
+                db.setPanelMessageId(guild.id, sentMsg.id);
+                console.log(`[JTC] Created persistent panel in #${panelCh.name} (ID: ${sentMsg.id})`);
+              }
+            }
+            // If it already exists, do nothing — the same message handles everyone
+          }
         }
 
       } catch (err) {
         console.error('[JTC] Failed to create temp channel:', err);
       }
     }
+
 
     // ==========================================
     // JOIN TO CREATE — USER LEFT A CHANNEL
