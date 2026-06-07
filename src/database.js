@@ -18,7 +18,9 @@ const DEFAULT_SCHEMA = {
   backups: {},       // backupId -> backup data
   guildBackupMap: {},// guildId -> backupId (for overwrite detection)
   modModes: {},      // guildId -> { expiresAt, startedBy }
-  triggers: {}       // guildId -> [ {match, response} ]
+  triggers: {},      // guildId -> [ {match, response} ]
+  jtc: {},           // guildId -> { lobbyChannelId, categoryId }
+  jtcChannels: {}    // channelId -> { ownerId, guildId }
 };
 
 class Database {
@@ -43,6 +45,8 @@ class Database {
         this.cache.guildBackupMap = this.cache.guildBackupMap || {};
         this.cache.modModes       = this.cache.modModes       || {};
         this.cache.triggers       = this.cache.triggers       || {};
+        this.cache.jtc            = this.cache.jtc            || {};
+        this.cache.jtcChannels    = this.cache.jtcChannels    || {};
       } else {
         this.save();
       }
@@ -474,6 +478,60 @@ class Database {
       return true;
     }
     return false;
+  }
+
+  // ==========================================
+  // JOIN TO CREATE (JTC)
+  // ==========================================
+
+  getJtcConfig(guildId) {
+    if (!this.cache.jtc) this.cache.jtc = {};
+    return this.cache.jtc[guildId] || null;
+  }
+
+  setJtcConfig(guildId, lobbyChannelId, categoryId) {
+    if (!this.cache.jtc) this.cache.jtc = {};
+    this.cache.jtc[guildId] = { lobbyChannelId, categoryId };
+    this.save();
+  }
+
+  clearJtcConfig(guildId) {
+    if (!this.cache.jtc) return;
+    delete this.cache.jtc[guildId];
+    this.save();
+  }
+
+  // Active temp channels
+  getJtcChannel(channelId) {
+    if (!this.cache.jtcChannels) this.cache.jtcChannels = {};
+    return this.cache.jtcChannels[channelId] || null;
+  }
+
+  addJtcChannel(channelId, ownerId, guildId) {
+    if (!this.cache.jtcChannels) this.cache.jtcChannels = {};
+    this.cache.jtcChannels[channelId] = { ownerId, guildId };
+    this.save();
+  }
+
+  removeJtcChannel(channelId) {
+    if (!this.cache.jtcChannels) return;
+    delete this.cache.jtcChannels[channelId];
+    this.save();
+  }
+
+  setJtcOwner(channelId, ownerId) {
+    if (!this.cache.jtcChannels?.[channelId]) return;
+    this.cache.jtcChannels[channelId].ownerId = ownerId;
+    this.save();
+  }
+
+  isJtcChannel(channelId) {
+    return !!(this.cache.jtcChannels?.[channelId]);
+  }
+
+  getAllJtcChannels() {
+    if (!this.cache.jtcChannels) return [];
+    return Object.entries(this.cache.jtcChannels).map(([channelId, data]) => ({ channelId, ...data }));
   }
 }
 

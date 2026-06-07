@@ -6,6 +6,7 @@ import { getAntinukeConfigPanel } from '../commands/security.js';
 import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
 import { handleSpamModal, handleSpamMoreButton } from '../commands/spam.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
+import { handleJtcButton, handleJtcModal, handleJtcLimitSelect, handleJtcBitrateSelect } from '../commands/jtc.js';
 
 export default {
   name: 'interactionCreate',
@@ -91,6 +92,19 @@ export default {
         }
         return;
       }
+
+      // JTC modals
+      if (interaction.customId.startsWith('jtc_') && interaction.customId.endsWith('_modal')) {
+        try {
+          await handleJtcModal(interaction);
+        } catch (error) {
+          console.error('Error handling JTC modal:', error);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ An error occurred with the voice channel action.', ephemeral: true }).catch(() => null);
+          }
+        }
+        return;
+      }
     }
 
     // ==========================================
@@ -126,7 +140,22 @@ export default {
         return;
       }
 
-      if (!validButtons.includes(interaction.customId)) return;
+      if (!validButtons.includes(interaction.customId)) {
+        // JTC control panel buttons
+        if (interaction.customId.startsWith('jtc_setlimit_')) {
+          try { await handleJtcLimitSelect(interaction); } catch (e) { console.error('[JTC limit]', e); }
+          return;
+        }
+        if (interaction.customId.startsWith('jtc_setbitrate_')) {
+          try { await handleJtcBitrateSelect(interaction); } catch (e) { console.error('[JTC bitrate]', e); }
+          return;
+        }
+        if (interaction.customId.startsWith('jtc_')) {
+          try { await handleJtcButton(interaction); } catch (e) { console.error('[JTC button]', e); }
+          return;
+        }
+        return;
+      }
 
       // Verify Administrator permissions for config buttons — bot owner + extra owners bypass
       const isBtnBypass = isBotOwnerSync(interaction.user.id) ||
