@@ -70,33 +70,41 @@ export default {
         // Register in database
         db.addJtcChannel(tempChannel.id, member.id, guild.id);
 
-        // ── Send VC-specific panel to the VC text chat ──
         const vcPanel = buildControlPanel(tempChannel, member);
-        await tempChannel.send(vcPanel).catch(e => console.error('[JTC] Could not send to VC text:', e.message));
 
         // ── Interface channel: ONE persistent panel, never duplicated ──
         const freshCfg = db.getJtcConfig(guild.id);
         if (freshCfg?.panelChannelId) {
           const panelCh = guild.channels.cache.get(freshCfg.panelChannelId);
           if (panelCh) {
-            // Try to find the stored panel message
             let existingMsg = null;
             if (freshCfg.panelMessageId) {
               existingMsg = await panelCh.messages.fetch(freshCfg.panelMessageId).catch(() => null);
             }
-
             if (!existingMsg) {
-              // No panel exists yet — create ONE and store its ID
               const sharedPanel = buildSharedPanel();
-              const sentMsg = await panelCh.send(sharedPanel).catch(() => null);
+              const sentMsg = await panelCh.send(sharedPanel).catch(e => console.error('[JTC] Interface channel send failed:', e.message));
               if (sentMsg) {
                 db.setPanelMessageId(guild.id, sentMsg.id);
-                console.log(`[JTC] Created persistent panel in #${panelCh.name} (ID: ${sentMsg.id})`);
+                console.log(`[JTC] ✅ Created persistent panel in #${panelCh.name}`);
               }
+            } else {
+              console.log(`[JTC] ✅ Reusing existing panel in #${panelCh.name}`);
             }
-            // If it already exists, do nothing — the same message handles everyone
           }
         }
+
+        // ── Send panel to VC text chat (delayed to let Discord init the channel) ──
+        setTimeout(async () => {
+          try {
+            const freshChannel = guild.channels.cache.get(tempChannel.id);
+            if (!freshChannel) { console.warn('[JTC] VC channel gone before panel send'); return; }
+            await freshChannel.send(vcPanel);
+            console.log(`[JTC] ✅ Sent panel to VC text: ${freshChannel.name}`);
+          } catch (e) {
+            console.error(`[JTC] ❌ VC text send failed: ${e.message}`);
+          }
+        }, 2000); // 2 second delay for Discord to fully init the VC text
 
       } catch (err) {
         console.error('[JTC] Failed to create temp channel:', err);
