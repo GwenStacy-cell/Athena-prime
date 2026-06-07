@@ -12,6 +12,9 @@ export default {
     const guild = newState.guild || oldState.guild;
     const userId = newState.id;
 
+    // Simple lock to prevent multiple shared panels from being created simultaneously
+    if (!client.jtcPanelLocks) client.jtcPanelLocks = new Set();
+
     // ==========================================
     // BOT HOME VC RESTORE
     // ==========================================
@@ -58,7 +61,16 @@ export default {
             },
             {
               id: client.user.id,
-              allow: [PermissionFlagsBits.Connect, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.MoveMembers, PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+              allow: [
+                PermissionFlagsBits.Connect, 
+                PermissionFlagsBits.ManageChannels, 
+                PermissionFlagsBits.MoveMembers, 
+                PermissionFlagsBits.ViewChannel, 
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.UseApplicationCommands
+              ]
             }
           ],
           reason: `JTC: Created by ${member.user.tag}`
@@ -81,14 +93,25 @@ export default {
             if (freshCfg.panelMessageId) {
               existingMsg = await panelCh.messages.fetch(freshCfg.panelMessageId).catch(() => null);
             }
-            if (!existingMsg) {
-              const sharedPanel = buildSharedPanel();
-              const sentMsg = await panelCh.send(sharedPanel).catch(e => console.error('[JTC] Interface channel send failed:', e.message));
-              if (sentMsg) {
-                db.setPanelMessageId(guild.id, sentMsg.id);
-                console.log(`[JTC] ✅ Created persistent panel in #${panelCh.name}`);
+            if (!existingMsg && !client.jtcPanelLocks.has(guild.id)) {
+              client.jtcPanelLocks.add(guild.id);
+              try {
+                // Fetch again to be absolutely sure no other process created it in the last few ms
+                const freshCfgCheck = db.getJtcConfig(guild.id);
+                const stillNoMsg = freshCfgCheck.panelMessageId ? await panelCh.messages.fetch(freshCfgCheck.panelMessageId).catch(() => null) : null;
+                
+                if (!stillNoMsg) {
+                  const sharedPanel = buildSharedPanel();
+                  const sentMsg = await panelCh.send(sharedPanel).catch(e => console.error('[JTC] Interface channel send failed:', e.message));
+                  if (sentMsg) {
+                    db.setPanelMessageId(guild.id, sentMsg.id);
+                    console.log(`[JTC] ✅ Created persistent panel in #${panelCh.name}`);
+                  }
+                }
+              } finally {
+                setTimeout(() => client.jtcPanelLocks.delete(guild.id), 5000); // Release lock after 5s
               }
-            } else {
+            } else if (existingMsg) {
               console.log(`[JTC] ✅ Reusing existing panel in #${panelCh.name}`);
             }
           }

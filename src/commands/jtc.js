@@ -594,26 +594,26 @@ export const commands = [
 
       if (!isOwner) return interaction.reply({ embeds: [embed.danger('Not Owner', 'Only the channel owner can do this.')], ephemeral: true });
 
-      if (sub === 'name') { await vcChannel.setName(interaction.options.getString('new_name')); return interaction.reply({ embeds: [embed.success('Renamed ✏️', `Channel renamed to **${interaction.options.getString('new_name')}**.`)] }); }
-      if (sub === 'limit') { const l = interaction.options.getInteger('number'); await vcChannel.setUserLimit(l); return interaction.reply({ embeds: [embed.success('Limit Set 👥', `Limit set to **${l === 0 ? 'Unlimited' : l}**.`)] }); }
-      if (sub === 'lock') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: false }); return interaction.reply({ embeds: [embed.danger('Locked 🔒', 'Channel is now locked.')] }); }
-      if (sub === 'unlock') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: null }); return interaction.reply({ embeds: [embed.success('Unlocked 🔓', 'Channel is now open.')] }); }
-      if (sub === 'ghost') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false }); return interaction.reply({ embeds: [embed.info('Ghosted 👻', 'Channel is now invisible.')] }); }
-      if (sub === 'unghost') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: null }); return interaction.reply({ embeds: [embed.success('Unghostd 👁️', 'Channel is now visible.')] }); }
-      if (sub === 'nsfw') { const c = vcChannel.nsfw; await vcChannel.setNSFW(!c); return interaction.reply({ embeds: [c ? embed.success('NSFW Off', 'Channel is no longer NSFW.') : embed.warn('NSFW On ⚠️', 'Channel marked as NSFW.')] }); }
-      if (sub === 'bitrate') { const k = interaction.options.getInteger('value'); await vcChannel.setBitrate(k * 1000); return interaction.reply({ embeds: [embed.success('Bitrate 🎚️', `Set to **${k}kbps**.`)] }); }
-      if (sub === 'region') { const r = interaction.options.getString('region'); await vcChannel.setRTCRegion(r || null); return interaction.reply({ embeds: [embed.success('Region 🌍', `Set to **${r || 'Auto'}**.`)] }); }
+      if (sub === 'name') { await vcChannel.setName(interaction.options.getString('new_name')); return interaction.reply({ embeds: [embed.success('Renamed ✏️', `Channel renamed to **${interaction.options.getString('new_name')}**.`)], ephemeral: true }); }
+      if (sub === 'limit') { const l = interaction.options.getInteger('number'); await vcChannel.setUserLimit(l); return interaction.reply({ embeds: [embed.success('Limit Set 👥', `Limit set to **${l === 0 ? 'Unlimited' : l}**.`)], ephemeral: true }); }
+      if (sub === 'lock') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: false }); return interaction.reply({ embeds: [embed.danger('Locked 🔒', 'Channel is now locked.')], ephemeral: true }); }
+      if (sub === 'unlock') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: null }); return interaction.reply({ embeds: [embed.success('Unlocked 🔓', 'Channel is now open.')], ephemeral: true }); }
+      if (sub === 'ghost') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false }); return interaction.reply({ embeds: [embed.info('Ghosted 👻', 'Channel is now invisible.')], ephemeral: true }); }
+      if (sub === 'unghost') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: null }); return interaction.reply({ embeds: [embed.success('Unghostd 👁️', 'Channel is now visible.')], ephemeral: true }); }
+      if (sub === 'nsfw') { const c = vcChannel.nsfw; await vcChannel.setNSFW(!c); return interaction.reply({ embeds: [c ? embed.success('NSFW Off', 'Channel is no longer NSFW.') : embed.warn('NSFW On ⚠️', 'Channel marked as NSFW.')], ephemeral: true }); }
+      if (sub === 'bitrate') { const k = interaction.options.getInteger('value'); await vcChannel.setBitrate(k * 1000); return interaction.reply({ embeds: [embed.success('Bitrate 🎚️', `Set to **${k}kbps**.`)], ephemeral: true }); }
+      if (sub === 'region') { const r = interaction.options.getString('region'); await vcChannel.setRTCRegion(r || null); return interaction.reply({ embeds: [embed.success('Region 🌍', `Set to **${r || 'Auto'}**.`)], ephemeral: true }); }
 
       if (sub === 'permit') {
         const t = interaction.options.getMember('user');
         await vcChannel.permissionOverwrites.edit(t.id, { Connect: true, ViewChannel: true });
-        return interaction.reply({ embeds: [embed.success('Permitted ✅', `${t} can now join.`)] });
+        return interaction.reply({ embeds: [embed.success('Permitted ✅', `${t} can now join.`)], ephemeral: true });
       }
       if (sub === 'reject') {
         const t = interaction.options.getMember('user');
         if (t.voice?.channelId === vcChannel.id) await t.voice.disconnect().catch(() => null);
         await vcChannel.permissionOverwrites.edit(t.id, { Connect: false, ViewChannel: false });
-        return interaction.reply({ embeds: [embed.danger('Rejected 🚫', `${t} has been removed.`)] });
+        return interaction.reply({ embeds: [embed.danger('Rejected 🚫', `${t} has been removed.`)], ephemeral: true });
       }
       if (sub === 'invite') {
         const t = interaction.options.getMember('user');
@@ -628,7 +628,7 @@ export const commands = [
         await vcChannel.permissionOverwrites.edit(member.id, { ManageChannels: false }).catch(() => null);
         await vcChannel.permissionOverwrites.edit(t.id, { Connect: true, ViewChannel: true, ManageChannels: true }).catch(() => null);
         db.setJtcOwner(vcChannel.id, t.id);
-        return interaction.reply({ embeds: [embed.success('Transferred 👑', `${t} is now the owner.`)] });
+        return interaction.reply({ embeds: [embed.success('Transferred 👑', `${t} is now the owner.`)], ephemeral: true });
       }
     }
   }
