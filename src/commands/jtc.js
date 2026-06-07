@@ -12,16 +12,26 @@ import embed from '../embed.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Resolve project root from src/commands/jtc.js → ../../
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
 // Load emoji map (populated by upload-jtc-emojis.mjs)
-const EMOJI_MAP_PATH = path.resolve('assets/jtc-emoji-map.json');
+const EMOJI_MAP_PATH = path.join(PROJECT_ROOT, 'assets', 'jtc-emoji-map.json');
 let emojiMap = {};
 try {
   if (fs.existsSync(EMOJI_MAP_PATH)) {
     emojiMap = JSON.parse(fs.readFileSync(EMOJI_MAP_PATH, 'utf8'));
-    console.log(`[JTC] Loaded ${Object.keys(emojiMap).length} custom emojis from emoji map.`);
+    console.log(`[JTC] ✅ Loaded ${Object.keys(emojiMap).length} custom emojis. Path: ${EMOJI_MAP_PATH}`);
+  } else {
+    console.warn(`[JTC] ⚠️  Emoji map not found at: ${EMOJI_MAP_PATH}`);
   }
-} catch { /* use text emoji fallback */ }
+} catch (e) {
+  console.error('[JTC] Failed to load emoji map:', e.message);
+}
 
 // Get emoji object for a given key (custom or text fallback)
 function getEmoji(key) {
@@ -68,7 +78,8 @@ export function buildControlPanel(vcChannel, ownerMember) {
       { label: 'Region', description: 'Change the channel voice region', value: 'jtc_region', emoji: getEmoji('region') },
       { label: 'Text', description: 'Create a temporary text channel', value: 'jtc_text', emoji: getEmoji('text') },
       { label: 'NSFW', description: 'Toggle NSFW on your channel', value: 'jtc_nsfw', emoji: getEmoji('nsfw') },
-      { label: 'Claim', description: 'Claim ownership of the channel', value: 'jtc_claim', emoji: getEmoji('claim') }
+      { label: 'Claim', description: 'Claim ownership of the channel', value: 'jtc_claim', emoji: getEmoji('claim') },
+      { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: 'ℹ️' }
     ]);
 
   // ── Channel Permissions Dropdown ──

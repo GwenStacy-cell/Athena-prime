@@ -71,15 +71,15 @@ export default {
         // Register in database
         db.addJtcChannel(tempChannel.id, member.id, guild.id);
 
-        // Send control panel — to configured panel channel or the VC text chat
+        // Always send control panel to the VC text chat
         const panel = buildControlPanel(tempChannel, member);
+        await tempChannel.send(panel).catch(() => null);
+
+        // Additionally send to the configured panel channel (if set)
         const jtcCfg = db.getJtcConfig(guild.id);
         if (jtcCfg?.panelChannelId) {
           const panelCh = guild.channels.cache.get(jtcCfg.panelChannelId);
           if (panelCh) await panelCh.send(panel).catch(() => null);
-          else await tempChannel.send(panel).catch(() => null);
-        } else {
-          await tempChannel.send(panel).catch(() => null);
         }
 
       } catch (err) {
