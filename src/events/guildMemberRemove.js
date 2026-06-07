@@ -1,5 +1,6 @@
 import { AuditLogEvent } from 'discord.js';
 import { checkAntiNuke } from '../utils/antinuke.js';
+import { sendLeaveMessage } from '../commands/welcome.js';
 
 export default {
   name: 'guildMemberRemove',
@@ -8,8 +9,9 @@ export default {
     if (!guild) return;
 
     // Run Audit Log check for kicks.
-    // If the latest audit entry matches AuditLogEvent.MemberKick and the target is this member,
-    // the executor gets quarantined immediately.
     await checkAntiNuke(guild, 'Member Kick', AuditLogEvent.MemberKick, member.id);
+
+    // Send leave message
+    await sendLeaveMessage(member);
   }
 };

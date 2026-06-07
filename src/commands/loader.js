@@ -7,6 +7,7 @@ import { commands as modmodeCmds } from './modmode.js';
 import { commands as vcdragCmds } from './vcdrag.js';
 import { commands as triggerCmds } from './trigger.js';
 import { commands as jtcCmds } from './jtc.js';
+import { commands as welcomeCmds } from './welcome.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -17,7 +18,8 @@ export const allCommands = [
   ...modmodeCmds,
   ...vcdragCmds,
   ...triggerCmds,
-  ...jtcCmds
+  ...jtcCmds,
+  ...welcomeCmds
 ];
 
 export const commandMap = new Map();

@@ -2,6 +2,7 @@ import db from '../database.js';
 import embed from '../embed.js';
 import { executeQuarantine } from '../commands/security.js';
 import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel } from '../utils/helpers.js';
+import { sendWelcomeMessage } from '../commands/welcome.js';
 
 export default {
   name: 'guildMemberAdd',
@@ -90,5 +91,10 @@ export default {
         await member.setNickname(finalNick, 'Automated Auto-Nickname on Join').catch(() => null);
       }
     }
+
+    // ==========================================
+    // 4. WELCOME MESSAGE
+    // ==========================================
+    await sendWelcomeMessage(member);
   }
 };

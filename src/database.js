@@ -543,6 +543,29 @@ class Database {
     if (!this.cache.jtcChannels) return [];
     return Object.entries(this.cache.jtcChannels).map(([channelId, data]) => ({ channelId, ...data }));
   }
+
+  // ==========================================
+  // WELCOME / LEAVE CONFIG
+  // ==========================================
+  getWelcomeConfig(guildId) {
+    return this.cache.welcome?.[guildId] || null;
+  }
+
+  setWelcomeConfig(guildId, config) {
+    if (!this.cache.welcome) this.cache.welcome = {};
+    this.cache.welcome[guildId] = config;
+    this.save();
+  }
+
+  getLeaveConfig(guildId) {
+    return this.cache.leave?.[guildId] || null;
+  }
+
+  setLeaveConfig(guildId, config) {
+    if (!this.cache.leave) this.cache.leave = {};
+    this.cache.leave[guildId] = config;
+    this.save();
+  }
 }
 
 const db = new Database();
