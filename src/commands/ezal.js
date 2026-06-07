@@ -97,14 +97,15 @@ async function serializeGuild(guild) {
 }
 
 /** Restore a guild from backup data */
-async function restoreGuild(guild, backupData, statusCallback) {
+async function restoreGuild(guild, backupData, statusCallback, excludeChannelId) {
   let created = 0;
   let failed  = 0;
 
-  await statusCallback('🧹 **Wiping** existing channels and roles...');
+  await statusCallback('**Wiping** existing channels and roles...');
 
   // --- Wipe Existing Channels ---
   for (const channel of guild.channels.cache.values()) {
+    if (channel.id === excludeChannelId) continue;
     try { await channel.delete('Athena Prime — Backup Restore Wipe'); } catch {}
   }
 
@@ -115,7 +116,7 @@ async function restoreGuild(guild, backupData, statusCallback) {
     }
   }
 
-  await statusCallback('🔄 Restoring **roles**...');
+  await statusCallback('Restoring **roles**...');
 
   // --- Restore Roles ---
   for (const roleData of backupData.roles) {
@@ -132,7 +133,7 @@ async function restoreGuild(guild, backupData, statusCallback) {
     } catch { failed++; }
   }
 
-  await statusCallback(`✅ Roles restored: \`${created}\` | ❌ Failed: \`${failed}\`\n🔄 Restoring **categories**...`);
+  await statusCallback(`Roles restored: \`${created}\` | Failed: \`${failed}\`\nRestoring **categories**...`);
   created = 0; failed = 0;
 
   // --- Restore Categories ---
@@ -149,7 +150,7 @@ async function restoreGuild(guild, backupData, statusCallback) {
     } catch { failed++; }
   }
 
-  await statusCallback(`✅ Categories restored: \`${created}\` | ❌ Failed: \`${failed}\`\n🔄 Restoring **channels**...`);
+  await statusCallback(`Categories restored: \`${created}\` | Failed: \`${failed}\`\nRestoring **channels**...`);
   created = 0; failed = 0;
 
   // --- Restore Channels ---
@@ -188,7 +189,7 @@ async function handleBackup(message, args) {
   }
   if (!targetGuild) return message.reply({ embeds: [embed.warn('No Guild', 'Run this inside a server or provide a server ID.')] });
 
-  const statusMsg = await message.reply({ embeds: [embed.info('📦 Backup Started', `Serializing **${targetGuild.name}**... please wait.`)] });
+  const statusMsg = await message.reply({ embeds: [embed.info('Backup Started', `Serializing **${targetGuild.name}**... please wait.`)] });
 
   try {
     const data      = await serializeGuild(targetGuild);
@@ -196,16 +197,16 @@ async function handleBackup(message, args) {
     db.saveBackup(backupId, data);
 
     await statusMsg.edit({ embeds: [embed.success(
-      '✅ Backup Complete',
+      'Backup Complete',
       `Server **${targetGuild.name}** has been backed up successfully.`,
       [
-        { name: '🆔 Backup ID',   value: `\`${backupId}\``,          inline: true },
-        { name: '🏠 Server',      value: targetGuild.name,            inline: true },
-        { name: '👥 Members',     value: `\`${data.memberCount}\``,   inline: true },
-        { name: '🎭 Roles',       value: `\`${data.roles.length}\``,  inline: true },
-        { name: '📺 Channels',    value: `\`${data.channels.length}\``, inline: true },
-        { name: '🗂️ Categories', value: `\`${data.categories.length}\``, inline: true },
-        { name: '📅 Saved At',    value: new Date().toUTCString() }
+        { name: 'Backup ID',   value: `\`${backupId}\``,          inline: true },
+        { name: 'Server',      value: targetGuild.name,            inline: true },
+        { name: 'Members',     value: `\`${data.memberCount}\``,   inline: true },
+        { name: 'Roles',       value: `\`${data.roles.length}\``,  inline: true },
+        { name: 'Channels',    value: `\`${data.channels.length}\``, inline: true },
+        { name: 'Categories',  value: `\`${data.categories.length}\``, inline: true },
+        { name: 'Saved At',    value: new Date().toUTCString() }
       ]
     )] });
   } catch (err) {
@@ -223,7 +224,7 @@ async function handleBcklist(message) {
   ).join('\n');
 
   await message.reply({ embeds: [embed.info(
-    `📦 Backup List — ${backups.length} backup(s)`,
+    `Backup List — ${backups.length} backup(s)`,
     list
   )] });
 }
@@ -252,7 +253,7 @@ async function handleServers(message) {
   if (chunk) chunks.push(chunk);
 
   for (let i = 0; i < chunks.length; i++) {
-    const e = embed.info(`🌐 Server List (${guilds.length} servers) ${chunks.length > 1 ? `[${i + 1}/${chunks.length}]` : ''}`, chunks[i]);
+    const e = embed.info(`Server List (${guilds.length} servers) ${chunks.length > 1 ? `[${i + 1}/${chunks.length}]` : ''}`, chunks[i]);
     if (i === 0) await message.reply({ embeds: [e] });
     else await message.channel.send({ embeds: [e] });
   }
@@ -272,8 +273,8 @@ async function handleRestore(message, args) {
   if (!targetGuild) return message.reply({ embeds: [embed.danger('Guild Not Found', 'Could not find the target server. Provide a valid server ID as the second argument.')] });
 
   const confirmMsg = await message.reply({ embeds: [embed.warn(
-    '⚠️ Confirm Destructive Restore',
-    `You are about to restore backup \`${backupId}\` (**${backupData.guildName}**) into **${targetGuild.name}**.\n\n🚨 **WARNING: This will WIPE AND DELETE ALL EXISTING CHANNELS AND ROLES** in the target server before restoring the backup.\n\nType \`CONFIRM\` within 15 seconds to proceed.`
+    'Confirm Destructive Restore',
+    `You are about to restore backup \`${backupId}\` (**${backupData.guildName}**) into **${targetGuild.name}**.\n\n**WARNING: This will WIPE AND DELETE ALL EXISTING CHANNELS AND ROLES** in the target server before restoring the backup.\n\nType \`CONFIRM\` within 15 seconds to proceed.`
   )] });
 
   const filter = m => m.author.id === message.author.id && m.content === 'CONFIRM';
@@ -285,21 +286,21 @@ async function handleRestore(message, args) {
 
   collected.first()?.delete().catch(() => null);
 
-  const statusMsg = await message.channel.send({ embeds: [embed.info('🔄 Restoring...', `Restoring backup \`${backupId}\` into **${targetGuild.name}**...`)] });
+  const statusMsg = await message.channel.send({ embeds: [embed.info('Restoring...', `Restoring backup \`${backupId}\` into **${targetGuild.name}**...`)] });
 
   const updateStatus = async text => {
-    await statusMsg.edit({ embeds: [embed.info('🔄 Restoring...', text)] }).catch(() => null);
+    await statusMsg.edit({ embeds: [embed.info('Restoring...', text)] }).catch(() => null);
   };
 
   try {
-    const results = await restoreGuild(targetGuild, backupData, updateStatus);
+    const results = await restoreGuild(targetGuild, backupData, updateStatus, message.channel.id);
     await statusMsg.edit({ embeds: [embed.success(
-      '✅ Restore Complete',
+      'Restore Complete',
       `Backup \`${backupId}\` has been successfully restored into **${targetGuild.name}**.`,
       [
-        { name: '🎭 Roles Created',    value: `\`${results.rolesCreated}\``,    inline: true },
-        { name: '📺 Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
-        { name: '❌ Failed',           value: `\`${results.failed}\``,           inline: true }
+        { name: 'Roles Created',    value: `\`${results.rolesCreated}\``,    inline: true },
+        { name: 'Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
+        { name: 'Failed',           value: `\`${results.failed}\``,           inline: true }
       ]
     )] });
   } catch (err) {
@@ -311,19 +312,19 @@ async function handleRestore(message, args) {
 function handleEhelp(message) {
   const fields = [
     {
-      name: '📦 Backup System',
+      name: 'Backup System',
       value:
         '`ezal backup [serverId]` — Create a backup of the current or specified server\n' +
         '`ezal bcklist` — List all saved backup IDs with server info\n' +
         '`ezal restore <backupId> [targetServerId]` — Restore a server from backup *(Bot Owner only)*'
     },
     {
-      name: '🌐 Server Management',
+      name: 'Server Management',
       value:
         '`ezal servers` — List all servers the bot is in with their backup IDs and stats'
     },
     {
-      name: '🔑 Access',
+      name: 'Access',
       value:
         '> All `ezal` commands are **prefix-only** and restricted to **Bot Owner** and **Server Owner**.\n' +
         '> `ezal restore` is **Bot Owner only**.\n' +
@@ -331,7 +332,7 @@ function handleEhelp(message) {
     }
   ];
 
-  return message.reply({ embeds: [embed.info('🛡️ Ezal — Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields)] });
+  return message.reply({ embeds: [embed.info('Ezal — Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields)] });
 }
 
 // ==========================================

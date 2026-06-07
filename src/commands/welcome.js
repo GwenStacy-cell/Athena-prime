@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, EmbedBuilder } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ChannelSelectMenuBuilder, ChannelType } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 
@@ -61,132 +61,140 @@ export function buildWelcomeEmbed(member, cfg) {
 }
 
 // ============================================================
-// SEND WELCOME/LEAVE MESSAGE
+// SEND MESSAGE
 // ============================================================
 export async function sendWelcomeMessage(member) {
   const cfg = db.getWelcomeConfig(member.guild.id);
   if (!cfg?.enabled || !cfg?.channelId) return;
-
   const channel = member.guild.channels.cache.get(cfg.channelId);
   if (!channel) return;
-
   const content = cfg.message ? resolve(cfg.message, member) : undefined;
   const embedObj = buildWelcomeEmbed(member, cfg);
-
   const payload = {};
   if (content) payload.content = content;
   if (embedObj) payload.embeds = [embedObj];
   if (!payload.content && !payload.embeds) return;
-
-  await channel.send(payload).catch(e => console.error('[Welcome] Send failed:', e.message));
+  await channel.send(payload).catch(() => null);
 }
 
 export async function sendLeaveMessage(member) {
   const cfg = db.getLeaveConfig(member.guild.id);
   if (!cfg?.enabled || !cfg?.channelId) return;
-
   const channel = member.guild.channels.cache.get(cfg.channelId);
   if (!channel) return;
-
   const content = cfg.message ? resolve(cfg.message, member) : undefined;
   const embedObj = buildWelcomeEmbed(member, cfg);
-
   const payload = {};
   if (content) payload.content = content;
   if (embedObj) payload.embeds = [embedObj];
   if (!payload.content && !payload.embeds) return;
-
-  await channel.send(payload).catch(e => console.error('[Leave] Send failed:', e.message));
+  await channel.send(payload).catch(() => null);
 }
 
 // ============================================================
-// SHARED SUBCOMMAND HANDLER
+// MANAGER UI
 // ============================================================
-async function handleConfig(interaction, type) {
-  const sub = interaction.options.getSubcommand();
-  const guildId = interaction.guild.id;
+function getManagerPanel(guildId, type) {
   const isWelcome = type === 'welcome';
+  const cfg = (isWelcome ? db.getWelcomeConfig(guildId) : db.getLeaveConfig(guildId)) || {};
+  const label = isWelcome ? 'Welcome' : 'Leave';
+  const prefix = isWelcome ? 'welcmgr_' : 'leavmgr_';
+
+  const e = embed.info(
+    `👋 ${label} Manager`,
+    `Manage the settings for your server's ${label.toLowerCase()} messages.\n\n` +
+    `**Current Configuration:**\n` +
+    `📡 **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : 'Not Set'}\n` +
+    `🔘 **Status:** ${cfg.enabled ? '✅ Enabled' : '❌ Disabled'}\n` +
+    `💬 **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `👤 **Author (From):** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `🏷️ **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `📝 **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `🎨 **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
+    `🖼️ **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
+    `📄 **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `🎭 **Thumbnail (Avatar):** ${cfg.thumbnail !== false ? '✅ On' : '❌ Off'}\n` +
+    `⏰ **Timestamp:** ${cfg.timestamp !== false ? '✅ On' : '❌ Off'}`
+  );
+
+  const channelSelectRow = new ActionRowBuilder().addComponents(
+    new ChannelSelectMenuBuilder()
+      .setCustomId(`${prefix}channel`)
+      .setPlaceholder('Select a channel to send messages...')
+      .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+  );
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`${prefix}text`).setLabel('Top Text').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`${prefix}author`).setLabel('Author').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`${prefix}title`).setLabel('Title').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`${prefix}desc`).setLabel('Description').setStyle(ButtonStyle.Secondary)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`${prefix}color`).setLabel('Color').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`${prefix}image`).setLabel('Image').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`${prefix}footer`).setLabel('Footer').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`${prefix}toggles`).setLabel('Toggles').setStyle(ButtonStyle.Secondary)
+  );
+
+  const row3 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`${prefix}status`).setLabel(cfg.enabled ? 'Disable System' : 'Enable System').setStyle(cfg.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`${prefix}test`).setLabel('Test Message').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId(`${prefix}reset`).setLabel('Reset All').setStyle(ButtonStyle.Danger)
+  );
+
+  return { embeds: [e], components: [channelSelectRow, row1, row2, row3], ephemeral: true };
+}
+
+// ============================================================
+// INTERACTION HANDLERS
+// ============================================================
+export async function handleWelcomeManagerMenu(interaction) {
+  const guildId = interaction.guild.id;
+  const isWelcome = interaction.customId.startsWith('welcmgr_');
   const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
   const setConfig = isWelcome ? db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
+  const typeStr = isWelcome ? 'welcome' : 'leave';
 
   const cfg = getConfig(guildId) || {};
-  const label = isWelcome ? '👋 Welcome' : '👋 Leave';
+  const selectedChannel = interaction.values[0];
 
-  if (sub === 'setup') {
-    const channel = interaction.options.getChannel('channel');
-    setConfig(guildId, { ...cfg, channelId: channel.id, enabled: true });
-    return interaction.reply({ embeds: [embed.success(`${label} Setup`, `Messages will be sent to ${channel}.\n\nUse the other subcommands to customize the embed.`)], ephemeral: true });
+  setConfig(guildId, { ...cfg, channelId: selectedChannel });
+  
+  await interaction.update(getManagerPanel(guildId, typeStr));
+}
+
+export async function handleWelcomeManagerButton(interaction) {
+  const guildId = interaction.guild.id;
+  const customId = interaction.customId;
+  const isWelcome = customId.startsWith('welcmgr_');
+  const action = isWelcome ? customId.replace('welcmgr_', '') : customId.replace('leavmgr_', '');
+  const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
+  const setConfig = isWelcome ? db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
+  const typeStr = isWelcome ? 'welcome' : 'leave';
+
+  const cfg = getConfig(guildId) || {};
+
+  if (action === 'status') {
+    setConfig(guildId, { ...cfg, enabled: !cfg.enabled });
+    return interaction.update(getManagerPanel(guildId, typeStr));
+  }
+  
+  if (action === 'toggles') {
+    setConfig(guildId, { ...cfg, thumbnail: !(cfg.thumbnail !== false), timestamp: !(cfg.timestamp !== false) });
+    return interaction.update(getManagerPanel(guildId, typeStr));
   }
 
-  if (sub === 'disable') {
-    setConfig(guildId, { ...cfg, enabled: false });
-    return interaction.reply({ embeds: [embed.danger(`${label} Disabled`, `${type} messages have been turned off.`)], ephemeral: true });
+  if (action === 'reset') {
+    setConfig(guildId, {});
+    return interaction.update(getManagerPanel(guildId, typeStr));
   }
 
-  if (sub === 'message') {
-    const text = interaction.options.getString('text');
-    setConfig(guildId, { ...cfg, message: text });
-    return interaction.reply({ embeds: [embed.success('Message Set', `Content above embed set to:\n\`\`\`${text}\`\`\`\n**Placeholders:** \`{user}\` \`{username}\` \`{displayname}\` \`{server}\` \`{count}\``)], ephemeral: true });
-  }
-
-  if (sub === 'color') {
-    const hex = interaction.options.getString('hex').replace('#', '');
-    const int = parseInt(hex, 16);
-    if (isNaN(int)) return interaction.reply({ embeds: [embed.warn('Invalid Color', 'Provide a valid hex color e.g. `#5865F2`')], ephemeral: true });
-    setConfig(guildId, { ...cfg, color: int });
-    return interaction.reply({ embeds: [embed.success('Color Set', `Embed color set to \`#${hex.toUpperCase()}\`.`)], ephemeral: true });
-  }
-
-  if (sub === 'from') {
-    const text = interaction.options.getString('text');
-    const icon = interaction.options.getString('icon') || null;
-    setConfig(guildId, { ...cfg, from: text, fromIcon: icon });
-    return interaction.reply({ embeds: [embed.success('"From" Author Set', `Author field set to **${text}**.\n${icon ? `Icon: ${icon}` : 'Icon: Server icon (default)'}`)], ephemeral: true });
-  }
-
-  if (sub === 'title') {
-    const text = interaction.options.getString('text');
-    setConfig(guildId, { ...cfg, title: text });
-    return interaction.reply({ embeds: [embed.success('Title Set', `Embed title set to **${text}**.`)], ephemeral: true });
-  }
-
-  if (sub === 'description') {
-    const text = interaction.options.getString('text');
-    setConfig(guildId, { ...cfg, description: text });
-    return interaction.reply({ embeds: [embed.success('Description Set', `Embed description updated.`)], ephemeral: true });
-  }
-
-  if (sub === 'thumbnail') {
-    const enabled = interaction.options.getBoolean('enabled');
-    setConfig(guildId, { ...cfg, thumbnail: enabled });
-    return interaction.reply({ embeds: [embed.success('Thumbnail', `User avatar thumbnail is now **${enabled ? 'ON' : 'OFF'}**.`)], ephemeral: true });
-  }
-
-  if (sub === 'image') {
-    const url = interaction.options.getString('url');
-    setConfig(guildId, { ...cfg, image: url === 'none' ? null : url });
-    return interaction.reply({ embeds: [embed.success('Image Set', url === 'none' ? 'Image removed.' : `Embed image set.`)], ephemeral: true });
-  }
-
-  if (sub === 'footer') {
-    const text = interaction.options.getString('text');
-    const icon = interaction.options.getString('icon') || null;
-    setConfig(guildId, { ...cfg, footer: text, footerIcon: icon });
-    return interaction.reply({ embeds: [embed.success('Footer Set', `Footer set to **${text}**.`)], ephemeral: true });
-  }
-
-  if (sub === 'timestamp') {
-    const enabled = interaction.options.getBoolean('enabled');
-    setConfig(guildId, { ...cfg, timestamp: enabled });
-    return interaction.reply({ embeds: [embed.success('Timestamp', `Timestamp is now **${enabled ? 'ON' : 'OFF'}**.`)], ephemeral: true });
-  }
-
-  if (sub === 'test') {
-    const freshCfg = getConfig(guildId);
-    if (!freshCfg?.channelId) return interaction.reply({ embeds: [embed.warn('Not Set Up', `Run \`/${type} setup\` first.`)], ephemeral: true });
-    const member = interaction.member;
-    const content = freshCfg.message ? resolve(freshCfg.message, member) : undefined;
-    const testEmbed = buildWelcomeEmbed(member, freshCfg);
+  if (action === 'test') {
+    if (!cfg.channelId) return interaction.reply({ embeds: [embed.warn('Channel Not Set', 'Please select a channel first.')], ephemeral: true });
+    const content = cfg.message ? resolve(cfg.message, interaction.member) : undefined;
+    const testEmbed = buildWelcomeEmbed(interaction.member, cfg);
     const payload = { embeds: [] };
     if (content) payload.content = `**[Preview]** ${content}`;
     if (testEmbed) payload.embeds = [testEmbed];
@@ -194,73 +202,111 @@ async function handleConfig(interaction, type) {
     return;
   }
 
-  if (sub === 'view') {
-    const freshCfg = getConfig(guildId) || {};
-    return interaction.reply({
-      embeds: [embed.info(`${label} Config`, null, [
-        { name: '📡 Channel', value: freshCfg.channelId ? `<#${freshCfg.channelId}>` : 'Not set', inline: true },
-        { name: '🔘 Enabled', value: freshCfg.enabled ? '✅ Yes' : '❌ No', inline: true },
-        { name: '💬 Message', value: freshCfg.message ? `\`${freshCfg.message.slice(0, 80)}\`` : 'None', inline: false },
-        { name: '👤 From (Author)', value: freshCfg.from || 'Not set', inline: true },
-        { name: '🏷️ Title', value: freshCfg.title || 'Not set', inline: true },
-        { name: '📝 Description', value: freshCfg.description ? `${freshCfg.description.slice(0, 60)}...` : 'Not set', inline: false },
-        { name: '🖼️ Thumbnail', value: freshCfg.thumbnail !== false ? '✅ On' : '❌ Off', inline: true },
-        { name: '🖼️ Image', value: freshCfg.image || 'None', inline: true },
-        { name: '📄 Footer', value: freshCfg.footer || 'Not set', inline: true },
-        { name: '⏰ Timestamp', value: freshCfg.timestamp !== false ? '✅ On' : '❌ Off', inline: true }
-      ])],
-      ephemeral: true
-    });
+  // Modals for everything else
+  const prefix = isWelcome ? 'welc_' : 'leav_';
+
+  if (action === 'text') {
+    const modal = new ModalBuilder().setCustomId(`${prefix}modal_text`).setTitle('Set Top Text');
+    modal.addComponents(new ActionRowBuilder().addComponents(
+      new TextInputBuilder().setCustomId('val').setLabel('Message content (above embed)').setStyle(TextInputStyle.Paragraph).setRequired(false).setValue(cfg.message || '')
+    ));
+    return interaction.showModal(modal);
   }
 
-  if (sub === 'reset') {
-    setConfig(guildId, {});
-    return interaction.reply({ embeds: [embed.danger(`${label} Reset`, `All ${type} message settings have been cleared.`)], ephemeral: true });
+  if (action === 'author') {
+    const modal = new ModalBuilder().setCustomId(`${prefix}modal_author`).setTitle('Set Author (From)');
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Author Text (e.g. "From Server")').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.from || '')),
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('icon').setLabel('Icon URL (leave empty for server icon)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.fromIcon || ''))
+    );
+    return interaction.showModal(modal);
+  }
+
+  if (action === 'title') {
+    const modal = new ModalBuilder().setCustomId(`${prefix}modal_title`).setTitle('Set Embed Title');
+    modal.addComponents(new ActionRowBuilder().addComponents(
+      new TextInputBuilder().setCustomId('val').setLabel('Embed Title').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.title || '')
+    ));
+    return interaction.showModal(modal);
+  }
+
+  if (action === 'desc') {
+    const modal = new ModalBuilder().setCustomId(`${prefix}modal_desc`).setTitle('Set Embed Description');
+    modal.addComponents(new ActionRowBuilder().addComponents(
+      new TextInputBuilder().setCustomId('val').setLabel('Embed Body').setStyle(TextInputStyle.Paragraph).setRequired(false).setValue(cfg.description || '')
+    ));
+    return interaction.showModal(modal);
+  }
+
+  if (action === 'color') {
+    const modal = new ModalBuilder().setCustomId(`${prefix}modal_color`).setTitle('Set Embed Color');
+    modal.addComponents(new ActionRowBuilder().addComponents(
+      new TextInputBuilder().setCustomId('val').setLabel('Hex Color Code (e.g. #5865F2)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.color ? `#${cfg.color.toString(16).toUpperCase()}` : '')
+    ));
+    return interaction.showModal(modal);
+  }
+
+  if (action === 'image') {
+    const modal = new ModalBuilder().setCustomId(`${prefix}modal_image`).setTitle('Set Embed Image');
+    modal.addComponents(new ActionRowBuilder().addComponents(
+      new TextInputBuilder().setCustomId('val').setLabel('Direct Image URL (or type "none" to clear)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.image || '')
+    ));
+    return interaction.showModal(modal);
+  }
+
+  if (action === 'footer') {
+    const modal = new ModalBuilder().setCustomId(`${prefix}modal_footer`).setTitle('Set Embed Footer');
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Footer Text').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.footer || '')),
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('icon').setLabel('Footer Icon URL').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.footerIcon || ''))
+    );
+    return interaction.showModal(modal);
   }
 }
 
-// ============================================================
-// SHARED SUBCOMMAND OPTIONS
-// ============================================================
-function subcommandOptions(type) {
-  return [
-    { name: 'setup', description: `Set the ${type} channel`, type: 1, options: [
-      { name: 'channel', description: `Channel to send ${type} messages`, type: 7, required: true, channel_types: [0] }
-    ]},
-    { name: 'message', description: 'Set the text above the embed', type: 1, options: [
-      { name: 'text', description: 'Use {user} {username} {displayname} {server} {count}', type: 3, required: true, max_length: 500 }
-    ]},
-    { name: 'from', description: 'Set the "From" author field', type: 1, options: [
-      { name: 'text', description: 'e.g. "From {server}" or "Welcome to the Family!"', type: 3, required: true },
-      { name: 'icon', description: 'Author icon URL (default: server icon)', type: 3, required: false }
-    ]},
-    { name: 'title', description: 'Set the embed title (bold)', type: 1, options: [
-      { name: 'text', description: 'Title text (supports placeholders)', type: 3, required: true }
-    ]},
-    { name: 'description', description: 'Set the embed description body', type: 1, options: [
-      { name: 'text', description: 'Description text (supports placeholders)', type: 3, required: true, max_length: 2000 }
-    ]},
-    { name: 'color', description: 'Set the embed left-bar color', type: 1, options: [
-      { name: 'hex', description: 'Hex color e.g. #5865F2', type: 3, required: true }
-    ]},
-    { name: 'thumbnail', description: 'Toggle user avatar as thumbnail (top-right)', type: 1, options: [
-      { name: 'enabled', description: 'Show avatar as thumbnail?', type: 5, required: true }
-    ]},
-    { name: 'image', description: 'Set the large image at the bottom', type: 1, options: [
-      { name: 'url', description: 'Direct image URL, or "none" to remove', type: 3, required: true }
-    ]},
-    { name: 'footer', description: 'Set the embed footer text', type: 1, options: [
-      { name: 'text', description: 'Footer text', type: 3, required: true },
-      { name: 'icon', description: 'Footer icon URL', type: 3, required: false }
-    ]},
-    { name: 'timestamp', description: 'Toggle timestamp in footer', type: 1, options: [
-      { name: 'enabled', description: 'Show timestamp?', type: 5, required: true }
-    ]},
-    { name: 'test', description: `Preview the ${type} message as yourself`, type: 1 },
-    { name: 'view', description: `View current ${type} config`, type: 1 },
-    { name: 'disable', description: `Disable ${type} messages`, type: 1 },
-    { name: 'reset', description: `Reset all ${type} settings`, type: 1 }
-  ];
+export async function handleWelcomeManagerModal(interaction) {
+  const guildId = interaction.guild.id;
+  const customId = interaction.customId;
+  const isWelcome = customId.startsWith('welc_');
+  const action = isWelcome ? customId.replace('welc_modal_', '') : customId.replace('leav_modal_', '');
+  const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
+  const setConfig = isWelcome ? db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
+  const typeStr = isWelcome ? 'welcome' : 'leave';
+
+  const cfg = getConfig(guildId) || {};
+  let val = interaction.fields.getTextInputValue('val')?.trim() || null;
+
+  if (action === 'text') cfg.message = val;
+  if (action === 'title') cfg.title = val;
+  if (action === 'desc') cfg.description = val;
+  
+  if (action === 'author') {
+    cfg.from = val;
+    cfg.fromIcon = interaction.fields.getTextInputValue('icon')?.trim() || null;
+  }
+  
+  if (action === 'footer') {
+    cfg.footer = val;
+    cfg.footerIcon = interaction.fields.getTextInputValue('icon')?.trim() || null;
+  }
+
+  if (action === 'color') {
+    if (val) {
+      const hex = val.replace('#', '');
+      const int = parseInt(hex, 16);
+      if (!isNaN(int)) cfg.color = int;
+    } else {
+      delete cfg.color;
+    }
+  }
+
+  if (action === 'image') {
+    if (!val || val.toLowerCase() === 'none') delete cfg.image;
+    else cfg.image = val;
+  }
+
+  setConfig(guildId, cfg);
+  await interaction.update(getManagerPanel(guildId, typeStr));
 }
 
 // ============================================================
@@ -269,28 +315,28 @@ function subcommandOptions(type) {
 export const commands = [
   {
     name: 'welcome',
-    description: '👋 Configure the welcome message system.',
+    description: '👋 Open the Welcome Message Manager.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
-    options: subcommandOptions('welcome'),
+    options: [], // No subcommands anymore!
     async executePrefix(message) {
-      return message.reply({ embeds: [embed.info('Use Slash Command', 'Please use `/welcome` to configure welcome messages.')] });
+      return message.reply(getManagerPanel(message.guild.id, 'welcome'));
     },
     async executeSlash(interaction) {
-      await handleConfig(interaction, 'welcome');
+      return interaction.reply(getManagerPanel(interaction.guild.id, 'welcome'));
     }
   },
   {
     name: 'leave',
-    description: '🚪 Configure the leave message system.',
+    description: '🚪 Open the Leave Message Manager.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
-    options: subcommandOptions('leave'),
+    options: [],
     async executePrefix(message) {
-      return message.reply({ embeds: [embed.info('Use Slash Command', 'Please use `/leave` to configure leave messages.')] });
+      return message.reply(getManagerPanel(message.guild.id, 'leave'));
     },
     async executeSlash(interaction) {
-      await handleConfig(interaction, 'leave');
+      return interaction.reply(getManagerPanel(interaction.guild.id, 'leave'));
     }
   }
 ];

@@ -70,7 +70,7 @@ export const embed = {
 
   success(title, description, fields = []) {
     return this.build({
-      title: `✅ ${title}`,
+      title: title,
       description,
       color: colors.success,
       fields
@@ -79,7 +79,7 @@ export const embed = {
 
   warn(title, description, fields = []) {
     return this.build({
-      title: `⚠️ ${title}`,
+      title: title,
       description,
       color: colors.warning,
       fields
@@ -88,7 +88,7 @@ export const embed = {
 
   danger(title, description, fields = []) {
     return this.build({
-      title: `🚨 ${title}`,
+      title: title,
       description,
       color: colors.danger,
       fields
@@ -97,7 +97,7 @@ export const embed = {
 
   info(title, description, fields = []) {
     return this.build({
-      title: `ℹ️ ${title}`,
+      title: title,
       description,
       color: colors.neutral,
       fields
@@ -106,7 +106,7 @@ export const embed = {
 
   raid(title, description, fields = []) {
     return this.build({
-      title: `🔒 ${title}`,
+      title: title,
       description,
       color: colors.raid,
       fields
@@ -118,7 +118,7 @@ export const embed = {
    */
   owner(title, description, fields = []) {
     return this.build({
-      title: `👑 ${title}`,
+      title: title,
       description,
       color: colors.owner || '#FFD700',
       fields
@@ -130,7 +130,7 @@ export const embed = {
    */
   security(title, description, fields = []) {
     return this.build({
-      title: `🛡️ ${title}`,
+      title: title,
       description,
       color: colors.security || '#00e5ff',
       fields
@@ -139,14 +139,13 @@ export const embed = {
 
   log(title, description, fields = [], level = 'info') {
     let color = colors.dark;
-    let icon = '📝';
-    if (level === 'success') { color = colors.success; icon = '🟩'; }
-    else if (level === 'warning') { color = colors.warning; icon = '🟨'; }
-    else if (level === 'danger') { color = colors.danger; icon = '🟥'; }
-    else if (level === 'raid') { color = colors.raid; icon = '🟪'; }
+    if (level === 'success') { color = colors.success; }
+    else if (level === 'warning') { color = colors.warning; }
+    else if (level === 'danger') { color = colors.danger; }
+    else if (level === 'raid') { color = colors.raid; }
 
     return this.build({
-      title: `${icon} Log: ${title}`,
+      title: `Log: ${title}`,
       description,
       color,
       fields

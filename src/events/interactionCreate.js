@@ -7,6 +7,7 @@ import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
 import { handleSpamModal, handleSpamMoreButton } from '../commands/spam.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 import { handleJtcSelectMenu, handleJtcModal } from '../commands/jtc.js';
+import { handleWelcomeManagerButton, handleWelcomeManagerModal, handleWelcomeManagerMenu } from '../commands/welcome.js';
 
 export default {
   name: 'interactionCreate',
@@ -105,6 +106,16 @@ export default {
         }
         return;
       }
+
+      // Welcome/Leave modals
+      if (interaction.customId.startsWith('welc_modal_') || interaction.customId.startsWith('leav_modal_')) {
+        try {
+          await handleWelcomeManagerModal(interaction);
+        } catch (error) {
+          console.error('Error handling Welcome modal:', error);
+        }
+        return;
+      }
     }
 
     // ==========================================
@@ -136,6 +147,16 @@ export default {
           if (!interaction.replied && !interaction.deferred) {
             await interaction.reply({ content: '\u274c Failed to send more spam.', ephemeral: true }).catch(() => null);
           }
+        }
+        return;
+      }
+
+      // Welcome/Leave Manager buttons
+      if (interaction.customId.startsWith('welcmgr_') || interaction.customId.startsWith('leavmgr_')) {
+        try {
+          await handleWelcomeManagerButton(interaction);
+        } catch (error) {
+          console.error('Error handling Welcome button:', error);
         }
         return;
       }
@@ -215,6 +236,20 @@ export default {
             await interaction.reply({ content: '❌ An error occurred.', ephemeral: true }).catch(() => null);
           }
         }
+      }
+    }
+
+    // ==========================================
+    // 5. CHANNEL SELECT MENU (Welcome/Leave)
+    // ==========================================
+    if (interaction.isChannelSelectMenu()) {
+      if (interaction.customId === 'welcmgr_channel' || interaction.customId === 'leavmgr_channel') {
+        try {
+          await handleWelcomeManagerMenu(interaction);
+        } catch (err) {
+          console.error('[Welcome SelectMenu]', err);
+        }
+        return;
       }
     }
   }
