@@ -149,15 +149,21 @@ export default {
     // JOIN TO CREATE — USER LEFT A CHANNEL
     // ==========================================
     if (oldState.channelId && oldState.channelId !== newState.channelId) {
-      const leftChannel = oldState.channel;
-      if (!leftChannel) return;
+      if (db.isJtcChannel(oldState.channelId)) {
+        let leftChannel = guild.channels.cache.get(oldState.channelId);
+        if (!leftChannel) {
+          leftChannel = await guild.channels.fetch(oldState.channelId).catch(() => null);
+        }
 
-      // Check if the left channel is a JTC temp channel
-      if (db.isJtcChannel(leftChannel.id)) {
-        // If channel is empty, delete it
-        if (leftChannel.members.size === 0) {
-          db.removeJtcChannel(leftChannel.id);
-          await leftChannel.delete('JTC: All members left, auto-cleanup').catch(() => null);
+        if (leftChannel) {
+          // Count real members in the channel (filter out bots, or just count all)
+          const membersCount = leftChannel.members.size;
+          
+          if (membersCount === 0) {
+            db.removeJtcChannel(leftChannel.id);
+            await leftChannel.delete('JTC: All members left, auto-cleanup').catch(() => null);
+            console.log(`[JTC] 🗑️ Deleted empty room: ${leftChannel.name}`);
+          }
         }
       }
     }

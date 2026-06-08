@@ -406,7 +406,7 @@ export async function handleJtcModal(interaction) {
 
   if (customId === 'jtc_status_modal') {
     const status = interaction.fields.getTextInputValue('jtc_status_val').trim();
-    await vcChannel.setStatus(status).catch(() => null);
+    await interaction.client.rest.put(`/channels/${vcChannel.id}/voice-status`, { body: { status } }).catch(() => null);
     return interaction.reply({ embeds: [embed.success('Status Set 💬', `Channel status set to: **${status}**`)], ephemeral: true });
   }
 
