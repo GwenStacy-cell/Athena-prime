@@ -151,15 +151,20 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     } catch (err) { 
       failed++; 
       consecutiveFailures++;
-      if (!lastError) lastError = `Role '${roleData.name}': ${err.message}`;
-      if (consecutiveFailures >= 5) break;
+      console.error(`[EZAL RESTORE] ❌ Role create FAILED: '${roleData.name}' | Error: ${err.message} | Code: ${err.code} | Status: ${err.status}`);
+      if (!lastError) lastError = `Role '${roleData.name}': ${err.message} (code ${err.code})`;
+      if (consecutiveFailures >= 5) {
+        console.error(`[EZAL RESTORE] 🛑 5 consecutive role failures — aborting role loop`);
+        break;
+      }
     }
     
     // Periodically update status & avoid severe API rate limit locks
     if ((i + 1) % 5 === 0) {
-      await statusCallback(`Restoring **roles**... (${i + 1}/${backupData.roles.length})`);
+      await statusCallback(`Restoring **roles**... ✅ ${created} created | ❌ ${failed} failed (${i + 1}/${backupData.roles.length})`);
     }
-    await new Promise(r => setTimeout(r, 500)); // 500ms delay to prevent anti-spam locks
+    console.log(`[EZAL RESTORE] Role ${i + 1}/${backupData.roles.length}: '${roleData.name}' — ${created} OK, ${failed} failed so far`);
+    await new Promise(r => setTimeout(r, 600)); // 600ms delay
   }
 
   // Helper to map overwrites
@@ -200,8 +205,12 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     } catch (err) { 
       failed++;
       consecutiveFailures++;
-      if (!lastError) lastError = `Category '${catData.name}': ${err.message}`;
-      if (consecutiveFailures >= 5) break;
+      console.error(`[EZAL RESTORE] ❌ Category create FAILED: '${catData.name}' | Error: ${err.message} | Code: ${err.code}`);
+      if (!lastError) lastError = `Category '${catData.name}': ${err.message} (code ${err.code})`;
+      if (consecutiveFailures >= 5) {
+        console.error(`[EZAL RESTORE] 🛑 5 consecutive category failures — aborting`);
+        break;
+      }
     }
     
     if ((i + 1) % 5 === 0) {
@@ -235,8 +244,12 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     } catch (err) { 
       failed++;
       consecutiveFailures++;
-      if (!lastError) lastError = `Channel '${chData.name}': ${err.message}`;
-      if (consecutiveFailures >= 5) break;
+      console.error(`[EZAL RESTORE] ❌ Channel create FAILED: '${chData.name}' | Error: ${err.message} | Code: ${err.code}`);
+      if (!lastError) lastError = `Channel '${chData.name}': ${err.message} (code ${err.code})`;
+      if (consecutiveFailures >= 5) {
+        console.error(`[EZAL RESTORE] 🛑 5 consecutive channel failures — aborting`);
+        break;
+      }
     }
     
     if ((i + 1) % 5 === 0) {
