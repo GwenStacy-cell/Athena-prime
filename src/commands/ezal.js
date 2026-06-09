@@ -131,7 +131,8 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
 
   // --- Restore Roles ---
   const roleMap = new Map(); // oldName -> newId (fallback) or oldId -> newId
-  for (const roleData of backupData.roles) {
+  for (let i = 0; i < backupData.roles.length; i++) {
+    const roleData = backupData.roles[i];
     try {
       const newRole = await guild.roles.create({
         name:        roleData.name,
@@ -145,20 +146,30 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       roleMap.set(roleData.name, newRole.id); // Name fallback
       created++;
     } catch { failed++; }
+    
+    // Periodically update status & avoid severe API rate limit locks
+    if ((i + 1) % 5 === 0) {
+      await statusCallback(`Restoring **roles**... (${i + 1}/${backupData.roles.length})`);
+    }
+    await new Promise(r => setTimeout(r, 500)); // 500ms delay to prevent anti-spam locks
   }
 
   // Helper to map overwrites
   const mapOverwrites = (overwrites) => {
     if (!overwrites) return undefined;
     return overwrites.map(ow => {
-      const targetId = ow.type === 0 ? (roleMap.get(ow.id) || ow.id) : ow.id; // Map role IDs, keep member IDs
+      let targetId = ow.id;
+      if (ow.type === 0) {
+        if (ow.id === backupData.guildId) targetId = guild.id; // Map @everyone role
+        else targetId = roleMap.get(ow.id) || ow.id;
+      }
       return {
         id: targetId,
         type: ow.type,
         allow: BigInt(ow.allow),
         deny: BigInt(ow.deny)
       };
-    }).filter(ow => guild.roles.cache.has(ow.id) || ow.type === 1);
+    }).filter(ow => guild.roles.cache.has(ow.id) || ow.id === guild.id || ow.type === 1);
   };
 
   await statusCallback(`Roles restored: \`${created}\` | Failed: \`${failed}\`\nRestoring **categories**...`);
@@ -166,7 +177,8 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
 
   // --- Restore Categories ---
   const categoryMap = new Map(); // name -> created channel
-  for (const catData of backupData.categories) {
+  for (let i = 0; i < backupData.categories.length; i++) {
+    const catData = backupData.categories[i];
     try {
       const cat = await guild.channels.create({
         name:   catData.name,
@@ -177,13 +189,19 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       categoryMap.set(catData.name, cat);
       created++;
     } catch { failed++; }
+    
+    if ((i + 1) % 5 === 0) {
+      await statusCallback(`Restoring **categories**... (${i + 1}/${backupData.categories.length})`);
+    }
+    await new Promise(r => setTimeout(r, 800)); // 800ms delay for channels
   }
 
   await statusCallback(`Categories restored: \`${created}\` | Failed: \`${failed}\`\nRestoring **channels**...`);
   created = 0; failed = 0;
 
   // --- Restore Channels ---
-  for (const chData of backupData.channels) {
+  for (let i = 0; i < backupData.channels.length; i++) {
+    const chData = backupData.channels[i];
     try {
       const parent = chData.parentName ? categoryMap.get(chData.parentName) : null;
       await guild.channels.create({
@@ -199,7 +217,12 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
         reason:           'Athena Prime — Backup Restore'
       });
       created++;
-    } catch { failed++; }
+    } catch (err) { failed++; }
+    
+    if ((i + 1) % 5 === 0) {
+      await statusCallback(`Restoring **channels**... (${i + 1}/${backupData.channels.length})`);
+    }
+    await new Promise(r => setTimeout(r, 800)); // 800ms delay for channels
   }
 
   return { rolesCreated: backupData.roles.length - failed, channelsCreated: created, failed };
