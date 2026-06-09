@@ -350,7 +350,9 @@ async function handleRestore(message, args) {
     `You are about to restore backup \`${backupId}\` (**${backupData.guildName}**) into **${targetGuild.name}**.\n\n**WARNING: This will WIPE AND DELETE ALL EXISTING CHANNELS AND ROLES** in the target server before restoring the backup.\n\nType \`CONFIRM\` within 15 seconds to proceed.`
   )] });
 
-  const filter = m => m.author.id === message.author.id && m.content === 'CONFIRM';
+  // IMPORTANT: filter must include channel.id so stale collectors from other commands
+  // don't fire this restore with wrong data
+  const filter = m => m.author.id === message.author.id && m.content.trim().toUpperCase() === 'CONFIRM' && m.channel.id === message.channel.id;
   const collected = await message.channel.awaitMessages({ filter, max: 1, time: 15000 }).catch(() => null);
 
   if (!collected?.size) {
@@ -358,6 +360,17 @@ async function handleRestore(message, args) {
   }
 
   collected.first()?.delete().catch(() => null);
+
+  // --- Pre-flight: Check bot has permissions in the target guild ---
+  const botMemberPF = await targetGuild.members.fetch(message.client.user.id).catch(() => null);
+  const hasPerms = botMemberPF?.permissions.has(8n) ||   // Administrator
+                   botMemberPF?.permissions.has(16n);    // Manage Channels
+  if (!hasPerms) {
+    return message.channel.send({ embeds: [embed.danger(
+      'Missing Permissions',
+      `Athena Prime does **not** have **Administrator** (or Manage Channels) in **${targetGuild.name}**.\n\nGive the bot Administrator in that server, then retry the restore.`
+    )] });
+  }
 
   const statusMsg = await message.channel.send({ embeds: [embed.info('Restoring...', `Restoring backup \`${backupId}\` into **${targetGuild.name}**...`)] });
 
