@@ -29,6 +29,7 @@ async function serializeGuild(guild) {
     .filter(r => r.id !== guild.id && !r.managed)
     .sort((a, b) => a.position - b.position)
     .map(r => ({
+      id:            r.id,
       name:          r.name,
       color:         r.color,
       permissions:   r.permissions.bitfield.toString(),
@@ -116,9 +117,12 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   await Promise.allSettled(channelDeletions);
 
   // --- Wipe Existing Roles ---
+  const botMember = await guild.members.fetch(guild.client.user.id).catch(() => null);
+  const botRoles = botMember ? botMember.roles.cache : new Map();
+
   const roleDeletions = [];
   for (const role of roles.values()) {
-    if (!role || role.id === guild.id || role.managed || !role.editable) continue;
+    if (!role || role.id === guild.id || role.managed || !role.editable || botRoles.has(role.id)) continue;
     roleDeletions.push(role.delete('Athena Prime — Backup Restore Wipe').catch(() => null));
   }
   await Promise.allSettled(roleDeletions);
@@ -126,9 +130,10 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   await statusCallback('Restoring **roles**...');
 
   // --- Restore Roles ---
+  const roleMap = new Map(); // oldName -> newId (fallback) or oldId -> newId
   for (const roleData of backupData.roles) {
     try {
-      await guild.roles.create({
+      const newRole = await guild.roles.create({
         name:        roleData.name,
         color:       roleData.color,
         permissions: BigInt(roleData.permissions),
@@ -136,9 +141,25 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
         mentionable: roleData.mentionable,
         reason:      'Athena Prime — Backup Restore'
       });
+      if (roleData.id) roleMap.set(roleData.id, newRole.id);
+      roleMap.set(roleData.name, newRole.id); // Name fallback
       created++;
     } catch { failed++; }
   }
+
+  // Helper to map overwrites
+  const mapOverwrites = (overwrites) => {
+    if (!overwrites) return undefined;
+    return overwrites.map(ow => {
+      const targetId = ow.type === 0 ? (roleMap.get(ow.id) || ow.id) : ow.id; // Map role IDs, keep member IDs
+      return {
+        id: targetId,
+        type: ow.type,
+        allow: BigInt(ow.allow),
+        deny: BigInt(ow.deny)
+      };
+    }).filter(ow => guild.roles.cache.has(ow.id) || ow.type === 1);
+  };
 
   await statusCallback(`Roles restored: \`${created}\` | Failed: \`${failed}\`\nRestoring **categories**...`);
   created = 0; failed = 0;
@@ -150,6 +171,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       const cat = await guild.channels.create({
         name:   catData.name,
         type:   ChannelType.GuildCategory,
+        permissionOverwrites: mapOverwrites(catData.permissionOverwrites),
         reason: 'Athena Prime — Backup Restore'
       });
       categoryMap.set(catData.name, cat);
@@ -173,6 +195,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
         userLimit:        chData.userLimit || undefined,
         rateLimitPerUser: chData.slowmode || undefined,
         parent:           parent?.id || undefined,
+        permissionOverwrites: mapOverwrites(chData.permissionOverwrites),
         reason:           'Athena Prime — Backup Restore'
       });
       created++;
