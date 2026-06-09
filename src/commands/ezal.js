@@ -101,6 +101,8 @@ async function serializeGuild(guild) {
 async function restoreGuild(guild, backupData, statusCallback, excludeChannelId) {
   let created = 0;
   let failed  = 0;
+  let lastError = null;
+  let consecutiveFailures = 0;
 
   await statusCallback('**Wiping** existing channels and roles...');
 
@@ -145,7 +147,13 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       if (roleData.id) roleMap.set(roleData.id, newRole.id);
       roleMap.set(roleData.name, newRole.id); // Name fallback
       created++;
-    } catch { failed++; }
+      consecutiveFailures = 0;
+    } catch (err) { 
+      failed++; 
+      consecutiveFailures++;
+      if (!lastError) lastError = `Role '${roleData.name}': ${err.message}`;
+      if (consecutiveFailures >= 5) break;
+    }
     
     // Periodically update status & avoid severe API rate limit locks
     if ((i + 1) % 5 === 0) {
@@ -188,7 +196,13 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       });
       categoryMap.set(catData.name, cat);
       created++;
-    } catch { failed++; }
+      consecutiveFailures = 0;
+    } catch (err) { 
+      failed++;
+      consecutiveFailures++;
+      if (!lastError) lastError = `Category '${catData.name}': ${err.message}`;
+      if (consecutiveFailures >= 5) break;
+    }
     
     if ((i + 1) % 5 === 0) {
       await statusCallback(`Restoring **categories**... (${i + 1}/${backupData.categories.length})`);
@@ -217,7 +231,13 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
         reason:           'Athena Prime — Backup Restore'
       });
       created++;
-    } catch (err) { failed++; }
+      consecutiveFailures = 0;
+    } catch (err) { 
+      failed++;
+      consecutiveFailures++;
+      if (!lastError) lastError = `Channel '${chData.name}': ${err.message}`;
+      if (consecutiveFailures >= 5) break;
+    }
     
     if ((i + 1) % 5 === 0) {
       await statusCallback(`Restoring **channels**... (${i + 1}/${backupData.channels.length})`);
@@ -225,7 +245,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     await new Promise(r => setTimeout(r, 800)); // 800ms delay for channels
   }
 
-  return { rolesCreated: backupData.roles.length - failed, channelsCreated: created, failed };
+  return { rolesCreated: backupData.roles.length - failed, channelsCreated: created, failed, lastError };
 }
 
 // ==========================================
@@ -349,7 +369,7 @@ async function handleRestore(message, args) {
     const results = await restoreGuild(targetGuild, backupData, updateStatus, message.channel.id);
     await statusMsg.edit({ embeds: [embed.success(
       'Restore Complete',
-      `Backup \`${backupId}\` has been successfully restored into **${targetGuild.name}**.`,
+      `Backup \`${backupId}\` has been restored into **${targetGuild.name}**.\n\n${results.lastError ? `**First Error Encountered:**\n\`${results.lastError}\`` : ''}`,
       [
         { name: 'Roles Created',    value: `\`${results.rolesCreated}\``,    inline: true },
         { name: 'Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
