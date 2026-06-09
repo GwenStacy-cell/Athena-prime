@@ -2,6 +2,16 @@ import { ChannelType } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
+import fs from 'fs';
+import path from 'path';
+
+// Log helper — writes to restore-log.txt for easy VPS debugging
+const RESTORE_LOG = path.resolve('restore-log.txt');
+function rlog(msg) {
+  const line = `[${new Date().toISOString()}] ${msg}`;
+  console.log(line);
+  fs.appendFileSync(RESTORE_LOG, line + '\n');
+}
 
 // ==========================================
 // EZAL — Owner-Only Command Suite
@@ -104,6 +114,11 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   let lastError = null;
   let consecutiveFailures = 0;
 
+  // Clear previous restore log
+  fs.writeFileSync(RESTORE_LOG, `=== EZAL RESTORE STARTED ${new Date().toISOString()} ===\n`);
+  rlog(`Target guild: ${guild.name} (${guild.id})`);
+  rlog(`Backup from: ${backupData.guildName} — Roles: ${backupData.roles.length}, Cats: ${backupData.categories.length}, Channels: ${backupData.channels.length}`);
+
   await statusCallback('**Wiping** existing channels and roles...');
 
   // Fetch everything to ensure cache isn't empty
@@ -148,13 +163,14 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       roleMap.set(roleData.name, newRole.id); // Name fallback
       created++;
       consecutiveFailures = 0;
+      rlog(`  ✅ Role OK: '${roleData.name}'`);
     } catch (err) { 
       failed++; 
       consecutiveFailures++;
-      console.error(`[EZAL RESTORE] ❌ Role create FAILED: '${roleData.name}' | Error: ${err.message} | Code: ${err.code} | Status: ${err.status}`);
+      rlog(`  ❌ Role FAILED: '${roleData.name}' → ${err.message} (code ${err.code}, status ${err.status})`);
       if (!lastError) lastError = `Role '${roleData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        console.error(`[EZAL RESTORE] 🛑 5 consecutive role failures — aborting role loop`);
+        rlog(`  🛑 5 consecutive failures — aborting role loop`);
         break;
       }
     }
@@ -163,8 +179,8 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     if ((i + 1) % 5 === 0) {
       await statusCallback(`Restoring **roles**... ✅ ${created} created | ❌ ${failed} failed (${i + 1}/${backupData.roles.length})`);
     }
-    console.log(`[EZAL RESTORE] Role ${i + 1}/${backupData.roles.length}: '${roleData.name}' — ${created} OK, ${failed} failed so far`);
-    await new Promise(r => setTimeout(r, 600)); // 600ms delay
+    rlog(`  Role ${i + 1}/${backupData.roles.length}: '${roleData.name}'`);
+    await new Promise(r => setTimeout(r, 600));
   }
 
   // Helper to map overwrites
@@ -202,13 +218,14 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       categoryMap.set(catData.name, cat);
       created++;
       consecutiveFailures = 0;
+      rlog(`  ✅ Category OK: '${catData.name}'`);
     } catch (err) { 
       failed++;
       consecutiveFailures++;
-      console.error(`[EZAL RESTORE] ❌ Category create FAILED: '${catData.name}' | Error: ${err.message} | Code: ${err.code}`);
+      rlog(`  ❌ Category FAILED: '${catData.name}' → ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Category '${catData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        console.error(`[EZAL RESTORE] 🛑 5 consecutive category failures — aborting`);
+        rlog(`  🛑 5 consecutive failures — aborting category loop`);
         break;
       }
     }
@@ -241,13 +258,14 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       });
       created++;
       consecutiveFailures = 0;
+      rlog(`  ✅ Channel OK: '${chData.name}'`);
     } catch (err) { 
       failed++;
       consecutiveFailures++;
-      console.error(`[EZAL RESTORE] ❌ Channel create FAILED: '${chData.name}' | Error: ${err.message} | Code: ${err.code}`);
+      rlog(`  ❌ Channel FAILED: '${chData.name}' → ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Channel '${chData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        console.error(`[EZAL RESTORE] 🛑 5 consecutive channel failures — aborting`);
+        rlog(`  🛑 5 consecutive failures — aborting channel loop`);
         break;
       }
     }
