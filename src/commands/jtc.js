@@ -279,6 +279,9 @@ export async function handleJtcSelectMenu(interaction) {
       ],
       reason: `JTC Temp Text for ${member.user.tag}`
     });
+    // Link text channel to VC in DB
+    db.setJtcTextChannel(vcChannel.id, textCh.id);
+
     // Grant access to all current VC members
     for (const [, m] of vcChannel.members) {
       await textCh.permissionOverwrites.edit(m.id, { ViewChannel: true, SendMessages: true }).catch(() => null);

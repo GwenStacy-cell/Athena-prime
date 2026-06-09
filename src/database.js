@@ -535,6 +535,12 @@ class Database {
     this.save();
   }
 
+  setJtcTextChannel(channelId, textChannelId) {
+    if (!this.cache.jtcChannels?.[channelId]) return;
+    this.cache.jtcChannels[channelId].textChannelId = textChannelId;
+    this.save();
+  }
+
   isJtcChannel(channelId) {
     return !!(this.cache.jtcChannels?.[channelId]);
   }

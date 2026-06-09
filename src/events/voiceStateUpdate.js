@@ -160,7 +160,29 @@ export default {
           const membersCount = leftChannel.members.size;
           
           if (membersCount === 0) {
+            const jtcRecord = db.getJtcChannel(leftChannel.id);
+            
+            // Look for a linked text channel
+            let textChannel = null;
+            if (jtcRecord?.textChannelId) {
+              textChannel = guild.channels.cache.get(jtcRecord.textChannelId) || await guild.channels.fetch(jtcRecord.textChannelId).catch(() => null);
+            }
+            
+            // Fallback for older "zombie" text channels created before the patch:
+            if (!textChannel && jtcRecord) {
+               textChannel = guild.channels.cache.find(c => 
+                 c.type === 0 && // GuildText
+                 c.parentId === leftChannel.parentId &&
+                 c.name.endsWith('-text') &&
+                 c.permissionOverwrites.cache.get(jtcRecord.ownerId)?.allow.has('ManageChannels')
+               );
+            }
+
             db.removeJtcChannel(leftChannel.id);
+            if (textChannel) {
+              await textChannel.delete('JTC: Auto-cleanup of linked text channel').catch(() => null);
+              console.log(`[JTC] 🗑️ Deleted linked text room: ${textChannel.name}`);
+            }
             await leftChannel.delete('JTC: All members left, auto-cleanup').catch(() => null);
             console.log(`[JTC] 🗑️ Deleted empty room: ${leftChannel.name}`);
           }
