@@ -183,20 +183,19 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       consecutiveFailures++;
       rlog(`  ❌ Role FAILED: '${roleData.name}' → ${err.message} (code ${err.code}, status ${err.status})`);
       if (!lastError) lastError = `Role '${roleData.name}': ${err.message} (code ${err.code})`;
-      if (consecutiveFailures >= 5) {
-        rlog(`  🛑 5 consecutive failures — aborting role loop`);
+      // Only abort if we have MANY consecutive failures (don't break on just a few timeouts)
+      if (consecutiveFailures >= 10) {
+        rlog(`  🛑 10 consecutive failures — aborting role loop`);
         break;
       }
     }
     
-    // Periodically update status & avoid severe API rate limit locks
+    // Periodically update status
     if ((i + 1) % 5 === 0) {
       await statusCallback(`Restoring **roles**... ✅ ${created} created | ❌ ${failed} failed (${i + 1}/${backupData.roles.length})`);
     }
     rlog(`  Role ${i + 1}/${backupData.roles.length}: '${roleData.name}'`);
-    // Respect Discord's rate limit — increase delay if we're seeing slowdowns
-    const delay = i > 50 ? 2500 : i > 30 ? 1800 : 1200;
-    await new Promise(r => setTimeout(r, delay));
+    await new Promise(r => setTimeout(r, 700)); // 700ms — tested safe, avoids rate limits
   }
 
   // Helper to map overwrites
@@ -253,7 +252,8 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     if ((i + 1) % 5 === 0) {
       await statusCallback(`Restoring **categories**... (${i + 1}/${backupData.categories.length})`);
     }
-    await new Promise(r => setTimeout(r, 1200)); // Increased delay
+    rlog(`  Cat ${i + 1}/${backupData.categories.length}: '${catData.name}'`);
+    await new Promise(r => setTimeout(r, 900));
   }
 
   await statusCallback(`Categories restored: \`${created}\` | Failed: \`${failed}\`\nRestoring **channels**...`);
@@ -297,7 +297,8 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     if ((i + 1) % 5 === 0) {
       await statusCallback(`Restoring **channels**... (${i + 1}/${backupData.channels.length})`);
     }
-    await new Promise(r => setTimeout(r, 800)); // 800ms delay for channels
+    rlog(`  Ch ${i + 1}/${backupData.channels.length}: '${chData.name}'`);
+    await new Promise(r => setTimeout(r, 900));
   }
 
   return { rolesCreated: backupData.roles.length - failed, channelsCreated: created, failed, lastError };
