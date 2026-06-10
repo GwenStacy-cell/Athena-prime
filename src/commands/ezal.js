@@ -114,6 +114,16 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   let lastError = null;
   let consecutiveFailures = 0;
 
+  // Wraps any promise with a timeout — prevents Discord rate limit hangs
+  const withTimeout = (promise, ms = 15000, label = '') => {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Timed out after ${ms}ms (${label})`)), ms)
+      )
+    ]);
+  };
+
   // Clear previous restore log
   fs.writeFileSync(RESTORE_LOG, `=== EZAL RESTORE STARTED ${new Date().toISOString()} ===\n`);
   rlog(`Target guild: ${guild.name} (${guild.id})`);
@@ -151,14 +161,18 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   for (let i = 0; i < backupData.roles.length; i++) {
     const roleData = backupData.roles[i];
     try {
-      const newRole = await guild.roles.create({
-        name:        roleData.name,
-        color:       roleData.color,
-        permissions: BigInt(roleData.permissions),
-        hoist:       roleData.hoist,
-        mentionable: roleData.mentionable,
-        reason:      'Athena Prime — Backup Restore'
-      });
+      const newRole = await withTimeout(
+        guild.roles.create({
+          name:        roleData.name,
+          color:       roleData.color,
+          permissions: BigInt(roleData.permissions),
+          hoist:       roleData.hoist,
+          mentionable: roleData.mentionable,
+          reason:      'Athena Prime — Backup Restore'
+        }),
+        12000,
+        `role:${roleData.name}`
+      );
       if (roleData.id) roleMap.set(roleData.id, newRole.id);
       roleMap.set(roleData.name, newRole.id); // Name fallback
       created++;
@@ -180,7 +194,9 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       await statusCallback(`Restoring **roles**... ✅ ${created} created | ❌ ${failed} failed (${i + 1}/${backupData.roles.length})`);
     }
     rlog(`  Role ${i + 1}/${backupData.roles.length}: '${roleData.name}'`);
-    await new Promise(r => setTimeout(r, 600));
+    // Respect Discord's rate limit — increase delay if we're seeing slowdowns
+    const delay = i > 50 ? 2500 : i > 30 ? 1800 : 1200;
+    await new Promise(r => setTimeout(r, delay));
   }
 
   // Helper to map overwrites
@@ -209,12 +225,16 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   for (let i = 0; i < backupData.categories.length; i++) {
     const catData = backupData.categories[i];
     try {
-      const cat = await guild.channels.create({
-        name:   catData.name,
-        type:   ChannelType.GuildCategory,
-        permissionOverwrites: mapOverwrites(catData.permissionOverwrites),
-        reason: 'Athena Prime — Backup Restore'
-      });
+      const cat = await withTimeout(
+        guild.channels.create({
+          name:   catData.name,
+          type:   ChannelType.GuildCategory,
+          permissionOverwrites: mapOverwrites(catData.permissionOverwrites),
+          reason: 'Athena Prime — Backup Restore'
+        }),
+        12000,
+        `category:${catData.name}`
+      );
       categoryMap.set(catData.name, cat);
       created++;
       consecutiveFailures = 0;
@@ -233,7 +253,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     if ((i + 1) % 5 === 0) {
       await statusCallback(`Restoring **categories**... (${i + 1}/${backupData.categories.length})`);
     }
-    await new Promise(r => setTimeout(r, 800)); // 800ms delay for channels
+    await new Promise(r => setTimeout(r, 1200)); // Increased delay
   }
 
   await statusCallback(`Categories restored: \`${created}\` | Failed: \`${failed}\`\nRestoring **channels**...`);
@@ -244,18 +264,22 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     const chData = backupData.channels[i];
     try {
       const parent = chData.parentName ? categoryMap.get(chData.parentName) : null;
-      await guild.channels.create({
-        name:             chData.name,
-        type:             chData.type,
-        topic:            chData.topic || undefined,
-        nsfw:             chData.nsfw,
-        bitrate:          chData.bitrate || undefined,
-        userLimit:        chData.userLimit || undefined,
-        rateLimitPerUser: chData.slowmode || undefined,
-        parent:           parent?.id || undefined,
-        permissionOverwrites: mapOverwrites(chData.permissionOverwrites),
-        reason:           'Athena Prime — Backup Restore'
-      });
+      await withTimeout(
+        guild.channels.create({
+          name:             chData.name,
+          type:             chData.type,
+          topic:            chData.topic || undefined,
+          nsfw:             chData.nsfw,
+          bitrate:          chData.bitrate || undefined,
+          userLimit:        chData.userLimit || undefined,
+          rateLimitPerUser: chData.slowmode || undefined,
+          parent:           parent?.id || undefined,
+          permissionOverwrites: mapOverwrites(chData.permissionOverwrites),
+          reason:           'Athena Prime — Backup Restore'
+        }),
+        12000,
+        `channel:${chData.name}`
+      );
       created++;
       consecutiveFailures = 0;
       rlog(`  ✅ Channel OK: '${chData.name}'`);
