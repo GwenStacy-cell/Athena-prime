@@ -542,28 +542,15 @@ export const commands = [
   // ─── VC SLASH COMMANDS ───
   {
     name: 'vc',
-    description: '🎙️ Manage your personal JTC voice channel.',
+    description: '🎙️ Voice channel quick actions. Use the panel buttons for all settings.',
     category: 'utility',
     permissions: [],
     options: [
-      { name: 'name', description: 'Rename your voice channel', type: 1, options: [{ name: 'new_name', description: 'The new name', type: 3, required: true }] },
-      { name: 'limit', description: 'Set user limit (0 = unlimited)', type: 1, options: [{ name: 'number', description: 'Max users (0-99)', type: 4, required: true, min_value: 0, max_value: 99 }] },
-      { name: 'lock', description: 'Prevent others from joining', type: 1 },
-      { name: 'unlock', description: 'Reopen the channel', type: 1 },
-      { name: 'ghost', description: 'Hide your channel from everyone', type: 1 },
-      { name: 'unghost', description: 'Make your channel visible again', type: 1 },
-      { name: 'permit', description: 'Permit a user to access the channel', type: 1, options: [{ name: 'user', description: 'User to permit', type: 6, required: true }] },
-      { name: 'reject', description: 'Reject/kick a user from the channel', type: 1, options: [{ name: 'user', description: 'User to reject', type: 6, required: true }] },
-      { name: 'invite', description: 'Invite a user via DM', type: 1, options: [{ name: 'user', description: 'User to invite', type: 6, required: true }] },
-      { name: 'transfer', description: 'Transfer ownership to another member', type: 1, options: [{ name: 'user', description: 'New owner (must be in channel)', type: 6, required: true }] },
-      { name: 'bitrate', description: 'Change channel bitrate (kbps)', type: 1, options: [{ name: 'value', description: 'Bitrate in kbps (8-384)', type: 4, required: true, min_value: 8, max_value: 384 }] },
-      { name: 'region', description: 'Change voice region', type: 1, options: [{ name: 'region', description: 'Voice region', type: 3, required: true, choices: [{ name: 'Auto', value: '' }, { name: 'Brazil', value: 'brazil' }, { name: 'Europe', value: 'europe' }, { name: 'Hong Kong', value: 'hongkong' }, { name: 'India', value: 'india' }, { name: 'Japan', value: 'japan' }, { name: 'Singapore', value: 'singapore' }, { name: 'US East', value: 'us-east' }, { name: 'US West', value: 'us-west' }, { name: 'US Central', value: 'us-central' }, { name: 'US South', value: 'us-south' }, { name: 'Sydney', value: 'sydney' }, { name: 'South Africa', value: 'southafrica' }, { name: 'Russia', value: 'russia' }] }] },
-      { name: 'nsfw', description: 'Toggle NSFW on your channel', type: 1 },
-      { name: 'claim', description: 'Claim ownership if owner left', type: 1 },
-      { name: 'info', description: 'Show channel details', type: 1 }
+      { name: 'claim', description: 'Claim ownership of the channel if the owner left', type: 1 },
+      { name: 'info', description: 'Show your voice channel details', type: 1 }
     ],
     async executePrefix(message) {
-      return message.reply({ embeds: [embed.info('Use Slash Command', 'Please use `/vc` for voice channel management.')] });
+      return message.reply({ embeds: [embed.info('Use the Panel', 'Use the control panel buttons in your channel to manage your VC settings.')] });
     },
     async executeSlash(interaction) {
       const sub = interaction.options.getSubcommand();
@@ -574,7 +561,6 @@ export const commands = [
       if (!vcChannel) return interaction.reply({ embeds: [embed.warn('Not In Voice', 'You must be in a voice channel to use this.')], ephemeral: true });
       const jtcData = db.getJtcChannel(vcChannel.id);
       if (!jtcData) return interaction.reply({ embeds: [embed.warn('Not A JTC Channel', 'This only works in a Join to Create channel.')], ephemeral: true });
-      const isOwner = jtcData.ownerId === member.id || isBotOwnerSync(member.id);
 
       if (sub === 'claim') {
         if (vcChannel.members.has(jtcData.ownerId)) return interaction.reply({ embeds: [embed.warn('Cannot Claim', 'The owner is still in the channel.')], ephemeral: true });
@@ -593,45 +579,6 @@ export const commands = [
           { name: '🌍 Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
           { name: '⚠️ NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true }
         ])], ephemeral: true });
-      }
-
-      if (!isOwner) return interaction.reply({ embeds: [embed.danger('Not Owner', 'Only the channel owner can do this.')], ephemeral: true });
-
-      if (sub === 'name') { await vcChannel.setName(interaction.options.getString('new_name')); return interaction.reply({ embeds: [embed.success('Renamed ✏️', `Channel renamed to **${interaction.options.getString('new_name')}**.`)], ephemeral: true }); }
-      if (sub === 'limit') { const l = interaction.options.getInteger('number'); await vcChannel.setUserLimit(l); return interaction.reply({ embeds: [embed.success('Limit Set 👥', `Limit set to **${l === 0 ? 'Unlimited' : l}**.`)], ephemeral: true }); }
-      if (sub === 'lock') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: false }); return interaction.reply({ embeds: [embed.danger('Locked 🔒', 'Channel is now locked.')], ephemeral: true }); }
-      if (sub === 'unlock') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: null }); return interaction.reply({ embeds: [embed.success('Unlocked 🔓', 'Channel is now open.')], ephemeral: true }); }
-      if (sub === 'ghost') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false }); return interaction.reply({ embeds: [embed.info('Ghosted 👻', 'Channel is now invisible.')], ephemeral: true }); }
-      if (sub === 'unghost') { await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: null }); return interaction.reply({ embeds: [embed.success('Unghostd 👁️', 'Channel is now visible.')], ephemeral: true }); }
-      if (sub === 'nsfw') { const c = vcChannel.nsfw; await vcChannel.setNSFW(!c); return interaction.reply({ embeds: [c ? embed.success('NSFW Off', 'Channel is no longer NSFW.') : embed.warn('NSFW On ⚠️', 'Channel marked as NSFW.')], ephemeral: true }); }
-      if (sub === 'bitrate') { const k = interaction.options.getInteger('value'); await vcChannel.setBitrate(k * 1000); return interaction.reply({ embeds: [embed.success('Bitrate 🎚️', `Set to **${k}kbps**.`)], ephemeral: true }); }
-      if (sub === 'region') { const r = interaction.options.getString('region'); await vcChannel.setRTCRegion(r || null); return interaction.reply({ embeds: [embed.success('Region 🌍', `Set to **${r || 'Auto'}**.`)], ephemeral: true }); }
-
-      if (sub === 'permit') {
-        const t = interaction.options.getMember('user');
-        await vcChannel.permissionOverwrites.edit(t.id, { Connect: true, ViewChannel: true });
-        return interaction.reply({ embeds: [embed.success('Permitted ✅', `${t} can now join.`)], ephemeral: true });
-      }
-      if (sub === 'reject') {
-        const t = interaction.options.getMember('user');
-        if (t.voice?.channelId === vcChannel.id) await t.voice.disconnect().catch(() => null);
-        await vcChannel.permissionOverwrites.edit(t.id, { Connect: false, ViewChannel: false });
-        return interaction.reply({ embeds: [embed.danger('Rejected 🚫', `${t} has been removed.`)], ephemeral: true });
-      }
-      if (sub === 'invite') {
-        const t = interaction.options.getMember('user');
-        const inv = await vcChannel.createInvite({ maxAge: 300, maxUses: 1 }).catch(() => null);
-        const dmEmbed = new EmbedBuilder().setColor(0x5865F2).setTitle('📨 You\'ve been invited!').setDescription(`**${member.displayName}** invites you to join their channel in **${guild.name}**.\n\n${inv ? `[Click to Join](${inv.url})` : 'Look for their channel!'}`);
-        const sent = await t.send({ embeds: [dmEmbed] }).catch(() => null);
-        return interaction.reply({ embeds: [sent ? embed.success('Invite Sent 📨', `${t} has been invited via DM.`) : embed.warn('DM Failed', `${t} has DMs disabled.`)], ephemeral: true });
-      }
-      if (sub === 'transfer') {
-        const t = interaction.options.getMember('user');
-        if (!vcChannel.members.has(t.id)) return interaction.reply({ embeds: [embed.warn('Not In Channel', 'That user must be in your channel.')], ephemeral: true });
-        await vcChannel.permissionOverwrites.edit(member.id, { ManageChannels: false }).catch(() => null);
-        await vcChannel.permissionOverwrites.edit(t.id, { Connect: true, ViewChannel: true, ManageChannels: true }).catch(() => null);
-        db.setJtcOwner(vcChannel.id, t.id);
-        return interaction.reply({ embeds: [embed.success('Transferred 👑', `${t} is now the owner.`)], ephemeral: true });
       }
     }
   }
