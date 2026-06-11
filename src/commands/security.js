@@ -806,6 +806,59 @@ export const commands = [
     }
   },
 
+  // --- BOTWHITELIST COMMAND ---
+  {
+    name: 'botwhitelist',
+    description: 'Manages trusted bots that are allowed to be in the server (Anti-Nuke bot guard).',
+    category: 'security',
+    permissions: [],
+    options: [
+      {
+        name: 'action',
+        description: 'Choose action',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Add Bot', value: 'add' },
+          { name: 'Remove Bot', value: 'remove' },
+          { name: 'List Bots', value: 'list' }
+        ]
+      },
+      {
+        name: 'bot_id',
+        description: 'The bot\'s User ID (right-click → Copy ID)',
+        type: 3,
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner** and **Server Owner** can manage the bot whitelist.`)] });
+      }
+      const action = args[0]?.toLowerCase();
+      const botId = args[1];
+      if (!action || (action !== 'list' && !botId)) {
+        return message.reply({ embeds: [embed.warn('Usage', `${message.author} \`!botwhitelist add <botId>\`, \`!botwhitelist remove <botId>\`, or \`!botwhitelist list\``)] });
+      }
+      const result = await handleBotWhitelist(message.guild, action, botId);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** and **Server Owner** can manage the bot whitelist.`)], ephemeral: true });
+      }
+      const action = interaction.options.getString('action');
+      const botId = interaction.options.getString('bot_id');
+      if (action !== 'list' && !botId) {
+        return interaction.reply({ embeds: [embed.warn('Error', `${interaction.user} Please provide the bot's User ID.`)], ephemeral: true });
+      }
+      const result = await handleBotWhitelist(interaction.guild, action, botId);
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
   // --- ANTILINK COMMAND ---
   {
     name: 'antilink',
@@ -1706,6 +1759,23 @@ async function handleExtraOwner(guild, moderator, action, targetUser) {
 
     const formattedList = owners.map(id => `• <@${id}> (ID: \`${id}\`)`).join('\n');
     return { embed: embed.owner('Extra Owners List', `**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>\n\n**Extra Owners:**\n${formattedList}`) };
+  }
+}
+
+async function handleBotWhitelist(guild, action, botId) {
+  if (action === 'add') {
+    if (!botId || !/^\d{17,20}$/.test(botId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid bot User ID (17-20 digit number).') };
+    db.addBotToWhitelist(guild.id, botId);
+    return { embed: embed.success('Bot Whitelisted ✅', `Bot ID \`${botId}\` has been added to the **Bot Whitelist**.\n\nThis bot will no longer be kicked or flagged when added to the server.`) };
+  } else if (action === 'remove') {
+    if (!botId) return { embed: embed.warn('Missing ID', 'Please provide the Bot ID to remove.') };
+    db.removeBotFromWhitelist(guild.id, botId);
+    return { embed: embed.success('Bot Removed', `Bot ID \`${botId}\` has been removed from the Bot Whitelist. It will now be blocked if added again.`) };
+  } else {
+    const list = db.getBotWhitelist(guild.id);
+    if (list.length === 0) return { embed: embed.info('No Whitelisted Bots', 'No bots are currently whitelisted.\n\nUse `!botwhitelist add <botId>` to whitelist a trusted bot.') };
+    const formatted = list.map(id => `• \`${id}\``).join('\n');
+    return { embed: embed.info('🤖 Whitelisted Bots', `These bots are permitted to be in the server:\n\n${formatted}`) };
   }
 }
 

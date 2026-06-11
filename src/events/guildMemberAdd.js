@@ -3,6 +3,7 @@ import embed from '../embed.js';
 import { executeQuarantine } from '../commands/security.js';
 import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel } from '../utils/helpers.js';
 import { sendWelcomeMessage } from '../commands/welcome.js';
+import { checkBotAdd } from '../utils/antinuke.js';
 
 export default {
   name: 'guildMemberAdd',
@@ -10,6 +11,14 @@ export default {
     const guild = member.guild;
     const userId = member.id;
     const config = db.getGuildConfig(guild.id);
+
+    // ==========================================
+    // 0. BOT ADD GUARD — unauthorized bot detection
+    // ==========================================
+    if (member.user.bot) {
+      await checkBotAdd(member);
+      return; // do not run welcome/quarantine logic on bots
+    }
 
     // ==========================================
     // 1. QUARANTINE BYPASS PROTECTION

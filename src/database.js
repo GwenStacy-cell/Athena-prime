@@ -20,7 +20,8 @@ const DEFAULT_SCHEMA = {
   modModes: {},      // guildId -> { expiresAt, startedBy }
   triggers: {},      // guildId -> [ {match, response} ]
   jtc: {},           // guildId -> { lobbyChannelId, categoryId }
-  jtcChannels: {}    // channelId -> { ownerId, guildId }
+  jtcChannels: {},   // channelId -> { ownerId, guildId }
+  botWhitelist: {}   // guildId -> [ botId... ]
 };
 
 class Database {
@@ -47,6 +48,7 @@ class Database {
         this.cache.triggers       = this.cache.triggers       || {};
         this.cache.jtc            = this.cache.jtc            || {};
         this.cache.jtcChannels    = this.cache.jtcChannels    || {};
+        this.cache.botWhitelist   = this.cache.botWhitelist   || {};
       } else {
         this.save();
       }
@@ -571,6 +573,33 @@ class Database {
     if (!this.cache.leave) this.cache.leave = {};
     this.cache.leave[guildId] = config;
     this.save();
+  }
+
+  // ==========================================
+  // BOT WHITELIST (per-guild trusted bots)
+  // ==========================================
+  getBotWhitelist(guildId) {
+    if (!this.cache.botWhitelist) this.cache.botWhitelist = {};
+    return this.cache.botWhitelist[guildId] || [];
+  }
+
+  addBotToWhitelist(guildId, botId) {
+    if (!this.cache.botWhitelist) this.cache.botWhitelist = {};
+    if (!this.cache.botWhitelist[guildId]) this.cache.botWhitelist[guildId] = [];
+    if (!this.cache.botWhitelist[guildId].includes(botId)) {
+      this.cache.botWhitelist[guildId].push(botId);
+      this.save();
+    }
+  }
+
+  removeBotFromWhitelist(guildId, botId) {
+    if (!this.cache.botWhitelist?.[guildId]) return;
+    this.cache.botWhitelist[guildId] = this.cache.botWhitelist[guildId].filter(id => id !== botId);
+    this.save();
+  }
+
+  isBotWhitelisted(guildId, botId) {
+    return (this.cache.botWhitelist?.[guildId] || []).includes(botId);
   }
 }
 

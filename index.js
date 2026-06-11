@@ -26,7 +26,11 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,      // Privileged Intent
     GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildPresences       // Privileged Intent (for owner status detection)
+    GatewayIntentBits.GuildPresences,      // Privileged Intent (for owner status detection)
+    GatewayIntentBits.GuildModeration,     // Required for ban/unban events
+    GatewayIntentBits.GuildWebhooks,       // Required for webhook events
+    GatewayIntentBits.GuildInvites,        // Required for invite tracking
+    GatewayIntentBits.GuildEmojisAndStickers // Required for emoji events
   ],
   partials: [
     Partials.User,
@@ -50,6 +54,9 @@ import roleCreateEvent from './src/events/roleCreate.js';
 import guildUpdateEvent from './src/events/guildUpdate.js';
 import guildMemberUpdateEvent from './src/events/guildMemberUpdate.js';
 import voiceStateUpdateEvent from './src/events/voiceStateUpdate.js';
+import roleUpdateEvent from './src/events/roleUpdate.js';
+import guildBanRemoveEvent from './src/events/guildBanRemove.js';
+import webhookUpdateEvent from './src/events/webhookUpdate.js';
 import { scheduleAutoUnquarantine } from './src/commands/security.js';
 import db from './src/database.js';
 
@@ -66,7 +73,10 @@ const events = [
   roleCreateEvent,
   guildUpdateEvent,
   guildMemberUpdateEvent,
-  voiceStateUpdateEvent
+  voiceStateUpdateEvent,
+  roleUpdateEvent,
+  guildBanRemoveEvent,
+  webhookUpdateEvent
 ];
 
 // Register Events
