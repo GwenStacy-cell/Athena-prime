@@ -59,8 +59,8 @@ function hasDangerousPerms(permissions) {
 // ==========================================
 // CORE PUNISHMENT ENGINE
 // ==========================================
-async function punish(guild, executor, eventType, config) {
-  const punishment = config.antiNukePunishment || 'ban';
+async function punish(guild, executor, eventType, config, forceQuarantine = false) {
+  const punishment = forceQuarantine ? 'quarantine' : (config.antiNukePunishment || 'ban');
   const reason = `[ATHENA ANTI-NUKE] Unauthorized action: ${eventType}`;
   let result = 'None applied';
 
@@ -83,6 +83,13 @@ async function punish(guild, executor, eventType, config) {
     } else {
       const qRes = await executeQuarantine(guild, executorMember, guild.members.me, reason);
       result = qRes.success ? '🔒 Quarantined (all roles stripped)' : '❌ Quarantine failed';
+      
+      // If forced quarantine, we still might want to ban if that's what the user expects for antibot,
+      // but wait, the user said "strip roles and ban". So maybe we should do both?
+      if (forceQuarantine && config.antiNukePunishment === 'ban') {
+        await executorMember.ban({ reason }).catch(() => null);
+        result += ' + 🔨 Banned';
+      }
     }
     // Clear their action tracker after punishment
     clearTracker(guild.id, executor.id);
@@ -132,12 +139,12 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
 // ==========================================
 // IS AUTHORIZED — Single source of truth
 // ==========================================
-function isAuthorized(guild, executor) {
+function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (executor.id === guild.members.me?.id) return true;    // bot itself
   if (isBotOwnerSync(executor.id)) return true;             // bot owner
   if (executor.id === guild.ownerId) return true;           // server owner
   if (db.isExtraOwner(guild.id, executor.id)) return true;  // extra owner
-  if (db.isWhitelisted(guild, executor.id)) return true;    // whitelist
+  if (db.isWhitelisted(guild, executor.id, eventType)) return true; // granular whitelist
   return false;
 }
 
@@ -375,22 +382,22 @@ export async function checkBotAdd(member) {
   const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
   if (botWhitelist.includes(member.id)) return;
 
-  try {
+    try {
     await new Promise(r => setTimeout(r, 500));
     const auditLogs = await guild.fetchAuditLogs({ limit: 3, type: AuditLogEvent.BotAdd }).catch(() => null);
     const entry = auditLogs?.entries?.find(e => e.target?.id === member.id);
     if (!entry) {
-      // Still kick the unknown bot
-      await member.kick('Athena Anti-Nuke: Unauthorized bot addition (no audit log entry)').catch(() => null);
-      await logToSecurityChannel(guild, embed.danger('🤖 Unauthorized Bot Kicked',
-        `Bot **${member.user.tag}** was kicked (not in whitelist, no audit log found).`
+      // Still ban the unknown bot
+      await member.ban({ reason: 'Athena Anti-Nuke: Unauthorized bot addition (no audit log entry)' }).catch(() => null);
+      await logToSecurityChannel(guild, embed.danger('🤖 Unauthorized Bot Banned',
+        `Bot **${member.user.tag}** was banned (not in whitelist, no audit log found).`
       ));
       return;
     }
 
     const { executor, createdAt } = entry;
     if (Date.now() - createdAt.getTime() > 15_000) return;
-    if (isAuthorized(guild, executor)) {
+    if (isAuthorized(guild, executor, 'antibot')) {
       // Even whitelisted user added a bot — just log it
       await logToSecurityChannel(guild, embed.info('🤖 Bot Added (Authorized)',
         `Bot **${member.user.tag}** was added by **${executor.tag}** (authorized).\nAdd it to the bot whitelist with \`!botwhitelist add ${member.id}\` if it should stay.`
@@ -398,12 +405,15 @@ export async function checkBotAdd(member) {
       return;
     }
 
-    // Kick the unauthorized bot first
-    await member.kick('Athena Anti-Nuke: Unauthorized bot addition').catch(() => null);
+    // Ban the unauthorized bot first
+    await member.ban({ reason: 'Athena Anti-Nuke: Unauthorized bot addition' }).catch(() => null);
 
-    const punishResult = await punish(guild, executor, 'Unauthorized Bot Addition', config);
+    // Strip roles by enforcing quarantine regardless of configured punishment, 
+    // or rely on standard punish (which already strips roles if quarantine is used).
+    // Let's enforce quarantine/role stripping for this specific severe violation.
+    const punishResult = await punish(guild, executor, 'Unauthorized Bot Addition', config, true);
     await notifyAndLog(guild, executor, `Unauthorized Bot Addition (${member.user.tag})`, punishResult,
-      `✅ Bot **${member.user.tag}** has been kicked from the server`);
+      `✅ Bot **${member.user.tag}** has been banned from the server`);
 
   } catch (err) {
     console.error('[AntiNuke] checkBotAdd error:', err);

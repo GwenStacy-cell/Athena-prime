@@ -103,7 +103,18 @@ class Database {
       if (cfg.antiNukeEnabled === undefined) { cfg.antiNukeEnabled = true; updated = true; }
       if (cfg.maxWarnings === undefined) { cfg.maxWarnings = 3; updated = true; }
       if (cfg.blacklistWords === undefined) { cfg.blacklistWords = []; updated = true; }
-      if (cfg.whitelist === undefined) { cfg.whitelist = []; updated = true; }
+      if (cfg.whitelist === undefined) { 
+        cfg.whitelist = {}; 
+        updated = true; 
+      } else if (Array.isArray(cfg.whitelist)) {
+        // Migrate old array format to granular object format
+        const oldArray = cfg.whitelist;
+        cfg.whitelist = {};
+        oldArray.forEach(id => {
+          cfg.whitelist[id] = ['all'];
+        });
+        updated = true;
+      }
       if (cfg.autonick === undefined) { cfg.autonick = { enabled: false, prefix: '', suffix: '' }; updated = true; }
       if (cfg.quarantineVcId === undefined) { cfg.quarantineVcId = null; updated = true; }
       if (cfg.homeVcId === undefined) { cfg.homeVcId = null; updated = true; }
@@ -126,7 +137,7 @@ class Database {
   }
 
   // Whitelist Manager
-  isWhitelisted(guild, userId) {
+  isWhitelisted(guild, userId, eventType = 'all') {
     if (!guild) return false;
     if (userId === guild.ownerId) return true; // Owner is always immune/whitelisted
     
@@ -138,24 +149,62 @@ class Database {
     if (this.isExtraOwner(guild.id, userId)) return true;
 
     const config = this.getGuildConfig(guild.id);
-    return config.whitelist.includes(userId);
+    const userEvents = config.whitelist[userId];
+    if (!userEvents) return false;
+
+    // 'all' grants immunity to everything
+    return userEvents.includes('all') || userEvents.includes(eventType);
   }
 
-  addWhitelist(guildId, userId) {
+  addWhitelist(guildId, userId, events = ['all']) {
     const config = this.getGuildConfig(guildId);
-    if (!config.whitelist.includes(userId)) {
-      config.whitelist.push(userId);
+    if (!config.whitelist) config.whitelist = {};
+    if (!config.whitelist[userId]) config.whitelist[userId] = [];
+
+    const userEvents = config.whitelist[userId];
+    let changed = false;
+
+    for (const event of events) {
+      if (!userEvents.includes(event)) {
+        userEvents.push(event);
+        changed = true;
+      }
+    }
+
+    if (changed) {
       this.updateGuildConfig(guildId, { whitelist: config.whitelist });
       return true;
     }
     return false;
   }
 
-  removeWhitelist(guildId, userId) {
+  removeWhitelist(guildId, userId, events = ['all']) {
     const config = this.getGuildConfig(guildId);
-    const index = config.whitelist.indexOf(userId);
-    if (index !== -1) {
-      config.whitelist.splice(index, 1);
+    if (!config.whitelist || !config.whitelist[userId]) return false;
+
+    if (events.includes('all')) {
+      delete config.whitelist[userId];
+      this.updateGuildConfig(guildId, { whitelist: config.whitelist });
+      return true;
+    }
+
+    const userEvents = config.whitelist[userId];
+    let changed = false;
+
+    for (const event of events) {
+      const index = userEvents.indexOf(event);
+      if (index !== -1) {
+        userEvents.splice(index, 1);
+        changed = true;
+      }
+    }
+
+    if (userEvents.length === 0) {
+      delete config.whitelist[userId];
+      changed = true;
+    }
+
+    if (changed) {
       this.updateGuildConfig(guildId, { whitelist: config.whitelist });
       return true;
     }

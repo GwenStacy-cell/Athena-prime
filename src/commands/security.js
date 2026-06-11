@@ -296,7 +296,7 @@ export const commands = [
   // --- WHITELIST COMMAND ---
   {
     name: 'whitelist',
-    description: 'Manages whitelisted members who are immune to Anti-Nuke, Anti-Spam, and AutoMod filters.',
+    description: 'Manages whitelisted members who are immune to specific bot filters.',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
     options: [
@@ -316,28 +316,44 @@ export const commands = [
         description: 'Target member for add/remove actions',
         type: 6,
         required: false
+      },
+      {
+        name: 'events',
+        description: 'Space-separated events (e.g. "antinuke antispam"). Use "all" for everything.',
+        type: 3,
+        required: false
       }
     ],
     async executePrefix(message, args) {
       const action = args[0]?.toLowerCase();
       const target = message.mentions.members.first();
-
+      
       if (!action || (action !== 'list' && !target)) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!whitelist add <@user>\`, \`!whitelist remove <@user>\`, or \`!whitelist list\``)] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!whitelist add <@user> [events...]\`, \`!whitelist remove <@user> [events...]\`, or \`!whitelist list\``)] });
       }
 
-      const result = await handleWhitelist(message.guild, message.member, action, target?.user);
+      // Extract events from arguments (skip action and ping)
+      let events = args.slice(2).map(e => e.toLowerCase().trim()).filter(e => e);
+      if (events.length === 0) events = ['all'];
+
+      const result = await handleWhitelist(message.guild, message.member, action, target?.user, events);
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
       const action = interaction.options.getString('action');
       const targetUser = interaction.options.getUser('user');
+      const eventsStr = interaction.options.getString('events');
 
       if (action !== 'list' && !targetUser) {
         return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user parameter for this action.`)], ephemeral: true });
       }
 
-      const result = await handleWhitelist(interaction.guild, interaction.member, action, targetUser);
+      let events = ['all'];
+      if (eventsStr) {
+        events = eventsStr.split(' ').map(e => e.toLowerCase().trim()).filter(e => e);
+      }
+
+      const result = await handleWhitelist(interaction.guild, interaction.member, action, targetUser, events);
       await interaction.reply({ embeds: [result.embed] });
     }
   },
@@ -1507,32 +1523,45 @@ async function handleRaidMode(guild, moderator, mode) {
   }
 }
 
-async function handleWhitelist(guild, moderator, action, targetUser) {
+async function handleWhitelist(guild, moderator, action, targetUser, events = ['all']) {
+  const allowedEvents = ['all', 'antinuke', 'antibot', 'antispam', 'antilink', 'antiinvite', 'quarantine'];
+  const invalidEvents = events.filter(e => !allowedEvents.includes(e));
+
+  if (invalidEvents.length > 0 && action !== 'list') {
+    return { embed: embed.warn('Invalid Events', `The following events are not recognized: \`${invalidEvents.join(', ')}\`\n\n**Allowed Events:** \`${allowedEvents.join(', ')}\``) };
+  }
+
   if (action === 'add') {
-    const success = db.addWhitelist(guild.id, targetUser.id);
+    const success = db.addWhitelist(guild.id, targetUser.id, events);
     if (success) {
-      logToSecurityChannel(guild, embed.log('Whitelist Added', `Administrator **${moderator.user.tag}** added **${targetUser.tag}** to whitelist.`, [], 'success'));
-      return { embed: embed.success('Whitelist Added', `Successfully added **${targetUser.tag}** to the security whitelist. They are now immune to all filters.`) };
+      logToSecurityChannel(guild, embed.log('Whitelist Added', `Administrator **${moderator.user.tag}** granted **${targetUser.tag}** immunity to: \`${events.join(', ')}\``, [], 'success'));
+      return { embed: embed.success('Whitelist Added', `Successfully whitelisted **${targetUser.tag}** for: \`${events.join(', ')}\`\nThey are now immune to those filters.`) };
     } else {
-      return { embed: embed.info('Already Whitelisted', `**${targetUser.tag}** is already whitelisted.`) };
+      return { embed: embed.info('Already Whitelisted', `**${targetUser.tag}** already has those exact whitelisted events.`) };
     }
   } else if (action === 'remove') {
-    const success = db.removeWhitelist(guild.id, targetUser.id);
+    const success = db.removeWhitelist(guild.id, targetUser.id, events);
     if (success) {
-      logToSecurityChannel(guild, embed.log('Whitelist Removed', `Administrator **${moderator.user.tag}** removed **${targetUser.tag}** from whitelist.`, [], 'warning'));
-      return { embed: embed.success('Whitelist Removed', `Successfully removed **${targetUser.tag}** from the security whitelist.`) };
+      logToSecurityChannel(guild, embed.log('Whitelist Removed', `Administrator **${moderator.user.tag}** removed whitelist from **${targetUser.tag}** for: \`${events.join(', ')}\``, [], 'warning'));
+      return { embed: embed.success('Whitelist Removed', `Successfully removed **${targetUser.tag}** from the whitelist for: \`${events.join(', ')}\``) };
     } else {
-      return { embed: embed.warn('Not Whitelisted', `**${targetUser.tag}** is not currently whitelisted.`) };
+      return { embed: embed.warn('Not Whitelisted', `**${targetUser.tag}** is not whitelisted for those events.`) };
     }
   } else {
     const config = db.getGuildConfig(guild.id);
-    const list = config.whitelist || [];
-    if (list.length === 0) {
+    const wlMap = config.whitelist || {};
+    const userIds = Object.keys(wlMap);
+
+    if (userIds.length === 0) {
       return { embed: embed.info('Whitelist Empty', `There are no custom whitelisted members in this guild. The owner <@${guild.ownerId}> is always immune.`) };
     }
     
-    const formattedList = list.map(id => `<@${id}> (ID: \`${id}\`)`).join('\n');
-    return { embed: embed.info('Security Whitelist', `Whitelisted users immune to Anti-Nuke, Anti-Spam, and Auto-Mod:\n\n**Owner (Always Immune):** <@${guild.ownerId}>\n\n**Custom Whitelist:**\n${formattedList}`) };
+    let formattedList = userIds.map(id => {
+      const evs = wlMap[id].join(', ');
+      return `• <@${id}> (ID: \`${id}\`) — **Events:** \`${evs}\``;
+    }).join('\n');
+    
+    return { embed: embed.info('🛡️ Security Whitelist', `Whitelisted users immune to specific Auto-Mod and Firewall filters:\n\n**Server Owner (Always Immune):** <@${guild.ownerId}>\n\n**Custom Whitelist:**\n${formattedList}`) };
   }
 }
 
@@ -1887,8 +1916,11 @@ async function getServerInfoEmbed(guild) {
 }
 
 async function getUserInfoEmbed(guild, member) {
+  const isExtraOwner = db.isExtraOwner(guild.id, member.id);
+  const wlMap = db.getGuildConfig(guild.id).whitelist || {};
+  const isWhitelisted = !!wlMap[member.id];
+  const wlEvents = isWhitelisted ? wlMap[member.id].join(', ') : '';
   const warnings = db.getWarnings(guild.id, member.id);
-  const isWhitelisted = db.isWhitelisted(guild, member.id);
   const isExtra = db.isExtraOwner(guild.id, member.id);
   const isBotOwn = isBotOwnerSync(member.id);
   const isServerOwner = member.id === guild.ownerId;
@@ -1902,9 +1934,9 @@ async function getUserInfoEmbed(guild, member) {
 
   let privileges = [];
   if (isBotOwn) privileges.push('👑 **Bot Owner**');
-  if (isServerOwner) privileges.push('🏠 **Server Owner**');
-  if (isExtra) privileges.push('⭐ **Extra Owner**');
-  if (isWhitelisted) privileges.push('✅ **Whitelisted**');
+  if (isServerOwner) privileges.push('👑 **Server Owner**');
+  if (isExtraOwner) privileges.push('⭐ **Extra Owner**');
+  if (isWhitelisted) privileges.push(`✅ **Whitelisted** (${wlEvents})`);
   if (privileges.length === 0) privileges.push('Standard Member');
 
   const fields = [
@@ -2185,7 +2217,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
     if (isBotOwnerSync(member.id))                              return false; // Skip bot owner
     if (member.id === guild.ownerId)                            return false; // Skip server owner
     if (db.isExtraOwner(guild.id, member.id))                   return false; // Skip extra owners
-    if (db.isWhitelisted(guild, member.id))                     return false; // Skip whitelisted
+    if (db.isWhitelisted(guild, member.id, 'quarantine'))       return false; // Skip whitelisted
     if (db.getQuarantine(guild.id, member.id))                  return false; // Skip already quarantined
     return true;
   });

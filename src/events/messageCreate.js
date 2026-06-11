@@ -110,14 +110,16 @@ export default {
       }
     }
 
-    // Whitelisted users and owner are immune to all auto-moderation filters
-    const isImmune = db.isWhitelisted(message.guild, userId);
+    // Granular Whitelist checks
+    const hasAntiInviteImmunity = db.isWhitelisted(message.guild, userId, 'antiinvite');
+    const hasAntiLinkImmunity = db.isWhitelisted(message.guild, userId, 'antilink');
+    const hasAntiSpamImmunity = db.isWhitelisted(message.guild, userId, 'antispam');
 
     // ==========================================
     // 1. AUTO-MODERATION: ANTI-INVITE
     // ==========================================
     const antiInviteActive = dbConfig.antiInviteEnabled !== undefined ? dbConfig.antiInviteEnabled : config.antiInvite.enabled;
-    if (!isImmune && antiInviteActive && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+    if (!hasAntiInviteImmunity && antiInviteActive && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const inviteRegex = /(discord\.(gg|io|me|li)\/.+|discord(app)?\.com\/invite\/.+)/gi;
       if (inviteRegex.test(message.content)) {
         if (config.antiInvite.deleteInvites) {
@@ -151,7 +153,7 @@ export default {
     // ==========================================
     // 1.5. AUTO-MODERATION: ANTI-LINK
     // ==========================================
-    if (!isImmune && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+    if (!hasAntiLinkImmunity && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       // allowAllLinks = true means admin has disabled the filter for all links
       if (dbConfig.allowAllLinks !== true) {
         const linkRegex = /https?:\/\/[^\s]+/gi;
@@ -196,7 +198,7 @@ export default {
     // ==========================================
     // 2. AUTO-MODERATION: WORD BLACKLIST FILTER
     // ==========================================
-    if (!isImmune && dbConfig.blacklistWords && dbConfig.blacklistWords.length > 0 && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+    if (!hasAntiSpamImmunity && dbConfig.blacklistWords && dbConfig.blacklistWords.length > 0 && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const msgLower = message.content.toLowerCase();
       const matchedWord = dbConfig.blacklistWords.find(word => msgLower.includes(word));
       
@@ -246,7 +248,7 @@ export default {
     // ==========================================
     // 3. AUTO-MODERATION: ANTI-SPAM
     // ==========================================
-    if (!isImmune && config.antiSpam.enabled && dbConfig.antiSpamEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+    if (!hasAntiSpamImmunity && config.antiSpam.enabled && dbConfig.antiSpamEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const now = Date.now();
       
       if (!spamCache.has(cacheKey)) {
