@@ -603,6 +603,41 @@ export const commands = [
     }
   },
 
+  // --- UNSETHOMEVC COMMAND ---
+  {
+    name: 'unsethomevc',
+    description: 'Removes the Home Voice Channel setting and makes the bot leave the VC.',
+    category: 'security',
+    permissions: [],
+    options: [],
+    async executePrefix(message, args) {
+      const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} This command is restricted to the Bot Owner and the Server Owner.`)] });
+      }
+
+      db.updateGuildConfig(message.guild.id, { homeVcId: null });
+      const { getVoiceConnection } = await import('@discordjs/voice');
+      const connection = getVoiceConnection(message.guild.id);
+      if (connection) connection.destroy();
+
+      await message.reply({ embeds: [embed.success('Home VC Removed', `Athena Prime's Home Voice Channel has been unset. The bot has disconnected from voice.`)] });
+    },
+    async executeSlash(interaction) {
+      const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`)], ephemeral: true });
+      }
+
+      db.updateGuildConfig(interaction.guild.id, { homeVcId: null });
+      const { getVoiceConnection } = await import('@discordjs/voice');
+      const connection = getVoiceConnection(interaction.guild.id);
+      if (connection) connection.destroy();
+
+      await interaction.reply({ embeds: [embed.success('Home VC Removed', `Athena Prime's Home Voice Channel has been unset. The bot has disconnected from voice.`)] });
+    }
+  },
+
   // --- SETGUILDAVATAR COMMAND ---
   {
     name: 'setguildavatar',

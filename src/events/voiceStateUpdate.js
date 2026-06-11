@@ -16,7 +16,7 @@ export default {
     if (!client.jtcPanelLocks) client.jtcPanelLocks = new Set();
 
     // ==========================================
-    // BOT HOME VC RESTORE
+    // BOT HOME VC RESTORE (Instant Reconnect)
     // ==========================================
     if (userId === client.user.id) {
       const config = db.getGuildConfig(guild.id);
@@ -24,13 +24,13 @@ export default {
       if (!homeVcId) return;
 
       if (newState.channelId !== homeVcId) {
-        console.log(`[JTC] Bot voice state changed in ${guild.name}. Restoring home VC...`);
-        setTimeout(() => {
-          const connection = getVoiceConnection(guild.id);
-          if (!connection || connection.joinConfig.channelId !== homeVcId) {
-            connectToHomeVc(guild, homeVcId);
-          }
-        }, 1500);
+        console.log(`[JTC] Bot voice state changed in ${guild.name}. Force restoring home VC...`);
+        // Immediately destroy any broken or moved connection
+        const connection = getVoiceConnection(guild.id);
+        if (connection) connection.destroy();
+
+        // Reconnect immediately
+        connectToHomeVc(guild, homeVcId);
       }
       return;
     }

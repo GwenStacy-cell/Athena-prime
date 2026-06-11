@@ -83,20 +83,18 @@ export default {
       try {
         const presence = getPresenceStatus(message.guild, ownerId);
 
-        const ownerEmbed = embed.owner(
-          'You tagged my Master !',
-          `<@${userId}>\n\nYour ping has been forwarded through direct messages.\nAwait his arrival.`,
-          [
-            { name: 'Status', value: `${presence.emoji} **${presence.text}**`, inline: true }
-          ]
-        );
-        await message.reply({ embeds: [ownerEmbed] }).catch(() => null);
+        const ownerEmbed = new EmbedBuilder()
+          .setColor(0x2b2d31)
+          .setDescription(`# You tagged my Master !\n\n> Status: **${presence.text.toUpperCase()}**\n\nYour ping has been forwarded through direct messages.\nAwait his arrival.`)
+          .setFooter({ text: `${client.user.username} Security • Today at ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}` });
+
+        await message.reply({ content: `<@${userId}>`, embeds: [ownerEmbed] }).catch(() => null);
 
         // DM the owner
         const ownerUser = await message.client.users.fetch(ownerId).catch(() => null);
         if (ownerUser) {
           const dmEmbed = embed.info(
-            '🔔 You were tagged!',
+            'You were tagged!',
             null,
             [
               { name: 'Tagger', value: `${message.author.tag} (<@${userId}>)`, inline: true },
