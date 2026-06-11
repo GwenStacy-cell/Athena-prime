@@ -319,9 +319,18 @@ export const commands = [
       },
       {
         name: 'events',
-        description: 'Space-separated events (e.g. "antinuke antispam"). Use "all" for everything.',
+        description: 'System to whitelist them for',
         type: 3,
-        required: false
+        required: false,
+        choices: [
+          { name: 'All Systems', value: 'all' },
+          { name: 'Anti-Nuke (Bans, Kicks, Channels, Roles)', value: 'antinuke' },
+          { name: 'Anti-Bot (Unauthorized Bots)', value: 'antibot' },
+          { name: 'Anti-Spam (Mass Messages, Bad Words)', value: 'antispam' },
+          { name: 'Anti-Link (Malicious/External Links)', value: 'antilink' },
+          { name: 'Anti-Invite (Discord Promos)', value: 'antiinvite' },
+          { name: 'Quarantine Immunity', value: 'quarantine' }
+        ]
       }
     ],
     async executePrefix(message, args) {
