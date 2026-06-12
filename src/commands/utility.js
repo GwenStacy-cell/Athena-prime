@@ -38,20 +38,25 @@ export const commands = [
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      // Send initial placeholder
-      const sent = await message.reply({ content: '\u200b' });
-      const pingMs = sent.createdTimestamp - message.createdTimestamp;
-      const wsMs   = Math.round(message.client.ws.ping);
+      // Send placeholder — measures round-trip (API latency)
+      const sent  = await message.reply({ content: '\u200b' });
+      const apiMs = sent.createdTimestamp - message.createdTimestamp;
+      const wsMs  = Math.round(message.client.ws.ping);
+
+      // Measure real DB read latency
+      const dbStart = Date.now();
+      db.getGuildConfig(message.guild?.id || '0');
+      const dbMs = Date.now() - dbStart;
 
       // Embed 1 — compact latency badge
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`**${pingMs}MS**`);
+        .setDescription(`**${apiMs}MS**`);
 
       // Embed 2 — full PONG stats with bot avatar
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : 0ms | API : ${pingMs}ms`)
+        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : ${dbMs}ms | API : ${apiMs}ms`)
         .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
 
       await sent.edit({ content: null, embeds: [e1, e2] });
@@ -62,17 +67,21 @@ export const commands = [
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      const sent = await interaction.reply({ content: '\u200b', fetchReply: true });
-      const pingMs = sent.createdTimestamp - interaction.createdTimestamp;
-      const wsMs   = Math.round(interaction.client.ws.ping);
+      const sent  = await interaction.reply({ content: '\u200b', fetchReply: true });
+      const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
+      const wsMs  = Math.round(interaction.client.ws.ping);
+
+      const dbStart = Date.now();
+      db.getGuildConfig(interaction.guild?.id || '0');
+      const dbMs = Date.now() - dbStart;
 
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`**${pingMs}MS**`);
+        .setDescription(`**${apiMs}MS**`);
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : 0ms | API : ${pingMs}ms`)
+        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : ${dbMs}ms | API : ${apiMs}ms`)
         .setThumbnail(interaction.client.user.displayAvatarURL({ size: 256 }));
 
       await interaction.editReply({ content: null, embeds: [e1, e2] });
