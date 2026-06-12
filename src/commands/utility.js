@@ -93,6 +93,43 @@ export const commands = [
     }
   },
 
+  // --- TIME COMMAND ---
+  {
+    name: 'time',
+    description: 'Check the current Indian Standard Time (IST)',
+    category: 'utility',
+    permissions: [],
+    async executePrefix(message) {
+      await this._executeTime(message.guild, message.client, message, message.author);
+    },
+    async executeSlash(interaction) {
+      await this._executeTime(interaction.guild, interaction.client, interaction, interaction.user);
+    },
+    async _executeTime(guild, client, context, user) {
+      const { EmbedBuilder } = await import('discord.js');
+      const cfg = db.getGuildConfig(guild?.id || '0');
+      const accentHex = cfg?.accentColor || '#00e5ff';
+      const accentInt = parseInt(accentHex.replace('#', ''), 16);
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' });
+      const dateStr = now.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+      const e1 = new EmbedBuilder()
+        .setColor(accentInt)
+        .setDescription(`> **COMMAND | ❕**`);
+
+      const e2 = new EmbedBuilder()
+        .setColor(accentInt)
+        .setDescription(`> • <@${user.id}> executed\n> **<:emoji_25:1515041866796503180> Time :**\n# ${timeStr}\n> **(IST) - ${dateStr}**`)
+        .setThumbnail(user.displayAvatarURL({ size: 256, dynamic: true }));
+
+      if (context.reply) {
+        await context.reply({ embeds: [e1, e2] });
+      }
+    }
+  },
+
   // --- SETUP COMMAND ---
   {
     name: 'setup',
