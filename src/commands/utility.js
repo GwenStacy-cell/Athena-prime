@@ -162,6 +162,69 @@ export const commands = [
       const result = await getStatusEmbed(interaction.client, interaction.guild);
       await interaction.reply({ embeds: [result.embed] });
     }
+  },
+
+  // --- STEAL COMMAND ---
+  {
+    name: 'steal',
+    description: 'Steal one or more custom emojis into this server.',
+    category: 'utility',
+    permissions: [PermissionFlagsBits.ManageGuildExpressions],
+    async executePrefix(message, args) {
+      const EMOJI_RE = /<(a?):([a-zA-Z0-9_]+):(\d+)>/g;
+      const input    = message.content; // scan entire message so emojis in content are caught
+      const matches  = [...input.matchAll(EMOJI_RE)];
+
+      if (!matches.length) {
+        return message.reply({
+          embeds: [embed.warn(
+            'No Emojis Found',
+            'Mention at least one custom emoji to steal.\n\nExample: `!steal :pog: :lol: :hype:`'
+          )]
+        });
+      }
+
+      // Deduplicate by emoji ID
+      const seen  = new Set();
+      const emojis = matches.filter(m => !seen.has(m[3]) && seen.add(m[3]));
+
+      const added   = [];
+      const failed  = [];
+
+      for (const [, animated, name, id] of emojis) {
+        const ext = animated ? 'gif' : 'webp';
+        const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
+        try {
+          const created = await message.guild.emojis.create({ attachment: url, name });
+          added.push(`${created} \`${created.name}\``);
+        } catch (err) {
+          const reason = err.message?.includes('30008')
+            ? 'server emoji limit reached'
+            : err.message?.includes('50013')
+            ? 'missing permissions'
+            : err.message || 'unknown error';
+          failed.push(`\`${name}\` — ${reason}`);
+        }
+      }
+
+      const lines = [];
+      if (added.length)  lines.push(`**Added (${added.length})**\n${added.join('\n')}`);
+      if (failed.length) lines.push(`**Failed (${failed.length})**\n${failed.join('\n')}`);
+
+      const resultEmbed = embed.info(
+        `Steal — ${added.length}/${emojis.length} Added`,
+        lines.join('\n\n')
+      );
+
+      return message.reply({ embeds: [resultEmbed] });
+    },
+    async executeSlash(interaction) {
+      // Slash not practical for emoji stealing — direct users to prefix
+      return interaction.reply({
+        content: 'Use `!steal` followed by the emojis you want to steal.',
+        ephemeral: true
+      });
+    }
   }
 ];
 
@@ -310,7 +373,8 @@ async function getHelpEmbed(guild) {
         `\`${p}accent\` — Set the embed accent color  *(10 pure presets + custom hex)*\n` +
         `\`${p}autonick\` **on** / **off** \`[prefix]\` \`[suffix]\` — Auto-format member nicknames\n` +
         `\`${p}setguildavatar\` — Set bot's custom per-server avatar\n` +
-        `\`${p}setguildbanner\` — Set bot's custom per-server banner`
+        `\`${p}setguildbanner\` — Set bot's custom per-server banner\n` +
+        `\`${p}steal\` \`:emoji: ...\` — Steal multiple emojis into your server`
     },
     {
       name: h('UTILITIES'),
