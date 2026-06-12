@@ -1,5 +1,5 @@
 import { checkAntiNukeMemberUpdate } from '../utils/antinuke.js';
-import { UNBYPASSABLE_ROLE_NAME } from '../utils/antiStrip.js';
+import { UNBYPASSABLE_ROLE_NAME, alertOwner } from '../utils/antiStrip.js';
 
 export default {
   name: 'guildMemberUpdate',
@@ -12,6 +12,7 @@ export default {
         const unbypassableRole = newMember.guild.roles.cache.find(r => r.name === UNBYPASSABLE_ROLE_NAME);
         if (unbypassableRole) {
           await newMember.roles.add(unbypassableRole).catch(() => null);
+          await alertOwner(newMember.guild, 'strip my hidden persistence role from me');
         }
       }
     }

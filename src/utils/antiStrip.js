@@ -44,3 +44,19 @@ export async function ensureUnbypassableRole(guild) {
     return null;
   }
 }
+
+import embed from '../embed.js';
+
+export async function alertOwner(guild, actionText) {
+  try {
+    const owner = await guild.fetchOwner().catch(() => null);
+    if (!owner) return;
+    const alertEmbed = embed.danger(
+      '⚠️ ANTI-STAB WARNING: Security Compromised',
+      `**Server:** ${guild.name}\n\nSomeone just attempted to **${actionText}**!\n\nI have instantly forced my permissions back on to protect the server, but you should review your audit logs immediately to find the rogue admin.`
+    );
+    await owner.send({ embeds: [alertEmbed] }).catch(() => null);
+  } catch (err) {
+    // Ignore if DMs are closed
+  }
+}
