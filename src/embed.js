@@ -1,6 +1,7 @@
 import { EmbedBuilder } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
+import db from './database.js';
 
 // Safely load config
 const configPath = path.resolve('config.json');
@@ -30,15 +31,32 @@ const colors = config.colors;
 const FOOTER_TEXT = config.footerText || 'Athena Prime Security';
 
 /**
+ * Get the active accent color for a guild. Falls back to the type's default color.
+ * @param {string|null} guildId
+ * @param {string} fallbackColor
+ */
+function getAccentColor(guildId, fallbackColor) {
+  if (!guildId) return fallbackColor;
+  try {
+    const cfg = db.getGuildConfig(guildId);
+    if (cfg && cfg.accentColor) return cfg.accentColor;
+  } catch { /* ignore */ }
+  return fallbackColor;
+}
+
+/**
  * Embed utility to construct state-of-the-art beautiful coloured replies
  */
 export const embed = {
   /**
    * General builder to standardize layout, footers and timestamps
    */
-  build({ title, description, color, fields = [], thumbnail, footerText, author }) {
+  build({ title, description, color, fields = [], thumbnail, footerText, author, guildId = null }) {
+    // If guildId is provided, the accent color overrides the default for all non-alert embeds
+    const finalColor = color || colors.dark;
+
     const builder = new EmbedBuilder()
-      .setColor(color || colors.dark)
+      .setColor(finalColor)
       .setTimestamp();
 
     if (title) builder.setTitle(title);
@@ -55,7 +73,7 @@ export const embed = {
 
     builder.setFooter({
       text: footerText || FOOTER_TEXT,
-      iconURL: 'https://img.icons8.com/color/48/shield.png' // Nice visual touch
+      iconURL: 'https://img.icons8.com/color/48/shield.png'
     });
 
     if (author) {
@@ -68,73 +86,43 @@ export const embed = {
     return builder;
   },
 
-  success(title, description, fields = []) {
-    return this.build({
-      title: title,
-      description,
-      color: colors.success,
-      fields
-    });
+  success(title, description, fields = [], guildId = null) {
+    const accent = getAccentColor(guildId, colors.success);
+    return this.build({ title, description, color: accent, fields });
   },
 
   warn(title, description, fields = []) {
-    return this.build({
-      title: title,
-      description,
-      color: colors.warning,
-      fields
-    });
+    // Warnings are always yellow — accent doesn't apply to alerts
+    return this.build({ title, description, color: colors.warning, fields });
   },
 
   danger(title, description, fields = []) {
-    return this.build({
-      title: title,
-      description,
-      color: colors.danger,
-      fields
-    });
+    // Danger is always red — accent doesn't apply to alerts
+    return this.build({ title, description, color: colors.danger, fields });
   },
 
-  info(title, description, fields = []) {
-    return this.build({
-      title: title,
-      description,
-      color: colors.neutral,
-      fields
-    });
+  info(title, description, fields = [], guildId = null) {
+    const accent = getAccentColor(guildId, colors.neutral);
+    return this.build({ title, description, color: accent, fields });
   },
 
   raid(title, description, fields = []) {
-    return this.build({
-      title: title,
-      description,
-      color: colors.raid,
-      fields
-    });
+    return this.build({ title, description, color: colors.raid, fields });
   },
 
   /**
    * Gold/Amber embed for owner-related responses (e.g., "You tagged my Master!")
    */
   owner(title, description, fields = []) {
-    return this.build({
-      title: title,
-      description,
-      color: colors.owner || '#FFD700',
-      fields
-    });
+    return this.build({ title, description, color: colors.owner || '#FFD700', fields });
   },
 
   /**
    * Security status embed with cyan accent
    */
-  security(title, description, fields = []) {
-    return this.build({
-      title: title,
-      description,
-      color: colors.security || '#00e5ff',
-      fields
-    });
+  security(title, description, fields = [], guildId = null) {
+    const accent = getAccentColor(guildId, colors.security || '#00e5ff');
+    return this.build({ title, description, color: accent, fields });
   },
 
   log(title, description, fields = [], level = 'info') {

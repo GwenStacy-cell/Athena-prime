@@ -82,12 +82,13 @@ class Database {
         antiInviteEnabled: true,
         raidMode: false,
         antiNukeEnabled: true,
-        antiNukePunishment: 'ban', // default is 'ban'
-        antiNukeThreshold: 1, // default is 1 action
+        antiNukePunishment: 'ban',
+        antiNukeThreshold: 1,
         maxWarnings: 3,
         blacklistWords: [],
         whitelist: [],
         allowedLinks: [],
+        accentColor: null,
         autonick: {
           enabled: false,
           prefix: '',
@@ -123,6 +124,7 @@ class Database {
       if (cfg.antiLinkEnabled === undefined) { cfg.antiLinkEnabled = false; updated = true; }
       if (cfg.antiInviteEnabled === undefined) { cfg.antiInviteEnabled = true; updated = true; }
       if (cfg.allowedLinks === undefined) { cfg.allowedLinks = []; updated = true; }
+      if (cfg.accentColor === undefined) { cfg.accentColor = null; updated = true; }
 
       if (updated) this.save();
     }

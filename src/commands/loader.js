@@ -8,6 +8,7 @@ import { commands as vcdragCmds } from './vcdrag.js';
 import { commands as triggerCmds } from './trigger.js';
 import { commands as jtcCmds } from './jtc.js';
 import { commands as welcomeCmds } from './welcome.js';
+import { commands as accentCmds } from './accent.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -19,7 +20,8 @@ export const allCommands = [
   ...vcdragCmds,
   ...triggerCmds,
   ...jtcCmds,
-  ...welcomeCmds
+  ...welcomeCmds,
+  ...accentCmds
 ];
 
 export const commandMap = new Map();

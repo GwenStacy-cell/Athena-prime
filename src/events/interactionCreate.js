@@ -8,6 +8,7 @@ import { handleSpamModal, handleSpamMoreButton } from '../commands/spam.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 import { handleJtcSelectMenu, handleJtcModal } from '../commands/jtc.js';
 import { handleWelcomeManagerButton, handleWelcomeManagerModal, handleWelcomeManagerMenu } from '../commands/welcome.js';
+import { handleAccentButton, handleAccentModal } from '../commands/accent.js';
 
 export default {
   name: 'interactionCreate',
@@ -116,6 +117,19 @@ export default {
         }
         return;
       }
+
+      // Accent hex modal
+      if (interaction.customId === 'accent_hex_modal') {
+        try {
+          await handleAccentModal(interaction);
+        } catch (error) {
+          console.error('Error handling Accent modal:', error);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ Failed to apply accent color.', ephemeral: true }).catch(() => null);
+          }
+        }
+        return;
+      }
     }
 
     // ==========================================
@@ -157,6 +171,19 @@ export default {
           await handleWelcomeManagerButton(interaction);
         } catch (error) {
           console.error('Error handling Welcome button:', error);
+        }
+        return;
+      }
+
+      // Accent color buttons
+      if (interaction.customId.startsWith('accent_')) {
+        try {
+          await handleAccentButton(interaction);
+        } catch (error) {
+          console.error('Error handling Accent button:', error);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ Failed to process accent action.', ephemeral: true }).catch(() => null);
+          }
         }
         return;
       }
