@@ -175,11 +175,8 @@ export async function handleAccentButton(interaction) {
 
   // ——— Close ———
   if (customId === 'accent_close') {
-    return interaction.update({
-      content: '',
-      embeds: [],
-      components: []
-    });
+    await interaction.message.delete().catch(() => null);
+    return;
   }
 }
 

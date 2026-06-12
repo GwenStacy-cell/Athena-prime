@@ -15,8 +15,8 @@ import {
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 
 // Toggle emoji constants — used throughout all security/config embeds
-const TOGGLE_ON  = '<:toggleon:1503046689450360965>';
-const TOGGLE_OFF = '<:toggleoff:1504207083673878739>';
+const TOGGLE_ON  = '<:on:1514996865030946847>';
+const TOGGLE_OFF = '<:off:1514996861474177109>';
 
 // ==========================================
 // AUTO-UNQUARANTINE TIMER MAP
@@ -1732,17 +1732,17 @@ export async function getAntinukeConfigPanel(guild) {
     new ButtonBuilder()
       .setCustomId('toggle_antinuke')
       .setLabel(`Anti-Nuke ${nukeState ? 'ON' : 'OFF'}`)
-      .setEmoji(nukeState ? { id: '1503046689450360965', name: 'toggleon' } : { id: '1504207083673878739', name: 'toggleoff' })
+      .setEmoji(nukeState ? { id: '1514996865030946847', name: 'on' } : { id: '1514996861474177109', name: 'off' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_spam')
       .setLabel(`Anti-Spam ${spamState ? 'ON' : 'OFF'}`)
-      .setEmoji(spamState ? { id: '1503046689450360965', name: 'toggleon' } : { id: '1504207083673878739', name: 'toggleoff' })
+      .setEmoji(spamState ? { id: '1514996865030946847', name: 'on' } : { id: '1514996861474177109', name: 'off' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_invite')
       .setLabel(`Anti-Invite ${inviteState ? 'ON' : 'OFF'}`)
-      .setEmoji(inviteState ? { id: '1503046689450360965', name: 'toggleon' } : { id: '1504207083673878739', name: 'toggleoff' })
+      .setEmoji(inviteState ? { id: '1514996865030946847', name: 'on' } : { id: '1514996861474177109', name: 'off' })
       .setStyle(ButtonStyle.Secondary)
   );
 
@@ -1750,7 +1750,7 @@ export async function getAntinukeConfigPanel(guild) {
     new ButtonBuilder()
       .setCustomId('toggle_blacklist_filter')
       .setLabel(`Word Filter ${blacklistState ? 'ON' : 'OFF'}`)
-      .setEmoji(blacklistState ? { id: '1503046689450360965', name: 'toggleon' } : { id: '1504207083673878739', name: 'toggleoff' })
+      .setEmoji(blacklistState ? { id: '1514996865030946847', name: 'on' } : { id: '1514996861474177109', name: 'off' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('cycle_punishment')
