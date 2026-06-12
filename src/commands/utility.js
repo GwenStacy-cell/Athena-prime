@@ -33,34 +33,49 @@ export const commands = [
     category: 'utility',
     permissions: [],
     async executePrefix(message) {
-      const response = await message.reply('Pinging WebSocket...');
-      const pingMs = response.createdTimestamp - message.createdTimestamp;
-      const apiMs = Math.round(message.client.ws.ping);
-      
-      const pingEmbed = embed.info(
-        'Pong! Latency Report',
-        `📡 Gateway Connection details:`,
-        [
-          { name: 'Bot Latency', value: `**${pingMs}ms**`, inline: true },
-          { name: 'Discord API Gateway', value: `**${apiMs}ms**`, inline: true }
-        ]
-      );
-      await response.edit({ content: null, embeds: [pingEmbed] });
+      const { EmbedBuilder } = await import('discord.js');
+      const cfg = db.getGuildConfig(message.guild?.id || '0');
+      const accentHex = cfg?.accentColor || '#00e5ff';
+      const accentInt = parseInt(accentHex.replace('#', ''), 16);
+
+      // Send initial placeholder
+      const sent = await message.reply({ content: '\u200b' });
+      const pingMs = sent.createdTimestamp - message.createdTimestamp;
+      const wsMs   = Math.round(message.client.ws.ping);
+
+      // Embed 1 — compact latency badge
+      const e1 = new EmbedBuilder()
+        .setColor(accentInt)
+        .setDescription(`**${pingMs}MS** | ❌`);
+
+      // Embed 2 — full PONG stats with bot avatar
+      const e2 = new EmbedBuilder()
+        .setColor(accentInt)
+        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : 0ms | API : ${pingMs}ms`)
+        .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
+
+      await sent.edit({ content: null, embeds: [e1, e2] });
     },
     async executeSlash(interaction) {
-      const sent = await interaction.reply({ content: 'Pinging WebSocket...', fetchReply: true });
-      const pingMs = sent.createdTimestamp - interaction.createdTimestamp;
-      const apiMs = Math.round(interaction.client.ws.ping);
+      const { EmbedBuilder } = await import('discord.js');
+      const cfg = db.getGuildConfig(interaction.guild?.id || '0');
+      const accentHex = cfg?.accentColor || '#00e5ff';
+      const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      const pingEmbed = embed.info(
-        'Pong! Latency Report',
-        `📡 Gateway Connection details:`,
-        [
-          { name: 'Bot Latency', value: `**${pingMs}ms**`, inline: true },
-          { name: 'Discord API Gateway', value: `**${apiMs}ms**`, inline: true }
-        ]
-      );
-      await interaction.editReply({ content: null, embeds: [pingEmbed] });
+      const sent = await interaction.reply({ content: '\u200b', fetchReply: true });
+      const pingMs = sent.createdTimestamp - interaction.createdTimestamp;
+      const wsMs   = Math.round(interaction.client.ws.ping);
+
+      const e1 = new EmbedBuilder()
+        .setColor(accentInt)
+        .setDescription(`**${pingMs}MS** | ❌`);
+
+      const e2 = new EmbedBuilder()
+        .setColor(accentInt)
+        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : 0ms | API : ${pingMs}ms`)
+        .setThumbnail(interaction.client.user.displayAvatarURL({ size: 256 }));
+
+      await interaction.editReply({ content: null, embeds: [e1, e2] });
     }
   },
 
