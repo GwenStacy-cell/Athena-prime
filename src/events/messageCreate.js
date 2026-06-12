@@ -379,7 +379,7 @@ export default {
 
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`\u2800\n> **| ${apiMs}MS |**\n\u2800`);
+        .setDescription(`> **| ${apiMs}MS |**`);
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
