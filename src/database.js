@@ -60,7 +60,13 @@ class Database {
 
   save() {
     try {
-      fs.writeFileSync(DB_FILE, JSON.stringify(this.cache, null, 2), 'utf8');
+      const replacer = (key, value) => {
+        if (typeof value === 'bigint') return value.toString();
+        // Skip circular Discord.js references if any sneak in
+        if (value && typeof value === 'object' && value.client) return undefined;
+        return value;
+      };
+      fs.writeFileSync(DB_FILE, JSON.stringify(this.cache, replacer, 2), 'utf8');
     } catch (error) {
       console.error('Error saving database:', error);
     }
