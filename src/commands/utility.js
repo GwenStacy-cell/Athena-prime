@@ -308,7 +308,7 @@ async function getHelpEmbed(guild, client) {
 
   const fields = [
     {
-      name: h('SECURITY  &  FIREWALL'),
+      name: '🛡️ ' + h('SECURITY  &  FIREWALL'),
       value:
         `\`${p}security\` **enable all** / **disable all** — Toggle all shields at once\n` +
         `\`${p}antinuke\` **enable** / **disable** / **config** — Interactive config panel\n` +
@@ -317,21 +317,21 @@ async function getHelpEmbed(guild, client) {
         `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots`
     },
     {
-      name: h('LINK  &  INVITE  FILTERS'),
+      name: '🔗 ' + h('LINK  &  INVITE  FILTERS'),
       value:
         `\`${p}antilink\` **on** / **off** — Block all external links from non-moderators\n` +
         `\`${p}linksallow\` **add** / **remove** / **list** \`domain\` — Whitelist domains\n` +
         `\`${p}blacklist\` **add** / **remove** / **list** \`phrase\` — Auto-delete matching messages`
     },
     {
-      name: h('WHITELIST  &  PERMISSIONS'),
+      name: '👑 ' + h('WHITELIST  &  PERMISSIONS'),
       value:
         `\`${p}whitelist\` **add** / **remove** / **list** \`@user\` \`[events...]\`\n` +
         `> Events: \`all\`  \`antinuke\`  \`antibot\`  \`antispam\`  \`antilink\`  \`antiinvite\`  \`quarantine\`\n` +
         `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access`
     },
     {
-      name: h('QUARANTINE  &  ISOLATION'),
+      name: '🔒 ' + h('QUARANTINE  &  ISOLATION'),
       value:
         `\`${p}quarantine\` \`@user\` \`[duration]\` \`[reason]\` — Strip roles & isolate  *(alias:* \`${p}qr\`*)*\n` +
         `\`${p}unquarantine\` \`@user\` — Restore roles and release from isolation\n` +
@@ -341,7 +341,7 @@ async function getHelpEmbed(guild, client) {
         `\`${p}lockdown\` **on** / **off** — Restrict channel to moderators only`
     },
     {
-      name: h('MODERATION'),
+      name: '🔨 ' + h('MODERATION'),
       value:
         `\`${p}warn\` \`@user\` \`reason\` — Issue a warning  *(auto-quarantine at threshold)*\n` +
         `\`${p}warnings\` / \`${p}clearwarns\` \`@user\` — View or wipe warning history\n` +
@@ -353,14 +353,14 @@ async function getHelpEmbed(guild, client) {
         `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role`
     },
     {
-      name: h('ANNOUNCEMENTS  &  MESSAGING'),
+      name: '📢 ' + h('ANNOUNCEMENTS  &  MESSAGING'),
       value:
         `\`${p}say\` \`#channel\` \`message\` — Send an anonymous bot message\n` +
         `\`${p}announce\` \`#channel\` \`title | message\` — Post a styled announcement embed\n` +
         `\`${p}modmode\` **on** / **off** — Restrict all channels to moderators instantly`
     },
     {
-      name: h('VOICE  &  JOIN-TO-CREATE'),
+      name: '🎙️ ' + h('VOICE  &  JOIN-TO-CREATE'),
       value:
         `\`${p}jtcsetup\` \`#voicechannel\` — Designate the JTC creator channel\n` +
         `\`${p}jtcdisable\` — Remove the JTC system from this server\n` +
@@ -370,28 +370,28 @@ async function getHelpEmbed(guild, client) {
         `\`${p}deafen\` / \`${p}muteall\` / \`${p}unmuteall\` — Voice management tools`
     },
     {
-      name: h('VC DRAG'),
+      name: '🚀 ' + h('VC DRAG'),
       value:
         `\`${p}vcdrag\` \`@user\` \`[interval]\` — Drag a user endlessly through VCs  *(default: 2s)*\n` +
         `\`${p}vcdragstop\` \`@user\` — Stop the drag session for a specific user\n` +
         `\`${p}vcdraglist\` — View all currently active drag sessions`
     },
     {
-      name: h('WELCOME  &  LEAVE'),
+      name: '👋 ' + h('WELCOME  &  LEAVE'),
       value:
         `\`${p}welcome\` — Open the Welcome message manager\n` +
         `\`${p}leave\` — Open the Leave message manager\n` +
         `> Supports \`{user}\`  \`{server}\`  \`{count}\` placeholders in custom embeds`
     },
     {
-      name: h('AUTO-RESPONDER'),
+      name: '🤖 ' + h('AUTO-RESPONDER'),
       value:
         `\`${p}trigger\` **create** \`match | response\` — Add a custom keyword trigger\n` +
         `\`${p}trigger\` **remove** \`match\` — Delete a trigger\n` +
         `\`${p}trigger\` **list** — View all active triggers in this server`
     },
     {
-      name: h('CUSTOMIZATION'),
+      name: '🎨 ' + h('CUSTOMIZATION'),
       value:
         `\`${p}accent\` — Set the embed accent color  *(10 pure presets + custom hex)*\n` +
         `\`${p}autonick\` **on** / **off** \`[prefix]\` \`[suffix]\` — Auto-format member nicknames\n` +
@@ -400,7 +400,7 @@ async function getHelpEmbed(guild, client) {
         `\`${p}steal\` \`:emoji: ...\` — Steal multiple emojis into your server`
     },
     {
-      name: h('UTILITIES'),
+      name: '⚙️ ' + h('UTILITIES'),
       value:
         `\`${p}status\` — Real-time security health overview\n` +
         `\`${p}serverinfo\` — Full server statistics and security state\n` +
@@ -413,7 +413,7 @@ async function getHelpEmbed(guild, client) {
     }
   ];
 
-  const description = `## Hey !!! , I am <@${botId}> ,\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! Made by author <@1081545645564858509> .. View down and see our srv management modules listed below:\n\n${bullet} To set Custom Prefix use <@${botId}> \`@Athena Prime prefix " your custom prefix "\`\n\n${bullet} Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
+  const description = `## Hey !!! , I am <@${botId}> ,\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! Made by author **Prince** (<@1081545645564858509>) .. View down and see our srv management modules listed below:\n\n${bullet} To set Custom Prefix use <@${botId}> \`@Athena Prime prefix " your custom prefix "\`\n\n${bullet} Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
 
   const guildConfig = db.getGuildConfig(guild?.id || '0');
   const accentColor = guildConfig?.accentColor || '#3b82f6';

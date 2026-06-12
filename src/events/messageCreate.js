@@ -467,9 +467,21 @@ export default {
     // ==========================================
     // 5. COMMAND ENGINE (PREFIX PARSER)
     // ==========================================
-    if (!message.content.startsWith(prefix)) return;
+    const botMention = `<@${message.client.user.id}>`;
+    const botMentionSpace = `<@${message.client.user.id}> `;
+    const botMentionNick = `<@!${message.client.user.id}>`;
+    const botMentionNickSpace = `<@!${message.client.user.id}> `;
 
-    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    let usedPrefix = null;
+    if (message.content.startsWith(prefix)) usedPrefix = prefix;
+    else if (message.content.startsWith(botMentionSpace)) usedPrefix = botMentionSpace;
+    else if (message.content.startsWith(botMentionNickSpace)) usedPrefix = botMentionNickSpace;
+    else if (message.content.startsWith(botMention)) usedPrefix = botMention;
+    else if (message.content.startsWith(botMentionNick)) usedPrefix = botMentionNick;
+
+    if (!usedPrefix) return;
+
+    const args = message.content.slice(usedPrefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
 
     // These are handled by dedicated prefix-less handlers — skip to avoid double response
