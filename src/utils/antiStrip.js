@@ -64,17 +64,17 @@ export async function handleAntiStab(guild, actionText, auditLogType) {
       try {
         const member = await guild.members.fetch(executor.id).catch(() => null);
         if (member && member.bannable) {
-          await member.roles.set([], 'Anti-Stab: Stripping roles from rogue admin').catch(() => null);
-          await member.ban({ reason: `Anti-Stab: Attempted to ${actionText}` }).catch(() => null);
-          punishedText = `\n\nI have successfully stripped their roles and **BANNED** them from the server to neutralize the threat.`;
+          await member.roles.set([], 'Anti-Stab: Hostile Neutralization - Stripping roles').catch(() => null);
+          await member.ban({ reason: `Anti-Stab: Hostile Neutralization - Attempted to ${actionText}` }).catch(() => null);
+          punishedText = `\n\n**Hostile Neutralization:** I have successfully stripped their roles and **BANNED** them from the server to neutralize the threat.`;
         } else {
-          punishedText = `\n\nI attempted to ban them, but their top role is higher than mine or they are the server owner.`;
+          punishedText = `\n\nI attempted to execute a **Hostile Neutralization**, but their top role is higher than mine or they are the server owner.`;
         }
       } catch (e) {
-        punishedText = `\n\nFailed to ban them automatically (missing permissions or hierarchy).`;
+        punishedText = `\n\nFailed to execute a **Hostile Neutralization** automatically (missing permissions or hierarchy).`;
       }
     } else if (executor?.id === guild.ownerId) {
-      punishedText = `\n\nSince they are the Server Owner, I cannot ban them, but I have forced my permissions back on.`;
+      punishedText = `\n\nSince they are the Server Owner, I cannot execute a **Hostile Neutralization**, but I have forced my permissions back on.`;
     }
 
     // 4. Alert the Server Owner (NO EMOJIS)
@@ -84,7 +84,7 @@ export async function handleAntiStab(guild, actionText, auditLogType) {
     const stabberMention = executor ? `<@${executor.id}> (${executor.tag})` : 'an Unknown Admin (Audit log hidden)';
     
     const alertEmbed = embed.danger(
-      'ANTI-STAB WARNING: Security Compromised',
+      'ANTI-STAB: Hostile Neutralization Initiated',
       `**Server:** ${guild.name}\n\nSomeone just attempted to **${actionText}**!\n\n**Stabber Detected:** ${stabberMention}${punishedText}\n\nI have instantly forced my permissions back on to protect the server. Please review your audit logs.`
     );
     
