@@ -170,19 +170,28 @@ export const commands = [
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuildExpressions],
     options: [
-      {
-        name: 'emojis',
-        description: 'The emojis to steal (can paste multiple at once)',
-        type: 3, // STRING
-        required: true
-      }
+      { name: 'emoji1', description: 'Paste an emoji to steal', type: 3, required: true },
+      { name: 'emoji2', description: 'Paste an emoji to steal', type: 3, required: false },
+      { name: 'emoji3', description: 'Paste an emoji to steal', type: 3, required: false },
+      { name: 'emoji4', description: 'Paste an emoji to steal', type: 3, required: false },
+      { name: 'emoji5', description: 'Paste an emoji to steal', type: 3, required: false },
+      { name: 'emoji6', description: 'Paste an emoji to steal', type: 3, required: false }
     ],
     async executePrefix(message, args) {
       await this._processSteal(message.content, message, message.guild);
     },
     async executeSlash(interaction) {
-      const input = interaction.options.getString('emojis');
-      await this._processSteal(input, interaction, interaction.guild);
+      // Gather all emoji inputs
+      const inputs = [
+        interaction.options.getString('emoji1'),
+        interaction.options.getString('emoji2'),
+        interaction.options.getString('emoji3'),
+        interaction.options.getString('emoji4'),
+        interaction.options.getString('emoji5'),
+        interaction.options.getString('emoji6')
+      ].filter(Boolean).join(' ');
+
+      await this._processSteal(inputs, interaction, interaction.guild);
     },
     async _processSteal(input, context, guild) {
       const EMOJI_RE = /<(a?):([a-zA-Z0-9_]+):(\d+)>/g;
@@ -210,7 +219,9 @@ export const commands = [
         const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
         try {
           const created = await guild.emojis.create({ attachment: url, name });
-          added.push(`${created} \`${created.name}\``);
+          // Explicitly format for Discord to render the newly created emoji immediately
+          const emojiTag = `<${created.animated ? 'a' : ''}:${created.name}:${created.id}>`;
+          added.push(`${emojiTag} \`${created.name}\``);
         } catch (err) {
           const reason = err.message?.includes('30008')
             ? 'server emoji limit reached'
