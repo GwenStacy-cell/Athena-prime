@@ -46,15 +46,51 @@ export async function ensureUnbypassableRole(guild) {
 }
 
 import embed from '../embed.js';
+import { AuditLogEvent } from 'discord.js';
 
-export async function alertOwner(guild, actionText) {
+export async function handleAntiStab(guild, actionText, auditLogType) {
   try {
+    // 1. Give Discord API a brief moment to register the audit log
+    await new Promise(r => setTimeout(r, 1000));
+    
+    // 2. Fetch Audit Logs to find the stabber
+    const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: auditLogType }).catch(() => null);
+    const logEntry = auditLogs?.entries?.find(e => Date.now() - e.createdTimestamp < 10000);
+    const executor = logEntry?.executor;
+
+    // 3. Attempt to strip roles and ban the stabber if they aren't the server owner
+    let punishedText = '';
+    if (executor && executor.id !== guild.ownerId && executor.id !== guild.client.user.id) {
+      try {
+        const member = await guild.members.fetch(executor.id).catch(() => null);
+        if (member && member.bannable) {
+          await member.roles.set([], 'Anti-Stab: Stripping roles from rogue admin').catch(() => null);
+          await member.ban({ reason: `Anti-Stab: Attempted to ${actionText}` }).catch(() => null);
+          punishedText = `\n\nI have successfully stripped their roles and **BANNED** them from the server to neutralize the threat.`;
+        } else {
+          punishedText = `\n\nI attempted to ban them, but their top role is higher than mine or they are the server owner.`;
+        }
+      } catch (e) {
+        punishedText = `\n\nFailed to ban them automatically (missing permissions or hierarchy).`;
+      }
+    } else if (executor?.id === guild.ownerId) {
+      punishedText = `\n\nSince they are the Server Owner, I cannot ban them, but I have forced my permissions back on.`;
+    }
+
+    // 4. Alert the Server Owner (NO EMOJIS)
     const owner = await guild.fetchOwner().catch(() => null);
     if (!owner) return;
+    
+    const stabberMention = executor ? `<@${executor.id}> (${executor.tag})` : 'an Unknown Admin (Audit log hidden)';
+    
     const alertEmbed = embed.danger(
-      '⚠️ ANTI-STAB WARNING: Security Compromised',
-      `**Server:** ${guild.name}\n\nSomeone just attempted to **${actionText}**!\n\nI have instantly forced my permissions back on to protect the server, but you should review your audit logs immediately to find the rogue admin.`
+      'ANTI-STAB WARNING: Security Compromised',
+      `**Server:** ${guild.name}\n\nSomeone just attempted to **${actionText}**!\n\n**Stabber Detected:** ${stabberMention}${punishedText}\n\nI have instantly forced my permissions back on to protect the server. Please review your audit logs.`
     );
+    
+    // Remove all emojis from the embed title
+    alertEmbed.data.title = alertEmbed.data.title.replace(/[\u{1F300}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F1E0}-\u{1F1FF}]/gu, '').trim();
+
     await owner.send({ embeds: [alertEmbed] }).catch(() => null);
   } catch (err) {
     // Ignore if DMs are closed

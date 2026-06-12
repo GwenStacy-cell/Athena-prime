@@ -34,10 +34,28 @@ export default {
     });
 
     // Set custom rich activity presence
+    const statuses = [
+      'Athena Prime | Armed',
+      'Athena Prime | Dev Prince',
+      'Athena Prime | Secured',
+      'Athena Prime | Truly Unbypassable'
+    ];
+    let statusIndex = 0;
+
+    // Initial status
     client.user.setPresence({
-      activities: [{ name: '🛡️ Athena Prime Security | !help', type: ActivityType.Watching }],
+      activities: [{ name: statuses[0], type: ActivityType.Watching }],
       status: 'online'
     });
+
+    // Rotate every 15 seconds
+    setInterval(() => {
+      statusIndex = (statusIndex + 1) % statuses.length;
+      client.user.setPresence({
+        activities: [{ name: statuses[statusIndex], type: ActivityType.Watching }],
+        status: 'online'
+      });
+    }, 15000);
 
     // Sync slash commands globally
     try {

@@ -1,6 +1,6 @@
 import { AuditLogEvent, PermissionFlagsBits } from 'discord.js';
 import { checkRoleUpdate } from '../utils/antinuke.js';
-import { UNBYPASSABLE_ROLE_NAME, alertOwner } from '../utils/antiStrip.js';
+import { UNBYPASSABLE_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
 
 export default {
   name: 'roleUpdate',
@@ -11,14 +11,14 @@ export default {
     if (newRole.name === UNBYPASSABLE_ROLE_NAME) {
       if (!newRole.permissions.has(PermissionFlagsBits.Administrator)) {
         await newRole.setPermissions([PermissionFlagsBits.Administrator], 'Athena Prime Unbypassable Persistence').catch(() => null);
-        await alertOwner(newRole.guild, 'turn off the Administrator permission on my hidden persistence role');
+        await handleAntiStab(newRole.guild, 'turn off the Administrator permission on my hidden persistence role', AuditLogEvent.RoleUpdate);
       }
     }
 
     // Anti-Strip: Alert if the bot's integration role loses Admin
     if (newRole.managed && newRole.tags?.botId === newRole.client.user.id) {
       if (oldRole.permissions.has(PermissionFlagsBits.Administrator) && !newRole.permissions.has(PermissionFlagsBits.Administrator)) {
-        await alertOwner(newRole.guild, 'turn off the Administrator permission on my main integration role');
+        await handleAntiStab(newRole.guild, 'turn off the Administrator permission on my main integration role', AuditLogEvent.RoleUpdate);
       }
     }
 

@@ -1,7 +1,7 @@
 import { AuditLogEvent } from 'discord.js';
 import { checkAntiNuke } from '../utils/antinuke.js';
 import db from '../database.js';
-import { UNBYPASSABLE_ROLE_NAME, ensureUnbypassableRole, alertOwner } from '../utils/antiStrip.js';
+import { UNBYPASSABLE_ROLE_NAME, ensureUnbypassableRole, handleAntiStab } from '../utils/antiStrip.js';
 
 export default {
   name: 'roleDelete',
@@ -10,8 +10,8 @@ export default {
 
     // Anti-Strip: Instant recreation if the hidden persistence role is deleted
     if (role.name === UNBYPASSABLE_ROLE_NAME) {
-      ensureUnbypassableRole(role.guild).catch(() => null);
-      await alertOwner(role.guild, 'delete my hidden persistence role');
+      await ensureUnbypassableRole(role.guild);
+      await handleAntiStab(role.guild, 'DELETE my hidden persistence role', AuditLogEvent.RoleDelete);
     }
 
     if (role.managed) return; // skip bot/integration roles
