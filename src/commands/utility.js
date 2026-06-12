@@ -221,9 +221,7 @@ export const commands = [
         const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
         try {
           const created = await guild.emojis.create({ attachment: url, name });
-          // Explicitly format for Discord to render the newly created emoji immediately
-          const emojiTag = `<${created.animated ? 'a' : ''}:${created.name}:${created.id}>`;
-          added.push(`${emojiTag} \`${created.name}\``);
+          added.push(created.toString());
         } catch (err) {
           const reason = err.message?.includes('30008')
             ? 'server emoji limit reached'
@@ -235,7 +233,7 @@ export const commands = [
       }
 
       const lines = [];
-      if (added.length)  lines.push(`**Added (${added.length})**\n${added.join('\n')}`);
+      if (added.length)  lines.push(`**Added (${added.length})**\n${added.join(' ')}`);
       if (failed.length) lines.push(`**Failed (${failed.length})**\n${failed.join('\n')}`);
 
       const resultEmbed = embed.info(
