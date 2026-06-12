@@ -246,6 +246,41 @@ export const commands = [
 
       return context.reply({ embeds: [resultEmbed] });
     }
+  },
+  {
+    name: 'prefix',
+    description: 'Set a custom prefix for the server',
+    type: 1,
+    options: [
+      {
+        name: 'new_prefix',
+        description: 'The new custom prefix to use',
+        type: 3, // STRING
+        required: true
+      }
+    ],
+    async executePrefix(message, args) {
+      if (!isBotOwnerSync(message.author.id) && message.author.id !== message.guild.ownerId) {
+        return message.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can use this command.')] });
+      }
+      
+      const newPrefix = args.join(' ');
+      if (!newPrefix) {
+        return message.reply({ embeds: [embed.warn('Missing Prefix', `Please provide a new prefix. Example: \`@Athena Prime prefix !\``)] });
+      }
+
+      db.updateGuildConfig(message.guild.id, { prefix: newPrefix });
+      await message.reply({ embeds: [embed.success('Prefix Updated', `The bot's prefix has been successfully updated to \`${newPrefix}\``)] });
+    },
+    async executeSlash(interaction) {
+      if (!isBotOwnerSync(interaction.user.id) && interaction.user.id !== interaction.guild.ownerId) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can use this command.')], ephemeral: true });
+      }
+
+      const newPrefix = interaction.options.getString('new_prefix');
+      db.updateGuildConfig(interaction.guild.id, { prefix: newPrefix });
+      await interaction.reply({ embeds: [embed.success('Prefix Updated', `The bot's prefix has been successfully updated to \`${newPrefix}\``)] });
+    }
   }
 ];
 
