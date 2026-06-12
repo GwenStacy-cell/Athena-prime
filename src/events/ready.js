@@ -18,7 +18,7 @@ export default {
     client.bootTimestamp = Date.now();
 
     // Cache the developer so their mention always resolves correctly in embeds
-    client.users.fetch('1081545645564858509').catch(() => null);
+    client.users.fetch('1423292960744804383').catch(() => null);
 
     // Auto-join Home VCs and ensure Unbypassable Role across all watching guilds
     client.guilds.cache.forEach(guild => {

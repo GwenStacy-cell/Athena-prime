@@ -260,7 +260,7 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      if (!isBotOwnerSync(message.author.id) && message.author.id !== message.guild.ownerId) {
+      if (message.author.id !== process.env.OWNER_ID && message.author.id !== message.guild.ownerId) {
         return message.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can use this command.')] });
       }
       
@@ -273,7 +273,7 @@ export const commands = [
       await message.reply({ embeds: [embed.success('Prefix Updated', `The bot's prefix has been successfully updated to \`${newPrefix}\``)] });
     },
     async executeSlash(interaction) {
-      if (!isBotOwnerSync(interaction.user.id) && interaction.user.id !== interaction.guild.ownerId) {
+      if (interaction.user.id !== process.env.OWNER_ID && interaction.user.id !== interaction.guild.ownerId) {
         return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can use this command.')], ephemeral: true });
       }
 
@@ -448,7 +448,7 @@ async function getHelpEmbed(guild, client) {
     }
   ];
 
-  const description = `## Hey !!! , I am <@${botId}> ,\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! Made by author **Prince** (<@1081545645564858509>) .. View down and see our srv management modules listed below:\n\n${bullet} To set Custom Prefix use <@${botId}> \`@Athena Prime prefix " your custom prefix "\`\n\n${bullet} Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
+  const description = `## Hey !!! , I am <@${botId}> ,\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! Made by author **Prince** (<@1423292960744804383>) .. View down and see our srv management modules listed below:\n\n${bullet} To set Custom Prefix use <@${botId}> \`@Athena Prime prefix " your custom prefix "\`\n\n${bullet} Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
 
   const guildConfig = db.getGuildConfig(guild?.id || '0');
   const accentColor = guildConfig?.accentColor || '#3b82f6';
