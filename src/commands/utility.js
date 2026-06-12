@@ -3,18 +3,10 @@ import db from '../database.js';
 import embed from '../embed.js';
 
 // ──────────────────────────────────────────────
-// Bold Unicode + underline header formatter
-// Renders as a distinct "font" in Discord embeds
+// Bold underline header formatter — matches embed title style
 // ──────────────────────────────────────────────
-const BOLD_MAP = {
-  A:'𝗔',B:'𝗕',C:'𝗖',D:'𝗗',E:'𝗘',F:'𝗙',G:'𝗚',H:'𝗛',I:'𝗜',J:'𝗝',
-  K:'𝗞',L:'𝗟',M:'𝗠',N:'𝗡',O:'𝗢',P:'𝗣',Q:'𝗤',R:'𝗥',S:'𝗦',T:'𝗧',
-  U:'𝗨',V:'𝗩',W:'𝗪',X:'𝗫',Y:'𝗬',Z:'𝗭',
-  '0':'𝟬','1':'𝟭','2':'𝟮','3':'𝟯','4':'𝟰','5':'𝟱','6':'𝟲','7':'𝟳','8':'𝟴','9':'𝟵'
-};
 function h(text) {
-  const bold = text.toUpperCase().split('').map(c => BOLD_MAP[c] ?? c).join('');
-  return `__${bold}__`;
+  return `__**${text.toUpperCase()}**__`;
 }
 
 export const commands = [

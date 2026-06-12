@@ -66,7 +66,7 @@ export const embed = {
       .setColor(color || colors.dark)
       .setTimestamp();
 
-    if (title) builder.setTitle(title);
+    if (title) builder.setTitle(`__**${title.toUpperCase()}**__`);
     if (description) builder.setDescription(description);
     if (thumbnail) builder.setThumbnail(thumbnail);
 
