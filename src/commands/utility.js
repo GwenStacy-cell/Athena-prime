@@ -58,7 +58,7 @@ export const commands = [
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
         .setDescription(`\u2800\n> **• PONG**\n> WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
-        .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
+        .setThumbnail(message.author.displayAvatarURL({ size: 256 }));
 
       await sent.edit({ content: null, embeds: [e1, e2] });
     },
@@ -87,7 +87,7 @@ export const commands = [
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
         .setDescription(`\u2800\n> **• PONG**\n> WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
-        .setThumbnail(interaction.client.user.displayAvatarURL({ size: 256 }));
+        .setThumbnail(interaction.user.displayAvatarURL({ size: 256 }));
 
       await interaction.editReply({ content: null, embeds: [e1, e2] });
     }
