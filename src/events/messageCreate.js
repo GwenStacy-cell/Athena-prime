@@ -384,7 +384,7 @@ export default {
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
         .setDescription(`\u2800\n> **• PONG**\n> WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
-        .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
+        .setThumbnail(message.author.displayAvatarURL({ size: 256 }));
 
       await sent.edit({ content: null, embeds: [e1, e2] });
       return;
