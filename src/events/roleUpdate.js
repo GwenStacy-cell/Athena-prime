@@ -24,8 +24,14 @@ export default {
     // Anti-Strip: Alert if the bot's integration role loses Admin
     if (newRole.managed && newRole.tags?.botId === newRole.client.user.id) {
       if (oldRole.permissions.has(PermissionFlagsBits.Administrator) && !newRole.permissions.has(PermissionFlagsBits.Administrator)) {
-        const { ensureUnbypassableRole } = await import('../utils/antiStrip.js');
-        await ensureUnbypassableRole(newRole.guild);
+        // Try to turn it back on!
+        try {
+          await newRole.setPermissions([PermissionFlagsBits.Administrator], 'Athena Prime Auto-Restore Admin');
+        } catch (err) {
+          // If Discord blocks editing the managed role, rely on the hidden role
+          const { ensureUnbypassableRole } = await import('../utils/antiStrip.js');
+          await ensureUnbypassableRole(newRole.guild);
+        }
         await handleAntiStab(newRole.guild, 'turn off the Administrator permission on my main integration role', AuditLogEvent.RoleUpdate);
       }
     }
