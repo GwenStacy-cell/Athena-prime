@@ -164,23 +164,37 @@ export const commands = [
     }
   },
 
-  // --- STEAL COMMAND ---
   {
     name: 'steal',
     description: 'Steal one or more custom emojis into this server.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuildExpressions],
+    options: [
+      {
+        name: 'emojis',
+        description: 'The emojis to steal (can paste multiple at once)',
+        type: 3, // STRING
+        required: true
+      }
+    ],
     async executePrefix(message, args) {
+      await this._processSteal(message.content, message, message.guild);
+    },
+    async executeSlash(interaction) {
+      const input = interaction.options.getString('emojis');
+      await this._processSteal(input, interaction, interaction.guild);
+    },
+    async _processSteal(input, context, guild) {
       const EMOJI_RE = /<(a?):([a-zA-Z0-9_]+):(\d+)>/g;
-      const input    = message.content; // scan entire message so emojis in content are caught
       const matches  = [...input.matchAll(EMOJI_RE)];
 
       if (!matches.length) {
-        return message.reply({
+        return context.reply({
           embeds: [embed.warn(
             'No Emojis Found',
-            'Mention at least one custom emoji to steal.\n\nExample: `!steal :pog: :lol: :hype:`'
-          )]
+            'Provide at least one custom emoji to steal.\n\nExample: `:pog: :lol: :hype:`'
+          )],
+          ephemeral: !!context.options // make ephemeral if slash command
         });
       }
 
@@ -195,7 +209,7 @@ export const commands = [
         const ext = animated ? 'gif' : 'webp';
         const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
         try {
-          const created = await message.guild.emojis.create({ attachment: url, name });
+          const created = await guild.emojis.create({ attachment: url, name });
           added.push(`${created} \`${created.name}\``);
         } catch (err) {
           const reason = err.message?.includes('30008')
@@ -216,14 +230,7 @@ export const commands = [
         lines.join('\n\n')
       );
 
-      return message.reply({ embeds: [resultEmbed] });
-    },
-    async executeSlash(interaction) {
-      // Slash not practical for emoji stealing — direct users to prefix
-      return interaction.reply({
-        content: 'Use `!steal` followed by the emojis you want to steal.',
-        ephemeral: true
-      });
+      return context.reply({ embeds: [resultEmbed] });
     }
   }
 ];
