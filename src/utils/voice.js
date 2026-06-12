@@ -29,10 +29,7 @@ export function connectToHomeVc(guild, channelId) {
 }
 
 /**
- * Toggle the bot's OWN self-deafen by leaving and rejoining the VC.
- * @discordjs/voice manages all op-4 packets internally, so the only
- * 100% reliable approach is to destroy the old connection and create a new
- * one with the desired selfDeaf value.
+ * Toggle the bot's OWN self-deafen by updating the voice connection.
  */
 export async function toggleBotDeafen(guild, deaf) {
   try {
@@ -43,12 +40,7 @@ export async function toggleBotDeafen(guild, deaf) {
 
     const channelId = me.voice.channelId;
 
-    // Destroy existing connection (if any) so we can cleanly rejoin
-    const { getVoiceConnection } = await import('@discordjs/voice');
-    const existing = getVoiceConnection(guild.id);
-    if (existing) existing.destroy();
-
-    // Rejoin with the new selfDeaf setting
+    // Update connection with the new selfDeaf setting without destroying it
     const { joinVoiceChannel } = await import('@discordjs/voice');
     joinVoiceChannel({
       channelId,
@@ -59,7 +51,8 @@ export async function toggleBotDeafen(guild, deaf) {
     });
 
     return { success: true };
-  } catch (error) {
-    return { success: false, message: error.message };
+  } catch (err) {
+    console.error('Failed to toggle deafen:', err);
+    return { success: false, message: 'An error occurred while updating voice state.' };
   }
 }
