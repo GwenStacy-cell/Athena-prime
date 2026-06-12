@@ -46,7 +46,7 @@ export const commands = [
       // Embed 1 — compact latency badge
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`**${pingMs}MS** | ❌`);
+        .setDescription(`**${pingMs}MS**`);
 
       // Embed 2 — full PONG stats with bot avatar
       const e2 = new EmbedBuilder()
@@ -68,7 +68,7 @@ export const commands = [
 
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`**${pingMs}MS** | ❌`);
+        .setDescription(`**${pingMs}MS**`);
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
