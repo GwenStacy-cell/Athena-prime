@@ -190,84 +190,138 @@ async function getHelpEmbed(guild) {
   const p = config?.prefix || '!';
 
   const fields = [
+    // ─────────────────────────────────────────
     {
-      name: '🛡️ Security & Anti-Nuke Shields',
+      name: '🛡️ Anti-Nuke & Firewall',
       value:
         `\`${p}security <enable all|disable all>\` — Toggle ALL shields at once *(Bot/Server Owner only)*\n` +
-        `\`${p}antinuke <enable all|disable all|config>\` — Per-feature toggle or open **button config panel**\n` +
+        `\`${p}antinuke <enable all|disable all|config>\` — Open interactive config panel or bulk-toggle\n` +
+        `\`${p}config <setting> <on|off>\` — Toggle antinuke / antispam / antiinvite / maxwarnings\n` +
+        `\`${p}raidmode <on|off>\` — Auto-quarantine every new join during a raid\n` +
+        `\`${p}botwhitelist <add|remove|list> <botId>\` — Permit trusted bots from bot-add guard`
+    },
+    // ─────────────────────────────────────────
+    {
+      name: '🔗 Link & Invite Filters',
+      value:
         `\`${p}antilink <on|off>\` — Block all external links from non-moderators\n` +
         `\`${p}linksallow <add|remove|list> [domain]\` — Whitelist domains (youtube.com, tenor.com…)\n` +
-        `\`${p}config <setting> <on|off>\` — Toggle antinuke/antispam/antiinvite individually\n` +
-        `\`${p}raidmode <on|off>\` — Auto-quarantine every new join during raids\n` +
-        `\`${p}lockdown <on|off>\` — Prevent everyone from sending messages in a channel\n` +
-        `\`${p}whitelist <add|remove|list> [@user]\` — Immune to all auto-mod filters\n` +
-        `\`${p}blacklist <add|remove|list> [phrase]\` — Auto-delete & warn matching messages\n` +
-        `\`${p}extraowner <add|remove|list> [@user]\` — Grant full bot access to extra users`
+        `\`${p}blacklist <add|remove|list> [phrase]\` — Auto-delete & warn messages matching phrases`
     },
+    // ─────────────────────────────────────────
     {
-      name: '🔒 Quarantine & Isolation System',
+      name: '✅ Whitelist & Permissions',
       value:
-        `\`${p}quarantine <@user> [reason]\` — Strip roles, move to quarantine VC, DM user\n` +
-        `\`${p}unquarantine <@user>\` — Restore roles & move back to previous VC\n` +
-        `\`${p}qrmanager <setup|setrole|setchannel|setvc|status>\` — Set up quarantine infrastructure\n` +
-        `\`${p}setup [#logchannel] [quarantineVC] [@quarantineRole]\` — Quick bind all at once\n` +
-        `*After \`qrmanager setup\`, quarantined users see **only** the quarantine VC & text channel.*`
+        `\`${p}whitelist <add|remove|list> [@user] [events...]\` — Per-event immunity\n` +
+        `> Events: \`all\` \`antinuke\` \`antibot\` \`antispam\` \`antilink\` \`antiinvite\` \`quarantine\`\n` +
+        `\`${p}extraowner <add|remove|list> [@user]\` — Grant full bot access to trusted users`
     },
+    // ─────────────────────────────────────────
+    {
+      name: '🔒 Quarantine & Isolation',
+      value:
+        `\`${p}quarantine <@user> [duration] [reason]\` — Strip roles & isolate (alias: \`${p}qr\`)\n` +
+        `\`${p}unquarantine <@user>\` — Restore roles & release from isolation\n` +
+        `\`${p}massquarantine <@role> [reason]\` — Quarantine all members of a role at once\n` +
+        `\`${p}massunquarantine\` — Release all currently quarantined members\n` +
+        `\`${p}qrmanager <setup|setrole|setchannel|setvc|status>\` — Configure quarantine infrastructure\n` +
+        `\`${p}setup [#logchannel] [quarantineVC] [@quarantineRole]\` — Quick bind all at once\n` +
+        `\`${p}lockdown <on|off>\` — Prevent @everyone from sending messages in a channel`
+    },
+    // ─────────────────────────────────────────
     {
       name: '🔨 Moderation & Member Management',
       value:
-        `\`${p}warn <@user> <reason>\` — Warn user (auto-quarantine at max warnings)\n` +
+        `\`${p}warn <@user> <reason>\` — Issue a warning (auto-quarantine at threshold)\n` +
         `\`${p}warnings <@user>\` / \`${p}clearwarns <@user>\` — View or clear warning history\n` +
-        `\`${p}timeout <@user> <dur> [reason]\` — Timeout a member\n` +
+        `\`${p}timeout <@user> <dur> [reason]\` — Timeout a member (e.g. \`5m\`, \`1h\`, \`1d\`)\n` +
         `\`${p}kick <@user> [reason]\` — Kick a member from the server\n` +
         `\`${p}ban <@user|id> [reason]\` — Ban by mention or raw User ID\n` +
-        `\`${p}unban <userId> [reason]\` — Unban by User ID\n` +
-        `\`${p}unbanall\` — Mass-unban all banned users *(Bot/Server/Extra Owner only)*\n` +
-        `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute/unmute everyone in your voice channel\n` +
-        `\`${p}purge <1-100>\` — Bulk-delete messages from the channel\n` +
+        `\`${p}unban <userId>\` — Unban by User ID\n` +
+        `\`${p}unbanall\` — Mass-unban all banned users\n` +
+        `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute/unmute everyone in your VC\n` +
+        `\`${p}purge <1–100>\` — Bulk-delete messages from current channel\n` +
         `\`${p}slowmode <seconds>\` — Set channel slowmode (0 = off)\n` +
-        `\`${p}say <#channel> <message>\` — Send anonymous bot message\n` +
-        `\`${p}announce <#channel> <title> | <message>\` — Post styled announcement embed\n` +
         `\`${p}createrole <name> [color]\` / \`${p}deleterole <@role>\` — Create or delete roles`
     },
+    // ─────────────────────────────────────────
     {
-      name: '🎛️ Bot & Server Configuration',
+      name: '📢 Announcements & Messaging',
       value:
-        `\`${p}autonick <on|off> [prefix] [suffix]\` — Auto-format new member nicknames *(manual only)*\n` +
-        `\`${p}sethomevc [channel|VC name]\` — Set bot's permanent Home Voice Channel\n` +
-        `\`${p}deafen <deafen|undeafen>\` — Toggle bot's own self-deafen in VC *(Bot/Server Owner)*\n` +
-        `\`${p}setguildavatar <url|attach>\` — Set bot's custom per-server avatar\n` +
-        `\`${p}setguildbanner <url|attach>\` — Set bot's custom per-server banner\n` +
-        `\`${p}serverinfo\` — Full server statistics & live security status\n` +
-        `\`${p}userinfo [@user]\` — User profile, roles, warnings & privileges`
+        `\`${p}say <#channel> <message>\` — Send an anonymous bot message\n` +
+        `\`${p}announce <#channel> <title> | <message>\` — Post a styled announcement embed\n` +
+        `\`${p}modmode <on|off>\` — Toggle Mod Mode (restricts channels to mods-only instantly)`
     },
+    // ─────────────────────────────────────────
     {
-      name: '📨 Spam & Owner Tools',
+      name: '🎤 Voice & JTC (Join-to-Create)',
       value:
-        `\`${p}spam [@user] [count] <message>\` — Spam user's DM or current channel anonymously\n` +
-        `\`${p}spampermit <userId>\` — Grant spam access to a user *(Bot Owner only)*\n` +
-        `\`${p}spamrevoke <userId>\` — Revoke spam access *(Bot Owner only)*\n` +
-        `\`${p}spamlist\` — List all permitted spam users *(Bot Owner only)*`
+        `\`${p}jtcsetup <#voicechannel>\` — Designate a channel as the JTC creator hub\n` +
+        `\`${p}jtcdisable\` — Remove the JTC system from the server\n` +
+        `\`${p}vc\` — Manage your personal JTC voice channel (rename, limit, privacy, etc.)\n` +
+        `\`${p}sethomevc [channel]\` — Set bot's permanent Home Voice Channel (rejoins if moved)\n` +
+        `\`${p}unsethomevc\` — Remove Home VC setting and disconnect the bot from voice\n` +
+        `\`${p}deafen <deafen|undeafen>\` — Toggle the bot's self-deafen in VC\n` +
+        `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute/unmute all users in your current VC`
     },
+    // ─────────────────────────────────────────
     {
       name: '🌀 VC Drag',
       value:
-        `\`${p}vcdrag <@user> [interval]\` — Drag a user through all VCs endlessly (interval in seconds, default 2)\n` +
-        `\`${p}vcdragstop <@user>\` — Stop the drag session for a user\n` +
+        `\`${p}vcdrag <@user> [interval]\` — Endlessly drag a user through VCs (default: 2s)\n` +
+        `\`${p}vcdragstop <@user>\` — Stop a drag session for a specific user\n` +
         `\`${p}vcdraglist\` — Show all currently active drag sessions in the server`
     },
+    // ─────────────────────────────────────────
     {
-      name: '🤖 Auto-Responder (Triggers)',
+      name: '👋 Welcome & Leave System',
       value:
-        `\`${p}trigger create <match> | <response>\` — Add a custom trigger response\n` +
-        `\`${p}trigger remove <match>\` — Delete a trigger\n` +
-        `\`${p}trigger list\` — Show all active triggers in the server`
+        `\`${p}welcome\` — Open the Welcome message manager (channel, embed, roles)\n` +
+        `\`${p}leave\` — Open the Leave message manager (channel & embed customization)\n` +
+        `> Both support fully customizable embed messages with \`{user}\`, \`{server}\`, \`{count}\` placeholders.`
     },
+    // ─────────────────────────────────────────
     {
-      name: '⚙️ Utilities',
+      name: '🤖 Auto-Responder & Triggers',
       value:
-        `\`${p}status\` — Athena Prime health & live security overview\n` +
-        `\`${p}ping\` / \`ping\` — WebSocket & API latency check *(prefix-less supported)*\n` +
+        `\`${p}trigger create <match> | <response>\` — Add a custom keyword trigger response\n` +
+        `\`${p}trigger remove <match>\` — Delete a trigger by its match phrase\n` +
+        `\`${p}trigger list\` — Show all active auto-responders in this server`
+    },
+    // ─────────────────────────────────────────
+    {
+      name: '💣 Enuke (Server Nuke Suite)',
+      value:
+        `\`${p}enuke\` — Opens the interactive Enuke Manager panel *(Bot Owner only)*\n` +
+        `> Supports full server wipe: channels, roles, bans, kicks, and more via button UI.`
+    },
+    // ─────────────────────────────────────────
+    {
+      name: '📨 Spam Tools *(Bot Owner only)*',
+      value:
+        `\`${p}spam [@user] [count] <message>\` — DM-spam or channel-spam anonymously\n` +
+        `\`${p}spampermit <userId>\` — Grant spam access to a user\n` +
+        `\`${p}spamrevoke <userId>\` — Revoke spam access\n` +
+        `\`${p}spamlist\` — List all users with spam permission`
+    },
+    // ─────────────────────────────────────────
+    {
+      name: '🎨 Customization & Appearance',
+      value:
+        `\`${p}accent\` — Set a custom embed accent color from 10 presets or any hex code\n` +
+        `\`${p}autonick <on|off> [prefix] [suffix]\` — Auto-format new member nicknames\n` +
+        `\`${p}setguildavatar <url|attach>\` — Set bot's custom per-server avatar\n` +
+        `\`${p}setguildbanner <url|attach>\` — Set bot's custom per-server banner`
+    },
+    // ─────────────────────────────────────────
+    {
+      name: '⚙️ Utilities & Info',
+      value:
+        `\`${p}status\` — Real-time security health overview for this server\n` +
+        `\`${p}serverinfo\` — Full server statistics, security state & member breakdown\n` +
+        `\`${p}userinfo [@user]\` — User profile, roles, warnings & privilege level\n` +
+        `\`${p}ping\` — WebSocket & API latency check\n` +
+        `\`${p}setup\` — Bind log channel, quarantine VC & quarantine role quickly\n` +
         `\`${p}help\` — Show this command console\n\n` +
         `> All commands work as **\`${p}prefix\`** and **\`/slash\`** interactions.\n` +
         `> **Bot Owner**, **Server Owner**, and **Extra Owners** bypass all permission checks.`
@@ -276,12 +330,15 @@ async function getHelpEmbed(guild) {
 
   const helpEmbed = embed.info(
     'Athena Prime — Command Console',
-    `🛡️ **God-Level Security System** — Active in **${guild?.name || 'your server'}**\n\nAll commands are available as both traditional \`${p}prefix\` and modern \`/slash\` interactions.`,
+    `🛡️ **God-Level Security System** — Active in **${guild?.name || 'your server'}**\n\nAll **${fields.length} categories** below. Every command works as both \`${p}prefix\` and \`/slash\` interaction.`,
     fields
   );
 
   return { embed: helpEmbed };
 }
+
+
+
 
 async function handleSetup(guild, channel, role, voiceChannel) {
   const updates = {};
