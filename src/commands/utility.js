@@ -54,11 +54,12 @@ export const commands = [
 
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`| **${apiMs}MS** |`);
+        .setAuthor({ name: `| ${apiMs}MS |` });
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
+        .setAuthor({ name: '• PONG' })
+        .setDescription(`WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
         .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
 
       await sent.edit({ content: null, embeds: [e1, e2] });
@@ -83,11 +84,12 @@ export const commands = [
 
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`| **${apiMs}MS** |`);
+        .setAuthor({ name: `| ${apiMs}MS |` });
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
+        .setAuthor({ name: '• PONG' })
+        .setDescription(`WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
         .setThumbnail(interaction.client.user.displayAvatarURL({ size: 256 }));
 
       await interaction.editReply({ content: null, embeds: [e1, e2] });
