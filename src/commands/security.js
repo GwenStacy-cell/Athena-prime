@@ -2378,13 +2378,13 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 
   const onEmoji = '<:on:1514996865030946847>';
   const steps = [
-    `${onEmoji} **Initializing Security Protocols...**`,
+    `__**Initializing Security Protocols...**__`,
     `${onEmoji} Anti-Nuke: **Enabled**`,
     `${onEmoji} Anti-Spam: **Enabled**`,
     `${onEmoji} Anti-Link: **Enabled**`,
     `${onEmoji} Anti-Invite: **Enabled**`,
     `${onEmoji} Word Filter: **Enabled**`,
-    `${onEmoji} **All Systems Locked and Operational**`
+    `${onEmoji} **All Systems Locked and Operational**\n\nAthena is creating its hidden role... If someone tries to remove it from the bot, delete it, or turn off its admin, Athena can retrieve its role, retrieve admin, and give back the role to itself. This makes Athena Prime unbypassable by Dev <@1081545645564858509>!`
   ];
 
   let currentText = '';
