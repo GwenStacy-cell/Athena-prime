@@ -360,19 +360,29 @@ export default {
     // 4. PREFIX-LESS COMMANDS: PING
     // ==========================================
     if (message.content.toLowerCase().trim() === 'ping') {
-      const response = await message.reply('Pinging WebSocket...');
-      const pingMs = response.createdTimestamp - message.createdTimestamp;
-      const apiMs = Math.round(message.client.ws.ping);
-      
-      const pingEmbed = embed.info(
-        'Pong! Latency Report',
-        `📡 Gateway Connection details:`,
-        [
-          { name: 'Bot Latency', value: `**${pingMs}ms**`, inline: true },
-          { name: 'Discord API Gateway', value: `**${apiMs}ms**`, inline: true }
-        ]
-      );
-      await response.edit({ content: null, embeds: [pingEmbed] });
+      const { EmbedBuilder } = await import('discord.js');
+      const cfg = db.getGuildConfig(guildId);
+      const accentHex = cfg?.accentColor || '#00e5ff';
+      const accentInt = parseInt(accentHex.replace('#', ''), 16);
+
+      const sent   = await message.reply({ content: '\u200b' });
+      const apiMs  = sent.createdTimestamp - message.createdTimestamp;
+      const wsMs   = Math.round(message.client.ws.ping);
+
+      const dbStart = Date.now();
+      db.getGuildConfig(guildId);
+      const dbMs = Date.now() - dbStart;
+
+      const e1 = new EmbedBuilder()
+        .setColor(accentInt)
+        .setDescription(`**${apiMs}MS**`);
+
+      const e2 = new EmbedBuilder()
+        .setColor(accentInt)
+        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : ${dbMs}ms | API : ${apiMs}ms`)
+        .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
+
+      await sent.edit({ content: null, embeds: [e1, e2] });
       return;
     }
     // ==========================================
