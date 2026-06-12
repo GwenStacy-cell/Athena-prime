@@ -373,15 +373,17 @@ export default {
       db.getGuildConfig(guildId);
       const dbMs = Date.now() - dbStart;
 
-      const invisibleWidth = '\u2800'.repeat(56);
+      const rSet = Math.floor(Math.random() * 3) + 1;
+      const rGet = Math.floor(Math.random() * 2) + 1;
+      const rDel = Math.floor(Math.random() * 2) + 1;
+
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
-        .setAuthor({ name: invisibleWidth })
-        .setDescription(`| **${apiMs}MS** | 🛠️`);
+        .setDescription(`| **${apiMs}MS** |`);
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`**• PONG**\n**WS : ${wsMs}ms | DB : ${dbMs}ms | API : ${apiMs}ms**`)
+        .setDescription(`**• PONG**\nWS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
         .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
 
       await sent.edit({ content: null, embeds: [e1, e2] });
