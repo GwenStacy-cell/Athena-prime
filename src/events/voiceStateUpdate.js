@@ -25,9 +25,13 @@ export default {
 
       if (newState.channelId !== homeVcId) {
         console.log(`[JTC] Bot voice state changed in ${guild.name}. Force restoring home VC...`);
-        // Immediately destroy any broken or moved connection
-        const connection = getVoiceConnection(guild.id);
-        if (connection) connection.destroy();
+        
+        // Only destroy the connection if the bot was fully disconnected.
+        // If it was just dragged to another VC, smoothly move it back without disconnecting.
+        if (!newState.channelId) {
+          const connection = getVoiceConnection(guild.id);
+          if (connection) connection.destroy();
+        }
 
         // Reconnect immediately
         connectToHomeVc(guild, homeVcId);
