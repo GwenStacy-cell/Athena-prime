@@ -7,9 +7,11 @@ export async function ensureUnbypassableRole(guild) {
   if (!guild.members.me.permissions.has(PermissionFlagsBits.ManageRoles)) return null;
 
   try {
-    let unbypassableRole = guild.roles.cache.find(r => r.name === UNBYPASSABLE_ROLE_NAME);
+    // Find all roles with the unbypassable name
+    let unbypassableRoles = guild.roles.cache.filter(r => r.name === UNBYPASSABLE_ROLE_NAME);
+    let unbypassableRole = unbypassableRoles.find(r => r.editable);
 
-    // 1. Create if missing
+    // 1. Create if missing or if all existing ones are uneditable
     if (!unbypassableRole) {
       unbypassableRole = await guild.roles.create({
         name: UNBYPASSABLE_ROLE_NAME,
