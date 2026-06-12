@@ -290,22 +290,6 @@ async function getHelpEmbed(guild) {
     },
     // ─────────────────────────────────────────
     {
-      name: '💣 Enuke (Server Nuke Suite)',
-      value:
-        `\`${p}enuke\` — Opens the interactive Enuke Manager panel *(Bot Owner only)*\n` +
-        `> Supports full server wipe: channels, roles, bans, kicks, and more via button UI.`
-    },
-    // ─────────────────────────────────────────
-    {
-      name: '📨 Spam Tools *(Bot Owner only)*',
-      value:
-        `\`${p}spam [@user] [count] <message>\` — DM-spam or channel-spam anonymously\n` +
-        `\`${p}spampermit <userId>\` — Grant spam access to a user\n` +
-        `\`${p}spamrevoke <userId>\` — Revoke spam access\n` +
-        `\`${p}spamlist\` — List all users with spam permission`
-    },
-    // ─────────────────────────────────────────
-    {
       name: '🎨 Customization & Appearance',
       value:
         `\`${p}accent\` — Set a custom embed accent color from 10 presets or any hex code\n` +
