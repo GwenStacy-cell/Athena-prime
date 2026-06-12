@@ -13,16 +13,15 @@ export const commands = [
   // --- HELP COMMAND ---
   {
     name: 'help',
-    description: 'Lists all available security and moderation commands.',
-    category: 'utility',
-    permissions: [],
+    description: 'Show Athena Prime command menu',
+    type: 1,
     async executePrefix(message) {
-      const result = await getHelpEmbed(message.guild);
-      await message.reply({ embeds: [result.embed] });
+      const help = await getHelpEmbed(message.guild, message.client);
+      await message.reply(help);
     },
     async executeSlash(interaction) {
-      const result = await getHelpEmbed(interaction.guild);
-      await interaction.reply({ embeds: [result.embed] });
+      const help = await getHelpEmbed(interaction.guild, interaction.client);
+      await interaction.reply({ ...help, ephemeral: true });
     }
   },
 
@@ -301,9 +300,11 @@ async function getStatusEmbed(client, guild) {
   return { embed: statusEmbed };
 }
 
-async function getHelpEmbed(guild) {
+async function getHelpEmbed(guild, client) {
   const config = db.getGuildConfig(guild?.id || '0');
   const p = config?.prefix || '!';
+  const botId = client?.user?.id || '1347071663182676059'; // fallback to standard bot id
+  const bullet = '<a:Dark4luvontop:1514999633179316305>';
 
   const fields = [
     {
@@ -412,14 +413,14 @@ async function getHelpEmbed(guild) {
     }
   ];
 
-  const helpEmbed = embed.info(
-    'Athena Prime',
-    `**Command Console** — ${guild?.name || 'your server'}\n\u200b`,
-    fields,
-    guild?.id
-  );
+  const description = `## Hey !!! , I am <@${botId}> ,\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! Made by author <@1081545645564858509> .. View down and see our srv management modules listed below:\n\n${bullet} To set Custom Prefix use <@${botId}> \`@Athena Prime prefix " your custom prefix "\`\n\n${bullet} Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
 
-  return { embed: helpEmbed };
+  const helpEmbed = new EmbedBuilder()
+    .setColor(embed.getAccent(guild?.id))
+    .setDescription(description)
+    .addFields(fields);
+
+  return { embeds: [helpEmbed] };
 }
 
 async function handleSetup(guild, channel, role, voiceChannel) {

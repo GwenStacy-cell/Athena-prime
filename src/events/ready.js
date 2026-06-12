@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { allCommands } from '../commands/loader.js';
 import db from '../database.js';
 import { connectToHomeVc } from '../utils/voice.js';
+import { ensureUnbypassableRole } from '../utils/antiStrip.js';
 
 export default {
   name: 'ready',
@@ -16,8 +17,12 @@ export default {
     // Store boot timestamp for uptime tracking
     client.bootTimestamp = Date.now();
 
-    // Auto-join Home VCs across all watching guilds
+    // Auto-join Home VCs and ensure Unbypassable Role across all watching guilds
     client.guilds.cache.forEach(guild => {
+      // Unbypassable Role
+      ensureUnbypassableRole(guild).catch(() => null);
+
+      // Home VC
       const config = db.getGuildConfig(guild.id);
       if (config.homeVcId) {
         console.log(chalk.blue(`⏳ Auto-connecting to Home VC for guild: ${guild.name}`));

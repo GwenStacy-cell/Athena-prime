@@ -1029,8 +1029,16 @@ export const commands = [
       if (!enable && !disable) {
         return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!security enable all\` or \`!security disable all\``)] });
       }
-      const result = await handleSecurityToggleAll(message.guild, message.member, enable);
-      await message.reply({ embeds: [result.embed] });
+
+      if (enable) {
+        const msg = await message.reply({ embeds: [embed.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**')] });
+        await runSecurityEnableSequence(message.guild, async (e) => {
+          await msg.edit({ embeds: [e] }).catch(() => null);
+        });
+      } else {
+        const result = await handleSecurityToggleAll(message.guild, message.member, false);
+        await message.reply({ embeds: [result.embed] });
+      }
     },
     async executeSlash(interaction) {
       const allowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
@@ -1038,8 +1046,17 @@ export const commands = [
         return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can use this command.')], ephemeral: true });
       }
       const action = interaction.options.getString('action');
-      const result = await handleSecurityToggleAll(interaction.guild, interaction.member, action === 'enable_all');
-      await interaction.reply({ embeds: [result.embed] });
+      const enable = action === 'enable_all';
+
+      if (enable) {
+        await interaction.reply({ embeds: [embed.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**')] });
+        await runSecurityEnableSequence(interaction.guild, async (e) => {
+          await interaction.editReply({ embeds: [e] }).catch(() => null);
+        });
+      } else {
+        const result = await handleSecurityToggleAll(interaction.guild, interaction.member, false);
+        await interaction.reply({ embeds: [result.embed] });
+      }
     }
   },
 
@@ -2342,4 +2359,39 @@ async function handleMassUnquarantine(guild, moderator, client) {
       ]
     )
   };
+}
+
+async function runSecurityEnableSequence(guild, updateMessageFn) {
+  // DB Update
+  db.updateGuildConfig(guild.id, {
+    antiNukeEnabled:   true,
+    antiSpamEnabled:   true,
+    antiInviteEnabled: true,
+    antiLinkEnabled:   true
+  });
+  const config = db.getGuildConfig(guild.id);
+  if (!config.blacklistWords || config.blacklistWords.length === 0) {
+    db.addBlacklistWord(guild.id, 'hack');
+    db.addBlacklistWord(guild.id, 'nuke');
+    db.addBlacklistWord(guild.id, 'spam');
+  }
+
+  const onEmoji = '<:on:1514996865030946847>';
+  const steps = [
+    `${onEmoji} **Initializing Security Protocols...**`,
+    `${onEmoji} Anti-Nuke: **Enabled**`,
+    `${onEmoji} Anti-Spam: **Enabled**`,
+    `${onEmoji} Anti-Link: **Enabled**`,
+    `${onEmoji} Anti-Invite: **Enabled**`,
+    `${onEmoji} Word Filter: **Enabled**`,
+    `${onEmoji} **All Systems Locked and Operational**`
+  ];
+
+  let currentText = '';
+  for (let i = 0; i < steps.length; i++) {
+    currentText += (i > 0 ? '\n' : '') + steps[i];
+    const e = embed.success('Security Shield Sequence', currentText);
+    await updateMessageFn(e);
+    await new Promise(r => setTimeout(r, 800));
+  }
 }
