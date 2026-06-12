@@ -2,7 +2,7 @@ import { PermissionFlagsBits, EmbedBuilder } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
 import db from '../database.js';
-import embed from '../embed.js';
+import embed, { setGuildContext } from '../embed.js';
 import commandMap from '../commands/loader.js';
 import { executeQuarantine } from '../commands/security.js';
 import { handleEzal, handleBackup } from '../commands/ezal.js';
@@ -71,6 +71,9 @@ export default {
     const guildId = message.guild.id;
     const userId = message.author.id;
     const cacheKey = `${guildId}-${userId}`;
+
+    // Set guild context so all embed calls in this command chain use the correct accent color
+    setGuildContext(guildId);
 
     // Load server configurations
     const dbConfig = db.getGuildConfig(guildId);

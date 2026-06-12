@@ -30,15 +30,25 @@ try {
 const colors = config.colors;
 const FOOTER_TEXT = config.footerText || 'Athena Prime Security';
 
+// ——————————————————————————————————————————
+// GUILD CONTEXT — set once per command invocation
+// Node.js is single-threaded so this is safe for sequential calls
+// ——————————————————————————————————————————
+let _currentGuildId = null;
+
+export function setGuildContext(guildId) {
+  _currentGuildId = guildId || null;
+}
+
 /**
- * Get the active accent color for a guild. Falls back to the type's default color.
- * @param {string|null} guildId
- * @param {string} fallbackColor
+ * Get the active accent color for the current guild context.
+ * Explicit guildId param takes priority, falls back to module-level context.
  */
 function getAccentColor(guildId, fallbackColor) {
-  if (!guildId) return fallbackColor;
+  const id = guildId || _currentGuildId;
+  if (!id) return fallbackColor;
   try {
-    const cfg = db.getGuildConfig(guildId);
+    const cfg = db.getGuildConfig(id);
     if (cfg && cfg.accentColor) return cfg.accentColor;
   } catch { /* ignore */ }
   return fallbackColor;
@@ -51,12 +61,9 @@ export const embed = {
   /**
    * General builder to standardize layout, footers and timestamps
    */
-  build({ title, description, color, fields = [], thumbnail, footerText, author, guildId = null }) {
-    // If guildId is provided, the accent color overrides the default for all non-alert embeds
-    const finalColor = color || colors.dark;
-
+  build({ title, description, color, fields = [], thumbnail, footerText, author }) {
     const builder = new EmbedBuilder()
-      .setColor(finalColor)
+      .setColor(color || colors.dark)
       .setTimestamp();
 
     if (title) builder.setTitle(title);
@@ -87,42 +94,33 @@ export const embed = {
   },
 
   success(title, description, fields = [], guildId = null) {
-    const accent = getAccentColor(guildId, colors.success);
-    return this.build({ title, description, color: accent, fields });
+    return this.build({ title, description, color: getAccentColor(guildId, colors.success), fields });
   },
 
   warn(title, description, fields = []) {
-    // Warnings are always yellow — accent doesn't apply to alerts
+    // Warnings always yellow — accent doesn't override alerts
     return this.build({ title, description, color: colors.warning, fields });
   },
 
   danger(title, description, fields = []) {
-    // Danger is always red — accent doesn't apply to alerts
+    // Danger always red — accent doesn't override alerts
     return this.build({ title, description, color: colors.danger, fields });
   },
 
   info(title, description, fields = [], guildId = null) {
-    const accent = getAccentColor(guildId, colors.neutral);
-    return this.build({ title, description, color: accent, fields });
+    return this.build({ title, description, color: getAccentColor(guildId, colors.neutral), fields });
   },
 
   raid(title, description, fields = []) {
     return this.build({ title, description, color: colors.raid, fields });
   },
 
-  /**
-   * Gold/Amber embed for owner-related responses (e.g., "You tagged my Master!")
-   */
   owner(title, description, fields = []) {
     return this.build({ title, description, color: colors.owner || '#FFD700', fields });
   },
 
-  /**
-   * Security status embed with cyan accent
-   */
   security(title, description, fields = [], guildId = null) {
-    const accent = getAccentColor(guildId, colors.security || '#00e5ff');
-    return this.build({ title, description, color: accent, fields });
+    return this.build({ title, description, color: getAccentColor(guildId, colors.security || '#00e5ff'), fields });
   },
 
   log(title, description, fields = [], level = 'info') {
@@ -132,12 +130,7 @@ export const embed = {
     else if (level === 'danger') { color = colors.danger; }
     else if (level === 'raid') { color = colors.raid; }
 
-    return this.build({
-      title: `Log: ${title}`,
-      description,
-      color,
-      fields
-    });
+    return this.build({ title: `Log: ${title}`, description, color, fields });
   }
 };
 export default embed;

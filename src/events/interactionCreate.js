@@ -1,6 +1,6 @@
 import { PermissionFlagsBits } from 'discord.js';
 import commandMap from '../commands/loader.js';
-import embed from '../embed.js';
+import embed, { setGuildContext } from '../embed.js';
 import db from '../database.js';
 import { getAntinukeConfigPanel } from '../commands/security.js';
 import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
@@ -17,6 +17,9 @@ export default {
     // 1. CHAT INPUT SLASH COMMANDS
     // ==========================================
     if (interaction.isChatInputCommand()) {
+      // Set guild accent context for all embed calls in this command
+      if (interaction.guild) setGuildContext(interaction.guild.id);
+
       const cmd = commandMap.get(interaction.commandName);
       if (!cmd) {
         return interaction.reply({
@@ -136,6 +139,8 @@ export default {
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton()) {
+      // Set guild accent context for all embed calls in this button handler
+      if (interaction.guild) setGuildContext(interaction.guild.id);
       // Enuke Manager button
       if (interaction.customId.startsWith('enuke_open_manager_')) {
         try {

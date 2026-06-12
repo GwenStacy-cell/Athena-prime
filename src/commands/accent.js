@@ -34,12 +34,12 @@ function hexToInt(hex) {
 // ——————————————————————————————————————————
 // SAVED ACCENT CONFIRMATION EMBED
 // ——————————————————————————————————————————
-function buildSavedEmbed(guild, colorName, hex, botAvatarURL) {
+function buildSavedEmbed(guild, colorName, hex, executorAvatarURL) {
   return new EmbedBuilder()
     .setColor(hexToInt(hex))
-    .setTitle('✅ Accent saved')
+    .setTitle('Accent saved')
     .setDescription(`**${colorName.toUpperCase()}** · \`${hex.toUpperCase()}\`\n> Server components will use this accent.`)
-    .setThumbnail(botAvatarURL || null);
+    .setThumbnail(executorAvatarURL || null);
 }
 
 // ——————————————————————————————————————————
@@ -158,8 +158,8 @@ export async function handleAccentButton(interaction) {
     await interaction.update({ embeds: [panel.embed], components: panel.components });
 
     // Send confirmation as a follow-up
-    const botAvatarURL = interaction.client.user.displayAvatarURL({ size: 256 });
-    const savedEmbed = buildSavedEmbed(guild, colorName, hex, botAvatarURL);
+    const executorAvatarURL = interaction.user.displayAvatarURL({ size: 256 });
+    const savedEmbed = buildSavedEmbed(guild, colorName, hex, executorAvatarURL);
     await interaction.followUp({ embeds: [savedEmbed] });
     return;
   }
@@ -211,8 +211,8 @@ export async function handleAccentModal(interaction) {
   await interaction.update({ embeds: [panel.embed], components: panel.components });
 
   // Send confirmation follow-up
-  const botAvatarURL = interaction.client.user.displayAvatarURL({ size: 256 });
-  const savedEmbed = buildSavedEmbed(interaction.guild, colorName, finalHex, botAvatarURL);
+  const executorAvatarURL = interaction.user.displayAvatarURL({ size: 256 });
+  const savedEmbed = buildSavedEmbed(interaction.guild, colorName, finalHex, executorAvatarURL);
   await interaction.followUp({ embeds: [savedEmbed] });
 }
 

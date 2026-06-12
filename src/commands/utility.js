@@ -190,136 +190,122 @@ async function getHelpEmbed(guild) {
   const p = config?.prefix || '!';
 
   const fields = [
-    // ─────────────────────────────────────────
     {
-      name: '🛡️ Anti-Nuke & Firewall',
+      name: 'SECURITY  &  FIREWALL',
       value:
-        `\`${p}security <enable all|disable all>\` — Toggle ALL shields at once *(Bot/Server Owner only)*\n` +
-        `\`${p}antinuke <enable all|disable all|config>\` — Open interactive config panel or bulk-toggle\n` +
-        `\`${p}config <setting> <on|off>\` — Toggle antinuke / antispam / antiinvite / maxwarnings\n` +
-        `\`${p}raidmode <on|off>\` — Auto-quarantine every new join during a raid\n` +
-        `\`${p}botwhitelist <add|remove|list> <botId>\` — Permit trusted bots from bot-add guard`
+        `\`${p}security\` **enable all** / **disable all** — Toggle all shields at once\n` +
+        `\`${p}antinuke\` **enable** / **disable** / **config** — Interactive config panel\n` +
+        `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **maxwarnings** \`on|off\`\n` +
+        `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid\n` +
+        `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots`
     },
-    // ─────────────────────────────────────────
     {
-      name: '🔗 Link & Invite Filters',
+      name: 'LINK  &  INVITE  FILTERS',
       value:
-        `\`${p}antilink <on|off>\` — Block all external links from non-moderators\n` +
-        `\`${p}linksallow <add|remove|list> [domain]\` — Whitelist domains (youtube.com, tenor.com…)\n` +
-        `\`${p}blacklist <add|remove|list> [phrase]\` — Auto-delete & warn messages matching phrases`
+        `\`${p}antilink\` **on** / **off** — Block all external links from non-moderators\n` +
+        `\`${p}linksallow\` **add** / **remove** / **list** \`domain\` — Whitelist domains\n` +
+        `\`${p}blacklist\` **add** / **remove** / **list** \`phrase\` — Auto-delete matching messages`
     },
-    // ─────────────────────────────────────────
     {
-      name: '✅ Whitelist & Permissions',
+      name: 'WHITELIST  &  PERMISSIONS',
       value:
-        `\`${p}whitelist <add|remove|list> [@user] [events...]\` — Per-event immunity\n` +
-        `> Events: \`all\` \`antinuke\` \`antibot\` \`antispam\` \`antilink\` \`antiinvite\` \`quarantine\`\n` +
-        `\`${p}extraowner <add|remove|list> [@user]\` — Grant full bot access to trusted users`
+        `\`${p}whitelist\` **add** / **remove** / **list** \`@user\` \`[events...]\`\n` +
+        `> Events: \`all\`  \`antinuke\`  \`antibot\`  \`antispam\`  \`antilink\`  \`antiinvite\`  \`quarantine\`\n` +
+        `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access`
     },
-    // ─────────────────────────────────────────
     {
-      name: '🔒 Quarantine & Isolation',
+      name: 'QUARANTINE  &  ISOLATION',
       value:
-        `\`${p}quarantine <@user> [duration] [reason]\` — Strip roles & isolate (alias: \`${p}qr\`)\n` +
-        `\`${p}unquarantine <@user>\` — Restore roles & release from isolation\n` +
-        `\`${p}massquarantine <@role> [reason]\` — Quarantine all members of a role at once\n` +
+        `\`${p}quarantine\` \`@user\` \`[duration]\` \`[reason]\` — Strip roles & isolate  *(alias:* \`${p}qr\`*)*\n` +
+        `\`${p}unquarantine\` \`@user\` — Restore roles and release from isolation\n` +
+        `\`${p}massquarantine\` \`@role\` — Quarantine all members of a role at once\n` +
         `\`${p}massunquarantine\` — Release all currently quarantined members\n` +
-        `\`${p}qrmanager <setup|setrole|setchannel|setvc|status>\` — Configure quarantine infrastructure\n` +
-        `\`${p}setup [#logchannel] [quarantineVC] [@quarantineRole]\` — Quick bind all at once\n` +
-        `\`${p}lockdown <on|off>\` — Prevent @everyone from sending messages in a channel`
+        `\`${p}qrmanager\` **setup** / **setrole** / **setchannel** / **setvc** / **status**\n` +
+        `\`${p}lockdown\` **on** / **off** — Restrict channel to moderators only`
     },
-    // ─────────────────────────────────────────
     {
-      name: '🔨 Moderation & Member Management',
+      name: 'MODERATION',
       value:
-        `\`${p}warn <@user> <reason>\` — Issue a warning (auto-quarantine at threshold)\n` +
-        `\`${p}warnings <@user>\` / \`${p}clearwarns <@user>\` — View or clear warning history\n` +
-        `\`${p}timeout <@user> <dur> [reason]\` — Timeout a member (e.g. \`5m\`, \`1h\`, \`1d\`)\n` +
-        `\`${p}kick <@user> [reason]\` — Kick a member from the server\n` +
-        `\`${p}ban <@user|id> [reason]\` — Ban by mention or raw User ID\n` +
-        `\`${p}unban <userId>\` — Unban by User ID\n` +
-        `\`${p}unbanall\` — Mass-unban all banned users\n` +
-        `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute/unmute everyone in your VC\n` +
-        `\`${p}purge <1–100>\` — Bulk-delete messages from current channel\n` +
-        `\`${p}slowmode <seconds>\` — Set channel slowmode (0 = off)\n` +
-        `\`${p}createrole <name> [color]\` / \`${p}deleterole <@role>\` — Create or delete roles`
+        `\`${p}warn\` \`@user\` \`reason\` — Issue a warning  *(auto-quarantine at threshold)*\n` +
+        `\`${p}warnings\` / \`${p}clearwarns\` \`@user\` — View or wipe warning history\n` +
+        `\`${p}timeout\` \`@user\` \`dur\` — Timeout a member  \`5m\` \`1h\` \`1d\`\n` +
+        `\`${p}kick\` / \`${p}ban\` / \`${p}unban\` / \`${p}unbanall\` — Standard moderation actions\n` +
+        `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute/unmute your current VC\n` +
+        `\`${p}purge\` \`1–100\` — Bulk-delete messages from current channel\n` +
+        `\`${p}slowmode\` \`seconds\` — Set channel slowmode  *(0 = off)*\n` +
+        `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role`
     },
-    // ─────────────────────────────────────────
     {
-      name: '📢 Announcements & Messaging',
+      name: 'ANNOUNCEMENTS  &  MESSAGING',
       value:
-        `\`${p}say <#channel> <message>\` — Send an anonymous bot message\n` +
-        `\`${p}announce <#channel> <title> | <message>\` — Post a styled announcement embed\n` +
-        `\`${p}modmode <on|off>\` — Toggle Mod Mode (restricts channels to mods-only instantly)`
+        `\`${p}say\` \`#channel\` \`message\` — Send an anonymous bot message\n` +
+        `\`${p}announce\` \`#channel\` \`title | message\` — Post a styled announcement embed\n` +
+        `\`${p}modmode\` **on** / **off** — Restrict all channels to moderators instantly`
     },
-    // ─────────────────────────────────────────
     {
-      name: '🎤 Voice & JTC (Join-to-Create)',
+      name: 'VOICE  &  JOIN-TO-CREATE',
       value:
-        `\`${p}jtcsetup <#voicechannel>\` — Designate a channel as the JTC creator hub\n` +
-        `\`${p}jtcdisable\` — Remove the JTC system from the server\n` +
-        `\`${p}vc\` — Manage your personal JTC voice channel (rename, limit, privacy, etc.)\n` +
-        `\`${p}sethomevc [channel]\` — Set bot's permanent Home Voice Channel (rejoins if moved)\n` +
-        `\`${p}unsethomevc\` — Remove Home VC setting and disconnect the bot from voice\n` +
-        `\`${p}deafen <deafen|undeafen>\` — Toggle the bot's self-deafen in VC\n` +
-        `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute/unmute all users in your current VC`
+        `\`${p}jtcsetup\` \`#voicechannel\` — Designate the JTC creator channel\n` +
+        `\`${p}jtcdisable\` — Remove the JTC system from this server\n` +
+        `\`${p}vc\` — Manage your personal JTC channel  *(rename, limit, privacy…)*\n` +
+        `\`${p}sethomevc\` \`[channel]\` — Set bot's Home VC  *(auto-rejoin if moved)*\n` +
+        `\`${p}unsethomevc\` — Clear Home VC and disconnect the bot\n` +
+        `\`${p}deafen\` / \`${p}muteall\` / \`${p}unmuteall\` — Voice management tools`
     },
-    // ─────────────────────────────────────────
     {
-      name: '🌀 VC Drag',
+      name: 'VC DRAG',
       value:
-        `\`${p}vcdrag <@user> [interval]\` — Endlessly drag a user through VCs (default: 2s)\n` +
-        `\`${p}vcdragstop <@user>\` — Stop a drag session for a specific user\n` +
-        `\`${p}vcdraglist\` — Show all currently active drag sessions in the server`
+        `\`${p}vcdrag\` \`@user\` \`[interval]\` — Drag a user endlessly through VCs  *(default: 2s)*\n` +
+        `\`${p}vcdragstop\` \`@user\` — Stop the drag session for a specific user\n` +
+        `\`${p}vcdraglist\` — View all currently active drag sessions`
     },
-    // ─────────────────────────────────────────
     {
-      name: '👋 Welcome & Leave System',
+      name: 'WELCOME  &  LEAVE',
       value:
-        `\`${p}welcome\` — Open the Welcome message manager (channel, embed, roles)\n` +
-        `\`${p}leave\` — Open the Leave message manager (channel & embed customization)\n` +
-        `> Both support fully customizable embed messages with \`{user}\`, \`{server}\`, \`{count}\` placeholders.`
+        `\`${p}welcome\` — Open the Welcome message manager\n` +
+        `\`${p}leave\` — Open the Leave message manager\n` +
+        `> Supports \`{user}\`  \`{server}\`  \`{count}\` placeholders in custom embeds`
     },
-    // ─────────────────────────────────────────
     {
-      name: '🤖 Auto-Responder & Triggers',
+      name: 'AUTO-RESPONDER',
       value:
-        `\`${p}trigger create <match> | <response>\` — Add a custom keyword trigger response\n` +
-        `\`${p}trigger remove <match>\` — Delete a trigger by its match phrase\n` +
-        `\`${p}trigger list\` — Show all active auto-responders in this server`
+        `\`${p}trigger\` **create** \`match | response\` — Add a custom keyword trigger\n` +
+        `\`${p}trigger\` **remove** \`match\` — Delete a trigger\n` +
+        `\`${p}trigger\` **list** — View all active triggers in this server`
     },
-    // ─────────────────────────────────────────
     {
-      name: '🎨 Customization & Appearance',
+      name: 'CUSTOMIZATION',
       value:
-        `\`${p}accent\` — Set a custom embed accent color from 10 presets or any hex code\n` +
-        `\`${p}autonick <on|off> [prefix] [suffix]\` — Auto-format new member nicknames\n` +
-        `\`${p}setguildavatar <url|attach>\` — Set bot's custom per-server avatar\n` +
-        `\`${p}setguildbanner <url|attach>\` — Set bot's custom per-server banner`
+        `\`${p}accent\` — Set the embed accent color  *(10 pure presets + custom hex)*\n` +
+        `\`${p}autonick\` **on** / **off** \`[prefix]\` \`[suffix]\` — Auto-format member nicknames\n` +
+        `\`${p}setguildavatar\` — Set bot's custom per-server avatar\n` +
+        `\`${p}setguildbanner\` — Set bot's custom per-server banner`
     },
-    // ─────────────────────────────────────────
     {
-      name: '⚙️ Utilities & Info',
+      name: 'UTILITIES',
       value:
-        `\`${p}status\` — Real-time security health overview for this server\n` +
-        `\`${p}serverinfo\` — Full server statistics, security state & member breakdown\n` +
-        `\`${p}userinfo [@user]\` — User profile, roles, warnings & privilege level\n` +
-        `\`${p}ping\` — WebSocket & API latency check\n` +
-        `\`${p}setup\` — Bind log channel, quarantine VC & quarantine role quickly\n` +
-        `\`${p}help\` — Show this command console\n\n` +
-        `> All commands work as **\`${p}prefix\`** and **\`/slash\`** interactions.\n` +
-        `> **Bot Owner**, **Server Owner**, and **Extra Owners** bypass all permission checks.`
+        `\`${p}status\` — Real-time security health overview\n` +
+        `\`${p}serverinfo\` — Full server statistics and security state\n` +
+        `\`${p}userinfo\` \`[@user]\` — Profile, roles, warnings and privilege level\n` +
+        `\`${p}ping\` — WebSocket and API latency\n` +
+        `\`${p}setup\` — Quick-bind log channel, quarantine VC and quarantine role\n` +
+        `\`${p}help\` — This command console\n\n` +
+        `> Every command works as \`${p}prefix\` and \`/slash\`.\n` +
+        `> Bot Owner, Server Owner, and Extra Owners bypass all permission checks.`
     }
   ];
 
   const helpEmbed = embed.info(
-    'Athena Prime — Command Console',
-    `🛡️ **God-Level Security System** — Active in **${guild?.name || 'your server'}**\n\nAll **${fields.length} categories** below. Every command works as both \`${p}prefix\` and \`/slash\` interaction.`,
-    fields
+    'Athena Prime',
+    `**Command Console** — ${guild?.name || 'your server'}\n\u200b`,
+    fields,
+    guild?.id
   );
 
   return { embed: helpEmbed };
 }
+
+
 
 
 
