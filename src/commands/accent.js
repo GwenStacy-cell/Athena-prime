@@ -12,23 +12,34 @@ import db from '../database.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 
 // ——————————————————————————————————————————
-// PRESET ACCENT COLORS — Curated palette
+// PRESET ACCENT COLORS — Pure, clean palette
 // ——————————————————————————————————————————
 const PRESETS = [
-  { label: 'Neon Green',    hex: '#00FF9F', emoji: '🟢' },
-  { label: 'Electric Blue', hex: '#3B82F6', emoji: '🔵' },
-  { label: 'Crimson Red',   hex: '#FF3355', emoji: '🔴' },
-  { label: 'Royal Purple',  hex: '#8B5CF6', emoji: '🟣' },
-  { label: 'Cyber Gold',    hex: '#FFD700', emoji: '🟡' },
-  { label: 'Frost White',   hex: '#E0F2FE', emoji: '⬜' },
-  { label: 'Midnight',      hex: '#1E1B4B', emoji: '⬛' },
-  { label: 'Sunset Orange', hex: '#FF6B35', emoji: '🟠' },
-  { label: 'Hot Pink',      hex: '#FF0090', emoji: '🩷' },
-  { label: 'Aqua Cyan',     hex: '#00E5FF', emoji: '🩵' },
+  { label: 'Red',     hex: '#FF0000', emoji: '🔴' },
+  { label: 'Blue',    hex: '#0000FF', emoji: '🔵' },
+  { label: 'Cyan',    hex: '#00FFFF', emoji: '🩵' },
+  { label: 'Green',   hex: '#00FF00', emoji: '🟢' },
+  { label: 'Yellow',  hex: '#FFFF00', emoji: '🟡' },
+  { label: 'Orange',  hex: '#FF8000', emoji: '🟠' },
+  { label: 'Purple',  hex: '#8000FF', emoji: '🟣' },
+  { label: 'Pink',    hex: '#FF00FF', emoji: '🩷' },
+  { label: 'White',   hex: '#FFFFFF', emoji: '⬜' },
+  { label: 'Black',   hex: '#010101', emoji: '⬛' },
 ];
 
 function hexToInt(hex) {
   return parseInt(hex.replace('#', ''), 16);
+}
+
+// ——————————————————————————————————————————
+// SAVED ACCENT CONFIRMATION EMBED
+// ——————————————————————————————————————————
+function buildSavedEmbed(guild, colorName, hex, botAvatarURL) {
+  return new EmbedBuilder()
+    .setColor(hexToInt(hex))
+    .setTitle('✅ Accent saved')
+    .setDescription(`**${colorName.toUpperCase()}** · \`${hex.toUpperCase()}\`\n> Server components will use this accent.`)
+    .setThumbnail(botAvatarURL || null);
 }
 
 // ——————————————————————————————————————————
@@ -38,12 +49,16 @@ export function buildAccentPanel(guild) {
   const cfg = db.getGuildConfig(guild.id);
   const current = cfg.accentColor || null;
 
-  const embed = new EmbedBuilder()
+  // Find the label of the current color if it's a preset
+  const currentPreset = PRESETS.find(p => p.hex.toUpperCase() === current?.toUpperCase());
+
+  const panelEmbed = new EmbedBuilder()
     .setColor(current ? hexToInt(current) : 0x2b2d31)
     .setTitle('🎨  Accent Color Manager')
     .setDescription(
-      `Customize the accent color used across all of **Athena Prime's** responses in this server.\n\nAll \`256³\` colors are available — choose a preset below, enter a custom hex code, or reset to the default.\n\n` +
-      `**CURRENT COLOR:** ${current ? `\`${current}\`` : 'Default (no accent set)'}`
+      `Customize the accent color used across all of **Athena Prime's** responses in this server.\n\n` +
+      `All \`256³\` colors are available — choose a preset below, enter a custom hex code, or reset to the default.\n\n` +
+      `**CURRENT COLOR:** ${current ? `\`${current.toUpperCase()}\`` : 'Default (no accent set)'}`
     )
     .setFooter({ text: 'Athena Prime Customization • Changes apply instantly' })
     .setTimestamp();
@@ -89,7 +104,7 @@ export function buildAccentPanel(guild) {
       .setStyle(ButtonStyle.Secondary)
   );
 
-  return { embed, components: [row1, row2, row3] };
+  return { embed: panelEmbed, components: [row1, row2, row3] };
 }
 
 // ——————————————————————————————————————————
@@ -120,7 +135,7 @@ export async function handleAccentButton(interaction) {
     const hexInput = new TextInputBuilder()
       .setCustomId('accent_hex_input')
       .setLabel('HEX COLOR CODE')
-      .setPlaceholder('#FFFFFF or FFFFFF')
+      .setPlaceholder('#FF0000 or FF0000')
       .setStyle(TextInputStyle.Short)
       .setMinLength(6)
       .setMaxLength(7)
@@ -133,22 +148,35 @@ export async function handleAccentButton(interaction) {
   // ——— Preset Color ———
   if (customId.startsWith('accent_preset_')) {
     const hex = '#' + customId.replace('accent_preset_', '');
+    const preset = PRESETS.find(p => p.hex.toUpperCase() === hex.toUpperCase());
+    const colorName = preset?.label || 'Custom';
+
     db.updateGuildConfig(guild.id, { accentColor: hex.toUpperCase() });
+
+    // Update the panel to reflect highlighted button
     const panel = buildAccentPanel(guild);
-    return interaction.update({ embeds: [panel.embed], components: panel.components });
+    await interaction.update({ embeds: [panel.embed], components: panel.components });
+
+    // Send confirmation as a follow-up
+    const botAvatarURL = interaction.client.user.displayAvatarURL({ size: 256 });
+    const savedEmbed = buildSavedEmbed(guild, colorName, hex, botAvatarURL);
+    await interaction.followUp({ embeds: [savedEmbed] });
+    return;
   }
 
   // ——— Reset ———
   if (customId === 'accent_reset') {
     db.updateGuildConfig(guild.id, { accentColor: null });
     const panel = buildAccentPanel(guild);
-    return interaction.update({ embeds: [panel.embed], components: panel.components });
+    await interaction.update({ embeds: [panel.embed], components: panel.components });
+    await interaction.followUp({ content: '🔄 Accent color has been reset to default.', ephemeral: true });
+    return;
   }
 
   // ——— Close ———
   if (customId === 'accent_close') {
     return interaction.update({
-      content: '✅ Accent color manager closed.',
+      content: '',
       embeds: [],
       components: []
     });
@@ -165,15 +193,27 @@ export async function handleAccentModal(interaction) {
 
   if (!valid) {
     return interaction.reply({
-      content: `❌ **Invalid hex code:** \`${rawHex}\`\n\nPlease enter a valid 6-digit hex color code (e.g. \`#FF3355\` or \`FF3355\`).`,
+      content: `❌ **Invalid hex code:** \`${rawHex}\`\n\nPlease enter a valid 6-digit hex color code (e.g. \`#FF0000\` or \`FF0000\`).`,
       ephemeral: true
     });
   }
 
-  db.updateGuildConfig(interaction.guild.id, { accentColor: clean.toUpperCase() });
+  const finalHex = clean.toUpperCase();
 
+  // Check if it matches a known preset name
+  const preset = PRESETS.find(p => p.hex.toUpperCase() === finalHex);
+  const colorName = preset?.label || 'Custom';
+
+  db.updateGuildConfig(interaction.guild.id, { accentColor: finalHex });
+
+  // Update the panel
   const panel = buildAccentPanel(interaction.guild);
-  return interaction.update({ embeds: [panel.embed], components: panel.components });
+  await interaction.update({ embeds: [panel.embed], components: panel.components });
+
+  // Send confirmation follow-up
+  const botAvatarURL = interaction.client.user.displayAvatarURL({ size: 256 });
+  const savedEmbed = buildSavedEmbed(interaction.guild, colorName, finalHex, botAvatarURL);
+  await interaction.followUp({ embeds: [savedEmbed] });
 }
 
 // ——————————————————————————————————————————
