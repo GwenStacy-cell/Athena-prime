@@ -54,7 +54,7 @@ export function buildAccentPanel(guild) {
 
   const panelEmbed = new EmbedBuilder()
     .setColor(current ? hexToInt(current) : 0x2b2d31)
-    .setTitle('🎨  Accent Color Manager')
+    .setTitle('__𝗔𝗖𝗖𝗘𝗡𝗧  𝗠𝗔𝗡𝗔𝗚𝗘𝗥__')
     .setDescription(
       `Customize the accent color used across all of **Athena Prime's** responses in this server.\n\n` +
       `All \`256³\` colors are available — choose a preset below, enter a custom hex code, or reset to the default.\n\n` +

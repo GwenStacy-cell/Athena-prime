@@ -2,6 +2,21 @@ import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 
+// ──────────────────────────────────────────────
+// Bold Unicode + underline header formatter
+// Renders as a distinct "font" in Discord embeds
+// ──────────────────────────────────────────────
+const BOLD_MAP = {
+  A:'𝗔',B:'𝗕',C:'𝗖',D:'𝗗',E:'𝗘',F:'𝗙',G:'𝗚',H:'𝗛',I:'𝗜',J:'𝗝',
+  K:'𝗞',L:'𝗟',M:'𝗠',N:'𝗡',O:'𝗢',P:'𝗣',Q:'𝗤',R:'𝗥',S:'𝗦',T:'𝗧',
+  U:'𝗨',V:'𝗩',W:'𝗪',X:'𝗫',Y:'𝗬',Z:'𝗭',
+  '0':'𝟬','1':'𝟭','2':'𝟮','3':'𝟯','4':'𝟰','5':'𝟱','6':'𝟲','7':'𝟳','8':'𝟴','9':'𝟵'
+};
+function h(text) {
+  const bold = text.toUpperCase().split('').map(c => BOLD_MAP[c] ?? c).join('');
+  return `__${bold}__`;
+}
+
 export const commands = [
   // --- HELP COMMAND ---
   {
@@ -191,7 +206,7 @@ async function getHelpEmbed(guild) {
 
   const fields = [
     {
-      name: 'SECURITY  &  FIREWALL',
+      name: h('SECURITY  &  FIREWALL'),
       value:
         `\`${p}security\` **enable all** / **disable all** — Toggle all shields at once\n` +
         `\`${p}antinuke\` **enable** / **disable** / **config** — Interactive config panel\n` +
@@ -200,21 +215,21 @@ async function getHelpEmbed(guild) {
         `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots`
     },
     {
-      name: 'LINK  &  INVITE  FILTERS',
+      name: h('LINK  &  INVITE  FILTERS'),
       value:
         `\`${p}antilink\` **on** / **off** — Block all external links from non-moderators\n` +
         `\`${p}linksallow\` **add** / **remove** / **list** \`domain\` — Whitelist domains\n` +
         `\`${p}blacklist\` **add** / **remove** / **list** \`phrase\` — Auto-delete matching messages`
     },
     {
-      name: 'WHITELIST  &  PERMISSIONS',
+      name: h('WHITELIST  &  PERMISSIONS'),
       value:
         `\`${p}whitelist\` **add** / **remove** / **list** \`@user\` \`[events...]\`\n` +
         `> Events: \`all\`  \`antinuke\`  \`antibot\`  \`antispam\`  \`antilink\`  \`antiinvite\`  \`quarantine\`\n` +
         `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access`
     },
     {
-      name: 'QUARANTINE  &  ISOLATION',
+      name: h('QUARANTINE  &  ISOLATION'),
       value:
         `\`${p}quarantine\` \`@user\` \`[duration]\` \`[reason]\` — Strip roles & isolate  *(alias:* \`${p}qr\`*)*\n` +
         `\`${p}unquarantine\` \`@user\` — Restore roles and release from isolation\n` +
@@ -224,7 +239,7 @@ async function getHelpEmbed(guild) {
         `\`${p}lockdown\` **on** / **off** — Restrict channel to moderators only`
     },
     {
-      name: 'MODERATION',
+      name: h('MODERATION'),
       value:
         `\`${p}warn\` \`@user\` \`reason\` — Issue a warning  *(auto-quarantine at threshold)*\n` +
         `\`${p}warnings\` / \`${p}clearwarns\` \`@user\` — View or wipe warning history\n` +
@@ -236,14 +251,14 @@ async function getHelpEmbed(guild) {
         `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role`
     },
     {
-      name: 'ANNOUNCEMENTS  &  MESSAGING',
+      name: h('ANNOUNCEMENTS  &  MESSAGING'),
       value:
         `\`${p}say\` \`#channel\` \`message\` — Send an anonymous bot message\n` +
         `\`${p}announce\` \`#channel\` \`title | message\` — Post a styled announcement embed\n` +
         `\`${p}modmode\` **on** / **off** — Restrict all channels to moderators instantly`
     },
     {
-      name: 'VOICE  &  JOIN-TO-CREATE',
+      name: h('VOICE  &  JOIN-TO-CREATE'),
       value:
         `\`${p}jtcsetup\` \`#voicechannel\` — Designate the JTC creator channel\n` +
         `\`${p}jtcdisable\` — Remove the JTC system from this server\n` +
@@ -253,28 +268,28 @@ async function getHelpEmbed(guild) {
         `\`${p}deafen\` / \`${p}muteall\` / \`${p}unmuteall\` — Voice management tools`
     },
     {
-      name: 'VC DRAG',
+      name: h('VC DRAG'),
       value:
         `\`${p}vcdrag\` \`@user\` \`[interval]\` — Drag a user endlessly through VCs  *(default: 2s)*\n` +
         `\`${p}vcdragstop\` \`@user\` — Stop the drag session for a specific user\n` +
         `\`${p}vcdraglist\` — View all currently active drag sessions`
     },
     {
-      name: 'WELCOME  &  LEAVE',
+      name: h('WELCOME  &  LEAVE'),
       value:
         `\`${p}welcome\` — Open the Welcome message manager\n` +
         `\`${p}leave\` — Open the Leave message manager\n` +
         `> Supports \`{user}\`  \`{server}\`  \`{count}\` placeholders in custom embeds`
     },
     {
-      name: 'AUTO-RESPONDER',
+      name: h('AUTO-RESPONDER'),
       value:
         `\`${p}trigger\` **create** \`match | response\` — Add a custom keyword trigger\n` +
         `\`${p}trigger\` **remove** \`match\` — Delete a trigger\n` +
         `\`${p}trigger\` **list** — View all active triggers in this server`
     },
     {
-      name: 'CUSTOMIZATION',
+      name: h('CUSTOMIZATION'),
       value:
         `\`${p}accent\` — Set the embed accent color  *(10 pure presets + custom hex)*\n` +
         `\`${p}autonick\` **on** / **off** \`[prefix]\` \`[suffix]\` — Auto-format member nicknames\n` +
@@ -282,7 +297,7 @@ async function getHelpEmbed(guild) {
         `\`${p}setguildbanner\` — Set bot's custom per-server banner`
     },
     {
-      name: 'UTILITIES',
+      name: h('UTILITIES'),
       value:
         `\`${p}status\` — Real-time security health overview\n` +
         `\`${p}serverinfo\` — Full server statistics and security state\n` +
@@ -304,11 +319,6 @@ async function getHelpEmbed(guild) {
 
   return { embed: helpEmbed };
 }
-
-
-
-
-
 
 async function handleSetup(guild, channel, role, voiceChannel) {
   const updates = {};
