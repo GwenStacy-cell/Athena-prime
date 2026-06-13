@@ -391,11 +391,17 @@ async function handleServers(message) {
 async function handleRestore(message, args) {
   if (!isBotOwnerSync(message.author.id)) return; // Double-gate: bot owner only
 
-  const backupId = args[0]?.toUpperCase();
+  // Clean the backup ID: remove any backticks or weird formatting the user might have copy-pasted
+  const backupId = args[0]?.replace(/[^A-Z0-9]/gi, '').toUpperCase();
   if (!backupId) return message.reply({ embeds: [embed.warn('Usage', '`ezal restore <backupId> [targetServerId]`')] });
 
   const backupData = db.getBackup(backupId);
-  if (!backupData) return message.reply({ embeds: [embed.danger('Not Found', `No backup found with ID \`${backupId}\`.`)] });
+  if (!backupData) {
+    // Help the user if they're having issues finding the ID
+    const backups = db.getAllBackups();
+    const available = backups.length ? backups.map(b => `\`${b.id}\` (${b.guildName})`).join(', ') : 'None saved in database.';
+    return message.reply({ embeds: [embed.danger('Not Found', `No backup found with ID \`${backupId}\`.\n\n**Available Backups in DB:**\n${available}`)] });
+  }
 
   // Resolve target guild — default to the backup's original guild
   let targetGuild = message.client.guilds.cache.get(args[1] || backupData.guildId);
