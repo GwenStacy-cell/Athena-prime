@@ -36,7 +36,6 @@ export default {
     // Set custom rich activity presence
     const statuses = [
       'Athena Prime | Armed',
-      'Athena Prime | Dev Prince',
       'Athena Prime | Secured',
       'Athena Prime | Truly Unbypassable'
     ];
