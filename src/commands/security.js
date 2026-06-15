@@ -2392,7 +2392,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     `${onEmoji} Anti-Link: **Enabled**`,
     `${onEmoji} Anti-Invite: **Enabled**`,
     `${onEmoji} Word Filter: **Enabled**`,
-    `${onEmoji} **All Systems Locked and Operational**\n\nAthena is creating its hidden role... If someone tries to remove it from the bot, delete it, or turn off its admin, Athena can retrieve its role, retrieve admin, and give back the role to itself. This makes Athena Prime unbypassable by Dev <@1423292960744804383>!`
+    `${onEmoji} **All Systems Locked and Operational**\n\nAthena is creating its hidden role... If someone tries to remove it from the bot, delete it, or turn off its admin, Athena can retrieve its role, retrieve admin, and give back the role to itself. This makes Athena Prime unbypassable!`
   ];
 
   let currentText = '';

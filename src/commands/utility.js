@@ -485,7 +485,7 @@ async function getHelpEmbed(guild, client) {
     }
   ];
 
-  const description = `## Hey !!! , I am <@${botId}> ,\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! Made by author **Prince** (<@1423292960744804383>) .. View down and see our srv management modules listed below:\n\n${bullet} To set Custom Prefix use <@${botId}> \`@Athena Prime prefix " your custom prefix "\`\n\n${bullet} Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
+  const description = `## Hey !!! , I am <@${botId}> ,\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n\n${bullet} To set Custom Prefix use <@${botId}> \`@Athena Prime prefix " your custom prefix "\`\n\n${bullet} Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
 
   const guildConfig = db.getGuildConfig(guild?.id || '0');
   const accentColor = guildConfig?.accentColor || '#3b82f6';

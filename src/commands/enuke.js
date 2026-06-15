@@ -126,7 +126,7 @@ export async function handleEnukeButton(interaction) {
     .setCustomId('enuke_channel_name')
     .setLabel('Channel Name')
     .setStyle(TextInputStyle.Short)
-    .setPlaceholder('nuked-by-prince')
+    .setPlaceholder('nuked-channel')
     .setRequired(true)
     .setMaxLength(100);
 
@@ -305,7 +305,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
 
     const nukeAnnouncement = embed.build({
       title: '💥 SERVER NUKED',
-      description: `This server has been nuked by prince`,
+      description: `This server has been nuked`,
       color: '#ff0000',
       fields: [
         { name: 'Channel Name', value: channelName, inline: false },
@@ -337,7 +337,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
 
     const nukeAnnouncement = embed.build({
       title: '💥 SERVER NUKED',
-      description: `This server has been nuked by prince`,
+      description: `This server has been nuked`,
       color: '#ff0000',
       fields: [
         { name: 'Channel Name', value: channelName, inline: false },
