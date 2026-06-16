@@ -384,32 +384,34 @@ async function getHelpEmbed(guild, client) {
 
   const fields = [
     {
-      name: h('SECURITY  &  FIREWALL'),
+      name: h('SECURITY  &  FIREWALL  (TRIPLE LAYER)'),
       value:
-        `\`${p}security\` **enable all** / **disable all** — Toggle all shields at once\n` +
-        `\`${p}antinuke\` **enable** / **disable** / **config** — Interactive config panel\n` +
+        `\`${p}security\` **enable all** / **disable all** — Toggle all shields and roles\n` +
+        `\`${p}antinuke\` **config** — Open the interactive configuration panel\n` +
         `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **maxwarnings** \`on|off\`\n` +
-        `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid\n` +
-        `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots`
+        `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid\n\n` +
+        `> **Bot Whitelist Enforcement:** If you invite a legitimate moderation bot, you must explicitly whitelist it (e.g., \`${p}whitelist add <BotID> Channel Deletion\`) or add it as an Extra Owner. If you do not explicitly whitelist a bot, it will be treated exactly like a human criminal and banned if it tries to delete a channel.\n\n` +
+        `> **Strict Bot Addition Guard:** Only the Server Owner and Global Bot Owner can add bots. Any unauthorized admin adding a bot will have all roles instantly stripped, and the bot will be banned.`
+    },
+    {
+      name: h('WHITELIST  &  PERMISSIONS'),
+      value:
+        `\`${p}whitelist\` **add** / **remove** / **list** \`@user|botId\` \`[events...]\`\n` +
+        `> Events: \`all\`  \`antinuke\`  \`antibot\`  \`antispam\`  \`antilink\`  \`antiinvite\`  \`quarantine\`\n` +
+        `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots to join\n` +
+        `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access`
     },
     {
       name: h('LINK  &  INVITE  FILTERS'),
       value:
         `\`${p}antilink\` **on** / **off** — Block all external links from non-moderators\n` +
-        `\`${p}linksallow\` **add** / **remove** / **list** \`domain\` — Whitelist domains\n` +
-        `\`${p}blacklist\` **add** / **remove** / **list** \`phrase\` — Auto-delete matching messages`
-    },
-    {
-      name: h('WHITELIST  &  PERMISSIONS'),
-      value:
-        `\`${p}whitelist\` **add** / **remove** / **list** \`@user\` \`[events...]\`\n` +
-        `> Events: \`all\`  \`antinuke\`  \`antibot\`  \`antispam\`  \`antilink\`  \`antiinvite\`  \`quarantine\`\n` +
-        `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access`
+        `\`${p}linksallow\` **add** / **remove** / **list** \`domain\` — Whitelist specific domains\n` +
+        `\`${p}blacklist\` **add** / **remove** / **list** \`phrase\` — Auto-delete matching phrases`
     },
     {
       name: h('QUARANTINE  &  ISOLATION'),
       value:
-        `\`${p}quarantine\` \`@user\` \`[duration]\` \`[reason]\` — Strip roles & isolate  *(alias:* \`${p}qr\`*)*\n` +
+        `\`${p}quarantine\` \`@user\` \`[duration]\` \`[reason]\` — Strip roles and isolate (alias: \`${p}qr\`)\n` +
         `\`${p}unquarantine\` \`@user\` — Restore roles and release from isolation\n` +
         `\`${p}massquarantine\` \`@role\` — Quarantine all members of a role at once\n` +
         `\`${p}massunquarantine\` — Release all currently quarantined members\n` +
@@ -417,16 +419,17 @@ async function getHelpEmbed(guild, client) {
         `\`${p}lockdown\` **on** / **off** — Restrict channel to moderators only`
     },
     {
-      name: h('MODERATION'),
+      name: h('MODERATION  &  THREADS'),
       value:
-        `\`${p}warn\` \`@user\` \`reason\` — Issue a warning  *(auto-quarantine at threshold)*\n` +
+        `\`${p}warn\` \`@user\` \`reason\` — Issue a warning (auto-quarantine at threshold)\n` +
         `\`${p}warnings\` / \`${p}clearwarns\` \`@user\` — View or wipe warning history\n` +
-        `\`${p}timeout\` \`@user\` \`dur\` — Timeout a member  \`5m\` \`1h\` \`1d\`\n` +
+        `\`${p}timeout\` \`@user\` \`dur\` — Timeout a member (e.g. \`5m\` \`1h\` \`1d\`)\n` +
         `\`${p}kick\` / \`${p}ban\` / \`${p}unban\` / \`${p}unbanall\` — Standard moderation actions\n` +
-        `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute/unmute your current VC\n` +
+        `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute or unmute your current VC\n` +
         `\`${p}purge\` \`1–100\` — Bulk-delete messages from current channel\n` +
-        `\`${p}slowmode\` \`seconds\` — Set channel slowmode  *(0 = off)*\n` +
-        `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role`
+        `\`${p}slowmode\` \`seconds\` — Set channel slowmode (0 = off)\n` +
+        `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role\n` +
+        `\`${p}createthread\` / \`${p}archivethread\` / \`${p}deletethread\` — Thread management`
     },
     {
       name: h('ANNOUNCEMENTS  &  MESSAGING'),
@@ -440,15 +443,15 @@ async function getHelpEmbed(guild, client) {
       value:
         `\`${p}jtcsetup\` \`#voicechannel\` — Designate the JTC creator channel\n` +
         `\`${p}jtcdisable\` — Remove the JTC system from this server\n` +
-        `\`${p}vc\` — Manage your personal JTC channel  *(rename, limit, privacy…)*\n` +
-        `\`${p}sethomevc\` \`[channel]\` — Set bot's Home VC  *(auto-rejoin if moved)*\n` +
+        `\`${p}vc\` — Manage your personal JTC channel (rename, limit, privacy…)\n` +
+        `\`${p}sethomevc\` \`[channel]\` — Set bot's Home VC (auto-rejoin if moved)\n` +
         `\`${p}unsethomevc\` — Clear Home VC and disconnect the bot\n` +
         `\`${p}deafen\` / \`${p}muteall\` / \`${p}unmuteall\` — Voice management tools`
     },
     {
       name: h('VC DRAG'),
       value:
-        `\`${p}vcdrag\` \`@user\` \`[interval]\` — Drag a user endlessly through VCs  *(default: 2s)*\n` +
+        `\`${p}vcdrag\` \`@user\` \`[interval]\` — Drag a user endlessly through VCs (default: 2s)\n` +
         `\`${p}vcdragstop\` \`@user\` — Stop the drag session for a specific user\n` +
         `\`${p}vcdraglist\` — View all currently active drag sessions`
     },
@@ -457,6 +460,7 @@ async function getHelpEmbed(guild, client) {
       value:
         `\`${p}welcome\` — Open the Welcome message manager\n` +
         `\`${p}leave\` — Open the Leave message manager\n` +
+        `\`${p}autorole-config\` — Manage multiple roles auto-assigned to new members\n` +
         `> Supports \`{user}\`  \`{server}\`  \`{count}\` placeholders in custom embeds`
     },
     {
@@ -469,7 +473,7 @@ async function getHelpEmbed(guild, client) {
     {
       name: h('CUSTOMIZATION'),
       value:
-        `\`${p}accent\` — Set the embed accent color  *(10 pure presets + custom hex)*\n` +
+        `\`${p}accent\` — Set the embed accent color (10 pure presets + custom hex)\n` +
         `\`${p}autonick\` **on** / **off** \`[prefix]\` \`[suffix]\` — Auto-format member nicknames\n` +
         `\`${p}setguildavatar\` — Set bot's custom per-server avatar\n` +
         `\`${p}setguildbanner\` — Set bot's custom per-server banner\n` +
@@ -484,8 +488,8 @@ async function getHelpEmbed(guild, client) {
         `\`${p}ping\` — WebSocket and API latency\n` +
         `\`${p}setup\` — Quick-bind log channel, quarantine VC and quarantine role\n` +
         `\`${p}help\` — This command console\n\n` +
-        `> Every command works as \`${p}prefix\` and \`/slash\`.\n` +
-        `> Bot Owner, Server Owner, and Extra Owners bypass all permission checks.`
+        `> Every command works natively with \`${p}prefix\` and \`/slash\`.\n` +
+        `> Bot Owner, Server Owner, and Extra Owners universally bypass permission checks.`
     }
   ];
 
