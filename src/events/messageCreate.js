@@ -228,13 +228,13 @@ export default {
 
           const criticalEmbed = embed.danger(
             'Profanity Quarantine Protocol',
-            `⚠️ **${message.author.tag}** has been automatically **quarantined** for exceeding maximum word filter warning thresholds (${warns.length}/${maxWarnings}).\n\n${quarantineRes.message || ''}`
+            `**${message.author.tag}** has been automatically **quarantined** for exceeding maximum word filter warning thresholds (${warns.length}/${maxWarnings}).\n\n${quarantineRes.message || ''}`
           );
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
           const filterWarnEmbed = embed.warn(
             'Profanity/Word Filter Triggered',
-            `⚠️ ${message.author}, your message contained a blacklisted word and was deleted.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
+            `${message.author}, your message contained a blacklisted word and was deleted.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
           );
           await message.channel.send({ embeds: [filterWarnEmbed] }).catch(() => null);
         }
@@ -294,13 +294,13 @@ export default {
 
             const criticalEmbed = embed.danger(
               'Raid Security Lock Triggered',
-              `⚠️ **${message.author.tag}** has been automatically **isolated and quarantined** for severe server spamming.\n\n${quarantineRes.message || ''}`
+              `**${message.author.tag}** has been automatically **isolated and quarantined** for severe server spamming.\n\n${quarantineRes.message || ''}`
             );
             await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
           } else {
             const spamWarnEmbed = embed.warn(
               'Anti-Spam Warning',
-              `⚠️ ${message.author}, please slow down. Sending messages too fast is against server security rules.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
+              `${message.author}, please slow down. Sending messages too fast is against server security rules.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
             );
             await message.channel.send({ embeds: [spamWarnEmbed] }).catch(() => null);
           }
