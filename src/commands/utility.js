@@ -387,7 +387,6 @@ async function getHelpEmbed(guild, client) {
   const config = db.getGuildConfig(guild?.id || '0');
   const p = config?.prefix || '!';
   const botId = client?.user?.id || '1347071663182676059'; // fallback to standard bot id
-  const bullet = '<a:Dark4luvontop:1514999633179316305>';
 
   const fields = [
     {
@@ -396,7 +395,8 @@ async function getHelpEmbed(guild, client) {
         `\`${p}security\` **enable all** / **disable all** — Toggle all shields and roles\n` +
         `\`${p}antinuke\` **config** — Open the interactive configuration panel\n` +
         `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **maxwarnings** \`on|off\`\n` +
-        `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid\n\n` +
+        `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid\n` +
+        `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels\n\n` +
         `> **Bot Whitelist Enforcement:** If you invite a legitimate moderation bot, you must explicitly whitelist it (e.g., \`${p}whitelist add <BotID> Channel Deletion\`) or add it as an Extra Owner. If you do not explicitly whitelist a bot, it will be treated exactly like a human criminal and banned if it tries to delete a channel.\n\n` +
         `> **Strict Bot Addition Guard:** Only the Server Owner and Global Bot Owner can add bots. Any unauthorized admin adding a bot will have all roles instantly stripped, and the bot will be banned.`
     },
@@ -430,6 +430,7 @@ async function getHelpEmbed(guild, client) {
       value:
         `\`${p}warn\` \`@user\` \`reason\` — Issue a warning (auto-quarantine at threshold)\n` +
         `\`${p}warnings\` / \`${p}clearwarns\` \`@user\` — View or wipe warning history\n` +
+        `\`/maxwarnings\` \`amount\` — Set the maximum warning threshold\n` +
         `\`${p}timeout\` \`@user\` \`dur\` — Timeout a member (e.g. \`5m\` \`1h\` \`1d\`)\n` +
         `\`${p}kick\` / \`${p}ban\` / \`${p}unban\` / \`${p}unbanall\` — Standard moderation actions\n` +
         `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute or unmute your current VC\n` +
@@ -500,7 +501,7 @@ async function getHelpEmbed(guild, client) {
     }
   ];
 
-  const description = `## Hey !!! , I am <@${botId}> ,\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n\n${bullet} To set Custom Prefix use <@${botId}> \`@Athena Prime prefix " your custom prefix "\`\n\n${bullet} Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
+  const description = `## ✦ Athena Prime ✦\n\n> Welcome to **Athena Prime**, an advanced system designed for unbypassable security and community management.\n> Explore the core modules below to configure your server's defense.\n\n✦ **Prefix Setup:** <@${botId}> \`prefix "your prefix"\`\n✦ **Detailed Guide:** Mention the bot and type \`Guide\` for advanced usage.\n\u200b`;
 
   const guildConfig = db.getGuildConfig(guild?.id || '0');
   const accentColor = guildConfig?.accentColor || '#3b82f6';

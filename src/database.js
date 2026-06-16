@@ -21,7 +21,8 @@ const DEFAULT_SCHEMA = {
   triggers: {},      // guildId -> [ {match, response} ]
   jtc: {},           // guildId -> { lobbyChannelId, categoryId }
   jtcChannels: {},   // channelId -> { ownerId, guildId }
-  botWhitelist: {}   // guildId -> [ botId... ]
+  botWhitelist: {},  // guildId -> [ botId... ]
+  emergencies: {}    // guildId -> { roles: [{id, perms}], channels: [{id, overwrites}] }
 };
 
 class Database {
@@ -49,6 +50,7 @@ class Database {
         this.cache.jtc            = this.cache.jtc            || {};
         this.cache.jtcChannels    = this.cache.jtcChannels    || {};
         this.cache.botWhitelist   = this.cache.botWhitelist   || {};
+        this.cache.emergencies    = this.cache.emergencies    || {};
       } else {
         this.save();
       }
@@ -658,9 +660,26 @@ class Database {
   }
 
   removeBotFromWhitelist(guildId, botId) {
-    if (!this.cache.botWhitelist?.[guildId]) return;
+    if (!this.cache.botWhitelist[guildId]) return;
     this.cache.botWhitelist[guildId] = this.cache.botWhitelist[guildId].filter(id => id !== botId);
     this.save();
+  }
+
+  // Emergency State
+  getEmergencyState(guildId) {
+    return this.cache.emergencies[guildId] || null;
+  }
+
+  saveEmergencyState(guildId, state) {
+    this.cache.emergencies[guildId] = state;
+    this.save();
+  }
+
+  clearEmergencyState(guildId) {
+    if (this.cache.emergencies[guildId]) {
+      delete this.cache.emergencies[guildId];
+      this.save();
+    }
   }
 
   isBotWhitelisted(guildId, botId) {

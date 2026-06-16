@@ -233,6 +233,50 @@ export const commands = [
     }
   },
 
+  // --- EMERGENCY COMMANDS ---
+  {
+    name: 'emergency',
+    description: 'Toggle Emergency Mode to strip permissions and hide channels.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      {
+        name: 'action',
+        description: 'Start (mode) or Stop (end) the emergency',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Enable Emergency Mode', value: 'mode' },
+          { name: 'End Emergency', value: 'end' }
+        ]
+      }
+    ],
+    async executePrefix(message, args) {
+      const action = args[0]?.toLowerCase() === 'end' ? 'end' : 'mode';
+      const result = await handleEmergency(message.guild, message.member, action);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const action = interaction.options.getString('action');
+      const result = await handleEmergency(interaction.guild, interaction.member, action);
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+  {
+    name: 'endemergency',
+    description: 'End an active Emergency Mode.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    async executePrefix(message, args) {
+      const result = await handleEmergency(message.guild, message.member, 'end');
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const result = await handleEmergency(interaction.guild, interaction.member, 'end');
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
   // --- LOCKDOWN COMMAND ---
   {
     name: 'lockdown',
@@ -1514,7 +1558,139 @@ export async function executeUnquarantine(guild, targetMember, moderator) {
 }
 
 // ==========================================
-// CORE LOCKDOWN & RAIDMODE HANDLERS
+// EMERGENCY, LOCKDOWN & RAIDMODE HANDLERS
+// ==========================================
+
+async function handleEmergency(guild, moderator, action) {
+  // Ensure we have a high privilege to use this
+  if (!isBotOwnerSync(moderator.id) && moderator.id !== guild.ownerId) {
+    return { embed: embed.danger('Access Denied', 'Only the Server Owner and Bot Owners can trigger Emergency Mode. Extra Owners are not authorized to use this command.') };
+  }
+
+  const botMember = await guild.members.fetch(guild.client.user.id);
+  const botHighestRolePosition = botMember.roles.highest.position;
+
+  if (action === 'mode') {
+    const currentState = db.getEmergencyState(guild.id);
+    if (currentState) {
+      return { embed: embed.warn('Emergency Active', 'Emergency Mode is already active.') };
+    }
+
+    const stateToSave = { roles: [], channels: [] };
+
+    // 1. Process Roles
+    const rolesToModify = [];
+    guild.roles.cache.forEach(role => {
+      // Protect Athena's own roles and roles higher/equal to it. Also protect managed roles.
+      if (role.position >= botHighestRolePosition || role.managed || role.id === guild.id) return;
+      
+      // Save current permissions
+      stateToSave.roles.push({
+        id: role.id,
+        perms: role.permissions.bitfield.toString()
+      });
+      rolesToModify.push(role);
+    });
+
+    // Strip ALL permissions to 0n
+    for (const role of rolesToModify) {
+      try {
+        await role.setPermissions(0n, `Emergency Mode triggered by ${moderator.user.tag}`);
+      } catch (e) {
+        console.error(`Failed to modify role ${role.id} during emergency`, e);
+      }
+    }
+
+    // 2. Process Channels
+    const channelsToModify = [];
+    guild.channels.cache.forEach(channel => {
+      // Just save the entire permissionOverwrites cache
+      const overwrites = channel.permissionOverwrites.cache.map(ow => ({
+        id: ow.id,
+        type: ow.type,
+        allow: ow.allow.bitfield.toString(),
+        deny: ow.deny.bitfield.toString()
+      }));
+
+      stateToSave.channels.push({
+        id: channel.id,
+        overwrites
+      });
+      channelsToModify.push(channel);
+    });
+
+    // For every channel, deny ViewChannel for @everyone, and clear other role overwrites to inherit the denied view.
+    for (const channel of channelsToModify) {
+      try {
+        // We can just deny ViewChannel for @everyone
+        await channel.permissionOverwrites.edit(guild.id, {
+          ViewChannel: false
+        }, { reason: `Emergency Mode triggered by ${moderator.user.tag}` });
+        
+        // Also deny ViewChannel for the roles we stripped
+        for (const role of rolesToModify) {
+           await channel.permissionOverwrites.edit(role.id, {
+             ViewChannel: false
+           });
+        }
+      } catch (e) {
+        console.error(`Failed to modify channel ${channel.id} during emergency`, e);
+      }
+    }
+
+    db.saveEmergencyState(guild.id, stateToSave);
+
+    logToSecurityChannel(guild, embed.log('Emergency Mode Activated', `🚨 **${moderator.user.tag}** has triggered Emergency Mode! All roles below the bot have been stripped of permissions and channels are hidden.`, [], 'danger'));
+
+    return { embed: embed.danger('🚨 EMERGENCY MODE ACTIVATED', 'All channels have been hidden and all permissions have been stripped from roles. Use `!end emergency` or `/endemergency` to restore the server.') };
+
+  } else if (action === 'end') {
+    const savedState = db.getEmergencyState(guild.id);
+    if (!savedState) {
+      return { embed: embed.info('No Emergency', 'Emergency Mode is not currently active on this server.') };
+    }
+
+    let rolesRestored = 0;
+    for (const roleData of savedState.roles) {
+      const role = guild.roles.cache.get(roleData.id);
+      if (role) {
+        try {
+          await role.setPermissions(BigInt(roleData.perms), `Emergency Mode ended by ${moderator.user.tag}`);
+          rolesRestored++;
+        } catch(e) {
+          console.error(`Failed to restore role ${role.id}`, e);
+        }
+      }
+    }
+
+    let channelsRestored = 0;
+    for (const channelData of savedState.channels) {
+      const channel = guild.channels.cache.get(channelData.id);
+      if (channel) {
+        try {
+          // Re-apply original overwrites
+          const overwrites = channelData.overwrites.map(ow => ({
+            id: ow.id,
+            allow: BigInt(ow.allow),
+            deny: BigInt(ow.deny),
+            type: ow.type
+          }));
+          await channel.permissionOverwrites.set(overwrites, `Emergency Mode ended by ${moderator.user.tag}`);
+          channelsRestored++;
+        } catch(e) {
+          console.error(`Failed to restore channel ${channel.id}`, e);
+        }
+      }
+    }
+
+    db.clearEmergencyState(guild.id);
+
+    logToSecurityChannel(guild, embed.log('Emergency Mode Ended', `🟢 **${moderator.user.tag}** has ended Emergency Mode. Restored ${rolesRestored} roles and ${channelsRestored} channels.`, [], 'success'));
+
+    return { embed: embed.success('Emergency Mode Ended', `All permissions and channel visibilities have been restored.`) };
+  }
+}
+
 // ==========================================
 
 async function handleLockdown(guild, channel, moderator, mode) {
@@ -1867,7 +2043,7 @@ async function handleExtraOwner(guild, moderator, action, targetUser) {
     const success = db.addExtraOwner(guild.id, targetUser.id);
     if (success) {
       logToSecurityChannel(guild, embed.log('Extra Owner Added', `**${moderator.user.tag}** added **${targetUser.tag}** as an Extra Owner.`, [], 'success'));
-      return { embed: embed.owner('Extra Owner Added', `Successfully added **${targetUser.tag}** as an **Extra Owner**.\n\nThey are now:\n• 🛡️ **Immune** to all moderation actions\n• 👑 **Authorized** to use all bot commands\n• ✅ **Whitelisted** from all auto-mod filters`) };
+      return { embed: embed.owner('Extra Owner Added', `Successfully added **${targetUser.tag}** as an **Extra Owner**.\n\nThey are now:\n• __**Immune**__ to all moderation actions\n• __**Authorized**__ to use all bot commands\n• __**Whitelisted**__ from all auto-mod filters`) };
     } else {
       return { embed: embed.info('Already Extra Owner', `**${targetUser.tag}** is already registered as an Extra Owner.`) };
     }
@@ -1897,7 +2073,7 @@ async function handleBotWhitelist(guild, action, botId) {
   if (action === 'add') {
     if (!botId || !/^\d{17,20}$/.test(botId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid bot User ID (17-20 digit number).') };
     db.addBotToWhitelist(guild.id, botId);
-    return { embed: embed.success('Bot Whitelisted ✅', `Bot ID \`${botId}\` has been added to the **Bot Whitelist**.\n\nThis bot will no longer be kicked or flagged when added to the server.`) };
+    return { embed: embed.success('Bot Whitelisted', `Bot ID \`${botId}\` has been added to the **Bot Whitelist**.\n\nThis bot will no longer be kicked or flagged when added to the server.`) };
   } else if (action === 'remove') {
     if (!botId) return { embed: embed.warn('Missing ID', 'Please provide the Bot ID to remove.') };
     db.removeBotFromWhitelist(guild.id, botId);
@@ -1906,7 +2082,7 @@ async function handleBotWhitelist(guild, action, botId) {
     const list = db.getBotWhitelist(guild.id);
     if (list.length === 0) return { embed: embed.info('No Whitelisted Bots', 'No bots are currently whitelisted.\n\nUse `!botwhitelist add <botId>` to whitelist a trusted bot.') };
     const formatted = list.map(id => `• \`${id}\``).join('\n');
-    return { embed: embed.info('🤖 Whitelisted Bots', `These bots are permitted to be in the server:\n\n${formatted}`) };
+    return { embed: embed.info('Whitelisted Bots', `These bots are permitted to be in the server:\n\n${formatted}`) };
   }
 }
 

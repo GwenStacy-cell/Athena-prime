@@ -10,6 +10,7 @@ function resolve(text, member) {
   const guild = member.guild;
   return text
     .replace(/{user}/gi, `<@${member.id}>`)
+    .replace(/{usermention}/gi, `<@${member.id}>`)
     .replace(/{username}/gi, member.user.username)
     .replace(/{displayname}/gi, member.displayName)
     .replace(/{server}/gi, guild.name)
