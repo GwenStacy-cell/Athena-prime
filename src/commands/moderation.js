@@ -410,9 +410,9 @@ export const commands = [
     permissions: [PermissionFlagsBits.ManageMessages],
     options: [
       {
-        name: 'channel',
-        description: 'Target text channel',
-        type: 7,
+        name: 'channel_id',
+        description: 'Target text channel ID or mention',
+        type: 3,
         required: true
       },
       {
@@ -448,12 +448,15 @@ export const commands = [
       await message.react('✅').catch(() => null);
     },
     async executeSlash(interaction) {
-      const channel = interaction.options.getChannel('channel');
+      const rawChannelInput = interaction.options.getString('channel_id');
+      const channelId = rawChannelInput.replace(/[^0-9]/g, '');
       const title = interaction.options.getString('title');
       const text = interaction.options.getString('message');
 
-      if (channel.type !== ChannelType.GuildText) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target channel must be a text channel.`)], ephemeral: true });
+      const channel = await interaction.guild.channels.fetch(channelId).catch(() => null);
+
+      if (!channel || channel.type !== ChannelType.GuildText) {
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Could not find a valid text channel from your input \`${rawChannelInput}\`.`)], ephemeral: true });
       }
 
       const announceEmbed = embed.success(title, text);
