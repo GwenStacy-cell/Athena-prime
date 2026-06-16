@@ -394,7 +394,7 @@ async function getHelpEmbed(guild, client) {
       value:
         `\`${p}security\` **enable all** / **disable all** — Toggle all shields and roles\n` +
         `\`${p}antinuke\` **config** — Open the interactive configuration panel\n` +
-        `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **maxwarnings** \`on|off\`\n` +
+        `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** \`on|off\`\n` +
         `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid\n` +
         `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels\n\n` +
         `> **Bot Whitelist Enforcement:** If you invite a legitimate moderation bot, you must explicitly whitelist it (e.g., \`${p}whitelist add <BotID> Channel Deletion\`) or add it as an Extra Owner. If you do not explicitly whitelist a bot, it will be treated exactly like a human criminal and banned if it tries to delete a channel.\n\n` +
@@ -501,7 +501,7 @@ async function getHelpEmbed(guild, client) {
     }
   ];
 
-  const description = `## ✦ Athena Prime ✦\n\n> Welcome to **Athena Prime**, an advanced system designed for unbypassable security and community management.\n> Explore the core modules below to configure your server's defense.\n\n✦ **Prefix Setup:** <@${botId}> \`prefix "your prefix"\`\n✦ **Detailed Guide:** Mention the bot and type \`Guide\` for advanced usage.\n\u200b`;
+  const description = `**Hey !!! , I am <@${botId}> ,**\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n\n> To set Custom Prefix use <@${botId}> \n\`<@${botId}> prefix " your custom prefix "\`\n\n> Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
 
   const guildConfig = db.getGuildConfig(guild?.id || '0');
   const accentColor = guildConfig?.accentColor || '#3b82f6';
