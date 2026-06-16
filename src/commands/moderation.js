@@ -443,7 +443,8 @@ export const commands = [
         return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please separate the Title and Message with a \`|\` (e.g. \`!announce #general Server Update | We have added security logs!\`)`)] });
       }
 
-      const announceEmbed = embed.success(title, text);
+      const announceEmbed = embed.success(title, text, [], message.guild.id);
+      announceEmbed.setThumbnail(message.guild.members.me.displayAvatarURL({ dynamic: true, size: 512 }));
       await channel.send({ embeds: [announceEmbed] });
       await message.react('✅').catch(() => null);
     },
@@ -459,7 +460,8 @@ export const commands = [
         return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Could not find a valid text channel from your input \`${rawChannelInput}\`.`)], ephemeral: true });
       }
 
-      const announceEmbed = embed.success(title, text);
+      const announceEmbed = embed.success(title, text, [], interaction.guild.id);
+      announceEmbed.setThumbnail(interaction.guild.members.me.displayAvatarURL({ dynamic: true, size: 512 }));
       await channel.send({ embeds: [announceEmbed] });
       await interaction.reply({ embeds: [embed.success('Announcement Published', `Successfully posted announcement to ${channel}.`)], ephemeral: true });
     }
