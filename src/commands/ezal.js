@@ -2,6 +2,7 @@ import { ChannelType } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
+import { handleEmergency } from './security.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -457,6 +458,33 @@ async function handleRestore(message, args) {
   }
 }
 
+async function handleRemoteEmergency(message, args) {
+  if (!isBotOwnerSync(message.author.id)) return;
+
+  const guildId = args[0];
+  const action = args[1]?.toLowerCase() === 'end' ? 'end' : 'mode';
+
+  if (!guildId) return message.reply({ embeds: [embed.warn('Usage', '`ezal emergency <serverId> [mode|end]`')] });
+
+  const targetGuild = message.client.guilds.cache.get(guildId);
+  if (!targetGuild) return message.reply({ embeds: [embed.danger('Guild Not Found', `Could not find the server ID \`${guildId}\` in the bot's cache.`)] });
+
+  let statusMsg = null;
+  const updateProgress = async (embedData) => {
+    if (!statusMsg) statusMsg = await message.reply({ embeds: [embedData] }).catch(() => null);
+    else await statusMsg.edit({ embeds: [embedData] }).catch(() => null);
+  };
+
+  const mockModerator = {
+    id: message.author.id,
+    user: message.author
+  };
+
+  const result = await handleEmergency(targetGuild, mockModerator, action, updateProgress);
+  if (statusMsg) await statusMsg.edit({ embeds: [result.embed] }).catch(() => null);
+  else await message.reply({ embeds: [result.embed] });
+}
+
 function handleEhelp(message) {
   const fields = [
     {
@@ -469,7 +497,8 @@ function handleEhelp(message) {
     {
       name: 'Server Management',
       value:
-        '`ezal servers` — List all servers the bot is in with their backup IDs and stats'
+        '`ezal servers` — List all servers the bot is in with their backup IDs and stats\n' +
+        '`ezal emergency <serverId> [mode|end]` — Trigger emergency mode remotely'
     },
     {
       name: 'Access',
@@ -499,6 +528,7 @@ export async function handleEzal(message) {
     case 'bcklist': return handleBcklist(message);
     case 'servers': return handleServers(message);
     case 'restore': return handleRestore(message, args);
+    case 'emergency': return handleRemoteEmergency(message, args);
     case 'ehelp':
     case 'help':
     default:        return handleEhelp(message);

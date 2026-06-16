@@ -1585,7 +1585,7 @@ export async function executeUnquarantine(guild, targetMember, moderator) {
 // EMERGENCY, LOCKDOWN & RAIDMODE HANDLERS
 // ==========================================
 
-async function handleEmergency(guild, moderator, action, updateProgress) {
+export async function handleEmergency(guild, moderator, action, updateProgress) {
   // Ensure we have a high privilege to use this
   if (!isBotOwnerSync(moderator.id) && moderator.id !== guild.ownerId) {
     return { embed: embed.danger('Access Denied', 'Only the Server Owner and Bot Owners can trigger Emergency Mode. Extra Owners are not authorized to use this command.') };
