@@ -253,13 +253,25 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       const action = args[0]?.toLowerCase() === 'end' ? 'end' : 'mode';
-      const result = await handleEmergency(message.guild, message.member, action);
-      await message.reply({ embeds: [result.embed] });
+      let statusMsg = null;
+      const updateProgress = async (embedData) => {
+        if (!statusMsg) statusMsg = await message.reply({ embeds: [embedData] }).catch(() => null);
+        else await statusMsg.edit({ embeds: [embedData] }).catch(() => null);
+      };
+      const result = await handleEmergency(message.guild, message.member, action, updateProgress);
+      if (statusMsg) await statusMsg.edit({ embeds: [result.embed] }).catch(()=>null);
+      else await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
       const action = interaction.options.getString('action');
-      const result = await handleEmergency(interaction.guild, interaction.member, action);
-      await interaction.reply({ embeds: [result.embed] });
+      let statusMsg = null;
+      const updateProgress = async (embedData) => {
+        if (!statusMsg) statusMsg = await interaction.reply({ embeds: [embedData], fetchReply: true }).catch(() => null);
+        else await interaction.editReply({ embeds: [embedData] }).catch(() => null);
+      };
+      const result = await handleEmergency(interaction.guild, interaction.member, action, updateProgress);
+      if (statusMsg) await interaction.editReply({ embeds: [result.embed] }).catch(()=>null);
+      else await interaction.reply({ embeds: [result.embed] });
     }
   },
   {
@@ -268,12 +280,24 @@ export const commands = [
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
     async executePrefix(message, args) {
-      const result = await handleEmergency(message.guild, message.member, 'end');
-      await message.reply({ embeds: [result.embed] });
+      let statusMsg = null;
+      const updateProgress = async (embedData) => {
+        if (!statusMsg) statusMsg = await message.reply({ embeds: [embedData] }).catch(() => null);
+        else await statusMsg.edit({ embeds: [embedData] }).catch(() => null);
+      };
+      const result = await handleEmergency(message.guild, message.member, 'end', updateProgress);
+      if (statusMsg) await statusMsg.edit({ embeds: [result.embed] }).catch(()=>null);
+      else await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      const result = await handleEmergency(interaction.guild, interaction.member, 'end');
-      await interaction.reply({ embeds: [result.embed] });
+      let statusMsg = null;
+      const updateProgress = async (embedData) => {
+        if (!statusMsg) statusMsg = await interaction.reply({ embeds: [embedData], fetchReply: true }).catch(() => null);
+        else await interaction.editReply({ embeds: [embedData] }).catch(() => null);
+      };
+      const result = await handleEmergency(interaction.guild, interaction.member, 'end', updateProgress);
+      if (statusMsg) await interaction.editReply({ embeds: [result.embed] }).catch(()=>null);
+      else await interaction.reply({ embeds: [result.embed] });
     }
   },
 
@@ -1561,7 +1585,7 @@ export async function executeUnquarantine(guild, targetMember, moderator) {
 // EMERGENCY, LOCKDOWN & RAIDMODE HANDLERS
 // ==========================================
 
-async function handleEmergency(guild, moderator, action) {
+async function handleEmergency(guild, moderator, action, updateProgress) {
   // Ensure we have a high privilege to use this
   if (!isBotOwnerSync(moderator.id) && moderator.id !== guild.ownerId) {
     return { embed: embed.danger('Access Denied', 'Only the Server Owner and Bot Owners can trigger Emergency Mode. Extra Owners are not authorized to use this command.') };
@@ -1575,6 +1599,8 @@ async function handleEmergency(guild, moderator, action) {
     if (currentState) {
       return { embed: embed.warn('Emergency Active', 'Emergency Mode is already active.') };
     }
+
+    if (updateProgress) await updateProgress(embed.warn('Emergency Protocol Initiated', 'Calculating role and channel overwrites...'));
 
     const stateToSave = { roles: [], channels: [] };
 
@@ -1596,9 +1622,12 @@ async function handleEmergency(guild, moderator, action) {
     });
 
     // Strip ALL permissions to 0n
+    let rCount = 0;
     for (const role of rolesToModify) {
       try {
         await role.setPermissions(0n, `Emergency Mode triggered by ${moderator.user.tag}`);
+        rCount++;
+        if (rCount % 5 === 0 && updateProgress) await updateProgress(embed.warn('Emergency Protocol Initiated', `Stripping permissions: **${rCount} / ${rolesToModify.length}** roles processed...`));
       } catch (e) {
         console.error(`Failed to modify role ${role.id} during emergency`, e);
       }
@@ -1623,6 +1652,7 @@ async function handleEmergency(guild, moderator, action) {
     });
 
     // For every channel, deny ViewChannel for @everyone, and clear other role overwrites to inherit the denied view.
+    let cCount = 0;
     for (const channel of channelsToModify) {
       try {
         // We can just deny ViewChannel for @everyone
@@ -1642,6 +1672,9 @@ async function handleEmergency(guild, moderator, action) {
           ViewChannel: true,
           SendMessages: true
         });
+        
+        cCount++;
+        if (cCount % 5 === 0 && updateProgress) await updateProgress(embed.warn('Emergency Protocol Initiated', `Hiding channels: **${cCount} / ${channelsToModify.length}** channels processed...`));
       } catch (e) {
         console.error(`Failed to modify channel ${channel.id} during emergency`, e);
       }
@@ -1651,6 +1684,13 @@ async function handleEmergency(guild, moderator, action) {
 
     logToSecurityChannel(guild, embed.log('Emergency Mode Activated', `🚨 **${moderator.user.tag}** has triggered Emergency Mode! All roles below the bot have been stripped of permissions and channels are hidden.`, [], 'danger'));
 
+    try {
+      const owner = await guild.members.fetch(guild.ownerId);
+      if (owner) {
+        owner.send({ embeds: [embed.danger('SERVER EMERGENCY ACTIVATED', `**${moderator.user.tag}** has triggered Emergency Mode in **${guild.name}**.\n\nAll permissions have been stripped and channels hidden to contain the threat. To restore normal operations, use \`!end emergency\`.`)] }).catch(() => null);
+      }
+    } catch(e) {}
+
     return { embed: embed.danger('🚨 EMERGENCY MODE ACTIVATED', 'All channels have been hidden and all permissions have been stripped from roles. Use `!end emergency` or `/endemergency` to restore the server.') };
 
   } else if (action === 'end') {
@@ -1659,6 +1699,8 @@ async function handleEmergency(guild, moderator, action) {
       return { embed: embed.info('No Emergency', 'Emergency Mode is not currently active on this server.') };
     }
 
+    if (updateProgress) await updateProgress(embed.info('Restoring Server', 'Calculating original role and channel states...'));
+
     let rolesRestored = 0;
     for (const roleData of savedState.roles) {
       const role = guild.roles.cache.get(roleData.id);
@@ -1666,6 +1708,7 @@ async function handleEmergency(guild, moderator, action) {
         try {
           await role.setPermissions(BigInt(roleData.perms), `Emergency Mode ended by ${moderator.user.tag}`);
           rolesRestored++;
+          if (rolesRestored % 5 === 0 && updateProgress) await updateProgress(embed.info('Restoring Server', `Restoring permissions: **${rolesRestored} / ${savedState.roles.length}** roles processed...`));
         } catch(e) {
           console.error(`Failed to restore role ${role.id}`, e);
         }
@@ -1686,6 +1729,7 @@ async function handleEmergency(guild, moderator, action) {
           }));
           await channel.permissionOverwrites.set(overwrites, `Emergency Mode ended by ${moderator.user.tag}`);
           channelsRestored++;
+          if (channelsRestored % 5 === 0 && updateProgress) await updateProgress(embed.info('Restoring Server', `Restoring channels: **${channelsRestored} / ${savedState.channels.length}** channels processed...`));
         } catch(e) {
           console.error(`Failed to restore channel ${channel.id}`, e);
         }
@@ -1695,6 +1739,13 @@ async function handleEmergency(guild, moderator, action) {
     db.clearEmergencyState(guild.id);
 
     logToSecurityChannel(guild, embed.log('Emergency Mode Ended', `🟢 **${moderator.user.tag}** has ended Emergency Mode. Restored ${rolesRestored} roles and ${channelsRestored} channels.`, [], 'success'));
+
+    try {
+      const owner = await guild.members.fetch(guild.ownerId);
+      if (owner) {
+        owner.send({ embeds: [embed.success('EMERGENCY RESOLVED', `**${moderator.user.tag}** has ended Emergency Mode in **${guild.name}**.\n\nAll permissions and channel visibilities have been fully restored.`)] }).catch(() => null);
+      }
+    } catch(e) {}
 
     return { embed: embed.success('Emergency Mode Ended', `All permissions and channel visibilities have been restored.`) };
   }
