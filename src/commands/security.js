@@ -1427,6 +1427,10 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
       ReadMessageHistory: true
     }, { reason: 'Quarantine zone access grant' }).catch(() => null);
 
+    // BACKGROUND SYNC: Enforce isolation across the entire server
+    // This dynamically hides all other channels from the quarantine role
+    syncQuarantinePermissions(guild, quarantineRole, quarantineChannel.id).catch(() => null);
+
     // Capture target voice state
     const prevVoiceChannelId = targetMember.voice.channelId || null;
 
@@ -2362,7 +2366,9 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
   if (action === 'setchannel') {
     if (!channelArg) return { embed: embed.warn('Missing Channel', 'Please specify a text channel using the `channel` option.') };
     db.updateGuildConfig(guild.id, { quarantineChannelId: channelArg.id });
-    return { embed: embed.success('Quarantine Channel Set', `Set <#${channelArg.id}> as the quarantine text zone.\nQuarantined users will be able to view and chat here.`) };
+    const qRole = await getOrCreateQuarantineRole(guild);
+    await syncQuarantinePermissions(guild, qRole, channelArg.id);
+    return { embed: embed.success('Quarantine Channel Set', `Set <#${channelArg.id}> as the quarantine text zone and synced deny overwrites across all channels.\nQuarantined users will be able to view and chat here.`) };
   }
 
   if (action === 'setvc') {
