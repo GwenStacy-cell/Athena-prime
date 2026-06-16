@@ -44,10 +44,10 @@ export default {
     // ==========================================
     const config = db.getGuildConfig(guild.id);
     const homeVcId = config.homeVcId;
-    if (homeVcId && (newState.channelId === homeVcId || oldState.channelId === homeVcId)) {
-      const channelToUpdate = newState.channelId === homeVcId ? newState.channel : oldState.channel;
-      if (channelToUpdate) {
-        updateBotVcStatus(channelToUpdate);
+    if (homeVcId) {
+      const homeChannel = guild.channels.cache.get(homeVcId);
+      if (homeChannel) {
+        updateBotVcStatus(homeChannel);
       }
     }
 
