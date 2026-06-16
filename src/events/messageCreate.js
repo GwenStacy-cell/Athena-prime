@@ -86,8 +86,11 @@ export default {
       try {
         const presence = getPresenceStatus(message.guild, ownerId);
 
+        const cfg = db.getGuildConfig(message.guild.id);
+        const embedColor = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+
         const ownerEmbed = new EmbedBuilder()
-          .setColor(0x2b2d31)
+          .setColor(embedColor)
           .setDescription(`# You tagged my Master !\n\n> Status: **${presence.text.toUpperCase()}**\n\nYour ping has been forwarded through direct messages.\nAwait his arrival.`)
           .setFooter({ text: `${message.client.user.username} Security • Today at ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}` });
 
@@ -341,8 +344,8 @@ export default {
 
           if (isUrl) {
             if (/\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(responseText)) {
-              // Standard images sent as invisible embeds to hide the URL text
-              const e = new EmbedBuilder().setImage(responseText).setColor(0x2b2d31);
+              const embedColor = dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31;
+              const e = new EmbedBuilder().setImage(responseText).setColor(embedColor);
               await message.channel.send({ embeds: [e] }).catch(() => null);
             } else {
               // If it's a tenor/giphy page link, or an .mp4, send the raw link and let Discord unfurl it

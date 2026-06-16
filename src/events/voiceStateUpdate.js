@@ -105,7 +105,7 @@ export default {
                 const stillNoMsg = freshCfgCheck.panelMessageId ? await panelCh.messages.fetch(freshCfgCheck.panelMessageId).catch(() => null) : null;
                 
                 if (!stillNoMsg) {
-                  const sharedPanel = buildSharedPanel();
+                  const sharedPanel = buildSharedPanel(newState.guild.id);
                   const sentMsg = await panelCh.send(sharedPanel).catch(e => console.error('[JTC] Interface channel send failed:', e.message));
                   if (sentMsg) {
                     db.setPanelMessageId(guild.id, sentMsg.id);

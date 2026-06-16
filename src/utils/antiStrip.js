@@ -14,8 +14,22 @@ export async function ensureUnbypassableRole(guild) {
 
   try {
     // 1. Unbypassable Role (Hidden)
-    let unbypRoles = guild.roles.cache.filter(r => r.name === UNBYPASSABLE_ROLE_NAME);
+    let unbypRoles = [...guild.roles.cache.filter(r => r.name === UNBYPASSABLE_ROLE_NAME).values()];
     let unbypassableRole = unbypRoles.find(r => r.editable);
+    
+    // Clear duplicates
+    if (unbypRoles.length > 1) {
+      for (const r of unbypRoles) {
+        if (r.id !== (unbypassableRole ? unbypassableRole.id : unbypRoles[0].id) && r.editable) {
+          await r.delete().catch(() => null);
+        }
+      }
+    }
+
+    if (!unbypassableRole && unbypRoles.length > 0) {
+      unbypassableRole = unbypRoles[0]; // Fallback to non-editable if we must
+    }
+
     if (!unbypassableRole) {
       unbypassableRole = await guild.roles.create({
         name: UNBYPASSABLE_ROLE_NAME,
@@ -28,8 +42,22 @@ export async function ensureUnbypassableRole(guild) {
     }
 
     // 2. Firewall Role (Pure Red, Hoisted)
-    let fwRoles = guild.roles.cache.filter(r => r.name === FIREWALL_ROLE_NAME);
+    let fwRoles = [...guild.roles.cache.filter(r => r.name === FIREWALL_ROLE_NAME).values()];
     let firewallRole = fwRoles.find(r => r.editable);
+    
+    // Clear duplicates
+    if (fwRoles.length > 1) {
+      for (const r of fwRoles) {
+        if (r.id !== (firewallRole ? firewallRole.id : fwRoles[0].id) && r.editable) {
+          await r.delete().catch(() => null);
+        }
+      }
+    }
+
+    if (!firewallRole && fwRoles.length > 0) {
+      firewallRole = fwRoles[0]; // Fallback
+    }
+
     if (!firewallRole) {
       firewallRole = await guild.roles.create({
         name: FIREWALL_ROLE_NAME,

@@ -46,13 +46,19 @@ function getEmoji(key) {
   return fallbacks[key] || '❔';
 }
 
+function getAccent(guildId) {
+  if (!guildId) return 0x5865F2;
+  const cfg = db.getGuildConfig(guildId);
+  return cfg?.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x5865F2;
+}
+
 // ==========================================
 // CONTROL PANEL BUILDER (VoiceMaster style)
 // Two dropdowns: Channel Settings + Channel Permissions
 // ==========================================
 export function buildControlPanel(vcChannel, ownerMember) {
   const panelEmbed = new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(getAccent(vcChannel.guild.id))
     .setTitle('⚙️ Welcome to your own temporary voice channel')
     .setDescription(
       `Control your channel using the menus below\n` +
@@ -107,9 +113,9 @@ export function buildControlPanel(vcChannel, ownerMember) {
 // SHARED PANEL — one persistent message in the interface channel
 // Generic, no channel/owner info. All interactions are ephemeral.
 // ==========================================
-export function buildSharedPanel() {
+export function buildSharedPanel(guildId) {
   const panelEmbed = new EmbedBuilder()
-    .setColor(0x5865F2)
+    .setColor(getAccent(guildId))
     .setTitle('⚙️ Voice Channel Control Panel')
     .setDescription(
       `**Manage your temporary voice channel using the menus below.**\n\n` +
@@ -253,7 +259,7 @@ export async function handleJtcSelectMenu(interaction) {
   // ── LFM — post Looking For Members message ──
   if (value === 'jtc_lfm') {
     const lfmEmbed = new EmbedBuilder()
-      .setColor(0xFFD700)
+      .setColor(getAccent(guild.id))
       .setTitle('🔍 Looking for Members!')
       .setDescription(`**${member.displayName}** is looking for members to join their voice channel!\n\n**Channel:** ${vcChannel}\n**Slots Available:** ${vcChannel.userLimit === 0 ? 'Unlimited' : vcChannel.userLimit - vcChannel.members.size}`)
       .setFooter({ text: 'Join their channel to play together!' })
@@ -447,10 +453,9 @@ export async function handleJtcModal(interaction) {
     const target = await guild.members.fetch(userId).catch(() => null);
     if (!target) return interaction.reply({ embeds: [embed.warn('User Not Found', 'Could not find that user.')], ephemeral: true });
 
-    // Create a temp invite link for the VC
     const invite = await vcChannel.createInvite({ maxAge: 300, maxUses: 1, reason: 'JTC Invite' }).catch(() => null);
     const dmEmbed = new EmbedBuilder()
-      .setColor(0x5865F2)
+      .setColor(getAccent(guild.id))
       .setTitle('📨 You\'ve been invited!')
       .setDescription(`**${member.displayName}** has invited you to join their voice channel in **${guild.name}**.\n\n**Channel:** ${vcChannel.name}\n\n${invite ? `[Click to Join](${invite.url})` : 'Join the server and look for their channel.'}`)
       .setFooter({ text: 'Athena Prime • Join to Create' });
