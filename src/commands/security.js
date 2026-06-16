@@ -1667,7 +1667,16 @@ async function handleConfig(guild, moderator, setting, value) {
     db.updateGuildConfig(guild.id, updates);
 
     logToSecurityChannel(guild, embed.log('Config Updated', `Administrator **${moderator.user.tag}** set maxWarnings to **${num}**.`, [], 'success'));
-    return { embed: embed.success('Warnings Limit Updated', `Exceeding **${num} Warnings** will now result in an automated server quarantine.`) };
+    return { embed: embed.success('Warnings Limit Updated', 
+      `Exceeding **${num} Warnings** will now result in an automated server quarantine.\n\n` +
+      `**Factors that apply Warnings:**\n` +
+      `- Usage of Blacklisted Words\n` +
+      `- Chat Spam or Mass Mentions (Anti-Spam)\n` +
+      `- Sending External Links (Anti-Link)\n` +
+      `- Sending Discord Invites (Anti-Invite)\n` +
+      `- Manual warnings via the \`/warn\` command\n\n` +
+      `> **Zero-Tolerance Actions:** Critical server damage like deleting/creating channels, roles, emojis, or adding unauthorized bots will completely bypass this warning system and result in an **instant ban**.`
+    ) };
   }
 
   if (value !== 'on' && value !== 'off') {
