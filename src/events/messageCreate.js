@@ -136,10 +136,7 @@ export default {
           'Invite Link Deleted',
           `${message.author}, invite links are strictly prohibited in this guild to prevent promotion spam.`
         );
-        const alertMsg = await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
-        if (alertMsg) {
-          setTimeout(() => alertMsg.delete().catch(() => null), 6000);
-        }
+        await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
 
         logToSecurityChannel(message.guild, embed.log(
           'Invite Link Filtered',
@@ -179,10 +176,7 @@ export default {
               'Link Deleted',
               `${message.author}, posting links is not allowed in this server.`
             );
-            const alertMsg = await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
-            if (alertMsg) {
-              setTimeout(() => alertMsg.delete().catch(() => null), 6000);
-            }
+            await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
 
             logToSecurityChannel(message.guild, embed.log(
               'Link Filtered',
@@ -242,10 +236,7 @@ export default {
             'Profanity/Word Filter Triggered',
             `⚠️ ${message.author}, your message contained a blacklisted word and was deleted.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
           );
-          const alertMsg = await message.channel.send({ embeds: [filterWarnEmbed] }).catch(() => null);
-          if (alertMsg) {
-            setTimeout(() => alertMsg.delete().catch(() => null), 8000);
-          }
+          await message.channel.send({ embeds: [filterWarnEmbed] }).catch(() => null);
         }
         return; // Halt
       }
@@ -311,10 +302,7 @@ export default {
               'Anti-Spam Warning',
               `⚠️ ${message.author}, please slow down. Sending messages too fast is against server security rules.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
             );
-            const alertMsg = await message.channel.send({ embeds: [spamWarnEmbed] }).catch(() => null);
-            if (alertMsg) {
-              setTimeout(() => alertMsg.delete().catch(() => null), 8000);
-            }
+            await message.channel.send({ embeds: [spamWarnEmbed] }).catch(() => null);
           }
         }
         return;
