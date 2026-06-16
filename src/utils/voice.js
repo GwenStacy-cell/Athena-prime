@@ -66,9 +66,12 @@ function toBoldUnicode(text) {
   return text.split('').map(c => boldMap[c] || c).join('');
 }
 
+let vcStatusIndex = 0;
+let emojiIndex = 0;
+
 /**
  * Dynamically updates the bot's Voice Channel Status with server statistics
- * and random aesthetic emojis as requested by the user.
+ * and aesthetic emojis as requested by the user, rotating sequentially.
  */
 export async function updateBotVcStatus(channel) {
   if (!channel || !channel.isVoiceBased()) return;
@@ -84,8 +87,9 @@ export async function updateBotVcStatus(channel) {
     '<a:emoji_110:1513755776928321586>'
   ];
   
-  const startEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-  const endEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+  const startEmoji = emojis[emojiIndex % emojis.length];
+  const endEmoji = emojis[(emojiIndex + 1) % emojis.length];
+  emojiIndex++;
 
   const guild = channel.guild;
   const vcMembers = channel.members;
@@ -104,7 +108,8 @@ export async function updateBotVcStatus(channel) {
     `${startEmoji} ${toBoldUnicode(`Total Bots : ${totalBots}`)} ${endEmoji} !!`
   ];
   
-  const finalStatus = templates[Math.floor(Math.random() * templates.length)];
+  const finalStatus = templates[vcStatusIndex % templates.length];
+  vcStatusIndex++;
   
   try {
     await channel.client.rest.put(

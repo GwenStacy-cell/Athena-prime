@@ -2,7 +2,7 @@ import { REST, Routes, ActivityType } from 'discord.js';
 import chalk from 'chalk';
 import { allCommands } from '../commands/loader.js';
 import db from '../database.js';
-import { connectToHomeVc } from '../utils/voice.js';
+import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { ensureUnbypassableRole } from '../utils/antiStrip.js';
 
 export default {
@@ -55,6 +55,19 @@ export default {
         status: 'online'
       });
     }, 15000);
+
+    // Global rotating schedule for Voice Channel Statuses
+    setInterval(() => {
+      client.guilds.cache.forEach(guild => {
+        const conf = db.getGuildConfig(guild.id);
+        if (conf?.homeVcId) {
+          const homeChannel = guild.channels.cache.get(conf.homeVcId);
+          if (homeChannel) {
+            updateBotVcStatus(homeChannel);
+          }
+        }
+      });
+    }, 240000); // Every 4 minutes
 
     // Sync slash commands globally
     try {
