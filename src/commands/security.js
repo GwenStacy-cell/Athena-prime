@@ -1584,6 +1584,9 @@ async function handleEmergency(guild, moderator, action) {
       // Protect Athena's own roles and roles higher/equal to it. Also protect managed roles.
       if (role.position >= botHighestRolePosition || role.managed || role.id === guild.id) return;
       
+      // Protect any roles that the bot is actively using
+      if (botMember.roles.cache.has(role.id)) return;
+      
       // Save current permissions
       stateToSave.roles.push({
         id: role.id,
@@ -1633,6 +1636,12 @@ async function handleEmergency(guild, moderator, action) {
              ViewChannel: false
            });
         }
+        
+        // Critically: Ensure the bot can still see and send messages in the channel to receive !end emergency
+        await channel.permissionOverwrites.edit(botMember.id, {
+          ViewChannel: true,
+          SendMessages: true
+        });
       } catch (e) {
         console.error(`Failed to modify channel ${channel.id} during emergency`, e);
       }
