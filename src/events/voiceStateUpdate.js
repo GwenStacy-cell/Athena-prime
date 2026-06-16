@@ -1,7 +1,7 @@
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
-import { connectToHomeVc } from '../utils/voice.js';
+import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { buildControlPanel, buildSharedPanel } from '../commands/jtc.js';
 
 export default {
@@ -37,6 +37,18 @@ export default {
         connectToHomeVc(guild, homeVcId);
       }
       return;
+    }
+
+    // ==========================================
+    // BOT HOME VC DYNAMIC STATUS SYNC
+    // ==========================================
+    const config = db.getGuildConfig(guild.id);
+    const homeVcId = config.homeVcId;
+    if (homeVcId && (newState.channelId === homeVcId || oldState.channelId === homeVcId)) {
+      const channelToUpdate = newState.channelId === homeVcId ? newState.channel : oldState.channel;
+      if (channelToUpdate) {
+        updateBotVcStatus(channelToUpdate);
+      }
     }
 
     // ==========================================

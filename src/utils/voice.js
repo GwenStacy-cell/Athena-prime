@@ -56,3 +56,51 @@ export async function toggleBotDeafen(guild, deaf) {
     return { success: false, message: 'An error occurred while updating voice state.' };
   }
 }
+
+/**
+ * Dynamically updates the bot's Voice Channel Status with server statistics
+ * and random aesthetic emojis as requested by the user.
+ */
+export async function updateBotVcStatus(channel) {
+  if (!channel || !channel.isVoiceBased()) return;
+  
+  const emojis = [
+    '<a:a_fheartSpinWhite:1516523707181433109>',
+    '<:00XO:1516521724689256550>',
+    '<a:emoji_114:1516523064492425318>',
+    '<a:81509ripyourheartout:1516523054283493576>',
+    '<a:thunder:1516523058742169674>',
+    '<a:bat1:1516523055642579016>',
+    '<a:nt:1445649701809684552>',
+    '<a:emoji_110:1513755776928321586>'
+  ];
+  
+  const startEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+  const endEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+
+  const guild = channel.guild;
+  const vcMembers = channel.members;
+  
+  const connected = vcMembers.size;
+  const muted = vcMembers.filter(m => m.voice.selfMute || m.voice.serverMute).size;
+  const deafened = vcMembers.filter(m => m.voice.selfDeaf || m.voice.serverDeaf).size;
+  
+  const totalMembers = guild.memberCount;
+  const totalBots = guild.members.cache.filter(m => m.user.bot).size;
+  const activeMembers = guild.members.cache.filter(m => m.voice.channelId).size;
+
+  const templates = [
+    `${startEmoji} Total Members : ${totalMembers}\n${endEmoji} Active Members : ${activeMembers} !!`,
+    `${startEmoji} Users Connected : ${connected} , Users Muted : ${muted} , Users Defend : ${deafened} ${endEmoji}`,
+    `${startEmoji} Total Bots : ${totalBots} ${endEmoji} !!`
+  ];
+  
+  const finalStatus = templates[Math.floor(Math.random() * templates.length)];
+  
+  try {
+    await channel.setStatus(finalStatus).catch(() => null);
+  } catch (error) {
+    // Gracefully ignore rate limits or permission errors
+  }
+}
+
