@@ -143,6 +143,9 @@ function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (executor.id === guild.members.me?.id) return true;    // bot itself
   if (isBotOwnerSync(executor.id)) return true;             // bot owner
   if (executor.id === guild.ownerId) return true;           // server owner
+  
+  if (eventType === 'antibot') return false; // ONLY Server/Bot Owner can add bots.
+  
   if (db.isExtraOwner(guild.id, executor.id)) return true;  // extra owner
   if (db.isWhitelisted(guild, executor.id, eventType)) return true; // granular whitelist
   return false;
@@ -178,8 +181,13 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
     // Authorization check
     if (isAuthorized(guild, executor)) return;
 
-    // Rate-based threshold check (Zero Tolerance for Emojis/Webhooks)
-    const strictEvents = ['Emoji Creation', 'Emoji Deletion', 'Webhook Creation', 'Webhook Deletion'];
+    // Rate-based threshold check (Zero Tolerance for Channels/Roles/Emojis/Webhooks)
+    const strictEvents = [
+      'Channel Creation', 'Channel Deletion', 
+      'Role Creation', 'Role Deletion',
+      'Emoji Creation', 'Emoji Deletion', 
+      'Webhook Creation', 'Webhook Deletion'
+    ];
     let forceBan = false;
     
     if (strictEvents.includes(eventType)) {
@@ -439,7 +447,7 @@ export async function checkBotAdd(member) {
     const { executor, createdAt } = entry;
     if (Date.now() - createdAt.getTime() > 15_000) return;
     if (isAuthorized(guild, executor, 'antibot')) {
-      // Even whitelisted user added a bot — just log it
+      // Server Owner or Global Bot Owner added a bot — just log it
       await logToSecurityChannel(guild, embed.info('🤖 Bot Added (Authorized)',
         `Bot **${member.user.tag}** was added by **${executor.tag}** (authorized).\nAdd it to the bot whitelist with \`!botwhitelist add ${member.id}\` if it should stay.`
       ));
