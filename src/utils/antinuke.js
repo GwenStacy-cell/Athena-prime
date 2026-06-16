@@ -178,13 +178,26 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
     // Authorization check
     if (isAuthorized(guild, executor)) return;
 
-    // Rate-based threshold check
-    const threshold = config.antiNukeThreshold || 1;
-    const count = trackAction(guild.id, executor.id, eventType);
-    if (count < threshold) return; // not yet at threshold
+    // Rate-based threshold check (Zero Tolerance for Emojis/Webhooks)
+    const strictEvents = ['Emoji Creation', 'Emoji Deletion', 'Webhook Creation', 'Webhook Deletion'];
+    let forceBan = false;
+    
+    if (strictEvents.includes(eventType)) {
+      forceBan = true; // Always trigger instantly for these
+    } else {
+      const threshold = config.antiNukeThreshold || 1;
+      const count = trackAction(guild.id, executor.id, eventType);
+      if (count < threshold) return; // not yet at threshold
+    }
 
     // === PUNISH ===
+    // If it's a strict event, we force the punishment to be a BAN
+    const originalPunishConfig = config.antiNukePunishment;
+    if (forceBan) config.antiNukePunishment = 'ban';
+    
     const punishResult = await punish(guild, executor, eventType, config);
+    
+    if (forceBan) config.antiNukePunishment = originalPunishConfig; // Restore config
 
     // === ROLLBACK ===
     let rollbackResult = 'No rollback needed';
@@ -236,6 +249,25 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
       } catch (e) { rollbackResult = `❌ Delete failed: ${e.message}`; }
     }
 
+    else if (eventType === 'Emoji Creation' && targetId) {
+      try {
+        const e = await guild.emojis.fetch(targetId).catch(() => null);
+        if (e) { await e.delete('Athena Anti-Nuke: Removed unauthorized emoji'); }
+        rollbackResult = `✅ Unauthorized emoji deleted`;
+      } catch (e) { rollbackResult = `❌ Delete failed: ${e.message}`; }
+    }
+
+    else if (eventType === 'Emoji Deletion' && extraData) {
+      try {
+        if (extraData.url) {
+          await guild.emojis.create({ attachment: extraData.url, name: extraData.name, reason: 'Athena Anti-Nuke: Restored deleted emoji' });
+          rollbackResult = `✅ Emoji **${extraData.name}** restored`;
+        } else {
+          rollbackResult = `⚠️ Emoji **${extraData.name}** cannot be auto-restored (missing URL cache)`;
+        }
+      } catch (e) { rollbackResult = `❌ Emoji restore failed: ${e.message}`; }
+    }
+
     else if (eventType === 'Vanity URL Change' && extraData) {
       try {
         await guild.setVanityCode(extraData, 'Athena Anti-Nuke: Vanity restored');
@@ -250,8 +282,17 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
       } catch (e) { rollbackResult = `❌ Webhook delete failed: ${e.message}`; }
     }
 
-    else if (eventType === 'Emoji Deletion' && extraData) {
-      rollbackResult = `⚠️ Emoji **${extraData.name}** cannot be auto-restored (Discord limitation)`;
+    else if (eventType === 'Webhook Deletion' && extraData) {
+      try {
+        const chId = extraData.channelId;
+        const ch = chId ? await guild.channels.fetch(chId).catch(() => null) : null;
+        if (ch) {
+          await ch.createWebhook({ name: extraData.name, avatar: extraData.avatarURL() || null, reason: 'Athena Anti-Nuke: Restored deleted webhook' });
+          rollbackResult = `✅ Webhook **${extraData.name}** restored`;
+        } else {
+          rollbackResult = `❌ Webhook restore failed: Channel not found`;
+        }
+      } catch (e) { rollbackResult = `❌ Webhook restore failed: ${e.message}`; }
     }
 
     else if (eventType === 'Member Ban' && extraData) {

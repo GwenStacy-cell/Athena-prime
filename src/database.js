@@ -131,6 +131,14 @@ class Database {
       if (cfg.antiInviteEnabled === undefined) { cfg.antiInviteEnabled = true; updated = true; }
       if (cfg.allowedLinks === undefined) { cfg.allowedLinks = []; updated = true; }
       if (cfg.accentColor === undefined) { cfg.accentColor = null; updated = true; }
+      if (cfg.autoroleIds === undefined) { 
+        cfg.autoroleIds = []; 
+        if (cfg.autoroleId) {
+          cfg.autoroleIds.push(cfg.autoroleId);
+          delete cfg.autoroleId;
+        }
+        updated = true; 
+      }
 
       if (updated) this.save();
     }

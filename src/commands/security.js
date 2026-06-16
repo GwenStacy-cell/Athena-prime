@@ -1793,9 +1793,12 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 
   const resEmbed = enable
     ? embed.success(
-        'All Security Shields ENGAGED',
-        `🚨 All Athena Prime protective filters are now **ACTIVE**.
-Anti-Nuke, Anti-Spam, Anti-Invite, Anti-Link, and Word Filter are fully armed!
+        '<:on:1514996865030946847> All Systems Locked and Operational',
+        `<:on:1514996865030946847> **Primary Role:** Athena Integration Enabled
+<:on:1514996865030946847> **Secondary Role:** Athena Firewall Activated
+<:on:1514996865030946847> **Hidden Role:** Athena Unbypassable Deployed
+
+*Athena Prime has deployed a triple-layer security architecture. If an unauthorized user attempts to disturb, delete, or strip permissions from any of my Primary, Secondary, or Hidden roles, Athena will instantly execute a Hostile Neutralization to safeguard the server and automatically restore its own permissions. This makes Athena Prime truly unbypassable.*
 
 *(Use \'antinuke config\' or individual commands to fine-tune)*`,
         [

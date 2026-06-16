@@ -57,6 +57,8 @@ import voiceStateUpdateEvent from './src/events/voiceStateUpdate.js';
 import roleUpdateEvent from './src/events/roleUpdate.js';
 import guildBanRemoveEvent from './src/events/guildBanRemove.js';
 import webhookUpdateEvent from './src/events/webhookUpdate.js';
+import emojiCreateEvent from './src/events/emojiCreate.js';
+import emojiDeleteEvent from './src/events/emojiDelete.js';
 import { scheduleAutoUnquarantine } from './src/commands/security.js';
 import db from './src/database.js';
 
@@ -76,7 +78,9 @@ const events = [
   voiceStateUpdateEvent,
   roleUpdateEvent,
   guildBanRemoveEvent,
-  webhookUpdateEvent
+  webhookUpdateEvent,
+  emojiCreateEvent,
+  emojiDeleteEvent
 ];
 
 // Register Events

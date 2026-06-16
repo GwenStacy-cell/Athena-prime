@@ -102,7 +102,27 @@ export default {
     }
 
     // ==========================================
-    // 4. WELCOME MESSAGE
+    // 4. AUTOROLE
+    // ==========================================
+    if (config.autoroleIds && config.autoroleIds.length > 0) {
+      try {
+        const rolesToAdd = [];
+        for (const roleId of config.autoroleIds) {
+          const role = guild.roles.cache.get(roleId);
+          if (role && role.editable) {
+            rolesToAdd.push(role);
+          }
+        }
+        if (rolesToAdd.length > 0) {
+          await member.roles.add(rolesToAdd, 'Athena Prime: Autorole').catch(() => null);
+        }
+      } catch (err) {
+        console.error('Failed to assign autoroles:', err);
+      }
+    }
+
+    // ==========================================
+    // 5. WELCOME MESSAGE
     // ==========================================
     await sendWelcomeMessage(member);
   }

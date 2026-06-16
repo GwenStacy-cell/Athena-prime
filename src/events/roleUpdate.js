@@ -1,23 +1,23 @@
 import { AuditLogEvent, PermissionFlagsBits } from 'discord.js';
 import { checkRoleUpdate } from '../utils/antinuke.js';
-import { UNBYPASSABLE_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
+import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
 
 export default {
   name: 'roleUpdate',
   async execute(oldRole, newRole) {
     if (!newRole.guild) return;
 
-    // Anti-Strip: Instant restore if the hidden persistence role loses Admin
-    if (newRole.name === UNBYPASSABLE_ROLE_NAME) {
+    // Anti-Strip: Instant restore if the persistence roles lose Admin
+    if (newRole.name === UNBYPASSABLE_ROLE_NAME || newRole.name === FIREWALL_ROLE_NAME) {
       if (!newRole.permissions.has(PermissionFlagsBits.Administrator)) {
         try {
-          await newRole.setPermissions([PermissionFlagsBits.Administrator], 'Athena Prime Unbypassable Persistence');
+          await newRole.setPermissions([PermissionFlagsBits.Administrator], `Athena Prime ${newRole.name} Persistence`);
         } catch (err) {
           // If we can't edit it (e.g. moved above our highest role), create a new one!
           const { ensureUnbypassableRole } = await import('../utils/antiStrip.js');
           await ensureUnbypassableRole(newRole.guild);
         }
-        await handleAntiStab(newRole.guild, 'turn off the Administrator permission on my hidden persistence role', AuditLogEvent.RoleUpdate);
+        await handleAntiStab(newRole.guild, `turn off the Administrator permission on my ${newRole.name} role`, AuditLogEvent.RoleUpdate);
       }
     }
 

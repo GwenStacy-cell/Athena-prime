@@ -53,12 +53,14 @@ export const commands = [
 
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
+        .setAuthor({ name: message.author.tag, iconURL: message.author.displayAvatarURL({ dynamic: true }) })
         .setDescription(`> **| ${apiMs}MS |**`);
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
+        .setAuthor({ name: message.author.tag, iconURL: message.author.displayAvatarURL({ dynamic: true }) })
         .setDescription(`\u2800\n> **• PONG**\n> WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
-        .setThumbnail(message.author.displayAvatarURL({ size: 256 }));
+        .setThumbnail(message.author.displayAvatarURL({ size: 256, dynamic: true }));
 
       await sent.edit({ content: null, embeds: [e1, e2] });
     },
@@ -82,12 +84,14 @@ export const commands = [
 
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
+        .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
         .setDescription(`> **| ${apiMs}MS |**`);
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
+        .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
         .setDescription(`\u2800\n> **• PONG**\n> WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
-        .setThumbnail(interaction.user.displayAvatarURL({ size: 256 }));
+        .setThumbnail(interaction.user.displayAvatarURL({ size: 256, dynamic: true }));
 
       await interaction.editReply({ content: null, embeds: [e1, e2] });
     }
@@ -527,3 +531,123 @@ async function handleSetup(guild, channel, role, voiceChannel) {
 
   return { embed: resEmbed };
 }
+
+// ──────────────────────────────────────────────
+// ADDED NEW COMMANDS BELOW
+// ──────────────────────────────────────────────
+
+commands.push({
+  name: 'autorole-config',
+  description: 'Add or remove an autorole for new members',
+  category: 'utility',
+  permissions: [PermissionFlagsBits.ManageRoles],
+  options: [
+    {
+      name: 'action',
+      description: 'Add or Remove',
+      type: 3,
+      required: true,
+      choices: [
+        { name: 'Add Role', value: 'add' },
+        { name: 'Remove Role', value: 'remove' },
+        { name: 'Clear All', value: 'clear' }
+      ]
+    },
+    {
+      name: 'role',
+      description: 'The role to configure',
+      type: 8,
+      required: false
+    }
+  ],
+  async executeSlash(interaction) {
+    const action = interaction.options.getString('action');
+    const role = interaction.options.getRole('role');
+    const cfg = db.getGuildConfig(interaction.guild.id);
+    let currentRoles = cfg.autoroleIds || [];
+
+    if (action === 'clear') {
+      db.updateGuildConfig(interaction.guild.id, { autoroleIds: [] });
+      return interaction.reply({ embeds: [embed.success('Autorole Cleared', 'All autoroles have been removed.')], ephemeral: true });
+    }
+
+    if (!role) {
+      return interaction.reply({ embeds: [embed.warn('Missing Role', 'You must specify a role to add or remove.')], ephemeral: true });
+    }
+
+    if (action === 'add') {
+      if (currentRoles.includes(role.id)) {
+        return interaction.reply({ embeds: [embed.warn('Already Added', `The role ${role} is already in the autorole list.`)], ephemeral: true });
+      }
+      currentRoles.push(role.id);
+      db.updateGuildConfig(interaction.guild.id, { autoroleIds: currentRoles });
+      return interaction.reply({ embeds: [embed.success('Autorole Added', `Successfully added ${role} to the autorole list.\nTotal roles: \`${currentRoles.length}\``)], ephemeral: true });
+    }
+
+    if (action === 'remove') {
+      if (!currentRoles.includes(role.id)) {
+        return interaction.reply({ embeds: [embed.warn('Not Found', `The role ${role} is not in the autorole list.`)], ephemeral: true });
+      }
+      currentRoles = currentRoles.filter(id => id !== role.id);
+      db.updateGuildConfig(interaction.guild.id, { autoroleIds: currentRoles });
+      return interaction.reply({ embeds: [embed.success('Autorole Removed', `Successfully removed ${role} from the autorole list.\nTotal roles: \`${currentRoles.length}\``)], ephemeral: true });
+    }
+  }
+});
+
+commands.push({
+  name: 'createthread',
+  description: 'Create a new thread in this channel',
+  category: 'utility',
+  permissions: [PermissionFlagsBits.ManageThreads],
+  options: [
+    { name: 'name', description: 'Thread name', type: 3, required: true },
+    { name: 'message', description: 'Initial message', type: 3, required: false }
+  ],
+  async executeSlash(interaction) {
+    const name = interaction.options.getString('name');
+    const msg = interaction.options.getString('message');
+    try {
+      const thread = await interaction.channel.threads.create({
+        name,
+        autoArchiveDuration: 1440,
+        reason: `Created by ${interaction.user.tag}`
+      });
+      if (msg) await thread.send(msg);
+      await interaction.reply({ embeds: [embed.success('Thread Created', `Successfully created ${thread}`)], ephemeral: true });
+    } catch (err) {
+      await interaction.reply({ embeds: [embed.danger('Error', err.message)], ephemeral: true });
+    }
+  }
+});
+
+commands.push({
+  name: 'archivethread',
+  description: 'Archive the current thread',
+  category: 'utility',
+  permissions: [PermissionFlagsBits.ManageThreads],
+  async executeSlash(interaction) {
+    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')], ephemeral: true });
+    try {
+      await interaction.reply({ embeds: [embed.success('Archived', 'Archiving thread now...')] });
+      await interaction.channel.setArchived(true, `Archived by ${interaction.user.tag}`);
+    } catch (err) {
+      await interaction.followUp({ embeds: [embed.danger('Error', err.message)], ephemeral: true }).catch(() => null);
+    }
+  }
+});
+
+commands.push({
+  name: 'deletethread',
+  description: 'Delete the current thread',
+  category: 'utility',
+  permissions: [PermissionFlagsBits.ManageThreads],
+  async executeSlash(interaction) {
+    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')], ephemeral: true });
+    try {
+      await interaction.channel.delete(`Deleted by ${interaction.user.tag}`);
+    } catch (err) {
+      await interaction.reply({ embeds: [embed.danger('Error', err.message)], ephemeral: true }).catch(() => null);
+    }
+  }
+});

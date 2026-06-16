@@ -254,9 +254,10 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
   // MODE 1 & 3: DELETE ALL ROLES
   // ==========================================
   if (mode === 1 || mode === 3) {
+    const { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME } = await import('../utils/antiStrip.js');
     const botHighest = guild.members.me.roles.highest.position;
     const roles = guild.roles.cache
-      .filter(r => !r.managed && r.id !== guild.id && r.position < botHighest)
+      .filter(r => !r.managed && r.id !== guild.id && r.position < botHighest && r.name !== UNBYPASSABLE_ROLE_NAME && r.name !== FIREWALL_ROLE_NAME)
       .sort((a, b) => b.position - a.position)
       .map(r => r);
 

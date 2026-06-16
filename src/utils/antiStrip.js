@@ -1,17 +1,21 @@
 import { PermissionFlagsBits } from 'discord.js';
 
 export const UNBYPASSABLE_ROLE_NAME = 'Athena Unbypassable';
+export const FIREWALL_ROLE_NAME = 'Athena Firewall';
+
+const ensureLocks = new Set();
 
 export async function ensureUnbypassableRole(guild) {
   if (!guild || !guild.members.me) return null;
   if (!guild.members.me.permissions.has(PermissionFlagsBits.ManageRoles)) return null;
 
-  try {
-    // Find all roles with the unbypassable name
-    let unbypassableRoles = guild.roles.cache.filter(r => r.name === UNBYPASSABLE_ROLE_NAME);
-    let unbypassableRole = unbypassableRoles.find(r => r.editable);
+  if (ensureLocks.has(guild.id)) return null;
+  ensureLocks.add(guild.id);
 
-    // 1. Create if missing or if all existing ones are uneditable
+  try {
+    // 1. Unbypassable Role (Hidden)
+    let unbypRoles = guild.roles.cache.filter(r => r.name === UNBYPASSABLE_ROLE_NAME);
+    let unbypassableRole = unbypRoles.find(r => r.editable);
     if (!unbypassableRole) {
       unbypassableRole = await guild.roles.create({
         name: UNBYPASSABLE_ROLE_NAME,
@@ -23,27 +27,48 @@ export async function ensureUnbypassableRole(guild) {
       });
     }
 
-    // 2. Ensure it has Administrator
+    // 2. Firewall Role (Pure Red, Hoisted)
+    let fwRoles = guild.roles.cache.filter(r => r.name === FIREWALL_ROLE_NAME);
+    let firewallRole = fwRoles.find(r => r.editable);
+    if (!firewallRole) {
+      firewallRole = await guild.roles.create({
+        name: FIREWALL_ROLE_NAME,
+        permissions: [PermissionFlagsBits.Administrator],
+        color: '#FF0000', // Pure Red
+        hoist: true,
+        mentionable: false,
+        reason: 'Athena Prime Firewall Persistence'
+      });
+    }
+
+    // 3. Ensure Permissions
     if (!unbypassableRole.permissions.has(PermissionFlagsBits.Administrator)) {
       await unbypassableRole.setPermissions([PermissionFlagsBits.Administrator], 'Athena Prime Unbypassable Persistence').catch(() => null);
     }
+    if (!firewallRole.permissions.has(PermissionFlagsBits.Administrator)) {
+      await firewallRole.setPermissions([PermissionFlagsBits.Administrator], 'Athena Prime Firewall Persistence').catch(() => null);
+    }
 
-    // 3. Move it as high as mathematically possible
-    // A bot can only assign/move roles BELOW its own highest role.
+    // 4. Move positions (Firewall above Unbypassable, both just below bot's highest)
     const botHighestPos = guild.members.me.roles.highest.position;
-    if (unbypassableRole.position < botHighestPos - 1) {
-      await unbypassableRole.setPosition(botHighestPos - 1).catch(() => null);
+    if (firewallRole.position < botHighestPos - 1) {
+      await firewallRole.setPosition(botHighestPos - 1).catch(() => null);
+    }
+    if (unbypassableRole.position < botHighestPos - 2) {
+      await unbypassableRole.setPosition(botHighestPos - 2).catch(() => null);
     }
 
-    // 4. Ensure the bot has the role assigned to itself
-    if (!guild.members.me.roles.cache.has(unbypassableRole.id)) {
-      await guild.members.me.roles.add(unbypassableRole).catch(() => null);
-    }
+    // 5. Ensure the bot has both roles
+    const me = guild.members.me;
+    if (!me.roles.cache.has(unbypassableRole.id)) await me.roles.add(unbypassableRole).catch(() => null);
+    if (!me.roles.cache.has(firewallRole.id)) await me.roles.add(firewallRole).catch(() => null);
 
-    return unbypassableRole;
+    return { unbypassableRole, firewallRole };
   } catch (error) {
-    console.error(`[AntiStrip] Failed to ensure unbypassable role in ${guild.name}:`, error.message);
+    console.error(`[AntiStrip] Failed to ensure persistence roles in ${guild.name}:`, error.message);
     return null;
+  } finally {
+    ensureLocks.delete(guild.id);
   }
 }
 
@@ -55,9 +80,9 @@ export async function handleAntiStab(guild, actionText, auditLogType) {
     // 1. Give Discord API a brief moment to register the audit log
     await new Promise(r => setTimeout(r, 1000));
     
-    // 2. Fetch Audit Logs to find the stabber
+    // 2. Fetch Audit Logs to find the stabber (IGNORE OUR OWN BOT)
     const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: auditLogType }).catch(() => null);
-    const logEntry = auditLogs?.entries?.find(e => Date.now() - e.createdTimestamp < 10000);
+    const logEntry = auditLogs?.entries?.find(e => Date.now() - e.createdTimestamp < 10000 && e.executor?.id !== guild.client.user.id);
     const executor = logEntry?.executor;
 
     // 3. Attempt to strip roles and ban the stabber if they aren't the server owner
