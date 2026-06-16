@@ -98,7 +98,10 @@ export async function updateBotVcStatus(channel) {
   const finalStatus = templates[Math.floor(Math.random() * templates.length)];
   
   try {
-    await channel.setStatus(finalStatus).catch(() => null);
+    await channel.client.rest.put(
+      `/channels/${channel.id}/voice-status`,
+      { body: { status: finalStatus } }
+    );
   } catch (error) {
     // Gracefully ignore rate limits or permission errors
   }
