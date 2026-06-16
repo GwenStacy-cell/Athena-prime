@@ -349,27 +349,33 @@ async function getStatusEmbed(client, guild) {
   const uptimeMs = Date.now() - (client.bootTimestamp || Date.now());
   const apiMs = Math.round(client.ws.ping);
 
-  const antiNukeStatus = config.antiNukeEnabled ? '🟢 **ACTIVE**' : '🔴 **DISABLED**';
-  const antiSpamStatus = config.antiSpamEnabled ? '🟢 **ACTIVE**' : '🔴 **DISABLED**';
-  const antiInviteStatus = (config.antiInviteEnabled !== false) ? '🟢 **ACTIVE**' : '🔴 **DISABLED**';
-  const antiLinkStatus = config.antiLinkEnabled ? '🟢 **ACTIVE**' : '🔴 **DISABLED**';
-  const raidModeStatus = config.raidMode ? '🚨 **ENGAGED**' : '🟢 **STANDBY**';
+  const onEmoji = '<:on:1514996865030946847>';
+  
+  const getStatusText = (isEnabled) => isEnabled ? `${onEmoji} **ACTIVE**` : `🔴 **DISABLED**`;
+
+  const antiNukeStatus = getStatusText(config.antiNukeEnabled);
+  const firewallStatus = getStatusText(config.antiNukeEnabled); // Athena Firewall is tied to core security
+  const antiSpamStatus = getStatusText(config.antiSpamEnabled);
+  const antiInviteStatus = getStatusText(config.antiInviteEnabled !== false);
+  const antiLinkStatus = getStatusText(config.antiLinkEnabled);
+  const raidModeStatus = config.raidMode ? `🔴 **ENGAGED**` : `${onEmoji} **STANDBY**`;
 
   const fields = [
-    { name: '⏱️ Bot Uptime', value: formatUptime(uptimeMs), inline: true },
-    { name: '📡 Gateway Latency', value: `**${apiMs}ms**`, inline: true },
-    { name: '🌐 Servers Protected', value: `**${client.guilds.cache.size}**`, inline: true },
-    { name: '🛡️ Anti-Nuke Shield', value: antiNukeStatus, inline: true },
-    { name: '⚡ Anti-Spam Filter', value: antiSpamStatus, inline: true },
-    { name: '🔗 Anti-Invite Blocker', value: antiInviteStatus, inline: true },
-    { name: '🌐 Anti-Link Filter', value: antiLinkStatus, inline: true },
-    { name: '🚨 Raid Mode', value: raidModeStatus, inline: true },
-    { name: '⚠️ Warning Ceiling', value: `\`${config.maxWarnings} Warnings\``, inline: true }
+    { name: 'Bot Uptime', value: formatUptime(uptimeMs), inline: true },
+    { name: 'Gateway Latency', value: `**${apiMs}ms**`, inline: true },
+    { name: 'Servers Protected', value: `**${client.guilds.cache.size}**`, inline: true },
+    { name: 'Anti-Nuke Shield', value: antiNukeStatus, inline: true },
+    { name: 'Athena Firewall', value: firewallStatus, inline: true },
+    { name: 'Anti-Spam Filter', value: antiSpamStatus, inline: true },
+    { name: 'Anti-Invite Blocker', value: antiInviteStatus, inline: true },
+    { name: 'Anti-Link Filter', value: antiLinkStatus, inline: true },
+    { name: 'Raid Mode', value: raidModeStatus, inline: true },
+    { name: 'Warning Ceiling', value: `\`${config.maxWarnings} Warnings\``, inline: true }
   ];
 
   const statusEmbed = embed.security(
     'Athena Prime — Security Status',
-    `Real-time security overview for **${guild.name}**.\nAll systems are operational and monitoring server activity.\n\n**🛡️ God Level Security — ENABLED**`,
+    `Real-time security overview for **${guild.name}**.\nYour server is fully armed and continuously monitored by ${client.user}.\n\n**God Level Security — ENABLED**`,
     fields
   );
 
