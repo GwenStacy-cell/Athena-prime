@@ -2375,11 +2375,17 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 
   const onEmoji = '<:on:1514996865030946847>';
   const steps = [
-    `__**Initializing Security Protocols...**__`,
-    `${onEmoji} **Primary Role:** Athena Integration Enabled`,
-    `${onEmoji} **Secondary Role:** Athena Firewall Activated`,
-    `${onEmoji} **Hidden Role:** Athena Unbypassable Deployed`,
-    `${onEmoji} **All Systems Locked and Operational**\n\n*Athena Prime has deployed a triple-layer security architecture. If an unauthorized user attempts to disturb, delete, or strip permissions from any of my Primary, Secondary, or Hidden roles, Athena will instantly execute a Hostile Neutralization to safeguard the server and automatically restore its own permissions. This makes Athena Prime truly unbypassable.*`
+    `__**INITIALIZING SECURITY PROTOCOLS...**__`,
+    `${onEmoji} Anti-Nuke: **Enabled**`,
+    `${onEmoji} Anti-Spam: **Enabled**`,
+    `${onEmoji} Anti-Link: **Enabled**`,
+    `${onEmoji} Anti-Invite: **Enabled**`,
+    `${onEmoji} Word Filter: **Enabled**`,
+    `\n__**DEPLOYING TRIPLE-LAYER DEFENSE...**__`,
+    `${onEmoji} **Creating Primary Role:** Athena Integration Enabled`,
+    `${onEmoji} **Creating Secondary Role:** Athena Firewall Activated`,
+    `${onEmoji} **Creating Hidden Role:** Athena Unbypassable Deployed`,
+    `\n${onEmoji} **ALL SYSTEMS LOCKED AND OPERATIONAL**\n\n**Athena Prime has deployed a triple-layer security architecture. Any attempt to disturb, delete, or strip permissions from my Primary, Secondary, or Hidden roles will trigger an instant Hostile Neutralization. Athena will automatically restore its own permissions, rendering the bot truly unbypassable.**`
   ];
 
   let currentText = '';
