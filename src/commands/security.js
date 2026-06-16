@@ -1636,6 +1636,9 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
     // 2. Process Channels
     const channelsToModify = [];
     guild.channels.cache.forEach(channel => {
+      // Threads and some channel types do not have permissionOverwrites
+      if (!channel.permissionOverwrites) return;
+
       // Just save the entire permissionOverwrites cache
       const overwrites = channel.permissionOverwrites.cache.map(ow => ({
         id: ow.id,
@@ -1655,23 +1658,21 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
     let cCount = 0;
     for (const channel of channelsToModify) {
       try {
-        // We can just deny ViewChannel for @everyone
-        await channel.permissionOverwrites.edit(guild.id, {
-          ViewChannel: false
-        }, { reason: `Emergency Mode triggered by ${moderator.user.tag}` });
-        
-        // Also deny ViewChannel for the roles we stripped
-        for (const role of rolesToModify) {
-           await channel.permissionOverwrites.edit(role.id, {
-             ViewChannel: false
-           });
-        }
-        
-        // Critically: Ensure the bot can still see and send messages in the channel to receive !end emergency
-        await channel.permissionOverwrites.edit(botMember.id, {
-          ViewChannel: true,
-          SendMessages: true
-        });
+        // We replace all overwrites with just a deny for @everyone and an allow for the bot.
+        // This drops any explicit "ViewChannel: true" overwrites other roles might have had,
+        // effectively hiding the channel from everyone except the bot in a single API call.
+        await channel.permissionOverwrites.set([
+          {
+            id: guild.id,
+            deny: [PermissionFlagsBits.ViewChannel],
+            type: 0 // Role overwrite
+          },
+          {
+            id: botMember.id,
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
+            type: 1 // Member overwrite
+          }
+        ], `Emergency Mode triggered by ${moderator.user.tag}`);
         
         cCount++;
         if (cCount % 5 === 0 && updateProgress) await updateProgress(embed.warn('Emergency Protocol Initiated', `Hiding channels: **${cCount} / ${channelsToModify.length}** channels processed...`));
