@@ -516,7 +516,7 @@ export const commands = [
   // --- ANTINUKE COMMAND ---
   {
     name: 'antinuke',
-    description: 'Enables, disables, or configures the Anti-Nuke protections panel with buttons.',
+    description: 'Configures the Anti-Nuke protections panel with buttons.',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
     options: [
@@ -526,8 +526,6 @@ export const commands = [
         type: 3,
         required: true,
         choices: [
-          { name: 'Enable All Protections', value: 'enable_all' },
-          { name: 'Disable All Protections', value: 'disable_all' },
           { name: 'Open Config Panel', value: 'config' }
         ]
       }
@@ -535,29 +533,17 @@ export const commands = [
     async executePrefix(message, args) {
       const sub = args.join(' ').toLowerCase();
 
-      if (sub === 'enable all' || sub === 'enable_all') {
-        const result = await handleAntinukeToggleAll(message.guild, message.member, true);
-        await message.reply({ embeds: [result.embed] });
-      } else if (sub === 'disable all' || sub === 'disable_all') {
-        const result = await handleAntinukeToggleAll(message.guild, message.member, false);
-        await message.reply({ embeds: [result.embed] });
-      } else if (sub === 'config') {
+      if (sub === 'config') {
         const panel = await getAntinukeConfigPanel(message.guild);
         await message.reply({ embeds: [panel.embed], components: panel.components });
       } else {
-        await message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!antinuke enable all\`, \`!antinuke disable all\`, or \`!antinuke config\``)] });
+        await message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!antinuke config\``)] });
       }
     },
     async executeSlash(interaction) {
       const sub = interaction.options.getString('subcommand');
 
-      if (sub === 'enable_all') {
-        const result = await handleAntinukeToggleAll(interaction.guild, interaction.member, true);
-        await interaction.reply({ embeds: [result.embed] });
-      } else if (sub === 'disable_all') {
-        const result = await handleAntinukeToggleAll(interaction.guild, interaction.member, false);
-        await interaction.reply({ embeds: [result.embed] });
-      } else if (sub === 'config') {
+      if (sub === 'config') {
         const panel = await getAntinukeConfigPanel(interaction.guild);
         await interaction.reply({ embeds: [panel.embed], components: panel.components });
       }
@@ -2390,12 +2376,10 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   const onEmoji = '<:on:1514996865030946847>';
   const steps = [
     `__**Initializing Security Protocols...**__`,
-    `${onEmoji} Anti-Nuke: **Enabled**`,
-    `${onEmoji} Anti-Spam: **Enabled**`,
-    `${onEmoji} Anti-Link: **Enabled**`,
-    `${onEmoji} Anti-Invite: **Enabled**`,
-    `${onEmoji} Word Filter: **Enabled**`,
-    `${onEmoji} **All Systems Locked and Operational**\n\nAthena is creating its hidden role... If someone tries to remove it from the bot, delete it, or turn off its admin, Athena can retrieve its role, retrieve admin, and give back the role to itself. This makes Athena Prime unbypassable!`
+    `${onEmoji} **Primary Role:** Athena Integration Enabled`,
+    `${onEmoji} **Secondary Role:** Athena Firewall Activated`,
+    `${onEmoji} **Hidden Role:** Athena Unbypassable Deployed`,
+    `${onEmoji} **All Systems Locked and Operational**\n\n*Athena Prime has deployed a triple-layer security architecture. If an unauthorized user attempts to disturb, delete, or strip permissions from any of my Primary, Secondary, or Hidden roles, Athena will instantly execute a Hostile Neutralization to safeguard the server and automatically restore its own permissions. This makes Athena Prime truly unbypassable.*`
   ];
 
   let currentText = '';
