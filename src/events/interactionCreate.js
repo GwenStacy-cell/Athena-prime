@@ -155,7 +155,7 @@ export default {
       }
 
       // Antinuke config panel buttons
-      const validButtons = ['toggle_antinuke', 'toggle_spam', 'toggle_invite', 'toggle_blacklist_filter', 'cycle_punishment'];
+      const validButtons = ['toggle_antinuke', 'toggle_spam', 'toggle_invite', 'toggle_blacklist_filter', 'cycle_punishment', 'save_panel'];
 
       // Spam "Send 5 More" button
       if (interaction.customId.startsWith('spam_more_')) {
@@ -248,6 +248,12 @@ export default {
         const currentIdx = punishments.indexOf(config.antiNukePunishment || 'ban');
         const nextIdx = (currentIdx + 1) % punishments.length;
         db.updateGuildConfig(guildId, { antiNukePunishment: punishments[nextIdx] });
+      } else if (interaction.customId === 'save_panel') {
+        const panel = await getAntinukeConfigPanel(interaction.guild);
+        panel.components.forEach(row => row.components.forEach(btn => btn.setDisabled(true)));
+        panel.embed.data.description = '**✅ Panel configuration has been saved and is now being actively enforced.**';
+        panel.embed.data.color = 0x2ECC71; // Success green color
+        return interaction.update({ embeds: [panel.embed], components: panel.components });
       }
 
       // Re-compile layout and update message

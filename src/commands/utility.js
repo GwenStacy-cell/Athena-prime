@@ -350,15 +350,16 @@ async function getStatusEmbed(client, guild) {
   const apiMs = Math.round(client.ws.ping);
 
   const onEmoji = '<:on:1514996865030946847>';
+  const offEmoji = '<:off:1514996861474177109>';
   
-  const getStatusText = (isEnabled) => isEnabled ? `${onEmoji} **ACTIVE**` : `🔴 **DISABLED**`;
+  const getStatusText = (isEnabled) => isEnabled ? `${onEmoji} **ENABLED**` : `${offEmoji} **DISABLED**`;
 
   const antiNukeStatus = getStatusText(config.antiNukeEnabled);
   const firewallStatus = getStatusText(config.antiNukeEnabled); // Athena Firewall is tied to core security
   const antiSpamStatus = getStatusText(config.antiSpamEnabled);
   const antiInviteStatus = getStatusText(config.antiInviteEnabled !== false);
   const antiLinkStatus = getStatusText(config.antiLinkEnabled);
-  const raidModeStatus = config.raidMode ? `🔴 **ENGAGED**` : `${onEmoji} **STANDBY**`;
+  const raidModeStatus = config.raidMode ? `${onEmoji} **ENGAGED**` : `${offEmoji} **STANDBY**`;
 
   const fields = [
     { name: 'Bot Uptime', value: formatUptime(uptimeMs), inline: true },

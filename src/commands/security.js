@@ -1748,12 +1748,12 @@ export async function getAntinukeConfigPanel(guild) {
   const nukeState = config.antiNukeEnabled;
 
   const fields = [
-    { name: '🛡️ Anti-Nuke Shield',      value: nukeState     ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
-    { name: '⚡ Anti-Spam Filter',      value: spamState     ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
-    { name: '🔗 Anti-Invite Blocker', value: inviteState   ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
-    { name: '📝 Word Filter (Swears)',  value: blacklistState ? `${TOGGLE_ON} **ENABLED** (${config.blacklistWords.length} Words)` : `${TOGGLE_OFF} **DISABLED**`, inline: true },
-    { name: '🛡️ Nuke Punishment',     value: `\`${config.antiNukePunishment.toUpperCase()}\``,                                                              inline: true },
-    { name: '🚨 Warning Ceiling',      value: `\`${config.maxWarnings} Warnings\``,                                                                              inline: true }
+    { name: 'Anti-Nuke Shield',      value: nukeState     ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
+    { name: 'Anti-Spam Filter',      value: spamState     ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
+    { name: 'Anti-Invite Blocker', value: inviteState   ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
+    { name: 'Word Filter (Swears)',  value: blacklistState ? `${TOGGLE_ON} **ENABLED** (${config.blacklistWords.length} Words)` : `${TOGGLE_OFF} **DISABLED**`, inline: true },
+    { name: 'Nuke Punishment',     value: `\`${config.antiNukePunishment.toUpperCase()}\``,                                                              inline: true },
+    { name: 'Warning Ceiling',      value: `\`${config.maxWarnings} Warnings\``,                                                                              inline: true }
   ];
 
   const panelEmbed = embed.info(
@@ -1789,7 +1789,11 @@ export async function getAntinukeConfigPanel(guild) {
     new ButtonBuilder()
       .setCustomId('cycle_punishment')
       .setLabel(`Punishment: ${config.antiNukePunishment.toUpperCase()}`)
-      .setStyle(ButtonStyle.Primary)
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId('save_panel')
+      .setLabel('Save & Enforce')
+      .setStyle(ButtonStyle.Success)
   );
 
   return { embed: panelEmbed, components: [row1, row2] };
