@@ -513,6 +513,37 @@ export const commands = [
     }
   },
 
+  // --- MAXWARNINGS COMMAND ---
+  {
+    name: 'maxwarnings',
+    description: 'Configure the maximum number of warnings before a member is auto-quarantined.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      {
+        name: 'limit',
+        description: 'Maximum warnings allowed (1-10)',
+        type: 4, // INTEGER
+        required: true,
+        min_value: 1,
+        max_value: 10
+      }
+    ],
+    async executePrefix(message, args) {
+      const value = args[0];
+      if (!value) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!maxwarnings <number>\``)] });
+      }
+      const result = await handleConfig(message.guild, message.member, 'maxwarnings', value.toString());
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const value = interaction.options.getInteger('limit');
+      const result = await handleConfig(interaction.guild, interaction.member, 'maxwarnings', value.toString());
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
   // --- ANTINUKE COMMAND ---
   {
     name: 'antinuke',

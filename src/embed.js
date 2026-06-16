@@ -97,40 +97,38 @@ export const embed = {
     return this.build({ title, description, color: getAccentColor(guildId, colors.success), fields });
   },
 
-  warn(title, description, fields = []) {
-    // Warnings always yellow — accent doesn't override alerts
-    return this.build({ title, description, color: colors.warning, fields });
+  warn(title, description, fields = [], guildId = null) {
+    return this.build({ title, description, color: getAccentColor(guildId, colors.warning), fields });
   },
 
-  danger(title, description, fields = []) {
-    // Danger always red — accent doesn't override alerts
-    return this.build({ title, description, color: colors.danger, fields });
+  danger(title, description, fields = [], guildId = null) {
+    return this.build({ title, description, color: getAccentColor(guildId, colors.danger), fields });
   },
 
   info(title, description, fields = [], guildId = null) {
     return this.build({ title, description, color: getAccentColor(guildId, colors.neutral), fields });
   },
 
-  raid(title, description, fields = []) {
-    return this.build({ title, description, color: colors.raid, fields });
+  raid(title, description, fields = [], guildId = null) {
+    return this.build({ title, description, color: getAccentColor(guildId, colors.raid), fields });
   },
 
-  owner(title, description, fields = []) {
-    return this.build({ title, description, color: colors.owner || '#FFD700', fields });
+  owner(title, description, fields = [], guildId = null) {
+    return this.build({ title, description, color: getAccentColor(guildId, colors.owner || '#FFD700'), fields });
   },
 
   security(title, description, fields = [], guildId = null) {
     return this.build({ title, description, color: getAccentColor(guildId, colors.security || '#00e5ff'), fields });
   },
 
-  log(title, description, fields = [], level = 'info') {
+  log(title, description, fields = [], level = 'info', guildId = null) {
     let color = colors.dark;
     if (level === 'success') { color = colors.success; }
     else if (level === 'warning') { color = colors.warning; }
     else if (level === 'danger') { color = colors.danger; }
     else if (level === 'raid') { color = colors.raid; }
 
-    return this.build({ title: `Log: ${title}`, description, color, fields });
+    return this.build({ title: `Log: ${title}`, description, color: getAccentColor(guildId, color), fields });
   }
 };
 export default embed;
