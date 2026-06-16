@@ -1682,7 +1682,7 @@ async function handleEmergency(guild, moderator, action, updateProgress) {
 
     db.saveEmergencyState(guild.id, stateToSave);
 
-    logToSecurityChannel(guild, embed.log('Emergency Mode Activated', `🚨 **${moderator.user.tag}** has triggered Emergency Mode! All roles below the bot have been stripped of permissions and channels are hidden.`, [], 'danger'));
+    logToSecurityChannel(guild, embed.log('Emergency Mode Activated', `**${moderator.user.tag}** has triggered Emergency Mode! All roles below the bot have been stripped of permissions and channels are hidden.`, [], 'danger'));
 
     try {
       const owner = await guild.members.fetch(guild.ownerId);
@@ -1691,7 +1691,7 @@ async function handleEmergency(guild, moderator, action, updateProgress) {
       }
     } catch(e) {}
 
-    return { embed: embed.danger('🚨 EMERGENCY MODE ACTIVATED', 'All channels have been hidden and all permissions have been stripped from roles. Use `!end emergency` or `/endemergency` to restore the server.') };
+    return { embed: embed.danger('EMERGENCY MODE ACTIVATED', 'All channels have been hidden and all permissions have been stripped from roles. Use `!end emergency` or `/endemergency` to restore the server.') };
 
   } else if (action === 'end') {
     const savedState = db.getEmergencyState(guild.id);
@@ -1738,7 +1738,7 @@ async function handleEmergency(guild, moderator, action, updateProgress) {
 
     db.clearEmergencyState(guild.id);
 
-    logToSecurityChannel(guild, embed.log('Emergency Mode Ended', `🟢 **${moderator.user.tag}** has ended Emergency Mode. Restored ${rolesRestored} roles and ${channelsRestored} channels.`, [], 'success'));
+    logToSecurityChannel(guild, embed.log('Emergency Mode Ended', `**${moderator.user.tag}** has ended Emergency Mode. Restored ${rolesRestored} roles and ${channelsRestored} channels.`, [], 'success'));
 
     try {
       const owner = await guild.members.fetch(guild.ownerId);
