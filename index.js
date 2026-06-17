@@ -63,6 +63,7 @@ import emojiCreateEvent from './src/events/emojiCreate.js';
 import emojiDeleteEvent from './src/events/emojiDelete.js';
 import inviteCreateEvent from './src/events/inviteCreate.js';
 import inviteDeleteEvent from './src/events/inviteDelete.js';
+import messageDeleteEvent from './src/events/messageDelete.js';
 import messageReactionAddEvent from './src/events/messageReactionAdd.js';
 import messageReactionRemoveEvent from './src/events/messageReactionRemove.js';
 import { scheduleAutoUnquarantine } from './src/commands/security.js';
@@ -90,7 +91,8 @@ const events = [
   inviteCreateEvent,
   inviteDeleteEvent,
   messageReactionAddEvent,
-  messageReactionRemoveEvent
+  messageReactionRemoveEvent,
+  messageDeleteEvent
 ];
 
 // Register Events
