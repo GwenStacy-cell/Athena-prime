@@ -677,6 +677,102 @@ export const commands = [
       const result = await handleUnbanAll(interaction.guild, interaction.member);
       await interaction.editReply({ embeds: [result.embed] });
     }
+  },
+
+  // --- SYNC COMMAND ---
+  {
+    name: 'sync',
+    description: 'Sync a channel\'s permissions with its category',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.ManageChannels],
+    async executePrefix(message) {
+      let channel = message.mentions.channels.first() || message.channel;
+      if (!channel.parent) {
+        return message.reply({ embeds: [embed.warning('Error', 'This channel does not belong to a category.')] });
+      }
+      try {
+        if (channel.permissionsLocked) {
+          return message.reply({ embeds: [embed.info('Already Synced', `${channel} is already synced with its category.`)] });
+        }
+        await channel.lockPermissions();
+        await message.reply({ embeds: [embed.success('Synced', `Successfully synced ${channel} with category **${channel.parent.name}**.`)] });
+      } catch (err) {
+        await message.reply({ embeds: [embed.danger('Error', 'Failed to sync permissions. Check my roles and hierarchy.')] });
+      }
+    },
+    async executeSlash(interaction) {
+      let channel = interaction.channel;
+      if (!channel.parent) {
+        return interaction.reply({ embeds: [embed.warning('Error', 'This channel does not belong to a category.')] });
+      }
+      try {
+        if (channel.permissionsLocked) {
+          return interaction.reply({ embeds: [embed.info('Already Synced', `${channel} is already synced with its category.`)] });
+        }
+        await channel.lockPermissions();
+        await interaction.reply({ embeds: [embed.success('Synced', `Successfully synced ${channel} with category **${channel.parent.name}**.`)] });
+      } catch (err) {
+        await interaction.reply({ embeds: [embed.danger('Error', 'Failed to sync permissions. Check my roles and hierarchy.')] });
+      }
+    }
+  },
+
+  // --- SYNCALL COMMAND ---
+  {
+    name: 'syncall',
+    description: 'Sync all channels in the server with their respective categories',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.Administrator],
+    async executePrefix(message) {
+      const m = await message.reply('⏳ Syncing all channels to their categories. This might take a while to respect Discord rate limits...');
+      let success = 0;
+      let failed = 0;
+
+      const channelsToSync = message.guild.channels.cache.filter(c => c.parent && !c.permissionsLocked);
+      
+      if (channelsToSync.size === 0) {
+        return m.edit({ content: '', embeds: [embed.success('Already Synced', 'All channels are already fully synced with their categories!')] });
+      }
+
+      for (const [id, channel] of channelsToSync) {
+        try {
+          await channel.lockPermissions();
+          success++;
+        } catch (err) {
+          failed++;
+        }
+      }
+
+      await m.edit({
+        content: '',
+        embeds: [embed.success('Sync Complete', `**${success}** channels synced.\n**${failed}** channels failed (missing permissions).`)]
+      });
+    },
+    async executeSlash(interaction) {
+      await interaction.reply('⏳ Syncing all channels to their categories. This might take a while to respect Discord rate limits...');
+      let success = 0;
+      let failed = 0;
+
+      const channelsToSync = interaction.guild.channels.cache.filter(c => c.parent && !c.permissionsLocked);
+      
+      if (channelsToSync.size === 0) {
+        return interaction.editReply({ content: '', embeds: [embed.success('Already Synced', 'All channels are already fully synced with their categories!')] });
+      }
+
+      for (const [id, channel] of channelsToSync) {
+        try {
+          await channel.lockPermissions();
+          success++;
+        } catch (err) {
+          failed++;
+        }
+      }
+
+      await interaction.editReply({
+        content: '',
+        embeds: [embed.success('Sync Complete', `**${success}** channels synced.\n**${failed}** channels failed (missing permissions).`)]
+      });
+    }
   }
 ];
 

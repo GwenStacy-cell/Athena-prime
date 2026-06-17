@@ -433,6 +433,7 @@ async function getHelpEmbed(guild, client) {
         `\`/maxwarnings\` \`amount\` — Set the maximum warning threshold\n` +
         `\`${p}timeout\` \`@user\` \`dur\` — Timeout a member (e.g. \`5m\` \`1h\` \`1d\`)\n` +
         `\`${p}kick\` / \`${p}ban\` / \`${p}unban\` / \`${p}unbanall\` — Standard moderation actions\n` +
+        `\`${p}sync\` / \`${p}syncall\` — Sync channel permissions with category\n` +
         `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute or unmute your current VC\n` +
         `\`${p}purge\` \`1–100\` — Bulk-delete messages from current channel\n` +
         `\`${p}slowmode\` \`seconds\` — Set channel slowmode (0 = off)\n` +
