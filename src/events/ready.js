@@ -47,7 +47,7 @@ export default {
       status: 'online'
     });
 
-    // Rotate every 15 seconds
+    // Rotate Activity every 15 seconds
     setInterval(() => {
       statusIndex = (statusIndex + 1) % statuses.length;
       client.user.setPresence({
@@ -55,6 +55,58 @@ export default {
         status: 'online'
       });
     }, 15000);
+
+    // Rotate Server Nickname every 30 minutes
+    const nicknameSuffixes = [
+      'Armed',
+      'Dev Prince',
+      'Truly Unbypassable',
+      'Secured'
+    ];
+    let nicknameIndex = 0;
+
+    setInterval(async () => {
+      nicknameIndex = (nicknameIndex + 1) % nicknameSuffixes.length;
+      const currentSuffix = nicknameSuffixes[nicknameIndex];
+
+      // Use a standard for loop to avoid overwhelming the API and cache simultaneously
+      for (const [guildId, guild] of client.guilds.cache) {
+        try {
+          const me = guild.members.me;
+          if (!me) continue;
+
+          // Extract base name
+          const currentNick = me.nickname || client.user.username;
+          
+          // Remove any existing suffix from the name
+          let baseName = currentNick;
+          for (const suffix of nicknameSuffixes) {
+            if (baseName.endsWith(` | ${suffix}`)) {
+              baseName = baseName.replace(` | ${suffix}`, '');
+              break;
+            }
+          }
+
+          // Truncate base name if it's too long (Discord max is 32 chars)
+          // " | Truly Unbypassable" is 20 chars. Max base name is 12 chars.
+          const maxBaseLength = 32 - (` | ${currentSuffix}`.length);
+          if (baseName.length > maxBaseLength) {
+            baseName = baseName.substring(0, maxBaseLength).trim();
+          }
+
+          const newNickname = `${baseName} | ${currentSuffix}`;
+          
+          // Only update if it actually changed
+          if (me.nickname !== newNickname) {
+            await me.setNickname(newNickname).catch(() => null);
+          }
+        } catch (err) {
+          // Ignore individual guild failures (e.g. Missing Permissions)
+        }
+      }
+    }, 30 * 60 * 1000);
+
+
 
     // Global rotating schedule for Voice Channel Statuses
     setInterval(() => {
