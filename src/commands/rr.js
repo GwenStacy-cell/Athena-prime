@@ -64,7 +64,7 @@ async function runInteractiveBuilder(message) {
     const entryMsg = await awaitReply();
     if (!entryMsg) return channel.send({ embeds: [embed.danger('Timeout', 'Setup cancelled.')] });
     
-    if (entryMsg.content.toLowerCase() === 'done') break;
+    if (entryMsg.content.trim().toLowerCase() === 'done') break;
 
     const cleanedMsg = entryMsg.content.replace(/\|/g, '');
     const parts = cleanedMsg.trim().split(/\s+/);
