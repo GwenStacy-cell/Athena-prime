@@ -66,7 +66,8 @@ async function runInteractiveBuilder(message) {
     
     if (entryMsg.content.toLowerCase() === 'done') break;
 
-    const parts = entryMsg.content.split(' ');
+    const cleanedMsg = entryMsg.content.replace(/\|/g, '');
+    const parts = cleanedMsg.trim().split(/\s+/);
     if (parts.length < 3) {
       await channel.send({ content: '❌ Invalid format. Please use: `emoji @role description`' });
       continue;
@@ -76,13 +77,19 @@ async function runInteractiveBuilder(message) {
     const roleStr = parts[1];
     const desc = parts.slice(2).join(' ');
 
-    const roleId = roleStr.replace(/<@&|>/g, '');
+    const roleId = roleStr.replace(/[^0-9]/g, '');
+    if (!roleId || roleId.length < 17) {
+      await channel.send({ content: '❌ Invalid role tag or ID.' });
+      continue;
+    }
+
     let role = message.guild.roles.cache.get(roleId);
     if (!role) {
       role = await message.guild.roles.fetch(roleId).catch(() => null);
     }
 
-    if (!role) {
+    // if fetch returned a Collection (which happens if roleId is empty, but we guarded against it)
+    if (!role || !role.id) {
       await channel.send({ content: '❌ Invalid role. Please tag a valid role or paste a valid Role ID.' });
       continue;
     }
@@ -102,15 +109,21 @@ async function runInteractiveBuilder(message) {
     return channel.send({ embeds: [embed.danger('Cancelled', 'No roles were added. Setup cancelled.')] });
   }
 
-  // Construct Aesthetic Message
-  let textContent = `**${title}**\n\n`;
+  // Construct Aesthetic Embed Message
+  let textContent = '';
   for (const m of mappings) {
-    textContent += `${m.emojiStr} | **${m.desc}**\n`;
+    textContent += `${m.emojiStr} | <@&${m.roleId}> **${m.desc}**\n\n`;
   }
+
+  const rrEmbed = embed.build({
+    title: title,
+    description: textContent,
+    color: '#2b2d31'
+  });
 
   // Send message
   try {
-    const postedMsg = await targetChannel.send({ content: textContent });
+    const postedMsg = await targetChannel.send({ embeds: [rrEmbed] });
 
     // Save to DB
     const dbMappings = {};
