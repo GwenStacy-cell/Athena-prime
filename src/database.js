@@ -22,7 +22,8 @@ const DEFAULT_SCHEMA = {
   jtc: {},           // guildId -> { lobbyChannelId, categoryId }
   jtcChannels: {},   // channelId -> { ownerId, guildId }
   botWhitelist: {},  // guildId -> [ botId... ]
-  emergencies: {}    // guildId -> { roles: [{id, perms}], channels: [{id, overwrites}] }
+  emergencies: {},   // guildId -> { roles: [{id, perms}], channels: [{id, overwrites}] }
+  reactionRoles: {}  // messageId -> { guildId, channelId, title, mappings: [{emoji, roleId}] }
 };
 
 class Database {
@@ -51,6 +52,7 @@ class Database {
         this.cache.jtcChannels    = this.cache.jtcChannels    || {};
         this.cache.botWhitelist   = this.cache.botWhitelist   || {};
         this.cache.emergencies    = this.cache.emergencies    || {};
+        this.cache.reactionRoles  = this.cache.reactionRoles  || {};
       } else {
         this.save();
       }
@@ -98,6 +100,7 @@ class Database {
         whitelist: [],
         allowedLinks: [],
         accentColor: null,
+        rrDmsEnabled: true,
         autonick: {
           enabled: false,
           prefix: '',
@@ -135,6 +138,7 @@ class Database {
       if (cfg.antiInviteEnabled === undefined) { cfg.antiInviteEnabled = true; updated = true; }
       if (cfg.allowedLinks === undefined) { cfg.allowedLinks = []; updated = true; }
       if (cfg.accentColor === undefined) { cfg.accentColor = null; updated = true; }
+      if (cfg.rrDmsEnabled === undefined) { cfg.rrDmsEnabled = true; updated = true; }
       if (cfg.autoroleIds === undefined) { 
         cfg.autoroleIds = []; 
         if (cfg.autoroleId) {
@@ -151,9 +155,26 @@ class Database {
 
   updateGuildConfig(guildId, updates) {
     const config = this.getGuildConfig(guildId);
-    this.cache.guilds[guildId] = { ...config, ...updates };
+    Object.assign(config, updates);
     this.save();
-    return this.cache.guilds[guildId];
+    return config;
+  }
+
+  // Reaction Roles
+  getReactionRoleMenu(messageId) {
+    return this.cache.reactionRoles[messageId];
+  }
+
+  saveReactionRoleMenu(messageId, data) {
+    this.cache.reactionRoles[messageId] = data;
+    this.save();
+  }
+
+  deleteReactionRoleMenu(messageId) {
+    if (this.cache.reactionRoles[messageId]) {
+      delete this.cache.reactionRoles[messageId];
+      this.save();
+    }
   }
 
   // Whitelist Manager

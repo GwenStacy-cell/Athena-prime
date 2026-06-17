@@ -30,13 +30,15 @@ const client = new Client({
     GatewayIntentBits.GuildModeration,     // Required for ban/unban events
     GatewayIntentBits.GuildWebhooks,       // Required for webhook events
     GatewayIntentBits.GuildInvites,        // Required for invite tracking
-    GatewayIntentBits.GuildEmojisAndStickers // Required for emoji events
+    GatewayIntentBits.GuildEmojisAndStickers, // Required for emoji events
+    GatewayIntentBits.GuildMessageReactions // Required for reaction roles
   ],
   partials: [
     Partials.User,
     Partials.GuildMember,
     Partials.Message,
-    Partials.Channel
+    Partials.Channel,
+    Partials.Reaction
   ]
 });
 
@@ -61,6 +63,8 @@ import emojiCreateEvent from './src/events/emojiCreate.js';
 import emojiDeleteEvent from './src/events/emojiDelete.js';
 import inviteCreateEvent from './src/events/inviteCreate.js';
 import inviteDeleteEvent from './src/events/inviteDelete.js';
+import messageReactionAddEvent from './src/events/messageReactionAdd.js';
+import messageReactionRemoveEvent from './src/events/messageReactionRemove.js';
 import { scheduleAutoUnquarantine } from './src/commands/security.js';
 import db from './src/database.js';
 
@@ -84,7 +88,9 @@ const events = [
   emojiCreateEvent,
   emojiDeleteEvent,
   inviteCreateEvent,
-  inviteDeleteEvent
+  inviteDeleteEvent,
+  messageReactionAddEvent,
+  messageReactionRemoveEvent
 ];
 
 // Register Events
