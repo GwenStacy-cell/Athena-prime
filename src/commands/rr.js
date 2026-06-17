@@ -39,11 +39,11 @@ async function runInteractiveBuilder(message) {
   });
   
   const targetChannelMsg = await awaitReply();
-  if (!targetChannelMsg) return channel.send({ embeds: [embed.error('Timeout', 'Setup cancelled.')] });
+  if (!targetChannelMsg) return channel.send({ embeds: [embed.danger('Timeout', 'Setup cancelled.')] });
   
   const targetChannelId = targetChannelMsg.content.replace(/<#|>/g, '');
   const targetChannel = message.guild.channels.cache.get(targetChannelId);
-  if (!targetChannel) return channel.send({ embeds: [embed.error('Invalid Channel', 'Setup cancelled.')] });
+  if (!targetChannel) return channel.send({ embeds: [embed.danger('Invalid Channel', 'Setup cancelled.')] });
 
   // Step 2: Title
   await channel.send({
@@ -51,7 +51,7 @@ async function runInteractiveBuilder(message) {
   });
   
   const titleMsg = await awaitReply();
-  if (!titleMsg) return channel.send({ embeds: [embed.error('Timeout', 'Setup cancelled.')] });
+  if (!titleMsg) return channel.send({ embeds: [embed.danger('Timeout', 'Setup cancelled.')] });
   const title = titleMsg.content;
 
   // Step 3: Entries
@@ -62,7 +62,7 @@ async function runInteractiveBuilder(message) {
 
   while (true) {
     const entryMsg = await awaitReply();
-    if (!entryMsg) return channel.send({ embeds: [embed.error('Timeout', 'Setup cancelled.')] });
+    if (!entryMsg) return channel.send({ embeds: [embed.danger('Timeout', 'Setup cancelled.')] });
     
     if (entryMsg.content.toLowerCase() === 'done') break;
 
@@ -96,7 +96,7 @@ async function runInteractiveBuilder(message) {
   }
 
   if (mappings.length === 0) {
-    return channel.send({ embeds: [embed.error('Cancelled', 'No roles were added. Setup cancelled.')] });
+    return channel.send({ embeds: [embed.danger('Cancelled', 'No roles were added. Setup cancelled.')] });
   }
 
   // Construct Aesthetic Message
@@ -135,6 +135,6 @@ async function runInteractiveBuilder(message) {
 
   } catch (err) {
     console.error(err);
-    await channel.send({ embeds: [embed.error('Error', 'Failed to post message or add reactions.')] });
+    await channel.send({ embeds: [embed.danger('Error', 'Failed to post message or add reactions.')] });
   }
 }
