@@ -85,6 +85,7 @@ class Database {
         quarantineChannelId: null,
         quarantineVcId: null,
         homeVcId: null,
+        inviteChannelId: null,
         antiSpamEnabled: true,
         antiLinkEnabled: false,
         antiInviteEnabled: true,
@@ -127,6 +128,7 @@ class Database {
       if (cfg.autonick === undefined) { cfg.autonick = { enabled: false, prefix: '', suffix: '' }; updated = true; }
       if (cfg.quarantineVcId === undefined) { cfg.quarantineVcId = null; updated = true; }
       if (cfg.homeVcId === undefined) { cfg.homeVcId = null; updated = true; }
+      if (cfg.inviteChannelId === undefined) { cfg.inviteChannelId = null; updated = true; }
       if (cfg.antiNukePunishment === undefined) { cfg.antiNukePunishment = 'ban'; updated = true; }
       if (cfg.antiNukeThreshold === undefined) { cfg.antiNukeThreshold = 1; updated = true; }
       if (cfg.antiLinkEnabled === undefined) { cfg.antiLinkEnabled = false; updated = true; }

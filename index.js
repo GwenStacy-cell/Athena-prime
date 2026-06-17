@@ -59,6 +59,8 @@ import guildBanRemoveEvent from './src/events/guildBanRemove.js';
 import webhookUpdateEvent from './src/events/webhookUpdate.js';
 import emojiCreateEvent from './src/events/emojiCreate.js';
 import emojiDeleteEvent from './src/events/emojiDelete.js';
+import inviteCreateEvent from './src/events/inviteCreate.js';
+import inviteDeleteEvent from './src/events/inviteDelete.js';
 import { scheduleAutoUnquarantine } from './src/commands/security.js';
 import db from './src/database.js';
 
@@ -80,7 +82,9 @@ const events = [
   guildBanRemoveEvent,
   webhookUpdateEvent,
   emojiCreateEvent,
-  emojiDeleteEvent
+  emojiDeleteEvent,
+  inviteCreateEvent,
+  inviteDeleteEvent
 ];
 
 // Register Events

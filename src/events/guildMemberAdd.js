@@ -125,5 +125,53 @@ export default {
     // 5. WELCOME MESSAGE
     // ==========================================
     await sendWelcomeMessage(member);
+    // ==========================================
+    // 6. INVITE TRACKING
+    // ==========================================
+    if (config.inviteChannelId) {
+      try {
+        const newInvites = await guild.invites.fetch().catch(() => new Map());
+        const oldInvites = member.client.invites?.get(guild.id) || new Map();
+        
+        let usedInvite = null;
+        for (const [code, invite] of newInvites) {
+          const oldUses = oldInvites.get(code) || 0;
+          if (invite.uses > oldUses) {
+            usedInvite = invite;
+            break;
+          }
+        }
+        
+        // Update cache for next time
+        if (member.client.invites) {
+          member.client.invites.set(guild.id, new Map(newInvites.map(i => [i.code, i.uses])));
+        }
+
+        const inviteChannel = guild.channels.cache.get(config.inviteChannelId);
+        if (inviteChannel) {
+          const inviter = usedInvite?.inviter;
+          const inviterText = inviter ? `<@${inviter.id}> (${inviter.tag})` : 'Unknown / Vanity URL / Temp Invite';
+          const codeText = usedInvite ? usedInvite.code : 'Unknown';
+          const usesText = usedInvite ? usedInvite.uses : 'N/A';
+          const maxUses = usedInvite ? (usedInvite.maxUses === 0 ? 'Infinite' : usedInvite.maxUses) : 'N/A';
+          const maxAge = usedInvite ? (usedInvite.maxAge === 0 ? 'Permanent' : `${usedInvite.maxAge} seconds`) : 'N/A';
+          const createdTime = usedInvite?.createdTimestamp ? `<t:${Math.floor(usedInvite.createdTimestamp / 1000)}:F>` : 'N/A';
+          const bullet = '<a:Animated_Arrow_Red:1462005582826311712>';
+          
+          const inviteEmbed = {
+            color: 0x2b2d31,
+            author: { name: 'MEMBER JOINED', icon_url: member.user.displayAvatarURL({ dynamic: true }) },
+            description: `${bullet} **User Joined:** ${member} (\`${member.id}\`)\n${bullet} **Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n\n**INVITE DETAILS**\n${bullet} **Creator:** ${inviterText}\n${bullet} **Invite Code:** \`${codeText}\`\n${bullet} **Total Uses:** ${usesText} / ${maxUses}\n${bullet} **Duration:** ${maxAge}\n${bullet} **Created At:** ${createdTime}`,
+            timestamp: new Date().toISOString(),
+            thumbnail: { url: member.user.displayAvatarURL({ dynamic: true, size: 256 }) },
+            footer: { text: `Total Members: ${guild.memberCount}`, icon_url: guild.iconURL({ dynamic: true }) }
+          };
+          
+          await inviteChannel.send({ embeds: [inviteEmbed] }).catch(() => null);
+        }
+      } catch (err) {
+        console.error('Failed to process invite tracking:', err);
+      }
+    }
   }
 };

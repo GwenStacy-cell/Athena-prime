@@ -71,6 +71,22 @@ export default {
 
     // Sync slash commands globally
     try {
+      console.log(chalk.blue('⏳ Fetching and caching invites...'));
+      client.invites = new Map();
+      for (const [guildId, guild] of client.guilds.cache) {
+        try {
+          const invites = await guild.invites.fetch().catch(() => null);
+          if (invites) {
+            client.invites.set(guild.id, new Map(invites.map(i => [i.code, i.uses])));
+          } else {
+            client.invites.set(guild.id, new Map());
+          }
+        } catch (e) {
+          // ignore missing permissions
+        }
+      }
+      console.log(chalk.green('✅ Invite cache initialized.'));
+
       console.log(chalk.blue('⏳ Syncing slash commands globally...'));
 
       const slashData = allCommands

@@ -9,6 +9,7 @@ import { commands as triggerCmds } from './trigger.js';
 import { commands as jtcCmds } from './jtc.js';
 import { commands as welcomeCmds } from './welcome.js';
 import { commands as accentCmds } from './accent.js';
+import { commands as invitesCmds } from './invites.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -21,7 +22,8 @@ export const allCommands = [
   ...triggerCmds,
   ...jtcCmds,
   ...welcomeCmds,
-  ...accentCmds
+  ...accentCmds,
+  ...invitesCmds
 ];
 
 export const commandMap = new Map();
