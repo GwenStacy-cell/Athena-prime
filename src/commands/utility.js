@@ -472,6 +472,15 @@ async function getHelpEmbed(guild, client) {
         `> Supports \`{user}\`  \`{server}\`  \`{count}\` placeholders in custom embeds`
     },
     {
+      name: h('ENGAGEMENT  &  TRACKING'),
+      value:
+        `\`${p}rrsetup\` — Launch the interactive Reaction Role Menu builder (alias: \`${p}reactionrole\`)\n` +
+        `\`${p}rrdisable\` — Wipe all Reaction Role configurations from the server\n` +
+        `\`${p}invitesetup\` \`#channel\` — Enable the Advanced Invite Tracker to log who invites who\n` +
+        `\`${p}invitedisable\` — Disable Invite Tracking\n` +
+        `> Note: Reaction Role menus can be deleted simply by deleting the message in Discord!`
+    },
+    {
       name: h('AUTO-RESPONDER'),
       value:
         `\`${p}trigger\` **create** \`match | response\` — Add a custom keyword trigger\n` +
