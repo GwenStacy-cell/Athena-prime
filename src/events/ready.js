@@ -135,14 +135,14 @@ export default {
           const humansCh = guild.channels.cache.get(stats.humansId);
           const botsCh = guild.channels.cache.get(stats.botsId);
 
-          if (totalCh && totalCh.name !== `🔒 ╭ ❗・USERS: ${total}`) {
-            await totalCh.setName(`🔒 ╭ ❗・USERS: ${total}`).catch(() => null);
+          if (totalCh && totalCh.name !== `❗・USERS: ${total}`) {
+            await totalCh.setName(`❗・USERS: ${total}`).catch(() => null);
           }
-          if (humansCh && humansCh.name !== `🔒 ├ ❗・MEMBERS: ${humans}`) {
-            await humansCh.setName(`🔒 ├ ❗・MEMBERS: ${humans}`).catch(() => null);
+          if (humansCh && humansCh.name !== `❗・MEMBERS: ${humans}`) {
+            await humansCh.setName(`❗・MEMBERS: ${humans}`).catch(() => null);
           }
-          if (botsCh && botsCh.name !== `🔒 ╰ ❗・BOTS: ${bots}`) {
-            await botsCh.setName(`🔒 ╰ ❗・BOTS: ${bots}`).catch(() => null);
+          if (botsCh && botsCh.name !== `❗・BOTS: ${bots}`) {
+            await botsCh.setName(`❗・BOTS: ${bots}`).catch(() => null);
           }
         } catch (e) {
           // Ignore API errors

@@ -51,21 +51,21 @@ export const commands = [
           });
           
           const totalCh = await message.guild.channels.create({
-            name: `🔒 ╭ ❗・USERS: ${total}`,
+            name: `❗・USERS: ${total}`,
             type: ChannelType.GuildVoice,
             parent: category.id,
             permissionOverwrites
           });
           
           const humansCh = await message.guild.channels.create({
-            name: `🔒 ├ ❗・MEMBERS: ${humans}`,
+            name: `❗・MEMBERS: ${humans}`,
             type: ChannelType.GuildVoice,
             parent: category.id,
             permissionOverwrites
           });
           
           const botsCh = await message.guild.channels.create({
-            name: `🔒 ╰ ❗・BOTS: ${bots}`,
+            name: `❗・BOTS: ${bots}`,
             type: ChannelType.GuildVoice,
             parent: category.id,
             permissionOverwrites
