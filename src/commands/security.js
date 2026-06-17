@@ -1639,6 +1639,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     // 2. Process Channels
     const channelsToModify = [];
+    await guild.channels.fetch().catch(() => null); // Ensure cache is full
     guild.channels.cache.forEach(channel => {
       // Threads and some channel types do not have permissionOverwrites
       if (!channel.permissionOverwrites) return;
@@ -1662,13 +1663,13 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
     let cCount = 0;
     for (const channel of channelsToModify) {
       try {
-        // We replace all overwrites with just a deny for @everyone and an allow for the bot.
-        // This drops any explicit "ViewChannel: true" overwrites other roles might have had,
-        // effectively hiding the channel from everyone except the bot in a single API call.
+        const isProtectedCommunityChannel = (channel.id === guild.rulesChannelId || channel.id === guild.publicUpdatesChannelId);
+        
         await channel.permissionOverwrites.set([
           {
             id: guild.id,
-            deny: [PermissionFlagsBits.ViewChannel],
+            // For rules/updates channels, Discord prevents hiding them from @everyone. So we just deny sending.
+            deny: isProtectedCommunityChannel ? [PermissionFlagsBits.SendMessages] : [PermissionFlagsBits.ViewChannel],
             type: 0 // Role overwrite
           },
           {
