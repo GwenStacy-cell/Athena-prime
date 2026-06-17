@@ -8,7 +8,7 @@ export const commands = [
     description: 'Setup the invite tracking channel for the server',
     permissions: [PermissionFlagsBits.Administrator],
     aliases: ['setinvites', 'invitetracker'],
-    executeText: async (message) => {
+    executePrefix: async (message) => {
       await setupInviteTracker(message.guild, message.channel, message.member);
     },
     executeSlash: async (interaction) => {

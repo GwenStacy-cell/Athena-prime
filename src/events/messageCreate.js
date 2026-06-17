@@ -515,11 +515,8 @@ export default {
     try {
       await cmd.executePrefix(message, args);
     } catch (error) {
-      console.error(`Error executing command ${cmd.name} via Prefix:`, error);
-      const errEmbed = embed.danger(
-        'Execution Error',
-        'An unexpected error occurred while executing this command.'
-      );
+      console.error(error);
+      const errEmbed = embed.danger('Execution Error', `An unexpected error occurred while executing this command.\n\n\`\`\`js\n${error.stack || error}\n\`\`\``);
       await message.reply({ embeds: [errEmbed] }).catch(() => null);
     }
   }

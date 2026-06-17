@@ -9,7 +9,7 @@ export const commands = [
     description: 'Interactive manager to build aesthetic reaction role menus',
     permissions: [PermissionFlagsBits.Administrator],
     aliases: ['reactionrole', 'rrmanager'],
-    executeText: async (message) => {
+    executePrefix: async (message) => {
       try {
         await runInteractiveBuilder(message);
       } catch (err) {
