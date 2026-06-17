@@ -68,14 +68,14 @@ async function runInteractiveBuilder(message) {
 
     const cleanedMsg = entryMsg.content.replace(/\|/g, '');
     const parts = cleanedMsg.trim().split(/\s+/);
-    if (parts.length < 3) {
-      await channel.send({ content: '❌ Invalid format. Please use: `emoji @role description`' });
+    if (parts.length < 2) {
+      await channel.send({ content: '❌ Invalid format. Please use: `emoji @role [description]`' });
       continue;
     }
 
     const emojiStr = parts[0];
     const roleStr = parts[1];
-    const desc = parts.slice(2).join(' ');
+    const desc = parts.length > 2 ? parts.slice(2).join(' ') : '';
 
     const roleId = roleStr.replace(/[^0-9]/g, '');
     if (!roleId || roleId.length < 17) {
@@ -102,7 +102,9 @@ async function runInteractiveBuilder(message) {
     }
 
     mappings.push({ emojiStr, emojiIdOrName, roleId: role.id, desc });
-    await channel.send({ content: `✅ Added: ${emojiStr} | **${desc}** -> <@&${role.id}>\nType next entry, or \`done\`.` });
+    
+    const displayDesc = desc ? `**${desc}** -> ` : '';
+    await channel.send({ content: `✅ Added: ${emojiStr} | ${displayDesc}<@&${role.id}>\nType next entry, or \`done\`.` });
   }
 
   if (mappings.length === 0) {
@@ -112,7 +114,11 @@ async function runInteractiveBuilder(message) {
   // Construct Aesthetic Embed Message
   let textContent = '';
   for (const m of mappings) {
-    textContent += `${m.emojiStr} | <@&${m.roleId}> **${m.desc}**\n\n`;
+    if (m.desc) {
+      textContent += `${m.emojiStr} | <@&${m.roleId}> **${m.desc}**\n\n`;
+    } else {
+      textContent += `${m.emojiStr} | <@&${m.roleId}>\n\n`;
+    }
   }
 
   const rrEmbed = embed.build({
