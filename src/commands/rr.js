@@ -57,7 +57,7 @@ async function runInteractiveBuilder(message) {
   // Step 3: Entries
   const mappings = [];
   await channel.send({
-    embeds: [embed.info('Reaction Role Manager [3/3]', 'Now, add your roles one by one.\n\nFormat: `[emoji] [@role] [description]`\nExample: `🎤 @Singer The Singer Role`\n\nType `done` when you are finished.')]
+    embeds: [embed.info('Reaction Role Manager [3/3]', 'Now, add your roles one by one.\n\nFormat: `[emoji] [@role OR Role ID] [description]`\nExample: `🎤 123456789 The Singer Role`\n\nType `done` when you are finished.')]
   });
 
   while (true) {
@@ -77,10 +77,13 @@ async function runInteractiveBuilder(message) {
     const desc = parts.slice(2).join(' ');
 
     const roleId = roleStr.replace(/<@&|>/g, '');
-    const role = message.guild.roles.cache.get(roleId);
+    let role = message.guild.roles.cache.get(roleId);
+    if (!role) {
+      role = await message.guild.roles.fetch(roleId).catch(() => null);
+    }
 
     if (!role) {
-      await channel.send({ content: '❌ Invalid role. Please tag a valid role.' });
+      await channel.send({ content: '❌ Invalid role. Please tag a valid role or paste a valid Role ID.' });
       continue;
     }
 
