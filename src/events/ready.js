@@ -37,7 +37,7 @@ export default {
     const statuses = [
       'Athena Prime | Armed',
       'Athena Prime | Secured',
-      'Athena Prime | Truly Unbypassable'
+      'Athena Prime | Unbypassable'
     ];
     let statusIndex = 0;
 
@@ -60,7 +60,7 @@ export default {
     const nicknameSuffixes = [
       'Armed',
       'Dev Prince',
-      'Truly Unbypassable',
+      'Unbypassable',
       'Secured'
     ];
     let nicknameIndex = 0;
