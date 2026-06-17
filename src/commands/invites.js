@@ -52,7 +52,7 @@ async function setupInviteTracker(guild, replyChannel, member, interaction = nul
       embeds: [
         embed.success(
           'Invite Tracker Setup Complete',
-          `Invite tracking has been enabled!\n\n<a:Animated_Arrow_Red:1462005582826311712> **Logs Channel:** ${inviteChannel}\n<a:Animated_Arrow_Red:1462005582826311712> **Status:** Active & Listening\n\nThe bot will now carefully monitor every join and detect exactly who invited them, posting an aesthetic log in the designated channel.`
+          `Invite tracking has been enabled!\n\n<a:95849prettyarrowr:1448722500975333578> **Logs Channel:** ${inviteChannel}\n<a:95849prettyarrowr:1448722500975333578> **Status:** Active & Listening\n\nThe bot will now carefully monitor every join and detect exactly who invited them, posting an aesthetic log in the designated channel.`
         )
       ]
     });
