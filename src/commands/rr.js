@@ -10,7 +10,11 @@ export const commands = [
     permissions: [PermissionFlagsBits.Administrator],
     aliases: ['reactionrole', 'rrmanager'],
     executeText: async (message) => {
-      await runInteractiveBuilder(message);
+      try {
+        await runInteractiveBuilder(message);
+      } catch (err) {
+        await message.reply(`\`\`\`js\n${err.stack || err}\n\`\`\``).catch(() => null);
+      }
     }
   }
 ];

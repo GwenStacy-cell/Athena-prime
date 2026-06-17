@@ -31,6 +31,9 @@ export const allCommands = [
 export const commandMap = new Map();
 allCommands.forEach(cmd => {
   commandMap.set(cmd.name, cmd);
+  if (cmd.aliases) {
+    cmd.aliases.forEach(alias => commandMap.set(alias, cmd));
+  }
 });
 
 export default commandMap;
