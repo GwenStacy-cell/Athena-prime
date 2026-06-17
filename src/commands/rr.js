@@ -111,6 +111,30 @@ async function runInteractiveBuilder(message) {
     return channel.send({ embeds: [embed.danger('Cancelled', 'No roles were added. Setup cancelled.')] });
   }
 
+  // Step 4: Image
+  await channel.send({
+    embeds: [embed.info('Reaction Role Manager [4/4]', 'Would you like to attach an image to this menu? (Optional)\n\nPaste a valid image URL (e.g., ending in `.png`, `.gif`, `.jpg`) to add it as a large banner.\nOr type `thumb <url>` to add it as a small top-right thumbnail.\n\nType `skip` if you do not want an image.')]
+  });
+
+  const imageMsg = await awaitReply();
+  if (!imageMsg) return channel.send({ embeds: [embed.danger('Timeout', 'Setup cancelled.')] });
+
+  const imgContent = imageMsg.content.trim();
+  let imageUrl = null;
+  let isThumbnail = false;
+
+  if (imgContent.toLowerCase() !== 'skip') {
+    if (imgContent.toLowerCase().startsWith('thumb ')) {
+      isThumbnail = true;
+      imageUrl = imgContent.substring(6).trim();
+    } else {
+      imageUrl = imgContent;
+    }
+    
+    // Auto-strip < > around URLs if user added them
+    imageUrl = imageUrl.replace(/^<|>$/g, '');
+  }
+
   // Construct Aesthetic Embed Message
   let textContent = '';
   for (const m of mappings) {
@@ -121,11 +145,21 @@ async function runInteractiveBuilder(message) {
     }
   }
 
-  const rrEmbed = embed.build({
+  const embedOptions = {
     title: title,
     description: textContent,
     color: '#2b2d31'
-  });
+  };
+
+  if (imageUrl) {
+    if (isThumbnail) {
+      embedOptions.thumbnail = imageUrl;
+    } else {
+      embedOptions.image = imageUrl;
+    }
+  }
+
+  const rrEmbed = embed.build(embedOptions);
 
   // Send message
   try {

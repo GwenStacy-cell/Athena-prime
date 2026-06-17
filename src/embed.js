@@ -61,7 +61,7 @@ export const embed = {
   /**
    * General builder to standardize layout, footers and timestamps
    */
-  build({ title, description, color, fields = [], thumbnail, footerText, author }) {
+  build({ title, description, color, fields = [], thumbnail, image, footerText, author }) {
     const builder = new EmbedBuilder()
       .setColor(color || colors.dark)
       .setTimestamp();
@@ -69,6 +69,7 @@ export const embed = {
     if (title) builder.setTitle(`__**${title.toUpperCase()}**__`);
     if (description) builder.setDescription(description);
     if (thumbnail) builder.setThumbnail(thumbnail);
+    if (image) builder.setImage(image);
 
     if (fields && fields.length > 0) {
       builder.addFields(fields.map(f => ({
