@@ -156,7 +156,7 @@ export default {
           const maxUses = usedInvite ? (usedInvite.maxUses === 0 ? 'Infinite' : usedInvite.maxUses) : 'N/A';
           const maxAge = usedInvite ? (usedInvite.maxAge === 0 ? 'Permanent' : `${usedInvite.maxAge} seconds`) : 'N/A';
           const createdTime = usedInvite?.createdTimestamp ? `<t:${Math.floor(usedInvite.createdTimestamp / 1000)}:F>` : 'N/A';
-          const bullet = '<a:95849prettyarrowr:1448722500975333578>';
+          const bullet = '<a:61589pinkglock:1451707353450676265>';
           
           const inviteEmbed = {
             color: 0x2b2d31,
