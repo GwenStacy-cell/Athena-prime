@@ -78,13 +78,10 @@ export default {
           // Extract base name
           const currentNick = me.nickname || client.user.username;
           
-          // Remove any existing suffix from the name
+          // Remove any existing suffix from the name safely
           let baseName = currentNick;
-          for (const suffix of nicknameSuffixes) {
-            if (baseName.endsWith(` | ${suffix}`)) {
-              baseName = baseName.replace(` | ${suffix}`, '');
-              break;
-            }
+          if (baseName.includes(' | ')) {
+            baseName = baseName.split(' | ')[0].trim();
           }
 
           // Truncate base name if it's too long (Discord max is 32 chars)
