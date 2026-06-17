@@ -23,7 +23,8 @@ const DEFAULT_SCHEMA = {
   jtcChannels: {},   // channelId -> { ownerId, guildId }
   botWhitelist: {},  // guildId -> [ botId... ]
   emergencies: {},   // guildId -> { roles: [{id, perms}], channels: [{id, overwrites}] }
-  reactionRoles: {}  // messageId -> { guildId, channelId, title, mappings: [{emoji, roleId}] }
+  reactionRoles: {}, // messageId -> { guildId, channelId, title, mappings: [{emoji, roleId}] }
+  serverStats: {}    // guildId -> { categoryId, totalId, humansId, botsId }
 };
 
 class Database {
@@ -53,6 +54,7 @@ class Database {
         this.cache.botWhitelist   = this.cache.botWhitelist   || {};
         this.cache.emergencies    = this.cache.emergencies    || {};
         this.cache.reactionRoles  = this.cache.reactionRoles  || {};
+        this.cache.serverStats    = this.cache.serverStats    || {};
       } else {
         this.save();
       }
@@ -173,6 +175,23 @@ class Database {
   deleteReactionRoleMenu(messageId) {
     if (this.cache.reactionRoles[messageId]) {
       delete this.cache.reactionRoles[messageId];
+      this.save();
+    }
+  }
+
+  // --- SERVER STATS ---
+  getServerStats(guildId) {
+    return this.cache.serverStats[guildId] || null;
+  }
+
+  saveServerStats(guildId, data) {
+    this.cache.serverStats[guildId] = data;
+    this.save();
+  }
+
+  deleteServerStats(guildId) {
+    if (this.cache.serverStats[guildId]) {
+      delete this.cache.serverStats[guildId];
       this.save();
     }
   }

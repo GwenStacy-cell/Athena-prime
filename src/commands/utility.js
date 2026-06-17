@@ -474,6 +474,7 @@ async function getHelpEmbed(guild, client) {
     {
       name: h('ENGAGEMENT  &  TRACKING'),
       value:
+        `\`${p}serverstats\` **setup** / **disable** — Create live auto-updating Member Count VCs\n` +
         `\`${p}rrsetup\` — Launch the interactive Reaction Role Menu builder (alias: \`${p}reactionrole\`)\n` +
         `\`${p}rrdisable\` — Wipe all Reaction Role configurations from the server\n` +
         `\`${p}invitesetup\` \`#channel\` — Enable the Advanced Invite Tracker to log who invites who\n` +

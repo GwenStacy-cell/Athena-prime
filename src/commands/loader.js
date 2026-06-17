@@ -11,6 +11,7 @@ import { commands as welcomeCmds } from './welcome.js';
 import { commands as accentCmds } from './accent.js';
 import { commands as invitesCmds } from './invites.js';
 import { commands as rrCmds } from './rr.js';
+import { commands as serverstatsCmds } from './serverstats.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -25,7 +26,8 @@ export const allCommands = [
   ...welcomeCmds,
   ...accentCmds,
   ...invitesCmds,
-  ...rrCmds
+  ...rrCmds,
+  ...serverstatsCmds
 ];
 
 export const commandMap = new Map();

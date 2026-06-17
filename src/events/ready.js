@@ -118,6 +118,38 @@ export default {
       });
     }, 240000); // Every 4 minutes
 
+    // Server Stats auto-update loop (runs every 6 minutes to stay under Discord rate limits)
+    setInterval(async () => {
+      for (const [guildId, guild] of client.guilds.cache) {
+        try {
+          const stats = db.getServerStats(guildId);
+          if (!stats) continue;
+
+          // For accurate bot count, we check the cache. 
+          // Bots are typically fully cached.
+          const total = guild.memberCount;
+          const bots = guild.members.cache.filter(member => member.user.bot).size;
+          const humans = total - bots;
+
+          const totalCh = guild.channels.cache.get(stats.totalId);
+          const humansCh = guild.channels.cache.get(stats.humansId);
+          const botsCh = guild.channels.cache.get(stats.botsId);
+
+          if (totalCh && totalCh.name !== `🔒 ╭ ❗・USERS: ${total}`) {
+            await totalCh.setName(`🔒 ╭ ❗・USERS: ${total}`).catch(() => null);
+          }
+          if (humansCh && humansCh.name !== `🔒 ├ ❗・MEMBERS: ${humans}`) {
+            await humansCh.setName(`🔒 ├ ❗・MEMBERS: ${humans}`).catch(() => null);
+          }
+          if (botsCh && botsCh.name !== `🔒 ╰ ❗・BOTS: ${bots}`) {
+            await botsCh.setName(`🔒 ╰ ❗・BOTS: ${bots}`).catch(() => null);
+          }
+        } catch (e) {
+          // Ignore API errors
+        }
+      }
+    }, 6 * 60 * 1000); // 6 minutes
+
     // Sync slash commands globally
     try {
       console.log(chalk.blue('⏳ Fetching and caching invites...'));
