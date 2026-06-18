@@ -43,9 +43,8 @@ export async function endGiveaway(client, messageId, gwData) {
     // Announce the winner
     if (winners.length > 0) {
       const winEmbed = new EmbedBuilder()
-        .setTitle('🎊 Giveaway Ended 🎊')
-        .setDescription(`\n${EMOJI_WINNER} **Winner(s):** ${winners.map(id => `<@${id}>`).join(', ')}\n**Prize:** ${gwData.prize}\n\nCongratulations! Please DM the host to claim your prize.`)
-        .setColor('#2ECC71');
+        .setColor('#2ECC71')
+        .setDescription(`## 🎊 Giveaway Ended 🎊\n\n${EMOJI_WINNER}\n\n**Winner(s):** ${winners.map(id => `<@${id}>`).join(', ')}\n**Prize:** ${gwData.prize}\n\n*Congratulations! Please DM the host to claim your prize.*`);
 
       await channel.send({ content: `${winners.map(id => `<@${id}>`).join(', ')}`, embeds: [winEmbed] });
 
@@ -66,9 +65,8 @@ export async function endGiveaway(client, messageId, gwData) {
       }
     } else {
       const loseEmbed = new EmbedBuilder()
-        .setTitle('🎊 Giveaway Ended 🎊')
-        .setDescription(`\n${EMOJI_WINNER} Nobody entered the giveaway! The prize **${gwData.prize}** goes unclaimed.`)
-        .setColor('#E74C3C');
+        .setColor('#E74C3C')
+        .setDescription(`## 🎊 Giveaway Ended 🎊\n\n${EMOJI_WINNER}\n\nNobody entered the giveaway! The prize **${gwData.prize}** goes unclaimed.`);
 
       await channel.send({ embeds: [loseEmbed] });
     }
@@ -136,8 +134,7 @@ export const commands = [
         const endsAtTimestamp = Math.floor(endsAt / 1000);
 
         const gwEmbed = new EmbedBuilder()
-          .setTitle(`${EMOJI_HEADER} **GIVEAWAY** ${EMOJI_HEADER}`)
-          .setDescription(`**Prize:** ${prize}\n**Ends:** <t:${endsAtTimestamp}:R> (<t:${endsAtTimestamp}:f>)\n**Hosted By:** ${interaction.user}\n**Winners:** ${winners}\n\n${customMessage ? `*${customMessage}*\n\n` : ''}Click the button below to enter!`)
+          .setDescription(`## ${EMOJI_HEADER} GIVEAWAY ${EMOJI_HEADER}\n\n**Prize:** ${prize}\n**Ends:** <t:${endsAtTimestamp}:R> (<t:${endsAtTimestamp}:f>)\n**Hosted By:** ${interaction.user}\n**Winners:** ${winners}\n\n${customMessage ? `*${customMessage}*\n\n` : ''}Click the button below to enter!`)
           .setColor('#5865F2')
           .setFooter({ text: '0 Entries' })
           .setTimestamp(new Date(endsAt));
