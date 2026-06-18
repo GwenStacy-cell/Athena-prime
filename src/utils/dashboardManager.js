@@ -133,7 +133,7 @@ export async function updateDashboardMessage(guild, client) {
     const embedDb = new EmbedBuilder()
       .setColor(accentInt)
       .setTitle("ATHENA'S SECURITY DASHBOARD")
-      .setDescription(`**Status:** ${stats.metrics.firewall === 'Active' ? 'PROTECTED' : 'VULNERABLE'}\n**Live Monitoring:** Active`)
+      .setDescription(`**Status:** **${stats.metrics.firewall === 'Active' ? 'PROTECTED' : 'VULNERABLE'}**\n**Last Sync:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Live Monitoring:** **Active**`)
       .setImage('attachment://dashboard.png');
 
     const embedTo = new EmbedBuilder()
