@@ -1,7 +1,6 @@
 import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
-import sharp from 'sharp';
 
 // ──────────────────────────────────────────────
 // Bold underline header formatter — matches embed title style
@@ -262,39 +261,16 @@ export const commands = [
       const failed  = [];
 
       for (const [, animated, name, id] of emojis) {
-        let ext = animated ? 'gif' : 'png';
-        let url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
+        const ext = animated ? 'gif' : 'png';
+        const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
         
         try {
-          let response = await fetch(url);
-          // If Discord says the GIF doesn't exist, try animated WEBP before fully degrading to static PNG
-          if (!response.ok && animated) {
-            ext = 'webp';
-            url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
-            response = await fetch(url);
-            
-            // If WEBP fails too, then default back to PNG
-            if (!response.ok) {
-              ext = 'png';
-              url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
-              response = await fetch(url);
-            }
-          }
-
+          const response = await fetch(url);
+          
           if (!response.ok) throw new Error('Invalid Asset');
 
           const arrayBuffer = await response.arrayBuffer();
-          let buffer = Buffer.from(arrayBuffer);
-
-          // Discord API strictly strips animation from WebP uploads. We MUST convert animated WebPs to GIF on the fly!
-          if (ext === 'webp' && animated) {
-            try {
-              buffer = await sharp(buffer, { animated: true }).gif().toBuffer();
-            } catch (sharpErr) {
-              console.error('Sharp webp->gif conversion failed:', sharpErr);
-              throw new Error('Animation Conversion Failed');
-            }
-          }
+          const buffer = Buffer.from(arrayBuffer);
 
           const created = await guild.emojis.create({ attachment: buffer, name });
           added.push(created.toString());
