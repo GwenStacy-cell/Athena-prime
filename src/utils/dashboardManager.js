@@ -206,6 +206,18 @@ export async function setupDashboardChannel(guild, client) {
     if (cfg.dashboardChannelId !== targetChannel.id) {
       db.setDashboardInfo(guild.id, targetChannel.id, []);
     }
+    
+    // Ensure existing channels have the correct permissions (visible to everyone)
+    try {
+      await targetChannel.permissionOverwrites.edit(guild.roles.everyone.id, {
+        ViewChannel: true,
+        SendMessages: false,
+        AddReactions: false
+      });
+    } catch (e) {
+      console.error('Failed to update dashboard channel permissions:', e);
+    }
+
     return updateDashboardMessage(guild, client);
   }
 
@@ -217,7 +229,8 @@ export async function setupDashboardChannel(guild, client) {
       permissionOverwrites: [
         {
           id: guild.roles.everyone.id,
-          deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+          allow: [PermissionFlagsBits.ViewChannel],
+          deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.AddReactions]
         },
         {
           id: client.user.id,
