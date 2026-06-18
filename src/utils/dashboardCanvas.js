@@ -40,17 +40,17 @@ function drawBlock(ctx, x, y, w, h, title, icon, value, accentColor) {
 
   // Icon
   ctx.fillStyle = accentColor;
-  ctx.font = 'bold 12px sans-serif';
+  ctx.font = 'bold 12px Roboto';
   ctx.fillText(icon, x + 15, y + 25);
 
   // Title
   ctx.fillStyle = '#A3A6AA';
-  ctx.font = 'bold 11px sans-serif';
+  ctx.font = 'bold 11px Roboto';
   ctx.fillText(title, x + 35, y + 25);
 
   // Value
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 32px sans-serif';
+  ctx.font = 'bold 32px Roboto';
   ctx.fillText(value, x + 15, y + 65);
 }
 
@@ -82,12 +82,12 @@ export async function generateDashboard(stats, accentColor) {
 
   // Title
   ctx.fillStyle = '#A3A6AA';
-  ctx.font = 'bold 12px sans-serif';
+  ctx.font = 'bold 12px Roboto';
   ctx.fillText('SYSTEM INTEGRITY INDEX', 60, 50);
   
   // Percentage
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 64px sans-serif';
+  ctx.font = 'bold 64px Roboto';
   ctx.fillText(`${stats.integrity}%`, 45, 110);
 
   // Progress Bar Bg
@@ -165,7 +165,7 @@ export async function generateDashboard(stats, accentColor) {
 
   // Terminal Title
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 20px sans-serif';
+  ctx.font = 'bold 20px Roboto';
   ctx.fillText('>> Active Monitoring Core', 60, termY + 40);
 
   // Terminal Logs
@@ -210,7 +210,7 @@ export async function generateTimeoutCard(logs, accentColor) {
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 24px sans-serif';
+  ctx.font = 'bold 24px Roboto';
   ctx.fillText('TIMEOUT DISCIPLINARY LOGS', 60, 60);
 
   ctx.font = '16px monospace';
@@ -252,7 +252,7 @@ export async function generateAutomodCard(logs, accentColor) {
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 24px sans-serif';
+  ctx.font = 'bold 24px Roboto';
   ctx.fillText('AUTOMOD SECURITY EVENTS', 60, 60);
 
   ctx.font = '16px monospace';

@@ -38,12 +38,12 @@ export async function fetchDashboardStats(guild) {
   
   // Firewall Status
   const cfg = db.getGuildConfig(guild.id);
-  const firewall = cfg.antiNuke ? 'ACTIVE' : 'OFFLINE';
+  const firewall = cfg.antiNukeEnabled ? 'ACTIVE' : 'OFFLINE';
 
   // Integrity Index Calculation (0-100%)
   // Start at 100%. Deduct for high ratios of admins to members, threat roles, offline firewall.
   let integrity = 100;
-  if (!cfg.antiNuke) integrity -= 30;
+  if (!cfg.antiNukeEnabled) integrity -= 30;
   if (adminRoles.size > 10) integrity -= 10;
   if (threatRoles.size > 5) integrity -= Math.min(20, threatRoles.size * 2);
   if (threatUsers.size > 10) integrity -= Math.min(20, threatUsers.size * 2);
