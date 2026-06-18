@@ -165,7 +165,7 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   let topMsgName = 'No Activity';
   if (topMsg) {
     const ch = guild?.channels.cache.get(topMsg.channel_id);
-    const cleanName = ch ? ch.name.replace(/[^\x20-\x7E]/g, '').trim() || 'channel' : 'unknown';
+    const cleanName = ch ? ch.name.normalize('NFKC').replace(/[^\x20-\x7E]/g, '').trim() || 'channel' : 'unknown';
     topMsgName = `# ${cleanName}`;
   }
   const topMsgVal = topMsg ? formatNumber(topMsg.total) : '0';
@@ -179,7 +179,7 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   let topVcName = 'No Activity';
   if (topVc) {
     const ch = guild?.channels.cache.get(topVc.channel_id);
-    const cleanName = ch ? ch.name.replace(/[^\x20-\x7E]/g, '').trim() || 'channel' : 'unknown';
+    const cleanName = ch ? ch.name.normalize('NFKC').replace(/[^\x20-\x7E]/g, '').trim() || 'channel' : 'unknown';
     topVcName = cleanName;
   }
   const topVcVal = topVc ? formatHours(topVc.total) : '0 secs';

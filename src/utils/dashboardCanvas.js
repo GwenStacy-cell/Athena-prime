@@ -195,7 +195,7 @@ export async function generateDashboard(stats, accentColor) {
       
       // Draw log text
       ctx.fillStyle = '#DCDDDE';
-      const cleanLog = log.replace(/[^\x20-\x7E]/g, '').trim();
+      const cleanLog = log.normalize('NFKC').replace(/[^\x20-\x7E]/g, '').trim();
       ctx.fillText(cleanLog, 80, logY);
       logY += 25;
     });
