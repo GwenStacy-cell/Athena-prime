@@ -154,6 +154,29 @@ export default {
         return;
       }
 
+      // Giveaway Join Button
+      if (interaction.customId === 'gw_join') {
+        const gwData = db.getGiveaway(interaction.message.id);
+        if (!gwData) {
+          return interaction.reply({ content: 'This giveaway has already ended or is invalid!', ephemeral: true });
+        }
+        
+        const joined = db.addGiveawayParticipant(interaction.message.id, interaction.user.id);
+        
+        // Update embed footer with new entry count
+        const newCount = db.getGiveaway(interaction.message.id).participants.length;
+        const originalEmbed = interaction.message.embeds[0];
+        const updatedEmbed = { ...originalEmbed.data, footer: { text: `${newCount} Entries` } };
+        
+        await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
+
+        if (joined) {
+          return interaction.reply({ content: `<a:emoji_10:1513761303003533363> You have successfully entered the giveaway!`, ephemeral: true });
+        } else {
+          return interaction.reply({ content: `You have successfully left the giveaway.`, ephemeral: true });
+        }
+      }
+
       // Antinuke config panel buttons
       const validButtons = ['toggle_antinuke', 'toggle_spam', 'toggle_invite', 'toggle_blacklist_filter', 'cycle_punishment', 'save_panel'];
 

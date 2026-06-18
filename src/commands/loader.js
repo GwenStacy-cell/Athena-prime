@@ -13,6 +13,7 @@ import { commands as invitesCmds } from './invites.js';
 import { commands as rrCmds } from './rr.js';
 import { commands as serverstatsCmds } from './serverstats.js';
 import { commands as birthdayCmds } from './birthday.js';
+import { commands as giveawayCmds } from './giveaway.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -29,7 +30,8 @@ export const allCommands = [
   ...invitesCmds,
   ...rrCmds,
   ...serverstatsCmds,
-  ...birthdayCmds
+  ...birthdayCmds,
+  ...giveawayCmds
 ];
 
 export const commandMap = new Map();

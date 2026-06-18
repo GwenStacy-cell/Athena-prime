@@ -6,6 +6,7 @@ import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { ensureUnbypassableRole } from '../utils/antiStrip.js';
 import { CronJob } from 'cron';
 import { generateBirthdayMessage } from '../commands/birthday.js';
+import { endGiveaway } from '../commands/giveaway.js';
 
 export default {
   name: 'ready',
@@ -46,6 +47,17 @@ export default {
         console.error(chalk.red('❌ Error running birthday cron job:'), err);
       }
     }, null, true, 'Asia/Kolkata');
+
+    // Giveaway Timer (Runs every 15 seconds)
+    setInterval(async () => {
+      const activeGiveaways = db.getActiveGiveaways();
+      for (const gw of activeGiveaways) {
+        if (!gw.ended && gw.endsAt <= Date.now()) {
+          console.log(chalk.blue(`⏳ Automatically ending giveaway: ${gw.messageId}`));
+          await endGiveaway(client, gw.messageId, gw);
+        }
+      }
+    }, 15000);
 
     // Store boot timestamp for uptime tracking
     client.bootTimestamp = Date.now();

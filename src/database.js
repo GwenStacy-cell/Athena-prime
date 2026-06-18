@@ -25,7 +25,8 @@ const DEFAULT_SCHEMA = {
   emergencies: {},   // guildId -> { roles: [{id, perms}], channels: [{id, overwrites}] }
   reactionRoles: {}, // messageId -> { guildId, channelId, title, mappings: [{emoji, roleId}] }
   serverStats: {},   // guildId -> { categoryId, totalId, humansId, botsId }
-  birthdays: {}      // guildId -> { channelId, users: { userId -> { day, month } } }
+  birthdays: {},     // guildId -> { channelId, users: { userId -> { day, month } } }
+  giveaways: {}      // messageId -> { guildId, channelId, hostId, prize, winnersCount, endsAt, participants: [] }
 };
 
 class Database {
@@ -57,6 +58,7 @@ class Database {
         this.cache.reactionRoles  = this.cache.reactionRoles  || {};
         this.cache.serverStats    = this.cache.serverStats    || {};
         this.cache.birthdays      = this.cache.birthdays      || {};
+        this.cache.giveaways      = this.cache.giveaways      || {};
       } else {
         this.save();
       }
@@ -763,6 +765,49 @@ class Database {
       return true;
     }
     return false;
+  }
+
+  // ==========================================
+  // GIVEAWAY SYSTEM
+  // ==========================================
+  getGiveaway(messageId) {
+    if (!this.cache.giveaways) this.cache.giveaways = {};
+    return this.cache.giveaways[messageId] || null;
+  }
+
+  saveGiveaway(messageId, data) {
+    if (!this.cache.giveaways) this.cache.giveaways = {};
+    this.cache.giveaways[messageId] = data;
+    this.save();
+  }
+
+  removeGiveaway(messageId) {
+    if (!this.cache.giveaways) return;
+    if (this.cache.giveaways[messageId]) {
+      delete this.cache.giveaways[messageId];
+      this.save();
+    }
+  }
+
+  addGiveawayParticipant(messageId, userId) {
+    const gw = this.getGiveaway(messageId);
+    if (!gw) return false;
+    
+    if (!gw.participants.includes(userId)) {
+      gw.participants.push(userId);
+      this.save();
+      return true; // Joined
+    } else {
+      // User is already in it, remove them (toggle functionality)
+      gw.participants = gw.participants.filter(id => id !== userId);
+      this.save();
+      return false; // Left
+    }
+  }
+
+  getActiveGiveaways() {
+    if (!this.cache.giveaways) return [];
+    return Object.entries(this.cache.giveaways).map(([messageId, data]) => ({ messageId, ...data }));
   }
 }
 
