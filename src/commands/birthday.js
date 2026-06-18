@@ -3,14 +3,27 @@ import db from '../database.js';
 import embed from '../embed.js';
 import { isBotOwnerOrServerOwnerStrict, isBotOwnerSync } from '../utils/helpers.js';
 
+const BDAY_EMOJIS = [
+  '<a:cheers:1517075669547483206>',
+  '<a:a_fheartSpinWhite:1516523707181433109>',
+  '<a:emoji_102:1517075665281613844>',
+  '<a:Star2:1516523061468205227>',
+  '<a:emoji_56:1517076996121690163>'
+];
+
 export function generateBirthdayMessage(userId) {
+  // Pick random emojis for each position
+  const e1 = BDAY_EMOJIS[Math.floor(Math.random() * BDAY_EMOJIS.length)];
+  const e2 = BDAY_EMOJIS[Math.floor(Math.random() * BDAY_EMOJIS.length)];
+  const e3 = BDAY_EMOJIS[Math.floor(Math.random() * BDAY_EMOJIS.length)];
+
   const customEmbed = new EmbedBuilder()
     .setColor('#ff0099')
     .setDescription(
-      `# <a:cheers:1517075669547483206> HAPPY BIRTHDAY! <a:a_fheartSpinWhite:1516523707181433109>\n\n` +
+      `# ${e1} HAPPY BIRTHDAY! ${e2}\n\n` +
       `## **Hey <@${userId}>!**\n\n` +
-      `### <a:whitecross:1517075668397985792> Wishing you a truly spectacular day surrounded by the people who matter most. May this special day be filled with endless joy, beautiful memories, and boundless success in everything you do. Thank you for being such an incredible part of our community. Celebrate big, because you absolutely deserve it!\n\n` +
-      `## <a:emoji_102:1517075665281613844> *Have an extraordinary year ahead!*`
+      `### Wishing you a truly spectacular day surrounded by the people who matter most. May this special day be filled with endless joy, beautiful memories, and boundless success in everything you do. Thank you for being such an incredible part of our community. Celebrate big, because you absolutely deserve it!\n\n` +
+      `## ${e3} **Have an extraordinary year ahead!**`
     );
   
   return { content: `<@${userId}>`, embeds: [customEmbed] };
