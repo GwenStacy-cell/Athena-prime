@@ -397,8 +397,7 @@ async function getHelpEmbed(guild, client) {
         `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** \`on|off\`\n` +
         `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid\n` +
         `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels\n\n` +
-        `> **Bot Whitelist Enforcement:** If you invite a legitimate moderation bot, you must explicitly whitelist it (e.g., \`${p}whitelist add <BotID> Channel Deletion\`) or add it as an Extra Owner. If you do not explicitly whitelist a bot, it will be treated exactly like a human criminal and banned if it tries to delete a channel.\n\n` +
-        `> **Strict Bot Addition Guard:** Only the Server Owner and Global Bot Owner can add bots. Any unauthorized admin adding a bot will have all roles instantly stripped, and the bot will be banned.`
+        `> **Warning:** You MUST whitelist friendly bots (e.g. \`${p}botwhitelist add <ID>\`). Unwhitelisted bots taking mod actions will be instantly banned.`
     },
     {
       name: h('WHITELIST  &  PERMISSIONS'),
