@@ -38,7 +38,7 @@ export async function fetchDashboardStats(guild) {
   
   // Firewall Status
   const cfg = db.getGuildConfig(guild.id);
-  const firewall = cfg.antiNukeEnabled ? 'ACTIVE' : 'OFFLINE';
+  const firewall = cfg.antiNukeEnabled ? 'Active' : 'Offline';
 
   // Integrity Index Calculation (0-100%)
   // Start at 100%. Deduct for high ratios of admins to members, threat roles, offline firewall.
@@ -133,7 +133,7 @@ export async function updateDashboardMessage(guild, client) {
     const embedDb = new EmbedBuilder()
       .setColor(accentInt)
       .setTitle("ATHENA'S SECURITY DASHBOARD")
-      .setDescription(`**Status:** ${stats.metrics.firewall === 'ACTIVE' ? 'PROTECTED' : 'VULNERABLE'}\n**Live Monitoring:** Active`)
+      .setDescription(`**Status:** ${stats.metrics.firewall === 'Active' ? 'PROTECTED' : 'VULNERABLE'}\n**Live Monitoring:** Active`)
       .setImage('attachment://dashboard.png');
 
     const embedTo = new EmbedBuilder()

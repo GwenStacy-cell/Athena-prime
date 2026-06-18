@@ -50,8 +50,17 @@ function drawBlock(ctx, x, y, w, h, title, icon, value, accentColor) {
 
   // Value
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 32px Roboto';
-  ctx.fillText(value, x + 15, y + 65);
+  ctx.shadowColor = accentColor;
+  ctx.shadowBlur = 10;
+  
+  if (typeof value === 'string' && value.length > 3) {
+    ctx.font = 'bold 24px Roboto';
+    ctx.fillText(value, x + 15, y + 60);
+  } else {
+    ctx.font = 'bold 32px Roboto';
+    ctx.fillText(value, x + 15, y + 65);
+  }
+  ctx.shadowBlur = 0;
 }
 
 export async function generateDashboard(stats, accentColor) {
@@ -87,8 +96,11 @@ export async function generateDashboard(stats, accentColor) {
   
   // Percentage
   ctx.fillStyle = '#FFFFFF';
+  ctx.shadowColor = accentColor;
+  ctx.shadowBlur = 15;
   ctx.font = 'bold 64px Roboto';
   ctx.fillText(`${stats.integrity}%`, 45, 110);
+  ctx.shadowBlur = 0;
 
   // Progress Bar Bg
   const barX = 230;
