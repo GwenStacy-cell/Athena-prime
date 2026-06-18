@@ -328,8 +328,14 @@ export const commands = [
       },
       {
         name: 'channel',
-        description: 'Optional target text channel',
+        description: 'Optional target text/voice channel',
         type: 7,
+        required: false
+      },
+      {
+        name: 'channel_id',
+        description: 'Optional channel ID (to send to remote servers)',
+        type: 3,
         required: false
       }
     ],
@@ -341,8 +347,8 @@ export const commands = [
       let channel = null;
       let text = '';
 
-      // Accept GuildText AND GuildAnnouncement (news channels)
-      const sendableTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread];
+      // Accept GuildText, GuildAnnouncement (news channels), threads, and GuildVoice
+      const sendableTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice];
 
       // Try to parse the first argument as a channel mention or ID
       const firstArg = args[0].replace(/[<#>]/g, '');
@@ -363,7 +369,12 @@ export const commands = [
       }
 
       // Check bot has permission to send in the target channel
-      const botMember = message.guild.members.me;
+      const targetGuild = channel.guild;
+      if (!targetGuild) {
+         return message.reply({ embeds: [embed.danger('Error', 'Target must be a server channel.')] });
+      }
+      
+      const botMember = targetGuild.members.me;
       if (!channel.permissionsFor(botMember).has(PermissionFlagsBits.SendMessages)) {
         return message.reply({ embeds: [embed.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}. Grant me access to that channel first.`)] });
       }
@@ -377,17 +388,31 @@ export const commands = [
     },
     async executeSlash(interaction) {
       const text = interaction.options.getString('message');
-      const channel = interaction.options.getChannel('channel') || interaction.channel;
+      let channel = interaction.options.getChannel('channel') || interaction.channel;
+      const channelId = interaction.options.getString('channel_id');
 
-      // Accept GuildText, GuildAnnouncement (news), threads
-      const sendableTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread];
+      if (channelId) {
+        const remoteChannel = interaction.client.channels.cache.get(channelId);
+        if (!remoteChannel) {
+          return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Could not find a channel with that ID. Make sure the bot is in that server.`)], ephemeral: true });
+        }
+        channel = remoteChannel;
+      }
+
+      // Accept GuildText, GuildAnnouncement (news), threads, and VC chat
+      const sendableTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice];
 
       if (!sendableTypes.includes(channel.type)) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target must be a text channel, announcement channel, or thread.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target must be a text channel, announcement channel, thread, or voice channel.`)], ephemeral: true });
       }
 
       // Check bot has permission to send in the target channel
-      const botMember = interaction.guild.members.me;
+      const targetGuild = channel.guild;
+      if (!targetGuild) {
+         return interaction.reply({ embeds: [embed.danger('Error', 'Target must be a server channel.')], ephemeral: true });
+      }
+
+      const botMember = targetGuild.members.me;
       if (!channel.permissionsFor(botMember).has(PermissionFlagsBits.SendMessages)) {
         return interaction.reply({ embeds: [embed.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}.\n\nGrant me access to that channel first.`)], ephemeral: true });
       }
