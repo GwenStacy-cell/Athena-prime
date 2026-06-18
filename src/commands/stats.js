@@ -1,4 +1,5 @@
 import { PermissionFlagsBits, AttachmentBuilder } from 'discord.js';
+import db from '../database.js';
 import statsDB from '../statsDB.js';
 import { generateStatCard } from '../utils/statCanvas.js';
 import embed from '../embed.js';
