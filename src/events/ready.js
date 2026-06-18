@@ -99,7 +99,7 @@ export default {
     ];
     let nicknameIndex = 0;
 
-    setInterval(async () => {
+    const rotateNickname = async () => {
       nicknameIndex = (nicknameIndex + 1) % nicknameSuffixes.length;
       const currentSuffix = nicknameSuffixes[nicknameIndex];
 
@@ -141,7 +141,10 @@ export default {
           // Ignore individual guild failures (e.g. Missing Permissions)
         }
       }
-    }, 30 * 60 * 1000);
+    };
+
+    rotateNickname(); // Run instantly on boot
+    setInterval(rotateNickname, 30 * 60 * 1000); // Then every 30 minutes
 
 
 
