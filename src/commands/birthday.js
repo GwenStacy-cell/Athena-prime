@@ -1,28 +1,19 @@
-import { PermissionFlagsBits, ChannelType } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 import { isBotOwnerOrServerOwnerStrict, isBotOwnerSync } from '../utils/helpers.js';
 
-const EMOJIS = [
-  '<a:emoji_114:1516523064492425318>',
-  '<a:crown:1445649249143357541>',
-  '<a:emoji_54:1417775717323636796>',
-  '<a:1226212822073999360:1513488972083363911>',
-  '<a:1436221846331723918:1514205977770065961>',
-  '<a:1498932004442341436:1513489569767493663>',
-  '<a:Dark4luvontop:1462126038753476629>'
-];
-
-export function getRandomBirthdayEmojis() {
-  const shuffled = [...EMOJIS].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, Math.floor(Math.random() * 3) + 2).join(' '); // 2 to 4 emojis
-}
-
 export function generateBirthdayMessage(userId) {
-  const e1 = getRandomBirthdayEmojis();
-  const e2 = getRandomBirthdayEmojis();
+  const customEmbed = new EmbedBuilder()
+    .setColor('#ff0099')
+    .setTitle('<a:Sexy:1409202438845501440> HAPPY BIRTHDAY! <a:Sexy:1409202438845501440>')
+    .setDescription(
+      `<a:thunder:1516519601394159638> **Hey <@${userId}>!**\n\n` +
+      `### Wishing you a fantastic day filled with joy, love, and countless blessings. May all your dreams come true!\n\n` +
+      `<a:5554blackwand:1451705843270815834> *Have an amazing year ahead!*`
+    );
   
-  return `${e1} \n\n# **HAPPY BIRTHDAY <@${userId}>!** \n\n### Wishing you a fantastic day filled with joy, love, and countless blessings. May all your dreams come true! \n\n${e2}`;
+  return { content: `<@${userId}>`, embeds: [customEmbed] };
 }
 
 export const commands = [
@@ -153,7 +144,7 @@ export const commands = [
       const targetUser = message.mentions.users.first() || message.author;
       const msg = generateBirthdayMessage(targetUser.id);
       
-      await message.channel.send({ content: msg });
+      await message.channel.send(msg);
     },
     async executeSlash(interaction) {
       return interaction.reply({ content: 'This is a prefix-only hidden command (`!testbirthday @user`).', ephemeral: true });

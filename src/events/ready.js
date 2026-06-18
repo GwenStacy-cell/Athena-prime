@@ -38,7 +38,7 @@ export default {
           for (const [userId, dates] of Object.entries(config.users)) {
             if (dates.day === currentDay && dates.month === currentMonth) {
               const message = generateBirthdayMessage(userId);
-              await channel.send({ content: message }).catch(() => null);
+              await channel.send(message).catch(() => null);
             }
           }
         }
