@@ -261,7 +261,7 @@ export const commands = [
       const failed  = [];
 
       for (const [, animated, name, id] of emojis) {
-        const ext = animated ? 'gif' : 'webp';
+        const ext = animated ? 'gif' : 'png';
         const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
         try {
           const created = await guild.emojis.create({ attachment: url, name });
