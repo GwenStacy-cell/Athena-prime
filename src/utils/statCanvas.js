@@ -74,8 +74,8 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   
   // Custom display name or nickname if any
   const nick = member ? member.displayName : user.username;
-  if (nick !== user.username) {
-    drawText(ctx, `AKA ${nick}`, 115, 85, '20px sans-serif', textColorSecondary);
+  if (nick) {
+    // We intentionally skip rendering the AKA nickname to avoid unsupported font tofu boxes
   }
 
   // Dates
