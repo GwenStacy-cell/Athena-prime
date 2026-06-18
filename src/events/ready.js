@@ -284,19 +284,14 @@ export default {
       const slashData = allCommands
         .filter(cmd => !cmd.hidden) // Skip hidden commands (e.g., enuke — prefix only)
         .map(cmd => {
-          // If the command is NOT 'stats' and NOT 'time', restrict it to Admins by default.
-          // This hides the command from the auto-complete menu for regular users.
-          let defaultPerms = null;
-          if (cmd.name !== 'stats' && cmd.name !== 'time') {
-            defaultPerms = '0'; // '0' disables for everyone except administrators
-          }
-
           // Map options and build proper REST format
           return {
             name: cmd.name,
             description: cmd.description,
             options: cmd.options || [],
-            default_member_permissions: defaultPerms
+            default_member_permissions: cmd.permissions && cmd.permissions.length > 0 
+              ? cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
+              : null
           };
         });
 
