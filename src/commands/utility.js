@@ -21,7 +21,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       const help = await getHelpEmbed(interaction.guild, interaction.client);
-      await interaction.reply({ ...help, ephemeral: true });
+      await interaction.reply({ ...help });
     }
   },
 
