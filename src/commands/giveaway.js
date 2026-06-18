@@ -42,9 +42,19 @@ export async function endGiveaway(client, messageId, gwData) {
 
     // Announce the winner
     if (winners.length > 0) {
-      await channel.send({ content: `${EMOJI_WINNER} Congratulations ${winners.map(id => `<@${id}>`).join(', ')}! You won **${gwData.prize}**!` });
+      const winEmbed = new EmbedBuilder()
+        .setTitle('🎊 Giveaway Ended 🎊')
+        .setDescription(`\n${EMOJI_WINNER} **Winner(s):** ${winners.map(id => `<@${id}>`).join(', ')}\n**Prize:** ${gwData.prize}\n\nCongratulations! Please DM the host to claim your prize.`)
+        .setColor('#2ECC71');
+
+      await channel.send({ content: `${winners.map(id => `<@${id}>`).join(', ')}`, embeds: [winEmbed] });
     } else {
-      await channel.send({ content: `${EMOJI_WINNER} Giveaway ended, but nobody participated!` });
+      const loseEmbed = new EmbedBuilder()
+        .setTitle('🎊 Giveaway Ended 🎊')
+        .setDescription(`\n${EMOJI_WINNER} Nobody entered the giveaway! The prize **${gwData.prize}** goes unclaimed.`)
+        .setColor('#E74C3C');
+
+      await channel.send({ embeds: [loseEmbed] });
     }
 
     // Mark as ended but keep in DB for rerolling
