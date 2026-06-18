@@ -40,7 +40,7 @@ function drawText(ctx, text, x, y, font, color, align = 'left') {
   ctx.fillText(text, x, y);
 }
 
-export async function generateStatCard(user, member, stats, ranks, topChannels, chartData) {
+export async function generateStatCard(user, member, stats, ranks, topChannels, chartData, guild) {
   const width = 800;
   const height = 450;
   const canvas = createCanvas(width, height);
@@ -162,7 +162,11 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   drawPanel(ctx, 35, botY + 45, tcW - 30, 30, 5, innerPanelColor);
   drawText(ctx, '#', 45, botY + 65, 'bold 16px sans-serif', textColorSecondary);
   const topMsg = topChannels.messages[0];
-  const topMsgName = topMsg ? `<#${topMsg.channel_id}>` : 'None';
+  let topMsgName = 'No Activity';
+  if (topMsg) {
+    const ch = guild?.channels.cache.get(topMsg.channel_id);
+    topMsgName = ch ? `# ${ch.name}` : `# unknown`;
+  }
   const topMsgVal = topMsg ? formatNumber(topMsg.total) : '0';
   drawText(ctx, topMsgName, 70, botY + 65, 'bold 16px sans-serif', textColorPrimary);
   drawText(ctx, topMsgVal + ' msgs', 20 + tcW - 25, botY + 65, '14px sans-serif', textColorSecondary, 'right');
@@ -171,8 +175,12 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   drawPanel(ctx, 35, botY + 85, tcW - 30, 30, 5, innerPanelColor);
   drawText(ctx, '🔊', 45, botY + 105, '16px sans-serif', textColorSecondary);
   const topVc = topChannels.voice[0];
-  const topVcName = topVc ? `<#${topVc.channel_id}>` : 'None';
-  const topVcVal = topVc ? formatHours(topVc.total) : '0';
+  let topVcName = 'No Activity';
+  if (topVc) {
+    const ch = guild?.channels.cache.get(topVc.channel_id);
+    topVcName = ch ? `🔊 ${ch.name}` : `🔊 unknown`;
+  }
+  const topVcVal = topVc ? formatHours(topVc.total) : '0 secs';
   drawText(ctx, topVcName, 70, botY + 105, 'bold 16px sans-serif', textColorPrimary);
   drawText(ctx, topVcVal, 20 + tcW - 25, botY + 105, '14px sans-serif', textColorSecondary, 'right');
 
@@ -244,7 +252,7 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   ctx.fill();
 
   // FOOTER
-  drawText(ctx, 'Server Lookback: Last 30 days — Timezone: UTC', 20, height - 15, '12px sans-serif', '#7A7C80');
+  drawText(ctx, 'Server Lookback: Last 30 days — Timezone: IST', 20, height - 15, '12px sans-serif', '#888');
   drawText(ctx, 'Powered by Athena Prime', width - 20, height - 15, 'bold 12px sans-serif', '#43B581', 'right');
 
   return canvas.toBuffer();

@@ -61,7 +61,7 @@ export const commands = [
       }
 
       try {
-        const buffer = await generateStatCard(targetUser, targetMember, userStats, serverRanks, topChannels, chartData);
+        const buffer = await generateStatCard(targetUser, targetMember, userStats, serverRanks, topChannels, chartData, interaction.guild);
         const attachment = new AttachmentBuilder(buffer, { name: 'statbot-card.png' });
         
         await interaction.editReply({ files: [attachment] });
