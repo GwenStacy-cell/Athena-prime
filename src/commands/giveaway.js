@@ -40,10 +40,13 @@ export async function endGiveaway(client, messageId, gwData) {
 
     await message.edit({ embeds: [originalEmbed], components: [row] });
 
+    const guildConfig = db.getGuildConfig(gwData.guildId) || {};
+    const accentColor = guildConfig.accentColor || '#5865F2';
+
     // Announce the winner
     if (winners.length > 0) {
       const winEmbed = new EmbedBuilder()
-        .setColor('#2ECC71')
+        .setColor(accentColor)
         .setDescription(`## 🎊 Giveaway Ended 🎊\n\n${EMOJI_WINNER}\n\n**Winner(s):** ${winners.map(id => `<@${id}>`).join(', ')}\n**Prize:** ${gwData.prize}\n\n*Congratulations! Please DM the host to claim your prize.*`);
 
       await channel.send({ content: `${winners.map(id => `<@${id}>`).join(', ')}`, embeds: [winEmbed] });
@@ -65,7 +68,7 @@ export async function endGiveaway(client, messageId, gwData) {
       }
     } else {
       const loseEmbed = new EmbedBuilder()
-        .setColor('#E74C3C')
+        .setColor(accentColor)
         .setDescription(`## 🎊 Giveaway Ended 🎊\n\n${EMOJI_WINNER}\n\nNobody entered the giveaway! The prize **${gwData.prize}** goes unclaimed.`);
 
       await channel.send({ embeds: [loseEmbed] });
@@ -133,9 +136,12 @@ export const commands = [
         const endsAt = Date.now() + durationMs;
         const endsAtTimestamp = Math.floor(endsAt / 1000);
 
+        const guildConfig = db.getGuildConfig(interaction.guild.id) || {};
+        const accentColor = guildConfig.accentColor || '#5865F2';
+
         const gwEmbed = new EmbedBuilder()
           .setDescription(`## ${EMOJI_HEADER} GIVEAWAY ${EMOJI_HEADER}\n\n**Prize:** ${prize}\n**Ends:** <t:${endsAtTimestamp}:R> (<t:${endsAtTimestamp}:f>)\n**Hosted By:** ${interaction.user}\n**Winners:** ${winners}\n\n${customMessage ? `*${customMessage}*\n\n` : ''}Click the button below to enter!`)
-          .setColor('#5865F2')
+          .setColor(accentColor)
           .setFooter({ text: '0 Entries' })
           .setTimestamp(new Date(endsAt));
 

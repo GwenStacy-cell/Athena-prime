@@ -11,14 +11,17 @@ const BDAY_EMOJIS = [
   '<a:emoji_56:1517076996121690163>'
 ];
 
-export function generateBirthdayMessage(userId) {
+export function generateBirthdayMessage(userId, guildId) {
   // Pick random emojis for each position
   const e1 = BDAY_EMOJIS[Math.floor(Math.random() * BDAY_EMOJIS.length)];
   const e2 = BDAY_EMOJIS[Math.floor(Math.random() * BDAY_EMOJIS.length)];
   const e3 = BDAY_EMOJIS[Math.floor(Math.random() * BDAY_EMOJIS.length)];
 
+  const guildConfig = db.getGuildConfig(guildId) || {};
+  const accentColor = guildConfig.accentColor || '#ff0099';
+
   const customEmbed = new EmbedBuilder()
-    .setColor('#ff0099')
+    .setColor(accentColor)
     .setDescription(
       `# ${e1} HAPPY BIRTHDAY! ${e2}\n\n` +
       `## **Hey <@${userId}>!**\n\n` +
@@ -155,7 +158,7 @@ export const commands = [
       if (!isBotOwnerSync(message.author.id)) return; // Completely ignore if not bot owner
       
       const targetUser = message.mentions.users.first() || message.author;
-      const msg = generateBirthdayMessage(targetUser.id);
+      const msg = generateBirthdayMessage(targetUser.id, message.guild?.id);
       
       await message.channel.send(msg);
     },
