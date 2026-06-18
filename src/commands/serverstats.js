@@ -20,7 +20,7 @@ export const commands = [
         type: 1 // SUB_COMMAND
       }
     ],
-    aliases: ['statsetup', 'stats'],
+    aliases: ['statsetup', 'serverstat'],
     executePrefix: async (message, args) => {
       const action = args[0]?.toLowerCase();
       
