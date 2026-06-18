@@ -261,10 +261,23 @@ export const commands = [
       const failed  = [];
 
       for (const [, animated, name, id] of emojis) {
-        const ext = animated ? 'gif' : 'png';
-        const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
+        let ext = animated ? 'gif' : 'png';
+        let url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
+        
         try {
-          const created = await guild.emojis.create({ attachment: url, name });
+          let response = await fetch(url);
+          // If Discord says the GIF doesn't exist but the tag claimed it was animated, fallback to PNG
+          if (!response.ok && animated) {
+            ext = 'png';
+            url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
+            response = await fetch(url);
+          }
+
+          if (!response.ok) throw new Error('Invalid Asset');
+
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const created = await guild.emojis.create({ attachment: buffer, name });
           added.push(created.toString());
         } catch (err) {
           const reason = err.message?.includes('30008')
