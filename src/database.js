@@ -24,7 +24,8 @@ const DEFAULT_SCHEMA = {
   botWhitelist: {},  // guildId -> [ botId... ]
   emergencies: {},   // guildId -> { roles: [{id, perms}], channels: [{id, overwrites}] }
   reactionRoles: {}, // messageId -> { guildId, channelId, title, mappings: [{emoji, roleId}] }
-  serverStats: {}    // guildId -> { categoryId, totalId, humansId, botsId }
+  serverStats: {},   // guildId -> { categoryId, totalId, humansId, botsId }
+  birthdays: {}      // guildId -> { channelId, users: { userId -> { day, month } } }
 };
 
 class Database {
@@ -55,6 +56,7 @@ class Database {
         this.cache.emergencies    = this.cache.emergencies    || {};
         this.cache.reactionRoles  = this.cache.reactionRoles  || {};
         this.cache.serverStats    = this.cache.serverStats    || {};
+        this.cache.birthdays      = this.cache.birthdays      || {};
       } else {
         this.save();
       }
@@ -726,6 +728,41 @@ class Database {
 
   isBotWhitelisted(guildId, botId) {
     return (this.cache.botWhitelist?.[guildId] || []).includes(botId);
+  }
+
+  // ==========================================
+  // BIRTHDAY WISHING SYSTEM
+  // ==========================================
+  getBirthdayConfig(guildId) {
+    if (!this.cache.birthdays) this.cache.birthdays = {};
+    if (!this.cache.birthdays[guildId]) {
+      this.cache.birthdays[guildId] = { channelId: null, users: {} };
+      this.save();
+    }
+    return this.cache.birthdays[guildId];
+  }
+
+  setBirthdayChannel(guildId, channelId) {
+    const config = this.getBirthdayConfig(guildId);
+    config.channelId = channelId;
+    this.save();
+  }
+
+  setBirthday(guildId, userId, day, month) {
+    const config = this.getBirthdayConfig(guildId);
+    if (!config.users) config.users = {};
+    config.users[userId] = { day, month };
+    this.save();
+  }
+
+  removeBirthday(guildId, userId) {
+    const config = this.getBirthdayConfig(guildId);
+    if (config.users && config.users[userId]) {
+      delete config.users[userId];
+      this.save();
+      return true;
+    }
+    return false;
   }
 }
 

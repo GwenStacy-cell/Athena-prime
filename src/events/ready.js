@@ -4,6 +4,8 @@ import { allCommands } from '../commands/loader.js';
 import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { ensureUnbypassableRole } from '../utils/antiStrip.js';
+import { CronJob } from 'cron';
+import { generateBirthdayMessage } from '../commands/birthday.js';
 
 export default {
   name: 'ready',
@@ -13,6 +15,37 @@ export default {
     console.log(chalk.hex('#FFD700').bold(`🚀 SUCCESS: Connected to Discord Gateway!`));
     console.log(chalk.cyan(`🤖 Logged in as: ${chalk.bold(client.user.tag)} (ID: ${client.user.id})`));
     console.log(chalk.yellow(`📈 Watching ${client.guilds.cache.size} server(s)...`));
+
+    // Start Birthday Cron Job (Runs exactly at 00:00 IST every day)
+    new CronJob('0 0 * * *', async () => {
+      try {
+        const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        const currentDay = now.getDate();
+        const currentMonth = now.getMonth() + 1;
+
+        console.log(chalk.magenta(`🎉 Checking birthdays for ${currentDay}/${currentMonth} (IST)...`));
+
+        const birthdayConfigs = db.cache.birthdays || {};
+        for (const [guildId, config] of Object.entries(birthdayConfigs)) {
+          if (!config.channelId || !config.users) continue;
+          
+          const guild = client.guilds.cache.get(guildId);
+          if (!guild) continue;
+          
+          const channel = guild.channels.cache.get(config.channelId);
+          if (!channel) continue;
+
+          for (const [userId, dates] of Object.entries(config.users)) {
+            if (dates.day === currentDay && dates.month === currentMonth) {
+              const message = generateBirthdayMessage(userId);
+              await channel.send({ content: message }).catch(() => null);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(chalk.red('❌ Error running birthday cron job:'), err);
+      }
+    }, null, true, 'Asia/Kolkata');
 
     // Store boot timestamp for uptime tracking
     client.bootTimestamp = Date.now();
