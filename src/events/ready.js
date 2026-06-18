@@ -241,12 +241,18 @@ export default {
     // =====================================
     // SECURITY DASHBOARD INITIALIZATION
     // =====================================
-    for (const guild of client.guilds.cache.values()) {
-      const cfg = db.getGuildConfig(guild.id);
-      if (cfg.antiNukeEnabled) {
-        await setupDashboardChannel(guild, client);
+    (async () => {
+      for (const guild of client.guilds.cache.values()) {
+        const cfg = db.getGuildConfig(guild.id);
+        if (cfg.antiNukeEnabled) {
+          try {
+            await setupDashboardChannel(guild, client);
+          } catch (e) {
+            console.error(`Failed to setup dashboard for ${guild.id}:`, e);
+          }
+        }
       }
-    }
+    })();
 
     // Update dashboards every 3 minutes
     setInterval(async () => {
