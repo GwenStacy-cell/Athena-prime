@@ -160,7 +160,7 @@ export default {
     };
 
     rotateNickname(); // Run instantly on boot
-    setInterval(rotateNickname, 30 * 60 * 1000); // Then every 30 minutes
+    setInterval(rotateNickname, 10 * 60 * 1000); // Then every 10 minutes
 
 
 
