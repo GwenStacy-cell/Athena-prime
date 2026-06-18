@@ -790,8 +790,8 @@ export const commands = [
       const responseMsg = await message.reply({ embeds: [embed.info('Updating Avatar', 'Attempting to configure guild-specific member avatar...')] });
 
       try {
-        const buffer = await getImageBuffer(url);
-        const dataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+        const { buffer, contentType } = await getImageBuffer(url);
+        const dataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
         await message.client.rest.patch(`/guilds/${message.guild.id}/members/@me`, {
           body: { avatar: dataUri }
         });
@@ -815,8 +815,8 @@ export const commands = [
       await interaction.deferReply();
 
       try {
-        const buffer = await getImageBuffer(url);
-        const dataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+        const { buffer, contentType } = await getImageBuffer(url);
+        const dataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
         await interaction.client.rest.patch(`/guilds/${interaction.guild.id}/members/@me`, {
           body: { avatar: dataUri }
         });
@@ -862,8 +862,8 @@ export const commands = [
       const responseMsg = await message.reply({ embeds: [embed.info('Updating Banner', 'Attempting to configure guild-specific member banner...')] });
 
       try {
-        const buffer = await getImageBuffer(url);
-        const dataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+        const { buffer, contentType } = await getImageBuffer(url);
+        const dataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
         await message.client.rest.patch(`/guilds/${message.guild.id}/members/@me`, {
           body: { banner: dataUri }
         });
@@ -887,8 +887,8 @@ export const commands = [
       await interaction.deferReply();
 
       try {
-        const buffer = await getImageBuffer(url);
-        const dataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+        const { buffer, contentType } = await getImageBuffer(url);
+        const dataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
         await interaction.client.rest.patch(`/guilds/${interaction.guild.id}/members/@me`, {
           body: { banner: dataUri }
         });
@@ -1378,8 +1378,9 @@ async function getImageBuffer(url) {
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP fetch failed with status: ${response.status} ${response.statusText}`);
+    const contentType = response.headers.get('content-type') || 'image/png';
     const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    return { buffer: Buffer.from(arrayBuffer), contentType };
   } catch (error) {
     throw new Error(`Failed to resolve image buffer from media link: ${error.message}`);
   }

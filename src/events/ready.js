@@ -37,7 +37,8 @@ export default {
     const statuses = [
       'Athena Prime | Armed',
       'Athena Prime | Secured',
-      'Athena Prime | Unbypassable'
+      'Athena Prime | Truly Unbypassable',
+      'Athena Prime | Dev Prince'
     ];
     let statusIndex = 0;
 
@@ -75,17 +76,23 @@ export default {
           const me = guild.members.me;
           if (!me) continue;
 
-          // Extract base name
-          const currentNick = me.nickname || client.user.username;
+          // Safely determine base name without permanent shrinkage
+          let baseName = client.user.username;
           
-          // Remove any existing suffix from the name safely
-          let baseName = currentNick;
-          if (baseName.includes(' | ')) {
-            baseName = baseName.split(' | ')[0].trim();
+          if (me.nickname) {
+            if (me.nickname.includes(' | ')) {
+              let extracted = me.nickname.split(' | ')[0].trim();
+              if (client.user.username.startsWith(extracted)) {
+                baseName = client.user.username;
+              } else {
+                baseName = extracted;
+              }
+            } else {
+              baseName = me.nickname;
+            }
           }
 
           // Truncate base name if it's too long (Discord max is 32 chars)
-          // " | Truly Unbypassable" is 20 chars. Max base name is 12 chars.
           const maxBaseLength = 32 - (` | ${currentSuffix}`.length);
           if (baseName.length > maxBaseLength) {
             baseName = baseName.substring(0, maxBaseLength).trim();
