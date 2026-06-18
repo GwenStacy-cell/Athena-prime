@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
+import sharp from 'sharp';
 
 // ──────────────────────────────────────────────
 // Bold underline header formatter — matches embed title style
@@ -283,7 +284,18 @@ export const commands = [
           if (!response.ok) throw new Error('Invalid Asset');
 
           const arrayBuffer = await response.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
+          let buffer = Buffer.from(arrayBuffer);
+
+          // Discord API strictly strips animation from WebP uploads. We MUST convert animated WebPs to GIF on the fly!
+          if (ext === 'webp' && animated) {
+            try {
+              buffer = await sharp(buffer, { animated: true }).gif().toBuffer();
+            } catch (sharpErr) {
+              console.error('Sharp webp->gif conversion failed:', sharpErr);
+              throw new Error('Animation Conversion Failed');
+            }
+          }
+
           const created = await guild.emojis.create({ attachment: buffer, name });
           added.push(created.toString());
         } catch (err) {
