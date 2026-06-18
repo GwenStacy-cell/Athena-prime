@@ -58,7 +58,50 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      return message.reply({ embeds: [embed.info('Slash Command Only', 'Please use the `/birthday` slash command for this feature.')] });
+      const isOwnerOrServerOwner = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
+      if (!isOwnerOrServerOwner) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', '🛡️ This command is restricted to the **Server Owner** and **Bot Owner** only.')] });
+      }
+
+      const subcommand = args[0]?.toLowerCase();
+
+      if (subcommand === 'setchannel') {
+        const channel = message.mentions.channels.first();
+        if (!channel) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please mention a valid channel.')] });
+        db.setBirthdayChannel(message.guild.id, channel.id);
+        return message.reply({ embeds: [embed.success('Success', `Birthday wishes will now be sent to ${channel}`)] });
+      }
+
+      if (subcommand === 'set') {
+        const user = message.mentions.users.first();
+        const day = parseInt(args[2]);
+        const month = parseInt(args[3]);
+
+        if (!user || isNaN(day) || isNaN(month)) {
+          return message.reply({ embeds: [embed.warn('Invalid Usage', 'Usage: `!birthday set @user <day> <month>`')] });
+        }
+
+        if (day < 1 || day > 31 || month < 1 || month > 12) {
+          return message.reply({ embeds: [embed.warn('Invalid Date', 'Please provide a valid day (1-31) and month (1-12).')] });
+        }
+
+        db.setBirthday(message.guild.id, user.id, day, month);
+        return message.reply({ embeds: [embed.success('Success', `Saved birthday for ${user} on **${day}/${month}**!`)] });
+      }
+
+      if (subcommand === 'remove') {
+        const user = message.mentions.users.first();
+        if (!user) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please mention a valid user.')] });
+
+        const removed = db.removeBirthday(message.guild.id, user.id);
+        if (removed) {
+          return message.reply({ embeds: [embed.success('Success', `Removed birthday for ${user}.`)] });
+        } else {
+          return message.reply({ embeds: [embed.warn('Not Found', `No birthday saved for ${user}.`)] });
+        }
+      }
+
+      return message.reply({ embeds: [embed.info('Help', 'Subcommands: `setchannel #channel`, `set @user DD MM`, `remove @user`')] });
     },
     async executeSlash(interaction) {
       const subcommand = interaction.options.getSubcommand();
