@@ -1,4 +1,11 @@
 import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import ffmpeg from 'fluent-ffmpeg';
+import ffmpegStatic from 'ffmpeg-static';
+import fs from 'fs/promises';
+import path from 'path';
+import os from 'os';
+
+ffmpeg.setFfmpegPath(ffmpegStatic);
 import db from '../database.js';
 import embed from '../embed.js';
 import { 
@@ -1378,9 +1385,40 @@ async function getImageBuffer(url) {
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP fetch failed with status: ${response.status} ${response.statusText}`);
-    const contentType = response.headers.get('content-type') || 'image/png';
+    let contentType = response.headers.get('content-type') || 'image/png';
     const arrayBuffer = await response.arrayBuffer();
-    return { buffer: Buffer.from(arrayBuffer), contentType };
+    let buffer = Buffer.from(arrayBuffer);
+
+    // If it's a video file, convert it to a high-quality GIF using FFmpeg
+    if (contentType.includes('video/mp4') || url.toLowerCase().includes('.mp4')) {
+      const tempId = Math.random().toString(36).substring(2, 15);
+      const tempMp4Path = path.join(os.tmpdir(), `athena_in_${tempId}.mp4`);
+      const tempGifPath = path.join(os.tmpdir(), `athena_out_${tempId}.gif`);
+      
+      await fs.writeFile(tempMp4Path, buffer);
+      
+      await new Promise((resolve, reject) => {
+        ffmpeg(tempMp4Path)
+          .outputOptions([
+            '-vf', 'fps=20,scale=min(iw\\,600):-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse',
+            '-loop', '0',
+            '-t', '15' // Max 15 seconds
+          ])
+          .toFormat('gif')
+          .on('end', resolve)
+          .on('error', (err) => reject(new Error(`FFmpeg conversion failed: ${err.message}`)))
+          .save(tempGifPath);
+      });
+      
+      buffer = await fs.readFile(tempGifPath);
+      contentType = 'image/gif';
+      
+      // Cleanup temporary files
+      await fs.unlink(tempMp4Path).catch(() => null);
+      await fs.unlink(tempGifPath).catch(() => null);
+    }
+
+    return { buffer, contentType };
   } catch (error) {
     throw new Error(`Failed to resolve image buffer from media link: ${error.message}`);
   }
