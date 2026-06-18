@@ -5,7 +5,7 @@ import ms from 'ms';
 import chalk from 'chalk';
 
 const EMOJI_HEADER = '<a:emoji_11:1517212810223026247>';
-const EMOJI_JOIN = '<a:emoji_10:1513761303003533363>';
+const EMOJI_JOIN = '<a:emoji_56:1517212375022047284>';
 const EMOJI_WINNER = '<a:giveaway:1517214415684898988>';
 
 export async function endGiveaway(client, messageId, gwData) {

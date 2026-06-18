@@ -171,7 +171,7 @@ export default {
         await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
 
         if (joined) {
-          return interaction.reply({ content: `<a:emoji_10:1513761303003533363> You have successfully entered the giveaway!`, ephemeral: true });
+          return interaction.reply({ content: `<a:emoji_56:1517212375022047284> You have successfully entered the giveaway!`, ephemeral: true });
         } else {
           return interaction.reply({ content: `You have successfully left the giveaway.`, ephemeral: true });
         }
