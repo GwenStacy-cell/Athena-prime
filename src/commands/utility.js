@@ -496,7 +496,16 @@ async function getHelpEmbed(guild, client) {
         `\`${p}autonick\` **on** / **off** \`[prefix]\` \`[suffix]\` — Auto-format member nicknames\n` +
         `\`${p}setguildavatar\` — Set bot's custom per-server avatar\n` +
         `\`${p}setguildbanner\` — Set bot's custom per-server banner\n` +
+        `> Note: MP4 video links will be automatically converted to high-quality GIFs!\n` +
         `\`${p}steal\` \`:emoji: ...\` — Steal multiple emojis into your server`
+    },
+    {
+      name: h('BIRTHDAYS'),
+      value:
+        `\`${p}birthday\` **setchannel** \`#channel\` — Set the channel for birthday announcements\n` +
+        `\`${p}birthday\` **set** \`@user\` \`day\` \`month\` — Add a member's birthday\n` +
+        `\`${p}birthday\` **remove** \`@user\` — Remove a member's birthday\n` +
+        `\`${p}testbirthday\` — Send a test birthday announcement immediately`
     },
     {
       name: h('UTILITIES'),
