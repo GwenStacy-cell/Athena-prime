@@ -8,6 +8,8 @@ import { CronJob } from 'cron';
 import { generateBirthdayMessage } from '../commands/birthday.js';
 import statsDB from '../statsDB.js';
 import { endGiveaway } from '../commands/giveaway.js';
+import { setupDashboardChannel, updateDashboardMessage } from '../utils/dashboardManager.js';
+import db from '../database.js';
 
 export default {
   name: 'ready',
@@ -226,6 +228,35 @@ export default {
         }
       }
       console.log(chalk.green('✅ Invite cache initialized.'));
+
+    // Periodically update JTC panels every 5 minutes to keep stats fresh
+    setInterval(async () => {
+      for (const [guildId, config] of Object.entries(db.cache.jtc)) {
+        if (!config.lobbyChannelId) continue;
+        const guild = client.guilds.cache.get(guildId);
+        if (guild) await buildSharedPanel(guild);
+      }
+    }, 5 * 60 * 1000);
+
+    // =====================================
+    // SECURITY DASHBOARD INITIALIZATION
+    // =====================================
+    for (const guild of client.guilds.cache.values()) {
+      const cfg = db.getGuildConfig(guild.id);
+      if (cfg.antiNukeEnabled) {
+        await setupDashboardChannel(guild, client);
+      }
+    }
+
+    // Update dashboards every 3 minutes
+    setInterval(async () => {
+      for (const guild of client.guilds.cache.values()) {
+        const cfg = db.getGuildConfig(guild.id);
+        if (cfg.antiNukeEnabled && cfg.dashboardChannelId) {
+          await updateDashboardMessage(guild, client);
+        }
+      }
+    }, 3 * 60 * 1000);
 
       console.log(chalk.blue('⏳ Syncing slash commands globally...'));
 

@@ -744,9 +744,22 @@ class Database {
     return this.cache.birthdays[guildId];
   }
 
-  setBirthdayChannel(guildId, channelId) {
-    const config = this.getBirthdayConfig(guildId);
-    config.channelId = channelId;
+  setWelcomeChannel(guildId, channelId) {
+    this._ensureGuild(guildId);
+    this.cache.guilds[guildId].welcomeChannel = channelId;
+    this.save();
+  }
+
+  setStatsChannel(guildId, channelId) {
+    this._ensureGuild(guildId);
+    this.cache.guilds[guildId].statsChannelId = channelId;
+    this.save();
+  }
+
+  setDashboardInfo(guildId, channelId, messageIds = []) {
+    this._ensureGuild(guildId);
+    this.cache.guilds[guildId].dashboardChannelId = channelId;
+    this.cache.guilds[guildId].dashboardMessageIds = messageIds;
     this.save();
   }
 

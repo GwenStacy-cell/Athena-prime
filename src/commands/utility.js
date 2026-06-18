@@ -649,6 +649,44 @@ commands.push({
     } catch (err) {
       await interaction.reply({ embeds: [embed.danger('Error', err.message)], ephemeral: true });
     }
+  },
+
+  // --- SET STATS CHANNEL COMMAND ---
+  {
+    name: 'setstatschannel',
+    description: 'Set a dedicated channel for /stats commands (prevents spam elsewhere)',
+    category: 'utility',
+    permissions: [PermissionFlagsBits.ManageGuild],
+    options: [
+      {
+        name: 'channel',
+        description: 'The channel to lock stats commands to',
+        type: 7, // CHANNEL
+        required: true
+      }
+    ],
+    async executePrefix(message, args) {
+      const channelMention = args[0];
+      if (!channelMention) return message.reply('Please mention a channel.');
+      const channelId = channelMention.replace(/<#|>/g, '');
+      const channel = message.guild.channels.cache.get(channelId);
+      if (!channel || ![ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(channel.type)) {
+        return message.reply({ embeds: [embed.warn('Invalid Channel', 'Please mention a valid text channel.')] });
+      }
+
+      db.setStatsChannel(message.guild.id, channel.id);
+      return message.reply({ embeds: [embed.success('Config Updated', `The \`/stats\` command is now locked to ${channel}.`)] });
+    },
+    async executeSlash(interaction) {
+      const channel = interaction.options.getChannel('channel');
+      
+      if (![ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(channel.type)) {
+        return interaction.reply({ embeds: [embed.warn('Invalid Channel', 'Please select a text or announcement channel.')], ephemeral: true });
+      }
+
+      db.setStatsChannel(interaction.guild.id, channel.id);
+      return interaction.reply({ embeds: [embed.success('Config Updated', `The \`/stats\` command is now locked to ${channel}.`)] });
+    }
   }
 });
 

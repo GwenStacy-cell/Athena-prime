@@ -20,6 +20,7 @@ import {
   syncQuarantinePermissions
 } from '../utils/helpers.js';
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
+import { setupDashboardChannel } from '../utils/dashboardManager.js';
 
 // Toggle emoji constants — used throughout all security/config embeds
 const TOGGLE_ON  = '<:on:1514996865030946847>';
@@ -2002,6 +2003,11 @@ async function handleConfig(guild, moderator, setting, value) {
     db.updateGuildConfig(guild.id, updates);
     const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE (Rapid deletions or bans trigger instant quarantine)` : `${TOGGLE_OFF} DEACTIVATED`;
     logToSecurityChannel(guild, embed.log('Config Anti-Nuke Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Nuke to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
+    
+    if (enabled) {
+      setupDashboardChannel(guild, guild.client);
+    }
+    
     return { embed: embed.success('Anti-Nuke Configured', `Anti-Nuke server protections are now **${modeDesc}**.`) };
   } else if (setting === 'antispam') {
     updates.antiSpamEnabled = enabled;
