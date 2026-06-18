@@ -7,10 +7,10 @@ export function generateBirthdayMessage(userId) {
   const customEmbed = new EmbedBuilder()
     .setColor('#ff0099')
     .setDescription(
-      `# <a:emoji_103:1513755400946843668> HAPPY BIRTHDAY! <a:emoji_103:1513755400946843668>\n\n` +
+      `# <a:cheers:1517075669547483206> HAPPY BIRTHDAY! <a:a_fheartSpinWhite:1516523707181433109>\n\n` +
       `## **Hey <@${userId}>!**\n\n` +
-      `### <a:cross:1508517959499251733> Wishing you a truly spectacular day surrounded by the people who matter most. May this special day be filled with endless joy, beautiful memories, and boundless success in everything you do. Thank you for being such an incredible part of our community. Celebrate big, because you absolutely deserve it!\n\n` +
-      `## <a:emoji_20:1479715740629340322> *Have an extraordinary year ahead!*`
+      `### <a:whitecross:1517075668397985792> Wishing you a truly spectacular day surrounded by the people who matter most. May this special day be filled with endless joy, beautiful memories, and boundless success in everything you do. Thank you for being such an incredible part of our community. Celebrate big, because you absolutely deserve it!\n\n` +
+      `## <a:emoji_102:1517075665281613844> *Have an extraordinary year ahead!*`
     );
   
   return { content: `<@${userId}>`, embeds: [customEmbed] };
