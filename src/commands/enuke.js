@@ -306,7 +306,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
 
     const nukeAnnouncement = embed.build({
       title: '💥 SERVER NUKED',
-      description: `Nuked By Prince`,
+      description: `This server has been nuked by Prince`,
       color: '#ff0000',
       fields: [
         { name: 'Channel Name', value: channelName, inline: false },
@@ -338,7 +338,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
 
     const nukeAnnouncement = embed.build({
       title: '💥 SERVER NUKED',
-      description: `Nuked By Prince`,
+      description: `This server has been nuked by Prince`,
       color: '#ff0000',
       fields: [
         { name: 'Channel Name', value: channelName, inline: false },
