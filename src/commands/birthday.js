@@ -6,11 +6,11 @@ import { isBotOwnerOrServerOwnerStrict, isBotOwnerSync } from '../utils/helpers.
 export function generateBirthdayMessage(userId) {
   const customEmbed = new EmbedBuilder()
     .setColor('#ff0099')
-    .setTitle('<a:Sexy:1409202438845501440> HAPPY BIRTHDAY! <a:Sexy:1409202438845501440>')
     .setDescription(
-      `<a:thunder:1516519601394159638> **Hey <@${userId}>!**\n\n` +
+      `# <a:emoji_103:1513755400946843668> HAPPY BIRTHDAY! <a:emoji_103:1513755400946843668>\n\n` +
+      `## **Hey <@${userId}>!**\n\n` +
       `### Wishing you a fantastic day filled with joy, love, and countless blessings. May all your dreams come true!\n\n` +
-      `<a:5554blackwand:1451705843270815834> *Have an amazing year ahead!*`
+      `## <a:emoji_102:1513755364280107279> *Have an amazing year ahead!*`
     );
   
   return { content: `<@${userId}>`, embeds: [customEmbed] };
