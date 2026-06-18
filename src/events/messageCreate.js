@@ -92,7 +92,7 @@ export default {
         const ownerEmbed = new EmbedBuilder()
           .setColor(embedColor)
           .setDescription(`# You tagged my Master !\n\n> Status: **${presence.text.toUpperCase()}**\n\nYour ping has been forwarded through direct messages.\nAwait his arrival.`)
-          .setFooter({ text: `${message.client.user.username} Security • Today at ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}` });
+          .setFooter({ text: `${message.client.user.username} Security • Today at ${new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false })} IST` });
 
         await message.reply({ content: `<@${userId}>`, embeds: [ownerEmbed] }).catch(() => null);
 

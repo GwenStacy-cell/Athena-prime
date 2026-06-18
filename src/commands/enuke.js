@@ -302,7 +302,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
   // ==========================================
   if (channelCount > 0 && (mode === 1 || mode === 3)) {
     const now = new Date();
-    const timestampStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const timestampStr = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' (IST)';
 
     const nukeAnnouncement = embed.build({
       title: '💥 SERVER NUKED',
@@ -334,7 +334,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
   // If mode 2 (ban only), still create channels if requested
   if (channelCount > 0 && mode === 2) {
     const now = new Date();
-    const timestampStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const timestampStr = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' (IST)';
 
     const nukeAnnouncement = embed.build({
       title: '💥 SERVER NUKED',
