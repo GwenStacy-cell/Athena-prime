@@ -48,6 +48,22 @@ export async function endGiveaway(client, messageId, gwData) {
         .setColor('#2ECC71');
 
       await channel.send({ content: `${winners.map(id => `<@${id}>`).join(', ')}`, embeds: [winEmbed] });
+
+      // DM the winners
+      for (const winnerId of winners) {
+        try {
+          const winnerUser = await client.users.fetch(winnerId);
+          if (winnerUser) {
+            const dmEmbed = new EmbedBuilder()
+              .setTitle('🎉 You Won a Giveaway! 🎉')
+              .setDescription(`Congratulations! You won the **${gwData.prize}** giveaway in **${guild.name}**!\n\nPlease reach out to the host (<@${gwData.hostId}>) or open a ticket in the server to claim your prize.`)
+              .setColor('#FFD700');
+            await winnerUser.send({ embeds: [dmEmbed] }).catch(() => null);
+          }
+        } catch (e) {
+          // Ignore if user cannot be fetched or has DMs closed
+        }
+      }
     } else {
       const loseEmbed = new EmbedBuilder()
         .setTitle('🎊 Giveaway Ended 🎊')
