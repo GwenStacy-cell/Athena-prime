@@ -1,5 +1,9 @@
 import { createCanvas, registerFont } from 'canvas';
+import path from 'path';
 
+// Register Roboto Font for headless Linux environments
+registerFont(path.join(process.cwd(), 'assets', 'Roboto-Regular.ttf'), { family: 'Roboto', weight: 'normal' });
+registerFont(path.join(process.cwd(), 'assets', 'Roboto-Bold.ttf'), { family: 'Roboto', weight: 'bold' });
 function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);

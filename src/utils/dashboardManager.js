@@ -189,6 +189,13 @@ export async function setupDashboardChannel(guild, client) {
     return updateDashboardMessage(guild, client);
   }
 
+  // Adopt existing channel if the database missed it during a crash
+  const existingChannel = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
+  if (existingChannel) {
+    db.setDashboardInfo(guild.id, existingChannel.id, []);
+    return updateDashboardMessage(guild, client);
+  }
+
   // Create channel
   try {
     const channel = await guild.channels.create({
