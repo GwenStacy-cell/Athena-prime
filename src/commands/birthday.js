@@ -9,8 +9,8 @@ export function generateBirthdayMessage(userId) {
     .setDescription(
       `# <a:emoji_103:1513755400946843668> HAPPY BIRTHDAY! <a:emoji_103:1513755400946843668>\n\n` +
       `## **Hey <@${userId}>!**\n\n` +
-      `### Wishing you a fantastic day filled with joy, love, and countless blessings. May all your dreams come true!\n\n` +
-      `## <a:emoji_102:1513755364280107279> *Have an amazing year ahead!*`
+      `### <a:cross:1508517959499251733> Wishing you a truly spectacular day surrounded by the people who matter most. May this special day be filled with endless joy, beautiful memories, and boundless success in everything you do. Thank you for being such an incredible part of our community. Celebrate big, because you absolutely deserve it!\n\n` +
+      `## <a:emoji_20:1479715740629340322> *Have an extraordinary year ahead!*`
     );
   
   return { content: `<@${userId}>`, embeds: [customEmbed] };
