@@ -3,6 +3,7 @@ import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { buildControlPanel, buildSharedPanel } from '../commands/jtc.js';
+import statsDB from '../statsDB.js';
 
 export default {
   name: 'voiceStateUpdate',
@@ -14,6 +15,35 @@ export default {
 
     // Simple lock to prevent multiple shared panels from being created simultaneously
     if (!client.jtcPanelLocks) client.jtcPanelLocks = new Set();
+    if (!client.vcSessions) client.vcSessions = new Map();
+
+    // ==========================================
+    // STATS TRACKER
+    // ==========================================
+    if (!newState.member?.user.bot) {
+      const oldChannelId = oldState.channelId;
+      const newChannelId = newState.channelId;
+
+      if (oldChannelId !== newChannelId) {
+        // User left or switched channels
+        if (oldChannelId) {
+          const session = client.vcSessions.get(userId);
+          if (session && session.channelId === oldChannelId) {
+            const seconds = Math.floor((Date.now() - session.joinTime) / 1000);
+            statsDB.logVoice(guild.id, userId, oldChannelId, seconds);
+          }
+          client.vcSessions.delete(userId);
+        }
+        
+        // User joined or switched to a new channel
+        if (newChannelId) {
+          client.vcSessions.set(userId, {
+            channelId: newChannelId,
+            joinTime: Date.now()
+          });
+        }
+      }
+    }
 
     // ==========================================
     // BOT HOME VC RESTORE (Instant Reconnect)

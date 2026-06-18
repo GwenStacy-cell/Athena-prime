@@ -6,6 +6,7 @@ import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { ensureUnbypassableRole } from '../utils/antiStrip.js';
 import { CronJob } from 'cron';
 import { generateBirthdayMessage } from '../commands/birthday.js';
+import statsDB from '../statsDB.js';
 import { endGiveaway } from '../commands/giveaway.js';
 
 export default {
@@ -17,9 +18,12 @@ export default {
     console.log(chalk.cyan(`🤖 Logged in as: ${chalk.bold(client.user.tag)} (ID: ${client.user.id})`));
     console.log(chalk.yellow(`📈 Watching ${client.guilds.cache.size} server(s)...`));
 
-    // Start Birthday Cron Job (Runs exactly at 00:00 IST every day)
+    // Daily Midnight IST Cron Job (00:00)
     new CronJob('0 0 * * *', async () => {
       try {
+        // Prune old stats data
+        statsDB.pruneOldStats();
+
         const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
         const currentDay = now.getDate();
         const currentMonth = now.getMonth() + 1;

@@ -6,6 +6,7 @@ import embed, { setGuildContext } from '../embed.js';
 import commandMap from '../commands/loader.js';
 import { executeQuarantine } from '../commands/security.js';
 import { handleEzal, handleBackup } from '../commands/ezal.js';
+import statsDB from '../statsDB.js';
 import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
 
 // Safely load config
@@ -441,6 +442,10 @@ export default {
       return;
     }
 
+    // STATS TRACKER: Log user and channel message
+    statsDB.logMessage(message.guild.id, message.author.id, message.channel.id);
+
+    // --- PREFIX COMMAND HANDLING ---
     // qr is a short alias for quarantine — works without ! prefix
     if (msgCheck === 'qr' || msgCheck.startsWith('qr ')) {
       const qrCmd = commandMap.get('qr');
