@@ -69,6 +69,59 @@ export const commands = [
         console.error('Failed to generate stat card:', err);
         await interaction.editReply({ embeds: [embed.danger('Error', 'Failed to generate statistics card. Please try again later.')] });
       }
+    },
+    executePrefix: async (message, args) => {
+      const cfg = db.getGuildConfig(message.guild.id);
+      if (cfg.statsChannelId && message.channel.id !== cfg.statsChannelId) {
+        return message.reply({ embeds: [embed.warn('Wrong Channel', `Please use this command in <#${cfg.statsChannelId}>.`)] }).catch(() => null);
+      }
+
+      let targetUser = message.author;
+      let targetMember = message.member;
+
+      // Check if they typed !statsme or !stats me
+      const isMe = message.content.toLowerCase().includes('statsme') || args[0]?.toLowerCase() === 'me';
+      const mentionedUser = message.mentions.users.first();
+
+      if (mentionedUser) {
+        targetUser = mentionedUser;
+        targetMember = message.mentions.members.first() || await message.guild.members.fetch(mentionedUser.id).catch(() => null);
+      } else if (!isMe && args[0]) {
+        const id = args[0].replace(/[<@!>]/g, '');
+        if (id) {
+          const member = await message.guild.members.fetch(id).catch(() => null);
+          if (member) {
+            targetUser = member.user;
+            targetMember = member;
+          }
+        }
+      }
+
+      const guildId = message.guild.id;
+      const userId = targetUser.id;
+
+      // Fetch data
+      const userStats = statsDB.getUserStats(guildId, userId);
+      const serverRanks = statsDB.getServerRanks(guildId, userId);
+      const topChannels = statsDB.getTopChannels(guildId, userId);
+      const chartData = statsDB.getChartData(guildId, userId);
+
+      // Verify they have some data
+      if (userStats.msg_30d === 0 && userStats.vc_30d === 0) {
+        return message.reply({ embeds: [embed.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 30 days.`)] });
+      }
+
+      const m = await message.reply('⏳ Generating your stats... Please wait.');
+
+      try {
+        const buffer = await generateStatCard(targetUser, targetMember, userStats, serverRanks, topChannels, chartData, message.guild);
+        const attachment = new AttachmentBuilder(buffer, { name: 'statbot-card.png' });
+        
+        await m.edit({ content: '', files: [attachment] });
+      } catch (err) {
+        console.error('Failed to generate stat card via prefix:', err);
+        await m.edit({ content: '', embeds: [embed.danger('Error', 'Failed to generate statistics card. Please try again later.')] });
+      }
     }
   }
 ];
