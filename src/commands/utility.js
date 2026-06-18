@@ -675,7 +675,11 @@ commands.push({
     }
 
     db.setStatsChannel(message.guild.id, channel.id);
-    return message.reply({ embeds: [embed.success('Config Updated', `The \`/stats\` command is now locked to ${channel}.`)] });
+    await channel.permissionOverwrites.edit(message.guild.roles.everyone.id, {
+      UseApplicationCommands: true
+    }).catch(() => null);
+
+    return message.reply({ embeds: [embed.success('Config Updated', `The \`/stats\` command is now locked to ${channel} and slash commands have been enabled for everyone there.`)] });
   },
   async executeSlash(interaction) {
     const channel = interaction.options.getChannel('channel');
@@ -685,7 +689,11 @@ commands.push({
     }
 
     db.setStatsChannel(interaction.guild.id, channel.id);
-    return interaction.reply({ embeds: [embed.success('Config Updated', `The \`/stats\` command is now locked to ${channel}.`)] });
+    await channel.permissionOverwrites.edit(interaction.guild.roles.everyone.id, {
+      UseApplicationCommands: true
+    }).catch(() => null);
+
+    return interaction.reply({ embeds: [embed.success('Config Updated', `The \`/stats\` command is now locked to ${channel} and slash commands have been enabled for everyone there.`)] });
   }
 });
 

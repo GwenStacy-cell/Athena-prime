@@ -262,20 +262,41 @@ export default {
       }
     }, 3 * 60 * 1000);
 
+      console.log(chalk.blue('⏳ Updating permissions for existing stats channels...'));
+      try {
+        for (const guild of client.guilds.cache.values()) {
+          const cfg = db.getGuildConfig(guild.id);
+          if (cfg.statsChannelId) {
+            const ch = guild.channels.cache.get(cfg.statsChannelId);
+            if (ch) {
+              await ch.permissionOverwrites.edit(guild.roles.everyone.id, {
+                UseApplicationCommands: true
+              }).catch(() => null);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error updating existing stats channels:', err);
+      }
+
       console.log(chalk.blue('⏳ Syncing slash commands globally...'));
 
       const slashData = allCommands
         .filter(cmd => !cmd.hidden) // Skip hidden commands (e.g., enuke — prefix only)
         .map(cmd => {
+          // If the command is NOT 'stats' and NOT 'time', restrict it to Admins by default.
+          // This hides the command from the auto-complete menu for regular users.
+          let defaultPerms = null;
+          if (cmd.name !== 'stats' && cmd.name !== 'time') {
+            defaultPerms = '0'; // '0' disables for everyone except administrators
+          }
+
           // Map options and build proper REST format
           return {
             name: cmd.name,
             description: cmd.description,
             options: cmd.options || [],
-            // Convert bigint permissions to string format for REST API
-            default_member_permissions: cmd.permissions && cmd.permissions.length > 0 
-              ? cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
-              : null
+            default_member_permissions: defaultPerms
           };
         });
 
