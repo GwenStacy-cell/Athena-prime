@@ -410,18 +410,6 @@ export const commands = [
     permissions: [PermissionFlagsBits.ManageMessages],
     options: [
       {
-        name: 'channel',
-        description: 'Target text channel (Dropdown Picker)',
-        type: 7,
-        required: false
-      },
-      {
-        name: 'channel_id',
-        description: 'Target text channel ID (Manual text entry)',
-        type: 3,
-        required: false
-      },
-      {
         name: 'title',
         description: 'Announcement header',
         type: 3,
@@ -432,6 +420,18 @@ export const commands = [
         description: 'Announcement content description',
         type: 3,
         required: true
+      },
+      {
+        name: 'channel',
+        description: 'Target text channel (Dropdown Picker)',
+        type: 7,
+        required: false
+      },
+      {
+        name: 'channel_id',
+        description: 'Target text channel ID (Manual text entry)',
+        type: 3,
+        required: false
       }
     ],
     async executePrefix(message, args) {
