@@ -9,8 +9,6 @@ import { generateBirthdayMessage } from '../commands/birthday.js';
 import statsDB from '../statsDB.js';
 import { endGiveaway } from '../commands/giveaway.js';
 import { setupDashboardChannel, updateDashboardMessage } from '../utils/dashboardManager.js';
-import db from '../database.js';
-
 export default {
   name: 'ready',
   once: true,
