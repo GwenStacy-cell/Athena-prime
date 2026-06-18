@@ -266,11 +266,18 @@ export const commands = [
         
         try {
           let response = await fetch(url);
-          // If Discord says the GIF doesn't exist but the tag claimed it was animated, fallback to PNG
+          // If Discord says the GIF doesn't exist, try animated WEBP before fully degrading to static PNG
           if (!response.ok && animated) {
-            ext = 'png';
+            ext = 'webp';
             url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
             response = await fetch(url);
+            
+            // If WEBP fails too, then default back to PNG
+            if (!response.ok) {
+              ext = 'png';
+              url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
+              response = await fetch(url);
+            }
           }
 
           if (!response.ok) throw new Error('Invalid Asset');
