@@ -165,7 +165,8 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   let topMsgName = 'No Activity';
   if (topMsg) {
     const ch = guild?.channels.cache.get(topMsg.channel_id);
-    topMsgName = ch ? `# ${ch.name}` : `# unknown`;
+    const cleanName = ch ? ch.name.replace(/[^\x20-\x7E]/g, '').trim() || 'channel' : 'unknown';
+    topMsgName = `# ${cleanName}`;
   }
   const topMsgVal = topMsg ? formatNumber(topMsg.total) : '0';
   drawText(ctx, topMsgName, 70, botY + 65, 'bold 16px sans-serif', textColorPrimary);
@@ -173,12 +174,13 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
 
   // Voice Top Channel
   drawPanel(ctx, 35, botY + 85, tcW - 30, 30, 5, innerPanelColor);
-  drawText(ctx, '🔊', 45, botY + 105, '16px sans-serif', textColorSecondary);
+  drawText(ctx, 'VC', 42, botY + 105, '14px sans-serif', textColorSecondary);
   const topVc = topChannels.voice[0];
   let topVcName = 'No Activity';
   if (topVc) {
     const ch = guild?.channels.cache.get(topVc.channel_id);
-    topVcName = ch ? `🔊 ${ch.name}` : `🔊 unknown`;
+    const cleanName = ch ? ch.name.replace(/[^\x20-\x7E]/g, '').trim() || 'channel' : 'unknown';
+    topVcName = cleanName;
   }
   const topVcVal = topVc ? formatHours(topVc.total) : '0 secs';
   drawText(ctx, topVcName, 70, botY + 105, 'bold 16px sans-serif', textColorPrimary);
