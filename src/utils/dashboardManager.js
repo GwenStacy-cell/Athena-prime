@@ -184,15 +184,28 @@ export async function updateDashboardMessage(guild, client) {
 
 export async function setupDashboardChannel(guild, client) {
   const cfg = db.getGuildConfig(guild.id);
-  if (cfg.dashboardChannelId && guild.channels.cache.has(cfg.dashboardChannelId)) {
-    // Already exists, just update it
-    return updateDashboardMessage(guild, client);
+  
+  // 1. Find all dashboard channels to clean up duplicates
+  const allDashChannels = guild.channels.cache.filter(c => c.name === 'athenas-dashboard');
+  let targetChannel = guild.channels.cache.get(cfg.dashboardChannelId);
+
+  if (allDashChannels.size > 1) {
+    const sorted = [...allDashChannels.values()].sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+    targetChannel = targetChannel || sorted[0]; // Prefer DB channel, otherwise keep oldest
+    for (const c of sorted) {
+      if (c.id !== targetChannel.id) {
+        await c.delete().catch(() => {});
+      }
+    }
+  } else if (allDashChannels.size === 1) {
+    targetChannel = targetChannel || allDashChannels.first();
   }
 
-  // Adopt existing channel if the database missed it during a crash
-  const existingChannel = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
-  if (existingChannel) {
-    db.setDashboardInfo(guild.id, existingChannel.id, []);
+  // 2. If we found a valid channel, update it and return
+  if (targetChannel) {
+    if (cfg.dashboardChannelId !== targetChannel.id) {
+      db.setDashboardInfo(guild.id, targetChannel.id, []);
+    }
     return updateDashboardMessage(guild, client);
   }
 
