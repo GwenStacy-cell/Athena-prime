@@ -165,15 +165,23 @@ export default {
           const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
           
           if (img !== null) {
-            try { oldEmbed.setImage(img || null); } catch { /* Ignore invalid URL */ }
+            let imgUrl = img;
+            if (imgUrl && imgUrl.includes('tenor.com/view/') && !imgUrl.endsWith('.gif')) {
+              imgUrl += '.gif';
+            }
+            try { oldEmbed.setImage(imgUrl || null); } catch { /* Ignore invalid URL */ }
           }
           
           if (thumb !== null) {
-            if (!thumb) {
+            let thumbUrl = thumb;
+            if (thumbUrl && thumbUrl.includes('tenor.com/view/') && !thumbUrl.endsWith('.gif')) {
+              thumbUrl += '.gif';
+            }
+            if (!thumbUrl) {
               // Default to bot's avatar if left blank
               oldEmbed.setThumbnail(interaction.guild.members.me.displayAvatarURL({ dynamic: true, size: 512 }));
             } else {
-              try { oldEmbed.setThumbnail(thumb); } catch { /* Ignore invalid URL */ }
+              try { oldEmbed.setThumbnail(thumbUrl); } catch { /* Ignore invalid URL */ }
             }
           }
 
