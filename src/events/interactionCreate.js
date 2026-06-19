@@ -156,6 +156,8 @@ export default {
 
       if (interaction.customId === 'ann_media_modal') {
         try {
+          await interaction.deferUpdate().catch(() => null);
+          
           let img = null;
           try { img = interaction.fields.getTextInputValue('ann_image'); } catch {}
           
@@ -164,19 +166,25 @@ export default {
           
           const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
           
-          if (img !== null) {
-            let imgUrl = img;
-            if (imgUrl && imgUrl.includes('tenor.com/view/') && !imgUrl.endsWith('.gif')) {
-              imgUrl += '.gif';
+          async function resolveTenor(url) {
+            if (url && url.includes('tenor.com/view/')) {
+              try {
+                const res = await fetch(url);
+                const text = await res.text();
+                const match = text.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+                if (match) return match[1];
+              } catch { }
             }
+            return url;
+          }
+          
+          if (img !== null) {
+            const imgUrl = await resolveTenor(img);
             try { oldEmbed.setImage(imgUrl || null); } catch { /* Ignore invalid URL */ }
           }
           
           if (thumb !== null) {
-            let thumbUrl = thumb;
-            if (thumbUrl && thumbUrl.includes('tenor.com/view/') && !thumbUrl.endsWith('.gif')) {
-              thumbUrl += '.gif';
-            }
+            let thumbUrl = await resolveTenor(thumb);
             if (!thumbUrl) {
               // Default to bot's avatar if left blank
               oldEmbed.setThumbnail(interaction.guild.members.me.displayAvatarURL({ dynamic: true, size: 512 }));
@@ -185,7 +193,7 @@ export default {
             }
           }
 
-          await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+          await interaction.editReply({ embeds: [oldEmbed] }).catch(() => null);
         } catch (err) {
           console.error('Ann media modal error:', err);
           if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
