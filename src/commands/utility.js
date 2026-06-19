@@ -277,6 +277,16 @@ export const commands = [
       const failed  = [];
 
       for (const [, animated, name, id] of emojis) {
+        if (guild.emojis.cache.has(id)) {
+          failed.push(`\`${name}\` — already present in server`);
+          continue;
+        }
+        
+        if (guild.emojis.cache.some(e => e.name === name)) {
+          failed.push(`\`${name}\` — name already in use`);
+          continue;
+        }
+
         const ext = animated ? 'gif' : 'png';
         const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
         
