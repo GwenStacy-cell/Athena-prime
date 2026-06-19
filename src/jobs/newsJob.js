@@ -53,8 +53,11 @@ async function checkNews(client) {
               newGuids.push(guid);
               previousGuids.add(guid);
 
+              const guildConfig = db.getGuildConfig(guildId);
+              const accentColor = guildConfig.accentColor || '#3b82f6';
+
               const newsEmbed = new EmbedBuilder()
-                .setColor('#e74c3c')
+                .setColor(accentColor)
                 .setAuthor({ name: feedConfig.name, iconURL: feed.image?.url || 'https://i.imgur.com/vHq49n8.png' })
                 .setTitle(item.title ? item.title.substring(0, 250) : 'New Article')
                 .setURL(item.link || feedConfig.url)
