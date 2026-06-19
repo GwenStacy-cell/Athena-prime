@@ -523,6 +523,13 @@ async function getHelpEmbed(guild, client) {
         `\`${p}testbirthday\` — Send a test birthday announcement immediately`
     },
     {
+      name: h('GIVEAWAYS'),
+      value:
+        `\`/giveaway start\` \`duration\` \`winners\` \`prize\` — Start an interactive button giveaway\n` +
+        `\`/giveaway end\` \`message_id\` — End a giveaway early and draw winners\n` +
+        `\`/giveaway reroll\` \`message_id\` — Draw new winners for a completed giveaway`
+    },
+    {
       name: h('UTILITIES'),
       value:
         `\`${p}status\` — Real-time security health overview\n` +
