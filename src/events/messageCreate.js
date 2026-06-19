@@ -8,6 +8,7 @@ import { executeQuarantine } from '../commands/security.js';
 import { handleEzal, handleBackup } from '../commands/ezal.js';
 import statsDB from '../statsDB.js';
 import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
+import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
 
 // Safely load config
 const configPath = path.resolve('config.json');
@@ -78,6 +79,32 @@ export default {
 
     // Load server configurations
     const dbConfig = db.getGuildConfig(guildId);
+
+    // ==========================================
+    // XP & LEVELING (TEXT)
+    // ==========================================
+    const xpSystem = db.getXpSystem(guildId);
+    if (xpSystem && xpSystem.enabled && !message.content.startsWith(dbConfig.prefix)) {
+      const userXp = db.getUserXp(guildId, userId);
+      const now = Date.now();
+      
+      // 60-second cooldown to prevent spamming XP
+      if (now - userXp.lastMessageAt >= 60000) {
+        const mult = getRoleMultiplier(guildId, message.member);
+        const gained = Math.floor(getRandomXp() * mult);
+        
+        userXp.xp += gained;
+        userXp.lastMessageAt = now;
+        
+        const newLevel = calculateLevel(userXp.xp);
+        if (newLevel > userXp.level) {
+          userXp.level = newLevel;
+          processLevelUp(message.client, message.guild, message.member, newLevel).catch(() => null);
+        }
+        
+        db.setUserXp(guildId, userId, userXp);
+      }
+    }
 
     // ==========================================
     // 0. OWNER MENTION DETECTION

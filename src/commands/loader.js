@@ -19,6 +19,7 @@ import { commands as newsCmds } from './news.js';
 import { commands as announceCmds } from './announce.js';
 import { commands as verifyCmds } from './verify.js';
 import { commands as ticketCmds } from './ticket.js';
+import { commands as levelingCmds } from './leveling.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -41,7 +42,8 @@ export const allCommands = [
   ...newsCmds,
   ...announceCmds,
   ...verifyCmds,
-  ...ticketCmds
+  ...ticketCmds,
+  ...levelingCmds
 ];
 
 export const commandMap = new Map();

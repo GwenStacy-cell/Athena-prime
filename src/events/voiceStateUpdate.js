@@ -4,6 +4,7 @@ import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { buildControlPanel, buildSharedPanel } from '../commands/jtc.js';
 import statsDB from '../statsDB.js';
+import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
 
 export default {
   name: 'voiceStateUpdate',
@@ -18,7 +19,7 @@ export default {
     if (!client.vcSessions) client.vcSessions = new Map();
 
     // ==========================================
-    // STATS TRACKER
+    // STATS TRACKER & VOICE XP
     // ==========================================
     if (!newState.member?.user.bot) {
       const oldChannelId = oldState.channelId;
@@ -31,6 +32,28 @@ export default {
           if (session && session.channelId === oldChannelId) {
             const seconds = Math.floor((Date.now() - session.joinTime) / 1000);
             statsDB.logVoice(guild.id, userId, oldChannelId, seconds);
+            
+            // --- VOICE XP ---
+            const xpSystem = db.getXpSystem(guild.id);
+            if (xpSystem && xpSystem.enabled) {
+              const minutes = Math.floor(seconds / 60);
+              if (minutes > 0) {
+                const userXp = db.getUserXp(guild.id, userId);
+                const mult = getRoleMultiplier(guild.id, oldState.member || newState.member);
+                
+                // Award XP equivalent to typing a message every 2 minutes
+                // Example: 1 minute = (getRandomXp() / 2) * mult
+                const totalXpGained = Math.floor(minutes * (getRandomXp() / 1.5) * mult);
+                
+                userXp.xp += totalXpGained;
+                const newLevel = calculateLevel(userXp.xp);
+                if (newLevel > userXp.level) {
+                  userXp.level = newLevel;
+                  processLevelUp(client, guild, oldState.member || newState.member, newLevel).catch(() => null);
+                }
+                db.setUserXp(guild.id, userId, userXp);
+              }
+            }
           }
           client.vcSessions.delete(userId);
         }

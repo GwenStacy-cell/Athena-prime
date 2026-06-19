@@ -29,7 +29,9 @@ const DEFAULT_SCHEMA = {
   giveaways: {},     // messageId -> { guildId, channelId, hostId, prize, winnersCount, endsAt, participants: [] }
   newsFeeds: {},     // guildId -> { channelId, roleId, feeds: [{name, url}], lastGuids: [] }
   verification: {},  // guildId -> { roleId, messageId, channelId }
-  tickets: {}        // guildId -> { categoryId, staffRoleId, ticketCount: 0, activeTickets: {} } // ticketId -> { textId, voiceId, ownerId }
+  tickets: {},       // guildId -> { categoryId, staffRoleId, ticketCount: 0, activeTickets: {} } // ticketId -> { textId, voiceId, ownerId }
+  xpSystems: {},     // guildId -> { enabled: false, levelChannelId: null, roleRewards: { level -> roleId }, multipliers: { roleId -> multiplier } }
+  usersXp: {}        // guildId -> { userId -> { xp: 0, level: 0, lastMessageAt: 0, voiceJoinAt: 0 } }
 };
 
 class Database {
@@ -65,6 +67,8 @@ class Database {
         this.cache.newsFeeds      = this.cache.newsFeeds      || {};
         this.cache.verification   = this.cache.verification   || {};
         this.cache.tickets        = this.cache.tickets        || {};
+        this.cache.xpSystems      = this.cache.xpSystems      || {};
+        this.cache.usersXp        = this.cache.usersXp        || {};
       } else {
         this.save();
       }
@@ -876,6 +880,61 @@ class Database {
     if (!this.cache.giveaways) return [];
     return Object.entries(this.cache.giveaways).map(([messageId, data]) => ({ messageId, ...data }));
   }
+  // --------------------------------------------------------------------------
+  // XP & Leveling System
+  // --------------------------------------------------------------------------
+
+  getXpSystem(guildId) {
+    if (!this.cache.xpSystems[guildId]) {
+      this.cache.xpSystems[guildId] = {
+        enabled: false,
+        levelChannelId: null,
+        roleRewards: {}, // level (string) -> roleId
+        multipliers: {}  // roleId -> multiplier (number)
+      };
+      this.save();
+    }
+    return this.cache.xpSystems[guildId];
+  }
+
+  setXpSystem(guildId, data) {
+    this.cache.xpSystems[guildId] = data;
+    this.save();
+  }
+
+  getUserXp(guildId, userId) {
+    if (!this.cache.usersXp[guildId]) {
+      this.cache.usersXp[guildId] = {};
+    }
+    if (!this.cache.usersXp[guildId][userId]) {
+      this.cache.usersXp[guildId][userId] = {
+        xp: 0,
+        level: 0,
+        lastMessageAt: 0,
+        voiceJoinAt: 0
+      };
+      this.save();
+    }
+    return this.cache.usersXp[guildId][userId];
+  }
+
+  setUserXp(guildId, userId, data) {
+    if (!this.cache.usersXp[guildId]) {
+      this.cache.usersXp[guildId] = {};
+    }
+    this.cache.usersXp[guildId][userId] = data;
+    this.save();
+  }
+
+  getTopUsersXp(guildId, limit = 10) {
+    if (!this.cache.usersXp[guildId]) return [];
+    
+    return Object.entries(this.cache.usersXp[guildId])
+      .map(([userId, data]) => ({ userId, ...data }))
+      .sort((a, b) => b.xp - a.xp)
+      .slice(0, limit);
+  }
+
 }
 
 const db = new Database();
