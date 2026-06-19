@@ -133,12 +133,155 @@ export default {
         }
         return;
       }
+      // Announcement Manager Modals
+      if (interaction.customId === 'ann_text_modal') {
+        const title = interaction.fields.getTextInputValue('ann_title') || null;
+        const desc = interaction.fields.getTextInputValue('ann_desc') || null;
+        
+        const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
+        if (title) oldEmbed.setTitle(title);
+        if (desc) oldEmbed.setDescription(desc);
+
+        await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+        return;
+      }
+
+      if (interaction.customId === 'ann_media_modal') {
+        const img = interaction.fields.getTextInputValue('ann_image') || null;
+        const thumb = interaction.fields.getTextInputValue('ann_thumb') || null;
+        
+        const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
+        if (img) oldEmbed.setImage(img); else oldEmbed.setImage(null);
+        if (thumb) oldEmbed.setThumbnail(thumb); else oldEmbed.setThumbnail(null);
+
+        await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+        return;
+      }
+
+      if (interaction.customId === 'ann_channel_modal') {
+        const chanInput = interaction.fields.getTextInputValue('ann_channel') || '';
+        const channelId = chanInput.replace(/[^0-9]/g, '');
+        
+        if (!channelId) {
+          await interaction.reply({ content: 'Invalid channel ID provided.', ephemeral: true });
+          return;
+        }
+
+        const channel = interaction.guild.channels.cache.get(channelId);
+        if (!channel) {
+          await interaction.reply({ content: 'I could not find that channel in this server.', ephemeral: true });
+          return;
+        }
+
+        const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
+        oldEmbed.setFooter({ text: `Target Channel: ${channel.id}` });
+        await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+        return;
+      }
     }
 
     // ==========================================
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton()) {
+      // Announcement Builder Buttons
+      if (interaction.customId === 'ann_edit_text') {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('ann_text_modal').setTitle('Edit Content');
+        
+        const currentEmbed = interaction.message.embeds[0];
+        
+        const titleInput = new TextInputBuilder()
+          .setCustomId('ann_title')
+          .setLabel('Title')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(false)
+          .setValue(currentEmbed?.title || '');
+          
+        const descInput = new TextInputBuilder()
+          .setCustomId('ann_desc')
+          .setLabel('Description (Supports Links/Newlines)')
+          .setStyle(TextInputStyle.Paragraph)
+          .setRequired(false)
+          .setValue(currentEmbed?.description || '');
+          
+        modal.addComponents(new ActionRowBuilder().addComponents(titleInput), new ActionRowBuilder().addComponents(descInput));
+        await interaction.showModal(modal);
+        return;
+      }
+
+      if (interaction.customId === 'ann_edit_media') {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('ann_media_modal').setTitle('Edit Media (Image URLs)');
+        
+        const currentEmbed = interaction.message.embeds[0];
+        
+        const imgInput = new TextInputBuilder()
+          .setCustomId('ann_image')
+          .setLabel('Large Image URL')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(false)
+          .setValue(currentEmbed?.image?.url || '');
+          
+        const thumbInput = new TextInputBuilder()
+          .setCustomId('ann_thumb')
+          .setLabel('Thumbnail Image URL')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(false)
+          .setValue(currentEmbed?.thumbnail?.url || '');
+          
+        modal.addComponents(new ActionRowBuilder().addComponents(imgInput), new ActionRowBuilder().addComponents(thumbInput));
+        await interaction.showModal(modal);
+        return;
+      }
+
+      if (interaction.customId === 'ann_edit_channel') {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('ann_channel_modal').setTitle('Set Target Channel');
+        
+        const chanInput = new TextInputBuilder()
+          .setCustomId('ann_channel')
+          .setLabel('Channel ID or #Name')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+          .setPlaceholder('e.g. 123456789012345678 or #announcements');
+          
+        modal.addComponents(new ActionRowBuilder().addComponents(chanInput));
+        await interaction.showModal(modal);
+        return;
+      }
+
+      if (interaction.customId === 'ann_publish') {
+        const currentEmbed = interaction.message.embeds[0];
+        const footerText = currentEmbed?.footer?.text || '';
+        const channelIdMatch = footerText.match(/Target Channel: (\d+)/);
+        
+        if (!channelIdMatch) {
+          return interaction.reply({ content: 'You must set a Target Channel before publishing!', ephemeral: true });
+        }
+        
+        const channelId = channelIdMatch[1];
+        const targetChannel = interaction.guild.channels.cache.get(channelId);
+        
+        if (!targetChannel) {
+          return interaction.reply({ content: 'The selected target channel no longer exists.', ephemeral: true });
+        }
+        
+        const finalEmbed = EmbedBuilder.from(currentEmbed);
+        // Remove the builder specific author and footer
+        finalEmbed.setAuthor(null);
+        finalEmbed.setFooter(null);
+        
+        try {
+          await targetChannel.send({ embeds: [finalEmbed] });
+          await interaction.reply({ content: `Announcement published seamlessly to <#${channelId}>!`, ephemeral: true });
+          await interaction.message.delete().catch(() => null); // Clean up the builder
+        } catch (err) {
+          console.error('Publish error:', err);
+          return interaction.reply({ content: 'I lack permissions to post in that channel.', ephemeral: true });
+        }
+        return;
+      }
       // Set guild accent context for all embed calls in this button handler
       if (interaction.guild) setGuildContext(interaction.guild.id);
       // Enuke Manager button

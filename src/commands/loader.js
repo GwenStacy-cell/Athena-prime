@@ -16,6 +16,7 @@ import { commands as birthdayCmds } from './birthday.js';
 import { commands as giveawayCmds } from './giveaway.js';
 import { commands as statsCmds } from './stats.js';
 import { commands as newsCmds } from './news.js';
+import { commands as announceCmds } from './announce.js';
 import { commands as verifyCmds } from './verify.js';
 import { commands as ticketCmds } from './ticket.js';
 
@@ -38,6 +39,7 @@ export const allCommands = [
   ...giveawayCmds,
   ...statsCmds,
   ...newsCmds,
+  ...announceCmds,
   ...verifyCmds,
   ...ticketCmds
 ];
