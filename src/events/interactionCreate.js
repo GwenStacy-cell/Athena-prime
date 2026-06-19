@@ -245,20 +245,20 @@ export default {
 
       if (interaction.customId === 'ann_edit_media') {
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
-        const modal = new ModalBuilder().setCustomId('ann_media_modal').setTitle('Edit Media (Image URLs)');
+        const modal = new ModalBuilder().setCustomId('ann_media_modal').setTitle('Edit Media');
         
         const currentEmbed = interaction.message.embeds[0];
         
         const imgInput = new TextInputBuilder()
           .setCustomId('ann_image')
-          .setLabel('Large Image URL')
+          .setLabel('Large Image URL (Supports GIF)')
           .setStyle(TextInputStyle.Short)
           .setRequired(false)
           .setValue(currentEmbed?.image?.url || '');
           
         const thumbInput = new TextInputBuilder()
           .setCustomId('ann_thumb')
-          .setLabel('Thumbnail Image URL')
+          .setLabel('Thumbnail URL (Supports GIF)')
           .setStyle(TextInputStyle.Short)
           .setRequired(false)
           .setValue(currentEmbed?.thumbnail?.url || '');
