@@ -8,6 +8,12 @@ const parser = new Parser({
   timeout: 5000,
   headers: {
     'User-Agent': 'AthenaPrime/1.0.0 (Discord Bot)'
+  },
+  customFields: {
+    item: [
+      ['media:content', 'mediaContent'],
+      ['media:thumbnail', 'mediaThumbnail']
+    ]
   }
 });
 
@@ -56,9 +62,19 @@ async function checkNews(client) {
                 .setFooter({ text: `Source: ${feed.title || feedConfig.name}` })
                 .setTimestamp(new Date(item.isoDate || item.pubDate || Date.now()));
 
-              // Try to extract an image from enclosure or content
+              // Try to extract an image from enclosure, media tags, or content
               if (item.enclosure && item.enclosure.url && item.enclosure.type && item.enclosure.type.startsWith('image/')) {
                 newsEmbed.setImage(item.enclosure.url);
+              } else if (item.mediaContent && item.mediaContent.$ && item.mediaContent.$.url) {
+                newsEmbed.setImage(item.mediaContent.$.url);
+              } else if (item.mediaThumbnail && item.mediaThumbnail.$ && item.mediaThumbnail.$.url) {
+                // If width is specified, we could check it, but usually the thumbnail is fine
+                // BBC news uses a low res by default, let's try to increase it by replacing /240/ with /976/ if possible
+                let url = item.mediaThumbnail.$.url;
+                if (url.includes('bbci.co.uk') && url.includes('/240/')) {
+                  url = url.replace('/240/', '/976/');
+                }
+                newsEmbed.setImage(url);
               } else if (item.content && item.content.match(/<img[^>]+src="([^">]+)"/)) {
                 const imgMatch = item.content.match(/<img[^>]+src="([^">]+)"/);
                 if (imgMatch && imgMatch[1]) {
