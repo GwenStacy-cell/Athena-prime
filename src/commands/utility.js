@@ -16,12 +16,28 @@ export const commands = [
     description: 'Show Athena Prime command menu',
     type: 1,
     async executePrefix(message) {
-      const help = await getHelpEmbed(message.guild, message.client);
-      await message.reply(help);
+      const embedsList = await getHelpEmbeds(message.guild, message.client);
+      let first = true;
+      for (const embed of embedsList) {
+        if (first) {
+          await message.reply({ embeds: [embed] });
+          first = false;
+        } else {
+          await message.channel.send({ embeds: [embed] });
+        }
+      }
     },
     async executeSlash(interaction) {
-      const help = await getHelpEmbed(interaction.guild, interaction.client);
-      await interaction.reply({ ...help });
+      const embedsList = await getHelpEmbeds(interaction.guild, interaction.client);
+      let first = true;
+      for (const embed of embedsList) {
+        if (first) {
+          await interaction.reply({ embeds: [embed] });
+          first = false;
+        } else {
+          await interaction.followUp({ embeds: [embed] });
+        }
+      }
     }
   },
 
@@ -391,7 +407,7 @@ async function getStatusEmbed(client, guild) {
   return { embed: statusEmbed };
 }
 
-async function getHelpEmbed(guild, client) {
+async function getHelpEmbeds(guild, client) {
   const config = db.getGuildConfig(guild?.id || '0');
   const p = config?.prefix || '!';
   const botId = client?.user?.id || '1347071663182676059'; // fallback to standard bot id
@@ -558,8 +574,8 @@ async function getHelpEmbed(guild, client) {
 
   for (const field of fields) {
     const fieldLength = field.name.length + field.value.length;
-    // Discord max total embed length is 6000, keep it under 5500 to be safe
-    if (currentLength + fieldLength > 5500 || currentEmbed.data.fields?.length >= 25) {
+    // Lowered threshold to perfectly split fields and avoid Interaction Failed limits
+    if (currentLength + fieldLength > 3000 || currentEmbed.data.fields?.length >= 10) {
       embeds.push(currentEmbed);
       pageNumber++;
       currentEmbed = new EmbedBuilder()
@@ -573,7 +589,7 @@ async function getHelpEmbed(guild, client) {
   
   embeds.push(currentEmbed);
 
-  return { embeds };
+  return embeds;
 }
 
 async function handleSetup(guild, channel, role, voiceChannel) {
