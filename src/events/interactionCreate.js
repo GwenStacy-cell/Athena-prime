@@ -135,47 +135,79 @@ export default {
       }
       // Announcement Manager Modals
       if (interaction.customId === 'ann_text_modal') {
-        const title = interaction.fields.getTextInputValue('ann_title') || null;
-        const desc = interaction.fields.getTextInputValue('ann_desc') || null;
-        
-        const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
-        if (title) oldEmbed.setTitle(title);
-        if (desc) oldEmbed.setDescription(desc);
+        try {
+          let title = null;
+          try { title = interaction.fields.getTextInputValue('ann_title'); } catch {}
+          
+          let desc = null;
+          try { desc = interaction.fields.getTextInputValue('ann_desc'); } catch {}
+          
+          const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
+          if (title !== null) oldEmbed.setTitle(title.slice(0, 256) || 'New Announcement');
+          if (desc !== null) oldEmbed.setDescription(desc || 'No description provided.');
 
-        await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+          await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+        } catch (err) {
+          console.error('Ann text modal error:', err);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+        }
         return;
       }
 
       if (interaction.customId === 'ann_media_modal') {
-        const img = interaction.fields.getTextInputValue('ann_image') || null;
-        const thumb = interaction.fields.getTextInputValue('ann_thumb') || null;
-        
-        const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
-        if (img) oldEmbed.setImage(img); else oldEmbed.setImage(null);
-        if (thumb) oldEmbed.setThumbnail(thumb); else oldEmbed.setThumbnail(null);
+        try {
+          let img = null;
+          try { img = interaction.fields.getTextInputValue('ann_image'); } catch {}
+          
+          let thumb = null;
+          try { thumb = interaction.fields.getTextInputValue('ann_thumb'); } catch {}
+          
+          const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
+          
+          if (img !== null) {
+            try { oldEmbed.setImage(img || null); } catch { /* Ignore invalid URL */ }
+          }
+          
+          if (thumb !== null) {
+            if (!thumb) {
+              // Default to bot's avatar if left blank
+              oldEmbed.setThumbnail(interaction.guild.members.me.displayAvatarURL({ dynamic: true, size: 512 }));
+            } else {
+              try { oldEmbed.setThumbnail(thumb); } catch { /* Ignore invalid URL */ }
+            }
+          }
 
-        await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+          await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+        } catch (err) {
+          console.error('Ann media modal error:', err);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+        }
         return;
       }
 
       if (interaction.customId === 'ann_channel_modal') {
-        const chanInput = interaction.fields.getTextInputValue('ann_channel') || '';
-        const channelId = chanInput.replace(/[^0-9]/g, '');
-        
-        if (!channelId) {
-          await interaction.reply({ content: 'Invalid channel ID provided.', ephemeral: true });
-          return;
-        }
+        try {
+          let chanInput = '';
+          try { chanInput = interaction.fields.getTextInputValue('ann_channel'); } catch {}
+          
+          const channelId = chanInput.replace(/[^0-9]/g, '');
+          
+          if (!channelId) {
+            return interaction.reply({ content: 'Invalid channel ID provided.', ephemeral: true });
+          }
 
-        const channel = interaction.guild.channels.cache.get(channelId);
-        if (!channel) {
-          await interaction.reply({ content: 'I could not find that channel in this server.', ephemeral: true });
-          return;
-        }
+          const channel = interaction.guild.channels.cache.get(channelId);
+          if (!channel) {
+            return interaction.reply({ content: 'I could not find that channel in this server.', ephemeral: true });
+          }
 
-        const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
-        oldEmbed.setFooter({ text: `Target Channel: ${channel.id}` });
-        await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+          const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
+          oldEmbed.setFooter({ text: `Target Channel: ${channel.id}` });
+          await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
+        } catch (err) {
+          console.error('Ann channel modal error:', err);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+        }
         return;
       }
     }
@@ -195,6 +227,7 @@ export default {
           .setCustomId('ann_title')
           .setLabel('Title')
           .setStyle(TextInputStyle.Short)
+          .setMaxLength(256)
           .setRequired(false)
           .setValue(currentEmbed?.title || '');
           
