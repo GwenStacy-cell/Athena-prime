@@ -1,5 +1,6 @@
 import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import embed, { setGuildContext } from '../embed.js';
+import db from '../database.js';
 
 export const commands = [
   {
@@ -11,8 +12,11 @@ export const commands = [
     async executePrefix(message, args) {
       if (message.guild) setGuildContext(message.guild.id);
       
+      const config = db.getGuildConfig(message.guild.id);
+      const color = config.accentHex || '#5865F2';
+      
       const previewEmbed = new EmbedBuilder()
-        .setColor(0x5865F2)
+        .setColor(color)
         .setAuthor({ name: 'Announcement Builder' })
         .setTitle('New Announcement')
         .setDescription('Click the buttons below to edit this announcement. You can seamlessly add links, images, and multiple lines of text!')
@@ -44,8 +48,11 @@ export const commands = [
     async executeSlash(interaction) {
       if (interaction.guild) setGuildContext(interaction.guild.id);
 
+      const config = db.getGuildConfig(interaction.guild.id);
+      const color = config.accentHex || '#5865F2';
+
       const previewEmbed = new EmbedBuilder()
-        .setColor(0x5865F2)
+        .setColor(color)
         .setAuthor({ name: 'Announcement Builder' })
         .setTitle('New Announcement')
         .setDescription('Click the buttons below to edit this announcement. You can seamlessly add links, images, and multiple lines of text!')
