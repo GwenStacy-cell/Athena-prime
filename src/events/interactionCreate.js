@@ -1,4 +1,4 @@
-import { PermissionFlagsBits } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder } from 'discord.js';
 import commandMap from '../commands/loader.js';
 import embed, { setGuildContext } from '../embed.js';
 import db from '../database.js';
