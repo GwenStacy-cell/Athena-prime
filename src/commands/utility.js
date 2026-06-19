@@ -405,13 +405,13 @@ async function getHelpEmbed(guild, client) {
         `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** \`on|off\`\n` +
         `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid\n` +
         `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels\n\n` +
-        `> **Warning:** You MUST whitelist friendly bots (e.g. \`${p}botwhitelist add <ID>\`). Unwhitelisted bots taking mod actions will be instantly banned.`
+        `**Warning:** You MUST whitelist friendly bots (e.g. \`${p}botwhitelist add <ID>\`). Unwhitelisted bots taking mod actions will be instantly banned.`
     },
     {
       name: h('WHITELIST  &  PERMISSIONS'),
       value:
         `\`${p}whitelist\` **add** / **remove** / **list** \`@user|botId\` \`[events...]\`\n` +
-        `> Events: \`all\`  \`antinuke\`  \`antibot\`  \`antispam\`  \`antilink\`  \`antiinvite\`  \`quarantine\`\n` +
+        `Events: \`all\`  \`antinuke\`  \`antibot\`  \`antispam\`  \`antilink\`  \`antiinvite\`  \`quarantine\`\n` +
         `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots to join\n` +
         `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access`
     },
@@ -477,7 +477,7 @@ async function getHelpEmbed(guild, client) {
         `\`${p}welcome\` — Open the Welcome message manager\n` +
         `\`${p}leave\` — Open the Leave message manager\n` +
         `\`${p}autorole-config\` — Manage multiple roles auto-assigned to new members\n` +
-        `> Supports \`{user}\`  \`{server}\`  \`{count}\` placeholders in custom embeds`
+        `Supports \`{user}\`  \`{server}\`  \`{count}\` placeholders in custom embeds`
     },
     {
       name: h('ENGAGEMENT  &  TRACKING'),
@@ -487,7 +487,7 @@ async function getHelpEmbed(guild, client) {
         `\`${p}rrdisable\` — Wipe all Reaction Role configurations from the server\n` +
         `\`${p}invitesetup\` \`#channel\` — Enable the Advanced Invite Tracker to log who invites who\n` +
         `\`${p}invitedisable\` — Disable Invite Tracking\n` +
-        `> Note: Reaction Role menus can be deleted simply by deleting the message in Discord!`
+        `Note: Reaction Role menus can be deleted simply by deleting the message in Discord!`
     },
     {
       name: h('AUTO-RESPONDER'),
@@ -497,13 +497,21 @@ async function getHelpEmbed(guild, client) {
         `\`${p}trigger\` **list** — View all active triggers in this server`
     },
     {
+      name: h('NEWS  FEED'),
+      value:
+        `\`/news setup\` \`#channel\` \`[@role]\` — Setup the automated news feed\n` +
+        `\`/news add\` \`[preset]\` \`[url]\` — Add a news source (e.g. BBC, CNN)\n` +
+        `\`/news remove\` \`url\` — Remove a news source\n` +
+        `\`/news list\` — View all active subscriptions`
+    },
+    {
       name: h('CUSTOMIZATION'),
       value:
         `\`${p}accent\` — Set the embed accent color (10 pure presets + custom hex)\n` +
         `\`${p}autonick\` **on** / **off** \`[prefix]\` \`[suffix]\` — Auto-format member nicknames\n` +
         `\`${p}setguildavatar\` — Set bot's custom per-server avatar\n` +
         `\`${p}setguildbanner\` — Set bot's custom per-server banner\n` +
-        `> Note: MP4 video links will be automatically converted to high-quality GIFs!\n` +
+        `Note: MP4 video links will be automatically converted to high-quality GIFs!\n` +
         `\`${p}steal\` \`:emoji: ...\` — Steal multiple emojis into your server`
     },
     {
@@ -523,22 +531,42 @@ async function getHelpEmbed(guild, client) {
         `\`${p}ping\` — WebSocket and API latency\n` +
         `\`${p}setup\` — Quick-bind log channel, quarantine VC and quarantine role\n` +
         `\`${p}help\` — This command console\n\n` +
-        `> Every command works natively with \`${p}prefix\` and \`/slash\`.\n` +
-        `> Bot Owner, Server Owner, and Extra Owners universally bypass permission checks.`
+        `Every command works natively with \`${p}prefix\` and \`/slash\`.\n` +
+        `Bot Owner, Server Owner, and Extra Owners universally bypass permission checks.`
     }
   ];
 
-  const description = `# Hey !!! , I am <@${botId}> ,\n\n> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n\n<a:Dark4luvontop:1514999633179316305> To set Custom Prefix use <@${botId}> \n\`@Athena Prime prefix " your custom prefix "\`\n\n<a:Dark4luvontop:1514999633179316305> Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
+  const description = `# Hey !!! , I am <@${botId}> ,\n\nWelcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n\n<a:Dark4luvontop:1514999633179316305> To set Custom Prefix use <@${botId}> \n\`@Athena Prime prefix " your custom prefix "\`\n\n<a:Dark4luvontop:1514999633179316305> Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\u200b`;
 
   const guildConfig = db.getGuildConfig(guild?.id || '0');
   const accentColor = guildConfig?.accentColor || '#3b82f6';
 
-  const helpEmbed = new EmbedBuilder()
+  const embeds = [];
+  let currentEmbed = new EmbedBuilder()
     .setColor(accentColor)
-    .setDescription(description)
-    .addFields(fields);
+    .setDescription(description);
 
-  return { embeds: [helpEmbed] };
+  let currentLength = description.length;
+  let pageNumber = 1;
+
+  for (const field of fields) {
+    const fieldLength = field.name.length + field.value.length;
+    // Discord max total embed length is 6000, keep it under 5500 to be safe
+    if (currentLength + fieldLength > 5500 || currentEmbed.data.fields?.length >= 25) {
+      embeds.push(currentEmbed);
+      pageNumber++;
+      currentEmbed = new EmbedBuilder()
+        .setColor(accentColor)
+        .setDescription(`*Help Menu - Page ${pageNumber}*`);
+      currentLength = currentEmbed.data.description.length;
+    }
+    currentEmbed.addFields(field);
+    currentLength += fieldLength;
+  }
+  
+  embeds.push(currentEmbed);
+
+  return { embeds };
 }
 
 async function handleSetup(guild, channel, role, voiceChannel) {
