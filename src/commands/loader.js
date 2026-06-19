@@ -15,6 +15,7 @@ import { commands as serverstatsCmds } from './serverstats.js';
 import { commands as birthdayCmds } from './birthday.js';
 import { commands as giveawayCmds } from './giveaway.js';
 import { commands as statsCmds } from './stats.js';
+import { commands as newsCmds } from './news.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -33,7 +34,8 @@ export const allCommands = [
   ...serverstatsCmds,
   ...birthdayCmds,
   ...giveawayCmds,
-  ...statsCmds
+  ...statsCmds,
+  ...newsCmds
 ];
 
 export const commandMap = new Map();

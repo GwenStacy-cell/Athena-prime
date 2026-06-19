@@ -26,7 +26,8 @@ const DEFAULT_SCHEMA = {
   reactionRoles: {}, // messageId -> { guildId, channelId, title, mappings: [{emoji, roleId}] }
   serverStats: {},   // guildId -> { categoryId, totalId, humansId, botsId }
   birthdays: {},     // guildId -> { channelId, users: { userId -> { day, month } } }
-  giveaways: {}      // messageId -> { guildId, channelId, hostId, prize, winnersCount, endsAt, participants: [] }
+  giveaways: {},     // messageId -> { guildId, channelId, hostId, prize, winnersCount, endsAt, participants: [] }
+  newsFeeds: {}      // guildId -> { channelId, roleId, feeds: [{name, url}], lastGuids: [] }
 };
 
 class Database {
@@ -59,6 +60,7 @@ class Database {
         this.cache.serverStats    = this.cache.serverStats    || {};
         this.cache.birthdays      = this.cache.birthdays      || {};
         this.cache.giveaways      = this.cache.giveaways      || {};
+        this.cache.newsFeeds      = this.cache.newsFeeds      || {};
       } else {
         this.save();
       }
@@ -183,7 +185,55 @@ class Database {
     }
   }
 
-  // --- SERVER STATS ---
+  // -------------------------
+  // News Feeds Configuration
+  // -------------------------
+  getNewsConfig(guildId) {
+    if (!this.cache.newsFeeds[guildId]) {
+      this.cache.newsFeeds[guildId] = { channelId: null, roleId: null, feeds: [], lastGuids: [] };
+      this.save();
+    }
+    return this.cache.newsFeeds[guildId];
+  }
+
+  setNewsSetup(guildId, channelId, roleId) {
+    const cfg = this.getNewsConfig(guildId);
+    cfg.channelId = channelId;
+    cfg.roleId = roleId;
+    this.save();
+  }
+
+  addNewsFeed(guildId, name, url) {
+    const cfg = this.getNewsConfig(guildId);
+    if (!cfg.feeds.find(f => f.url === url)) {
+      cfg.feeds.push({ name, url });
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  removeNewsFeed(guildId, url) {
+    const cfg = this.getNewsConfig(guildId);
+    const initialLen = cfg.feeds.length;
+    cfg.feeds = cfg.feeds.filter(f => f.url !== url);
+    if (cfg.feeds.length < initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  updateNewsGuids(guildId, guidsArray) {
+    const cfg = this.getNewsConfig(guildId);
+    // Keep only the last 200 guids to prevent infinite DB growth
+    cfg.lastGuids = [...new Set([...guidsArray, ...cfg.lastGuids])].slice(0, 200);
+    this.save();
+  }
+
+  // -------------------------
+  // Server Stats
+  // -------------------------
   getServerStats(guildId) {
     return this.cache.serverStats[guildId] || null;
   }

@@ -9,6 +9,8 @@ import { generateBirthdayMessage } from '../commands/birthday.js';
 import statsDB from '../statsDB.js';
 import { endGiveaway } from '../commands/giveaway.js';
 import { setupDashboardChannel, updateDashboardMessage } from '../utils/dashboardManager.js';
+import { startNewsJob } from '../jobs/newsJob.js';
+
 export default {
   name: 'ready',
   once: true,
@@ -226,6 +228,10 @@ export default {
         }
       }
       console.log(chalk.green('✅ Invite cache initialized.'));
+
+    // Start the News Feed Cron Job
+    console.log(chalk.blue('⏳ Initializing News Feed Job...'));
+    startNewsJob(client);
 
     // Periodically update JTC panels every 5 minutes to keep stats fresh
     setInterval(async () => {
