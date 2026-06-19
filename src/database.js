@@ -63,6 +63,8 @@ class Database {
         this.cache.birthdays      = this.cache.birthdays      || {};
         this.cache.giveaways      = this.cache.giveaways      || {};
         this.cache.newsFeeds      = this.cache.newsFeeds      || {};
+        this.cache.verification   = this.cache.verification   || {};
+        this.cache.tickets        = this.cache.tickets        || {};
       } else {
         this.save();
       }
