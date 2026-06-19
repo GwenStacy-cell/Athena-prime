@@ -13,7 +13,7 @@ export const commands = [
       if (message.guild) setGuildContext(message.guild.id);
       
       const config = db.getGuildConfig(message.guild.id);
-      const color = config.accentHex || '#5865F2';
+      const color = config.accentColor || '#5865F2';
       
       const previewEmbed = new EmbedBuilder()
         .setColor(color)
@@ -49,7 +49,7 @@ export const commands = [
       if (interaction.guild) setGuildContext(interaction.guild.id);
 
       const config = db.getGuildConfig(interaction.guild.id);
-      const color = config.accentHex || '#5865F2';
+      const color = config.accentColor || '#5865F2';
 
       const previewEmbed = new EmbedBuilder()
         .setColor(color)
