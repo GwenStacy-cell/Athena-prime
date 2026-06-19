@@ -531,6 +531,13 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}steal\` \`:emoji: ...\` — Steal multiple emojis into your server`
     },
     {
+      name: h('MESSAGE STATISTICS'),
+      value:
+        `\`/stats me\` — View your personal server message statistics\n` +
+        `\`/stats user\` \`@user\` — View message stats for a specific user\n` +
+        `\`/setstatschannel\` \`#channel\` — Restrict \`/stats\` usage to a specific channel`
+    },
+    {
       name: h('BIRTHDAYS'),
       value:
         `\`${p}birthday\` **setchannel** \`#channel\` — Set the channel for birthday announcements\n` +
