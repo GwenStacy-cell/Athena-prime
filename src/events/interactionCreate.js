@@ -171,7 +171,7 @@ export default {
               try {
                 const res = await fetch(url);
                 const text = await res.text();
-                const match = text.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+                const match = text.match(/content="([^"]+media\.tenor\.com[^"]+\.gif)"/i);
                 if (match) return match[1];
               } catch { }
             }
