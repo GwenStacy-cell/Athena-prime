@@ -27,7 +27,9 @@ const DEFAULT_SCHEMA = {
   serverStats: {},   // guildId -> { categoryId, totalId, humansId, botsId }
   birthdays: {},     // guildId -> { channelId, users: { userId -> { day, month } } }
   giveaways: {},     // messageId -> { guildId, channelId, hostId, prize, winnersCount, endsAt, participants: [] }
-  newsFeeds: {}      // guildId -> { channelId, roleId, feeds: [{name, url}], lastGuids: [] }
+  newsFeeds: {},     // guildId -> { channelId, roleId, feeds: [{name, url}], lastGuids: [] }
+  verification: {},  // guildId -> { roleId, messageId, channelId }
+  tickets: {}        // guildId -> { categoryId, staffRoleId, ticketCount: 0, activeTickets: {} } // ticketId -> { textId, voiceId, ownerId }
 };
 
 class Database {

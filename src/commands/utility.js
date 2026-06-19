@@ -496,6 +496,13 @@ async function getHelpEmbeds(guild, client) {
         `Supports \`{user}\`  \`{server}\`  \`{count}\` placeholders in custom embeds`
     },
     {
+      name: h('VERIFICATION  &  TICKETS'),
+      value:
+        `\`/verify setup\` \`@role\` — Deploy the server verification panel\n` +
+        `\`/verify disable\` — Remove the verification system\n` +
+        `\`/ticket setup\` \`#category\` \`@role\` — Deploy the support ticket panel`
+    },
+    {
       name: h('ENGAGEMENT  &  TRACKING'),
       value:
         `\`${p}serverstats\` **setup** / **disable** — Create live auto-updating Member Count VCs\n` +

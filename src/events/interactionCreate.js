@@ -154,6 +154,143 @@ export default {
         return;
       }
 
+      // Verify Button
+      if (interaction.customId === 'verify_button') {
+        const verifyData = db.getVerification(interaction.guild.id);
+        if (!verifyData || !verifyData.roleId) {
+          return interaction.reply({ content: 'The verification system is currently disabled or improperly configured.', ephemeral: true });
+        }
+        const role = interaction.guild.roles.cache.get(verifyData.roleId);
+        if (!role) {
+          return interaction.reply({ content: 'The verification role no longer exists on this server!', ephemeral: true });
+        }
+        if (interaction.member.roles.cache.has(role.id)) {
+          return interaction.reply({ content: 'You are already verified!', ephemeral: true });
+        }
+        try {
+          await interaction.member.roles.add(role);
+          return interaction.reply({ content: `<a:emoji_18:1517214419996643509> You have been successfully verified! Access granted.`, ephemeral: true });
+        } catch (err) {
+          return interaction.reply({ content: 'I do not have permission to assign the verification role. Please contact an admin.', ephemeral: true });
+        }
+      }
+
+      // Ticket Open Button
+      if (interaction.customId === 'ticket_open') {
+        const ticketConfig = db.getTickets(interaction.guild.id);
+        if (!ticketConfig || !ticketConfig.categoryId) {
+          return interaction.reply({ content: 'The ticket system is not fully configured.', ephemeral: true });
+        }
+
+        const category = interaction.guild.channels.cache.get(ticketConfig.categoryId);
+        if (!category) {
+          return interaction.reply({ content: 'The ticket category could not be found.', ephemeral: true });
+        }
+
+        // Check if user already has an active ticket
+        for (const [tId, ticket] of Object.entries(ticketConfig.activeTickets)) {
+          if (ticket.ownerId === interaction.user.id) {
+            return interaction.reply({ content: `You already have an open ticket in <#${ticket.textId}>!`, ephemeral: true });
+          }
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        try {
+          const permissionOverwrites = [
+            {
+              id: interaction.guild.id, // @everyone
+              deny: [PermissionFlagsBits.ViewChannel],
+            },
+            {
+              id: interaction.user.id, // Ticket creator
+              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak],
+            },
+            {
+              id: interaction.client.user.id, // Bot
+              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels],
+            }
+          ];
+
+          if (ticketConfig.staffRoleId) {
+            permissionOverwrites.push({
+              id: ticketConfig.staffRoleId, // Staff
+              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak],
+            });
+          }
+
+          // Create Text Channel
+          const textChannel = await interaction.guild.channels.create({
+            name: `🎫-ticket-${interaction.user.username}`,
+            type: 0, // GUILD_TEXT
+            parent: category.id,
+            permissionOverwrites
+          });
+
+          // Create Voice Channel
+          const voiceChannel = await interaction.guild.channels.create({
+            name: `🔊 Ticket Voice`,
+            type: 2, // GUILD_VOICE
+            parent: category.id,
+            permissionOverwrites
+          });
+
+          const ticketId = db.createTicket(interaction.guild.id, textChannel.id, voiceChannel.id, interaction.user.id);
+
+          const ticketEmbed = embed.info(
+            `Ticket #${ticketId}`,
+            `Welcome ${interaction.user}!\n\nA staff member will be with you shortly. You have a dedicated text channel here, and a dedicated voice channel: <#${voiceChannel.id}>.\n\nClick the button below to close this ticket.`
+          );
+
+          const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
+          const closeRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId(`ticket_close_${ticketId}`)
+              .setLabel('Close Ticket')
+              .setEmoji('<a:emoji_106:1517212811678453942>')
+              .setStyle(ButtonStyle.Danger)
+          );
+
+          await textChannel.send({
+            content: ticketConfig.staffRoleId ? `<@&${ticketConfig.staffRoleId}>` : undefined,
+            embeds: [ticketEmbed],
+            components: [closeRow]
+          });
+
+          return interaction.editReply({ content: `Your ticket has been created: <#${textChannel.id}>` });
+        } catch (err) {
+          console.error('Error creating ticket:', err);
+          return interaction.editReply({ content: 'An error occurred while trying to create your ticket channels.' });
+        }
+      }
+
+      // Ticket Close Button
+      if (interaction.customId.startsWith('ticket_close_')) {
+        const ticketId = interaction.customId.replace('ticket_close_', '');
+        const ticketConfig = db.getTickets(interaction.guild.id);
+        const ticketData = ticketConfig.activeTickets[ticketId];
+
+        if (!ticketData) {
+          return interaction.reply({ content: 'This ticket is no longer tracked in the database.', ephemeral: true });
+        }
+
+        // To prevent misclicks, let's defer update and immediately delete the channels
+        await interaction.deferUpdate();
+
+        try {
+          const textChannel = interaction.guild.channels.cache.get(ticketData.textId);
+          const voiceChannel = interaction.guild.channels.cache.get(ticketData.voiceId);
+
+          if (textChannel) await textChannel.delete();
+          if (voiceChannel) await voiceChannel.delete();
+
+          db.removeTicket(interaction.guild.id, ticketId);
+        } catch (err) {
+          console.error('Error deleting ticket channels:', err);
+        }
+        return;
+      }
+
       // Giveaway Join Button
       if (interaction.customId === 'gw_join') {
         const gwData = db.getGiveaway(interaction.message.id);
