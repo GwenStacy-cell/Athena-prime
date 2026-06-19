@@ -156,43 +156,56 @@ export default {
 
       // Verify Button
       if (interaction.customId === 'verify_button') {
-        const verifyData = db.getVerification(interaction.guild.id);
-        if (!verifyData || !verifyData.roleId) {
-          return interaction.reply({ content: 'The verification system is currently disabled or improperly configured.', ephemeral: true });
-        }
-        const role = interaction.guild.roles.cache.get(verifyData.roleId);
-        if (!role) {
-          return interaction.reply({ content: 'The verification role no longer exists on this server!', ephemeral: true });
-        }
-        if (interaction.member.roles.cache.has(role.id)) {
-          return interaction.reply({ content: 'You are already verified!', ephemeral: true });
-        }
         try {
-          await interaction.member.roles.add(role);
+          const verifyData = db.getVerification(interaction.guild.id);
+          if (!verifyData || !verifyData.roleId) {
+            return interaction.reply({ content: 'The verification system is currently disabled or improperly configured.', ephemeral: true });
+          }
+          const role = interaction.guild.roles.cache.get(verifyData.roleId);
+          if (!role) {
+            return interaction.reply({ content: 'The verification role no longer exists on this server!', ephemeral: true });
+          }
+          
+          // Ensure we have a full GuildMember object, not an APIInteractionGuildMember
+          const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+          if (!member) {
+            return interaction.reply({ content: 'Could not resolve your server profile.', ephemeral: true });
+          }
+
+          if (member.roles.cache.has(role.id)) {
+            return interaction.reply({ content: 'You are already verified!', ephemeral: true });
+          }
+          
+          await member.roles.add(role);
           return interaction.reply({ content: `<a:emoji_18:1517214419996643509> You have been successfully verified! Access granted.`, ephemeral: true });
         } catch (err) {
-          return interaction.reply({ content: 'I do not have permission to assign the verification role. Please contact an admin.', ephemeral: true });
+          console.error('Verify error:', err);
+          return interaction.reply({ content: 'I do not have permission to assign the verification role. Please contact an admin.', ephemeral: true }).catch(() => null);
         }
       }
 
       // Ticket Open Button
       if (interaction.customId === 'ticket_open') {
-        const ticketConfig = db.getTickets(interaction.guild.id);
-        if (!ticketConfig || !ticketConfig.categoryId) {
-          return interaction.reply({ content: 'The ticket system is not fully configured.', ephemeral: true });
-        }
-
-        const category = interaction.guild.channels.cache.get(ticketConfig.categoryId);
-        if (!category) {
-          return interaction.reply({ content: 'The ticket category could not be found.', ephemeral: true });
-        }
-
-        // Check if user already has an active ticket
-        for (const [tId, ticket] of Object.entries(ticketConfig.activeTickets)) {
-          if (ticket.ownerId === interaction.user.id) {
-            return interaction.reply({ content: `You already have an open ticket in <#${ticket.textId}>!`, ephemeral: true });
+        try {
+          const ticketConfig = db.getTickets(interaction.guild.id);
+          if (!ticketConfig || !ticketConfig.categoryId) {
+            return interaction.reply({ content: 'The ticket system is not fully configured.', ephemeral: true });
           }
-        }
+
+          const category = interaction.guild.channels.cache.get(ticketConfig.categoryId);
+          if (!category) {
+            return interaction.reply({ content: 'The ticket category could not be found.', ephemeral: true });
+          }
+
+          // Ensure activeTickets is an object
+          const activeTickets = ticketConfig.activeTickets || {};
+
+          // Check if user already has an active ticket
+          for (const [tId, ticket] of Object.entries(activeTickets)) {
+            if (ticket.ownerId === interaction.user.id) {
+              return interaction.reply({ content: `You already have an open ticket in <#${ticket.textId}>!`, ephemeral: true });
+            }
+          }
 
         await interaction.deferReply({ ephemeral: true });
 
@@ -262,7 +275,13 @@ export default {
           console.error('Error creating ticket:', err);
           return interaction.editReply({ content: 'An error occurred while trying to create your ticket channels.' });
         }
+      } catch (err) {
+        console.error('Ticket open error:', err);
+        if (!interaction.replied && !interaction.deferred) {
+          return interaction.reply({ content: 'An unexpected error occurred while processing your ticket.', ephemeral: true }).catch(() => null);
+        }
       }
+    }
 
       // Ticket Close Button
       if (interaction.customId.startsWith('ticket_close_')) {
