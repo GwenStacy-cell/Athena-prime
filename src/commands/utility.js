@@ -469,6 +469,7 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}kick\` / \`${p}ban\` / \`${p}unban\` / \`${p}unbanall\` — Standard moderation actions\n` +
         `\`${p}sync\` / \`${p}syncall\` — Sync channel permissions with category\n` +
         `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute or unmute your current VC\n` +
+        `\`${p}massmove\` \`dest\` / \`${p}massdc\` — Move or disconnect everyone in a VC\n` +
         `\`${p}purge\` \`1–100\` — Bulk-delete messages from current channel\n` +
         `\`${p}slowmode\` \`seconds\` — Set channel slowmode (0 = off)\n` +
         `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role\n` +

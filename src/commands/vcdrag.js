@@ -124,6 +124,120 @@ export const commands = [
 
     async executeSlash(interaction) {
       const result = handleVcDragList(interaction.guild);
+      await interaction.reply({ embeds: [result.embed], ephemeral: true });
+    }
+  },
+
+  // ─────────────────────────────────────────────
+  // /massdc  —  Mass Disconnect users from a VC
+  // ─────────────────────────────────────────────
+  {
+    name: 'massdc',
+    description: 'Disconnects all users from a voice channel (you are immune).',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.MoveMembers],
+    options: [
+      {
+        name: 'channel',
+        description: 'The voice channel to clear (defaults to your current channel)',
+        type: 7, // CHANNEL
+        channel_types: [ChannelType.GuildVoice, ChannelType.GuildStageVoice],
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      let targetVc;
+      if (args[0]) {
+        targetVc = message.guild.channels.cache.get(args[0].replace(/[<#>]/g, '')) || 
+                   message.guild.channels.cache.find(c => (c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildStageVoice) && c.name.toLowerCase().includes(args.join(' ').toLowerCase()));
+      } else {
+        targetVc = message.member.voice.channel;
+      }
+
+      if (!targetVc || (targetVc.type !== ChannelType.GuildVoice && targetVc.type !== ChannelType.GuildStageVoice)) {
+        return message.reply({ embeds: [embed.warn('Channel Not Found', 'Please specify a valid voice channel, or join one first.')] });
+      }
+
+      const result = await handleMassDisconnect(targetVc, message.member);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const targetVc = interaction.options.getChannel('channel') || interaction.member.voice.channel;
+
+      if (!targetVc || (targetVc.type !== ChannelType.GuildVoice && targetVc.type !== ChannelType.GuildStageVoice)) {
+        return interaction.reply({ embeds: [embed.warn('Channel Not Found', 'Please specify a valid voice channel, or join one first.')], ephemeral: true });
+      }
+
+      const result = await handleMassDisconnect(targetVc, interaction.member);
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // ─────────────────────────────────────────────
+  // /massmove  —  Mass Move users to another VC
+  // ─────────────────────────────────────────────
+  {
+    name: 'massmove',
+    description: 'Moves all users from one voice channel to another.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.MoveMembers],
+    options: [
+      {
+        name: 'destination',
+        description: 'The voice channel to move everyone to',
+        type: 7, // CHANNEL
+        channel_types: [ChannelType.GuildVoice, ChannelType.GuildStageVoice],
+        required: true
+      },
+      {
+        name: 'source',
+        description: 'The channel to pull users from (defaults to your current channel)',
+        type: 7, // CHANNEL
+        channel_types: [ChannelType.GuildVoice, ChannelType.GuildStageVoice],
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      if (!args[0]) {
+        return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massmove <destination>` or `!massmove <source> <destination>`')] });
+      }
+
+      let sourceVc = message.member.voice.channel;
+      let destVc;
+
+      // If two args provided, try to resolve both
+      if (args.length >= 2) {
+        const potentialSource = message.guild.channels.cache.get(args[0].replace(/[<#>]/g, ''));
+        if (potentialSource && (potentialSource.type === ChannelType.GuildVoice || potentialSource.type === ChannelType.GuildStageVoice)) {
+          sourceVc = potentialSource;
+          const destQuery = args.slice(1).join(' ').toLowerCase();
+          destVc = message.guild.channels.cache.get(destQuery.replace(/[<#>]/g, '')) || 
+                   message.guild.channels.cache.find(c => (c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildStageVoice) && c.name.toLowerCase().includes(destQuery));
+        } else {
+          // Just one arg technically, resolving destination
+          const destQuery = args.join(' ').toLowerCase();
+          destVc = message.guild.channels.cache.get(destQuery.replace(/[<#>]/g, '')) || 
+                   message.guild.channels.cache.find(c => (c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildStageVoice) && c.name.toLowerCase().includes(destQuery));
+        }
+      } else {
+        const destQuery = args.join(' ').toLowerCase();
+        destVc = message.guild.channels.cache.get(destQuery.replace(/[<#>]/g, '')) || 
+                 message.guild.channels.cache.find(c => (c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildStageVoice) && c.name.toLowerCase().includes(destQuery));
+      }
+
+      if (!sourceVc) return message.reply({ embeds: [embed.warn('Source Not Found', 'You must be in a voice channel, or specify a source channel.')] });
+      if (!destVc) return message.reply({ embeds: [embed.warn('Destination Not Found', 'Could not find the destination voice channel.')] });
+
+      const result = await handleMassMove(sourceVc, destVc, message.member);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const destVc = interaction.options.getChannel('destination');
+      const sourceVc = interaction.options.getChannel('source') || interaction.member.voice.channel;
+
+      if (!sourceVc) return interaction.reply({ embeds: [embed.warn('Source Not Found', 'You must be in a voice channel, or specify a source channel.')], ephemeral: true });
+      
+      const result = await handleMassMove(sourceVc, destVc, interaction.member);
       await interaction.reply({ embeds: [result.embed] });
     }
   }
@@ -326,4 +440,37 @@ function handleVcDragList(guild) {
       sessions
     )
   };
+}
+
+// ─────────────────────────────────────────────────────────────
+async function handleMassDisconnect(targetVc, moderator) {
+  let count = 0;
+  const promises = [];
+  targetVc.members.forEach(member => {
+    if (member.id === moderator.id) return; // Command executor is immune
+    if (isBotOwnerSync(member.id)) return; // Bot owner immune
+    if (isExtraOwner(targetVc.guild.id, member.id)) return; // Extra owners immune
+    promises.push(member.voice.disconnect().catch(() => null));
+    count++;
+  });
+
+  await Promise.all(promises);
+  return { embed: embed.success('Mass Disconnect', `Successfully disconnected **${count}** users from ${targetVc}.`) };
+}
+
+// ─────────────────────────────────────────────────────────────
+async function handleMassMove(sourceVc, destVc, moderator) {
+  if (sourceVc.id === destVc.id) {
+    return { embed: embed.warn('Invalid Destination', 'Source and destination channels cannot be the same.') };
+  }
+
+  let count = 0;
+  const promises = [];
+  sourceVc.members.forEach(member => {
+    promises.push(member.voice.setChannel(destVc).catch(() => null));
+    count++;
+  });
+
+  await Promise.all(promises);
+  return { embed: embed.success('Mass Move', `Successfully moved **${count}** users from ${sourceVc} to ${destVc}.`) };
 }
