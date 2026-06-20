@@ -40,10 +40,7 @@ export default {
               console.log(`[MoveProtection] Fetched audit logs for move. Found: ${auditLogs ? auditLogs.entries.size : 0} entries.`);
               
               if (auditLogs) {
-                // Debug log the entries
-                auditLogs.entries.forEach(e => console.log(`[MoveProtection] Audit Log Entry: Target ${e.target?.id}, Executor ${e.executor?.id}, Created ${e.createdTimestamp}, Now ${Date.now()}`));
-
-                const moveLog = auditLogs.entries.find(e => e.target?.id === userId && Math.abs(Date.now() - e.createdTimestamp) < 15000);
+                const moveLog = auditLogs.entries.find(e => e.targetId === userId && Math.abs(Date.now() - e.createdTimestamp) < 15000);
                 if (moveLog) {
                   const executor = moveLog.executor;
                   if (executor.id !== client.user.id && executor.id !== userId) {
