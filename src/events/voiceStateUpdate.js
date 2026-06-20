@@ -34,23 +34,28 @@ export default {
         // ==========================================
         if (oldChannelId && newChannelId) {
           if (db.isMoveProtected(guild.id, userId)) {
+            console.log(`[MoveProtection] Protected user ${userId} changed VC. Triggering 3s delay...`);
             // Give audit logs a moment to register
             setTimeout(async () => {
-              const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberMove }).catch(() => null);
-              console.log(`[MoveProtection] Fetched audit logs for move. Found: ${auditLogs ? auditLogs.entries.size : 0} entries.`);
+              const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberMove }).catch(err => {
+                console.error('[MoveProtection] Error fetching audit logs:', err);
+                return null;
+              });
               
               if (auditLogs) {
-                // Discord does not provide the User ID for MemberMove audit logs.
-                // We must match based on the destination channel and timestamp!
-                const moveLog = auditLogs.entries.find(e => 
-                  e.extra && e.extra.channel && e.extra.channel.id === newChannelId && 
-                  Math.abs(Date.now() - e.createdTimestamp) < 15000
-                );
+                console.log(`[MoveProtection] Fetched ${auditLogs.entries.size} MemberMove logs. Analyzing...`);
+                
+                const moveLog = auditLogs.entries.find(e => {
+                  const isMatch = e.extra && e.extra.channel && e.extra.channel.id === newChannelId && Math.abs(Date.now() - e.createdTimestamp) < 15000;
+                  console.log(`[MoveProtection] Eval Log ${e.id}: extra.channel.id=${e.extra?.channel?.id}, newChannelId=${newChannelId}, timeDiff=${Math.abs(Date.now() - e.createdTimestamp)} -> match=${isMatch}`);
+                  return isMatch;
+                });
+
                 if (moveLog) {
+                  console.log(`[MoveProtection] Found matching log! Executor: ${moveLog.executor?.id}`);
                   const executor = moveLog.executor;
                   if (executor.id !== client.user.id && executor.id !== userId) {
                     // Check if executor is Bot Owner (Bypass allowed)
-                    // (Server Owners are NOT allowed to bypass move protection per user request)
                     if (isBotOwnerSync(executor.id)) {
                       console.log(`[MoveProtection] Bypass triggered for ${executor.tag} (BotOwner)`);
                       return; // Bypass move protection
@@ -59,14 +64,22 @@ export default {
                     console.log(`[MoveProtection] Intercepted illegal move of ${userId} by ${executor.id}. Reverting...`);
                     
                     // Restitution: Move target back to previous channel
-                    await newState.member.voice.setChannel(oldChannelId).catch(() => null);
+                    await newState.member.voice.setChannel(oldChannelId).catch(err => console.error('[MoveProtection] Restitution failed:', err));
 
                     // Punish executor: Issue a warning
                     const execMember = await guild.members.fetch(executor.id).catch(() => null);
                     if (execMember) {
-                      await handleWarn(guild, guild.members.me, execMember, `Automated: Illegally moving protected user <@${userId}>`);
+                      console.log(`[MoveProtection] Warning executor ${execMember.user.tag}...`);
+                      const warnResult = await handleWarn(guild, guild.members.me, execMember, `Automated: Illegally moving protected user <@${userId}>`);
+                      console.log(`[MoveProtection] Warn result:`, warnResult);
+                    } else {
+                      console.log(`[MoveProtection] Could not fetch executor member to warn.`);
                     }
+                  } else {
+                    console.log(`[MoveProtection] Executor is bot or self-move. Ignoring.`);
                   }
+                } else {
+                  console.log(`[MoveProtection] No matching recent MemberMove log found for channel ${newChannelId}.`);
                 }
               }
             }, 3000);
