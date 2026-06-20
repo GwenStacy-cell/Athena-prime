@@ -228,7 +228,7 @@ export default {
         return;
       }
 
-      if (interaction.customId === 'xp_channel_modal') {
+      if (interaction.customId === 'xp_announce_modal') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         try {
           const chanInput = interaction.fields.getTextInputValue('xp_channel_id');
@@ -239,13 +239,36 @@ export default {
           if (!channel) return interaction.reply({ content: 'I could not find that channel in this server.', ephemeral: true });
 
           const system = db.getXpSystem(interaction.guild.id);
-          system.levelChannelId = channel.id;
+          system.announceChannelId = channel.id;
           db.setXpSystem(interaction.guild.id, system);
           
           const payload = await buildXpDashboard(interaction.guild.id);
           return interaction.update(payload).catch(() => null);
         } catch (err) {
-          console.error('XP channel modal error:', err);
+          console.error('XP announce modal error:', err);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+        }
+        return;
+      }
+
+      if (interaction.customId === 'xp_cmd_modal') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        try {
+          const chanInput = interaction.fields.getTextInputValue('xp_channel_id');
+          const channelId = chanInput.replace(/[^0-9]/g, '');
+          
+          if (!channelId) return interaction.reply({ content: 'Invalid channel ID.', ephemeral: true });
+          const channel = interaction.guild.channels.cache.get(channelId);
+          if (!channel) return interaction.reply({ content: 'I could not find that channel in this server.', ephemeral: true });
+
+          const system = db.getXpSystem(interaction.guild.id);
+          system.cmdChannelId = channel.id;
+          db.setXpSystem(interaction.guild.id, system);
+          
+          const payload = await buildXpDashboard(interaction.guild.id);
+          return interaction.update(payload).catch(() => null);
+        } catch (err) {
+          console.error('XP cmd modal error:', err);
           if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
         }
         return;
@@ -271,16 +294,41 @@ export default {
         const system = db.getXpSystem(interaction.guild.id);
         system.roleRewards = {};
         system.multipliers = {};
-        system.levelChannelId = null;
+        system.announceChannelId = null;
+        system.cmdChannelId = null;
         db.setXpSystem(interaction.guild.id, system);
         const payload = await buildXpDashboard(interaction.guild.id);
         return interaction.update(payload).catch(() => null);
       }
 
-      if (interaction.customId === 'xp_set_channel') {
+      if (interaction.customId === 'xp_save') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        const payload = await buildXpDashboard(interaction.guild.id);
+        // Turn embed green to indicate save
+        payload.embeds[0].data.color = 0x2ECC71;
+        payload.embeds[0].data.description = '**✅ XP Setup Saved & Locked!**\n\n' + payload.embeds[0].data.description;
+        // Disable components
+        payload.components.forEach(row => row.components.forEach(btn => btn.setDisabled(true)));
+        return interaction.update(payload).catch(() => null);
+      }
+
+      if (interaction.customId === 'xp_set_announce') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
-        const modal = new ModalBuilder().setCustomId('xp_channel_modal').setTitle('Set Level Channel');
+        const modal = new ModalBuilder().setCustomId('xp_announce_modal').setTitle('Set Announce Channel');
+        const chanInput = new TextInputBuilder()
+          .setCustomId('xp_channel_id')
+          .setLabel('Channel ID')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+        modal.addComponents(new ActionRowBuilder().addComponents(chanInput));
+        return interaction.showModal(modal);
+      }
+
+      if (interaction.customId === 'xp_set_cmd') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('xp_cmd_modal').setTitle('Set Command Channel');
         const chanInput = new TextInputBuilder()
           .setCustomId('xp_channel_id')
           .setLabel('Channel ID')

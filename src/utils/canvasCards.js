@@ -32,7 +32,7 @@ export async function generateRankCard(member, xp, level, rank, requiredXp) {
   // Draw Username
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 42px sans-serif';
-  let displayName = member.displayName;
+  let displayName = member.displayName.replace(/[^\x00-\x7F]/g, '').trim() || member.user.username.replace(/[^\x00-\x7F]/g, '').trim() || 'User';
   if (displayName.length > 15) displayName = displayName.substring(0, 15) + '...';
   ctx.fillText(displayName, 240, 110);
 
@@ -139,7 +139,7 @@ export async function generateLeaderboard(guild, users, page, totalPages) {
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 28px sans-serif';
-        let dname = member.displayName;
+        let dname = member.displayName.replace(/[^\x00-\x7F]/g, '').trim() || member.user.username.replace(/[^\x00-\x7F]/g, '').trim() || 'User';
         if (dname.length > 20) dname = dname.substring(0, 20) + '...';
         ctx.fillText(dname, 210, yPos + 40);
       } else {

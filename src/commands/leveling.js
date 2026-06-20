@@ -32,7 +32,7 @@ export async function buildXpDashboard(guildId) {
 
   const panelEmbed = embed.info(
     'XP Manager',
-    `Welcome to the Interactive XP Control Panel.\n\n**Status**: ${statusIcon}\n**Channel**: ${system.levelChannelId ? `<#${system.levelChannelId}>` : 'Not Set'}`
+    `Welcome to the Interactive XP Control Panel.\n\n**Status**: ${statusIcon}\n**Announce Channel**: ${system.announceChannelId ? `<#${system.announceChannelId}>` : 'Not Set'}\n**Command Channel**: ${system.cmdChannelId ? `<#${system.cmdChannelId}>` : 'Not Set'}`
   );
   
   panelEmbed.addFields(
@@ -42,8 +42,10 @@ export async function buildXpDashboard(guildId) {
 
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('xp_toggle').setLabel(system.enabled ? 'Disable System' : 'Enable System').setStyle(system.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
-    new ButtonBuilder().setCustomId('xp_set_channel').setLabel('Set Channel (ID)').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId('xp_clear').setLabel('Clear Setup').setStyle(ButtonStyle.Danger)
+    new ButtonBuilder().setCustomId('xp_set_announce').setLabel('Announce Ch (ID)').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('xp_set_cmd').setLabel('Command Ch (ID)').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('xp_clear').setLabel('Clear Setup').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('xp_save').setLabel('Save Setup').setStyle(ButtonStyle.Success)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
@@ -91,8 +93,8 @@ export const commands = [
         return interaction.reply({ content: 'The XP system is currently disabled.', ephemeral: true });
       }
 
-      if (system.levelChannelId && interaction.channelId !== system.levelChannelId) {
-        return interaction.reply({ content: `Please use this command in <#${system.levelChannelId}>.`, ephemeral: true });
+      if (system.cmdChannelId && interaction.channelId !== system.cmdChannelId) {
+        return interaction.reply({ content: `Please use this command in <#${system.cmdChannelId}>.`, ephemeral: true });
       }
 
       await interaction.deferReply();
@@ -130,8 +132,8 @@ export const commands = [
         return interaction.reply({ content: 'The XP system is currently disabled.', ephemeral: true });
       }
 
-      if (system.levelChannelId && interaction.channelId !== system.levelChannelId) {
-        return interaction.reply({ content: `Please use this command in <#${system.levelChannelId}>.`, ephemeral: true });
+      if (system.cmdChannelId && interaction.channelId !== system.cmdChannelId) {
+        return interaction.reply({ content: `Please use this command in <#${system.cmdChannelId}>.`, ephemeral: true });
       }
 
       await interaction.deferReply();

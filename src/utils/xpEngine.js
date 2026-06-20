@@ -54,17 +54,33 @@ export async function processLevelUp(client, guild, member, newLevel) {
   }
 
   // 2. Announcements
-  if (system.levelChannelId) {
-    const channel = guild.channels.cache.get(system.levelChannelId);
+  if (system.announceChannelId) {
+    const channel = guild.channels.cache.get(system.announceChannelId);
     if (channel) {
-      const bearCheer = '<a:bear_cheer:1517636380526645491>';
-      let desc = `Congratulations <@${member.id}>! You just advanced to **Level ${newLevel}**! ${bearCheer}`;
-      if (rewardGiven) {
-        desc += `\n\n🎉 You also unlocked the **${rewardName}** role!`;
-      }
+      const { generateRankCard } = await import('./canvasCards.js');
+      const allUsers = db.getTopUsersXp(guild.id, 99999);
+      let rank = allUsers.findIndex(u => u.userId === member.id) + 1;
+      if (rank === 0) rank = '-';
       
-      const levelUpEmbed = embed.success('Level Up!', desc);
-      await channel.send({ content: `<@${member.id}>`, embeds: [levelUpEmbed] }).catch(() => null);
+      const userXp = db.getUserXp(guild.id, member.id);
+      const requiredXp = calculateXpForLevel(newLevel + 1);
+      const remainingXp = requiredXp - userXp.xp;
+      
+      const attachment = await generateRankCard(member, userXp.xp, newLevel, rank, requiredXp);
+
+      const HEART = '<a:redheart:1517824307445764227>';
+      const FLAME = '<a:RED:1517824304392175783>';
+      const BOOK = '<a:emoji_29:1517214418717380749>';
+
+      let description = `Congratulations <@${member.id}>! You have leveled up to **Level ${newLevel}**! ${FLAME}\n\n`;
+      if (rewardGiven) {
+        description += `**Milestone Reached!** ${HEART}\nYou have been rewarded with the **${rewardName}** role!\n\n`;
+      }
+      description += `${BOOK} **Next Milestone Progress:**\nYou need **${remainingXp} more XP** to reach Level ${newLevel + 1}. Keep chatting and staying active in voice channels!`;
+
+      const announcementEmbed = embed.success('Level Up!', description).setImage('attachment://rank-card.png');
+
+      await channel.send({ content: `<@${member.id}>`, embeds: [announcementEmbed], files: [attachment] }).catch(() => null);
     }
   }
 }

@@ -888,7 +888,8 @@ class Database {
     if (!this.cache.xpSystems[guildId]) {
       this.cache.xpSystems[guildId] = {
         enabled: false,
-        levelChannelId: null,
+        announceChannelId: null,
+        cmdChannelId: null,
         roleRewards: {}, // level (string) -> roleId
         multipliers: {}  // roleId -> multiplier (number)
       };
