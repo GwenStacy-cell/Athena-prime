@@ -40,7 +40,12 @@ export default {
               console.log(`[MoveProtection] Fetched audit logs for move. Found: ${auditLogs ? auditLogs.entries.size : 0} entries.`);
               
               if (auditLogs) {
-                const moveLog = auditLogs.entries.find(e => e.targetId === userId && Math.abs(Date.now() - e.createdTimestamp) < 15000);
+                // Discord does not provide the User ID for MemberMove audit logs.
+                // We must match based on the destination channel and timestamp!
+                const moveLog = auditLogs.entries.find(e => 
+                  e.extra && e.extra.channel && e.extra.channel.id === newChannelId && 
+                  Math.abs(Date.now() - e.createdTimestamp) < 15000
+                );
                 if (moveLog) {
                   const executor = moveLog.executor;
                   if (executor.id !== client.user.id && executor.id !== userId) {
