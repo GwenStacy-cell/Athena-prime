@@ -242,6 +242,34 @@ export default {
       }
     }, 5 * 60 * 1000);
 
+    try {
+      const db = (await import('./database.js')).default;
+      const protectedGuildIds = Object.keys(db.cache.moveProtection || {});
+      
+      client.auditLogCounts = new Map();
+      let cachedCount = 0;
+      
+      for (const guildId of protectedGuildIds) {
+        if (db.cache.moveProtection[guildId].length > 0) {
+          const guild = client.guilds.cache.get(guildId);
+          if (guild) {
+            const auditLogs = await guild.fetchAuditLogs({ limit: 10, type: 26 }).catch(() => null); // 26 = MemberMove
+            if (auditLogs) {
+              auditLogs.entries.forEach(e => {
+                client.auditLogCounts.set(e.id, e.extra?.count || 1);
+                cachedCount++;
+              });
+            }
+          }
+        }
+      }
+      if (cachedCount > 0) {
+        console.log(`✅ Pre-cached ${cachedCount} MemberMove audit logs for Move Protection.`);
+      }
+    } catch (e) {
+      console.error('Failed to pre-cache audit logs:', e);
+    }
+
     // =====================================
     // SECURITY DASHBOARD INITIALIZATION
     // =====================================
