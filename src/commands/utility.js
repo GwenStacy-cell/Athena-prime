@@ -429,6 +429,7 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}security\` **enable all** / **disable all** — Toggle all shields and roles\n` +
         `\`${p}antinuke\` **config** — Open the interactive configuration panel\n` +
         `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** \`on|off\`\n` +
+        `\`/moveprotect\` **add|remove|list** \`@user\` — Prevent rogue admins from moving protected users\n` +
         `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid\n` +
         `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels\n\n` +
         `**Warning:** You MUST whitelist friendly bots (e.g. \`${p}botwhitelist add <ID>\`). Unwhitelisted bots taking mod actions will be instantly banned.`
