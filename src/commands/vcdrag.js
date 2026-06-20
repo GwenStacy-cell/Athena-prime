@@ -1,12 +1,17 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import embed from '../embed.js';
 import { isBotOwnerSync, isExtraOwner, isAuthorized } from '../utils/helpers.js';
+import db from '../database.js';
 
 // ============================================================
 // ACTIVE DRAG SESSIONS — keyed by `${guildId}:${targetUserId}`
 // Holds the interval reference so it can be cleared by /vcdragstop
 // ============================================================
 const activeDrags = new Map();
+
+export function isUserInDragSession(guildId, userId) {
+  return activeDrags.has(`${guildId}:${userId}`);
+}
 
 export const commands = [
   // ─────────────────────────────────────────────
@@ -276,6 +281,16 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
     };
   }
 
+  // Move Protected users are immune
+  if (db.isMoveProtected(guild.id, target.id)) {
+    return {
+      embed: embed.danger(
+        '🛡️ Move Protected',
+        `**${target.user.tag}** is currently enrolled in Move Protection. They cannot be targeted by VC drag sessions.`
+      )
+    };
+  }
+
   // Target must currently be in a voice channel
   if (!target.voice.channel) {
     return {
@@ -461,17 +476,27 @@ function handleVcDragList(guild) {
 // ─────────────────────────────────────────────────────────────
 async function handleMassDisconnect(targetVc, moderator) {
   let count = 0;
+  let skipped = 0;
   const promises = [];
   targetVc.members.forEach(member => {
     if (member.id === moderator.id) return; // Command executor is immune
     if (isBotOwnerSync(member.id)) return; // Bot owner immune
     if (isExtraOwner(targetVc.guild.id, member.id)) return; // Extra owners immune
+    
+    // Skip move-protected users
+    if (db.isMoveProtected(targetVc.guild.id, member.id)) {
+      skipped++;
+      return;
+    }
+
     promises.push(member.voice.disconnect().catch(() => null));
     count++;
   });
 
   await Promise.all(promises);
-  return { embed: embed.success('Mass Disconnect', `Successfully disconnected **${count}** users from ${targetVc}.`) };
+  let msg = `Successfully disconnected **${count}** users from ${targetVc}.`;
+  if (skipped > 0) msg += `\n\n> 🛡️ **${skipped}** users were skipped due to active **Move Protection**.`;
+  return { embed: embed.success('Mass Disconnect', msg) };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -481,12 +506,21 @@ async function handleMassMove(sourceVc, destVc, moderator) {
   }
 
   let count = 0;
+  let skipped = 0;
   const promises = [];
   sourceVc.members.forEach(member => {
+    // Skip move-protected users
+    if (db.isMoveProtected(sourceVc.guild.id, member.id)) {
+      skipped++;
+      return;
+    }
+
     promises.push(member.voice.setChannel(destVc).catch(() => null));
     count++;
   });
 
   await Promise.all(promises);
-  return { embed: embed.success('Mass Move', `Successfully moved **${count}** users from ${sourceVc} to ${destVc}.`) };
+  let msg = `Successfully moved **${count}** users from ${sourceVc} to ${destVc}.`;
+  if (skipped > 0) msg += `\n\n> 🛡️ **${skipped}** users were skipped due to active **Move Protection**.`;
+  return { embed: embed.success('Mass Move', msg) };
 }
