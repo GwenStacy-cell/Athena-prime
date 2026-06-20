@@ -6,7 +6,7 @@ import db from '../database.js';
 import { getAntinukeConfigPanel } from '../commands/security.js';
 import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
 import { handleSpamModal, handleSpamMoreButton } from '../commands/spam.js';
-import { isBotOwnerSync } from '../utils/helpers.js';
+import { isBotOwnerSync, canModerate } from '../utils/helpers.js';
 import { handleJtcSelectMenu, handleJtcModal } from '../commands/jtc.js';
 import { handleWelcomeManagerButton, handleWelcomeManagerModal, handleWelcomeManagerMenu } from '../commands/welcome.js';
 import { handleAccentButton, handleAccentModal } from '../commands/accent.js';
