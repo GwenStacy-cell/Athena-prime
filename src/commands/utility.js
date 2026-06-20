@@ -548,6 +548,14 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}steal\` \`:emoji: ...\` — Steal multiple emojis into your server`
     },
     {
+      name: h('LEVELING  &  XP ENGINE'),
+      value:
+        `\`/xpsetup\` — Launch the Interactive XP Control Panel (Toggle system, map Milestones & Multipliers)\n` +
+        `\`/rank\` \`[@user]\` — View a beautiful graphic of your current level, XP, and progress\n` +
+        `\`/leaderboard\` — View the server's top active members sorted by XP\n` +
+        `*Passively earn XP in text channels (with anti-spam cooldown) and Voice Channels!*`
+    },
+    {
       name: h('MESSAGE STATISTICS'),
       value:
         `\`/stats me\` — View your personal server message statistics\n` +
