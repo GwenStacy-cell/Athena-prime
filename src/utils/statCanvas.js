@@ -267,7 +267,7 @@ export async function generateServerOverviewImage(guild, stats) {
   const ctx = canvas.getContext('2d');
 
   // Font Stack to prevent Tofu on Unicode
-  const FONT_STACK = '"Inter", "Segoe UI Emoji", "Segoe UI Symbol", "Apple Color Emoji", sans-serif';
+  const FONT_STACK = '"Inter", sans-serif';
 
   // Colors based on Statbot
   const bgColor = '#18191C';
@@ -276,6 +276,11 @@ export async function generateServerOverviewImage(guild, stats) {
   const textPrimary = '#FFFFFF';
   const textSecondary = '#A3A6AA';
   const textMuted = '#72767D';
+
+  const cleanString = (str) => {
+    if (!str) return '';
+    return str.normalize('NFKC').replace(/[\u{10000}-\u{10FFFF}]/gu, '').replace(/[\u2600-\u27BF]/g, '').trim();
+  };
 
   // Background
   ctx.fillStyle = bgColor;
@@ -297,10 +302,10 @@ export async function generateServerOverviewImage(guild, stats) {
 
   ctx.fillStyle = textPrimary;
   ctx.font = `bold 36px ${FONT_STACK}`;
-  ctx.fillText(guild.name, 120, 50);
+  ctx.fillText(cleanString(guild.name) || 'Server Overview', 120, 50);
   ctx.fillStyle = textSecondary;
   ctx.font = `24px ${FONT_STACK}`;
-  ctx.fillText('📊 Server Overview', 120, 85);
+  ctx.fillText('Server Overview', 120, 85);
 
   const createdDate = new Date(guild.createdTimestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   const joinedDate = guild.joinedTimestamp ? new Date(guild.joinedTimestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown';
@@ -379,12 +384,12 @@ export async function generateServerOverviewImage(guild, stats) {
   drawStatRow(20, 185, '7d', formatNum(stats.overview.d7_msg), 'messages');
   drawStatRow(20, 220, '14d', formatNum(stats.overview.d14_msg), 'messages');
 
-  drawPanelWithTitle(280, 110, 240, 150, 'Voice Activity', '🔊');
+  drawPanelWithTitle(280, 110, 240, 150, 'Voice Activity', 'VC');
   drawStatRow(280, 150, '1d', formatHrs(stats.overview.d1_vc), 'hours');
   drawStatRow(280, 185, '7d', formatHrs(stats.overview.d7_vc), 'hours');
   drawStatRow(280, 220, '14d', formatHrs(stats.overview.d14_vc), 'hours');
 
-  drawPanelWithTitle(540, 110, 240, 150, 'Contributors', '👤');
+  drawPanelWithTitle(540, 110, 240, 150, 'Contributors', '');
   drawStatRow(540, 150, '1d', formatNum(stats.overview.d1_contributors), 'members');
   drawStatRow(540, 185, '7d', formatNum(stats.overview.d7_contributors), 'members');
   drawStatRow(540, 220, '14d', formatNum(stats.overview.d14_contributors), 'members');
@@ -394,16 +399,16 @@ export async function generateServerOverviewImage(guild, stats) {
     if (!id) return 'Unknown';
     try {
       const member = await guild.members.fetch(id).catch(() => null);
-      if (member) return member.user.username;
+      if (member) return cleanString(member.user.username);
       const user = await guild.client.users.fetch(id).catch(() => null);
-      return user ? user.username : 'Unknown';
+      return user ? cleanString(user.username) : 'Unknown';
     } catch { return 'Unknown'; }
   };
 
   const getChannelName = (id) => {
     if (!id) return 'Unknown';
     const ch = guild.channels.cache.get(id);
-    return ch ? ch.name : 'Unknown';
+    return ch ? cleanString(ch.name) : 'Unknown';
   };
 
   const topMsgUserName = await getUserName(stats.topMembers.messages?.user_id);
@@ -441,13 +446,13 @@ export async function generateServerOverviewImage(guild, stats) {
   };
 
   // Row 2
-  drawPanelWithTitle(20, 280, 370, 110, 'Top Members', '👤');
+  drawPanelWithTitle(20, 280, 370, 110, 'Top Members', '');
   drawRankingRow(20, 320, '#', topMsgUserName, formatNum(stats.topMembers.messages?.total || 0) + ' msgs');
-  drawRankingRow(20, 355, '🔊', topVcUserName, formatHrs(stats.topMembers.voice?.total || 0) + ' hours');
+  drawRankingRow(20, 355, 'VC', topVcUserName, formatHrs(stats.topMembers.voice?.total || 0) + ' hours');
 
-  drawPanelWithTitle(410, 280, 370, 110, 'Top Channels', '˅');
-  drawRankingRow(410, 320, '#', '💬 ' + getChannelName(stats.topChannels.messages?.channel_id), formatNum(stats.topChannels.messages?.total || 0) + ' msgs');
-  drawRankingRow(410, 355, '🔊', '🍺 ' + getChannelName(stats.topChannels.voice?.channel_id), formatHrs(stats.topChannels.voice?.total || 0) + ' hours');
+  drawPanelWithTitle(410, 280, 370, 110, 'Top Channels', 'v');
+  drawRankingRow(410, 320, '#', getChannelName(stats.topChannels.messages?.channel_id), formatNum(stats.topChannels.messages?.total || 0) + ' msgs');
+  drawRankingRow(410, 355, 'VC', getChannelName(stats.topChannels.voice?.channel_id), formatHrs(stats.topChannels.voice?.total || 0) + ' hours');
 
   // Row 3: Charts
   drawPanelWithTitle(20, 410, 760, 130, 'Charts');
