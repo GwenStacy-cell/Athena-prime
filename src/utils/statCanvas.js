@@ -266,14 +266,20 @@ export async function generateServerOverviewImage(guild, stats) {
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  // Background
-  ctx.fillStyle = '#181A1F';
-  ctx.fillRect(0, 0, width, height);
+  // Font Stack to prevent Tofu on Unicode
+  const FONT_STACK = '"Inter", "Segoe UI Emoji", "Segoe UI Symbol", "Apple Color Emoji", sans-serif';
 
-  const panelColor = '#24262B';
-  const innerPanelColor = '#1D1E22';
-  const textColorPrimary = '#FFFFFF';
-  const textColorSecondary = '#A3A6AA';
+  // Colors based on Statbot
+  const bgColor = '#18191C';
+  const panelColor = '#222327';
+  const innerBoxColor = '#16171A';
+  const textPrimary = '#FFFFFF';
+  const textSecondary = '#A3A6AA';
+  const textMuted = '#72767D';
+
+  // Background
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, width, height);
 
   // Header
   try {
@@ -289,48 +295,99 @@ export async function generateServerOverviewImage(guild, stats) {
     }
   } catch (e) {}
 
-  drawText(ctx, guild.name, 120, 50, 'bold 36px sans-serif', textColorPrimary);
-  drawText(ctx, '📊 Server Overview', 120, 85, '24px sans-serif', textColorSecondary);
+  ctx.fillStyle = textPrimary;
+  ctx.font = `bold 36px ${FONT_STACK}`;
+  ctx.fillText(guild.name, 120, 50);
+  ctx.fillStyle = textSecondary;
+  ctx.font = `24px ${FONT_STACK}`;
+  ctx.fillText('📊 Server Overview', 120, 85);
 
-  const createdDate = new Date(guild.createdTimestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  const joinedDate = guild.joinedTimestamp ? new Date(guild.joinedTimestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Unknown';
+  const createdDate = new Date(guild.createdTimestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const joinedDate = guild.joinedTimestamp ? new Date(guild.joinedTimestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown';
 
   // Created On Badge
-  drawPanel(ctx, 450, 25, 150, 50, 8, '#2F3136');
-  drawText(ctx, 'Created On', 460, 45, 'bold 12px sans-serif', '#FFFFFF');
-  drawText(ctx, createdDate, 460, 65, '14px sans-serif', '#FFFFFF');
+  ctx.fillStyle = panelColor;
+  drawPanel(ctx, 490, 25, 140, 50, 8, panelColor);
+  ctx.fillStyle = textPrimary;
+  ctx.font = `bold 13px ${FONT_STACK}`;
+  ctx.fillText('Created On', 500, 45);
+  ctx.font = `14px ${FONT_STACK}`;
+  ctx.fillStyle = textSecondary;
+  ctx.fillText(createdDate, 500, 65);
 
   // Invited On Badge
-  drawPanel(ctx, 620, 25, 150, 50, 8, '#2F3136');
-  drawText(ctx, 'Invited Bot On', 630, 45, 'bold 12px sans-serif', '#FFFFFF');
-  drawText(ctx, joinedDate, 630, 65, '14px sans-serif', '#FFFFFF');
+  ctx.fillStyle = panelColor;
+  drawPanel(ctx, 640, 25, 140, 50, 8, panelColor);
+  ctx.fillStyle = textPrimary;
+  ctx.font = `bold 13px ${FONT_STACK}`;
+  ctx.fillText('Invited Bot On', 650, 45);
+  ctx.font = `14px ${FONT_STACK}`;
+  ctx.fillStyle = textSecondary;
+  ctx.fillText(joinedDate, 650, 65);
 
-  const drawListRow = (x, y, label, value, unit) => {
-    drawPanel(ctx, x, y, 220, 35, 5, innerPanelColor);
-    drawText(ctx, label, x + 15, y + 23, 'bold 16px sans-serif', textColorPrimary);
-    const valText = value;
-    drawText(ctx, valText, x + 60, y + 23, '16px sans-serif', textColorSecondary);
-    drawText(ctx, unit, x + 60 + ctx.measureText(valText).width + 5, y + 23, 'italic 14px sans-serif', '#888');
+  const drawPanelWithTitle = (x, y, w, h, title, iconText) => {
+    drawPanel(ctx, x, y, w, h, 8, panelColor);
+    ctx.fillStyle = textPrimary;
+    ctx.font = `bold 18px ${FONT_STACK}`;
+    ctx.fillText(title, x + 15, y + 30);
+    if (iconText) {
+      ctx.fillStyle = textPrimary;
+      ctx.font = `18px ${FONT_STACK}`;
+      ctx.textAlign = 'right';
+      ctx.fillText(iconText, x + w - 15, y + 30);
+      ctx.textAlign = 'left';
+    }
+  };
+
+  const drawStatRow = (x, y, label, value, unit) => {
+    // Inner box for the label (e.g. 1d)
+    drawPanel(ctx, x + 15, y, 40, 30, 4, innerBoxColor);
+    
+    ctx.fillStyle = textPrimary;
+    ctx.font = `bold 15px ${FONT_STACK}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x + 35, y + 21);
+    ctx.textAlign = 'left';
+
+    // Value text directly on panel background
+    const valText = value.toString();
+    ctx.fillStyle = textPrimary;
+    ctx.font = `16px ${FONT_STACK}`;
+    const textW = ctx.measureText(valText).width;
+    ctx.fillText(valText, x + 75, y + 21);
+    
+    // Unit text
+    ctx.fillStyle = textSecondary;
+    ctx.font = `italic 14px ${FONT_STACK}`;
+    ctx.fillText(unit, x + 75 + textW + 5, y + 21);
+  };
+
+  // Format Helpers
+  const formatNum = (num) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(2) + 'k';
+    return num.toString();
+  };
+
+  const formatHrs = (seconds) => {
+    return (seconds / 3600).toFixed(2);
   };
 
   // Row 1
-  drawPanel(ctx, 20, 110, 240, 160, 10, panelColor);
-  drawText(ctx, 'Messages', 35, 140, 'bold 20px sans-serif', textColorPrimary);
-  drawListRow(30, 150, '1d', formatNumber(stats.overview.d1_msg), 'messages');
-  drawListRow(30, 190, '7d', formatNumber(stats.overview.d7_msg), 'messages');
-  drawListRow(30, 230, '14d', formatNumber(stats.overview.d14_msg), 'messages');
+  drawPanelWithTitle(20, 110, 240, 150, 'Messages', '#');
+  drawStatRow(20, 150, '1d', formatNum(stats.overview.d1_msg), 'messages');
+  drawStatRow(20, 185, '7d', formatNum(stats.overview.d7_msg), 'messages');
+  drawStatRow(20, 220, '14d', formatNum(stats.overview.d14_msg), 'messages');
 
-  drawPanel(ctx, 280, 110, 240, 160, 10, panelColor);
-  drawText(ctx, 'Voice Activity', 295, 140, 'bold 20px sans-serif', textColorPrimary);
-  drawListRow(290, 150, '1d', formatHours(stats.overview.d1_vc).split(' ')[0], 'hours');
-  drawListRow(290, 190, '7d', formatHours(stats.overview.d7_vc).split(' ')[0], 'hours');
-  drawListRow(290, 230, '14d', formatHours(stats.overview.d14_vc).split(' ')[0], 'hours');
+  drawPanelWithTitle(280, 110, 240, 150, 'Voice Activity', '🔊');
+  drawStatRow(280, 150, '1d', formatHrs(stats.overview.d1_vc), 'hours');
+  drawStatRow(280, 185, '7d', formatHrs(stats.overview.d7_vc), 'hours');
+  drawStatRow(280, 220, '14d', formatHrs(stats.overview.d14_vc), 'hours');
 
-  drawPanel(ctx, 540, 110, 240, 160, 10, panelColor);
-  drawText(ctx, 'Contributors', 555, 140, 'bold 20px sans-serif', textColorPrimary);
-  drawListRow(550, 150, '1d', formatNumber(stats.overview.d1_contributors), 'members');
-  drawListRow(550, 190, '7d', formatNumber(stats.overview.d7_contributors), 'members');
-  drawListRow(550, 230, '14d', formatNumber(stats.overview.d14_contributors), 'members');
+  drawPanelWithTitle(540, 110, 240, 150, 'Contributors', '👤');
+  drawStatRow(540, 150, '1d', formatNum(stats.overview.d1_contributors), 'members');
+  drawStatRow(540, 185, '7d', formatNum(stats.overview.d7_contributors), 'members');
+  drawStatRow(540, 220, '14d', formatNum(stats.overview.d14_contributors), 'members');
 
   // Helpers
   const getUserName = async (id) => {
@@ -352,50 +409,77 @@ export async function generateServerOverviewImage(guild, stats) {
   const topMsgUserName = await getUserName(stats.topMembers.messages?.user_id);
   const topVcUserName = await getUserName(stats.topMembers.voice?.user_id);
 
+  const drawRankingRow = (panelX, y, icon, name, valueText) => {
+    // Icon on the left
+    ctx.fillStyle = textSecondary;
+    ctx.font = `bold 16px ${FONT_STACK}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(icon, panelX + 30, y + 22);
+    ctx.textAlign = 'left';
+
+    // Dark box for the name
+    drawPanel(ctx, panelX + 50, y, 160, 30, 4, innerBoxColor);
+
+    // Truncate name if necessary
+    ctx.fillStyle = textPrimary;
+    ctx.font = `bold 15px ${FONT_STACK}`;
+    let display = name;
+    if (ctx.measureText(display).width > 150) {
+      while (display.length > 0 && ctx.measureText(display + '...').width > 150) {
+        display = display.substring(0, display.length - 1);
+      }
+      display += '...';
+    }
+    ctx.fillText(display, panelX + 60, y + 21);
+
+    // Value on the right
+    ctx.fillStyle = textSecondary;
+    ctx.font = `14px ${FONT_STACK}`;
+    ctx.textAlign = 'right';
+    ctx.fillText(valueText, panelX + 355, y + 21);
+    ctx.textAlign = 'left';
+  };
+
   // Row 2
-  drawPanel(ctx, 20, 290, 370, 120, 10, panelColor);
-  drawText(ctx, 'Top Members', 35, 320, 'bold 18px sans-serif', textColorPrimary);
-  drawPanel(ctx, 30, 330, 350, 30, 5, innerPanelColor);
-  drawPanel(ctx, 30, 370, 350, 30, 5, innerPanelColor);
-  
-  drawText(ctx, '#', 45, 350, 'bold 16px sans-serif', textColorSecondary);
-  drawText(ctx, topMsgUserName, 70, 350, 'bold 16px sans-serif', textColorPrimary);
-  drawText(ctx, formatNumber(stats.topMembers.messages?.total || 0) + ' msgs', 370, 350, '14px sans-serif', textColorSecondary, 'right');
+  drawPanelWithTitle(20, 280, 370, 110, 'Top Members', '👤');
+  drawRankingRow(20, 320, '#', topMsgUserName, formatNum(stats.topMembers.messages?.total || 0) + ' msgs');
+  drawRankingRow(20, 355, '🔊', topVcUserName, formatHrs(stats.topMembers.voice?.total || 0) + ' hours');
 
-  drawText(ctx, '🎙️', 42, 390, '14px sans-serif', textColorSecondary);
-  drawText(ctx, topVcUserName, 70, 390, 'bold 16px sans-serif', textColorPrimary);
-  drawText(ctx, formatHours(stats.topMembers.voice?.total || 0), 370, 390, '14px sans-serif', textColorSecondary, 'right');
-
-  drawPanel(ctx, 410, 290, 370, 120, 10, panelColor);
-  drawText(ctx, 'Top Channels', 425, 320, 'bold 18px sans-serif', textColorPrimary);
-  drawPanel(ctx, 420, 330, 350, 30, 5, innerPanelColor);
-  drawPanel(ctx, 420, 370, 350, 30, 5, innerPanelColor);
-  
-  drawText(ctx, '#', 435, 350, 'bold 16px sans-serif', textColorSecondary);
-  drawText(ctx, getChannelName(stats.topChannels.messages?.channel_id), 460, 350, 'bold 16px sans-serif', textColorPrimary);
-  drawText(ctx, formatNumber(stats.topChannels.messages?.total || 0) + ' msgs', 760, 350, '14px sans-serif', textColorSecondary, 'right');
-
-  drawText(ctx, '🎙️', 432, 390, '14px sans-serif', textColorSecondary);
-  drawText(ctx, getChannelName(stats.topChannels.voice?.channel_id), 460, 390, 'bold 16px sans-serif', textColorPrimary);
-  drawText(ctx, formatHours(stats.topChannels.voice?.total || 0), 760, 390, '14px sans-serif', textColorSecondary, 'right');
+  drawPanelWithTitle(410, 280, 370, 110, 'Top Channels', '˅');
+  drawRankingRow(410, 320, '#', '💬 ' + getChannelName(stats.topChannels.messages?.channel_id), formatNum(stats.topChannels.messages?.total || 0) + ' msgs');
+  drawRankingRow(410, 355, '🔊', '🍺 ' + getChannelName(stats.topChannels.voice?.channel_id), formatHrs(stats.topChannels.voice?.total || 0) + ' hours');
 
   // Row 3: Charts
-  drawPanel(ctx, 20, 430, 760, 110, 10, panelColor);
-  drawText(ctx, 'Charts', 35, 460, 'bold 18px sans-serif', textColorPrimary);
+  drawPanelWithTitle(20, 410, 760, 130, 'Charts');
   
   // Legend
-  drawText(ctx, '● Message', 600, 460, '14px sans-serif', '#43B581');
-  drawText(ctx, '● Voice', 690, 460, '14px sans-serif', '#E83D84');
+  ctx.fillStyle = '#43B581';
+  ctx.beginPath(); ctx.arc(630, 435, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = textPrimary;
+  ctx.font = `13px ${FONT_STACK}`;
+  ctx.fillText('Message', 642, 440);
+
+  ctx.fillStyle = '#E83D84';
+  ctx.beginPath(); ctx.arc(710, 435, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = textPrimary;
+  ctx.fillText('Voice', 722, 440);
 
   // Draw Line Charts
   if (stats.chart && stats.chart.length > 0) {
-    const chartHeight = 50;
+    const chartHeight = 65;
     const chartY = 530;
     const chartWidth = 730;
     const stepX = chartWidth / (stats.chart.length - 1 || 1);
 
     let maxMsg = Math.max(...stats.chart.map(d => d.messages), 1);
     let maxVc = Math.max(...stats.chart.map(d => d.voice_seconds), 1);
+
+    // Gridlines (Bottom axis line)
+    ctx.strokeStyle = '#2A2A2A';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(35, chartY); ctx.lineTo(35 + chartWidth, chartY);
+    ctx.stroke();
 
     // Voice
     ctx.beginPath();
@@ -412,7 +496,7 @@ export async function generateServerOverviewImage(guild, stats) {
     ctx.lineTo(35 + chartWidth, chartY);
     ctx.lineTo(35, chartY);
     const gradVc = ctx.createLinearGradient(0, chartY - chartHeight, 0, chartY);
-    gradVc.addColorStop(0, 'rgba(232, 61, 132, 0.4)');
+    gradVc.addColorStop(0, 'rgba(232, 61, 132, 0.3)');
     gradVc.addColorStop(1, 'rgba(232, 61, 132, 0.0)');
     ctx.fillStyle = gradVc;
     ctx.fill();
@@ -432,15 +516,19 @@ export async function generateServerOverviewImage(guild, stats) {
     ctx.lineTo(35 + chartWidth, chartY);
     ctx.lineTo(35, chartY);
     const gradMsg = ctx.createLinearGradient(0, chartY - chartHeight, 0, chartY);
-    gradMsg.addColorStop(0, 'rgba(67, 181, 129, 0.4)');
+    gradMsg.addColorStop(0, 'rgba(67, 181, 129, 0.3)');
     gradMsg.addColorStop(1, 'rgba(67, 181, 129, 0.0)');
     ctx.fillStyle = gradMsg;
     ctx.fill();
   }
 
   // Footer
-  drawText(ctx, 'Server Lookback: Last 14 days — Timezone: IST', 20, 565, '12px sans-serif', '#888');
-  drawText(ctx, 'Powered by Athena Prime', width - 20, 565, 'bold 12px sans-serif', '#43B581', 'right');
+  ctx.fillStyle = textMuted;
+  ctx.font = `12px ${FONT_STACK}`;
+  ctx.fillText('Server Lookback: Last 14 days — Timezone: UTC', 20, 565);
+  ctx.fillStyle = '#43B581';
+  ctx.textAlign = 'right';
+  ctx.fillText('Powered by Athena Prime', width - 20, 565);
 
   return canvas.toBuffer('image/png');
 }
