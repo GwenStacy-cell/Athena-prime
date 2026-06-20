@@ -440,7 +440,8 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}whitelist\` **add** / **remove** / **list** \`@user|botId\` \`[events...]\`\n` +
         `Events: \`all\`  \`antinuke\`  \`antibot\`  \`antispam\`  \`antilink\`  \`antiinvite\`  \`quarantine\`\n` +
         `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots to join\n` +
-        `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access`
+        `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access\n` +
+        `\`/userblacklist\` **add** / **remove** / **list** \`ID\` — [BOT OWNER] Global bot block`
     },
     {
       name: h('LINK  &  INVITE  FILTERS'),
