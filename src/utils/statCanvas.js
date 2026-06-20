@@ -259,3 +259,188 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
 
   return canvas.toBuffer();
 }
+
+export async function generateServerOverviewImage(guild, stats) {
+  const width = 800;
+  const height = 580;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#181A1F';
+  ctx.fillRect(0, 0, width, height);
+
+  const panelColor = '#24262B';
+  const innerPanelColor = '#1D1E22';
+  const textColorPrimary = '#FFFFFF';
+  const textColorSecondary = '#A3A6AA';
+
+  // Header
+  try {
+    if (guild.iconURL()) {
+      const icon = await loadImage(guild.iconURL({ extension: 'png', size: 128 }));
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(60, 60, 40, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(icon, 20, 20, 80, 80);
+      ctx.restore();
+    }
+  } catch (e) {}
+
+  drawText(ctx, guild.name, 120, 50, 'bold 36px sans-serif', textColorPrimary);
+  drawText(ctx, '📊 Server Overview', 120, 85, '24px sans-serif', textColorSecondary);
+
+  const createdDate = new Date(guild.createdTimestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const joinedDate = guild.joinedTimestamp ? new Date(guild.joinedTimestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Unknown';
+
+  // Created On Badge
+  drawPanel(ctx, 450, 25, 150, 50, 8, '#2F3136');
+  drawText(ctx, 'Created On', 460, 45, 'bold 12px sans-serif', '#FFFFFF');
+  drawText(ctx, createdDate, 460, 65, '14px sans-serif', '#FFFFFF');
+
+  // Invited On Badge
+  drawPanel(ctx, 620, 25, 150, 50, 8, '#2F3136');
+  drawText(ctx, 'Invited Bot On', 630, 45, 'bold 12px sans-serif', '#FFFFFF');
+  drawText(ctx, joinedDate, 630, 65, '14px sans-serif', '#FFFFFF');
+
+  const drawListRow = (x, y, label, value, unit) => {
+    drawPanel(ctx, x, y, 220, 35, 5, innerPanelColor);
+    drawText(ctx, label, x + 15, y + 23, 'bold 16px sans-serif', textColorPrimary);
+    const valText = value;
+    drawText(ctx, valText, x + 60, y + 23, '16px sans-serif', textColorSecondary);
+    drawText(ctx, unit, x + 60 + ctx.measureText(valText).width + 5, y + 23, 'italic 14px sans-serif', '#888');
+  };
+
+  // Row 1
+  drawPanel(ctx, 20, 110, 240, 160, 10, panelColor);
+  drawText(ctx, 'Messages', 35, 140, 'bold 20px sans-serif', textColorPrimary);
+  drawListRow(30, 150, '1d', formatNumber(stats.overview.d1_msg), 'messages');
+  drawListRow(30, 190, '7d', formatNumber(stats.overview.d7_msg), 'messages');
+  drawListRow(30, 230, '14d', formatNumber(stats.overview.d14_msg), 'messages');
+
+  drawPanel(ctx, 280, 110, 240, 160, 10, panelColor);
+  drawText(ctx, 'Voice Activity', 295, 140, 'bold 20px sans-serif', textColorPrimary);
+  drawListRow(290, 150, '1d', formatHours(stats.overview.d1_vc).split(' ')[0], 'hours');
+  drawListRow(290, 190, '7d', formatHours(stats.overview.d7_vc).split(' ')[0], 'hours');
+  drawListRow(290, 230, '14d', formatHours(stats.overview.d14_vc).split(' ')[0], 'hours');
+
+  drawPanel(ctx, 540, 110, 240, 160, 10, panelColor);
+  drawText(ctx, 'Contributors', 555, 140, 'bold 20px sans-serif', textColorPrimary);
+  drawListRow(550, 150, '1d', formatNumber(stats.overview.d1_contributors), 'members');
+  drawListRow(550, 190, '7d', formatNumber(stats.overview.d7_contributors), 'members');
+  drawListRow(550, 230, '14d', formatNumber(stats.overview.d14_contributors), 'members');
+
+  // Helpers
+  const getUserName = async (id) => {
+    if (!id) return 'Unknown';
+    try {
+      const member = await guild.members.fetch(id).catch(() => null);
+      if (member) return member.user.username;
+      const user = await guild.client.users.fetch(id).catch(() => null);
+      return user ? user.username : 'Unknown';
+    } catch { return 'Unknown'; }
+  };
+
+  const getChannelName = (id) => {
+    if (!id) return 'Unknown';
+    const ch = guild.channels.cache.get(id);
+    return ch ? ch.name : 'Unknown';
+  };
+
+  const topMsgUserName = await getUserName(stats.topMembers.messages?.user_id);
+  const topVcUserName = await getUserName(stats.topMembers.voice?.user_id);
+
+  // Row 2
+  drawPanel(ctx, 20, 290, 370, 120, 10, panelColor);
+  drawText(ctx, 'Top Members', 35, 320, 'bold 18px sans-serif', textColorPrimary);
+  drawPanel(ctx, 30, 330, 350, 30, 5, innerPanelColor);
+  drawPanel(ctx, 30, 370, 350, 30, 5, innerPanelColor);
+  
+  drawText(ctx, '#', 45, 350, 'bold 16px sans-serif', textColorSecondary);
+  drawText(ctx, topMsgUserName, 70, 350, 'bold 16px sans-serif', textColorPrimary);
+  drawText(ctx, formatNumber(stats.topMembers.messages?.total || 0) + ' msgs', 370, 350, '14px sans-serif', textColorSecondary, 'right');
+
+  drawText(ctx, '🎙️', 42, 390, '14px sans-serif', textColorSecondary);
+  drawText(ctx, topVcUserName, 70, 390, 'bold 16px sans-serif', textColorPrimary);
+  drawText(ctx, formatHours(stats.topMembers.voice?.total || 0), 370, 390, '14px sans-serif', textColorSecondary, 'right');
+
+  drawPanel(ctx, 410, 290, 370, 120, 10, panelColor);
+  drawText(ctx, 'Top Channels', 425, 320, 'bold 18px sans-serif', textColorPrimary);
+  drawPanel(ctx, 420, 330, 350, 30, 5, innerPanelColor);
+  drawPanel(ctx, 420, 370, 350, 30, 5, innerPanelColor);
+  
+  drawText(ctx, '#', 435, 350, 'bold 16px sans-serif', textColorSecondary);
+  drawText(ctx, getChannelName(stats.topChannels.messages?.channel_id), 460, 350, 'bold 16px sans-serif', textColorPrimary);
+  drawText(ctx, formatNumber(stats.topChannels.messages?.total || 0) + ' msgs', 760, 350, '14px sans-serif', textColorSecondary, 'right');
+
+  drawText(ctx, '🎙️', 432, 390, '14px sans-serif', textColorSecondary);
+  drawText(ctx, getChannelName(stats.topChannels.voice?.channel_id), 460, 390, 'bold 16px sans-serif', textColorPrimary);
+  drawText(ctx, formatHours(stats.topChannels.voice?.total || 0), 760, 390, '14px sans-serif', textColorSecondary, 'right');
+
+  // Row 3: Charts
+  drawPanel(ctx, 20, 430, 760, 110, 10, panelColor);
+  drawText(ctx, 'Charts', 35, 460, 'bold 18px sans-serif', textColorPrimary);
+  
+  // Legend
+  drawText(ctx, '● Message', 600, 460, '14px sans-serif', '#43B581');
+  drawText(ctx, '● Voice', 690, 460, '14px sans-serif', '#E83D84');
+
+  // Draw Line Charts
+  if (stats.chart && stats.chart.length > 0) {
+    const chartHeight = 50;
+    const chartY = 530;
+    const chartWidth = 730;
+    const stepX = chartWidth / (stats.chart.length - 1 || 1);
+
+    let maxMsg = Math.max(...stats.chart.map(d => d.messages), 1);
+    let maxVc = Math.max(...stats.chart.map(d => d.voice_seconds), 1);
+
+    // Voice
+    ctx.beginPath();
+    ctx.moveTo(35, chartY);
+    stats.chart.forEach((d, i) => {
+      const x = 35 + (i * stepX);
+      const y = chartY - (d.voice_seconds / maxVc) * chartHeight;
+      ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#E83D84';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.lineTo(35 + chartWidth, chartY);
+    ctx.lineTo(35, chartY);
+    const gradVc = ctx.createLinearGradient(0, chartY - chartHeight, 0, chartY);
+    gradVc.addColorStop(0, 'rgba(232, 61, 132, 0.4)');
+    gradVc.addColorStop(1, 'rgba(232, 61, 132, 0.0)');
+    ctx.fillStyle = gradVc;
+    ctx.fill();
+
+    // Messages
+    ctx.beginPath();
+    ctx.moveTo(35, chartY);
+    stats.chart.forEach((d, i) => {
+      const x = 35 + (i * stepX);
+      const y = chartY - (d.messages / maxMsg) * chartHeight;
+      ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#43B581';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.lineTo(35 + chartWidth, chartY);
+    ctx.lineTo(35, chartY);
+    const gradMsg = ctx.createLinearGradient(0, chartY - chartHeight, 0, chartY);
+    gradMsg.addColorStop(0, 'rgba(67, 181, 129, 0.4)');
+    gradMsg.addColorStop(1, 'rgba(67, 181, 129, 0.0)');
+    ctx.fillStyle = gradMsg;
+    ctx.fill();
+  }
+
+  // Footer
+  drawText(ctx, 'Server Lookback: Last 14 days — Timezone: IST', 20, 565, '12px sans-serif', '#888');
+  drawText(ctx, 'Powered by Athena Prime', width - 20, 565, 'bold 12px sans-serif', '#43B581', 'right');
+
+  return canvas.toBuffer('image/png');
+}

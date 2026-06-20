@@ -21,6 +21,7 @@ import { commands as verifyCmds } from './verify.js';
 import { commands as ticketCmds } from './ticket.js';
 import { commands as levelingCmds } from './leveling.js';
 import { commands as moveprotectCmds } from './moveprotect.js';
+import { commands as serveroverviewCmds } from './serveroverview.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -45,15 +46,19 @@ export const allCommands = [
   ...verifyCmds,
   ...ticketCmds,
   ...levelingCmds,
-  ...moveprotectCmds
+  ...moveprotectCmds,
+  ...serveroverviewCmds
 ];
 
 export const commandMap = new Map();
-allCommands.forEach(cmd => {
+
+for (const cmd of allCommands) {
   commandMap.set(cmd.name, cmd);
   if (cmd.aliases) {
-    cmd.aliases.forEach(alias => commandMap.set(alias, cmd));
+    for (const alias of cmd.aliases) {
+      commandMap.set(alias, cmd);
+    }
   }
-});
+}
 
 export default commandMap;

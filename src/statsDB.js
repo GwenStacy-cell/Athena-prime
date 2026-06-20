@@ -228,6 +228,113 @@ export function getChartData(guildId, userId) {
   return result;
 }
 
+export function getServerOverviewStats(guildId) {
+  // 1d, 7d, 14d stats
+  const statsStmt = db.prepare(`
+    SELECT 
+      SUM(CASE WHEN date = date('now') THEN messages ELSE 0 END) as d1_msg,
+      SUM(CASE WHEN date = date('now') THEN voice_seconds ELSE 0 END) as d1_vc,
+      COUNT(DISTINCT CASE WHEN date = date('now') AND (messages > 0 OR voice_seconds > 0) THEN user_id ELSE NULL END) as d1_contributors,
+
+      SUM(CASE WHEN date >= date('now', '-6 days') THEN messages ELSE 0 END) as d7_msg,
+      SUM(CASE WHEN date >= date('now', '-6 days') THEN voice_seconds ELSE 0 END) as d7_vc,
+      COUNT(DISTINCT CASE WHEN date >= date('now', '-6 days') AND (messages > 0 OR voice_seconds > 0) THEN user_id ELSE NULL END) as d7_contributors,
+
+      SUM(CASE WHEN date >= date('now', '-13 days') THEN messages ELSE 0 END) as d14_msg,
+      SUM(CASE WHEN date >= date('now', '-13 days') THEN voice_seconds ELSE 0 END) as d14_vc,
+      COUNT(DISTINCT CASE WHEN date >= date('now', '-13 days') AND (messages > 0 OR voice_seconds > 0) THEN user_id ELSE NULL END) as d14_contributors
+    FROM user_activity
+    WHERE guild_id = ? AND date >= date('now', '-13 days')
+  `);
+  
+  const statsRow = statsStmt.get(guildId) || {};
+
+  // Top Members
+  const topMsgMember = db.prepare(`
+    SELECT user_id, SUM(messages) as total FROM user_activity
+    WHERE guild_id = ? AND date >= date('now', '-13 days') AND messages > 0
+    GROUP BY user_id ORDER BY total DESC LIMIT 1
+  `).get(guildId) || null;
+
+  const topVcMember = db.prepare(`
+    SELECT user_id, SUM(voice_seconds) as total FROM user_activity
+    WHERE guild_id = ? AND date >= date('now', '-13 days') AND voice_seconds > 0
+    GROUP BY user_id ORDER BY total DESC LIMIT 1
+  `).get(guildId) || null;
+
+  // Top Channels
+  const topMsgChannel = db.prepare(`
+    SELECT channel_id, SUM(messages) as total FROM channel_activity
+    WHERE guild_id = ? AND date >= date('now', '-13 days') AND messages > 0
+    GROUP BY channel_id ORDER BY total DESC LIMIT 1
+  `).get(guildId) || null;
+
+  const topVcChannel = db.prepare(`
+    SELECT channel_id, SUM(voice_seconds) as total FROM channel_activity
+    WHERE guild_id = ? AND date >= date('now', '-13 days') AND voice_seconds > 0
+    GROUP BY channel_id ORDER BY total DESC LIMIT 1
+  `).get(guildId) || null;
+
+  // Chart Data
+  const chartRows = db.prepare(`
+    SELECT date, SUM(messages) as messages, SUM(voice_seconds) as voice_seconds
+    FROM user_activity
+    WHERE guild_id = ? AND date >= date('now', '-13 days')
+    GROUP BY date
+    ORDER BY date ASC
+  `).all(guildId);
+
+  const dataMap = {};
+  for (const row of chartRows) {
+    dataMap[row.date] = row;
+  }
+
+  const chart = [];
+  const today = new Date();
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateString = d.toISOString().split('T')[0];
+    
+    if (dataMap[dateString]) {
+      chart.push({
+        date: dateString,
+        messages: dataMap[dateString].messages || 0,
+        voice_seconds: dataMap[dateString].voice_seconds || 0
+      });
+    } else {
+      chart.push({
+        date: dateString,
+        messages: 0,
+        voice_seconds: 0
+      });
+    }
+  }
+
+  return {
+    overview: {
+      d1_msg: statsRow.d1_msg || 0,
+      d1_vc: statsRow.d1_vc || 0,
+      d1_contributors: statsRow.d1_contributors || 0,
+      d7_msg: statsRow.d7_msg || 0,
+      d7_vc: statsRow.d7_vc || 0,
+      d7_contributors: statsRow.d7_contributors || 0,
+      d14_msg: statsRow.d14_msg || 0,
+      d14_vc: statsRow.d14_vc || 0,
+      d14_contributors: statsRow.d14_contributors || 0
+    },
+    topMembers: {
+      messages: topMsgMember,
+      voice: topVcMember
+    },
+    topChannels: {
+      messages: topMsgChannel,
+      voice: topVcChannel
+    },
+    chart
+  };
+}
+
 export default {
   logMessage,
   logVoice,
@@ -235,5 +342,6 @@ export default {
   getUserStats,
   getServerRanks,
   getTopChannels,
-  getChartData
+  getChartData,
+  getServerOverviewStats
 };
