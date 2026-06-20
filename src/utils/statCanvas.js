@@ -279,7 +279,7 @@ export async function generateServerOverviewImage(guild, stats) {
 
   const cleanString = (str) => {
     if (!str) return '';
-    return str.normalize('NFKC').replace(/[\u{10000}-\u{10FFFF}]/gu, '').replace(/[\u2600-\u27BF]/g, '').trim();
+    return str.normalize('NFKC').replace(/[\u{10000}-\u{10FFFF}]/gu, '').replace(/[\u2500-\u27BF]/g, '').trim();
   };
 
   // Background
