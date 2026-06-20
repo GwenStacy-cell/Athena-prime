@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import embed from '../embed.js';
-import { isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';
+import { isBotOwnerSync, isExtraOwner, isAuthorized } from '../utils/helpers.js';
 
 // ============================================================
 // ACTIVE DRAG SESSIONS — keyed by `${guildId}:${targetUserId}`
@@ -133,9 +133,9 @@ export const commands = [
   // ─────────────────────────────────────────────
   {
     name: 'massdc',
-    description: 'Disconnects all users from a voice channel (you are immune).',
-    category: 'moderation',
-    permissions: [PermissionFlagsBits.MoveMembers],
+    description: '[OWNER ONLY] Disconnects all users from a voice channel (you are immune).',
+    category: 'security',
+    permissions: [],
     options: [
       {
         name: 'channel',
@@ -146,6 +146,10 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
+      if (!(await isAuthorized(message.author, message.guild))) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
+      }
+
       let targetVc;
       if (args[0]) {
         targetVc = message.guild.channels.cache.get(args[0].replace(/[<#>]/g, '')) || 
@@ -162,6 +166,10 @@ export const commands = [
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)], ephemeral: true });
+      }
+
       const targetVc = interaction.options.getChannel('channel') || interaction.member.voice.channel;
 
       if (!targetVc || (targetVc.type !== ChannelType.GuildVoice && targetVc.type !== ChannelType.GuildStageVoice)) {
@@ -178,9 +186,9 @@ export const commands = [
   // ─────────────────────────────────────────────
   {
     name: 'massmove',
-    description: 'Moves all users from one voice channel to another.',
-    category: 'moderation',
-    permissions: [PermissionFlagsBits.MoveMembers],
+    description: '[OWNER ONLY] Moves all users from one voice channel to another.',
+    category: 'security',
+    permissions: [],
     options: [
       {
         name: 'destination',
@@ -198,6 +206,10 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
+      if (!(await isAuthorized(message.author, message.guild))) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
+      }
+
       if (!args[0]) {
         return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massmove <destination>` or `!massmove <source> <destination>`')] });
       }
@@ -232,6 +244,10 @@ export const commands = [
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)], ephemeral: true });
+      }
+
       const destVc = interaction.options.getChannel('destination');
       const sourceVc = interaction.options.getChannel('source') || interaction.member.voice.channel;
 
