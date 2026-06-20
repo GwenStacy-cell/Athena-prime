@@ -7,76 +7,74 @@ import { generateRankCard, generateLeaderboard } from '../utils/canvasCards.js';
 const TROPHY = '<a:trophy:1517636666825773058>';
 const COIN = '<a:Boost2:1517637137388929147>';
 
+export async function buildXpDashboard(guildId) {
+  const { ActionRowBuilder, ButtonBuilder, ButtonStyle, RoleSelectMenuBuilder } = await import('discord.js');
+  const system = db.getXpSystem(guildId);
+
+  const ON_EMOJI = '<:on:1517213880483446978>';
+  const OFF_EMOJI = '<:off:1517213879367761981>';
+  const statusIcon = system.enabled ? ON_EMOJI : OFF_EMOJI;
+
+  let rewardsText = 'None';
+  if (Object.keys(system.roleRewards).length > 0) {
+    rewardsText = Object.entries(system.roleRewards)
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([level, roleId]) => `**Level ${level}**: <@&${roleId}>`)
+      .join('\n');
+  }
+
+  let multipliersText = 'None';
+  if (Object.keys(system.multipliers).length > 0) {
+    multipliersText = Object.entries(system.multipliers)
+      .map(([roleId, mult]) => `<@&${roleId}> (**${mult}x**)`)
+      .join('\n');
+  }
+
+  const panelEmbed = embed.info(
+    'XP Manager',
+    `Welcome to the Interactive XP Control Panel.\n\n**Status**: ${statusIcon}\n**Channel**: ${system.levelChannelId ? `<#${system.levelChannelId}>` : 'Not Set'}`
+  );
+  
+  panelEmbed.addFields(
+    { name: 'Role Rewards (Auto-Milestones)', value: rewardsText, inline: true },
+    { name: 'XP Multipliers (1.5x Auto-Boost)', value: multipliersText, inline: true }
+  );
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('xp_toggle').setLabel(system.enabled ? 'Disable System' : 'Enable System').setStyle(system.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('xp_set_channel').setLabel('Set Channel (ID)').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('xp_clear').setLabel('Clear Setup').setStyle(ButtonStyle.Danger)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new RoleSelectMenuBuilder()
+      .setCustomId('xp_add_reward')
+      .setPlaceholder('Select roles to automatically add as Level Rewards')
+      .setMinValues(1)
+      .setMaxValues(10)
+  );
+
+  const row3 = new ActionRowBuilder().addComponents(
+    new RoleSelectMenuBuilder()
+      .setCustomId('xp_add_multiplier')
+      .setPlaceholder('Select roles to automatically grant a 1.5x XP Boost')
+      .setMinValues(1)
+      .setMaxValues(10)
+  );
+
+  return { embeds: [panelEmbed], components: [row1, row2, row3] };
+}
+
 export const commands = [
   {
     name: 'xpsetup',
-    description: 'Configure the XP & Leveling system.',
+    description: 'Launch the Interactive XP Manager Control Panel.',
     category: 'admin',
     permissions: [PermissionFlagsBits.ManageGuild],
-    options: [
-      {
-        name: 'toggle',
-        description: 'Enable or disable the XP system',
-        type: 1,
-        options: [{ name: 'enabled', description: 'Enable?', type: 5, required: true }]
-      },
-      {
-        name: 'channel',
-        description: 'Set the designated channel for level ups and leveling commands',
-        type: 1,
-        options: [{ name: 'target', description: 'Channel', type: 7, required: true }]
-      },
-      {
-        name: 'add_reward',
-        description: 'Add a role reward for a specific level',
-        type: 1,
-        options: [
-          { name: 'level', description: 'Level required', type: 4, required: true },
-          { name: 'role', description: 'Role to give', type: 8, required: true }
-        ]
-      },
-      {
-        name: 'add_multiplier',
-        description: 'Add an XP multiplier for a specific role',
-        type: 1,
-        options: [
-          { name: 'role', description: 'Role', type: 8, required: true },
-          { name: 'multiplier', description: 'Multiplier (e.g. 1.5)', type: 10, required: true }
-        ]
-      }
-    ],
+    options: [],
     async executeSlash(interaction) {
-      const sub = interaction.options.getSubcommand();
-      const system = db.getXpSystem(interaction.guild.id);
-
-      if (sub === 'toggle') {
-        system.enabled = interaction.options.getBoolean('enabled');
-        db.setXpSystem(interaction.guild.id, system);
-        return interaction.reply({ embeds: [embed.success('XP System', `Leveling is now **${system.enabled ? 'Enabled' : 'Disabled'}**.`)] });
-      }
-      
-      if (sub === 'channel') {
-        const channel = interaction.options.getChannel('target');
-        system.levelChannelId = channel.id;
-        db.setXpSystem(interaction.guild.id, system);
-        return interaction.reply({ embeds: [embed.success('XP System', `Level up announcements and leveling commands are now restricted to <#${channel.id}>.`)] });
-      }
-
-      if (sub === 'add_reward') {
-        const level = interaction.options.getInteger('level');
-        const role = interaction.options.getRole('role');
-        system.roleRewards[String(level)] = role.id;
-        db.setXpSystem(interaction.guild.id, system);
-        return interaction.reply({ embeds: [embed.success('XP System', `Users will now receive <@&${role.id}> at **Level ${level}**.`)] });
-      }
-
-      if (sub === 'add_multiplier') {
-        const role = interaction.options.getRole('role');
-        const mult = interaction.options.getNumber('multiplier');
-        system.multipliers[role.id] = mult;
-        db.setXpSystem(interaction.guild.id, system);
-        return interaction.reply({ embeds: [embed.success('XP System', `Users with <@&${role.id}> will now gain **${mult}x** XP.`)] });
-      }
+      const payload = await buildXpDashboard(interaction.guild.id);
+      await interaction.reply({ ...payload, ephemeral: true });
     }
   },
 

@@ -1,4 +1,5 @@
 import { PermissionFlagsBits, EmbedBuilder } from 'discord.js';
+import { buildXpDashboard } from '../commands/leveling.js';
 import commandMap from '../commands/loader.js';
 import embed, { setGuildContext } from '../embed.js';
 import db from '../database.js';
@@ -226,12 +227,69 @@ export default {
         }
         return;
       }
+
+      if (interaction.customId === 'xp_channel_modal') {
+        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        try {
+          const chanInput = interaction.fields.getTextInputValue('xp_channel_id');
+          const channelId = chanInput.replace(/[^0-9]/g, '');
+          
+          if (!channelId) return interaction.reply({ content: 'Invalid channel ID.', ephemeral: true });
+          const channel = interaction.guild.channels.cache.get(channelId);
+          if (!channel) return interaction.reply({ content: 'I could not find that channel in this server.', ephemeral: true });
+
+          const system = db.getXpSystem(interaction.guild.id);
+          system.levelChannelId = channel.id;
+          db.setXpSystem(interaction.guild.id, system);
+          
+          const payload = await buildXpDashboard(interaction.guild.id);
+          return interaction.update(payload).catch(() => null);
+        } catch (err) {
+          console.error('XP channel modal error:', err);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+        }
+        return;
+      }
     }
 
     // ==========================================
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton()) {
+      // XP Manager Buttons
+      if (interaction.customId === 'xp_toggle') {
+        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        const system = db.getXpSystem(interaction.guild.id);
+        system.enabled = !system.enabled;
+        db.setXpSystem(interaction.guild.id, system);
+        const payload = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(payload).catch(() => null);
+      }
+
+      if (interaction.customId === 'xp_clear') {
+        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        const system = db.getXpSystem(interaction.guild.id);
+        system.roleRewards = {};
+        system.multipliers = {};
+        system.levelChannelId = null;
+        db.setXpSystem(interaction.guild.id, system);
+        const payload = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(payload).catch(() => null);
+      }
+
+      if (interaction.customId === 'xp_set_channel') {
+        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('xp_channel_modal').setTitle('Set Level Channel');
+        const chanInput = new TextInputBuilder()
+          .setCustomId('xp_channel_id')
+          .setLabel('Channel ID')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+        modal.addComponents(new ActionRowBuilder().addComponents(chanInput));
+        return interaction.showModal(modal);
+      }
+
       // Announcement Builder Buttons
       if (interaction.customId === 'ann_edit_text') {
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
@@ -659,6 +717,46 @@ export default {
           console.error('[Welcome SelectMenu]', err);
         }
         return;
+      }
+    }
+    // ==========================================
+    // 6. ROLE SELECT MENU (XP Manager)
+    // ==========================================
+    if (interaction.isRoleSelectMenu()) {
+      if (interaction.customId === 'xp_add_reward') {
+        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        const system = db.getXpSystem(interaction.guild.id);
+        const selectedRoles = interaction.values;
+        
+        // Find highest existing level
+        let nextLevel = 5;
+        if (Object.keys(system.roleRewards).length > 0) {
+          const levels = Object.keys(system.roleRewards).map(Number);
+          nextLevel = Math.max(...levels) + 5;
+        }
+
+        for (const roleId of selectedRoles) {
+          system.roleRewards[String(nextLevel)] = roleId;
+          nextLevel += 5;
+        }
+        
+        db.setXpSystem(interaction.guild.id, system);
+        const payload = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(payload).catch(() => null);
+      }
+
+      if (interaction.customId === 'xp_add_multiplier') {
+        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        const system = db.getXpSystem(interaction.guild.id);
+        const selectedRoles = interaction.values;
+        
+        for (const roleId of selectedRoles) {
+          system.multipliers[roleId] = 1.5;
+        }
+        
+        db.setXpSystem(interaction.guild.id, system);
+        const payload = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(payload).catch(() => null);
       }
     }
   }
