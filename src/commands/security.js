@@ -973,7 +973,7 @@ export const commands = [
 
   // --- GLOBAL BOT BLACKLIST COMMAND ---
   {
-    name: 'botblacklist',
+    name: 'userblacklist',
     description: '[BOT OWNER ONLY] Globally block a user from using Athena Prime commands.',
     category: 'security',
     permissions: [],
@@ -1005,7 +1005,7 @@ export const commands = [
       let targetId = args[1]?.replace(/[<@!>]/g, '');
 
       if (!action || (action !== 'list' && !targetId)) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!botblacklist add <ID>\`, \`!botblacklist remove <ID>\`, or \`!botblacklist list\``)] });
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!userblacklist add <ID>\`, \`!userblacklist remove <ID>\`, or \`!userblacklist list\``)] });
       }
 
       const result = await handleBotBlacklist(action, targetId);
