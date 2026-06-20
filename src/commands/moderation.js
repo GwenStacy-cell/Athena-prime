@@ -768,7 +768,7 @@ async function handleUnmuteAll(guild, moderator) {
   return { embed: resEmbed };
 }
 
-async function handleWarn(guild, moderator, target, reason) {
+export async function handleWarn(guild, moderator, target, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
     return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };

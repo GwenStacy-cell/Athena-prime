@@ -30,8 +30,9 @@ const DEFAULT_SCHEMA = {
   newsFeeds: {},     // guildId -> { channelId, roleId, feeds: [{name, url}], lastGuids: [] }
   verification: {},  // guildId -> { roleId, messageId, channelId }
   tickets: {},       // guildId -> { categoryId, staffRoleId, ticketCount: 0, activeTickets: {} } // ticketId -> { textId, voiceId, ownerId }
-  xpSystems: {},     // guildId -> { enabled: false, levelChannelId: null, roleRewards: { level -> roleId }, multipliers: { roleId -> multiplier } }
-  usersXp: {}        // guildId -> { userId -> { xp: 0, level: 0, lastMessageAt: 0, voiceJoinAt: 0 } }
+  xpSystems: {},     // guildId -> { enabled: false, announceChannelId: null, cmdChannelId: null, roleRewards: { level -> roleId }, multipliers: { roleId -> multiplier } }
+  usersXp: {},       // guildId -> { userId -> { xp: 0, level: 0, lastMessageAt: 0, voiceJoinAt: 0 } }
+  moveProtection: {} // guildId -> [userIds]
 };
 
 class Database {
@@ -69,6 +70,7 @@ class Database {
         this.cache.tickets        = this.cache.tickets        || {};
         this.cache.xpSystems      = this.cache.xpSystems      || {};
         this.cache.usersXp        = this.cache.usersXp        || {};
+        this.cache.moveProtection = this.cache.moveProtection || {};
       } else {
         this.save();
       }
@@ -934,6 +936,43 @@ class Database {
       .map(([userId, data]) => ({ userId, ...data }))
       .sort((a, b) => b.xp - a.xp)
       .slice(0, limit);
+  }
+
+  // --------------------------------------------------------------------------
+  // Move Protection System
+  // --------------------------------------------------------------------------
+  getMoveProtectedUsers(guildId) {
+    if (!this.cache.moveProtection[guildId]) {
+      this.cache.moveProtection[guildId] = [];
+      this.save();
+    }
+    return this.cache.moveProtection[guildId];
+  }
+
+  isMoveProtected(guildId, userId) {
+    const protectedUsers = this.getMoveProtectedUsers(guildId);
+    return protectedUsers.includes(userId);
+  }
+
+  addMoveProtectedUser(guildId, userId) {
+    const protectedUsers = this.getMoveProtectedUsers(guildId);
+    if (!protectedUsers.includes(userId)) {
+      protectedUsers.push(userId);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  removeMoveProtectedUser(guildId, userId) {
+    let protectedUsers = this.getMoveProtectedUsers(guildId);
+    const initialLen = protectedUsers.length;
+    this.cache.moveProtection[guildId] = protectedUsers.filter(id => id !== userId);
+    if (this.cache.moveProtection[guildId].length < initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
   }
 
 }

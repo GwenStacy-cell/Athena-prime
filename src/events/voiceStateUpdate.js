@@ -1,10 +1,12 @@
-import { ChannelType, PermissionFlagsBits } from 'discord.js';
+import { ChannelType, PermissionFlagsBits, AuditLogEvent } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { buildControlPanel, buildSharedPanel } from '../commands/jtc.js';
 import statsDB from '../statsDB.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
+import { isBotOwnerSync } from '../utils/helpers.js';
+import { handleWarn } from '../commands/moderation.js';
 
 export default {
   name: 'voiceStateUpdate',
@@ -26,6 +28,41 @@ export default {
       const newChannelId = newState.channelId;
 
       if (oldChannelId !== newChannelId) {
+
+        // ==========================================
+        // MOVE PROTECTION INTERCEPTOR
+        // ==========================================
+        if (oldChannelId && newChannelId) {
+          if (db.isMoveProtected(guild.id, userId)) {
+            // Give audit logs a moment to register
+            setTimeout(async () => {
+              const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberMove }).catch(() => null);
+              if (auditLogs) {
+                const moveLog = auditLogs.entries.find(e => e.target.id === userId && Date.now() - e.createdTimestamp < 5000);
+                if (moveLog) {
+                  const executor = moveLog.executor;
+                  if (executor.id !== client.user.id && executor.id !== userId) {
+                    // Check if executor is Bot Owner or Server Owner (Bypass allowed)
+                    if (executor.id === guild.ownerId || isBotOwnerSync(executor.id)) {
+                      return; // Bypass move protection
+                    }
+
+                    console.log(`[MoveProtection] Intercepted illegal move of ${userId} by ${executor.id}. Reverting...`);
+                    
+                    // Restitution: Move target back to previous channel
+                    await newState.member.voice.setChannel(oldChannelId).catch(() => null);
+
+                    // Punish executor: Issue a warning
+                    const execMember = await guild.members.fetch(executor.id).catch(() => null);
+                    if (execMember) {
+                      await handleWarn(guild, guild.members.me, execMember, `Automated: Illegally moving protected user <@${userId}>`);
+                    }
+                  }
+                }
+              }
+            }, 1000);
+          }
+        }
         // User left or switched channels
         if (oldChannelId) {
           const session = client.vcSessions.get(userId);
