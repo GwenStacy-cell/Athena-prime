@@ -37,8 +37,13 @@ export default {
             // Give audit logs a moment to register
             setTimeout(async () => {
               const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberMove }).catch(() => null);
+              console.log(`[MoveProtection] Fetched audit logs for move. Found: ${auditLogs ? auditLogs.entries.size : 0} entries.`);
+              
               if (auditLogs) {
-                const moveLog = auditLogs.entries.find(e => e.target.id === userId && Math.abs(Date.now() - e.createdTimestamp) < 15000);
+                // Debug log the entries
+                auditLogs.entries.forEach(e => console.log(`[MoveProtection] Audit Log Entry: Target ${e.target?.id}, Executor ${e.executor?.id}, Created ${e.createdTimestamp}, Now ${Date.now()}`));
+
+                const moveLog = auditLogs.entries.find(e => e.target?.id === userId && Math.abs(Date.now() - e.createdTimestamp) < 15000);
                 if (moveLog) {
                   const executor = moveLog.executor;
                   if (executor.id !== client.user.id && executor.id !== userId) {
@@ -61,7 +66,7 @@ export default {
                   }
                 }
               }
-            }, 1000);
+            }, 3000);
           }
         }
         // User left or switched channels
