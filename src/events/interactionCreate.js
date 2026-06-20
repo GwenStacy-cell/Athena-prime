@@ -229,7 +229,7 @@ export default {
       }
 
       if (interaction.customId === 'xp_channel_modal') {
-        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         try {
           const chanInput = interaction.fields.getTextInputValue('xp_channel_id');
           const channelId = chanInput.replace(/[^0-9]/g, '');
@@ -258,7 +258,7 @@ export default {
     if (interaction.isButton()) {
       // XP Manager Buttons
       if (interaction.customId === 'xp_toggle') {
-        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         const system = db.getXpSystem(interaction.guild.id);
         system.enabled = !system.enabled;
         db.setXpSystem(interaction.guild.id, system);
@@ -267,7 +267,7 @@ export default {
       }
 
       if (interaction.customId === 'xp_clear') {
-        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         const system = db.getXpSystem(interaction.guild.id);
         system.roleRewards = {};
         system.multipliers = {};
@@ -278,7 +278,7 @@ export default {
       }
 
       if (interaction.customId === 'xp_set_channel') {
-        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
         const modal = new ModalBuilder().setCustomId('xp_channel_modal').setTitle('Set Level Channel');
         const chanInput = new TextInputBuilder()
@@ -724,7 +724,7 @@ export default {
     // ==========================================
     if (interaction.isRoleSelectMenu()) {
       if (interaction.customId === 'xp_add_reward') {
-        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         const system = db.getXpSystem(interaction.guild.id);
         const selectedRoles = interaction.values;
         
@@ -746,7 +746,7 @@ export default {
       }
 
       if (interaction.customId === 'xp_add_multiplier') {
-        if (!canModerate(interaction.member)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         const system = db.getXpSystem(interaction.guild.id);
         const selectedRoles = interaction.values;
         
