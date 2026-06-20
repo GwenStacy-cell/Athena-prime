@@ -940,13 +940,17 @@ export const commands = [
       }
 
       const action = args[0]?.toLowerCase();
-      const target = message.mentions.members.first();
-
-      if (!action || (action !== 'list' && !target)) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!extraowner add <@user>\`, \`!extraowner remove <@user>\`, or \`!extraowner list\``)] });
+      let targetUser = message.mentions.users.first();
+      
+      if (!targetUser && args[1]) {
+        targetUser = await message.client.users.fetch(args[1]).catch(() => null);
       }
 
-      const result = await handleExtraOwner(message.guild, message.member, action, target?.user);
+      if (!action || (action !== 'list' && !targetUser)) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!extraowner add <@user|ID>\`, \`!extraowner remove <@user|ID>\`, or \`!extraowner list\``)] });
+      }
+
+      const result = await handleExtraOwner(message.guild, message.member, action, targetUser);
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
@@ -963,6 +967,63 @@ export const commands = [
       }
 
       const result = await handleExtraOwner(interaction.guild, interaction.member, action, targetUser);
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- GLOBAL BOT BLACKLIST COMMAND ---
+  {
+    name: 'botblacklist',
+    description: '[BOT OWNER ONLY] Globally block a user from using Athena Prime commands.',
+    category: 'security',
+    permissions: [],
+    options: [
+      {
+        name: 'action',
+        description: 'Choose action',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Flag User', value: 'add' },
+          { name: 'Unflag User', value: 'remove' },
+          { name: 'List Flagged', value: 'list' }
+        ]
+      },
+      {
+        name: 'user_id',
+        description: 'Target user ID or mention',
+        type: 3,
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      if (!isBotOwnerSync(message.author.id)) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner** can manage the global bot blacklist.`)] });
+      }
+
+      const action = args[0]?.toLowerCase();
+      let targetId = args[1]?.replace(/[<@!>]/g, '');
+
+      if (!action || (action !== 'list' && !targetId)) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!botblacklist add <ID>\`, \`!botblacklist remove <ID>\`, or \`!botblacklist list\``)] });
+      }
+
+      const result = await handleBotBlacklist(action, targetId);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      if (!isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** can manage the global bot blacklist.`)], ephemeral: true });
+      }
+
+      const action = interaction.options.getString('action');
+      let targetId = interaction.options.getString('user_id')?.replace(/[<@!>]/g, '');
+
+      if (action !== 'list' && !targetId) {
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user ID.`)], ephemeral: true });
+      }
+
+      const result = await handleBotBlacklist(action, targetId);
       await interaction.reply({ embeds: [result.embed] });
     }
   },
@@ -2194,6 +2255,34 @@ async function handleBotWhitelist(guild, action, botId) {
     if (list.length === 0) return { embed: embed.info('No Whitelisted Bots', 'No bots are currently whitelisted.\n\nUse `!botwhitelist add <botId>` to whitelist a trusted bot.') };
     const formatted = list.map(id => `• \`${id}\``).join('\n');
     return { embed: embed.info('Whitelisted Bots', `These bots are permitted to be in the server:\n\n${formatted}`) };
+  }
+}
+
+async function handleBotBlacklist(action, targetId) {
+  if (action === 'add') {
+    if (!targetId || !/^\d{17,20}$/.test(targetId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid user ID (17-20 digit number).') };
+    const success = db.addUserToBotBlacklist(targetId);
+    if (success) {
+      return { embed: embed.success('User Flagged', `User ID \`${targetId}\` has been **flagged**.\nThey are now blacklisted and cannot use any Athena Prime commands globally.`) };
+    } else {
+      return { embed: embed.info('Already Flagged', `User ID \`${targetId}\` is already on the bot blacklist.`) };
+    }
+  } else if (action === 'remove') {
+    if (!targetId || !/^\d{17,20}$/.test(targetId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid user ID to unflag.') };
+    const success = db.removeUserFromBotBlacklist(targetId);
+    if (success) {
+      return { embed: embed.success('User Unflagged', `User ID \`${targetId}\` has been **unflagged** and removed from the global bot blacklist.`) };
+    } else {
+      return { embed: embed.warn('Not Flagged', `User ID \`${targetId}\` is not currently flagged.`) };
+    }
+  } else {
+    // List
+    const flagged = db.getBotBlacklist();
+    if (flagged.length === 0) {
+      return { embed: embed.info('No Flagged Users', 'There are no users currently flagged on the global bot blacklist.') };
+    }
+    const formattedList = flagged.map(id => `• <@${id}> (ID: \`${id}\`)`).join('\n');
+    return { embed: embed.danger('Flagged Users', `These users are globally banned from using the bot:\n\n${formattedList}`) };
   }
 }
 

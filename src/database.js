@@ -32,7 +32,8 @@ const DEFAULT_SCHEMA = {
   tickets: {},       // guildId -> { categoryId, staffRoleId, ticketCount: 0, activeTickets: {} } // ticketId -> { textId, voiceId, ownerId }
   xpSystems: {},     // guildId -> { enabled: false, announceChannelId: null, cmdChannelId: null, roleRewards: { level -> roleId }, multipliers: { roleId -> multiplier } }
   usersXp: {},       // guildId -> { userId -> { xp: 0, level: 0, lastMessageAt: 0, voiceJoinAt: 0 } }
-  moveProtection: {} // guildId -> [userIds]
+  moveProtection: {},// guildId -> [userIds]
+  botBlacklist: []   // global list of userIds
 };
 
 class Database {
@@ -58,6 +59,7 @@ class Database {
         this.cache.modModes       = this.cache.modModes       || {};
         this.cache.triggers       = this.cache.triggers       || {};
         this.cache.jtc            = this.cache.jtc            || {};
+        this.cache.botBlacklist   = this.cache.botBlacklist   || [];
         this.cache.jtcChannels    = this.cache.jtcChannels    || {};
         this.cache.botWhitelist   = this.cache.botWhitelist   || {};
         this.cache.emergencies    = this.cache.emergencies    || {};
@@ -969,6 +971,35 @@ class Database {
     const initialLen = protectedUsers.length;
     this.cache.moveProtection[guildId] = protectedUsers.filter(id => id !== userId);
     if (this.cache.moveProtection[guildId].length < initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
+  // Global Bot Blacklist (Flags)
+  getBotBlacklist() {
+    return this.cache.botBlacklist || [];
+  }
+
+  isUserBotBlacklisted(userId) {
+    return this.getBotBlacklist().includes(userId);
+  }
+
+  addUserToBotBlacklist(userId) {
+    if (!this.cache.botBlacklist) this.cache.botBlacklist = [];
+    if (!this.cache.botBlacklist.includes(userId)) {
+      this.cache.botBlacklist.push(userId);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  removeUserFromBotBlacklist(userId) {
+    if (!this.cache.botBlacklist) this.cache.botBlacklist = [];
+    const initialLen = this.cache.botBlacklist.length;
+    this.cache.botBlacklist = this.cache.botBlacklist.filter(id => id !== userId);
+    if (this.cache.botBlacklist.length < initialLen) {
       this.save();
       return true;
     }

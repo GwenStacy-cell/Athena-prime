@@ -34,6 +34,9 @@ export default {
     // Ignore bots and webhooks
     if (message.author.bot || message.webhookId) return;
 
+    // Ignore globally blacklisted users
+    if (db.isUserBotBlacklisted(message.author.id)) return;
+
     // ==========================================
     // DM CONTEXT — spam commands for permitted users / bot owner
     // Works with or without the ! prefix (e.g. "spam @user hi" or "!spam @user hi")

@@ -14,6 +14,13 @@ import { handleAccentButton, handleAccentModal } from '../commands/accent.js';
 export default {
   name: 'interactionCreate',
   async execute(interaction) {
+    if (interaction.user && db.isUserBotBlacklisted(interaction.user.id)) {
+      if (interaction.isRepliable()) {
+        await interaction.reply({ content: 'You have been globally blacklisted from using Athena Prime commands.', ephemeral: true }).catch(() => null);
+      }
+      return;
+    }
+
     // ==========================================
     // 1. CHAT INPUT SLASH COMMANDS
     // ==========================================
