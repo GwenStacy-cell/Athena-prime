@@ -49,9 +49,10 @@ export default {
                 if (moveLog) {
                   const executor = moveLog.executor;
                   if (executor.id !== client.user.id && executor.id !== userId) {
-                    // Check if executor is Bot Owner or Server Owner (Bypass allowed)
-                    if (executor.id === guild.ownerId || isBotOwnerSync(executor.id)) {
-                      console.log(`[MoveProtection] Bypass triggered for ${executor.tag} (Owner/BotOwner)`);
+                    // Check if executor is Bot Owner (Bypass allowed)
+                    // (Server Owners are NOT allowed to bypass move protection per user request)
+                    if (isBotOwnerSync(executor.id)) {
+                      console.log(`[MoveProtection] Bypass triggered for ${executor.tag} (BotOwner)`);
                       return; // Bypass move protection
                     }
 
