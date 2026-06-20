@@ -768,13 +768,13 @@ async function handleUnmuteAll(guild, moderator) {
   return { embed: resEmbed };
 }
 
-export async function handleWarn(guild, moderator, target, reason) {
+export async function handleWarn(guild, moderator, target, reason, force = false) {
   // Owner immunity check
-  if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
+  if (!force && (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id))) {
     return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };
   }
 
-  if (!canModerate(moderator, target)) {
+  if (!force && !canModerate(moderator, target)) {
     return { embed: embed.danger('Permission Denied', `You do not have enough power to warn **${target.user.tag}**.`) };
   }
 

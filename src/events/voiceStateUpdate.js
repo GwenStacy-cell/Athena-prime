@@ -70,7 +70,7 @@ export default {
                     const execMember = await guild.members.fetch(executor.id).catch(() => null);
                     if (execMember) {
                       console.log(`[MoveProtection] Warning executor ${execMember.user.tag}...`);
-                      const warnResult = await handleWarn(guild, guild.members.me, execMember, `Automated: Illegally moving protected user <@${userId}>`);
+                      const warnResult = await handleWarn(guild, guild.members.me, execMember, `Automated: Illegally moving protected user <@${userId}>`, true);
                       console.log(`[MoveProtection] Warn result:`, warnResult);
                     } else {
                       console.log(`[MoveProtection] Could not fetch executor member to warn.`);
