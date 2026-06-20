@@ -45,10 +45,25 @@ export default {
               if (auditLogs) {
                 console.log(`[MoveProtection] Fetched ${auditLogs.entries.size} MemberMove logs. Analyzing...`);
                 
+                if (!client.auditLogCounts) client.auditLogCounts = new Map();
+
                 const moveLog = auditLogs.entries.find(e => {
-                  const isMatch = e.extra && e.extra.channel && e.extra.channel.id === newChannelId && Math.abs(Date.now() - e.createdTimestamp) < 15000;
-                  console.log(`[MoveProtection] Eval Log ${e.id}: extra.channel.id=${e.extra?.channel?.id}, newChannelId=${newChannelId}, timeDiff=${Math.abs(Date.now() - e.createdTimestamp)} -> match=${isMatch}`);
-                  return isMatch;
+                  if (e.extra && e.extra.channel && e.extra.channel.id === newChannelId) {
+                    const count = e.extra.count || 1;
+                    const lastCount = client.auditLogCounts.get(e.id);
+                    
+                    const isNewBatch = lastCount !== undefined && count > lastCount;
+                    const isRecent = Math.abs(Date.now() - e.createdTimestamp) < 15000;
+                    
+                    const isMatch = isNewBatch || isRecent;
+                    console.log(`[MoveProtection] Eval Log ${e.id}: newChannelId=${newChannelId}, timeDiff=${Math.abs(Date.now() - e.createdTimestamp)}, count=${count}, lastCount=${lastCount} -> match=${isMatch}`);
+                    
+                    if (isMatch) {
+                      client.auditLogCounts.set(e.id, count);
+                      return true;
+                    }
+                  }
+                  return false;
                 });
 
                 if (moveLog) {
