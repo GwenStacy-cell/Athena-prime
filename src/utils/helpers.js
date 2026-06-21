@@ -434,7 +434,7 @@ export async function applyAutonick(member, autonickConfig) {
     layout = `${autonickConfig.prefix || ''}{name}${autonickConfig.suffix || ''}`;
   }
 
-  const baseName = member.user.username;
+  const baseName = member.user.globalName || member.user.username;
   const layoutLenWithoutName = layout.length - '{name}'.length;
   const maxNameLen = Math.max(1, 32 - layoutLenWithoutName);
   
