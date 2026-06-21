@@ -106,6 +106,10 @@ export const embed = {
     return this.build({ title, description, color: getAccentColor(guildId, colors.danger), fields });
   },
 
+  error(title, description, fields = [], guildId = null) {
+    return this.danger(title, description, fields, guildId);
+  },
+
   info(title, description, fields = [], guildId = null) {
     return this.build({ title, description, color: getAccentColor(guildId, colors.neutral), fields });
   },
