@@ -68,19 +68,31 @@ export default {
                 let culpritId = member.id;
                 let culpritUser = member.user;
 
-                // Wait 1.5 seconds for Discord to populate the Audit Logs
-                await new Promise(r => setTimeout(r, 1500));
+                // Function to fetch Audit Logs with retry for speed & accuracy
+                const findCulprit = async () => {
+                  try {
+                    let auditLogs = await guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberUpdate });
+                    let entry = auditLogs.entries.first();
+                    if (entry && entry.target.id === member.id && (Date.now() - entry.createdTimestamp) < 10000) {
+                      return entry.executor;
+                    }
+                    // Wait and retry if API was too slow
+                    await new Promise(r => setTimeout(r, 800));
+                    auditLogs = await guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberUpdate });
+                    entry = auditLogs.entries.first();
+                    if (entry && entry.target.id === member.id && (Date.now() - entry.createdTimestamp) < 10000) {
+                      return entry.executor;
+                    }
+                  } catch(e) {}
+                  return null;
+                };
 
-                // Find out WHO unmuted them via Audit Logs
-                try {
-                  const auditLogs = await guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberUpdate });
-                  const entry = auditLogs.entries.first();
-                  if (entry && entry.target.id === member.id && (Date.now() - entry.createdTimestamp) < 10000) {
-                    if (entry.executor.id === client.user.id) return; // Bot did it, ignore
-                    culpritId = entry.executor.id;
-                    culpritUser = entry.executor;
-                  }
-                } catch(e) {}
+                const executor = await findCulprit();
+                if (executor) {
+                  if (executor.id === client.user.id) return; // Bot did it, ignore
+                  culpritId = executor.id;
+                  culpritUser = executor;
+                }
                 
                 // Do not quarantine bot owner or server owner
                 if (culpritId === guild.ownerId) return;
@@ -92,6 +104,8 @@ export default {
                 theaterStrikes.set(strikeKey, strikes);
                 
                 const { EmbedBuilder } = await import('discord.js');
+                const accentHex = guildCfg.accentColor || '#3b82f6';
+                const accentInt = parseInt(accentHex.replace('#', ''), 16);
                 
                 const channel = guild.channels.cache.get(newState.channelId);
                 const warnEmoji = '<a:exclamation:1518131513764348064>';
@@ -99,8 +113,9 @@ export default {
                 if (strikes < 3) {
                   // WARNING
                   const warnEmbed = new EmbedBuilder()
-                    .setColor('#95a5a6')
-                    .setDescription(`${warnEmoji} <@${culpritId}> *kindly refrain from unmuting or undeafening members during a Theater Mode session.* (\`Strike ${strikes}/3\`)`);
+                    .setColor(accentInt)
+                    .setTitle('Theater Mode Interruption')
+                    .setDescription(`${warnEmoji} <@${culpritId}>\n-# kindly refrain from unmuting or undeafening members during a Theater Mode session. (\`Strike ${strikes}/3\`)`);
                   
                   if (channel) {
                     await channel.send({ content: `<@${culpritId}>`, embeds: [warnEmbed] }).catch(() => null);
@@ -116,8 +131,9 @@ export default {
                   }
 
                   const dmEmbed = new EmbedBuilder()
-                    .setColor('#95a5a6')
-                    .setDescription(`${warnEmoji} *You have been quarantined in **${guild.name}** and stripped of any extra permissions for repeatedly interrupting Theater Mode.*`);
+                    .setColor(accentInt)
+                    .setTitle('Quarantined')
+                    .setDescription(`${warnEmoji}\n-# You have been quarantined in **${guild.name}** and stripped of any extra permissions for repeatedly interrupting Theater Mode.`);
                   await culpritUser.send({ embeds: [dmEmbed] }).catch(() => null);
                   
                   const qRole = guildCfg.quarantineRoleId;
@@ -125,8 +141,8 @@ export default {
                      const role = guild.roles.cache.get(qRole);
                      if (role) {
                         const qEmbed = new EmbedBuilder()
-                          .setColor('#95a5a6')
-                          .setDescription(`${warnEmoji} <@${culpritId}> *has been Quarantined for attempting to interrupt Theater Mode.*`);
+                          .setColor(accentInt)
+                          .setDescription(`${warnEmoji} <@${culpritId}>\n-# has been **Quarantined** for attempting to interrupt Theater Mode.`);
                         if (channel) {
                           await channel.send({ embeds: [qEmbed] }).catch(() => null);
                         }
