@@ -8,6 +8,16 @@ import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '
 import { isBotOwnerSync } from '../utils/helpers.js';
 import { handleWarn } from '../commands/moderation.js';
 
+const theaterStrikes = new Map();
+
+export function clearTheaterStrikes(guildId) {
+  for (const key of theaterStrikes.keys()) {
+    if (key.startsWith(`${guildId}:`)) {
+      theaterStrikes.delete(key);
+    }
+  }
+}
+
 export default {
   name: 'voiceStateUpdate',
   once: false,
@@ -15,10 +25,78 @@ export default {
     const client = newState.client;
     const guild = newState.guild || oldState.guild;
     const userId = newState.id;
+    const member = newState.member;
 
     // Simple lock to prevent multiple shared panels from being created simultaneously
     if (!client.jtcPanelLocks) client.jtcPanelLocks = new Set();
     if (!client.vcSessions) client.vcSessions = new Map();
+
+    // ==========================================
+    // THEATER MODE ("MOVIE MODE") ENFORCEMENT
+    // ==========================================
+    const guildCfg = db.getGuildConfig(guild.id);
+    const theaterVcId = guildCfg?.theaterModeVcId;
+    if (theaterVcId && member && !member.user.bot) {
+      import('../utils/helpers.js').then(async ({ isAuthorized }) => {
+        if (!isAuthorized(guild, member)) {
+          // If joined Theater VC
+          if (newState.channelId === theaterVcId && oldState.channelId !== theaterVcId) {
+             if (!newState.serverMute || !newState.serverDeaf) {
+               await member.voice.setMute(true).catch(() => null);
+               await member.voice.setDeaf(true).catch(() => null);
+             }
+          }
+          // If left Theater VC
+          else if (oldState.channelId === theaterVcId && newState.channelId !== theaterVcId) {
+             if (newState.channelId) {
+               // They joined another VC
+               if (newState.serverMute) await member.voice.setMute(false).catch(() => null);
+               if (newState.serverDeaf) await member.voice.setDeaf(false).catch(() => null);
+             } else {
+               // They fully disconnected. Voice state can't be mutated.
+             }
+          }
+          // If in Theater VC and voice state changed (e.g. unmuted by someone else or exploiting glitch)
+          else if (newState.channelId === theaterVcId && oldState.channelId === theaterVcId) {
+             if (!newState.serverMute || !newState.serverDeaf) {
+                // Evasion detected
+                await member.voice.setMute(true).catch(() => null);
+                await member.voice.setDeaf(true).catch(() => null);
+                
+                const strikeKey = `${guild.id}:${userId}`;
+                const strikes = (theaterStrikes.get(strikeKey) || 0) + 1;
+                theaterStrikes.set(strikeKey, strikes);
+                
+                if (strikes >= 3) {
+                  // QUARANTINE
+                  theaterStrikes.delete(strikeKey);
+                  const { executeQuarantine } = await import('../commands/security.js');
+                  
+                  // Strip extra owner
+                  if (db.isExtraOwner(guild.id, userId)) {
+                    db.removeExtraOwner(guild.id, userId);
+                  }
+
+                  const reason = 'Repeatedly interrupting Theater Mode (3 Strikes)';
+                  await member.send(`⚠️ **WARNING:** You have been quarantined in **${guild.name}** and stripped of any extra permissions for repeatedly interrupting Theater Mode.`).catch(() => null);
+                  
+                  const qRole = guildCfg.quarantineRoleId;
+                  if (qRole) {
+                     const role = guild.roles.cache.get(qRole);
+                     if (role) {
+                        const channel = guild.channels.cache.get(newState.channelId);
+                        if (channel) {
+                          await channel.send(`⚠️ ${member} has been **Quarantined** for attempting to interrupt Theater Mode!`).catch(() => null);
+                        }
+                        await executeQuarantine(guild, member, { user: client.user }, reason, null, client);
+                     }
+                  }
+                }
+             }
+          }
+        }
+      });
+    }
 
     // ==========================================
     // STATS TRACKER & VOICE XP

@@ -87,18 +87,8 @@ export default {
     // 3. AUTOMATED NICKNAME ON JOIN
     // ==========================================
     if (config.autonick && config.autonick.enabled) {
-      const prefix = config.autonick.prefix || '';
-      const suffix = config.autonick.suffix || '';
-      
-      if (prefix || suffix) {
-        let nick = member.user.username;
-        const maxLen = 32 - prefix.length - suffix.length;
-        if (nick.length > maxLen) {
-          nick = nick.slice(0, maxLen);
-        }
-        const finalNick = `${prefix}${nick}${suffix}`;
-        await member.setNickname(finalNick, 'Automated Auto-Nickname on Join').catch(() => null);
-      }
+      const { applyAutonick } = await import('../utils/helpers.js');
+      await applyAutonick(member, config.autonick);
     }
 
     // ==========================================

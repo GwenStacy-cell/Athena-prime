@@ -494,52 +494,54 @@ export const commands = [
   // --- AUTONICK COMMAND ---
   {
     name: 'autonick',
-    description: 'Configures auto-nickname formatting for newly joining server members.',
+    description: 'Advanced auto-nickname configuration and syncing.',
     category: 'security',
     permissions: [PermissionFlagsBits.ManageNicknames],
     options: [
       {
-        name: 'status',
-        description: 'Enable or disable autonick formatting',
+        name: 'action',
+        description: 'Action to perform (on, off, layout, sync)',
         type: 3,
         required: true,
         choices: [
           { name: 'Enable Autonick', value: 'on' },
-          { name: 'Disable Autonick', value: 'off' }
+          { name: 'Disable Autonick', value: 'off' },
+          { name: 'Set Layout', value: 'layout' },
+          { name: 'Sync All Members', value: 'sync' }
         ]
       },
       {
-        name: 'prefix',
-        description: 'String to prepend (e.g. [Member] )',
-        type: 3,
-        required: false
-      },
-      {
-        name: 'suffix',
-        description: 'String to append (e.g. | Guest)',
+        name: 'value',
+        description: 'Layout string for layout action (use {name} as placeholder)',
         type: 3,
         required: false
       }
     ],
     async executePrefix(message, args) {
-      const statusArg = args[0]?.toLowerCase();
-      if (statusArg !== 'on' && statusArg !== 'off') {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!autonick <on|off> [prefix] [suffix]\``)] });
+      const action = args[0]?.toLowerCase();
+      if (!['on', 'off', 'layout', 'sync'].includes(action)) {
+        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!autonick <on|off|layout|sync> [layout_string]\`\n\nExample Layout: \`!autonick layout [Member] {name} |\``)] });
       }
       
-      const prefix = args[1] || '';
-      const suffix = args[2] || '';
-
-      const result = await handleAutonick(message.guild, message.member, statusArg, prefix, suffix);
-      await message.reply({ embeds: [result.embed] });
+      const value = args.slice(1).join(' ') || '';
+      const result = await handleAutonick(message.guild, message.member, action, value);
+      if (result.embed) {
+        await message.reply({ embeds: [result.embed] });
+      }
     },
     async executeSlash(interaction) {
-      const status = interaction.options.getString('status');
-      const prefix = interaction.options.getString('prefix') || '';
-      const suffix = interaction.options.getString('suffix') || '';
+      const action = interaction.options.getString('action');
+      const value = interaction.options.getString('value') || '';
 
-      const result = await handleAutonick(interaction.guild, interaction.member, status, prefix, suffix);
-      await interaction.reply({ embeds: [result.embed] });
+      if (action === 'sync') await interaction.deferReply();
+
+      const result = await handleAutonick(interaction.guild, interaction.member, action, value, interaction);
+      
+      if (action === 'sync') {
+         if (result.embed) await interaction.editReply({ embeds: [result.embed] });
+      } else {
+         if (result.embed) await interaction.reply({ embeds: [result.embed] });
+      }
     }
   },
 
@@ -1987,46 +1989,73 @@ async function handleBlacklist(guild, moderator, action, phrase) {
   }
 }
 
-async function handleAutonick(guild, moderator, status, prefix, suffix) {
-  const enabled = status === 'on';
-  const updates = {
-    autonick: {
-      enabled,
-      prefix,
-      suffix
-    }
-  };
-
-  db.updateGuildConfig(guild.id, updates);
-
-  const fields = [
-    { name: 'Autonick Status', value: enabled ? `${TOGGLE_ON} ENABLED` : `${TOGGLE_OFF} DISABLED`, inline: true }
-  ];
-  if (enabled) {
-    if (prefix) fields.push({ name: 'Appended Prefix', value: `\`${prefix}\``, inline: true });
-    if (suffix) fields.push({ name: 'Appended Suffix', value: `\`${suffix}\``, inline: true });
+async function handleAutonick(guild, moderator, action, value, interaction = null) {
+  let cfg = db.getGuildConfig(guild.id);
+  if (!cfg.autonick) {
+    cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
   }
 
-  const resEmbed = embed.success(
-    'Auto-Nickname Configured',
-    enabled 
-      ? 'New joining members will now have their nicknames automatically formatted.' 
-      : 'Auto-nickname formatting has been deactivated.',
-    fields
-  );
+  if (action === 'on' || action === 'off') {
+    const enabled = action === 'on';
+    db.updateGuildConfig(guild.id, {
+      autonick: { ...cfg.autonick, enabled }
+    });
+    
+    return { embed: embed.success('Auto-Nickname Configured', 
+      enabled ? 'Autonick has been activated.' : 'Autonick has been deactivated.',
+      [{ name: 'Status', value: enabled ? `${TOGGLE_ON} ENABLED` : `${TOGGLE_OFF} DISABLED`, inline: true }]
+    )};
+  }
 
-  logToSecurityChannel(guild, embed.log(
-    'Auto-Nick Updated',
-    `Moderator updated auto-nickname settings.`,
-    [
-      { name: 'Enabled', value: enabled ? 'Yes' : 'No', inline: true },
-      { name: 'Prefix', value: prefix || 'None', inline: true },
-      { name: 'Suffix', value: suffix || 'None', inline: true }
-    ],
-    enabled ? 'success' : 'warning'
-  ));
+  if (action === 'layout') {
+    if (!value || !value.includes('{name}')) {
+      return { embed: embed.warn('Invalid Layout', 'You must provide a layout string that includes the `{name}` placeholder.\nExample: `!autonick layout [M] {name} | User`') };
+    }
+    db.updateGuildConfig(guild.id, {
+      autonick: { ...cfg.autonick, layout: value }
+    });
+    
+    return { embed: embed.success('Autonick Layout Updated', `The new layout format has been saved:\n\`${value}\``) };
+  }
 
-  return { embed: resEmbed };
+  if (action === 'sync') {
+    if (!cfg.autonick.enabled) {
+      return { embed: embed.error('Autonick Disabled', 'You must enable autonick before syncing (`!autonick on`).') };
+    }
+
+    if (interaction) {
+      // Deferred
+    } else {
+      await guild.channels.cache.first()?.send({ embeds: [embed.info('Syncing Autonick', 'This will take some time to prevent hitting rate limits. Do not use this command again until it finishes.')] }).catch(()=>null);
+    }
+
+    const { applyAutonick } = await import('../utils/helpers.js');
+    await guild.members.fetch();
+    
+    let successCount = 0;
+    let failCount = 0;
+    let skippedCount = 0;
+    
+    for (const [id, member] of guild.members.cache) {
+      // Aggressively rename everyone except bot owner
+      if (isBotOwnerSync(id)) {
+        skippedCount++;
+        continue;
+      }
+      
+      const changed = await applyAutonick(member, cfg.autonick);
+      if (changed) {
+        successCount++;
+        await new Promise(res => setTimeout(res, 800)); // 800ms delay to avoid aggressive rate limits
+      } else {
+        failCount++;
+      }
+    }
+    
+    return { embed: embed.success('Autonick Sync Complete', `Successfully renamed **${successCount}** members.\nSkipped/Failed: **${failCount}**\nBot Owners Ignored: **${skippedCount}**`) };
+  }
+
+  return { embed: embed.error('Error', 'Invalid action.') };
 }
 
 async function handleConfig(guild, moderator, setting, value) {

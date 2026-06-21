@@ -22,6 +22,10 @@ import { commands as ticketCmds } from './ticket.js';
 import { commands as levelingCmds } from './leveling.js';
 import { commands as moveprotectCmds } from './moveprotect.js';
 import { commands as serveroverviewCmds } from './serveroverview.js';
+import { commands as vcCmds } from './vc.js';
+import { commands as userinfoCmds } from './userinfo.js';
+import { commands as rolemanagerCmds } from './rolemanager.js';
+import { commands as theaterCmds } from './theater.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -47,7 +51,11 @@ export const allCommands = [
   ...ticketCmds,
   ...levelingCmds,
   ...moveprotectCmds,
-  ...serveroverviewCmds
+  ...serveroverviewCmds,
+  ...vcCmds,
+  ...userinfoCmds,
+  ...rolemanagerCmds,
+  ...theaterCmds
 ];
 
 export const commandMap = new Map();

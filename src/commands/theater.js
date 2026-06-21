@@ -1,0 +1,92 @@
+import { PermissionFlagsBits } from 'discord.js';
+import embed from '../embed.js';
+import db from '../database.js';
+import { isAuthorized } from '../utils/helpers.js';
+
+export const commands = [
+  {
+    name: 'theatermode',
+    description: 'Toggles Theater Mode in the current VC (Auto-mutes/deafens all members).',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.MuteMembers, PermissionFlagsBits.DeafenMembers],
+    options: [
+      {
+        name: 'status',
+        description: 'Enable or disable Theater Mode',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Enable', value: 'on' },
+          { name: 'Disable', value: 'off' }
+        ]
+      }
+    ],
+    async executePrefix(message, args) {
+      if (!isAuthorized(message.guild, message.member)) return;
+      const status = args[0]?.toLowerCase();
+      if (status !== 'on' && status !== 'off') {
+        return message.reply({ embeds: [embed.warn('Command Error', `Usage: \`!theatermode <on|off>\``)] });
+      }
+      const result = await handleTheaterMode(message.guild, message.member, status, message.client);
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      if (!isAuthorized(interaction.guild, interaction.member)) return interaction.reply({ content: 'Unauthorized', ephemeral: true });
+      const status = interaction.options.getString('status');
+      const result = await handleTheaterMode(interaction.guild, interaction.member, status, interaction.client);
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  }
+];
+
+async function handleTheaterMode(guild, moderator, status, client) {
+  const vc = moderator.voice.channel;
+  if (!vc && status === 'on') {
+    return { embed: embed.error('Error', 'You must be in a Voice Channel to activate Theater Mode.') };
+  }
+
+  const enabled = status === 'on';
+  let cfg = db.getGuildConfig(guild.id);
+
+  if (enabled) {
+    db.updateGuildConfig(guild.id, { theaterModeVcId: vc.id });
+    
+    // Auto-mute and deafen everyone currently in the VC (except authorized users)
+    let affectedCount = 0;
+    for (const [id, member] of vc.members) {
+      if (isAuthorized(guild, member)) continue; // Don't mute other admins
+      try {
+        await member.voice.setMute(true);
+        await member.voice.setDeaf(true);
+        affectedCount++;
+      } catch(e) {}
+    }
+
+    return { embed: embed.success('Theater Mode Activated', `**${vc.name}** is now in Theater Mode.\n\nAll current and new members will be server-muted and server-deafened. Anyone caught attempting to evade this restriction will be stripped of privileges and quarantined. Muted **${affectedCount}** existing members.`) };
+  } else {
+    const currentVcId = cfg.theaterModeVcId;
+    db.updateGuildConfig(guild.id, { theaterModeVcId: null });
+    
+    // Clear strikes
+    import('../events/voiceStateUpdate.js').then(module => {
+      if (module.clearTheaterStrikes) module.clearTheaterStrikes(guild.id);
+    }).catch(() => null);
+
+    if (currentVcId) {
+      const channel = guild.channels.cache.get(currentVcId);
+      if (channel) {
+        let count = 0;
+        for (const [id, member] of channel.members) {
+           try {
+             if (member.voice.serverMute) await member.voice.setMute(false);
+             if (member.voice.serverDeaf) await member.voice.setDeaf(false);
+             count++;
+           } catch(e) {}
+        }
+        return { embed: embed.success('Theater Mode Deactivated', `Theater Mode disabled. Restored voice privileges for **${count}** members in **${channel.name}**.`) };
+      }
+    }
+    
+    return { embed: embed.success('Theater Mode Deactivated', 'Theater Mode disabled.') };
+  }
+}

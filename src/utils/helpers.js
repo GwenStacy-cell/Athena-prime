@@ -422,3 +422,36 @@ export function getPresenceStatus(guild, ownerId) {
     return { text: 'UNKNOWN', emoji: '❓' };
   }
 }
+
+export async function applyAutonick(member, autonickConfig) {
+  if (!autonickConfig || !autonickConfig.enabled) return false;
+  if (!member.manageable) return false;
+
+  let layout = autonickConfig.layout || '{name}';
+  
+  // Backwards compatibility
+  if (layout === '{name}' && (autonickConfig.prefix || autonickConfig.suffix)) {
+    layout = `${autonickConfig.prefix || ''}{name}${autonickConfig.suffix || ''}`;
+  }
+
+  const baseName = member.user.username;
+  const layoutLenWithoutName = layout.length - '{name}'.length;
+  const maxNameLen = Math.max(1, 32 - layoutLenWithoutName);
+  
+  let finalName = baseName;
+  if (finalName.length > maxNameLen) {
+    finalName = finalName.substring(0, maxNameLen);
+  }
+  
+  const targetNick = layout.replace('{name}', finalName).substring(0, 32);
+  
+  if (member.displayName === targetNick || member.nickname === targetNick) return false;
+  
+  try {
+    await member.setNickname(targetNick, 'Autonick Format');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+

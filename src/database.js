@@ -148,9 +148,11 @@ class Database {
         });
         updated = true;
       }
-      if (cfg.autonick === undefined) { cfg.autonick = { enabled: false, prefix: '', suffix: '' }; updated = true; }
+      if (cfg.autonick === undefined) { cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' }; updated = true; }
+      else if (cfg.autonick.layout === undefined) { cfg.autonick.layout = '{name}'; updated = true; }
       if (cfg.quarantineVcId === undefined) { cfg.quarantineVcId = null; updated = true; }
       if (cfg.homeVcId === undefined) { cfg.homeVcId = null; updated = true; }
+      if (cfg.theaterModeVcId === undefined) { cfg.theaterModeVcId = null; updated = true; }
       if (cfg.inviteChannelId === undefined) { cfg.inviteChannelId = null; updated = true; }
       if (cfg.antiNukePunishment === undefined) { cfg.antiNukePunishment = 'ban'; updated = true; }
       if (cfg.antiNukeThreshold === undefined) { cfg.antiNukeThreshold = 1; updated = true; }
