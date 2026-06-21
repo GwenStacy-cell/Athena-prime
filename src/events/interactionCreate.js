@@ -333,15 +333,17 @@ export default {
           
         const prefixInput = new TextInputBuilder()
           .setCustomId('prefix')
-          .setLabel('Prefix (e.g. "[Member] ")')
+          .setLabel('Prefix')
           .setStyle(TextInputStyle.Short)
+          .setPlaceholder('Type Prefix here (e.g. "Dev ") - Spaces work!')
           .setValue(currentPrefix)
           .setRequired(false);
           
         const suffixInput = new TextInputBuilder()
           .setCustomId('suffix')
-          .setLabel('Suffix (e.g. " | Guest")')
+          .setLabel('Suffix')
           .setStyle(TextInputStyle.Short)
+          .setPlaceholder('Type Suffix here (e.g. " | VIP")')
           .setValue(currentSuffix)
           .setRequired(false);
 
@@ -383,6 +385,30 @@ export default {
         }
         
         return interaction.editReply({ embeds: [embed.success('Autonick Sync Complete', `Successfully renamed **${successCount}** members.\nSkipped/Failed: **${failCount}**\nBot Owners Ignored: **${skippedCount}**`)] });
+      }
+
+      if (interaction.customId === 'autonick_restore') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        
+        await interaction.deferReply({ ephemeral: true });
+        await interaction.guild.members.fetch();
+        
+        let successCount = 0;
+        let failCount = 0;
+        
+        for (const [id, member] of interaction.guild.members.cache) {
+          if (isBotOwnerSync(id) || !member.nickname) continue;
+          
+          try {
+            await member.setNickname(null);
+            successCount++;
+            await new Promise(res => setTimeout(res, 800)); // Rate limit safety
+          } catch(e) {
+            failCount++;
+          }
+        }
+        
+        return interaction.editReply({ embeds: [embed.success('Names Restored', `Successfully restored **${successCount}** members to their original Discord usernames.\nSkipped/Failed: **${failCount}**`)] });
       }
 
       // XP Manager Buttons

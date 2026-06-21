@@ -1961,8 +1961,9 @@ export async function buildAutonickDashboard(guildId) {
   const state = cfg.autonick.enabled ? 'ENABLED' : 'DISABLED';
   const color = cfg.autonick.enabled ? 'success' : 'danger';
   const layout = cfg.autonick.layout || '{name}';
+  const exampleName = layout.replace('{name}', 'Username');
   
-  const dashboardEmbed = embed[color]('Autonick Manager', `**Status:** \`${state}\`\n**Current Layout:** \`${layout}\`\n\nUse the buttons below to cleanly manage the Auto-nickname settings.`);
+  const dashboardEmbed = embed[color]('Autonick Manager', `**Status:** \`${state}\`\n**Current Layout:** \`${layout}\`\n**Example Preview:** \`${exampleName}\`\n\nUse the buttons below to cleanly manage the Auto-nickname settings.`);
 
   const toggleBtn = new ButtonBuilder()
     .setCustomId('autonick_toggle')
@@ -1979,8 +1980,14 @@ export async function buildAutonickDashboard(guildId) {
     .setLabel('Sync Members')
     .setStyle(ButtonStyle.Secondary);
 
+  const restoreBtn = new ButtonBuilder()
+    .setCustomId('autonick_restore')
+    .setLabel('Restore Names')
+    .setStyle(ButtonStyle.Danger);
+
   const row = new ActionRowBuilder().addComponents(toggleBtn, editBtn, syncBtn);
-  return { embeds: [dashboardEmbed], components: [row] };
+  const row2 = new ActionRowBuilder().addComponents(restoreBtn);
+  return { embeds: [dashboardEmbed], components: [row, row2] };
 }
 async function handleConfig(guild, moderator, setting, value) {
   const updates = {};
