@@ -468,9 +468,9 @@ async function getHelpEmbeds(guild, client) {
         `\`/maxwarnings\` \`amount\` — Set the maximum warning threshold\n` +
         `\`${p}timeout\` \`@user\` \`dur\` — Timeout a member (e.g. \`5m\` \`1h\` \`1d\`)\n` +
         `\`${p}kick\` / \`${p}ban\` / \`${p}unban\` / \`${p}unbanall\` — Standard moderation actions\n` +
+        `\`${p}addrole\` / \`${p}removerole\` \`@user\` \`@roles...\` — Safely assign/remove multiple roles\n` +
+        `\`${p}striproles\` \`@user\` — Instantly strip all roles from a member\n` +
         `\`${p}sync\` / \`${p}syncall\` — Sync channel permissions with category\n` +
-        `\`${p}muteall\` / \`${p}unmuteall\` — Server-mute or unmute your current VC\n` +
-        `\`${p}massmove\` \`dest\` / \`${p}massdc\` — Move or disconnect everyone in a VC\n` +
         `\`${p}purge\` \`1–100\` — Bulk-delete messages from current channel\n` +
         `\`${p}slowmode\` \`seconds\` — Set channel slowmode (0 = off)\n` +
         `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role\n` +
@@ -486,12 +486,15 @@ async function getHelpEmbeds(guild, client) {
     {
       name: h('VOICE  &  JOIN-TO-CREATE'),
       value:
+        `\`${p}theatermode\` **on/off** — Activates Movie Mode (Server mutes/deafens the entire VC & auto-quarantines evaders)\n` +
+        `\`${p}vclock\` / \`${p}vcunlock\` — Deny or restore Connect permissions for @everyone in your VC\n` +
+        `\`${p}deafen\` / \`${p}undeafenall\` / \`${p}muteall\` / \`${p}unmuteall\` — VC member state control\n` +
+        `\`${p}massmove\` \`dest\` / \`${p}massdc\` — Move or disconnect everyone in a VC\n` +
         `\`${p}jtcsetup\` \`#voicechannel\` — Designate the JTC creator channel\n` +
         `\`${p}jtcdisable\` — Remove the JTC system from this server\n` +
         `\`${p}vc\` — Manage your personal JTC channel (rename, limit, privacy…)\n` +
         `\`${p}sethomevc\` \`[channel]\` — Set bot's Home VC (auto-rejoin if moved)\n` +
-        `\`${p}unsethomevc\` — Clear Home VC and disconnect the bot\n` +
-        `\`${p}deafen\` / \`${p}muteall\` / \`${p}unmuteall\` — Voice management tools`
+        `\`${p}unsethomevc\` — Clear Home VC and disconnect the bot`
     },
     {
       name: h('VC DRAG'),
@@ -544,7 +547,7 @@ async function getHelpEmbeds(guild, client) {
       name: h('CUSTOMIZATION'),
       value:
         `\`${p}accent\` — Set the embed accent color (10 pure presets + custom hex)\n` +
-        `\`${p}autonick\` **on** / **off** \`[prefix]\` \`[suffix]\` — Auto-format member nicknames\n` +
+        `\`${p}autonick\` **on/off** / **sync** / **layout** \`[format]\` — Auto-format nicknames (Supports {name} tags)\n` +
         `\`${p}setguildavatar\` — Set bot's custom per-server avatar\n` +
         `\`${p}setguildbanner\` — Set bot's custom per-server banner\n` +
         `Note: MP4 video links will be automatically converted to high-quality GIFs!\n` +
@@ -583,6 +586,7 @@ async function getHelpEmbeds(guild, client) {
     {
       name: h('UTILITIES'),
       value:
+        `\`${p}avatar\` / \`${p}banner\` \`[@user]\` — View a member's global/server avatar or banner\n` +
         `\`${p}status\` — Real-time security health overview\n` +
         `\`${p}serverinfo\` — Full server statistics and security state\n` +
         `\`${p}userinfo\` \`[@user]\` — Profile, roles, warnings and privilege level\n` +

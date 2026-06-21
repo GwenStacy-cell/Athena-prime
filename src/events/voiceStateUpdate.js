@@ -78,7 +78,7 @@ export default {
                   }
 
                   const reason = 'Repeatedly interrupting Theater Mode (3 Strikes)';
-                  await member.send(`⚠️ **WARNING:** You have been quarantined in **${guild.name}** and stripped of any extra permissions for repeatedly interrupting Theater Mode.`).catch(() => null);
+                  await member.send(`❗ **WARNING:** You have been quarantined in **${guild.name}** and stripped of any extra permissions for repeatedly interrupting Theater Mode.`).catch(() => null);
                   
                   const qRole = guildCfg.quarantineRoleId;
                   if (qRole) {
@@ -86,7 +86,7 @@ export default {
                      if (role) {
                         const channel = guild.channels.cache.get(newState.channelId);
                         if (channel) {
-                          await channel.send(`⚠️ ${member} has been **Quarantined** for attempting to interrupt Theater Mode!`).catch(() => null);
+                          await channel.send(`❗ ${member} has been **Quarantined** for attempting to interrupt Theater Mode!`).catch(() => null);
                         }
                         await executeQuarantine(guild, member, { user: client.user }, reason, null, client);
                      }
