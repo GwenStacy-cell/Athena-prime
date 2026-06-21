@@ -42,16 +42,19 @@ export default {
           // If joined Theater VC
           if (newState.channelId === theaterVcId && oldState.channelId !== theaterVcId) {
              if (!newState.serverMute || !newState.serverDeaf) {
-               await member.voice.setMute(true).catch(() => null);
-               await member.voice.setDeaf(true).catch(() => null);
+               await member.edit({ mute: true, deaf: true }).catch(() => null);
              }
           }
           // If left Theater VC
           else if (oldState.channelId === theaterVcId && newState.channelId !== theaterVcId) {
              if (newState.channelId) {
                // They joined another VC
-               if (newState.serverMute) await member.voice.setMute(false).catch(() => null);
-               if (newState.serverDeaf) await member.voice.setDeaf(false).catch(() => null);
+               const updates = {};
+               if (newState.serverMute) updates.mute = false;
+               if (newState.serverDeaf) updates.deaf = false;
+               if (Object.keys(updates).length > 0) {
+                 await member.edit(updates).catch(() => null);
+               }
              } else {
                // They fully disconnected. Voice state can't be mutated.
              }
@@ -60,8 +63,7 @@ export default {
           else if (newState.channelId === theaterVcId && oldState.channelId === theaterVcId) {
              if (!newState.serverMute || !newState.serverDeaf) {
                 // Evasion detected
-                await member.voice.setMute(true).catch(() => null);
-                await member.voice.setDeaf(true).catch(() => null);
+                await member.edit({ mute: true, deaf: true }).catch(() => null);
                 
                 const strikeKey = `${guild.id}:${userId}`;
                 const strikes = (theaterStrikes.get(strikeKey) || 0) + 1;

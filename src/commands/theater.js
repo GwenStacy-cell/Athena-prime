@@ -32,9 +32,10 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: 'Unauthorized', ephemeral: true });
+      await interaction.deferReply();
       const status = interaction.options.getString('status');
       const result = await handleTheaterMode(interaction.guild, interaction.member, status, interaction.client);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.editReply({ embeds: [result.embed] });
     }
   }
 ];
@@ -56,10 +57,11 @@ async function handleTheaterMode(guild, moderator, status, client) {
     for (const [id, member] of vc.members) {
       if (await isAuthorized(member.user, guild)) continue; // Don't mute other admins
       try {
-        await member.voice.setMute(true);
-        await member.voice.setDeaf(true);
+        await member.edit({ mute: true, deaf: true });
         affectedCount++;
-      } catch(e) {}
+      } catch(e) {
+        console.error(`Failed to mute/deafen ${member.user.tag}:`, e);
+      }
     }
 
     return { embed: embed.success('Theater Mode Activated', `**${vc.name}** is now in Theater Mode.\n\nAll current and new members will be server-muted and server-deafened. Anyone caught attempting to evade this restriction will be stripped of privileges and quarantined. Muted **${affectedCount}** existing members.`) };
@@ -78,10 +80,16 @@ async function handleTheaterMode(guild, moderator, status, client) {
         let count = 0;
         for (const [id, member] of channel.members) {
            try {
-             if (member.voice.serverMute) await member.voice.setMute(false);
-             if (member.voice.serverDeaf) await member.voice.setDeaf(false);
+             const updates = {};
+             if (member.voice.serverMute) updates.mute = false;
+             if (member.voice.serverDeaf) updates.deaf = false;
+             if (Object.keys(updates).length > 0) {
+               await member.edit(updates);
+             }
              count++;
-           } catch(e) {}
+           } catch(e) {
+             console.error(`Failed to unmute/undeafen ${member.user.tag}:`, e);
+           }
         }
         return { embed: embed.success('Theater Mode Deactivated', `Theater Mode disabled. Restored voice privileges for **${count}** members in **${channel.name}**.`) };
       }
