@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
+import { isBotOwnerSync } from '../utils/helpers.js';
 
 // ──────────────────────────────────────────────
 // Bold underline header formatter — matches embed title style
@@ -282,7 +283,8 @@ export const commands = [
           continue;
         }
         
-        if (guild.emojis.cache.some(e => e.name === name)) {
+        const isOwner = isBotOwnerSync(context.user ? context.user.id : context.author.id);
+        if (!isOwner && guild.emojis.cache.some(e => e.name === name)) {
           failed.push(`\`${name}\` — name already in use`);
           continue;
         }
