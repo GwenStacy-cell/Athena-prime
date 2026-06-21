@@ -83,15 +83,19 @@ export default {
       if (interaction.customId === 'autonick_modal') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         
-        const prefix = interaction.fields.getTextInputValue('prefix') || '';
-        const suffix = interaction.fields.getTextInputValue('suffix') || '';
-        const layout = `${prefix}{name}${suffix}`;
+        const layout = interaction.fields.getTextInputValue('layout') || '{name}';
+        
+        if (!layout.includes('{name}')) {
+          return interaction.reply({ content: 'Your layout must include the `{name}` placeholder!', ephemeral: true });
+        }
         
         let cfg = db.getGuildConfig(interaction.guild.id);
         if (!cfg.autonick) cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
         
-        cfg.autonick.prefix = prefix;
-        cfg.autonick.suffix = suffix;
+        // Extract prefix and suffix to preserve backward compatibility with the database and helpers
+        const parts = layout.split('{name}');
+        cfg.autonick.prefix = parts[0] || '';
+        cfg.autonick.suffix = parts[1] || '';
         cfg.autonick.layout = layout;
         db.updateGuildConfig(interaction.guild.id, { autonick: cfg.autonick });
         
@@ -324,32 +328,22 @@ export default {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         
         let cfg = db.getGuildConfig(interaction.guild.id);
-        const currentPrefix = cfg.autonick?.prefix || '';
-        const currentSuffix = cfg.autonick?.suffix || '';
+        const currentLayout = cfg.autonick?.layout || '{name}';
 
         const modal = new ModalBuilder()
           .setCustomId('autonick_modal')
           .setTitle('Edit Autonick Layout');
           
-        const prefixInput = new TextInputBuilder()
-          .setCustomId('prefix')
-          .setLabel('Prefix')
+        const layoutInput = new TextInputBuilder()
+          .setCustomId('layout')
+          .setLabel('Layout Style (use {name} for username)')
           .setStyle(TextInputStyle.Short)
-          .setPlaceholder('Type Prefix here (e.g. "Dev ") - Spaces work!')
-          .setValue(currentPrefix)
-          .setRequired(false);
-          
-        const suffixInput = new TextInputBuilder()
-          .setCustomId('suffix')
-          .setLabel('Suffix')
-          .setStyle(TextInputStyle.Short)
-          .setPlaceholder('Type Suffix here (e.g. " | VIP")')
-          .setValue(currentSuffix)
-          .setRequired(false);
+          .setPlaceholder('e.g. Dev {name} | VIP')
+          .setValue(currentLayout)
+          .setRequired(true);
 
-        const row1 = new ActionRowBuilder().addComponents(prefixInput);
-        const row2 = new ActionRowBuilder().addComponents(suffixInput);
-        modal.addComponents(row1, row2);
+        const row1 = new ActionRowBuilder().addComponents(layoutInput);
+        modal.addComponents(row1);
         
         return interaction.showModal(modal);
       }
