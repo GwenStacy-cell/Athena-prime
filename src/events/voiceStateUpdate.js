@@ -65,32 +65,76 @@ export default {
                 // Evasion detected
                 await member.edit({ mute: true, deaf: true }).catch(() => null);
                 
-                const strikeKey = `${guild.id}:${userId}`;
+                let culpritId = member.id;
+                let culpritUser = member.user;
+
+                // Find out WHO unmuted them via Audit Logs
+                try {
+                  const auditLogs = await guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberUpdate });
+                  const entry = auditLogs.entries.first();
+                  if (entry && entry.target.id === member.id && (Date.now() - entry.createdTimestamp) < 5000) {
+                    if (entry.executor.id === client.user.id) return; // Bot did it, ignore
+                    culpritId = entry.executor.id;
+                    culpritUser = entry.executor;
+                  }
+                } catch(e) {}
+                
+                // Do not quarantine bot owner or server owner
+                if (culpritId === guild.ownerId) return;
+                const { isBotOwnerSync } = await import('../utils/helpers.js');
+                if (isBotOwnerSync(culpritId)) return;
+                
+                const strikeKey = `${guild.id}:${culpritId}`;
                 const strikes = (theaterStrikes.get(strikeKey) || 0) + 1;
                 theaterStrikes.set(strikeKey, strikes);
                 
-                if (strikes >= 3) {
+                const { EmbedBuilder } = await import('discord.js');
+                const accentHex = guildCfg.accentColor || '#3b82f6';
+                const accentInt = parseInt(accentHex.replace('#', ''), 16);
+                
+                const channel = guild.channels.cache.get(newState.channelId);
+
+                if (strikes < 3) {
+                  // WARNING
+                  const warnEmbed = new EmbedBuilder()
+                    .setColor(accentInt)
+                    .setTitle('Theater Mode Interruption')
+                    .setDescription(`⚠️ <@${culpritId}>, do not attempt to unmute/undeafen members during Theater Mode! (\`Strike ${strikes}/3\`)`);
+                  
+                  if (channel) {
+                    await channel.send({ content: `<@${culpritId}>`, embeds: [warnEmbed] }).catch(() => null);
+                  }
+                } else {
                   // QUARANTINE
                   theaterStrikes.delete(strikeKey);
                   const { executeQuarantine } = await import('../commands/security.js');
                   
                   // Strip extra owner
-                  if (db.isExtraOwner(guild.id, userId)) {
-                    db.removeExtraOwner(guild.id, userId);
+                  if (db.isExtraOwner(guild.id, culpritId)) {
+                    db.removeExtraOwner(guild.id, culpritId);
                   }
 
-                  const reason = 'Repeatedly interrupting Theater Mode (3 Strikes)';
-                  await member.send(`❗ **WARNING:** You have been quarantined in **${guild.name}** and stripped of any extra permissions for repeatedly interrupting Theater Mode.`).catch(() => null);
+                  const dmEmbed = new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle('Quarantined')
+                    .setDescription(`❗ You have been quarantined in **${guild.name}** and stripped of any extra permissions for repeatedly interrupting Theater Mode.`);
+                  await culpritUser.send({ embeds: [dmEmbed] }).catch(() => null);
                   
                   const qRole = guildCfg.quarantineRoleId;
                   if (qRole) {
                      const role = guild.roles.cache.get(qRole);
                      if (role) {
-                        const channel = guild.channels.cache.get(newState.channelId);
+                        const qEmbed = new EmbedBuilder()
+                          .setColor(0xff0000)
+                          .setDescription(`❗ <@${culpritId}> has been **Quarantined** for attempting to interrupt Theater Mode!`);
                         if (channel) {
-                          await channel.send(`❗ ${member} has been **Quarantined** for attempting to interrupt Theater Mode!`).catch(() => null);
+                          await channel.send({ embeds: [qEmbed] }).catch(() => null);
                         }
-                        await executeQuarantine(guild, member, { user: client.user }, reason, null, client);
+                        
+                        const culpritMember = await guild.members.fetch(culpritId).catch(() => null);
+                        if (culpritMember) {
+                          await executeQuarantine(guild, culpritMember, guild.members.me, 'Repeatedly interrupting Theater Mode (3 Strikes)', null, client);
+                        }
                      }
                   }
                 }
