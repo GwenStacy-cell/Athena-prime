@@ -355,7 +355,8 @@ export default {
           return interaction.reply({ content: 'You must enable Autonick before syncing.', ephemeral: true });
         }
         
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ ephemeral: false });
+        await interaction.editReply({ embeds: [embed.info('Autonick Sync', 'Starting sync across all members. This may take a moment...')] }).catch(() => null);
         
         const { applyAutonick } = await import('../utils/helpers.js');
         await interaction.guild.members.fetch();
@@ -372,19 +373,22 @@ export default {
           const changed = await applyAutonick(member, cfg.autonick);
           if (changed) {
             successCount++;
-            await new Promise(res => setTimeout(res, 800)); // Rate limit safety
+            if (successCount % 15 === 0) {
+              await interaction.editReply({ embeds: [embed.info('Autonick Sync', `Syncing in progress...\n\n✅ Renamed: **${successCount}**\n❌ Failed/Skipped: **${failCount}**`)] }).catch(() => null);
+            }
           } else {
             failCount++;
           }
         }
         
-        return interaction.editReply({ embeds: [embed.success('Autonick Sync Complete', `Successfully renamed **${successCount}** members.\nSkipped/Failed: **${failCount}**\nBot Owners Ignored: **${skippedCount}**`)] });
+        return interaction.editReply({ embeds: [embed.success('Autonick Sync Complete', `Successfully renamed **${successCount}** members.\nSkipped/Failed: **${failCount}**\nBot Owners Ignored: **${skippedCount}**`)] }).catch(() => null);
       }
 
       if (interaction.customId === 'autonick_restore') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ ephemeral: false });
+        await interaction.editReply({ embeds: [embed.info('Restoring Names', 'Starting to restore all nicknames to original Discord usernames...')] }).catch(() => null);
         await interaction.guild.members.fetch();
         
         let successCount = 0;
@@ -396,13 +400,15 @@ export default {
           try {
             await member.setNickname(null);
             successCount++;
-            await new Promise(res => setTimeout(res, 800)); // Rate limit safety
+            if (successCount % 15 === 0) {
+              await interaction.editReply({ embeds: [embed.info('Restoring Names', `Restore in progress...\n\n✅ Restored: **${successCount}**\n❌ Failed: **${failCount}**`)] }).catch(() => null);
+            }
           } catch(e) {
             failCount++;
           }
         }
         
-        return interaction.editReply({ embeds: [embed.success('Names Restored', `Successfully restored **${successCount}** members to their original Discord usernames.\nSkipped/Failed: **${failCount}**`)] });
+        return interaction.editReply({ embeds: [embed.success('Names Restored', `Successfully restored **${successCount}** members to their original Discord usernames.\nSkipped/Failed: **${failCount}**`)] }).catch(() => null);
       }
 
       // XP Manager Buttons

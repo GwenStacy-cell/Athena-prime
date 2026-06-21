@@ -59,7 +59,9 @@ export const commands = [
       }
     },
     async executeSlash(interaction) {
-      if (!(await isAuthorized(interaction.user, interaction.guild))) return;
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')], ephemeral: true }).catch(() => null);
+      }
       const vc = interaction.member?.voice?.channel;
       if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
       
@@ -93,21 +95,34 @@ export const commands = [
       await message.reply({ embeds: [embed.success('Success', `Undeafened **${count}** members in **${vc.name}**.`)] });
     },
     async executeSlash(interaction) {
-      if (!(await isAuthorized(interaction.user, interaction.guild))) return;
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')], ephemeral: true }).catch(() => null);
+      }
       const vc = interaction.member?.voice?.channel;
       if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
       
+      await interaction.deferReply({ ephemeral: false });
+      await interaction.editReply({ embeds: [embed.info('Undeafen All', 'Initiating mass undeafen...')] }).catch(() => null);
+
       let count = 0;
-      await interaction.deferReply();
-      for (const [id, member] of vc.members) {
+      const promises = [];
+      vc.members.forEach(member => {
         if (member.voice.serverDeaf) {
-          try {
-            await member.voice.setDeaf(false);
-            count++;
-          } catch(e) {}
+          promises.push(
+            member.voice.setDeaf(false)
+              .then(() => {
+                count++;
+                if (count % 15 === 0) {
+                  interaction.editReply({ embeds: [embed.info('Undeafen All', `Undeafening in progress...\n\n✅ Undeafened: **${count}**`)] }).catch(() => null);
+                }
+              })
+              .catch(() => null)
+          );
         }
-      }
-      await interaction.editReply({ embeds: [embed.success('Success', `Undeafened **${count}** members in **${vc.name}**.`)] });
+      });
+      
+      await Promise.all(promises);
+      await interaction.editReply({ embeds: [embed.success('Success', `Undeafened **${count}** members in **${vc.name}**.`)] }).catch(() => null);
     }
   }
 ];

@@ -172,7 +172,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)], ephemeral: true }).catch(() => null);
       }
 
       const targetVc = interaction.options.getChannel('channel') || interaction.member.voice.channel;
@@ -181,8 +181,11 @@ export const commands = [
         return interaction.reply({ embeds: [embed.warn('Channel Not Found', 'Please specify a valid voice channel, or join one first.')], ephemeral: true });
       }
 
-      const result = await handleMassDisconnect(targetVc, interaction.member);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.deferReply({ ephemeral: false });
+      await interaction.editReply({ embeds: [embed.info('Mass Disconnect', 'Initiating mass disconnect...')] }).catch(() => null);
+
+      const result = await handleMassDisconnect(targetVc, interaction.member, interaction);
+      await interaction.editReply({ embeds: [result.embed] }).catch(() => null);
     }
   },
 
@@ -250,7 +253,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)], ephemeral: true }).catch(() => null);
       }
 
       const destVc = interaction.options.getChannel('destination');
@@ -258,8 +261,11 @@ export const commands = [
 
       if (!sourceVc) return interaction.reply({ embeds: [embed.warn('Source Not Found', 'You must be in a voice channel, or specify a source channel.')], ephemeral: true });
       
-      const result = await handleMassMove(sourceVc, destVc, interaction.member);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.deferReply({ ephemeral: false });
+      await interaction.editReply({ embeds: [embed.info('Mass Move', 'Initiating mass move...')] }).catch(() => null);
+
+      const result = await handleMassMove(sourceVc, destVc, interaction.member, interaction);
+      await interaction.editReply({ embeds: [result.embed] }).catch(() => null);
     }
   }
 ];
@@ -474,7 +480,7 @@ function handleVcDragList(guild) {
 }
 
 // ─────────────────────────────────────────────────────────────
-async function handleMassDisconnect(targetVc, moderator) {
+async function handleMassDisconnect(targetVc, moderator, interaction = null) {
   let count = 0;
   let skipped = 0;
   const promises = [];
@@ -489,8 +495,16 @@ async function handleMassDisconnect(targetVc, moderator) {
       return;
     }
 
-    promises.push(member.voice.disconnect().catch(() => null));
-    count++;
+    promises.push(
+      member.voice.disconnect()
+        .then(() => {
+          count++;
+          if (interaction && count % 15 === 0) {
+            interaction.editReply({ embeds: [embed.info('Mass Disconnect', `Disconnecting in progress...\n\n✅ Disconnected: **${count}**\n🛡️ Skipped (Protected): **${skipped}**`)] }).catch(() => null);
+          }
+        })
+        .catch(() => null)
+    );
   });
 
   await Promise.all(promises);
@@ -500,7 +514,7 @@ async function handleMassDisconnect(targetVc, moderator) {
 }
 
 // ─────────────────────────────────────────────────────────────
-async function handleMassMove(sourceVc, destVc, moderator) {
+async function handleMassMove(sourceVc, destVc, moderator, interaction = null) {
   if (sourceVc.id === destVc.id) {
     return { embed: embed.warn('Invalid Destination', 'Source and destination channels cannot be the same.') };
   }
@@ -515,8 +529,16 @@ async function handleMassMove(sourceVc, destVc, moderator) {
       return;
     }
 
-    promises.push(member.voice.setChannel(destVc).catch(() => null));
-    count++;
+    promises.push(
+      member.voice.setChannel(destVc)
+        .then(() => {
+          count++;
+          if (interaction && count % 15 === 0) {
+            interaction.editReply({ embeds: [embed.info('Mass Move', `Moving in progress...\n\n✅ Moved: **${count}**\n🛡️ Skipped (Protected): **${skipped}**`)] }).catch(() => null);
+          }
+        })
+        .catch(() => null)
+    );
   });
 
   await Promise.all(promises);
