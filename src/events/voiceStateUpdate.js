@@ -38,7 +38,7 @@ export default {
     const theaterVcId = guildCfg?.theaterModeVcId;
     if (theaterVcId && member && !member.user.bot) {
       import('../utils/helpers.js').then(async ({ isAuthorized }) => {
-        if (!isAuthorized(guild, member)) {
+        if (!(await isAuthorized(member.user, guild))) {
           // If joined Theater VC
           if (newState.channelId === theaterVcId && oldState.channelId !== theaterVcId) {
              if (!newState.serverMute || !newState.serverDeaf) {
