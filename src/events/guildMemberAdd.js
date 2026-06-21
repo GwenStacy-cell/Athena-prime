@@ -149,7 +149,7 @@ export default {
           const bullet = '<a:61589pinkglock:1451707353450676265>';
           
           const inviteEmbed = {
-            color: 0x2b2d31,
+            color: config.accentColor || 0x2b2d31,
             author: { name: 'MEMBER JOINED', icon_url: member.user.displayAvatarURL({ dynamic: true }) },
             description: `${bullet} **User Joined:** ${member} (\`${member.id}\`)\n${bullet} **Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n\n**INVITE DETAILS**\n${bullet} **Creator:** ${inviterText}\n${bullet} **Invite Code:** \`${codeText}\`\n${bullet} **Total Uses:** ${usesText} / ${maxUses}\n${bullet} **Duration:** ${maxAge}\n${bullet} **Created At:** ${createdTime}`,
             timestamp: new Date().toISOString(),
