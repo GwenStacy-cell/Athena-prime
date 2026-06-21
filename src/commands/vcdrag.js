@@ -40,6 +40,7 @@ export const commands = [
     ],
 
     async executePrefix(message, args) {
+      if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
       const target = message.mentions.members.first();
       if (!target) {
         return message.reply({
@@ -53,6 +54,7 @@ export const commands = [
     },
 
     async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)], ephemeral: true }).catch(() => null);
       await interaction.deferReply();
       const targetUser = interaction.options.getUser('user');
       const intervalSec = interaction.options.getInteger('interval') ?? 2;
@@ -87,6 +89,7 @@ export const commands = [
     ],
 
     async executePrefix(message) {
+      if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
       const target = message.mentions.members.first();
       if (!target) {
         return message.reply({
@@ -99,6 +102,7 @@ export const commands = [
     },
 
     async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)], ephemeral: true }).catch(() => null);
       const targetUser = interaction.options.getUser('user');
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
@@ -123,11 +127,13 @@ export const commands = [
     options: [],
 
     async executePrefix(message) {
+      if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
       const result = handleVcDragList(message.guild);
       await message.reply({ embeds: [result.embed] });
     },
 
     async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)], ephemeral: true }).catch(() => null);
       const result = handleVcDragList(interaction.guild);
       await interaction.reply({ embeds: [result.embed], ephemeral: true });
     }
@@ -409,9 +415,9 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
       ' VC Drag Activated',
       `${target} is now being dragged through every voice channel every **${intervalSec}s**.\n\nUse \`/vcdragstop\` or \`!vcdragstop @${target.user.username}\` to stop.`,
       [
-        { name: '� Target', value: `${target.user.tag} (${target.id})`, inline: true },
-        { name: '⏱ Interval', value: `${intervalSec} second(s)`, inline: true },
-        { name: '� Voice Channels', value: `${vcList.length} channels in rotation`, inline: true }
+        { name: 'Target', value: `${target.user.tag} (${target.id})`, inline: true },
+        { name: 'Interval', value: `${intervalSec} second(s)`, inline: true },
+        { name: 'Voice Channels', value: `${vcList.length} channels in rotation`, inline: true }
       ]
     )
   };
@@ -438,12 +444,12 @@ function handleVcDragStop(guild, moderator, target) {
 
   return {
     embed: embed.success(
-      '⏹ VC Drag Stopped',
+      'VC Drag Stopped',
       `The VC drag session for **${session.targetTag}** has been terminated.`,
       [
-        { name: '� Target', value: session.targetTag, inline: true },
-        { name: '⏱ Session Duration', value: `${durationSec}s`, inline: true },
-        { name: '� Stopped By', value: moderator.user.tag, inline: true }
+        { name: 'Target', value: session.targetTag, inline: true },
+        { name: 'Session Duration', value: `${durationSec}s`, inline: true },
+        { name: 'Stopped By', value: moderator.user.tag, inline: true }
       ]
     )
   };
@@ -457,7 +463,7 @@ function handleVcDragList(guild) {
     if (key.startsWith(guild.id + ':')) {
       const durationSec = Math.round((Date.now() - session.startedAt) / 1000);
       sessions.push({
-        name: `� ${session.targetTag}`,
+        name: `Session: ${session.targetTag}`,
         value: `ID: \`${session.targetId}\` | Interval: **${session.intervalSec}s** | Running: **${durationSec}s**`,
         inline: false
       });
