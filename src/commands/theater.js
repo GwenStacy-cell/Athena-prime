@@ -43,7 +43,8 @@ export const commands = [
 ];
 
 async function handleTheaterMode(guild, moderator, status, client) {
-  const vc = moderator.voice.channel;
+  const fullModerator = await guild.members.fetch(moderator.id).catch(() => moderator);
+  const vc = fullModerator?.voice?.channel;
   if (!vc && status === 'on') {
     return { embed: embed.error('Error', 'You must be in a Voice Channel to activate Theater Mode.') };
   }

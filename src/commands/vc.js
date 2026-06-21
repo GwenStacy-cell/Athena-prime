@@ -28,7 +28,7 @@ export const commands = [
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
         return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')], ephemeral: true });
       }
-      const vc = interaction.member.voice.channel;
+      const vc = interaction.member?.voice?.channel;
       if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
       
       try {
@@ -60,7 +60,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) return;
-      const vc = interaction.member.voice.channel;
+      const vc = interaction.member?.voice?.channel;
       if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
       
       try {
@@ -94,7 +94,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) return;
-      const vc = interaction.member.voice.channel;
+      const vc = interaction.member?.voice?.channel;
       if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
       
       let count = 0;
