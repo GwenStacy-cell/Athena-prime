@@ -31,7 +31,9 @@ export const commands = [
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: 'Unauthorized', ephemeral: true });
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')], ephemeral: true });
+      }
       await interaction.deferReply();
       const status = interaction.options.getString('status');
       const result = await handleTheaterMode(interaction.guild, interaction.member, status, interaction.client);
