@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegStatic from 'ffmpeg-static';
 import fs from 'fs/promises';
@@ -494,54 +494,17 @@ export const commands = [
   // --- AUTONICK COMMAND ---
   {
     name: 'autonick',
-    description: 'Advanced auto-nickname configuration and syncing.',
+    description: 'Interactive Auto-nickname manager dashboard.',
     category: 'security',
     permissions: [PermissionFlagsBits.ManageNicknames],
-    options: [
-      {
-        name: 'action',
-        description: 'Action to perform (on, off, layout, sync)',
-        type: 3,
-        required: true,
-        choices: [
-          { name: 'Enable Autonick', value: 'on' },
-          { name: 'Disable Autonick', value: 'off' },
-          { name: 'Set Layout', value: 'layout' },
-          { name: 'Sync All Members', value: 'sync' }
-        ]
-      },
-      {
-        name: 'value',
-        description: 'Layout string for layout action (use {name} as placeholder)',
-        type: 3,
-        required: false
-      }
-    ],
+    options: [],
     async executePrefix(message, args) {
-      const action = args[0]?.toLowerCase();
-      if (!['on', 'off', 'layout', 'sync'].includes(action)) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!autonick <on|off|layout|sync> [layout_string]\`\n\nExample Layout: \`!autonick layout [Member] {name} |\``)] });
-      }
-      
-      const value = args.slice(1).join(' ') || '';
-      const result = await handleAutonick(message.guild, message.member, action, value);
-      if (result.embed) {
-        await message.reply({ embeds: [result.embed] });
-      }
+      const payload = await buildAutonickDashboard(message.guild.id);
+      await message.reply(payload);
     },
     async executeSlash(interaction) {
-      const action = interaction.options.getString('action');
-      const value = interaction.options.getString('value') || '';
-
-      if (action === 'sync') await interaction.deferReply();
-
-      const result = await handleAutonick(interaction.guild, interaction.member, action, value, interaction);
-      
-      if (action === 'sync') {
-         if (result.embed) await interaction.editReply({ embeds: [result.embed] });
-      } else {
-         if (result.embed) await interaction.reply({ embeds: [result.embed] });
-      }
+      const payload = await buildAutonickDashboard(interaction.guild.id);
+      await interaction.reply(payload);
     }
   },
 
@@ -1988,76 +1951,37 @@ async function handleBlacklist(guild, moderator, action, phrase) {
     return { embed: embed.info('Filtered Word Blacklist', `If a non-moderator sends a message matching any of these terms, it will be deleted immediately:\n\n${formattedWords}`) };
   }
 }
-
-async function handleAutonick(guild, moderator, action, value, interaction = null) {
-  let cfg = db.getGuildConfig(guild.id);
+export async function buildAutonickDashboard(guildId) {
+  let cfg = db.getGuildConfig(guildId);
   if (!cfg.autonick) {
     cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
+    db.updateGuildConfig(guildId, { autonick: cfg.autonick });
   }
 
-  if (action === 'on' || action === 'off') {
-    const enabled = action === 'on';
-    db.updateGuildConfig(guild.id, {
-      autonick: { ...cfg.autonick, enabled }
-    });
-    
-    return { embed: embed.success('Auto-Nickname Configured', 
-      enabled ? 'Autonick has been activated.' : 'Autonick has been deactivated.',
-      [{ name: 'Status', value: enabled ? `${TOGGLE_ON} ENABLED` : `${TOGGLE_OFF} DISABLED`, inline: true }]
-    )};
-  }
+  const state = cfg.autonick.enabled ? 'ENABLED' : 'DISABLED';
+  const color = cfg.autonick.enabled ? 'success' : 'danger';
+  const layout = cfg.autonick.layout || '{name}';
+  
+  const dashboardEmbed = embed[color]('Autonick Manager', `**Status:** \`${state}\`\n**Current Layout:** \`${layout}\`\n\nUse the buttons below to cleanly manage the Auto-nickname settings.`);
 
-  if (action === 'layout') {
-    if (!value || !value.includes('{name}')) {
-      return { embed: embed.warn('Invalid Layout', 'You must provide a layout string that includes the `{name}` placeholder.\nExample: `!autonick layout [M] {name} | User`') };
-    }
-    db.updateGuildConfig(guild.id, {
-      autonick: { ...cfg.autonick, layout: value }
-    });
+  const toggleBtn = new ButtonBuilder()
+    .setCustomId('autonick_toggle')
+    .setLabel(cfg.autonick.enabled ? 'Disable' : 'Enable')
+    .setStyle(cfg.autonick.enabled ? ButtonStyle.Danger : ButtonStyle.Success);
     
-    return { embed: embed.success('Autonick Layout Updated', `The new layout format has been saved:\n\`${value}\``) };
-  }
-
-  if (action === 'sync') {
-    if (!cfg.autonick.enabled) {
-      return { embed: embed.error('Autonick Disabled', 'You must enable autonick before syncing (`!autonick on`).') };
-    }
-
-    if (interaction) {
-      // Deferred
-    } else {
-      await guild.channels.cache.first()?.send({ embeds: [embed.info('Syncing Autonick', 'This will take some time to prevent hitting rate limits. Do not use this command again until it finishes.')] }).catch(()=>null);
-    }
-
-    const { applyAutonick } = await import('../utils/helpers.js');
-    await guild.members.fetch();
+  const editBtn = new ButtonBuilder()
+    .setCustomId('autonick_edit')
+    .setLabel('Edit Layout')
+    .setStyle(ButtonStyle.Primary);
     
-    let successCount = 0;
-    let failCount = 0;
-    let skippedCount = 0;
-    
-    for (const [id, member] of guild.members.cache) {
-      // Aggressively rename everyone except bot owner
-      if (isBotOwnerSync(id)) {
-        skippedCount++;
-        continue;
-      }
-      
-      const changed = await applyAutonick(member, cfg.autonick);
-      if (changed) {
-        successCount++;
-        await new Promise(res => setTimeout(res, 800)); // 800ms delay to avoid aggressive rate limits
-      } else {
-        failCount++;
-      }
-    }
-    
-    return { embed: embed.success('Autonick Sync Complete', `Successfully renamed **${successCount}** members.\nSkipped/Failed: **${failCount}**\nBot Owners Ignored: **${skippedCount}**`) };
-  }
+  const syncBtn = new ButtonBuilder()
+    .setCustomId('autonick_sync')
+    .setLabel('Sync Members')
+    .setStyle(ButtonStyle.Secondary);
 
-  return { embed: embed.error('Error', 'Invalid action.') };
+  const row = new ActionRowBuilder().addComponents(toggleBtn, editBtn, syncBtn);
+  return { embeds: [dashboardEmbed], components: [row] };
 }
-
 async function handleConfig(guild, moderator, setting, value) {
   const updates = {};
   

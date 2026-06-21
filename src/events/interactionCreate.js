@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, EmbedBuilder } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from 'discord.js';
 import { buildXpDashboard } from '../commands/leveling.js';
 import commandMap from '../commands/loader.js';
 import embed, { setGuildContext } from '../embed.js';
@@ -80,6 +80,26 @@ export default {
     // 2. MODAL SUBMISSIONS
     // ==========================================
     if (interaction.isModalSubmit()) {
+      if (interaction.customId === 'autonick_modal') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        
+        const prefix = interaction.fields.getTextInputValue('prefix') || '';
+        const suffix = interaction.fields.getTextInputValue('suffix') || '';
+        const layout = `${prefix}{name}${suffix}`;
+        
+        let cfg = db.getGuildConfig(interaction.guild.id);
+        if (!cfg.autonick) cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
+        
+        cfg.autonick.prefix = prefix;
+        cfg.autonick.suffix = suffix;
+        cfg.autonick.layout = layout;
+        db.updateGuildConfig(interaction.guild.id, { autonick: cfg.autonick });
+        
+        const { buildAutonickDashboard } = await import('../commands/security.js');
+        const payload = await buildAutonickDashboard(interaction.guild.id);
+        return interaction.update(payload).catch(() => null);
+      }
+
       // Enuke Manager modal
       if (interaction.customId.startsWith('enuke_modal_')) {
         try {
@@ -286,6 +306,85 @@ export default {
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton()) {
+      // Autonick Manager Buttons
+      if (interaction.customId === 'autonick_toggle') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        let cfg = db.getGuildConfig(interaction.guild.id);
+        if (!cfg.autonick) cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
+        
+        cfg.autonick.enabled = !cfg.autonick.enabled;
+        db.updateGuildConfig(interaction.guild.id, { autonick: cfg.autonick });
+        
+        const { buildAutonickDashboard } = await import('../commands/security.js');
+        const payload = await buildAutonickDashboard(interaction.guild.id);
+        return interaction.update(payload).catch(() => null);
+      }
+
+      if (interaction.customId === 'autonick_edit') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        
+        let cfg = db.getGuildConfig(interaction.guild.id);
+        const currentPrefix = cfg.autonick?.prefix || '';
+        const currentSuffix = cfg.autonick?.suffix || '';
+
+        const modal = new ModalBuilder()
+          .setCustomId('autonick_modal')
+          .setTitle('Edit Autonick Layout');
+          
+        const prefixInput = new TextInputBuilder()
+          .setCustomId('prefix')
+          .setLabel('Prefix (e.g. "[Member] ")')
+          .setStyle(TextInputStyle.Short)
+          .setValue(currentPrefix)
+          .setRequired(false);
+          
+        const suffixInput = new TextInputBuilder()
+          .setCustomId('suffix')
+          .setLabel('Suffix (e.g. " | Guest")')
+          .setStyle(TextInputStyle.Short)
+          .setValue(currentSuffix)
+          .setRequired(false);
+
+        const row1 = new ActionRowBuilder().addComponents(prefixInput);
+        const row2 = new ActionRowBuilder().addComponents(suffixInput);
+        modal.addComponents(row1, row2);
+        
+        return interaction.showModal(modal);
+      }
+
+      if (interaction.customId === 'autonick_sync') {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        let cfg = db.getGuildConfig(interaction.guild.id);
+        if (!cfg.autonick?.enabled) {
+          return interaction.reply({ content: 'You must enable Autonick before syncing.', ephemeral: true });
+        }
+        
+        await interaction.deferReply({ ephemeral: true });
+        
+        const { applyAutonick } = await import('../utils/helpers.js');
+        await interaction.guild.members.fetch();
+        
+        let successCount = 0;
+        let failCount = 0;
+        let skippedCount = 0;
+        
+        for (const [id, member] of interaction.guild.members.cache) {
+          if (isBotOwnerSync(id)) {
+            skippedCount++;
+            continue;
+          }
+          const changed = await applyAutonick(member, cfg.autonick);
+          if (changed) {
+            successCount++;
+            await new Promise(res => setTimeout(res, 800)); // Rate limit safety
+          } else {
+            failCount++;
+          }
+        }
+        
+        return interaction.editReply({ embeds: [embed.success('Autonick Sync Complete', `Successfully renamed **${successCount}** members.\nSkipped/Failed: **${failCount}**\nBot Owners Ignored: **${skippedCount}**`)] });
+      }
+
       // XP Manager Buttons
       if (interaction.customId === 'xp_toggle') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
