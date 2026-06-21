@@ -9,7 +9,7 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageChannels],
     async executePrefix(message) {
-      if (!isAuthorized(message.guild, message.member)) {
+      if (!(await isAuthorized(message.author, message.guild))) {
         return message.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
       }
       const vc = message.member.voice.channel;
@@ -25,7 +25,7 @@ export const commands = [
       }
     },
     async executeSlash(interaction) {
-      if (!isAuthorized(interaction.guild, interaction.member)) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
         return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')], ephemeral: true });
       }
       const vc = interaction.member.voice.channel;
@@ -45,7 +45,7 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageChannels],
     async executePrefix(message) {
-      if (!isAuthorized(message.guild, message.member)) return;
+      if (!(await isAuthorized(message.author, message.guild))) return;
       const vc = message.member.voice.channel;
       if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')] });
       
@@ -59,7 +59,7 @@ export const commands = [
       }
     },
     async executeSlash(interaction) {
-      if (!isAuthorized(interaction.guild, interaction.member)) return;
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return;
       const vc = interaction.member.voice.channel;
       if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
       
@@ -77,7 +77,7 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.DeafenMembers],
     async executePrefix(message) {
-      if (!isAuthorized(message.guild, message.member)) return;
+      if (!(await isAuthorized(message.author, message.guild))) return;
       const vc = message.member.voice.channel;
       if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')] });
       
@@ -93,7 +93,7 @@ export const commands = [
       await message.reply({ embeds: [embed.success('Success', `Undeafened **${count}** members in **${vc.name}**.`)] });
     },
     async executeSlash(interaction) {
-      if (!isAuthorized(interaction.guild, interaction.member)) return;
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return;
       const vc = interaction.member.voice.channel;
       if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
       

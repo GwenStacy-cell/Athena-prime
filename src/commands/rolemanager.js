@@ -9,7 +9,7 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageRoles],
     async executePrefix(message) {
-      if (!isAuthorized(message.guild, message.member)) return;
+      if (!(await isAuthorized(message.author, message.guild))) return;
       
       const target = message.mentions.members.first();
       const roles = message.mentions.roles;
@@ -55,7 +55,7 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageRoles],
     async executePrefix(message) {
-      if (!isAuthorized(message.guild, message.member)) return;
+      if (!(await isAuthorized(message.author, message.guild))) return;
       
       const target = message.mentions.members.first();
       const roles = message.mentions.roles;
@@ -101,7 +101,7 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageRoles],
     async executePrefix(message) {
-      if (!isAuthorized(message.guild, message.member)) return;
+      if (!(await isAuthorized(message.author, message.guild))) return;
       
       const target = message.mentions.members.first();
       if (!target) {

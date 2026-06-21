@@ -22,7 +22,7 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      if (!isAuthorized(message.guild, message.member)) return;
+      if (!(await isAuthorized(message.author, message.guild))) return;
       const status = args[0]?.toLowerCase();
       if (status !== 'on' && status !== 'off') {
         return message.reply({ embeds: [embed.warn('Command Error', `Usage: \`!theatermode <on|off>\``)] });
@@ -31,7 +31,7 @@ export const commands = [
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      if (!isAuthorized(interaction.guild, interaction.member)) return interaction.reply({ content: 'Unauthorized', ephemeral: true });
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: 'Unauthorized', ephemeral: true });
       const status = interaction.options.getString('status');
       const result = await handleTheaterMode(interaction.guild, interaction.member, status, interaction.client);
       await interaction.reply({ embeds: [result.embed] });
@@ -54,7 +54,7 @@ async function handleTheaterMode(guild, moderator, status, client) {
     // Auto-mute and deafen everyone currently in the VC (except authorized users)
     let affectedCount = 0;
     for (const [id, member] of vc.members) {
-      if (isAuthorized(guild, member)) continue; // Don't mute other admins
+      if (await isAuthorized(member.user, guild)) continue; // Don't mute other admins
       try {
         await member.voice.setMute(true);
         await member.voice.setDeaf(true);
