@@ -164,7 +164,7 @@ export default {
         }
 
         const warnEmbed = embed.warn(
-          'Invite Link Deleted',
+          '<:gun:1517636066964799679> Invite Deleted',
           `${message.author}, invite links are strictly prohibited in this guild to prevent promotion spam.`
         );
         await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
@@ -204,7 +204,7 @@ export default {
             await message.delete().catch(() => null);
 
             const warnEmbed = embed.warn(
-              'Link Deleted',
+              '<:gun:1517636066964799679> Link Deleted',
               `${message.author}, posting links is not allowed in this server.`
             );
             await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
@@ -264,7 +264,7 @@ export default {
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
           const filterWarnEmbed = embed.warn(
-            'Profanity/Word Filter Triggered',
+            '<:gun:1517636066964799679> Word Filter Triggered',
             `${message.author}, your message contained a blacklisted word and was deleted.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
           );
           await message.channel.send({ embeds: [filterWarnEmbed] }).catch(() => null);
@@ -330,7 +330,7 @@ export default {
             await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
           } else {
             const spamWarnEmbed = embed.warn(
-              'Anti-Spam Warning',
+              '<:gun:1517636066964799679> Anti-Spam Warning',
               `${message.author}, please slow down. Sending messages too fast is against server security rules.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
             );
             await message.channel.send({ embeds: [spamWarnEmbed] }).catch(() => null);
