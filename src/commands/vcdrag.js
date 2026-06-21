@@ -281,8 +281,8 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
     return {
       embed: embed.danger(
-        '👑 Untouchable',
-        `🛡️ **${target.user.tag}** is protected by Athena Prime and cannot be dragged.`
+        ' Untouchable',
+        ` **${target.user.tag}** is protected by Athena Prime and cannot be dragged.`
       )
     };
   }
@@ -291,7 +291,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
   if (db.isMoveProtected(guild.id, target.id)) {
     return {
       embed: embed.danger(
-        '🛡️ Move Protected',
+        ' Move Protected',
         `**${target.user.tag}** is currently enrolled in Move Protection. They cannot be targeted by VC drag sessions.`
       )
     };
@@ -406,12 +406,12 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
 
   return {
     embed: embed.danger(
-      '🌀 VC Drag Activated',
+      ' VC Drag Activated',
       `${target} is now being dragged through every voice channel every **${intervalSec}s**.\n\nUse \`/vcdragstop\` or \`!vcdragstop @${target.user.username}\` to stop.`,
       [
-        { name: '🎯 Target', value: `${target.user.tag} (${target.id})`, inline: true },
-        { name: '⏱️ Interval', value: `${intervalSec} second(s)`, inline: true },
-        { name: '📡 Voice Channels', value: `${vcList.length} channels in rotation`, inline: true }
+        { name: '� Target', value: `${target.user.tag} (${target.id})`, inline: true },
+        { name: '⏱ Interval', value: `${intervalSec} second(s)`, inline: true },
+        { name: '� Voice Channels', value: `${vcList.length} channels in rotation`, inline: true }
       ]
     )
   };
@@ -438,12 +438,12 @@ function handleVcDragStop(guild, moderator, target) {
 
   return {
     embed: embed.success(
-      '⏹️ VC Drag Stopped',
+      '⏹ VC Drag Stopped',
       `The VC drag session for **${session.targetTag}** has been terminated.`,
       [
-        { name: '🎯 Target', value: session.targetTag, inline: true },
-        { name: '⏱️ Session Duration', value: `${durationSec}s`, inline: true },
-        { name: '🛑 Stopped By', value: moderator.user.tag, inline: true }
+        { name: '� Target', value: session.targetTag, inline: true },
+        { name: '⏱ Session Duration', value: `${durationSec}s`, inline: true },
+        { name: '� Stopped By', value: moderator.user.tag, inline: true }
       ]
     )
   };
@@ -457,7 +457,7 @@ function handleVcDragList(guild) {
     if (key.startsWith(guild.id + ':')) {
       const durationSec = Math.round((Date.now() - session.startedAt) / 1000);
       sessions.push({
-        name: `🎯 ${session.targetTag}`,
+        name: `� ${session.targetTag}`,
         value: `ID: \`${session.targetId}\` | Interval: **${session.intervalSec}s** | Running: **${durationSec}s**`,
         inline: false
       });
@@ -472,7 +472,7 @@ function handleVcDragList(guild) {
 
   return {
     embed: embed.info(
-      `🌀 Active VC Drag Sessions (${sessions.length})`,
+      ` Active VC Drag Sessions (${sessions.length})`,
       `Use \`/vcdragstop <@user>\` to stop any session.`,
       sessions
     )
@@ -500,7 +500,7 @@ async function handleMassDisconnect(targetVc, moderator, interaction = null) {
         .then(() => {
           count++;
           if (interaction && count % 15 === 0) {
-            interaction.editReply({ embeds: [embed.info('Mass Disconnect', `Disconnecting in progress...\n\n✅ Disconnected: **${count}**\n🛡️ Skipped (Protected): **${skipped}**`)] }).catch(() => null);
+            interaction.editReply({ embeds: [embed.info('Mass Disconnect', `Disconnecting in progress...\n\n Disconnected: **${count}**\n Skipped (Protected): **${skipped}**`)] }).catch(() => null);
           }
         })
         .catch(() => null)
@@ -509,7 +509,7 @@ async function handleMassDisconnect(targetVc, moderator, interaction = null) {
 
   await Promise.all(promises);
   let msg = `Successfully disconnected **${count}** users from ${targetVc}.`;
-  if (skipped > 0) msg += `\n\n> 🛡️ **${skipped}** users were skipped due to active **Move Protection**.`;
+  if (skipped > 0) msg += `\n\n>  **${skipped}** users were skipped due to active **Move Protection**.`;
   return { embed: embed.success('Mass Disconnect', msg) };
 }
 
@@ -534,7 +534,7 @@ async function handleMassMove(sourceVc, destVc, moderator, interaction = null) {
         .then(() => {
           count++;
           if (interaction && count % 15 === 0) {
-            interaction.editReply({ embeds: [embed.info('Mass Move', `Moving in progress...\n\n✅ Moved: **${count}**\n🛡️ Skipped (Protected): **${skipped}**`)] }).catch(() => null);
+            interaction.editReply({ embeds: [embed.info('Mass Move', `Moving in progress...\n\n Moved: **${count}**\n Skipped (Protected): **${skipped}**`)] }).catch(() => null);
           }
         })
         .catch(() => null)
@@ -543,6 +543,6 @@ async function handleMassMove(sourceVc, destVc, moderator, interaction = null) {
 
   await Promise.all(promises);
   let msg = `Successfully moved **${count}** users from ${sourceVc} to ${destVc}.`;
-  if (skipped > 0) msg += `\n\n> 🛡️ **${skipped}** users were skipped due to active **Move Protection**.`;
+  if (skipped > 0) msg += `\n\n>  **${skipped}** users were skipped due to active **Move Protection**.`;
   return { embed: embed.success('Mass Move', msg) };
 }

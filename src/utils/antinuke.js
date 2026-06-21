@@ -69,33 +69,33 @@ async function punish(guild, executor, eventType, config, forceQuarantine = fals
 
   try {
     if (punishment === 'ban') {
-      await executorMember.send({ embeds: [embed.danger('🔨 Banned — Athena Prime Protection',
+      await executorMember.send({ embeds: [embed.danger('� Banned — Athena Prime Protection',
         `You have been permanently banned from **${guild.name}** for triggering Anti-Nuke protection.\n\n**Violation:** ${eventType}`
       )] }).catch(() => null);
       await executorMember.ban({ reason });
-      result = '🔨 Permanently Banned';
+      result = '� Permanently Banned';
     } else if (punishment === 'kick') {
-      await executorMember.send({ embeds: [embed.danger('👢 Kicked — Athena Prime Protection',
+      await executorMember.send({ embeds: [embed.danger('� Kicked — Athena Prime Protection',
         `You have been kicked from **${guild.name}** for triggering Anti-Nuke protection.\n\n**Violation:** ${eventType}`
       )] }).catch(() => null);
       await executorMember.kick(reason);
-      result = '👢 Kicked';
+      result = '� Kicked';
     } else {
       const qRes = await executeQuarantine(guild, executorMember, guild.members.me, reason);
-      result = qRes.success ? '🔒 Quarantined (all roles stripped)' : '❌ Quarantine failed';
+      result = qRes.success ? '� Quarantined (all roles stripped)' : ' Quarantine failed';
       
       // If forced quarantine, we still might want to ban if that's what the user expects for antibot,
       // but wait, the user said "strip roles and ban". So maybe we should do both?
       if (forceQuarantine && config.antiNukePunishment === 'ban') {
         await executorMember.ban({ reason }).catch(() => null);
-        result += ' + 🔨 Banned';
+        result += ' + � Banned';
       }
     }
     // Clear their action tracker after punishment
     clearTracker(guild.id, executor.id);
   } catch (err) {
     console.error('[AntiNuke] Punishment failed:', err.message);
-    result = `❌ Hierarchy blocked (${err.message})`;
+    result = ` Hierarchy blocked (${err.message})`;
   }
 
   return result;
@@ -106,13 +106,13 @@ async function punish(guild, executor, eventType, config, forceQuarantine = fals
 // ==========================================
 async function notifyAndLog(guild, executor, eventType, punishResult, rollbackResult) {
   const logEmbed = embed.log(
-    '🚨 Anti-Nuke Firewall Triggered',
+    '� Anti-Nuke Firewall Triggered',
     `A dangerous server mutation was detected, blocked, and rolled back.`,
     [
-      { name: '👤 Violator',   value: `${executor.tag} (\`${executor.id}\`)`, inline: true },
+      { name: '� Violator',   value: `${executor.tag} (\`${executor.id}\`)`, inline: true },
       { name: '⚡ Action',     value: `\`${eventType}\``,                     inline: true },
-      { name: '⚖️ Punishment', value: `**${punishResult}**`,                  inline: true },
-      { name: '🔄 Rollback',   value: rollbackResult }
+      { name: '⚖ Punishment', value: `**${punishResult}**`,                  inline: true },
+      { name: '� Rollback',   value: rollbackResult }
     ],
     'raid'
   );
@@ -123,13 +123,13 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
     const owner = await guild.members.fetch(guild.ownerId).catch(() => null);
     if (owner) {
       await owner.send({ embeds: [embed.danger(
-        '🚨 CRITICAL: Anti-Nuke Triggered',
+        '� CRITICAL: Anti-Nuke Triggered',
         `A dangerous action was detected and contained on **${guild.name}**.`,
         [
-          { name: '🔴 Violator',    value: `**${executor.tag}** (\`${executor.id}\`)` },
+          { name: '� Violator',    value: `**${executor.tag}** (\`${executor.id}\`)` },
           { name: '⚡ Violation',   value: `\`${eventType}\`` },
-          { name: '⚖️ Punishment',  value: `**${punishResult}**` },
-          { name: '🔄 Rollback',    value: rollbackResult }
+          { name: '⚖ Punishment',  value: `**${punishResult}**` },
+          { name: '� Rollback',    value: rollbackResult }
         ]
       )] }).catch(() => null);
     }
@@ -224,8 +224,8 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
           permissionOverwrites: overwrites,
           reason: 'Athena Anti-Nuke: Restored deleted channel'
         });
-        rollbackResult = `✅ **#${ch.name}** restored (<#${newCh.id}>)`;
-      } catch (e) { rollbackResult = `❌ Channel restore failed: ${e.message}`; }
+        rollbackResult = ` **#${ch.name}** restored (<#${newCh.id}>)`;
+      } catch (e) { rollbackResult = ` Channel restore failed: ${e.message}`; }
     }
 
     else if (eventType === 'Role Deletion' && extraData) {
@@ -237,57 +237,57 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
           mentionable: r.mentionable,
           reason: 'Athena Anti-Nuke: Restored deleted role'
         });
-        rollbackResult = `✅ Role **${r.name}** restored`;
-      } catch (e) { rollbackResult = `❌ Role restore failed: ${e.message}`; }
+        rollbackResult = ` Role **${r.name}** restored`;
+      } catch (e) { rollbackResult = ` Role restore failed: ${e.message}`; }
     }
 
     else if (eventType === 'Channel Creation' && targetId) {
       try {
         const ch = await guild.channels.fetch(targetId).catch(() => null);
         if (ch) { await ch.delete('Athena Anti-Nuke: Removed unauthorized channel'); }
-        rollbackResult = `✅ Unauthorized channel deleted`;
-      } catch (e) { rollbackResult = `❌ Delete failed: ${e.message}`; }
+        rollbackResult = ` Unauthorized channel deleted`;
+      } catch (e) { rollbackResult = ` Delete failed: ${e.message}`; }
     }
 
     else if (eventType === 'Role Creation' && targetId) {
       try {
         const r = await guild.roles.fetch(targetId).catch(() => null);
         if (r) { await r.delete('Athena Anti-Nuke: Removed unauthorized role'); }
-        rollbackResult = `✅ Unauthorized role deleted`;
-      } catch (e) { rollbackResult = `❌ Delete failed: ${e.message}`; }
+        rollbackResult = ` Unauthorized role deleted`;
+      } catch (e) { rollbackResult = ` Delete failed: ${e.message}`; }
     }
 
     else if (eventType === 'Emoji Creation' && targetId) {
       try {
         const e = await guild.emojis.fetch(targetId).catch(() => null);
         if (e) { await e.delete('Athena Anti-Nuke: Removed unauthorized emoji'); }
-        rollbackResult = `✅ Unauthorized emoji deleted`;
-      } catch (e) { rollbackResult = `❌ Delete failed: ${e.message}`; }
+        rollbackResult = ` Unauthorized emoji deleted`;
+      } catch (e) { rollbackResult = ` Delete failed: ${e.message}`; }
     }
 
     else if (eventType === 'Emoji Deletion' && extraData) {
       try {
         if (extraData.url) {
           await guild.emojis.create({ attachment: extraData.url, name: extraData.name, reason: 'Athena Anti-Nuke: Restored deleted emoji' });
-          rollbackResult = `✅ Emoji **${extraData.name}** restored`;
+          rollbackResult = ` Emoji **${extraData.name}** restored`;
         } else {
-          rollbackResult = `⚠️ Emoji **${extraData.name}** cannot be auto-restored (missing URL cache)`;
+          rollbackResult = `⚠ Emoji **${extraData.name}** cannot be auto-restored (missing URL cache)`;
         }
-      } catch (e) { rollbackResult = `❌ Emoji restore failed: ${e.message}`; }
+      } catch (e) { rollbackResult = ` Emoji restore failed: ${e.message}`; }
     }
 
     else if (eventType === 'Vanity URL Change' && extraData) {
       try {
         await guild.setVanityCode(extraData, 'Athena Anti-Nuke: Vanity restored');
-        rollbackResult = `✅ Vanity restored to **discord.gg/${extraData}**`;
-      } catch (e) { rollbackResult = `❌ Vanity restore failed: ${e.message}`; }
+        rollbackResult = ` Vanity restored to **discord.gg/${extraData}**`;
+      } catch (e) { rollbackResult = ` Vanity restore failed: ${e.message}`; }
     }
 
     else if (eventType === 'Webhook Creation' && extraData) {
       try {
         await extraData.delete('Athena Anti-Nuke: Unauthorized webhook removed');
-        rollbackResult = `✅ Webhook **${extraData.name}** deleted`;
-      } catch (e) { rollbackResult = `❌ Webhook delete failed: ${e.message}`; }
+        rollbackResult = ` Webhook **${extraData.name}** deleted`;
+      } catch (e) { rollbackResult = ` Webhook delete failed: ${e.message}`; }
     }
 
     else if (eventType === 'Webhook Deletion' && extraData) {
@@ -296,16 +296,16 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
         const ch = chId ? await guild.channels.fetch(chId).catch(() => null) : null;
         if (ch) {
           await ch.createWebhook({ name: extraData.name, avatar: extraData.avatarURL() || null, reason: 'Athena Anti-Nuke: Restored deleted webhook' });
-          rollbackResult = `✅ Webhook **${extraData.name}** restored`;
+          rollbackResult = ` Webhook **${extraData.name}** restored`;
         } else {
-          rollbackResult = `❌ Webhook restore failed: Channel not found`;
+          rollbackResult = ` Webhook restore failed: Channel not found`;
         }
-      } catch (e) { rollbackResult = `❌ Webhook restore failed: ${e.message}`; }
+      } catch (e) { rollbackResult = ` Webhook restore failed: ${e.message}`; }
     }
 
     else if (eventType === 'Member Ban' && extraData) {
       // extraData = { userId, username }
-      rollbackResult = `⚠️ Banned member: **${extraData.username}** — unban manually if needed`;
+      rollbackResult = `⚠ Banned member: **${extraData.username}** — unban manually if needed`;
     }
 
     await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
@@ -345,8 +345,8 @@ export async function checkRoleUpdate(oldRole, newRole) {
     let rollbackResult = 'No rollback';
     try {
       await newRole.setPermissions(oldRole.permissions, 'Athena Anti-Nuke: Reverted dangerous permission escalation');
-      rollbackResult = `✅ Role **${newRole.name}** permissions reverted`;
-    } catch (e) { rollbackResult = `❌ Revert failed: ${e.message}`; }
+      rollbackResult = ` Role **${newRole.name}** permissions reverted`;
+    } catch (e) { rollbackResult = ` Revert failed: ${e.message}`; }
 
     const punishResult = await punish(guild, executor, 'Role Permission Escalation', config);
     await notifyAndLog(guild, executor, 'Role Permission Escalation', punishResult, rollbackResult);
@@ -392,8 +392,8 @@ export async function checkAntiNukeMemberUpdate(oldMember, newMember) {
     let rollbackResult = 'No rollback';
     try {
       await newMember.roles.remove(dangerousRolesAdded, 'Athena Anti-Nuke: Unauthorized dangerous role grant reversed');
-      rollbackResult = `✅ Removed roles: **${dangerousRolesAdded.map(r => r.name).join(', ')}** from ${newMember.user.tag}`;
-    } catch (e) { rollbackResult = `❌ Role removal failed: ${e.message}`; }
+      rollbackResult = ` Removed roles: **${dangerousRolesAdded.map(r => r.name).join(', ')}** from ${newMember.user.tag}`;
+    } catch (e) { rollbackResult = ` Role removal failed: ${e.message}`; }
 
     // Strip executor's roles too
     const executorMember = await guild.members.fetch(executor.id).catch(() => null);
@@ -402,7 +402,7 @@ export async function checkAntiNukeMemberUpdate(oldMember, newMember) {
       try {
         const managed = executorMember.roles.cache.filter(r => r.managed).map(r => r.id);
         await executorMember.roles.set(managed, 'Athena Anti-Nuke: Stripped unauthorized role grantor');
-        punishResult = '🔒 All roles stripped from executor';
+        punishResult = '� All roles stripped from executor';
       } catch {}
       punishResult = await punish(guild, executor, 'Unauthorized Dangerous Role Grant', config);
     }
@@ -462,7 +462,7 @@ export async function checkBotAdd(member) {
     // Let's enforce quarantine/role stripping for this specific severe violation.
     const punishResult = await punish(guild, executor, 'Unauthorized Bot Addition', config, true);
     await notifyAndLog(guild, executor, `Unauthorized Bot Addition (${member.user.tag})`, punishResult,
-      `✅ Bot **${member.user.tag}** has been banned from the server`);
+      ` Bot **${member.user.tag}** has been banned from the server`);
 
   } catch (err) {
     console.error('[AntiNuke] checkBotAdd error:', err);
@@ -492,8 +492,8 @@ export async function checkBanRemove(guild, user) {
     let rollbackResult = 'No rollback';
     try {
       await guild.bans.create(user.id, { reason: 'Athena Anti-Nuke: Re-applied ban reversed by unauthorized user' });
-      rollbackResult = `✅ **${user.tag}** re-banned`;
-    } catch (e) { rollbackResult = `❌ Re-ban failed: ${e.message}`; }
+      rollbackResult = ` **${user.tag}** re-banned`;
+    } catch (e) { rollbackResult = ` Re-ban failed: ${e.message}`; }
 
     const punishResult = await punish(guild, executor, 'Unauthorized Ban Removal', config);
     await notifyAndLog(guild, executor, `Unauthorized Ban Removal (${user.tag})`, punishResult, rollbackResult);
@@ -540,29 +540,29 @@ export async function checkGuildUpdate(oldGuild, newGuild) {
     if (oldGuild.name !== newGuild.name) {
       try {
         await newGuild.setName(oldGuild.name, 'Athena Anti-Nuke: Reverted server name');
-        rollbacks.push(`✅ Name restored to **${oldGuild.name}**`);
-      } catch { rollbacks.push(`❌ Name restore failed`); }
+        rollbacks.push(` Name restored to **${oldGuild.name}**`);
+      } catch { rollbacks.push(` Name restore failed`); }
     }
 
     if (oldGuild.verificationLevel !== newGuild.verificationLevel) {
       try {
         await newGuild.setVerificationLevel(oldGuild.verificationLevel, 'Athena Anti-Nuke: Reverted verification level');
-        rollbacks.push(`✅ Verification level restored`);
-      } catch { rollbacks.push(`❌ Verification level restore failed`); }
+        rollbacks.push(` Verification level restored`);
+      } catch { rollbacks.push(` Verification level restore failed`); }
     }
 
     if (oldGuild.explicitContentFilter !== newGuild.explicitContentFilter) {
       try {
         await newGuild.setExplicitContentFilter(oldGuild.explicitContentFilter, 'Athena Anti-Nuke: Reverted explicit content filter');
-        rollbacks.push(`✅ Explicit content filter restored`);
-      } catch { rollbacks.push(`❌ Explicit filter restore failed`); }
+        rollbacks.push(` Explicit content filter restored`);
+      } catch { rollbacks.push(` Explicit filter restore failed`); }
     }
 
     if (oldGuild.vanityURLCode !== newGuild.vanityURLCode && oldGuild.vanityURLCode) {
       try {
         await newGuild.setVanityCode(oldGuild.vanityURLCode, 'Athena Anti-Nuke: Reverted vanity URL');
-        rollbacks.push(`✅ Vanity URL restored to **discord.gg/${oldGuild.vanityURLCode}**`);
-      } catch { rollbacks.push(`❌ Vanity restore failed`); }
+        rollbacks.push(` Vanity URL restored to **discord.gg/${oldGuild.vanityURLCode}**`);
+      } catch { rollbacks.push(` Vanity restore failed`); }
     }
 
     const rollbackResult = rollbacks.join('\n') || 'No rollback performed';
@@ -603,9 +603,9 @@ export async function checkWebhook(guild) {
       const wh = webhooks?.find(w => w.id === target?.id);
       if (wh) {
         await wh.delete('Athena Anti-Nuke: Removed unauthorized webhook');
-        rollbackResult = `✅ Webhook **${wh.name}** deleted`;
+        rollbackResult = ` Webhook **${wh.name}** deleted`;
       }
-    } catch (e) { rollbackResult = `❌ Webhook delete failed: ${e.message}`; }
+    } catch (e) { rollbackResult = ` Webhook delete failed: ${e.message}`; }
 
     const punishResult = await punish(guild, executor, 'Unauthorized Webhook Creation', config);
     await notifyAndLog(guild, executor, 'Unauthorized Webhook Creation', punishResult, rollbackResult);
@@ -639,7 +639,7 @@ export async function checkMassBan(guild, user) {
 
     const punishResult = await punish(guild, executor, 'Mass/Unauthorized Ban', config);
     await notifyAndLog(guild, executor, `Mass/Unauthorized Ban (${user.tag})`, punishResult,
-      `⚠️ **${user.tag}** was banned — unban manually if needed`);
+      `⚠ **${user.tag}** was banned — unban manually if needed`);
 
   } catch (err) {
     console.error('[AntiNuke] checkMassBan error:', err);

@@ -9,14 +9,14 @@ let config = {
   botName: 'Athena Prime',
   footerText: 'Athena Prime Security',
   colors: {
-    success: '#00ffaa',
-    warning: '#ffaa00',
-    danger: '#ff3333',
-    neutral: '#3b82f6',
-    raid: '#8b5cf6',
-    dark: '#2f3136',
-    owner: '#FFD700',
-    security: '#00e5ff'
+    success: '#2b2d31',
+    warning: '#2b2d31',
+    danger: '#2b2d31',
+    neutral: '#2b2d31',
+    raid: '#2b2d31',
+    dark: '#2b2d31',
+    owner: '#2b2d31',
+    security: '#2b2d31'
   }
 };
 try {

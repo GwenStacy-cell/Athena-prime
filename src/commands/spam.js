@@ -31,7 +31,7 @@ export const commands = [
   // ─────────────────────────────────────────
   {
     name: 'spam',
-    description: '📨 Spam a user\'s DM or current channel. (Permitted users only)',
+    description: ' Spam a user\'s DM or current channel. (Permitted users only)',
     category: 'owner',
     hidden: false,
     permissions: [],
@@ -89,7 +89,7 @@ export const commands = [
       if (!text) {
         return message.reply({
           embeds: [embed.warn('Spam Usage',
-            `${message.author} 📨 **Spam a user's DM:**\n\`!spam @user [count] <message>\`\n\n` +
+            `${message.author}  **Spam a user's DM:**\n\`!spam @user [count] <message>\`\n\n` +
             `**Spam current channel:**\n\`!spam [count] <message>\`\n\n` +
             `Count defaults to 5 (max 10).`
           )]
@@ -106,7 +106,7 @@ export const commands = [
         const row = buildSpamMoreRow(userId, null, targetUser.id, text, 'user_dm');
         await message.channel.send({
           embeds: [result.success
-            ? embed.success('DM Spam Deployed 📨', `Spammed **${targetUser.tag}**'s DM with your message **${count}x**.`)
+            ? embed.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM with your message **${count}x**.`)
             : embed.warn('DM Spam Failed', result.message)
           ],
           components: result.success ? [row] : []
@@ -116,7 +116,7 @@ export const commands = [
         await executeChannelSpam(message.channel, text, count);
         const row = buildSpamMoreRow(userId, message.channel.id, null, text, 'channel');
         await message.channel.send({
-          embeds: [embed.success('Channel Spam Deployed 📨', `Message sent **${count}x** anonymously in this channel.`)],
+          embeds: [embed.success('Channel Spam Deployed ', `Message sent **${count}x** anonymously in this channel.`)],
           components: [row]
         }).catch(() => null);
       }
@@ -125,7 +125,7 @@ export const commands = [
     async executeSlash(interaction) {
       const userId = interaction.user.id;
       if (!isBotOwnerSync(userId) && !db.isSpamPermitted(userId)) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ You do not have permission to use this command.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', ' You do not have permission to use this command.')], ephemeral: true });
       }
 
       const targetUser = interaction.options.getUser('target') || null;
@@ -136,7 +136,7 @@ export const commands = [
         // Show modal
         const modal = new ModalBuilder()
           .setCustomId(`spam_modal_${interaction.user.id}`)
-          .setTitle('📨 Spam Manager');
+          .setTitle(' Spam Manager');
 
         modal.addComponents(
           new ActionRowBuilder().addComponents(
@@ -168,7 +168,7 @@ export const commands = [
         const row = buildSpamMoreRow(userId, null, targetUser.id, text, 'user_dm');
         await interaction.editReply({
           embeds: [result.success
-            ? embed.success('DM Spam Deployed 📨', `Spammed **${targetUser.tag}**'s DM **${count}x**.`)
+            ? embed.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM **${count}x**.`)
             : embed.warn('DM Spam Failed', result.message)
           ],
           components: result.success ? [row] : []
@@ -177,7 +177,7 @@ export const commands = [
         await executeChannelSpam(interaction.channel, text, count);
         const row = buildSpamMoreRow(userId, interaction.channel.id, null, text, 'channel');
         await interaction.editReply({
-          embeds: [embed.success('Channel Spam Deployed 📨', `Message sent **${count}x** anonymously.`)],
+          embeds: [embed.success('Channel Spam Deployed ', `Message sent **${count}x** anonymously.`)],
           components: [row]
         });
       }
@@ -189,7 +189,7 @@ export const commands = [
   // ─────────────────────────────────────────
   {
     name: 'spampermit',
-    description: '🔑 Grant a user permission to use the spam command. (Bot Owner only)',
+    description: '� Grant a user permission to use the spam command. (Bot Owner only)',
     category: 'owner',
     hidden: false,
     permissions: [],
@@ -216,14 +216,14 @@ export const commands = [
 
       return message.reply({ embeds: [
         added
-          ? embed.success('Spam Access Granted', `${message.author} ✅ ${userTag} can now use the spam command.`)
+          ? embed.success('Spam Access Granted', `${message.author}  ${userTag} can now use the spam command.`)
           : embed.warn('Already Permitted', `${message.author} That user already has spam access.`)
       ]});
     },
 
     async executeSlash(interaction) {
       if (!isBotOwnerSync(interaction.user.id)) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the Bot Owner can do this.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only the Bot Owner can do this.')], ephemeral: true });
       }
       const targetId = interaction.options.getString('userid').replace(/\D/g, '');
       if (!targetId || targetId.length < 17) {
@@ -235,7 +235,7 @@ export const commands = [
 
       return interaction.reply({ embeds: [
         added
-          ? embed.success('Spam Access Granted', `✅ ${userTag} can now use the spam command.`)
+          ? embed.success('Spam Access Granted', ` ${userTag} can now use the spam command.`)
           : embed.warn('Already Permitted', 'That user already has spam access.')
       ], ephemeral: true });
     }
@@ -246,7 +246,7 @@ export const commands = [
   // ─────────────────────────────────────────
   {
     name: 'spamrevoke',
-    description: '🔒 Revoke a user\'s spam permission. (Bot Owner only)',
+    description: '� Revoke a user\'s spam permission. (Bot Owner only)',
     category: 'owner',
     hidden: false,
     permissions: [],
@@ -267,7 +267,7 @@ export const commands = [
       let userTag = `\`${targetId}\``;
       try { const u = await message.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
       return message.reply({ embeds: [removed
-        ? embed.danger('Spam Access Revoked', `🔒 ${userTag}'s spam access has been revoked.`)
+        ? embed.danger('Spam Access Revoked', `� ${userTag}'s spam access has been revoked.`)
         : embed.warn('Not Found', `User \`${targetId}\` doesn't have spam access.`)
       ]});
     },
@@ -279,7 +279,7 @@ export const commands = [
       let userTag = `\`${targetId}\``;
       try { const u = await interaction.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
       return interaction.reply({ embeds: [removed
-        ? embed.danger('Spam Access Revoked', `🔒 ${userTag}'s spam access has been revoked.`)
+        ? embed.danger('Spam Access Revoked', `� ${userTag}'s spam access has been revoked.`)
         : embed.warn('Not Found', "That user doesn't have spam access.")
       ], ephemeral: true });
     }
@@ -290,7 +290,7 @@ export const commands = [
   // ─────────────────────────────────────────
   {
     name: 'spamlist',
-    description: '📋 List all permitted spam users. (Bot Owner only)',
+    description: '� List all permitted spam users. (Bot Owner only)',
     category: 'owner',
     hidden: false,
     permissions: [],
@@ -299,21 +299,21 @@ export const commands = [
     async executePrefix(message) {
       if (!isBotOwnerSync(message.author.id)) return;
       const list = db.getSpamPermitted();
-      if (list.length === 0) return message.reply({ embeds: [embed.info('Spam Permitted List', '📋 No users have spam access yet.')] });
+      if (list.length === 0) return message.reply({ embeds: [embed.info('Spam Permitted List', '� No users have spam access yet.')] });
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await message.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return message.reply({ embeds: [embed.security('Spam Access List', `📋 **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`)] });
+      return message.reply({ embeds: [embed.security('Spam Access List', `� **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`)] });
     },
 
     async executeSlash(interaction) {
       if (!isBotOwnerSync(interaction.user.id)) return interaction.reply({ embeds: [embed.danger('Access Denied', 'Bot Owner only.')], ephemeral: true });
       const list = db.getSpamPermitted();
-      if (list.length === 0) return interaction.reply({ embeds: [embed.info('Spam Permitted List', '📋 No users have spam access yet.')], ephemeral: true });
+      if (list.length === 0) return interaction.reply({ embeds: [embed.info('Spam Permitted List', '� No users have spam access yet.')], ephemeral: true });
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await interaction.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return interaction.reply({ embeds: [embed.security('Spam Access List', `📋 **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`)], ephemeral: true });
+      return interaction.reply({ embeds: [embed.security('Spam Access List', `� **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`)], ephemeral: true });
     }
   }
 ];
@@ -324,7 +324,7 @@ export const commands = [
 export async function handleSpamModal(interaction) {
   const userId = interaction.user.id;
   if (!isBotOwnerSync(userId) && !db.isSpamPermitted(userId)) {
-    return interaction.reply({ content: '🛡️ Access Denied.', ephemeral: true });
+    return interaction.reply({ content: ' Access Denied.', ephemeral: true });
   }
 
   const text = interaction.fields.getTextInputValue('spam_message').trim();
@@ -333,13 +333,13 @@ export async function handleSpamModal(interaction) {
 
   if (!text) return interaction.reply({ embeds: [embed.warn('Empty Message', 'You must enter a message.')], ephemeral: true });
 
-  await interaction.reply({ content: '📨 Spamming...', ephemeral: true });
+  await interaction.reply({ content: ' Spamming...', ephemeral: true });
 
   await executeChannelSpam(interaction.channel, text, count);
   const row = buildSpamMoreRow(userId, interaction.channel.id, null, text, 'channel');
 
   await interaction.followUp({
-    embeds: [embed.success('Spam Deployed 📨', `Message sent **${count}x** anonymously.`)],
+    embeds: [embed.success('Spam Deployed ', `Message sent **${count}x** anonymously.`)],
     components: [row],
     ephemeral: true
   }).catch(() => null);
@@ -355,15 +355,15 @@ export async function handleSpamMoreButton(interaction) {
   const buttonOwnerId = parts[2];
 
   if (interaction.user.id !== buttonOwnerId) {
-    return interaction.reply({ content: '❌ This button is not for you.', ephemeral: true });
+    return interaction.reply({ content: ' This button is not for you.', ephemeral: true });
   }
 
   const cacheEntry = spamMoreCache.get(customId);
   if (!cacheEntry) {
-    return interaction.reply({ content: '❌ This spam session has expired (10 min limit).', ephemeral: true });
+    return interaction.reply({ content: ' This spam session has expired (10 min limit).', ephemeral: true });
   }
 
-  await interaction.reply({ content: '📨 Sending 5 more...', ephemeral: true });
+  await interaction.reply({ content: ' Sending 5 more...', ephemeral: true });
 
   try {
     if (cacheEntry.mode === 'user_dm') {
@@ -371,7 +371,7 @@ export async function handleSpamMoreButton(interaction) {
       const newRow = buildSpamMoreRow(interaction.user.id, null, cacheEntry.targetUserId, cacheEntry.text, 'user_dm');
       await interaction.followUp({
         embeds: [result.success
-          ? embed.success('5 More Sent 📨', 'Sent 5 more DMs. Press again to send 5 more.')
+          ? embed.success('5 More Sent ', 'Sent 5 more DMs. Press again to send 5 more.')
           : embed.warn('DM Failed', result.message)
         ],
         components: result.success ? [newRow] : [],
@@ -383,7 +383,7 @@ export async function handleSpamMoreButton(interaction) {
         await executeChannelSpam(channel, cacheEntry.text, 5);
         const newRow = buildSpamMoreRow(interaction.user.id, cacheEntry.channelId, null, cacheEntry.text, 'channel');
         await interaction.followUp({
-          embeds: [embed.success('5 More Sent 📨', 'Sent 5 more. Press again for 5 more.')],
+          embeds: [embed.success('5 More Sent ', 'Sent 5 more. Press again for 5 more.')],
           components: [newRow],
           ephemeral: true
         }).catch(() => null);
@@ -406,7 +406,7 @@ function buildSpamMoreRow(requesterId, channelId, targetUserId, text, mode) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(buttonId)
-      .setLabel('📨 Send 5 More')
+      .setLabel(' Send 5 More')
       .setStyle(ButtonStyle.Primary)
   );
 }

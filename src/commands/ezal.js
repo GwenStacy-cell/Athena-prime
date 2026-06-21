@@ -178,22 +178,22 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       roleMap.set(roleData.name, newRole.id); // Name fallback
       created++;
       consecutiveFailures = 0;
-      rlog(`  ✅ Role OK: '${roleData.name}'`);
+      rlog(`   Role OK: '${roleData.name}'`);
     } catch (err) { 
       failed++; 
       consecutiveFailures++;
-      rlog(`  ❌ Role FAILED: '${roleData.name}' → ${err.message} (code ${err.code}, status ${err.status})`);
+      rlog(`   Role FAILED: '${roleData.name}' → ${err.message} (code ${err.code}, status ${err.status})`);
       if (!lastError) lastError = `Role '${roleData.name}': ${err.message} (code ${err.code})`;
       // Only abort if we have MANY consecutive failures (don't break on just a few timeouts)
       if (consecutiveFailures >= 10) {
-        rlog(`  🛑 10 consecutive failures — aborting role loop`);
+        rlog(`  � 10 consecutive failures — aborting role loop`);
         break;
       }
     }
     
     // Periodically update status
     if ((i + 1) % 5 === 0) {
-      await statusCallback(`Restoring **roles**... ✅ ${created} created | ❌ ${failed} failed (${i + 1}/${backupData.roles.length})`);
+      await statusCallback(`Restoring **roles**...  ${created} created |  ${failed} failed (${i + 1}/${backupData.roles.length})`);
     }
     rlog(`  Role ${i + 1}/${backupData.roles.length}: '${roleData.name}'`);
     await new Promise(r => setTimeout(r, 700)); // 700ms — tested safe, avoids rate limits
@@ -238,14 +238,14 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       categoryMap.set(catData.name, cat);
       created++;
       consecutiveFailures = 0;
-      rlog(`  ✅ Category OK: '${catData.name}'`);
+      rlog(`   Category OK: '${catData.name}'`);
     } catch (err) { 
       failed++;
       consecutiveFailures++;
-      rlog(`  ❌ Category FAILED: '${catData.name}' → ${err.message} (code ${err.code})`);
+      rlog(`   Category FAILED: '${catData.name}' → ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Category '${catData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  🛑 5 consecutive failures — aborting category loop`);
+        rlog(`  � 5 consecutive failures — aborting category loop`);
         break;
       }
     }
@@ -283,14 +283,14 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       );
       created++;
       consecutiveFailures = 0;
-      rlog(`  ✅ Channel OK: '${chData.name}'`);
+      rlog(`   Channel OK: '${chData.name}'`);
     } catch (err) { 
       failed++;
       consecutiveFailures++;
-      rlog(`  ❌ Channel FAILED: '${chData.name}' → ${err.message} (code ${err.code})`);
+      rlog(`   Channel FAILED: '${chData.name}' → ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Channel '${chData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  🛑 5 consecutive failures — aborting channel loop`);
+        rlog(`  � 5 consecutive failures — aborting channel loop`);
         break;
       }
     }
@@ -350,7 +350,7 @@ async function handleBcklist(message) {
   if (!backups.length) return message.reply({ embeds: [embed.warn('No Backups', 'No server backups have been saved yet.')] });
 
   const list = backups.map((b, i) =>
-    `\`${i + 1}.\` **${b.guildName}** | ID: \`${b.id}\` | 👥 ${b.memberCount} | 🎭 ${b.roleCount} | 📺 ${b.channelCount} | <t:${Math.floor(b.createdAt / 1000)}:R>`
+    `\`${i + 1}.\` **${b.guildName}** | ID: \`${b.id}\` | � ${b.memberCount} |  ${b.roleCount} | � ${b.channelCount} | <t:${Math.floor(b.createdAt / 1000)}:R>`
   ).join('\n');
 
   await message.reply({ embeds: [embed.info(
@@ -366,7 +366,7 @@ async function handleServers(message) {
   const lines = guilds.map((g, i) => {
     const backup = db.getBackupByGuild(g.id);
     const bId    = backup ? `\`${db.cache.guildBackupMap[g.id]}\`` : '`No Backup`';
-    return `\`${i + 1}.\` **${g.name}** \`(${g.id})\`\n└ 👥 ${g.memberCount} members | 🎭 ${g.roles.cache.size} roles | 📺 ${g.channels.cache.size} channels | Backup: ${bId}`;
+    return `\`${i + 1}.\` **${g.name}** \`(${g.id})\`\n└ � ${g.memberCount} members |  ${g.roles.cache.size} roles | � ${g.channels.cache.size} channels | Backup: ${bId}`;
   }).join('\n\n');
 
   // Split into chunks if too long

@@ -31,7 +31,7 @@ export default {
       const cmd = commandMap.get(interaction.commandName);
       if (!cmd) {
         return interaction.reply({
-          embeds: [embed.warn('Unknown Command', `${interaction.user} ❌ The command \`/${interaction.commandName}\` was not recognized.\n\nUse \`/help\` to see all available commands.`)],
+          embeds: [embed.warn('Unknown Command', `${interaction.user}  The command \`/${interaction.commandName}\` was not recognized.\n\nUse \`/help\` to see all available commands.`)],
           ephemeral: true
         });
       }
@@ -51,7 +51,7 @@ export default {
             : false;
           if (!hasPerms) {
             return interaction.reply({
-              embeds: [embed.danger('Access Denied', `${interaction.user} 🛡️ You do not possess the required permissions to execute this command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)],
+              embeds: [embed.danger('Access Denied', `${interaction.user}  You do not possess the required permissions to execute this command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)],
               ephemeral: true
             });
           }
@@ -111,7 +111,7 @@ export default {
         } catch (error) {
           console.error('Error handling Enuke modal:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ An error occurred during the nuke sequence.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' An error occurred during the nuke sequence.', ephemeral: true }).catch(() => null);
           }
         }
         return;
@@ -124,7 +124,7 @@ export default {
         } catch (error) {
           console.error('Error handling Spam modal:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ An error occurred with the spam command.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' An error occurred with the spam command.', ephemeral: true }).catch(() => null);
           }
         }
         return;
@@ -137,7 +137,7 @@ export default {
         } catch (error) {
           console.error('Error handling JTC modal:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ An error occurred with the voice channel action.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' An error occurred with the voice channel action.', ephemeral: true }).catch(() => null);
           }
         }
         return;
@@ -160,7 +160,7 @@ export default {
         } catch (error) {
           console.error('Error handling Accent modal:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ Failed to apply accent color.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' Failed to apply accent color.', ephemeral: true }).catch(() => null);
           }
         }
         return;
@@ -374,7 +374,7 @@ export default {
           if (changed) {
             successCount++;
             if (successCount % 15 === 0) {
-              await interaction.editReply({ embeds: [embed.info('Autonick Sync', `Syncing in progress...\n\n✅ Renamed: **${successCount}**\n❌ Failed/Skipped: **${failCount}**`)] }).catch(() => null);
+              await interaction.editReply({ embeds: [embed.info('Autonick Sync', `Syncing in progress...\n\n Renamed: **${successCount}**\n Failed/Skipped: **${failCount}**`)] }).catch(() => null);
             }
           } else {
             failCount++;
@@ -401,7 +401,7 @@ export default {
             await member.setNickname(null);
             successCount++;
             if (successCount % 15 === 0) {
-              await interaction.editReply({ embeds: [embed.info('Restoring Names', `Restore in progress...\n\n✅ Restored: **${successCount}**\n❌ Failed: **${failCount}**`)] }).catch(() => null);
+              await interaction.editReply({ embeds: [embed.info('Restoring Names', `Restore in progress...\n\n Restored: **${successCount}**\n Failed: **${failCount}**`)] }).catch(() => null);
             }
           } catch(e) {
             failCount++;
@@ -438,7 +438,7 @@ export default {
         const payload = await buildXpDashboard(interaction.guild.id);
         // Turn embed green to indicate save
         payload.embeds[0].data.color = 0x2ECC71;
-        payload.embeds[0].data.description = '**✅ XP Setup Saved & Locked!**\n\n' + payload.embeds[0].data.description;
+        payload.embeds[0].data.description = '** XP Setup Saved & Locked!**\n\n' + payload.embeds[0].data.description;
         // Disable components
         payload.components.forEach(row => row.components.forEach(btn => btn.setDisabled(true)));
         return interaction.update(payload).catch(() => null);
@@ -578,7 +578,7 @@ export default {
         } catch (error) {
           console.error('Error handling Enuke button:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ Failed to open Enuke Manager.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' Failed to open Enuke Manager.', ephemeral: true }).catch(() => null);
           }
         }
         return;
@@ -664,7 +664,7 @@ export default {
 
           // Create Text Channel
           const textChannel = await interaction.guild.channels.create({
-            name: `🎫-ticket-${interaction.user.username}`,
+            name: `�-ticket-${interaction.user.username}`,
             type: 0, // GUILD_TEXT
             parent: category.id,
             permissionOverwrites
@@ -672,7 +672,7 @@ export default {
 
           // Create Voice Channel
           const voiceChannel = await interaction.guild.channels.create({
-            name: `🔊 Ticket Voice`,
+            name: `� Ticket Voice`,
             type: 2, // GUILD_VOICE
             parent: category.id,
             permissionOverwrites
@@ -796,7 +796,7 @@ export default {
         } catch (error) {
           console.error('Error handling Accent button:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ Failed to process accent action.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' Failed to process accent action.', ephemeral: true }).catch(() => null);
           }
         }
         return;
@@ -826,7 +826,7 @@ export default {
 
       if (!isBtnBypass && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
         return interaction.reply({
-          content: '🛡️ Access Denied: You must possess the **Administrator** permission to adjust security panel configurations.',
+          content: ' Access Denied: You must possess the **Administrator** permission to adjust security panel configurations.',
           ephemeral: true
         });
       }
@@ -860,7 +860,7 @@ export default {
       } else if (interaction.customId === 'save_panel') {
         const panel = await getAntinukeConfigPanel(interaction.guild);
         panel.components.forEach(row => row.components.forEach(btn => btn.setDisabled(true)));
-        panel.embed.data.description = '**✅ Panel configuration has been saved and is now being actively enforced.**';
+        panel.embed.data.description = '** Panel configuration has been saved and is now being actively enforced.**';
         panel.embed.data.color = 0x2ECC71; // Success green color
         return interaction.update({ embeds: [panel.embed], components: panel.components });
       }
@@ -880,7 +880,7 @@ export default {
         } catch (err) {
           console.error('[JTC SelectMenu]', err);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ An error occurred.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' An error occurred.', ephemeral: true }).catch(() => null);
           }
         }
       }

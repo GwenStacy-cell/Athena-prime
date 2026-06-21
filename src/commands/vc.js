@@ -113,7 +113,7 @@ export const commands = [
               .then(() => {
                 count++;
                 if (count % 15 === 0) {
-                  interaction.editReply({ embeds: [embed.info('Undeafen All', `Undeafening in progress...\n\n✅ Undeafened: **${count}**`)] }).catch(() => null);
+                  interaction.editReply({ embeds: [embed.info('Undeafen All', `Undeafening in progress...\n\n Undeafened: **${count}**`)] }).catch(() => null);
                 }
               })
               .catch(() => null)

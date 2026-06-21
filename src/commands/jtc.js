@@ -25,9 +25,9 @@ let emojiMap = {};
 try {
   if (fs.existsSync(EMOJI_MAP_PATH)) {
     emojiMap = JSON.parse(fs.readFileSync(EMOJI_MAP_PATH, 'utf8'));
-    console.log(`[JTC] ✅ Loaded ${Object.keys(emojiMap).length} custom emojis. Path: ${EMOJI_MAP_PATH}`);
+    console.log(`[JTC]  Loaded ${Object.keys(emojiMap).length} custom emojis. Path: ${EMOJI_MAP_PATH}`);
   } else {
-    console.warn(`[JTC] ⚠️  Emoji map not found at: ${EMOJI_MAP_PATH}`);
+    console.warn(`[JTC] ⚠  Emoji map not found at: ${EMOJI_MAP_PATH}`);
   }
 } catch (e) {
   console.error('[JTC] Failed to load emoji map:', e.message);
@@ -38,10 +38,10 @@ function getEmoji(key) {
   if (emojiMap[key]?.id) return { id: emojiMap[key].id, name: emojiMap[key].name };
   // Fallback text emoji
   const fallbacks = {
-    name: '✏️', limit: '👥', status: '💬', game: '🎮', lfm: '🔍',
-    bitrate: '🎚️', region: '🌍', text: '#️⃣', nsfw: '⚠️', claim: '👑',
-    lock: '🔒', unlock: '🔓', ghost: '👻', unghost: '👁️',
-    permit: '✅', reject: '🚫', invite: '📨', transfer: '⭐'
+    name: '✏', limit: '�', status: '�', game: '�', lfm: '�',
+    bitrate: '�', region: '�', text: '#⃣', nsfw: '⚠', claim: '',
+    lock: '�', unlock: '�', ghost: '�', unghost: '�',
+    permit: '', reject: '', invite: '', transfer: ''
   };
   return fallbacks[key] || '❔';
 }
@@ -59,7 +59,7 @@ function getAccent(guildId) {
 export function buildControlPanel(vcChannel, ownerMember) {
   const panelEmbed = new EmbedBuilder()
     .setColor(getAccent(vcChannel.guild.id))
-    .setTitle('⚙️ Welcome to your own temporary voice channel')
+    .setTitle('⚙ Welcome to your own temporary voice channel')
     .setDescription(
       `Control your channel using the menus below\n` +
       `• Use the dropdowns to manage settings and permissions\n` +
@@ -85,7 +85,7 @@ export function buildControlPanel(vcChannel, ownerMember) {
       { label: 'Text', description: 'Create a temporary text channel', value: 'jtc_text', emoji: getEmoji('text') },
       { label: 'NSFW', description: 'Toggle NSFW on your channel', value: 'jtc_nsfw', emoji: getEmoji('nsfw') },
       { label: 'Claim', description: 'Claim ownership of the channel', value: 'jtc_claim', emoji: getEmoji('claim') },
-      { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: 'ℹ️' }
+      { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: 'ℹ' }
     ]);
 
   // ── Channel Permissions Dropdown ──
@@ -116,13 +116,13 @@ export function buildControlPanel(vcChannel, ownerMember) {
 export function buildSharedPanel(guildId) {
   const panelEmbed = new EmbedBuilder()
     .setColor(getAccent(guildId))
-    .setTitle('⚙️ Voice Channel Control Panel')
+    .setTitle('⚙ Voice Channel Control Panel')
     .setDescription(
       `**Manage your temporary voice channel using the menus below.**\n\n` +
       `• Join the **➕ Join to Create** lobby first\n` +
       `• Use the dropdowns to control your room\n` +
       `• Alternatively use \`/vc\` slash commands\n\n` +
-      `> 🔒 Only **you** can see the responses — fully private.`
+      `> � Only **you** can see the responses — fully private.`
     )
     .setFooter({ text: 'Athena Prime • Join to Create' });
 
@@ -140,7 +140,7 @@ export function buildSharedPanel(guildId) {
       { label: 'Text', description: 'Create a temporary text channel', value: 'jtc_text', emoji: getEmoji('text') },
       { label: 'NSFW', description: 'Toggle NSFW on your channel', value: 'jtc_nsfw', emoji: getEmoji('nsfw') },
       { label: 'Claim', description: 'Claim ownership of the channel', value: 'jtc_claim', emoji: getEmoji('claim') },
-      { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: 'ℹ️' }
+      { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: 'ℹ' }
     ]);
 
   const permsMenu = new StringSelectMenuBuilder()
@@ -198,14 +198,14 @@ export async function handleJtcSelectMenu(interaction) {
     const members = vcChannel.members.map(m => m.toString()).join(', ') || 'None';
     const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
     return interaction.reply({
-      embeds: [embed.info('Channel Info ℹ️', null, [
-        { name: '📋 Name', value: vcChannel.name, inline: true },
-        { name: '👑 Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
-        { name: '👥 Limit', value: vcChannel.userLimit === 0 ? 'No Limit' : `${vcChannel.userLimit}`, inline: true },
-        { name: '🎚️ Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
-        { name: '🌍 Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
-        { name: '⚠️ NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true },
-        { name: '👤 Members In Channel', value: members }
+      embeds: [embed.info('Channel Info ℹ', null, [
+        { name: '� Name', value: vcChannel.name, inline: true },
+        { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
+        { name: '� Limit', value: vcChannel.userLimit === 0 ? 'No Limit' : `${vcChannel.userLimit}`, inline: true },
+        { name: '� Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
+        { name: '� Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
+        { name: '⚠ NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true },
+        { name: '� Members In Channel', value: members }
       ])],
       ephemeral: true
     });
@@ -221,28 +221,28 @@ export async function handleJtcSelectMenu(interaction) {
 
   if (value === 'jtc_lock') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: false });
-    return interaction.reply({ embeds: [embed.danger('Channel Locked 🔒', 'No one new can join your channel.')], ephemeral: true });
+    return interaction.reply({ embeds: [embed.danger('Channel Locked �', 'No one new can join your channel.')], ephemeral: true });
   }
 
   if (value === 'jtc_unlock') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: null });
-    return interaction.reply({ embeds: [embed.success('Channel Unlocked 🔓', 'Your channel is now open for anyone to join.')], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Channel Unlocked �', 'Your channel is now open for anyone to join.')], ephemeral: true });
   }
 
   if (value === 'jtc_ghost') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
-    return interaction.reply({ embeds: [embed.info('Channel Hidden 👻', 'Your channel is now invisible to others.\nUsers you permit can still see and join.')], ephemeral: true });
+    return interaction.reply({ embeds: [embed.info('Channel Hidden �', 'Your channel is now invisible to others.\nUsers you permit can still see and join.')], ephemeral: true });
   }
 
   if (value === 'jtc_unghost') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: null });
-    return interaction.reply({ embeds: [embed.success('Channel Visible 👁️', 'Your channel is now visible to everyone again.')], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Channel Visible �', 'Your channel is now visible to everyone again.')], ephemeral: true });
   }
 
   if (value === 'jtc_nsfw') {
     const current = vcChannel.nsfw;
     await vcChannel.setNSFW(!current).catch(() => null);
-    return interaction.reply({ embeds: [current ? embed.success('NSFW Disabled', 'Your channel is no longer marked NSFW.') : embed.warn('NSFW Enabled ⚠️', 'Your channel has been marked as NSFW.')], ephemeral: true });
+    return interaction.reply({ embeds: [current ? embed.success('NSFW Disabled', 'Your channel is no longer marked NSFW.') : embed.warn('NSFW Enabled ⚠', 'Your channel has been marked as NSFW.')], ephemeral: true });
   }
 
   // ── GAME — set channel name to game owner is playing ──
@@ -253,19 +253,19 @@ export async function handleJtcSelectMenu(interaction) {
       return interaction.reply({ embeds: [embed.warn('No Game Detected', 'You must be playing a game with rich presence enabled for this to work.')], ephemeral: true });
     }
     await vcChannel.setName(activity.name).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Game Set 🎮', `Channel renamed to **${activity.name}**.`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Game Set �', `Channel renamed to **${activity.name}**.`)], ephemeral: true });
   }
 
   // ── LFM — post Looking For Members message ──
   if (value === 'jtc_lfm') {
     const lfmEmbed = new EmbedBuilder()
       .setColor(getAccent(guild.id))
-      .setTitle('🔍 Looking for Members!')
+      .setTitle('� Looking for Members!')
       .setDescription(`**${member.displayName}** is looking for members to join their voice channel!\n\n**Channel:** ${vcChannel}\n**Slots Available:** ${vcChannel.userLimit === 0 ? 'Unlimited' : vcChannel.userLimit - vcChannel.members.size}`)
       .setFooter({ text: 'Join their channel to play together!' })
       .setTimestamp();
     await interaction.channel.send({ embeds: [lfmEmbed] }).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('LFM Posted 🔍', 'Your Looking for Members message has been posted in this channel.')], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('LFM Posted �', 'Your Looking for Members message has been posted in this channel.')], ephemeral: true });
   }
 
   // ── TEXT — create a temp text channel linked to VC ──
@@ -292,7 +292,7 @@ export async function handleJtcSelectMenu(interaction) {
     for (const [, m] of vcChannel.members) {
       await textCh.permissionOverwrites.edit(m.id, { ViewChannel: true, SendMessages: true }).catch(() => null);
     }
-    return interaction.reply({ embeds: [embed.success('Text Channel Created #️⃣', `Temporary text channel created: ${textCh}
+    return interaction.reply({ embeds: [embed.success('Text Channel Created #⃣', `Temporary text channel created: ${textCh}
 
 It is only visible to members in your voice channel.`)], ephemeral: true });
   }
@@ -322,7 +322,7 @@ It is only visible to members in your voice channel.`)], ephemeral: true });
     const modal = new ModalBuilder().setCustomId('jtc_status_modal').setTitle('Set Channel Status');
     modal.addComponents(new ActionRowBuilder().addComponents(
       new TextInputBuilder().setCustomId('jtc_status_val').setLabel('Channel Status')
-        .setStyle(TextInputStyle.Short).setPlaceholder('e.g. Playing Valorant 🎮').setRequired(true).setMaxLength(500)
+        .setStyle(TextInputStyle.Short).setPlaceholder('e.g. Playing Valorant �').setRequired(true).setMaxLength(500)
     ));
     return interaction.showModal(modal);
   }
@@ -403,32 +403,32 @@ export async function handleJtcModal(interaction) {
   if (customId === 'jtc_rename_modal') {
     const newName = interaction.fields.getTextInputValue('jtc_new_name').trim();
     await vcChannel.setName(newName).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Channel Renamed ✏️', `Your channel has been renamed to **${newName}**.`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Channel Renamed ✏', `Your channel has been renamed to **${newName}**.`)], ephemeral: true });
   }
 
   if (customId === 'jtc_limit_modal') {
     const val = parseInt(interaction.fields.getTextInputValue('jtc_limit_val')) || 0;
     const limit = Math.min(Math.max(val, 0), 99);
     await vcChannel.setUserLimit(limit).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Limit Updated 👥', `User limit set to **${limit === 0 ? 'Unlimited' : limit}**.`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Limit Updated �', `User limit set to **${limit === 0 ? 'Unlimited' : limit}**.`)], ephemeral: true });
   }
 
   if (customId === 'jtc_status_modal') {
     const status = interaction.fields.getTextInputValue('jtc_status_val').trim();
     await interaction.client.rest.put(`/channels/${vcChannel.id}/voice-status`, { body: { status } }).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Status Set 💬', `Channel status set to: **${status}**`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Status Set �', `Channel status set to: **${status}**`)], ephemeral: true });
   }
 
   if (customId === 'jtc_bitrate_modal') {
     const kbps = Math.min(Math.max(parseInt(interaction.fields.getTextInputValue('jtc_bitrate_val')) || 64, 8), 384);
     await vcChannel.setBitrate(kbps * 1000).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Bitrate Updated 🎚️', `Bitrate set to **${kbps}kbps**.`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Bitrate Updated �', `Bitrate set to **${kbps}kbps**.`)], ephemeral: true });
   }
 
   if (customId === 'jtc_region_modal') {
     const region = interaction.fields.getTextInputValue('jtc_region_val').trim().toLowerCase() || null;
     await vcChannel.setRTCRegion(region).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Region Updated 🌍', `Voice region set to **${region || 'Auto'}**.`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Region Updated �', `Voice region set to **${region || 'Auto'}**.`)], ephemeral: true });
   }
 
   if (customId === 'jtc_permit_modal') {
@@ -436,7 +436,7 @@ export async function handleJtcModal(interaction) {
     const target = await guild.members.fetch(userId).catch(() => null);
     if (!target) return interaction.reply({ embeds: [embed.warn('User Not Found', 'Could not find that user in this server.')], ephemeral: true });
     await vcChannel.permissionOverwrites.edit(userId, { Connect: true, ViewChannel: true });
-    return interaction.reply({ embeds: [embed.success('User Permitted ✅', `${target} can now join your channel even when locked or ghosted.`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('User Permitted ', `${target} can now join your channel even when locked or ghosted.`)], ephemeral: true });
   }
 
   if (customId === 'jtc_reject_modal') {
@@ -445,7 +445,7 @@ export async function handleJtcModal(interaction) {
     if (!target) return interaction.reply({ embeds: [embed.warn('User Not Found', 'Could not find that user.')], ephemeral: true });
     if (target.voice?.channelId === vcChannel.id) await target.voice.disconnect().catch(() => null);
     await vcChannel.permissionOverwrites.edit(userId, { Connect: false, ViewChannel: false });
-    return interaction.reply({ embeds: [embed.danger('User Rejected 🚫', `${target} has been removed and banned from your channel.`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.danger('User Rejected ', `${target} has been removed and banned from your channel.`)], ephemeral: true });
   }
 
   if (customId === 'jtc_invite_modal') {
@@ -456,13 +456,13 @@ export async function handleJtcModal(interaction) {
     const invite = await vcChannel.createInvite({ maxAge: 300, maxUses: 1, reason: 'JTC Invite' }).catch(() => null);
     const dmEmbed = new EmbedBuilder()
       .setColor(getAccent(guild.id))
-      .setTitle('📨 You\'ve been invited!')
+      .setTitle(' You\'ve been invited!')
       .setDescription(`**${member.displayName}** has invited you to join their voice channel in **${guild.name}**.\n\n**Channel:** ${vcChannel.name}\n\n${invite ? `[Click to Join](${invite.url})` : 'Join the server and look for their channel.'}`)
       .setFooter({ text: 'Athena Prime • Join to Create' });
 
     const dmSent = await target.send({ embeds: [dmEmbed] }).catch(() => null);
     if (!dmSent) return interaction.reply({ embeds: [embed.warn('DM Failed', `Could not send a DM to ${target}. They may have DMs disabled.`)], ephemeral: true });
-    return interaction.reply({ embeds: [embed.success('Invite Sent 📨', `${target} has been invited to your channel via DM.`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Invite Sent ', `${target} has been invited to your channel via DM.`)], ephemeral: true });
   }
 
   if (customId === 'jtc_transfer_modal') {
@@ -473,7 +473,7 @@ export async function handleJtcModal(interaction) {
     await vcChannel.permissionOverwrites.edit(member.id, { ManageChannels: false }).catch(() => null);
     await vcChannel.permissionOverwrites.edit(userId, { Connect: true, ViewChannel: true, ManageChannels: true }).catch(() => null);
     db.setJtcOwner(vcChannel.id, userId);
-    return interaction.reply({ embeds: [embed.success('Ownership Transferred 👑', `${target} is now the owner of this channel.`)], ephemeral: true });
+    return interaction.reply({ embeds: [embed.success('Ownership Transferred ', `${target} is now the owner of this channel.`)], ephemeral: true });
   }
 }
 
@@ -484,7 +484,7 @@ export const commands = [
   // ─── JTCSETUP ───
   {
     name: 'jtcsetup',
-    description: '⚙️ Set up the Join to Create system. (Admin only)',
+    description: '⚙ Set up the Join to Create system. (Admin only)',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [
@@ -504,7 +504,7 @@ export const commands = [
       const panelChannel = interaction.options.getChannel('panel_channel');
 
       if (!lobbyChannel) {
-        const cat = await guild.channels.create({ name: '🎙️ Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
+        const cat = await guild.channels.create({ name: '� Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
         lobbyChannel = await guild.channels.create({ name: '➕ Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
         category = cat;
       }
@@ -514,7 +514,7 @@ export const commands = [
       db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
 
       await interaction.editReply({
-        embeds: [embed.success('JTC System Activated ✅', [
+        embeds: [embed.success('JTC System Activated ', [
           `**Lobby Channel:** ${lobbyChannel}`,
           `**Category:** ${categoryId ? `<#${categoryId}>` : 'Same as lobby'}`,
           `**Panel Channel:** ${panelChannelId ? `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
@@ -529,7 +529,7 @@ export const commands = [
   // ─── JTCDISABLE ───
   {
     name: 'jtcdisable',
-    description: '❌ Disable the Join to Create system. (Admin only)',
+    description: ' Disable the Join to Create system. (Admin only)',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [],
@@ -547,7 +547,7 @@ export const commands = [
   // ─── VC SLASH COMMANDS ───
   {
     name: 'vc',
-    description: '🎙️ Voice channel quick actions. Use the panel buttons for all settings.',
+    description: '� Voice channel quick actions. Use the panel buttons for all settings.',
     category: 'utility',
     permissions: [],
     options: [
@@ -577,12 +577,12 @@ export const commands = [
       if (sub === 'info') {
         const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
         return interaction.reply({ embeds: [embed.info('Channel Info', null, [
-          { name: '📋 Name', value: vcChannel.name, inline: true },
-          { name: '👑 Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
-          { name: '👥 Limit', value: vcChannel.userLimit === 0 ? 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
-          { name: '🎚️ Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
-          { name: '🌍 Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
-          { name: '⚠️ NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true }
+          { name: '� Name', value: vcChannel.name, inline: true },
+          { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
+          { name: '� Limit', value: vcChannel.userLimit === 0 ? 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
+          { name: '� Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
+          { name: '� Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
+          { name: '⚠ NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true }
         ])], ephemeral: true });
       }
     }

@@ -91,7 +91,7 @@ export function scheduleAutoUnquarantine(client, guildId, userId, durationMs) {
       await executeUnquarantine(guild, member, botMember);
       logToSecurityChannel(guild, embed.info(
         'Auto-Unquarantine',
-        `⏰ <@${userId}>'s quarantine duration expired — automatically released.`
+        ` <@${userId}>'s quarantine duration expired — automatically released.`
       ));
     } catch (err) {
       console.error('[AutoUnquarantine]', err);
@@ -752,7 +752,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} 🛡️ This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
+        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
       }
 
       const url = args[0] || message.attachments.first()?.url;
@@ -777,7 +777,7 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} 🛡️ This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], ephemeral: true });
       }
 
       const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
@@ -824,7 +824,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} 🛡️ This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
+        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
       }
 
       const url = args[0] || message.attachments.first()?.url;
@@ -849,7 +849,7 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} 🛡️ This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], ephemeral: true });
       }
 
       const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
@@ -1148,7 +1148,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId;
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can use this command.')] });
+        return message.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.')] });
       }
       const sub = args.join(' ').toLowerCase().trim();
       const enable = (sub === 'enable all' || sub === 'enable_all');
@@ -1170,7 +1170,7 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can use this command.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.')], ephemeral: true });
       }
       const action = interaction.options.getString('action');
       const enable = action === 'enable_all';
@@ -1257,7 +1257,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId;
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can control the bot\'s deafen state.')] });
+        return message.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can control the bot\'s deafen state.')] });
       }
       const status = args[0]?.toLowerCase();
       if (status !== 'deafen' && status !== 'undeafen') {
@@ -1269,7 +1269,7 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only the **Bot Owner** or **Server Owner** can control the bot\'s deafen state.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can control the bot\'s deafen state.')], ephemeral: true });
       }
       const status = interaction.options.getString('status');
       const result = await handleDeafen(interaction.guild, status === 'deafen');
@@ -1458,7 +1458,7 @@ async function getImageBuffer(url) {
 export async function executeQuarantine(guild, targetMember, moderator, reason, durationMs = null, client = null) {
   // Owner immunity check
   if (isBotOwnerSync(targetMember.id) || isExtraOwner(guild.id, targetMember.id)) {
-    return { success: false, message: '🛡️ This user is protected by **Athena Prime** and cannot be quarantined.' };
+    return { success: false, message: ' This user is protected by **Athena Prime** and cannot be quarantined.' };
   }
 
   // 1. Check permission checks (if triggered by a moderator and not an auto-event)
@@ -1532,7 +1532,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
     const durationLabel = durationMs ? formatDuration(durationMs) : 'Until manually lifted';
     const dmEmbed = embed.danger(
       'Server Isolation Notice',
-      `⚠️ You have been placed under **Quarantine** in **${guild.name}**.`,
+      `⚠ You have been placed under **Quarantine** in **${guild.name}**.`,
       [
         { name: 'Reason', value: reason },
         { name: 'Duration', value: durationLabel, inline: true },
@@ -1619,7 +1619,7 @@ export async function executeUnquarantine(guild, targetMember, moderator) {
     // DM target user
     const dmEmbed = embed.success(
       'Isolation Terminated',
-      `🎉 Your quarantine status has been lifted in **${guild.name}**! Your original access privileges have been fully restored.`,
+      `� Your quarantine status has been lifted in **${guild.name}**! Your original access privileges have been fully restored.`,
       []
     );
     await targetMember.send({ embeds: [dmEmbed] }).catch(() => null);
@@ -1833,7 +1833,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const lockEmbed = embed.danger(
         'Lockdown Activated', 
-        `🔴 This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
+        `� This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
       );
       logToSecurityChannel(guild, embed.log('Channel Locked', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
       return { embed: lockEmbed };
@@ -1843,7 +1843,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const unlockEmbed = embed.success(
         'Lockdown Deactivated', 
-        `🟢 Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
+        `� Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
       );
       logToSecurityChannel(guild, embed.log('Channel Unlocked', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
       return { embed: unlockEmbed };
@@ -1861,7 +1861,7 @@ async function handleRaidMode(guild, moderator, mode) {
   if (enabled) {
     const resEmbed = embed.raid(
       'Raid Mode Engaged',
-      `🚨 **Server Raid Protection is now ACTIVE.**\nAll joining accounts will be automatically quarantined immediately to protect the server until deactivated.`,
+      `� **Server Raid Protection is now ACTIVE.**\nAll joining accounts will be automatically quarantined immediately to protect the server until deactivated.`,
       [{ name: 'Enforced by', value: `${moderator}` }]
     );
     logToSecurityChannel(guild, embed.log('Raid Mode Active', `Administrator **${moderator.user.tag}** turned ON Guild Raid Mode.`, [], 'raid'));
@@ -1869,7 +1869,7 @@ async function handleRaidMode(guild, moderator, mode) {
   } else {
     const resEmbed = embed.success(
       'Raid Mode Disengaged',
-      `🛡️ **Server Raid Protection is now OFF.**\nNew accounts can join normally.`,
+      ` **Server Raid Protection is now OFF.**\nNew accounts can join normally.`,
       [{ name: 'Lifted by', value: `${moderator}` }]
     );
     logToSecurityChannel(guild, embed.log(
@@ -1920,7 +1920,7 @@ async function handleWhitelist(guild, moderator, action, targetUser, events = ['
       return `• <@${id}> (ID: \`${id}\`) — **Events:** \`${evs}\``;
     }).join('\n');
     
-    return { embed: embed.info('🛡️ Security Whitelist', `Whitelisted users immune to specific Auto-Mod and Firewall filters:\n\n**Server Owner (Always Immune):** <@${guild.ownerId}>\n\n**Custom Whitelist:**\n${formattedList}`) };
+    return { embed: embed.info(' Security Whitelist', `Whitelisted users immune to specific Auto-Mod and Firewall filters:\n\n**Server Owner (Always Immune):** <@${guild.ownerId}>\n\n**Custom Whitelist:**\n${formattedList}`) };
   }
 }
 
@@ -2140,17 +2140,17 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 
 *(Use \'antinuke config\' or individual commands to fine-tune)*`,
         [
-          { name: '🛡️ Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: ' Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
           { name: '⚡ Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '🔗 Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '🌐 Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '📝 Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '� Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '� Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '� Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
           { name: 'Enforced by', value: `${moderator}`, inline: true }
         ]
       )
     : embed.warn(
         'All Security Shields DISENGAGED',
-        `🛡️ Athena Prime protective filters have been **DEACTIVATED** server-wide.`,
+        ` Athena Prime protective filters have been **DEACTIVATED** server-wide.`,
         [{ name: 'Lifted by', value: `${moderator}` }]
       );
 
@@ -2287,22 +2287,22 @@ async function getServerInfoEmbed(guild) {
   const antiSpamStatus   = config.antiSpamEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiInviteStatus = (config.antiInviteEnabled !== false) ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
-  const raidModeStatus   = config.raidMode                      ? '🚨 ENGAGED' : `${TOGGLE_ON} STANDBY`;
+  const raidModeStatus   = config.raidMode                      ? '� ENGAGED' : `${TOGGLE_ON} STANDBY`;
 
   const fields = [
-    { name: '👑 Owner', value: `${ownerTag}`, inline: true },
-    { name: '👥 Members', value: `**${totalMembers}**`, inline: true },
-    { name: '📋 Roles', value: `**${roleCount}**`, inline: true },
-    { name: '💬 Channels', value: `**${channelCount}**`, inline: true },
-    { name: '🚀 Boost Level', value: `**Tier ${boostLevel}** (${boostCount} boosts)`, inline: true },
-    { name: '📅 Created', value: createdAt, inline: true },
+    { name: ' Owner', value: `${ownerTag}`, inline: true },
+    { name: '� Members', value: `**${totalMembers}**`, inline: true },
+    { name: '� Roles', value: `**${roleCount}**`, inline: true },
+    { name: '� Channels', value: `**${channelCount}**`, inline: true },
+    { name: '� Boost Level', value: `**Tier ${boostLevel}** (${boostCount} boosts)`, inline: true },
+    { name: '� Created', value: createdAt, inline: true },
     { name: '\u200b', value: '**── Security Status ──**' },
-    { name: '🛡️ Anti-Nuke', value: antiNukeStatus, inline: true },
+    { name: ' Anti-Nuke', value: antiNukeStatus, inline: true },
     { name: '⚡ Anti-Spam', value: antiSpamStatus, inline: true },
-    { name: '🔗 Anti-Invite', value: antiInviteStatus, inline: true },
-    { name: '🌐 Anti-Link', value: antiLinkStatus, inline: true },
-    { name: '🚨 Raid Mode', value: raidModeStatus, inline: true },
-    { name: '⚠️ Max Warns', value: `\`${config.maxWarnings}\``, inline: true }
+    { name: '� Anti-Invite', value: antiInviteStatus, inline: true },
+    { name: '� Anti-Link', value: antiLinkStatus, inline: true },
+    { name: '� Raid Mode', value: raidModeStatus, inline: true },
+    { name: '⚠ Max Warns', value: `\`${config.maxWarnings}\``, inline: true }
   ];
 
   const serverEmbed = embed.security(
@@ -2336,20 +2336,20 @@ async function getUserInfoEmbed(guild, member) {
     .join(', ') || 'None';
 
   let privileges = [];
-  if (isBotOwn) privileges.push('👑 **Bot Owner**');
-  if (isServerOwner) privileges.push('👑 **Server Owner**');
-  if (isExtraOwner) privileges.push('⭐ **Extra Owner**');
-  if (isWhitelisted) privileges.push(`✅ **Whitelisted** (${wlEvents})`);
+  if (isBotOwn) privileges.push(' **Bot Owner**');
+  if (isServerOwner) privileges.push(' **Server Owner**');
+  if (isExtraOwner) privileges.push(' **Extra Owner**');
+  if (isWhitelisted) privileges.push(` **Whitelisted** (${wlEvents})`);
   if (privileges.length === 0) privileges.push('Standard Member');
 
   const fields = [
-    { name: '🏷️ Username', value: `${member.user.tag}`, inline: true },
-    { name: '🆔 User ID', value: `\`${member.id}\``, inline: true },
-    { name: '📅 Account Created', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
-    { name: '📥 Joined Server', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: true },
-    { name: '⚠️ Active Warnings', value: `\`${warnings.length}\``, inline: true },
-    { name: '🛡️ Privileges', value: privileges.join(' | '), inline: true },
-    { name: `📋 Roles [${member.roles.cache.size - 1}]`, value: roles }
+    { name: '� Username', value: `${member.user.tag}`, inline: true },
+    { name: '� User ID', value: `\`${member.id}\``, inline: true },
+    { name: '� Account Created', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
+    { name: '� Joined Server', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: true },
+    { name: '⚠ Active Warnings', value: `\`${warnings.length}\``, inline: true },
+    { name: ' Privileges', value: privileges.join(' | '), inline: true },
+    { name: `� Roles [${member.roles.cache.size - 1}]`, value: roles }
   ];
 
   const userEmbed = embed.info(
@@ -2389,20 +2389,20 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
 
   const resEmbed = enable
     ? embed.success(
-        'All Security Shields ENGAGED 🚨',
+        'All Security Shields ENGAGED �',
         `All Athena Prime protective layers are now **ACTIVE**.\nAnti-Nuke, Anti-Spam, Anti-Invite, Anti-Link, and Word Filter are fully armed!\n\n*(Use individual commands like \`antinuke config\` or \`linksallow\` to fine-tune)*`,
         [
-          { name: '🛡️ Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: ' Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
           { name: '⚡ Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '🔗 Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '🌐 Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '📝 Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '� Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '� Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '� Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
           { name: 'Enabled by',    value: `${moderator}`,    inline: true }
         ]
       )
     : embed.warn(
         'All Security Shields DISENGAGED',
-        `🛡️ All Athena Prime protective filters have been **DEACTIVATED** server-wide.`,
+        ` All Athena Prime protective filters have been **DEACTIVATED** server-wide.`,
         [{ name: 'Disabled by', value: `${moderator}` }]
       );
 
@@ -2433,17 +2433,17 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const synced = await syncQuarantinePermissions(guild, qRole, qChannel?.id || null);
 
     const fields = [
-      { name: '🔒 Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : '❌ Not Created', inline: true },
-      { name: '💬 Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : '❌ Not Created', inline: true },
-      { name: '🔢 Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
+      { name: '� Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
+      { name: '� Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
+      { name: '� Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
     ];
 
     const vc = config.quarantineVcId ? await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
-    if (vc) fields.push({ name: '🔊 Quarantine VC', value: `<#${vc.id}>`, inline: true });
+    if (vc) fields.push({ name: '� Quarantine VC', value: `<#${vc.id}>`, inline: true });
 
     return {
       embed: embed.success(
-        'Quarantine System Fixed ✅',
+        'Quarantine System Fixed ',
         `The quarantine role and channel have been set up.\nDeny overwrites applied to **${synced}** channels — quarantined users will only see the quarantine zone.`,
         fields
       )
@@ -2480,9 +2480,9 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 
     return {
       embed: embed.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
-        { name: '🔒 Quarantine Role',    value: role    ? `<@&${role.id}>`   : '❌ Not Set — run `/qrmanager setup`', inline: true },
-        { name: '💬 Quarantine Channel', value: channel ? `<#${channel.id}>` : '❌ Not Set — run `/qrmanager setup`', inline: true },
-        { name: '🔊 Quarantine VC',      value: vc      ? `<#${vc.id}>`      : '⚠️ Not Set — use `/qrmanager setvc`', inline: true }
+        { name: '� Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set — run `/qrmanager setup`', inline: true },
+        { name: '� Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set — run `/qrmanager setup`', inline: true },
+        { name: '� Quarantine VC',      value: vc      ? `<#${vc.id}>`      : '⚠ Not Set — use `/qrmanager setvc`', inline: true }
       ])
     };
   }
@@ -2505,7 +2505,7 @@ async function handleDeafen(guild, deaf) {
   }
   return {
     embed: embed.success(
-      deaf ? '🔇 Bot Deafened' : '🔊 Bot Undeafened',
+      deaf ? '� Bot Deafened' : '� Bot Undeafened',
       deaf
         ? 'The bot is now **server deafened** and will not process incoming audio.'
         : 'The bot is now **undeafened** and can hear audio in the voice channel.'
@@ -2521,9 +2521,9 @@ async function handleLinksAllow(guild, action, domain) {
     db.updateGuildConfig(guild.id, { allowAllLinks: true });
     return {
       embed: embed.success(
-        '🔓 All Links Allowed',
+        '� All Links Allowed',
         'The anti-link filter has been **completely disabled** for this server.\n\nAll users can now post any link freely.\n\nUse `/linksallow disallowall` to re-enable the filter.',
-        [{ name: '⚠️ Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
+        [{ name: '⚠ Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
       )
     };
   }
@@ -2532,7 +2532,7 @@ async function handleLinksAllow(guild, action, domain) {
     db.updateGuildConfig(guild.id, { allowAllLinks: false });
     return {
       embed: embed.warn(
-        '🔒 Anti-Link Filter Restored',
+        '� Anti-Link Filter Restored',
         'The anti-link filter is **active** again.\n\nOnly whitelisted domains are allowed. Use `/linksallow add <domain>` to whitelist specific domains.'
       )
     };
@@ -2579,7 +2579,7 @@ async function handleLinksAllow(guild, action, domain) {
   if (allOpen) {
     return {
       embed: embed.info(
-        '🔓 All Links Allowed',
+        '� All Links Allowed',
         'The anti-link filter is currently **fully disabled** — all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
       )
     };
@@ -2656,26 +2656,26 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
     'Mass Quarantine Executed',
     `**${moderator.user.tag}** mass-quarantined all members with role <@&${targetRole.id}>.`,
     [
-      { name: '🎯 Role',       value: `<@&${targetRole.id}>`, inline: true },
-      { name: '✅ Quarantined', value: `\`${success}\``,       inline: true },
-      { name: '❌ Failed',      value: `\`${failed}\``,        inline: true },
-      { name: '⏭️ Skipped',    value: `\`${skipped}\``,       inline: true },
-      { name: '📋 Reason',     value: reason }
+      { name: '� Role',       value: `<@&${targetRole.id}>`, inline: true },
+      { name: ' Quarantined', value: `\`${success}\``,       inline: true },
+      { name: ' Failed',      value: `\`${failed}\``,        inline: true },
+      { name: '⏭ Skipped',    value: `\`${skipped}\``,       inline: true },
+      { name: '� Reason',     value: reason }
     ],
     'danger'
   ));
 
   return {
     embed: embed.danger(
-      '🔒 Mass Quarantine Complete',
+      '� Mass Quarantine Complete',
       `All targeted members with <@&${targetRole.id}> have been processed.`,
       [
-        { name: '🎯 Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
-        { name: '✅ Quarantined',  value: `\`${success}\``,  inline: true },
-        { name: '❌ Failed',       value: `\`${failed}\``,   inline: true },
-        { name: '⏭️ Skipped',     value: `\`${skipped}\``,  inline: true },
-        { name: '📋 Reason',       value: reason,             inline: false },
-        { name: '🔨 Executed By',  value: `${moderator}`,    inline: true }
+        { name: '� Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
+        { name: ' Quarantined',  value: `\`${success}\``,  inline: true },
+        { name: ' Failed',       value: `\`${failed}\``,   inline: true },
+        { name: '⏭ Skipped',     value: `\`${skipped}\``,  inline: true },
+        { name: '� Reason',       value: reason,             inline: false },
+        { name: '� Executed By',  value: `${moderator}`,    inline: true }
       ]
     )
   };
@@ -2721,20 +2721,20 @@ async function handleMassUnquarantine(guild, moderator, client) {
     'Mass Unquarantine Executed',
     `**${moderator.user.tag}** released all quarantined members.`,
     [
-      { name: '✅ Released', value: `\`${success}\``, inline: true },
-      { name: '❌ Failed',   value: `\`${failed}\``,  inline: true }
+      { name: ' Released', value: `\`${success}\``, inline: true },
+      { name: ' Failed',   value: `\`${failed}\``,  inline: true }
     ],
     'success'
   ));
 
   return {
     embed: embed.success(
-      '🔓 Mass Unquarantine Complete',
+      '� Mass Unquarantine Complete',
       `All quarantined members have been processed.`,
       [
-        { name: '✅ Released',     value: `\`${success}\``, inline: true },
-        { name: '❌ Failed',        value: `\`${failed}\``,  inline: true },
-        { name: '🔨 Executed By', value: `${moderator}`,    inline: true }
+        { name: ' Released',     value: `\`${success}\``, inline: true },
+        { name: ' Failed',        value: `\`${failed}\``,  inline: true },
+        { name: '� Executed By', value: `${moderator}`,    inline: true }
       ]
     )
   };

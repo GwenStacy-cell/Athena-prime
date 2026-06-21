@@ -102,20 +102,20 @@ function getManagerPanel(guildId, type) {
   const prefix = isWelcome ? 'welcmgr_' : 'leavmgr_';
 
   const e = embed.info(
-    `👋 ${label} Manager`,
+    `� ${label} Manager`,
     `Manage the settings for your server's ${label.toLowerCase()} messages.\n\n` +
     `**Current Configuration:**\n` +
-    `📡 **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : 'Not Set'}\n` +
-    `🔘 **Status:** ${cfg.enabled ? '✅ Enabled' : '❌ Disabled'}\n` +
-    `💬 **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `👤 **Author (From):** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `🏷️ **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `📝 **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `🎨 **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
-    `🖼️ **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
-    `📄 **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `🎭 **Thumbnail (Avatar):** ${cfg.thumbnail !== false ? '✅ On' : '❌ Off'}\n` +
-    `⏰ **Timestamp:** ${cfg.timestamp !== false ? '✅ On' : '❌ Off'}`
+    `� **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : 'Not Set'}\n` +
+    ` **Status:** ${cfg.enabled ? ' Enabled' : ' Disabled'}\n` +
+    `� **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `� **Author (From):** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `� **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `� **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `� **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
+    `� **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
+    `� **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    ` **Thumbnail (Avatar):** ${cfg.thumbnail !== false ? ' On' : ' Off'}\n` +
+    ` **Timestamp:** ${cfg.timestamp !== false ? ' On' : ' Off'}`
   );
 
   const channelSelectRow = new ActionRowBuilder().addComponents(
@@ -316,7 +316,7 @@ export async function handleWelcomeManagerModal(interaction) {
 export const commands = [
   {
     name: 'welcome',
-    description: '👋 Open the Welcome Message Manager.',
+    description: '� Open the Welcome Message Manager.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [], // No subcommands anymore!
@@ -329,7 +329,7 @@ export const commands = [
   },
   {
     name: 'leave',
-    description: '🚪 Open the Leave Message Manager.',
+    description: '� Open the Leave Message Manager.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [],
