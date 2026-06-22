@@ -181,6 +181,7 @@ export default {
           dance: 'dance', pout: 'pout', shrug: 'shrug', smug: 'smug', feed: 'feed',
           highfive: 'highfive', handshake: 'handshake', handhold: 'handhold',
           shoot: 'shoot', sip: 'sip', spin: 'spin', tableflip: 'tableflip', yawn: 'yawn', nod: 'nod',
+          salute: 'salute', run: 'run',
 
           // Synonyms & Requested
           lick: 'nom', fuck: 'kabedon', protect: 'cuddle', wiggle: 'dance', move: 'run',
@@ -192,7 +193,7 @@ export default {
           lock: 'cuddle', unlock: 'pat', tie: 'cuddle', hold: 'handhold', bye: 'wave', tata: 'wave',
           squeeze: 'hug', gesture: 'wave', pray: 'nod', please: 'pout', tweak: 'poke',
           comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap', play: 'dance', shy: 'blush',
-          marry: 'handhold', bully: 'poke'
+          marry: 'handhold', bully: 'poke', point: 'poke', walk: 'run', keep: 'cuddle'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -270,7 +271,12 @@ export default {
                 marry: targetStr ? `marries ${targetStr}` : 'is getting married',
                 bully: targetStr ? `bullies ${targetStr}` : 'is being a bully',
                 nod: targetStr ? `nods at ${targetStr}` : 'nods',
-                feed: targetStr ? `feeds ${targetStr}` : 'is sharing food'
+                feed: targetStr ? `feeds ${targetStr}` : 'is sharing food',
+                salute: targetStr ? `salutes ${targetStr}` : 'is saluting',
+                point: targetStr ? `points at ${targetStr}` : 'is pointing',
+                run: targetStr ? `runs around with ${targetStr}` : 'is running around',
+                walk: targetStr ? `walks with ${targetStr}` : 'is walking',
+                keep: targetStr ? `keeps ${targetStr} close` : 'is keeping things close'
               };
 
               let desc = '';
