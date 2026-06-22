@@ -9,6 +9,7 @@ import { handleEzal, handleBackup } from '../commands/ezal.js';
 import statsDB from '../statsDB.js';
 import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
+import animeActions from 'anime-actions';
 
 // Safely load config
 const configPath = path.resolve('config.json');
@@ -127,6 +128,56 @@ export default {
         }
         
         db.setUserXp(guildId, userId, userXp);
+      }
+    }
+
+    // ==========================================
+    // 0.5. ROLEPLAY / REACTION SYSTEM
+    // ==========================================
+    const botMentionRegex = new RegExp(`^<@!?${message.client.user.id}>\\s+([a-zA-Z]+)(?:\\s+<@!?(\\d+)>)?`, 'i');
+    const rpMatch = message.content.match(botMentionRegex);
+
+    if (rpMatch) {
+      const actionRaw = rpMatch[1].toLowerCase();
+      const targetId = rpMatch[2];
+
+      const actionMap = {
+        kiss: 'kiss', hug: 'hug', slap: 'slap', punch: 'punch', kick: 'kick',
+        lick: 'bite', protect: 'hug', wiggle: 'dance', move: 'yeet',
+        bite: 'bite', pat: 'pat', kill: 'kill', poke: 'poke', cringe: 'baka',
+        sleep: 'goodnight', lift: 'yeet', roll: 'dance', cuddle: 'cuddle',
+        see: 'stare', look: 'stare', greet: 'wave', hi: 'wave',
+        angry: 'bully', hate: 'slap', shake: 'handshake', deal: 'handshake',
+        think: 'thinking', pinch: 'poke', bait: 'wink', clause: 'stare',
+        smile: 'smile', laugh: 'happy', tease: 'bully', smooch: 'kiss',
+        romance: 'kiss', love: 'hug', hifi: 'highfive', happy: 'happy',
+        sad: 'sad', count: 'thinking'
+      };
+
+      const mappedAction = actionMap[actionRaw];
+      
+      if (mappedAction) {
+        try {
+          const gifUrl = await animeActions[mappedAction]();
+          if (gifUrl) {
+            const targetUser = targetId ? await message.client.users.fetch(targetId).catch(()=>null) : null;
+            let desc = `**${message.author.username}** ${actionRaw}s!`;
+            if (targetUser) {
+              desc = `**${message.author.username}** ${actionRaw}s **${targetUser.username}**!`;
+            }
+
+            const rpEmbed = new EmbedBuilder()
+              .setColor(dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31)
+              .setDescription(desc)
+              .setImage(gifUrl)
+              .setFooter({ text: 'Athena Prime Roleplay' });
+
+            await message.reply({ embeds: [rpEmbed] }).catch(() => null);
+            return; // Stop processing so it doesn't trigger owner ping or normal commands
+          }
+        } catch (err) {
+          console.error('[Roleplay] Error fetching GIF:', err);
+        }
       }
     }
 
