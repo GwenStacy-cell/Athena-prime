@@ -49,20 +49,12 @@ export const commands = [
         const match = parts[0].trim();
         let response = parts.slice(1).join('|').trim();
         
-        if (!match || !response) return message.reply({ embeds: [embed.warn('Error', 'Match and response cannot be empty.')] });
-
-        if (response.toLowerCase().endsWith('.mp4')) {
-          const sent = await message.channel.send({ embeds: [embed.info('Processing Media', 'Transcoding your MP4 to a Discord-friendly GIF... please wait.')] }).catch(()=>null);
-          try {
-            const { convertMp4ToGif, uploadGifToDiscord } = await import('../utils/mediaConverter.js');
-            const gifBuffer = await convertMp4ToGif(response);
-            response = await uploadGifToDiscord(message, gifBuffer, 'trigger.gif');
-            if (sent) await sent.delete().catch(()=>null);
-          } catch (err) {
-            console.error('Trigger MP4 convert error:', err);
-            if (sent) await sent.edit({ embeds: [embed.warn('Media Error', 'Failed to convert the `.mp4` video. Saving the raw link instead.')] }).catch(()=>null);
-          }
+        // Support native attachments (images, GIFs, MP4s)
+        if (!response && message.attachments.size > 0) {
+          response = message.attachments.first().url;
         }
+        
+        if (!match || !response) return message.reply({ embeds: [embed.warn('Error', 'Match and response cannot be empty. You can provide text or upload a media attachment.')] });
 
         const success = db.addTrigger(message.guild.id, match, response);
         if (success) {
@@ -98,28 +90,19 @@ export const commands = [
       
       if (sub === 'create') {
         const match = interaction.options.getString('match').trim();
-        let response = interaction.options.getString('response').trim();
+        let response = interaction.options.getString('response');
+        if (response) response = response.trim();
         
-        let replied = false;
-        if (response.toLowerCase().endsWith('.mp4')) {
-          await interaction.deferReply();
-          replied = true;
-          try {
-            const { convertMp4ToGif, uploadGifToDiscord } = await import('../utils/mediaConverter.js');
-            const gifBuffer = await convertMp4ToGif(response);
-            response = await uploadGifToDiscord(interaction, gifBuffer, 'trigger.gif');
-          } catch (err) {
-            console.error('Trigger MP4 convert error:', err);
-          }
-        }
+        // If they provided a URL, use it directly. We don't need to transcode MP4s.
+        if (!match || !response) return interaction.reply({ embeds: [embed.warn('Error', 'Match and response cannot be empty.')] });
         
         const success = db.addTrigger(interaction.guild.id, match, response);
         if (success) {
           const payload = { embeds: [embed.success('Trigger Created', `Whenever someone says \`${match}\`, I will respond.`)] };
-          replied ? await interaction.editReply(payload) : await interaction.reply(payload);
+          await interaction.reply(payload);
         } else {
           const payload = { embeds: [embed.danger('Error', `A trigger for \`${match}\` already exists.`)] };
-          replied ? await interaction.editReply(payload) : await interaction.reply(payload);
+          await interaction.reply(payload);
         }
       }
       else if (sub === 'remove') {
