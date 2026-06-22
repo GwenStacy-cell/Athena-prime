@@ -195,7 +195,8 @@ export default {
           comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap', play: 'dance', shy: 'blush',
           marry: 'handhold', bully: 'poke', point: 'poke', walk: 'run', keep: 'cuddle',
           ping: 'poke', call: 'wave', sing: 'dance', movie: 'cuddle', flex: 'smug', fight: 'punch',
-          awkward: 'blush', akward: 'blush', bury: 'yeet', drink: 'sip', care: 'pat', kidnap: 'carry'
+          awkward: 'blush', akward: 'blush', bury: 'yeet', drink: 'sip', care: 'pat', kidnap: 'carry',
+          rotate: 'spin', revolve: 'spin', swing: 'spin', jiggle: 'shake', chop: 'slap'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -291,7 +292,12 @@ export default {
                 bury: targetStr ? `buries ${targetStr}` : 'is burying things',
                 drink: targetStr ? `drinks with ${targetStr}` : 'is drinking',
                 care: targetStr ? `cares for ${targetStr}` : 'is feeling caring',
-                kidnap: targetStr ? `kidnaps ${targetStr}` : 'is kidnapping someone'
+                kidnap: targetStr ? `kidnaps ${targetStr}` : 'is kidnapping someone',
+                rotate: targetStr ? `rotates ${targetStr}` : 'is rotating',
+                revolve: targetStr ? `revolves around ${targetStr}` : 'is revolving',
+                swing: targetStr ? `swings ${targetStr} around` : 'is swinging',
+                jiggle: targetStr ? `jiggles ${targetStr}` : 'is jiggling',
+                chop: targetStr ? `karate chops ${targetStr}` : 'is doing karate chops'
               };
 
               let desc = '';
