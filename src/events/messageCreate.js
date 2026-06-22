@@ -195,7 +195,7 @@ export default {
           comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap', play: 'dance', shy: 'blush',
           marry: 'handhold', bully: 'poke', point: 'poke', walk: 'run', keep: 'cuddle',
           ping: 'poke', call: 'wave', sing: 'dance', movie: 'cuddle', flex: 'smug', fight: 'punch',
-          awkward: 'blush', akward: 'blush', bury: 'yeet', drink: 'sip'
+          awkward: 'blush', akward: 'blush', bury: 'yeet', drink: 'sip', care: 'pat'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -289,7 +289,8 @@ export default {
                 awkward: targetStr ? `feels awkward around ${targetStr}` : 'feels awkward',
                 akward: targetStr ? `feels awkward around ${targetStr}` : 'feels awkward',
                 bury: targetStr ? `buries ${targetStr}` : 'is burying things',
-                drink: targetStr ? `drinks with ${targetStr}` : 'is drinking'
+                drink: targetStr ? `drinks with ${targetStr}` : 'is drinking',
+                care: targetStr ? `cares for ${targetStr}` : 'is feeling caring'
               };
 
               let desc = '';
