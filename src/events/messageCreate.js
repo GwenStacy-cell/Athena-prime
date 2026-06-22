@@ -170,9 +170,20 @@ export default {
             const nbRes = await fetchRandom(mappedAction);
             if (nbRes && nbRes.results && nbRes.results[0]) {
               const gifUrl = nbRes.results[0].url;
-              let desc = `**${message.author.username}** ${actionRaw}s!`;
+              
+              // Basic verb conjugation
+              let verb = actionRaw;
+              if (verb.endsWith('s') || verb.endsWith('h') || verb.endsWith('x') || verb.endsWith('z')) {
+                verb += 'es';
+              } else if (verb.endsWith('y') && !['a','e','i','o','u'].includes(verb[verb.length-2])) {
+                verb = verb.slice(0, -1) + 'ies';
+              } else {
+                verb += 's';
+              }
+
+              let desc = `<@${message.author.id}> ${verb}!`;
               if (targetUser) {
-                desc = `**${message.author.username}** ${actionRaw}s **${targetUser.username}**!`;
+                desc = `<@${message.author.id}> ${verb} <@${targetUser.id}>!`;
               }
 
               const rpEmbed = new EmbedBuilder()
