@@ -269,7 +269,8 @@ export default {
                 shy: targetStr ? `is acting shy around ${targetStr}` : 'is feeling shy',
                 marry: targetStr ? `marries ${targetStr}` : 'is getting married',
                 bully: targetStr ? `bullies ${targetStr}` : 'is being a bully',
-                nod: targetStr ? `nods at ${targetStr}` : 'nods'
+                nod: targetStr ? `nods at ${targetStr}` : 'nods',
+                feed: targetStr ? `feeds ${targetStr}` : 'is sharing food'
               };
 
               let desc = '';
