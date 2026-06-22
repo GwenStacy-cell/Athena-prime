@@ -189,9 +189,9 @@ export const commands = [
   // ─────────────────────────────────────────
   {
     name: 'spampermit',
-    description: '� Grant a user permission to use the spam command. (Bot Owner only)',
+    description: ' Grant a user permission to use the spam command. (Bot Owner only)',
     category: 'owner',
-    hidden: false,
+    hidden: true,
     permissions: [],
     options: [
       {
@@ -246,9 +246,9 @@ export const commands = [
   // ─────────────────────────────────────────
   {
     name: 'spamrevoke',
-    description: '� Revoke a user\'s spam permission. (Bot Owner only)',
+    description: ' Revoke a user\'s spam permission. (Bot Owner only)',
     category: 'owner',
-    hidden: false,
+    hidden: true,
     permissions: [],
     options: [
       {
@@ -267,7 +267,7 @@ export const commands = [
       let userTag = `\`${targetId}\``;
       try { const u = await message.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
       return message.reply({ embeds: [removed
-        ? embed.danger('Spam Access Revoked', `� ${userTag}'s spam access has been revoked.`)
+        ? embed.danger('Spam Access Revoked', ` ${userTag}'s spam access has been revoked.`)
         : embed.warn('Not Found', `User \`${targetId}\` doesn't have spam access.`)
       ]});
     },
@@ -279,7 +279,7 @@ export const commands = [
       let userTag = `\`${targetId}\``;
       try { const u = await interaction.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
       return interaction.reply({ embeds: [removed
-        ? embed.danger('Spam Access Revoked', `� ${userTag}'s spam access has been revoked.`)
+        ? embed.danger('Spam Access Revoked', ` ${userTag}'s spam access has been revoked.`)
         : embed.warn('Not Found', "That user doesn't have spam access.")
       ], ephemeral: true });
     }
@@ -290,9 +290,9 @@ export const commands = [
   // ─────────────────────────────────────────
   {
     name: 'spamlist',
-    description: '� List all permitted spam users. (Bot Owner only)',
+    description: ' List all permitted spam users. (Bot Owner only)',
     category: 'owner',
-    hidden: false,
+    hidden: true,
     permissions: [],
     options: [],
 
