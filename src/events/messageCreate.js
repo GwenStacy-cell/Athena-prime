@@ -160,7 +160,8 @@ export default {
           kill: 'shoot', cringe: 'facepalm', lift: 'carry', roll: 'spin', see: 'stare',
           look: 'stare', greet: 'wave', hi: 'wave', clause: 'stare', pinch: 'tickle',
           bait: 'wink', tease: 'smug', smooch: 'peck', romance: 'handhold', love: 'hug',
-          hate: 'slap', hifi: 'highfive', deal: 'handshake', sad: 'cry', count: 'think'
+          hate: 'slap', hifi: 'highfive', deal: 'handshake', sad: 'cry', count: 'think',
+          propose: 'handhold'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -171,19 +172,64 @@ export default {
             if (nbRes && nbRes.results && nbRes.results[0]) {
               const gifUrl = nbRes.results[0].url;
               
-              // Basic verb conjugation
-              let verb = actionRaw;
-              if (verb.endsWith('s') || verb.endsWith('h') || verb.endsWith('x') || verb.endsWith('z')) {
-                verb += 'es';
-              } else if (verb.endsWith('y') && !['a','e','i','o','u'].includes(verb[verb.length-2])) {
-                verb = verb.slice(0, -1) + 'ies';
-              } else {
-                verb += 's';
-              }
+              const targetStr = targetUser ? `<@${targetUser.id}>` : null;
 
-              let desc = `<@${message.author.id}> ${verb}!`;
-              if (targetUser) {
-                desc = `<@${message.author.id}> ${verb} <@${targetUser.id}>!`;
+              const actionSentences = {
+                kiss: targetStr ? `gives ${targetStr} a kiss` : 'blows a kiss',
+                hug: targetStr ? `gives ${targetStr} a hug` : 'wants a hug',
+                slap: targetStr ? `gives ${targetStr} a slap` : 'is slapping the air',
+                punch: targetStr ? `gives ${targetStr} a punch` : 'is punching the air',
+                kick: targetStr ? `gives ${targetStr} a kick` : 'is kicking the air',
+                lick: targetStr ? `gives ${targetStr} a lick` : 'is licking their lips',
+                protect: targetStr ? `protects ${targetStr}` : 'is feeling protective',
+                wiggle: targetStr ? `wiggles at ${targetStr}` : 'is wiggling',
+                move: targetStr ? `moves towards ${targetStr}` : 'is moving',
+                bite: targetStr ? `gives ${targetStr} a bite` : 'is biting the air',
+                pat: targetStr ? `gives ${targetStr} a pat` : 'wants a pat',
+                kill: targetStr ? `kills ${targetStr}` : 'is out for blood',
+                poke: targetStr ? `gives ${targetStr} a poke` : 'is poking around',
+                cringe: targetStr ? `cringes at ${targetStr}` : 'is cringing',
+                sleep: targetStr ? `sleeps next to ${targetStr}` : 'is sleeping',
+                lift: targetStr ? `lifts ${targetStr} up` : 'is lifting weights',
+                roll: targetStr ? `rolls around with ${targetStr}` : 'is rolling around',
+                cuddle: targetStr ? `cuddles with ${targetStr}` : 'wants to cuddle',
+                see: targetStr ? `looks at ${targetStr}` : 'is looking around',
+                look: targetStr ? `stares at ${targetStr}` : 'is staring',
+                greet: targetStr ? `greets ${targetStr}` : 'is waving hello',
+                angry: targetStr ? `is angry at ${targetStr}` : 'is angry',
+                shake: targetStr ? `shakes ${targetStr}` : 'is shaking',
+                clause: targetStr ? `stares closely at ${targetStr}` : 'is staring closely',
+                think: targetStr ? `thinks about ${targetStr}` : 'is thinking',
+                pinch: targetStr ? `gives ${targetStr} a pinch` : 'wants to pinch someone',
+                bait: targetStr ? `baits ${targetStr}` : 'is baiting',
+                smile: targetStr ? `smiles at ${targetStr}` : 'is smiling',
+                laugh: targetStr ? `laughs at ${targetStr}` : 'is laughing',
+                tease: targetStr ? `teases ${targetStr}` : 'is feeling teasing',
+                smooch: targetStr ? `gives ${targetStr} a smooch` : 'wants a smooch',
+                romance: targetStr ? `romances ${targetStr}` : 'is feeling romantic',
+                love: targetStr ? `loves ${targetStr}` : 'is feeling loving',
+                hate: targetStr ? `hates ${targetStr}` : 'is feeling hateful',
+                hifi: targetStr ? `gives ${targetStr} a high-five` : 'wants a high-five',
+                hi: targetStr ? `says hi to ${targetStr}` : 'is saying hi',
+                deal: targetStr ? `makes a deal with ${targetStr}` : 'wants to make a deal',
+                happy: targetStr ? `is happy with ${targetStr}` : 'is happy',
+                sad: targetStr ? `is sad with ${targetStr}` : 'is sad',
+                count: targetStr ? `counts with ${targetStr}` : 'is counting',
+                fuck: targetStr ? `pins ${targetStr} against the wall` : 'is acting bold',
+                propose: targetStr ? `proposes to ${targetStr}` : 'is proposing to the air'
+              };
+
+              let desc = '';
+              if (actionSentences[actionRaw]) {
+                desc = `<@${message.author.id}> ${actionSentences[actionRaw]}!`;
+              } else {
+                // Fallback for any unknown/default actions
+                let verb = actionRaw;
+                if (verb.endsWith('s') || verb.endsWith('h') || verb.endsWith('x') || verb.endsWith('z')) verb += 'es';
+                else if (verb.endsWith('y') && !['a','e','i','o','u'].includes(verb[verb.length-2])) verb = verb.slice(0, -1) + 'ies';
+                else verb += 's';
+
+                desc = targetStr ? `<@${message.author.id}> ${verb} ${targetStr}!` : `<@${message.author.id}> ${verb}!`;
               }
 
               const rpEmbed = new EmbedBuilder()
