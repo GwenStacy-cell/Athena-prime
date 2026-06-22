@@ -191,7 +191,8 @@ export default {
           propose: 'handhold', throw: 'yeet', crush: 'blush', eat: 'nom', secure: 'cuddle',
           lock: 'cuddle', unlock: 'pat', tie: 'cuddle', hold: 'handhold', bye: 'wave', tata: 'wave',
           squeeze: 'hug', gesture: 'wave', pray: 'nod', please: 'pout', tweak: 'poke',
-          comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap', play: 'dance', shy: 'blush'
+          comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap', play: 'dance', shy: 'blush',
+          marry: 'handhold'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -265,7 +266,8 @@ export default {
                 swipe: targetStr ? `swipes at ${targetStr}` : 'is swiping',
                 play: targetStr ? `plays with ${targetStr}` : 'is playing',
                 blush: targetStr ? `blushes at ${targetStr}` : 'is blushing',
-                shy: targetStr ? `is acting shy around ${targetStr}` : 'is feeling shy'
+                shy: targetStr ? `is acting shy around ${targetStr}` : 'is feeling shy',
+                marry: targetStr ? `marries ${targetStr}` : 'is getting married'
               };
 
               let desc = '';
