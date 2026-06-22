@@ -47,9 +47,22 @@ export const commands = [
           return message.reply({ embeds: [embed.warn('Usage Error', 'Use `|` to separate match and response.\n**Example:** `!trigger create hello | hi there!`')] });
         }
         const match = parts[0].trim();
-        const response = parts.slice(1).join('|').trim();
+        let response = parts.slice(1).join('|').trim();
         
         if (!match || !response) return message.reply({ embeds: [embed.warn('Error', 'Match and response cannot be empty.')] });
+
+        if (response.toLowerCase().endsWith('.mp4')) {
+          const sent = await message.channel.send({ embeds: [embed.info('Processing Media', 'Transcoding your MP4 to a Discord-friendly GIF... please wait.')] }).catch(()=>null);
+          try {
+            const { convertMp4ToGif, uploadGifToDiscord } = await import('../utils/mediaConverter.js');
+            const gifBuffer = await convertMp4ToGif(response);
+            response = await uploadGifToDiscord(message, gifBuffer, 'trigger.gif');
+            if (sent) await sent.delete().catch(()=>null);
+          } catch (err) {
+            console.error('Trigger MP4 convert error:', err);
+            if (sent) await sent.edit({ embeds: [embed.warn('Media Error', 'Failed to convert the `.mp4` video. Saving the raw link instead.')] }).catch(()=>null);
+          }
+        }
 
         const success = db.addTrigger(message.guild.id, match, response);
         if (success) {
@@ -85,13 +98,28 @@ export const commands = [
       
       if (sub === 'create') {
         const match = interaction.options.getString('match').trim();
-        const response = interaction.options.getString('response').trim();
+        let response = interaction.options.getString('response').trim();
+        
+        let replied = false;
+        if (response.toLowerCase().endsWith('.mp4')) {
+          await interaction.deferReply();
+          replied = true;
+          try {
+            const { convertMp4ToGif, uploadGifToDiscord } = await import('../utils/mediaConverter.js');
+            const gifBuffer = await convertMp4ToGif(response);
+            response = await uploadGifToDiscord(interaction, gifBuffer, 'trigger.gif');
+          } catch (err) {
+            console.error('Trigger MP4 convert error:', err);
+          }
+        }
         
         const success = db.addTrigger(interaction.guild.id, match, response);
         if (success) {
-          await interaction.reply({ embeds: [embed.success('Trigger Created', `Whenever someone says \`${match}\`, I will respond.`)] });
+          const payload = { embeds: [embed.success('Trigger Created', `Whenever someone says \`${match}\`, I will respond.`)] };
+          replied ? await interaction.editReply(payload) : await interaction.reply(payload);
         } else {
-          await interaction.reply({ embeds: [embed.danger('Error', `A trigger for \`${match}\` already exists.`)] });
+          const payload = { embeds: [embed.danger('Error', `A trigger for \`${match}\` already exists.`)] };
+          replied ? await interaction.editReply(payload) : await interaction.reply(payload);
         }
       }
       else if (sub === 'remove') {
