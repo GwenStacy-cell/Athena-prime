@@ -90,7 +90,14 @@ export default {
           };
 
           const pings = [];
-          if (cfg.bumpRoleId) pings.push(`<@&${cfg.bumpRoleId}>`);
+          
+          if (cfg.bumpRoleIds && Array.isArray(cfg.bumpRoleIds)) {
+            cfg.bumpRoleIds.forEach(id => pings.push(`<@&${id}>`));
+          } else if (cfg.bumpRoleId) {
+            // Fallback for old schema
+            pings.push(`<@&${cfg.bumpRoleId}>`);
+          }
+
           if (bumper) pings.push(`<@${bumper.id}>`);
           const pingText = pings.length > 0 ? pings.join(' ') : (owner ? `<@${owner.id}>` : '');
 
@@ -359,6 +366,10 @@ export default {
         .filter(cmd => !cmd.hidden) // Skip hidden commands (e.g., enuke — prefix only)
         .map(cmd => {
           // Map options and build proper REST format
+          if (cmd.slashDef && typeof cmd.slashDef.toJSON === 'function') {
+            return cmd.slashDef.toJSON();
+          }
+          
           return {
             name: cmd.name,
             description: cmd.description,
