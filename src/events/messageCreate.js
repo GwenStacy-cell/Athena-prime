@@ -198,7 +198,7 @@ export default {
           awkward: 'blush', akward: 'blush', bury: 'yeet', drink: 'sip', care: 'pat', kidnap: 'carry',
           rotate: 'spin', revolve: 'spin', swing: 'spin', jiggle: 'shake', chop: 'slap',
           fire: 'shoot', train: 'punch', dress: 'pat', tag: 'poke', bath: 'pat', dump: 'yeet',
-          bump: 'highfive', shut: 'slap', block: 'nope'
+          bump: 'highfive', shut: 'slap', block: 'nope', strike: 'punch'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -308,7 +308,8 @@ export default {
                 dump: targetStr ? `dumps ${targetStr}` : 'is dumping things',
                 bump: targetStr ? `fist-bumps ${targetStr}` : 'is bumping fists',
                 shut: targetStr ? `tells ${targetStr} to shut up` : 'wants everyone to shut up',
-                block: targetStr ? `blocks ${targetStr}` : 'is blocking things'
+                block: targetStr ? `blocks ${targetStr}` : 'is blocking things',
+                strike: targetStr ? `strikes ${targetStr}` : 'is striking'
               };
 
               let desc = '';
