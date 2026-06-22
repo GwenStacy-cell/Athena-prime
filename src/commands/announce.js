@@ -20,6 +20,7 @@ export const commands = [
         .setAuthor({ name: 'Announcement Builder' })
         .setTitle('New Announcement')
         .setDescription('Click the buttons below to edit this announcement. You can seamlessly add links, images, and multiple lines of text!')
+        .setThumbnail(message.guild.members.me.displayAvatarURL({ dynamic: true, size: 256 }))
         .setFooter({ text: 'Target Channel: Not Set' });
 
       const row = new ActionRowBuilder().addComponents(
@@ -56,6 +57,7 @@ export const commands = [
         .setAuthor({ name: 'Announcement Builder' })
         .setTitle('New Announcement')
         .setDescription('Click the buttons below to edit this announcement. You can seamlessly add links, images, and multiple lines of text!')
+        .setThumbnail(interaction.guild.members.me.displayAvatarURL({ dynamic: true, size: 256 }))
         .setFooter({ text: 'Target Channel: Not Set' });
 
       const row = new ActionRowBuilder().addComponents(

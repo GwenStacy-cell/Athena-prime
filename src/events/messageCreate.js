@@ -163,11 +163,8 @@ export default {
           await message.delete().catch(() => null);
         }
 
-        const warnEmbed = embed.warn(
-          '<:gun:1517636066964799679> Invite Deleted',
-          `${message.author}, invite links are strictly prohibited in this guild to prevent promotion spam.`
-        );
-        await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
+        const maxWarnings = dbConfig.maxWarnings || 3;
+        const warns = db.addWarning(guildId, userId, message.client.user.id, `Automated AutoMod: Unauthorized Invite Link`);
 
         logToSecurityChannel(message.guild, embed.log(
           'Invite Link Filtered',
@@ -175,10 +172,30 @@ export default {
           [
             { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
             { name: 'Channel', value: `${message.channel}`, inline: true },
+            { name: 'Warnings Count', value: `\`${warns.length}\` / ${maxWarnings}`, inline: true },
             { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
           ],
           'warning'
         ));
+
+        if (warns.length >= maxWarnings) {
+          const quarantineReason = `Automated: Warning threshold limit exceeded (${warns.length}/${maxWarnings} Warnings)`;
+          const quarantineRes = await executeQuarantine(message.guild, message.member, message.guild.members.me, quarantineReason);
+          
+          db.clearWarnings(guildId, userId);
+
+          const criticalEmbed = embed.danger(
+            'Invite Quarantine Protocol',
+            `**${message.author.tag}** has been automatically **quarantined** for exceeding maximum invite warning thresholds (${warns.length}/${maxWarnings}).\n\n${quarantineRes.message || ''}`
+          );
+          await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
+        } else {
+          const warnEmbed = embed.warn(
+            '<:gun:1517636066964799679> Invite Deleted',
+            `${message.author}, invite links are strictly prohibited in this guild to prevent promotion spam.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
+          );
+          await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
+        }
         
         return;
       }

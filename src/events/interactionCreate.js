@@ -10,6 +10,7 @@ import { isBotOwnerSync, canModerate } from '../utils/helpers.js';
 import { handleJtcSelectMenu, handleJtcModal } from '../commands/jtc.js';
 import { handleWelcomeManagerButton, handleWelcomeManagerModal, handleWelcomeManagerMenu } from '../commands/welcome.js';
 import { handleAccentButton, handleAccentModal } from '../commands/accent.js';
+import { convertMp4ToGif, uploadGifToDiscord } from '../utils/mediaConverter.js';
 
 export default {
   name: 'interactionCreate',
@@ -211,7 +212,15 @@ export default {
           }
           
           if (img !== null) {
-            const imgUrl = await resolveTenor(img);
+            let imgUrl = await resolveTenor(img);
+            if (imgUrl && imgUrl.toLowerCase().endsWith('.mp4')) {
+              try {
+                const gifBuffer = await convertMp4ToGif(imgUrl);
+                imgUrl = await uploadGifToDiscord(interaction, gifBuffer, 'large_image.gif');
+              } catch (err) {
+                console.error('Ann media modal img convert error:', err);
+              }
+            }
             try { oldEmbed.setImage(imgUrl || null); } catch { /* Ignore invalid URL */ }
           }
           
@@ -221,6 +230,14 @@ export default {
               // Default to bot's avatar if left blank
               oldEmbed.setThumbnail(interaction.guild.members.me.displayAvatarURL({ dynamic: true, size: 512 }));
             } else {
+              if (thumbUrl.toLowerCase().endsWith('.mp4')) {
+                try {
+                  const gifBuffer = await convertMp4ToGif(thumbUrl);
+                  thumbUrl = await uploadGifToDiscord(interaction, gifBuffer, 'thumbnail.gif');
+                } catch (err) {
+                  console.error('Ann media modal thumb convert error:', err);
+                }
+              }
               try { oldEmbed.setThumbnail(thumbUrl); } catch { /* Ignore invalid URL */ }
             }
           }

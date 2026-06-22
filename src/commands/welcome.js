@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ChannelSelectMenuBuilder, ChannelType } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
+import { convertMp4ToGif, uploadGifToDiscord } from '../utils/mediaConverter.js';
 
 // ============================================================
 // PLACEHOLDER RESOLVER
@@ -44,7 +45,7 @@ export function buildWelcomeEmbed(member, cfg) {
   else if (!cfg.title && !cfg.from) e.setDescription(`**Welcome to ${member.guild.name}!**`);
 
   if (cfg.thumbnail !== false) {
-    e.setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }));
+    e.setThumbnail(cfg.thumbnailUrl || member.guild.members.me.displayAvatarURL({ dynamic: true, size: 256 }));
   }
 
   if (cfg.image) e.setImage(cfg.image);
@@ -248,10 +249,11 @@ export async function handleWelcomeManagerButton(interaction) {
   }
 
   if (action === 'image') {
-    const modal = new ModalBuilder().setCustomId(`${prefix}modal_image`).setTitle('Set Embed Image');
-    modal.addComponents(new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('val').setLabel('Direct Image URL (or type "none" to clear)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.image || '')
-    ));
+    const modal = new ModalBuilder().setCustomId(`${prefix}modal_image`).setTitle('Edit Media');
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Large Image URL (Supports GIF & MP4)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.image || '')),
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('thumb').setLabel('Thumbnail URL (Supports GIF & MP4)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.thumbnailUrl || ''))
+    );
     return interaction.showModal(modal);
   }
 
@@ -302,12 +304,45 @@ export async function handleWelcomeManagerModal(interaction) {
   }
 
   if (action === 'image') {
-    if (!val || val.toLowerCase() === 'none') delete cfg.image;
-    else cfg.image = val;
+    if (!val || val.toLowerCase() === 'none') {
+      delete cfg.image;
+    } else {
+      if (val.toLowerCase().endsWith('.mp4')) {
+        await interaction.deferUpdate();
+        try {
+          const gifBuffer = await convertMp4ToGif(val);
+          val = await uploadGifToDiscord(interaction, gifBuffer, 'large_image.gif');
+        } catch (err) {
+          console.error('Failed to convert large image MP4 to GIF:', err);
+        }
+      }
+      cfg.image = val;
+    }
+    
+    let thumbVal = interaction.fields.getTextInputValue('thumb')?.trim() || null;
+    if (!thumbVal || thumbVal.toLowerCase() === 'none') {
+      delete cfg.thumbnailUrl;
+    } else {
+      if (thumbVal.toLowerCase().endsWith('.mp4')) {
+        if (!interaction.deferred) await interaction.deferUpdate();
+        try {
+          const gifBuffer = await convertMp4ToGif(thumbVal);
+          thumbVal = await uploadGifToDiscord(interaction, gifBuffer, 'thumbnail.gif');
+        } catch (err) {
+          console.error('Failed to convert thumbnail MP4 to GIF:', err);
+        }
+      }
+      cfg.thumbnailUrl = thumbVal;
+    }
   }
 
   setConfig(guildId, cfg);
-  await interaction.update(getManagerPanel(guildId, typeStr));
+  
+  if (interaction.deferred) {
+    await interaction.editReply(getManagerPanel(guildId, typeStr));
+  } else {
+    await interaction.update(getManagerPanel(guildId, typeStr));
+  }
 }
 
 // ============================================================
