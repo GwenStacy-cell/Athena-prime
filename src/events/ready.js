@@ -143,8 +143,8 @@ export default {
     // Initial status
     client.user.setPresence({
       activities: [
-        { name: 'status', type: ActivityType.Custom, state: 'Truly Unbypassable' },
-        { name: watchingStatuses[0], type: ActivityType.Watching }
+        { name: watchingStatuses[0], type: ActivityType.Watching },
+        { name: 'status', type: ActivityType.Custom, state: 'Truly Unbypassable' }
       ],
       status: 'online'
     });
@@ -154,8 +154,8 @@ export default {
       statusIndex = (statusIndex + 1) % watchingStatuses.length;
       client.user.setPresence({
         activities: [
-          { name: 'status', type: ActivityType.Custom, state: 'Truly Unbypassable' },
-          { name: watchingStatuses[statusIndex], type: ActivityType.Watching }
+          { name: watchingStatuses[statusIndex], type: ActivityType.Watching },
+          { name: 'status', type: ActivityType.Custom, state: 'Truly Unbypassable' }
         ],
         status: 'online'
       });
