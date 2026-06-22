@@ -221,7 +221,7 @@ export default {
 
               let desc = '';
               if (actionSentences[actionRaw]) {
-                desc = `<@${message.author.id}> ${actionSentences[actionRaw]}!`;
+                desc = `**<@${message.author.id}> ${actionSentences[actionRaw]}!**`;
               } else {
                 // Fallback for any unknown/default actions
                 let verb = actionRaw;
@@ -229,7 +229,7 @@ export default {
                 else if (verb.endsWith('y') && !['a','e','i','o','u'].includes(verb[verb.length-2])) verb = verb.slice(0, -1) + 'ies';
                 else verb += 's';
 
-                desc = targetStr ? `<@${message.author.id}> ${verb} ${targetStr}!` : `<@${message.author.id}> ${verb}!`;
+                desc = targetStr ? `**<@${message.author.id}> ${verb} ${targetStr}!**` : `**<@${message.author.id}> ${verb}!**`;
               }
 
               const rpEmbed = new EmbedBuilder()
