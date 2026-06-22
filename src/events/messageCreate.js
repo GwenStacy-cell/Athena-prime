@@ -193,7 +193,8 @@ export default {
           lock: 'cuddle', unlock: 'pat', tie: 'cuddle', hold: 'handhold', bye: 'wave', tata: 'wave',
           squeeze: 'hug', gesture: 'wave', pray: 'nod', please: 'pout', tweak: 'poke',
           comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap', play: 'dance', shy: 'blush',
-          marry: 'handhold', bully: 'poke', point: 'poke', walk: 'run', keep: 'cuddle'
+          marry: 'handhold', bully: 'poke', point: 'poke', walk: 'run', keep: 'cuddle',
+          ping: 'poke', call: 'wave'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -277,7 +278,9 @@ export default {
                 run: targetStr ? `runs around with ${targetStr}` : 'is running around',
                 walk: targetStr ? `walks with ${targetStr}` : 'is walking',
                 keep: targetStr ? `keeps ${targetStr} close` : 'is keeping things close',
-                wave: targetStr ? `waves at ${targetStr}` : 'is waving'
+                wave: targetStr ? `waves at ${targetStr}` : 'is waving',
+                ping: targetStr ? `pings ${targetStr}` : 'is pinging',
+                call: targetStr ? `calls out to ${targetStr}` : 'is calling out'
               };
 
               let desc = '';
