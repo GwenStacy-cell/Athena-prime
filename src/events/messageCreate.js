@@ -9,7 +9,34 @@ import { handleEzal, handleBackup } from '../commands/ezal.js';
 import statsDB from '../statsDB.js';
 import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
-import { fetchRandom } from 'nekos-best.js';
+import { Client } from 'nekos-best.js';
+
+const nbClient = new Client();
+const gifCache = new Map();
+
+async function getCachedGif(action) {
+  if (!gifCache.has(action)) gifCache.set(action, []);
+  const pool = gifCache.get(action);
+
+  if (pool.length === 0) {
+    try {
+      const res = await nbClient.fetch(action, 20);
+      if (res && res.results) pool.push(...res.results.map(r => r.url));
+    } catch (err) {
+      console.error(`[Roleplay] Pool fetch failed for ${action}:`, err);
+    }
+  }
+
+  if (pool.length === 0) return null;
+  const url = pool.pop();
+
+  if (pool.length < 5) {
+    nbClient.fetch(action, 20).then(res => {
+      if (res && res.results) pool.push(...res.results.map(r => r.url));
+    }).catch(() => null);
+  }
+  return url;
+}
 
 // Safely load config
 const configPath = path.resolve('config.json');
@@ -161,16 +188,13 @@ export default {
           look: 'stare', greet: 'wave', hi: 'wave', clause: 'stare', pinch: 'tickle',
           bait: 'wink', tease: 'smug', smooch: 'peck', romance: 'handhold', love: 'hug',
           hate: 'slap', hifi: 'highfive', deal: 'handshake', sad: 'cry', count: 'think',
-          propose: 'handhold', throw: 'yeet'
+          propose: 'handhold', throw: 'yeet', crush: 'blush'
         };
 
         const mappedAction = actionMap[actionRaw];
         
         if (mappedAction) {
           try {
-            const nbRes = await fetchRandom(mappedAction);
-            if (nbRes && nbRes.results && nbRes.results[0]) {
-              const gifUrl = nbRes.results[0].url;
               
               const targetStr = targetUser ? `<@${targetUser.id}>` : null;
 
@@ -217,7 +241,8 @@ export default {
                 count: targetStr ? `counts with ${targetStr}` : 'is counting',
                 fuck: targetStr ? `pins ${targetStr} against the wall` : 'is acting bold',
                 propose: targetStr ? `proposes to ${targetStr}` : 'is proposing to the air',
-                throw: targetStr ? `throws ${targetStr} across the room` : 'is throwing things'
+                throw: targetStr ? `throws ${targetStr} across the room` : 'is throwing things',
+                crush: targetStr ? `has a crush on ${targetStr}` : 'is crushing hard'
               };
 
               let desc = '';
@@ -236,12 +261,13 @@ export default {
               const rpEmbed = new EmbedBuilder()
                 .setColor(dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31)
                 .setDescription(desc)
-                .setImage(gifUrl)
                 .setFooter({ text: 'Athena Prime Roleplay' });
+
+              const gifUrl = await getCachedGif(mappedAction);
+              if (gifUrl) rpEmbed.setImage(gifUrl);
 
               await message.reply({ embeds: [rpEmbed] }).catch(() => null);
               return; // Stop processing so it doesn't trigger normal prefix parser
-            }
           } catch (err) {
             console.error('[Roleplay] Error fetching GIF:', err);
             // If it fails, silently fall through, but we should probably stop the unknown command error.
