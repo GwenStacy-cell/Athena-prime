@@ -197,7 +197,8 @@ export default {
           ping: 'poke', call: 'wave', sing: 'dance', movie: 'cuddle', flex: 'smug', fight: 'punch',
           awkward: 'blush', akward: 'blush', bury: 'yeet', drink: 'sip', care: 'pat', kidnap: 'carry',
           rotate: 'spin', revolve: 'spin', swing: 'spin', jiggle: 'shake', chop: 'slap',
-          fire: 'shoot', train: 'punch', dress: 'pat', tag: 'poke', bath: 'pat', dump: 'yeet'
+          fire: 'shoot', train: 'punch', dress: 'pat', tag: 'poke', bath: 'pat', dump: 'yeet',
+          bump: 'highfive', shut: 'slap', block: 'nope'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -304,7 +305,10 @@ export default {
                 dress: targetStr ? `dresses up ${targetStr}` : 'is dressing up',
                 tag: targetStr ? `tags ${targetStr}` : 'is playing tag',
                 bath: targetStr ? `bathes ${targetStr}` : 'is taking a bath',
-                dump: targetStr ? `dumps ${targetStr}` : 'is dumping things'
+                dump: targetStr ? `dumps ${targetStr}` : 'is dumping things',
+                bump: targetStr ? `fist-bumps ${targetStr}` : 'is bumping fists',
+                shut: targetStr ? `tells ${targetStr} to shut up` : 'wants everyone to shut up',
+                block: targetStr ? `blocks ${targetStr}` : 'is blocking things'
               };
 
               let desc = '';
