@@ -196,7 +196,8 @@ export default {
           marry: 'handhold', bully: 'poke', point: 'poke', walk: 'run', keep: 'cuddle',
           ping: 'poke', call: 'wave', sing: 'dance', movie: 'cuddle', flex: 'smug', fight: 'punch',
           awkward: 'blush', akward: 'blush', bury: 'yeet', drink: 'sip', care: 'pat', kidnap: 'carry',
-          rotate: 'spin', revolve: 'spin', swing: 'spin', jiggle: 'shake', chop: 'slap'
+          rotate: 'spin', revolve: 'spin', swing: 'spin', jiggle: 'shake', chop: 'slap',
+          fire: 'shoot', train: 'punch', dress: 'pat'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -297,7 +298,10 @@ export default {
                 revolve: targetStr ? `revolves around ${targetStr}` : 'is revolving',
                 swing: targetStr ? `swings ${targetStr} around` : 'is swinging',
                 jiggle: targetStr ? `jiggles ${targetStr}` : 'is jiggling',
-                chop: targetStr ? `karate chops ${targetStr}` : 'is doing karate chops'
+                chop: targetStr ? `karate chops ${targetStr}` : 'is doing karate chops',
+                fire: targetStr ? `fires at ${targetStr}` : 'is firing',
+                train: targetStr ? `trains with ${targetStr}` : 'is training',
+                dress: targetStr ? `dresses up ${targetStr}` : 'is dressing up'
               };
 
               let desc = '';
