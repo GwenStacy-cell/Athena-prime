@@ -188,7 +188,7 @@ export default {
           look: 'stare', greet: 'wave', hi: 'wave', clause: 'stare', pinch: 'tickle',
           bait: 'wink', tease: 'smug', smooch: 'peck', romance: 'handhold', love: 'hug',
           hate: 'slap', hifi: 'highfive', deal: 'handshake', sad: 'cry', count: 'think',
-          propose: 'handhold', throw: 'yeet', crush: 'blush', eat: 'nom'
+          propose: 'handhold', throw: 'yeet', crush: 'blush', eat: 'nom', secure: 'cuddle'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -243,7 +243,8 @@ export default {
                 propose: targetStr ? `proposes to ${targetStr}` : 'is proposing to the air',
                 throw: targetStr ? `throws ${targetStr} across the room` : 'is throwing things',
                 crush: targetStr ? `has a crush on ${targetStr}` : 'is crushing hard',
-                eat: targetStr ? `takes a bite out of ${targetStr}` : 'is eating'
+                eat: targetStr ? `takes a bite out of ${targetStr}` : 'is eating',
+                secure: targetStr ? `securely holds ${targetStr}` : 'is securing the area'
               };
 
               let desc = '';
