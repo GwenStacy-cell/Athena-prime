@@ -188,7 +188,8 @@ export default {
           look: 'stare', greet: 'wave', hi: 'wave', clause: 'stare', pinch: 'tickle',
           bait: 'wink', tease: 'smug', smooch: 'peck', romance: 'handhold', love: 'hug',
           hate: 'slap', hifi: 'highfive', deal: 'handshake', sad: 'cry', count: 'think',
-          propose: 'handhold', throw: 'yeet', crush: 'blush', eat: 'nom', secure: 'cuddle'
+          propose: 'handhold', throw: 'yeet', crush: 'blush', eat: 'nom', secure: 'cuddle',
+          lock: 'cuddle', unlock: 'pat', tie: 'cuddle', hold: 'handhold', bye: 'wave', tata: 'wave'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -244,7 +245,13 @@ export default {
                 throw: targetStr ? `throws ${targetStr} across the room` : 'is throwing things',
                 crush: targetStr ? `has a crush on ${targetStr}` : 'is crushing hard',
                 eat: targetStr ? `takes a bite out of ${targetStr}` : 'is eating',
-                secure: targetStr ? `securely holds ${targetStr}` : 'is securing the area'
+                secure: targetStr ? `securely holds ${targetStr}` : 'is securing the area',
+                lock: targetStr ? `locks arms with ${targetStr}` : 'is locked in',
+                unlock: targetStr ? `unlocks ${targetStr}` : 'is unlocked',
+                tie: targetStr ? `ties up ${targetStr}` : 'is tying knots',
+                hold: targetStr ? `holds ${targetStr}` : 'wants to be held',
+                bye: targetStr ? `waves goodbye to ${targetStr}` : 'says goodbye',
+                tata: targetStr ? `says ta-ta to ${targetStr}` : 'says ta-ta'
               };
 
               let desc = '';
