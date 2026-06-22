@@ -132,24 +132,31 @@ export default {
     });
 
     // Set custom rich activity presence
-    const statuses = [
-      'Truly Unbypassable',
-      'Armed & Secured',
-      'Dev Prince'
+    const watchingStatuses = [
+      'Athena Prime | Armed',
+      'Athena Prime | Secured',
+      'Athena Prime | Truly Unbypassable',
+      'Athena Prime | Dev Prince'
     ];
     let statusIndex = 0;
 
     // Initial status
     client.user.setPresence({
-      activities: [{ name: 'status', type: ActivityType.Custom, state: statuses[0] }],
+      activities: [
+        { name: 'status', type: ActivityType.Custom, state: 'Truly Unbypassable' },
+        { name: watchingStatuses[0], type: ActivityType.Watching }
+      ],
       status: 'online'
     });
 
     // Rotate Activity every 15 seconds
     setInterval(() => {
-      statusIndex = (statusIndex + 1) % statuses.length;
+      statusIndex = (statusIndex + 1) % watchingStatuses.length;
       client.user.setPresence({
-        activities: [{ name: 'status', type: ActivityType.Custom, state: statuses[statusIndex] }],
+        activities: [
+          { name: 'status', type: ActivityType.Custom, state: 'Truly Unbypassable' },
+          { name: watchingStatuses[statusIndex], type: ActivityType.Watching }
+        ],
         status: 'online'
       });
     }, 15000);
