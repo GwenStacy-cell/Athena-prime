@@ -161,7 +161,7 @@ export default {
           look: 'stare', greet: 'wave', hi: 'wave', clause: 'stare', pinch: 'tickle',
           bait: 'wink', tease: 'smug', smooch: 'peck', romance: 'handhold', love: 'hug',
           hate: 'slap', hifi: 'highfive', deal: 'handshake', sad: 'cry', count: 'think',
-          propose: 'handhold'
+          propose: 'handhold', throw: 'yeet'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -216,7 +216,8 @@ export default {
                 sad: targetStr ? `is sad with ${targetStr}` : 'is sad',
                 count: targetStr ? `counts with ${targetStr}` : 'is counting',
                 fuck: targetStr ? `pins ${targetStr} against the wall` : 'is acting bold',
-                propose: targetStr ? `proposes to ${targetStr}` : 'is proposing to the air'
+                propose: targetStr ? `proposes to ${targetStr}` : 'is proposing to the air',
+                throw: targetStr ? `throws ${targetStr} across the room` : 'is throwing things'
               };
 
               let desc = '';
