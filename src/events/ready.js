@@ -133,16 +133,15 @@ export default {
 
     // Set custom rich activity presence
     const statuses = [
-      'Athena Prime | Armed',
-      'Athena Prime | Secured',
-      'Athena Prime | Truly Unbypassable',
-      'Athena Prime | Dev Prince'
+      'Truly Unbypassable',
+      'Armed & Secured',
+      'Dev Prince'
     ];
     let statusIndex = 0;
 
     // Initial status
     client.user.setPresence({
-      activities: [{ name: statuses[0], type: ActivityType.Watching }],
+      activities: [{ name: 'status', type: ActivityType.Custom, state: statuses[0] }],
       status: 'online'
     });
 
@@ -150,7 +149,7 @@ export default {
     setInterval(() => {
       statusIndex = (statusIndex + 1) % statuses.length;
       client.user.setPresence({
-        activities: [{ name: statuses[statusIndex], type: ActivityType.Watching }],
+        activities: [{ name: 'status', type: ActivityType.Custom, state: statuses[statusIndex] }],
         status: 'online'
       });
     }, 15000);
