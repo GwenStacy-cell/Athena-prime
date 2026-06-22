@@ -198,7 +198,8 @@ export default {
           awkward: 'blush', akward: 'blush', bury: 'yeet', drink: 'sip', care: 'pat', kidnap: 'carry',
           rotate: 'spin', revolve: 'spin', swing: 'spin', jiggle: 'shake', chop: 'slap',
           fire: 'shoot', train: 'punch', dress: 'pat', tag: 'poke', bath: 'pat', dump: 'yeet',
-          bump: 'highfive', shut: 'slap', block: 'nope', strike: 'punch', push: 'slap', pull: 'cuddle'
+          bump: 'highfive', shut: 'slap', block: 'nope', strike: 'punch', push: 'slap', pull: 'cuddle',
+          taste: 'nom'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -311,7 +312,8 @@ export default {
                 block: targetStr ? `blocks ${targetStr}` : 'is blocking things',
                 strike: targetStr ? `strikes ${targetStr}` : 'is striking',
                 push: targetStr ? `pushes ${targetStr}` : 'is pushing things',
-                pull: targetStr ? `pulls ${targetStr} closer` : 'is pulling'
+                pull: targetStr ? `pulls ${targetStr} closer` : 'is pulling',
+                taste: targetStr ? `tastes ${targetStr}` : 'is tasting things'
               };
 
               let desc = '';
