@@ -180,7 +180,7 @@ export default {
           tickle: 'tickle', baka: 'baka', yeet: 'yeet', blush: 'blush', bonk: 'bonk',
           dance: 'dance', pout: 'pout', shrug: 'shrug', smug: 'smug', feed: 'feed',
           highfive: 'highfive', handshake: 'handshake', handhold: 'handhold',
-          shoot: 'shoot', sip: 'sip', spin: 'spin', tableflip: 'tableflip', yawn: 'yawn',
+          shoot: 'shoot', sip: 'sip', spin: 'spin', tableflip: 'tableflip', yawn: 'yawn', nod: 'nod',
 
           // Synonyms & Requested
           lick: 'nom', fuck: 'kabedon', protect: 'cuddle', wiggle: 'dance', move: 'run',
@@ -268,7 +268,8 @@ export default {
                 blush: targetStr ? `blushes at ${targetStr}` : 'is blushing',
                 shy: targetStr ? `is acting shy around ${targetStr}` : 'is feeling shy',
                 marry: targetStr ? `marries ${targetStr}` : 'is getting married',
-                bully: targetStr ? `bullies ${targetStr}` : 'is being a bully'
+                bully: targetStr ? `bullies ${targetStr}` : 'is being a bully',
+                nod: targetStr ? `nods at ${targetStr}` : 'nods'
               };
 
               let desc = '';
