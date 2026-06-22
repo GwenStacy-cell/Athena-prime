@@ -276,7 +276,8 @@ export default {
                 point: targetStr ? `points at ${targetStr}` : 'is pointing',
                 run: targetStr ? `runs around with ${targetStr}` : 'is running around',
                 walk: targetStr ? `walks with ${targetStr}` : 'is walking',
-                keep: targetStr ? `keeps ${targetStr} close` : 'is keeping things close'
+                keep: targetStr ? `keeps ${targetStr} close` : 'is keeping things close',
+                wave: targetStr ? `waves at ${targetStr}` : 'is waving'
               };
 
               let desc = '';
