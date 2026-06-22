@@ -189,7 +189,9 @@ export default {
           bait: 'wink', tease: 'smug', smooch: 'peck', romance: 'handhold', love: 'hug',
           hate: 'slap', hifi: 'highfive', deal: 'handshake', sad: 'cry', count: 'think',
           propose: 'handhold', throw: 'yeet', crush: 'blush', eat: 'nom', secure: 'cuddle',
-          lock: 'cuddle', unlock: 'pat', tie: 'cuddle', hold: 'handhold', bye: 'wave', tata: 'wave'
+          lock: 'cuddle', unlock: 'pat', tie: 'cuddle', hold: 'handhold', bye: 'wave', tata: 'wave',
+          squeeze: 'hug', gesture: 'wave', pray: 'nod', please: 'pout', tweak: 'poke',
+          comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -251,7 +253,16 @@ export default {
                 tie: targetStr ? `ties up ${targetStr}` : 'is tying knots',
                 hold: targetStr ? `holds ${targetStr}` : 'wants to be held',
                 bye: targetStr ? `waves goodbye to ${targetStr}` : 'says goodbye',
-                tata: targetStr ? `says ta-ta to ${targetStr}` : 'says ta-ta'
+                tata: targetStr ? `says ta-ta to ${targetStr}` : 'says ta-ta',
+                squeeze: targetStr ? `squeezes ${targetStr}` : 'is squeezing',
+                gesture: targetStr ? `gestures to ${targetStr}` : 'makes a gesture',
+                pray: targetStr ? `prays for ${targetStr}` : 'is praying',
+                please: targetStr ? `begs ${targetStr}` : 'says please',
+                tweak: targetStr ? `tweaks ${targetStr}` : 'is tweaking',
+                comb: targetStr ? `combs ${targetStr}'s hair` : 'is combing hair',
+                alert: targetStr ? `alerts ${targetStr}` : 'is on high alert',
+                wipe: targetStr ? `wipes ${targetStr}` : 'is wiping',
+                swipe: targetStr ? `swipes at ${targetStr}` : 'is swiping'
               };
 
               let desc = '';
