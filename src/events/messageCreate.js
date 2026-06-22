@@ -9,7 +9,7 @@ import { handleEzal, handleBackup } from '../commands/ezal.js';
 import statsDB from '../statsDB.js';
 import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
-import animeActions from 'anime-actions';
+import { fetchRandom } from 'nekos-best.js';
 
 // Safely load config
 const configPath = path.resolve('config.json');
@@ -134,49 +134,55 @@ export default {
     // ==========================================
     // 0.5. ROLEPLAY / REACTION SYSTEM
     // ==========================================
-    const botMentionRegex = new RegExp(`^<@!?${message.client.user.id}>\\s+([a-zA-Z]+)(?:\\s+<@!?(\\d+)>)?`, 'i');
-    const rpMatch = message.content.match(botMentionRegex);
-
-    if (rpMatch) {
-      const actionRaw = rpMatch[1].toLowerCase();
-      const targetId = rpMatch[2];
-
-      const actionMap = {
-        kiss: 'kiss', hug: 'hug', slap: 'slap', punch: 'punch', kick: 'kick',
-        lick: 'bite', protect: 'hug', wiggle: 'dance', move: 'yeet',
-        bite: 'bite', pat: 'pat', kill: 'kill', poke: 'poke', cringe: 'baka',
-        sleep: 'goodnight', lift: 'yeet', roll: 'dance', cuddle: 'cuddle',
-        see: 'stare', look: 'stare', greet: 'wave', hi: 'wave',
-        angry: 'bully', hate: 'slap', shake: 'handshake', deal: 'handshake',
-        think: 'thinking', pinch: 'poke', bait: 'wink', clause: 'stare',
-        smile: 'smile', laugh: 'happy', tease: 'bully', smooch: 'kiss',
-        romance: 'kiss', love: 'hug', hifi: 'highfive', happy: 'happy',
-        sad: 'sad', count: 'thinking'
-      };
-
-      const mappedAction = actionMap[actionRaw];
+    // Check if message strictly starts with the bot mention
+    const botMentionSpaceRegex = new RegExp(`^<@!?${message.client.user.id}>\\s+`);
+    if (botMentionSpaceRegex.test(message.content)) {
+      const args = message.content.replace(botMentionSpaceRegex, '').trim().split(/ +/);
+      const actionRaw = args[0]?.toLowerCase();
       
-      if (mappedAction) {
-        try {
-          const gifUrl = await animeActions[mappedAction]();
-          if (gifUrl) {
-            const targetUser = targetId ? await message.client.users.fetch(targetId).catch(()=>null) : null;
-            let desc = `**${message.author.username}** ${actionRaw}s!`;
-            if (targetUser) {
-              desc = `**${message.author.username}** ${actionRaw}s **${targetUser.username}**!`;
+      if (actionRaw) {
+        // Find if there is a target mention (anywhere in the arguments after the action)
+        const targetUser = message.mentions.users.find(u => u.id !== message.client.user.id);
+
+        const actionMap = {
+          kiss: 'kiss', hug: 'hug', slap: 'slap', punch: 'punch', kick: 'kick',
+          lick: 'bite', protect: 'cuddle', wiggle: 'dance', move: 'yeet',
+          bite: 'bite', pat: 'pat', kill: 'yeet', poke: 'poke', cringe: 'bored',
+          sleep: 'sleep', lift: 'yeet', roll: 'dance', cuddle: 'cuddle',
+          see: 'stare', look: 'stare', greet: 'wave', hi: 'wave',
+          angry: 'pout', hate: 'slap', shake: 'highfive', deal: 'highfive',
+          think: 'think', pinch: 'tickle', bait: 'wink', clause: 'stare',
+          smile: 'smile', laugh: 'laugh', tease: 'smug', smooch: 'kiss',
+          romance: 'kiss', love: 'hug', hifi: 'highfive', happy: 'happy',
+          sad: 'cry', count: 'think'
+        };
+
+        const mappedAction = actionMap[actionRaw];
+        
+        if (mappedAction) {
+          try {
+            const nbRes = await fetchRandom(mappedAction);
+            if (nbRes && nbRes.results && nbRes.results[0]) {
+              const gifUrl = nbRes.results[0].url;
+              let desc = `**${message.author.username}** ${actionRaw}s!`;
+              if (targetUser) {
+                desc = `**${message.author.username}** ${actionRaw}s **${targetUser.username}**!`;
+              }
+
+              const rpEmbed = new EmbedBuilder()
+                .setColor(dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31)
+                .setDescription(desc)
+                .setImage(gifUrl)
+                .setFooter({ text: 'Athena Prime Roleplay' });
+
+              await message.reply({ embeds: [rpEmbed] }).catch(() => null);
+              return; // Stop processing so it doesn't trigger normal prefix parser
             }
-
-            const rpEmbed = new EmbedBuilder()
-              .setColor(dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31)
-              .setDescription(desc)
-              .setImage(gifUrl)
-              .setFooter({ text: 'Athena Prime Roleplay' });
-
-            await message.reply({ embeds: [rpEmbed] }).catch(() => null);
-            return; // Stop processing so it doesn't trigger owner ping or normal commands
+          } catch (err) {
+            console.error('[Roleplay] Error fetching GIF:', err);
+            // If it fails, silently fall through, but we should probably stop the unknown command error.
+            return message.reply({ content: `❌ Could not load a GIF for \`${actionRaw}\` at the moment.` }).catch(() => null);
           }
-        } catch (err) {
-          console.error('[Roleplay] Error fetching GIF:', err);
         }
       }
     }
@@ -615,16 +621,18 @@ export default {
     // Intelligent command error correction with fuzzy matching
     if (!cmd) {
       const closest = findClosestCommand(commandName, [...commandMap.keys()]);
+      const triggerUsed = usedPrefix === prefix ? prefix : `@${message.client.user.username} `;
+      
       if (closest) {
         const suggestEmbed = embed.warn(
           'Unknown Command',
-          `${message.author} ❌ Command \`${prefix}${commandName}\` not found.\n\n💡 Did you mean: \`${prefix}${closest}\`?\n\nUse \`${prefix}help\` for all commands.`
+          `${message.author} ❌ Command \`${triggerUsed}${commandName}\` not found.\n\n💡 Did you mean: \`${prefix}${closest}\`?\n\nUse \`${prefix}help\` for all commands.`
         );
         return message.reply({ embeds: [suggestEmbed] }).catch(() => null);
       } else {
         const notFoundEmbed = embed.warn(
           'Unknown Command',
-          `${message.author} ❌ Command \`${prefix}${commandName}\` does not exist.\n\nUse \`${prefix}help\` for all available commands.`
+          `${message.author} ❌ Command \`${triggerUsed}${commandName}\` does not exist.\n\nUse \`${prefix}help\` for all available commands.`
         );
         return message.reply({ embeds: [notFoundEmbed] }).catch(() => null);
       }
