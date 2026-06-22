@@ -194,7 +194,8 @@ export default {
           squeeze: 'hug', gesture: 'wave', pray: 'nod', please: 'pout', tweak: 'poke',
           comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap', play: 'dance', shy: 'blush',
           marry: 'handhold', bully: 'poke', point: 'poke', walk: 'run', keep: 'cuddle',
-          ping: 'poke', call: 'wave', sing: 'dance', movie: 'cuddle', flex: 'smug', fight: 'punch'
+          ping: 'poke', call: 'wave', sing: 'dance', movie: 'cuddle', flex: 'smug', fight: 'punch',
+          awkward: 'blush', akward: 'blush', bury: 'yeet', drink: 'sip'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -284,7 +285,11 @@ export default {
                 sing: targetStr ? `sings a song for ${targetStr}` : 'is singing',
                 movie: targetStr ? `watches a movie with ${targetStr}` : 'is watching a movie',
                 flex: targetStr ? `flexes on ${targetStr}` : 'is flexing',
-                fight: targetStr ? `fights with ${targetStr}` : 'wants to fight'
+                fight: targetStr ? `fights with ${targetStr}` : 'wants to fight',
+                awkward: targetStr ? `feels awkward around ${targetStr}` : 'feels awkward',
+                akward: targetStr ? `feels awkward around ${targetStr}` : 'feels awkward',
+                bury: targetStr ? `buries ${targetStr}` : 'is burying things',
+                drink: targetStr ? `drinks with ${targetStr}` : 'is drinking'
               };
 
               let desc = '';
