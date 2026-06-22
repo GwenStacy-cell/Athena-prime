@@ -145,16 +145,22 @@ export default {
         const targetUser = message.mentions.users.find(u => u.id !== message.client.user.id);
 
         const actionMap = {
+          // Direct matches
           kiss: 'kiss', hug: 'hug', slap: 'slap', punch: 'punch', kick: 'kick',
-          lick: 'bite', protect: 'cuddle', wiggle: 'dance', move: 'yeet',
-          bite: 'bite', pat: 'pat', kill: 'yeet', poke: 'poke', cringe: 'bored',
-          sleep: 'sleep', lift: 'yeet', roll: 'dance', cuddle: 'cuddle',
-          see: 'stare', look: 'stare', greet: 'wave', hi: 'wave',
-          angry: 'pout', hate: 'slap', shake: 'highfive', deal: 'highfive',
-          think: 'think', pinch: 'tickle', bait: 'wink', clause: 'stare',
-          smile: 'smile', laugh: 'laugh', tease: 'smug', smooch: 'kiss',
-          romance: 'kiss', love: 'hug', hifi: 'highfive', happy: 'happy',
-          sad: 'cry', count: 'think'
+          bite: 'bite', pat: 'pat', poke: 'poke', sleep: 'sleep', cuddle: 'cuddle',
+          angry: 'angry', shake: 'shake', think: 'think', smile: 'smile', laugh: 'laugh',
+          happy: 'happy', stare: 'stare', wave: 'wave', wink: 'wink', cry: 'cry',
+          tickle: 'tickle', baka: 'baka', yeet: 'yeet', blush: 'blush', bonk: 'bonk',
+          dance: 'dance', pout: 'pout', shrug: 'shrug', smug: 'smug', feed: 'feed',
+          highfive: 'highfive', handshake: 'handshake', handhold: 'handhold',
+          shoot: 'shoot', sip: 'sip', spin: 'spin', tableflip: 'tableflip', yawn: 'yawn',
+
+          // Synonyms & Requested
+          lick: 'nom', fuck: 'kabedon', protect: 'cuddle', wiggle: 'dance', move: 'run',
+          kill: 'shoot', cringe: 'facepalm', lift: 'carry', roll: 'spin', see: 'stare',
+          look: 'stare', greet: 'wave', hi: 'wave', clause: 'stare', pinch: 'tickle',
+          bait: 'wink', tease: 'smug', smooch: 'peck', romance: 'handhold', love: 'hug',
+          hate: 'slap', hifi: 'highfive', deal: 'handshake', sad: 'cry', count: 'think'
         };
 
         const mappedAction = actionMap[actionRaw];
