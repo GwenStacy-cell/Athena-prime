@@ -194,7 +194,7 @@ export default {
           squeeze: 'hug', gesture: 'wave', pray: 'nod', please: 'pout', tweak: 'poke',
           comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap', play: 'dance', shy: 'blush',
           marry: 'handhold', bully: 'poke', point: 'poke', walk: 'run', keep: 'cuddle',
-          ping: 'poke', call: 'wave'
+          ping: 'poke', call: 'wave', sing: 'dance', movie: 'cuddle'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -280,7 +280,9 @@ export default {
                 keep: targetStr ? `keeps ${targetStr} close` : 'is keeping things close',
                 wave: targetStr ? `waves at ${targetStr}` : 'is waving',
                 ping: targetStr ? `pings ${targetStr}` : 'is pinging',
-                call: targetStr ? `calls out to ${targetStr}` : 'is calling out'
+                call: targetStr ? `calls out to ${targetStr}` : 'is calling out',
+                sing: targetStr ? `sings a song for ${targetStr}` : 'is singing',
+                movie: targetStr ? `watches a movie with ${targetStr}` : 'is watching a movie'
               };
 
               let desc = '';
