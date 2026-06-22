@@ -69,7 +69,7 @@ export default {
           bumperId = message.interaction.user.id;
         }
         
-        if (bumperId && message.guild) {
+        if (message.guild) {
           db.setBumpReminder(message.guild.id, {
             channelId: message.channel.id,
             ownerId: message.guild.ownerId,
