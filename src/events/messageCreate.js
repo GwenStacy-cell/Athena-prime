@@ -27,6 +27,7 @@ try {
 // In-memory maps for anti-spam trackers
 const spamCache = new Map(); // key: guildId-userId -> array of timestamps
 const spamCooldown = new Map(); // key: guildId-userId -> cooldown timestamp
+const masterPingCooldowns = new Map(); // key: guildId -> timestamp
 
 export default {
   name: 'messageCreate',
@@ -134,36 +135,44 @@ export default {
     // ==========================================
     const ownerId = process.env.OWNER_ID;
     if (ownerId && userId !== ownerId && message.mentions.has(ownerId)) {
-      try {
-        const presence = getPresenceStatus(message.guild, ownerId);
+      const nowMs = Date.now();
+      const lastPing = masterPingCooldowns.get(guildId) || 0;
+      
+      // 3 minute (180000ms) cooldown per guild
+      if (nowMs - lastPing >= 180000) {
+        masterPingCooldowns.set(guildId, nowMs);
 
-        const cfg = db.getGuildConfig(message.guild.id);
-        const embedColor = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+        try {
+          const presence = getPresenceStatus(message.guild, ownerId);
 
-        const ownerEmbed = new EmbedBuilder()
-          .setColor(embedColor)
-          .setDescription(`# You tagged my Master !\n\n> Status: **${presence.text.toUpperCase()}**\n\nYour ping has been forwarded through direct messages.\nAwait his arrival.`)
-          .setFooter({ text: `${message.client.user.username} Security • Today at ${new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false })} IST` });
+          const cfg = db.getGuildConfig(message.guild.id);
+          const embedColor = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
 
-        await message.reply({ content: `<@${userId}>`, embeds: [ownerEmbed] }).catch(() => null);
+          const ownerEmbed = new EmbedBuilder()
+            .setColor(embedColor)
+            .setDescription(`# You tagged my Master !\n\n> Status: **${presence.text.toUpperCase()}**\n\nYour ping has been forwarded through direct messages.\nAwait his arrival.`)
+            .setFooter({ text: `${message.client.user.username} Security • Today at ${new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false })} IST` });
 
-        // DM the owner
-        const ownerUser = await message.client.users.fetch(ownerId).catch(() => null);
-        if (ownerUser) {
-          const dmEmbed = embed.info(
-            'You were tagged!',
-            null,
-            [
-              { name: 'Tagger', value: `${message.author.tag} (<@${userId}>)`, inline: true },
-              { name: 'Server', value: `${message.guild.name}`, inline: true },
-              { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
-              { name: 'Message Link', value: `[Jump to Message](https://discord.com/channels/${guildId}/${message.channel.id}/${message.id})` }
-            ]
-          );
-          await ownerUser.send({ embeds: [dmEmbed] }).catch(() => null);
+          await message.reply({ content: `<@${userId}>`, embeds: [ownerEmbed] }).catch(() => null);
+
+          // DM the owner
+          const ownerUser = await message.client.users.fetch(ownerId).catch(() => null);
+          if (ownerUser) {
+            const dmEmbed = embed.info(
+              'You were tagged!',
+              null,
+              [
+                { name: 'Tagger', value: `${message.author.tag} (<@${userId}>)`, inline: true },
+                { name: 'Server', value: `${message.guild.name}`, inline: true },
+                { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
+                { name: 'Message Link', value: `[Jump to Message](https://discord.com/channels/${guildId}/${message.channel.id}/${message.id})` }
+              ]
+            );
+            await ownerUser.send({ embeds: [dmEmbed] }).catch(() => null);
+          }
+        } catch (err) {
+          console.error('[Owner Mention]', err);
         }
-      } catch (error) {
-        console.error('Error in owner mention detection:', error);
       }
     }
 

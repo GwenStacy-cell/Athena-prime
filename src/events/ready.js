@@ -77,21 +77,22 @@ export default {
           const channel = guild.channels.cache.get(data.channelId);
           if (!channel) continue;
           
+          const cfg = db.getGuildConfig(guildId) || {};
           const owner = await client.users.fetch(data.ownerId).catch(() => null);
           const bumper = data.bumperId ? await client.users.fetch(data.bumperId).catch(() => null) : null;
           
           const embedData = {
             title: 'BUMP AVAILABLE',
             description: `It has been 2 hours since the last bump! Please use the \`/bump\` command to bump **${guild.name}** again and help the server grow.`,
-            color: db.getGuildConfig(guildId)?.accentColor || '#00e5ff',
+            color: cfg.accentColor || '#00e5ff',
             footer: { text: 'Athena Prime Automations' },
             timestamp: new Date()
           };
 
           const pings = [];
-          if (owner) pings.push(`<@${owner.id}>`);
-          if (bumper && bumper.id !== owner?.id) pings.push(`<@${bumper.id}>`);
-          const pingText = pings.join(' ');
+          if (cfg.bumpRoleId) pings.push(`<@&${cfg.bumpRoleId}>`);
+          if (bumper) pings.push(`<@${bumper.id}>`);
+          const pingText = pings.length > 0 ? pings.join(' ') : (owner ? `<@${owner.id}>` : '');
 
           // Send to channel
           await channel.send({ content: pingText, embeds: [embedData] }).catch(() => null);
