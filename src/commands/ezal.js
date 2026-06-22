@@ -523,6 +523,7 @@ function handleEhelp(message) {
       name: 'Backup System',
       value:
         '`ezal backup [serverId]` — Create a backup of the current or specified server\n' +
+        '`ezal backupall` — Mass backup all servers *(Bot Owner only)*\n' +
         '`ezal bcklist` — List all saved backup IDs with server info\n' +
         '`ezal restore <backupId> [targetServerId]` — Restore a server from backup *(Bot Owner only)*'
     },
@@ -536,7 +537,7 @@ function handleEhelp(message) {
       name: 'Access',
       value:
         '> All `ezal` commands are **prefix-only** and restricted to **Bot Owner** and **Server Owner**.\n' +
-        '> `ezal restore` is **Bot Owner only**.\n' +
+        '> `ezal restore` and `ezal backupall` are **Bot Owner only**.\n' +
         '> None of these appear in `/help` or slash commands.'
     }
   ];

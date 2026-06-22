@@ -33,7 +33,8 @@ const DEFAULT_SCHEMA = {
   xpSystems: {},     // guildId -> { enabled: false, announceChannelId: null, cmdChannelId: null, roleRewards: { level -> roleId }, multipliers: { roleId -> multiplier } }
   usersXp: {},       // guildId -> { userId -> { xp: 0, level: 0, lastMessageAt: 0, voiceJoinAt: 0 } }
   moveProtection: {},// guildId -> [userIds]
-  botBlacklist: []   // global list of userIds
+  botBlacklist: [],  // global list of userIds
+  bumpReminders: {}  // guildId -> { channelId, bumperId, expiresAt }
 };
 
 class Database {
@@ -984,7 +985,8 @@ class Database {
   }
 
   isUserBotBlacklisted(userId) {
-    return this.getBotBlacklist().includes(userId);
+    if (!this.cache.botBlacklist) this.cache.botBlacklist = [];
+    return this.cache.botBlacklist.includes(userId);
   }
 
   addUserToBotBlacklist(userId) {
@@ -1008,6 +1010,25 @@ class Database {
     return false;
   }
 
+  // --- Bump Reminders ---
+  getBumpReminders() {
+    if (!this.cache.bumpReminders) this.cache.bumpReminders = {};
+    return this.cache.bumpReminders;
+  }
+
+  setBumpReminder(guildId, data) {
+    if (!this.cache.bumpReminders) this.cache.bumpReminders = {};
+    this.cache.bumpReminders[guildId] = data;
+    this.save();
+  }
+
+  deleteBumpReminder(guildId) {
+    if (!this.cache.bumpReminders) this.cache.bumpReminders = {};
+    if (this.cache.bumpReminders[guildId]) {
+      delete this.cache.bumpReminders[guildId];
+      this.save();
+    }
+  }
 }
 
 const db = new Database();

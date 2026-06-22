@@ -65,6 +65,45 @@ export default {
       }
     }, 15000);
 
+    // Bump Reminder Timer (Runs every 60 seconds)
+    setInterval(async () => {
+      const reminders = db.getBumpReminders();
+      for (const [guildId, data] of Object.entries(reminders)) {
+        if (data.expiresAt <= Date.now()) {
+          db.deleteBumpReminder(guildId);
+          
+          const guild = client.guilds.cache.get(guildId);
+          if (!guild) continue;
+          const channel = guild.channels.cache.get(data.channelId);
+          if (!channel) continue;
+          
+          const owner = await client.users.fetch(data.ownerId).catch(() => null);
+          const bumper = data.bumperId ? await client.users.fetch(data.bumperId).catch(() => null) : null;
+          
+          const embedData = {
+            title: 'BUMP AVAILABLE',
+            description: `It has been 2 hours since the last bump! Please use the \`/bump\` command to bump **${guild.name}** again and help the server grow.`,
+            color: db.getGuildConfig(guildId)?.accentColor || '#00e5ff',
+            footer: { text: 'Athena Prime Automations' },
+            timestamp: new Date()
+          };
+
+          const pings = [];
+          if (owner) pings.push(`<@${owner.id}>`);
+          if (bumper && bumper.id !== owner?.id) pings.push(`<@${bumper.id}>`);
+          const pingText = pings.join(' ');
+
+          // Send to channel
+          await channel.send({ content: pingText, embeds: [embedData] }).catch(() => null);
+          
+          // DM the server owner
+          if (owner) {
+            await owner.send({ content: pingText, embeds: [embedData] }).catch(() => null);
+          }
+        }
+      }
+    }, 60000);
+
     // Store boot timestamp for uptime tracking
     client.bootTimestamp = Date.now();
 

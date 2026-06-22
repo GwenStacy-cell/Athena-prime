@@ -438,8 +438,8 @@ export async function checkBotAdd(member) {
     if (!entry) {
       // Still ban the unknown bot
       await member.ban({ reason: 'Athena Anti-Nuke: Unauthorized bot addition (no audit log entry)' }).catch(() => null);
-      await logToSecurityChannel(guild, embed.danger('🤖 Unauthorized Bot Banned',
-        `Bot **${member.user.tag}** was banned (not in whitelist, no audit log found).`
+      await logToSecurityChannel(guild, embed.danger('Unauthorized Bot Banned',
+        `Bot **${member.user.tag}** was banned (not in whitelist, no audit log found).`, [], guild.id
       ));
       return;
     }
@@ -448,8 +448,8 @@ export async function checkBotAdd(member) {
     if (Date.now() - createdAt.getTime() > 15_000) return;
     if (isAuthorized(guild, executor, 'antibot')) {
       // Server Owner or Global Bot Owner added a bot — just log it
-      await logToSecurityChannel(guild, embed.info('🤖 Bot Added (Authorized)',
-        `Bot **${member.user.tag}** was added by **${executor.tag}** (authorized).\nAdd it to the bot whitelist with \`!botwhitelist add ${member.id}\` if it should stay.`
+      await logToSecurityChannel(guild, embed.info('Bot Added (Authorized)',
+        `Bot **${member.user.tag}** was added by **${executor.tag}** (authorized).\nAdd it to the bot whitelist with \`!botwhitelist add ${member.id}\` if it should stay.`, [], guild.id
       ));
       return;
     }

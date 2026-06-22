@@ -31,6 +31,26 @@ const spamCooldown = new Map(); // key: guildId-userId -> cooldown timestamp
 export default {
   name: 'messageCreate',
   async execute(message) {
+    // Disboard Bump Detection
+    if (message.author.id === '302050872383242240' && message.embeds.length > 0) {
+      const embedDesc = message.embeds[0].description || '';
+      if (embedDesc.includes('Bump done!') || embedDesc.includes('Check it out on DISBOARD')) {
+        let bumperId = null;
+        if (message.interaction && message.interaction.user) {
+          bumperId = message.interaction.user.id;
+        }
+        
+        if (bumperId && message.guild) {
+          db.setBumpReminder(message.guild.id, {
+            channelId: message.channel.id,
+            ownerId: message.guild.ownerId,
+            bumperId: bumperId,
+            expiresAt: Date.now() + 7200000 // 2 hours
+          });
+        }
+      }
+    }
+
     // Ignore bots and webhooks
     if (message.author.bot || message.webhookId) return;
 
