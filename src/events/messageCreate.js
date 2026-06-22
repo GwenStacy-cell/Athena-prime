@@ -191,7 +191,7 @@ export default {
           propose: 'handhold', throw: 'yeet', crush: 'blush', eat: 'nom', secure: 'cuddle',
           lock: 'cuddle', unlock: 'pat', tie: 'cuddle', hold: 'handhold', bye: 'wave', tata: 'wave',
           squeeze: 'hug', gesture: 'wave', pray: 'nod', please: 'pout', tweak: 'poke',
-          comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap'
+          comb: 'pat', alert: 'shocked', wipe: 'pat', swipe: 'slap', play: 'dance'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -262,7 +262,8 @@ export default {
                 comb: targetStr ? `combs ${targetStr}'s hair` : 'is combing hair',
                 alert: targetStr ? `alerts ${targetStr}` : 'is on high alert',
                 wipe: targetStr ? `wipes ${targetStr}` : 'is wiping',
-                swipe: targetStr ? `swipes at ${targetStr}` : 'is swiping'
+                swipe: targetStr ? `swipes at ${targetStr}` : 'is swiping',
+                play: targetStr ? `plays with ${targetStr}` : 'is playing'
               };
 
               let desc = '';
