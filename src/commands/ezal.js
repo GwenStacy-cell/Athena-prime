@@ -345,12 +345,44 @@ async function handleBackup(message, args) {
   }
 }
 
+async function handleBackupAll(message) {
+  const guilds = Array.from(message.client.guilds.cache.values());
+  if (!guilds.length) return message.reply({ embeds: [embed.warn('No Servers', 'The bot is not in any servers.')] });
+
+  let successCount = 0;
+  let failCount = 0;
+
+  const statusMsg = await message.reply({ embeds: [embed.info('Mass Backup Initiated', `Backing up **${guilds.length}** servers. This will be as quick as possible.\n\n**Progress:** 0 / ${guilds.length} Servers`)] }).catch(() => null);
+
+  for (let i = 0; i < guilds.length; i++) {
+    const targetGuild = guilds[i];
+    try {
+      const backupData = await serializeGuild(targetGuild);
+      const backupId = generateBackupId();
+      db.saveBackup(backupId, backupData);
+      successCount++;
+    } catch (err) {
+      console.error(`Failed to backup guild ${targetGuild.id}:`, err);
+      failCount++;
+    }
+
+    // Update status every 5 servers to prevent rate limiting on edits
+    if (statusMsg && (i + 1) % 5 === 0) {
+      await statusMsg.edit({ embeds: [embed.info('Mass Backup In Progress', `Backing up **${guilds.length}** servers...\n\n**Progress:** ${i + 1} / ${guilds.length} Servers\n**Success:** ${successCount} | **Failed:** ${failCount}`)] }).catch(() => null);
+    }
+  }
+
+  if (statusMsg) {
+    await statusMsg.edit({ embeds: [embed.success('Mass Backup Complete', `Successfully backed up all servers.\n\n**Total Servers:** ${guilds.length}\n**Success:** ${successCount}\n**Failed:** ${failCount}`)] }).catch(() => null);
+  }
+}
+
 async function handleBcklist(message) {
   const backups = db.getAllBackups();
   if (!backups.length) return message.reply({ embeds: [embed.warn('No Backups', 'No server backups have been saved yet.')] });
 
   const list = backups.map((b, i) =>
-    `\`${i + 1}.\` **${b.guildName}** | ID: \`${b.id}\` | � ${b.memberCount} |  ${b.roleCount} | � ${b.channelCount} | <t:${Math.floor(b.createdAt / 1000)}:R>`
+    `\`${i + 1}.\` **${b.guildName}** | ID: \`${b.id}\` |  ${b.memberCount} |  ${b.roleCount} |  ${b.channelCount} | <t:${Math.floor(b.createdAt / 1000)}:R>`
   ).join('\n');
 
   await message.reply({ embeds: [embed.info(
@@ -525,6 +557,7 @@ export async function handleEzal(message) {
 
   switch (sub) {
     case 'backup':  return handleBackup(message, args);
+    case 'backupall': return handleBackupAll(message);
     case 'bcklist': return handleBcklist(message);
     case 'servers': return handleServers(message);
     case 'restore': return handleRestore(message, args);

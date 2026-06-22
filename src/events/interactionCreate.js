@@ -327,6 +327,25 @@ export default {
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton()) {
+      // Global Server Invite Generator (Bot Owner DM)
+      if (interaction.customId.startsWith('gen_invite_')) {
+        const targetGuildId = interaction.customId.replace('gen_invite_', '');
+        const targetGuild = interaction.client.guilds.cache.get(targetGuildId);
+        if (!targetGuild) return interaction.reply({ content: 'I am no longer in that server or it is not cached.', ephemeral: true });
+        
+        try {
+          const channels = await targetGuild.channels.fetch();
+          const textChannel = channels.find(c => c && c.type === 0 && c.permissionsFor(interaction.client.user.id)?.has(PermissionFlagsBits.CreateInstantInvite));
+          if (!textChannel) return interaction.reply({ content: 'Could not find a text channel where I have permission to create invites.', ephemeral: true });
+          
+          const invite = await textChannel.createInvite({ maxAge: 86400, maxUses: 1, reason: 'Requested by Bot Owner' });
+          return interaction.reply({ content: `Here is your invite to **${targetGuild.name}**:\n${invite.url}`, ephemeral: true });
+        } catch (err) {
+          console.error('Invite gen error:', err);
+          return interaction.reply({ content: 'An error occurred while generating the invite.', ephemeral: true });
+        }
+      }
+
       // Autonick Manager Buttons
       if (interaction.customId === 'autonick_toggle') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
