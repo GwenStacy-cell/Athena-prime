@@ -78,7 +78,7 @@ export default {
           });
           
           // Send a confirmation so they know it worked
-          message.channel.send({ content: `✅ **Bump detected!** I've set a timer and will remind the configured roles in 2 hours.` }).catch(() => null);
+          message.channel.send({ content: `**Bump detected!** I've set a timer and will remind the configured roles in 2 hours.` }).catch(() => null);
         }
       }
     }
