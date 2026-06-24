@@ -76,6 +76,9 @@ export default {
             bumperId: bumperId,
             expiresAt: Date.now() + 7200000 // 2 hours
           });
+          
+          // Send a confirmation so they know it worked
+          message.channel.send({ content: `✅ **Bump detected!** I've set a timer and will remind the configured roles in 2 hours.` }).catch(() => null);
         }
       }
     }
