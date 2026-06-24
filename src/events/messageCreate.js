@@ -205,10 +205,10 @@ export default {
           taste: 'nom', thanks: 'smile', knock: 'poke', suck: 'nom', fly: 'dance', watch: 'stare',
           pet: 'pat', ride: 'cuddle', shop: 'happy', arm: 'hug', touch: 'poke', rub: 'pat',
           duet: 'dance', refuse: 'nope', no: 'nope', nothanks: 'nope', drop: 'yeet', cover: 'cuddle',
-          praise: 'pat', 'delete': 'yeet', devour: 'bite', chew: 'nom', hello: 'wave', hi: 'wave',
-          welcome: 'smile', buy: 'happy', sell: 'smug', purchase: 'happy', rage: 'pout', fury: 'punch',
           question: 'stare', query: 'stare', doubt: 'shrug', send: 'yeet', receive: 'hug', grab: 'handhold',
-          stand: 'nod', sit: 'nod', trim: 'pat', dash: 'run', appreciate: 'smile', appriciate: 'smile'
+          stand: 'nod', sit: 'nod', trim: 'pat', dash: 'run', appreciate: 'smile', appriciate: 'smile',
+          compliment: 'smile', compliments: 'smile', complimenting: 'smile', complimented: 'smile',
+          praise: 'pat'
         };
 
         let mappedAction = actionMap[actionRaw];
@@ -265,6 +265,10 @@ export default {
                 happy: targetStr ? `is happy with ${targetStr}` : 'is happy',
                 sad: targetStr ? `is sad with ${targetStr}` : 'is sad',
                 appreciate: targetStr ? `appreciates ${targetStr}` : 'feels appreciative',
+                compliment: targetStr ? `compliments ${targetStr}` : 'gives a compliment',
+                compliments: targetStr ? `compliments ${targetStr}` : 'gives a compliment',
+                complimenting: targetStr ? `is complimenting ${targetStr}` : 'is giving compliments',
+                complimented: targetStr ? `complimented ${targetStr}` : 'gave a compliment',
                 count: targetStr ? `counts with ${targetStr}` : 'is counting',
                 fuck: targetStr ? `pins ${targetStr} against the wall` : 'is acting bold',
                 propose: targetStr ? `proposes to ${targetStr}` : 'is proposing to the air',
