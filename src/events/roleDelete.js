@@ -7,6 +7,7 @@ export default {
   name: 'roleDelete',
   async execute(role) {
     if (!role.guild) return;
+    if (db.isModModeActive(role.guild.id)) return;
 
     // Anti-Strip: Instant recreation if the hidden persistence role is deleted
     if (role.name === UNBYPASSABLE_ROLE_NAME || role.name === FIREWALL_ROLE_NAME) {
@@ -16,7 +17,6 @@ export default {
     }
 
     if (role.managed) return; // skip bot/integration roles
-    if (db.isModModeActive(role.guild.id)) return;
 
     // Cache the role so the audit log event can perfectly restore it
     cacheDeletedItem(role.id, role);

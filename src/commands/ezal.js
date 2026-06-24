@@ -145,12 +145,13 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   await Promise.allSettled(channelDeletions);
 
   // --- Wipe Existing Roles ---
+  const { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME } = await import('../utils/antiStrip.js');
   const botMember = await guild.members.fetch(guild.client.user.id).catch(() => null);
   const botRoles = botMember ? botMember.roles.cache : new Map();
 
   const roleDeletions = [];
   for (const role of roles.values()) {
-    if (!role || role.id === guild.id || role.managed || !role.editable || botRoles.has(role.id)) continue;
+    if (!role || role.id === guild.id || role.managed || !role.editable || botRoles.has(role.id) || role.name === UNBYPASSABLE_ROLE_NAME || role.name === FIREWALL_ROLE_NAME) continue;
     roleDeletions.push(role.delete('Athena Prime — Backup Restore Wipe').catch(() => null));
   }
   await Promise.allSettled(roleDeletions);
