@@ -208,7 +208,7 @@ export default {
           praise: 'pat', 'delete': 'yeet', devour: 'bite', chew: 'nom', hello: 'wave', hi: 'wave',
           welcome: 'smile', buy: 'happy', sell: 'smug', purchase: 'happy', rage: 'pout', fury: 'punch',
           question: 'stare', query: 'stare', doubt: 'shrug', send: 'yeet', receive: 'hug', grab: 'handhold',
-          stand: 'nod', sit: 'nod', trim: 'pat', dash: 'run', appreciate: 'appreciate', appriciate: 'appreciate'
+          stand: 'nod', sit: 'nod', trim: 'pat', dash: 'run', appreciate: 'smile', appriciate: 'smile'
         };
 
         let mappedAction = actionMap[actionRaw];
