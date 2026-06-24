@@ -9,6 +9,7 @@ import { executeQuarantine } from '../commands/security.js';
 // ==========================================
 export const deletedCache = new Map();
 export const restoredCategories = new Map();
+export const queuedRestorations = new Set(); // Prevent duplicate queueing
 
 export function cacheDeletedItem(id, item) {
   deletedCache.set(id, item);
@@ -30,14 +31,14 @@ async function processRestorationQueue() {
   if (isRestoring || restorationQueue.length === 0) return;
   isRestoring = true;
 
-  // Sort: Categories go first!
-  restorationQueue.sort((a, b) => {
-    if (a.isCategory && !b.isCategory) return -1;
-    if (!a.isCategory && b.isCategory) return 1;
-    return 0;
-  });
-
   while (restorationQueue.length > 0) {
+    // Sort dynamically inside the loop so new categories get prioritized
+    restorationQueue.sort((a, b) => {
+      if (a.isCategory && !b.isCategory) return -1;
+      if (!a.isCategory && b.isCategory) return 1;
+      return 0;
+    });
+
     const task = restorationQueue.shift();
     try {
       await task.execute();
@@ -105,36 +106,45 @@ function hasDangerousPerms(permissions) {
 // ==========================================
 // CORE PUNISHMENT ENGINE
 // ==========================================
+const activePunishments = new Set(); // Prevent concurrent bans of the same user
+
 async function punish(guild, executor, eventType, config, forceQuarantine = false) {
   const punishment = forceQuarantine ? 'quarantine' : (config.antiNukePunishment || 'ban');
   const reason = `[ATHENA ANTI-NUKE] Unauthorized action: ${eventType}`;
   let result = 'None applied';
 
+  if (activePunishments.has(executor.id)) return result;
+
   const executorMember = await guild.members.fetch(executor.id).catch(() => null);
   if (!executorMember) return result;
 
+  // Lock the user to prevent duplicate API calls
+  activePunishments.add(executor.id);
+  setTimeout(() => activePunishments.delete(executor.id), 10_000);
+
   try {
     if (punishment === 'ban') {
-      await executorMember.send({ embeds: [embed.danger('� Banned — Athena Prime Protection',
+      // Fire ban API instantly (no await on DM) to minimize latency
+      const banPromise = executorMember.ban({ reason });
+      executorMember.send({ embeds: [embed.danger(' Banned — Athena Prime Protection',
         `You have been permanently banned from **${guild.name}** for triggering Anti-Nuke protection.\n\n**Violation:** ${eventType}`
       )] }).catch(() => null);
-      await executorMember.ban({ reason });
-      result = '� Permanently Banned';
+      await banPromise;
+      result = ' Permanently Banned';
     } else if (punishment === 'kick') {
-      await executorMember.send({ embeds: [embed.danger('� Kicked — Athena Prime Protection',
+      const kickPromise = executorMember.kick(reason);
+      executorMember.send({ embeds: [embed.danger(' Kicked — Athena Prime Protection',
         `You have been kicked from **${guild.name}** for triggering Anti-Nuke protection.\n\n**Violation:** ${eventType}`
       )] }).catch(() => null);
-      await executorMember.kick(reason);
-      result = '� Kicked';
+      await kickPromise;
+      result = ' Kicked';
     } else {
       const qRes = await executeQuarantine(guild, executorMember, guild.members.me, reason);
-      result = qRes.success ? '� Quarantined (all roles stripped)' : ' Quarantine failed';
+      result = qRes.success ? ' Quarantined (all roles stripped)' : ' Quarantine failed';
       
-      // If forced quarantine, we still might want to ban if that's what the user expects for antibot,
-      // but wait, the user said "strip roles and ban". So maybe we should do both?
       if (forceQuarantine && config.antiNukePunishment === 'ban') {
         await executorMember.ban({ reason }).catch(() => null);
-        result += ' + � Banned';
+        result += ' +  Banned';
       }
     }
     // Clear their action tracker after punishment
@@ -150,34 +160,41 @@ async function punish(guild, executor, eventType, config, forceQuarantine = fals
 // ==========================================
 // CORE LOG + DM ENGINE
 // ==========================================
+const dmThrottle = new Set();
+
 async function notifyAndLog(guild, executor, eventType, punishResult, rollbackResult) {
   const logEmbed = embed.log(
-    '� Anti-Nuke Firewall Triggered',
+    ' Anti-Nuke Firewall Triggered',
     `A dangerous server mutation was detected, blocked, and rolled back.`,
     [
-      { name: '� Violator',   value: `${executor.tag} (\`${executor.id}\`)`, inline: true },
+      { name: ' Violator',   value: `${executor.tag} (\`${executor.id}\`)`, inline: true },
       { name: '⚡ Action',     value: `\`${eventType}\``,                     inline: true },
       { name: '⚖ Punishment', value: `**${punishResult}**`,                  inline: true },
-      { name: '� Rollback',   value: rollbackResult }
+      { name: ' Rollback',   value: rollbackResult }
     ],
     'raid'
   );
   await logToSecurityChannel(guild, logEmbed);
 
-  // DM server owner
+  // DM server owner (debounced to prevent spam during mass restores)
   try {
-    const owner = await guild.members.fetch(guild.ownerId).catch(() => null);
-    if (owner) {
-      await owner.send({ embeds: [embed.danger(
-        '� CRITICAL: Anti-Nuke Triggered',
-        `A dangerous action was detected and contained on **${guild.name}**.`,
-        [
-          { name: '� Violator',    value: `**${executor.tag}** (\`${executor.id}\`)` },
-          { name: '⚡ Violation',   value: `\`${eventType}\`` },
-          { name: '⚖ Punishment',  value: `**${punishResult}**` },
-          { name: '� Rollback',    value: rollbackResult }
-        ]
-      )] }).catch(() => null);
+    if (!dmThrottle.has(guild.ownerId)) {
+      dmThrottle.add(guild.ownerId);
+      setTimeout(() => dmThrottle.delete(guild.ownerId), 10_000); // 10s cooldown
+      
+      const owner = await guild.members.fetch(guild.ownerId).catch(() => null);
+      if (owner) {
+        await owner.send({ embeds: [embed.danger(
+          ' CRITICAL: Anti-Nuke Triggered',
+          `A dangerous action was detected and contained on **${guild.name}**.`,
+          [
+            { name: ' Violator',    value: `**${executor.tag}** (\`${executor.id}\`)` },
+            { name: '⚡ Violation',   value: `\`${eventType}\`` },
+            { name: '⚖ Punishment',  value: `**${punishResult}**` },
+            { name: ' Rollback',    value: rollbackResult + ' (Check security logs for more)' }
+          ]
+        )] }).catch(() => null);
+      }
     }
   } catch { /* ignore */ }
 }
@@ -239,47 +256,66 @@ export async function handleAuditLogEntry(guild, entry) {
     const cachedChannel = deletedCache.get(targetId);
     if (cachedChannel) {
       const isCategory = cachedChannel.type === 4; // GuildCategory
-      restorationQueue.push({
-        isCategory,
-        execute: async () => {
-          try {
-            // Clever restoration: map to newly restored category if applicable
-            const parentId = restoredCategories.get(cachedChannel.parentId) || cachedChannel.parentId;
-            const overwrites = cachedChannel.permissionOverwrites.cache.map(o => ({
-              id: o.id, type: o.type, allow: o.allow.bitfield, deny: o.deny.bitfield
-            }));
-            const newCh = await guild.channels.create({
-              name: cachedChannel.name,
-              type: cachedChannel.type,
-              topic: cachedChannel.topic || null,
-              parent: parentId || null,
-              position: cachedChannel.position || 0,
-              permissionOverwrites: overwrites,
-              reason: 'Athena Anti-Nuke: Restored deleted channel'
-            });
-            if (isCategory) mapRestoredCategory(cachedChannel.id, newCh.id);
-            rollbackResult = ` **#${cachedChannel.name}** restored (<#${newCh.id}>)`;
-            await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
-          } catch (e) {
-            // Fallback for parent invalid
-            if (e.message.includes('CHANNEL_PARENT_INVALID') || e.message.includes('parent_id')) {
-              try {
-                const newCh = await guild.channels.create({
-                  name: cachedChannel.name, type: cachedChannel.type,
-                  reason: 'Athena Anti-Nuke: Restored without parent (Parent Invalid)'
-                });
-                if (isCategory) mapRestoredCategory(cachedChannel.id, newCh.id);
-                rollbackResult = ` **#${cachedChannel.name}** restored (outside category)`;
-              } catch(e2) {
-                rollbackResult = ` Channel restore failed: ${e2.message}`;
+
+      const queueChannelRestoration = (ch, categoryFlag) => {
+        if (queuedRestorations.has(ch.id)) return;
+        queuedRestorations.add(ch.id);
+
+        restorationQueue.push({
+          isCategory: categoryFlag,
+          execute: async () => {
+            try {
+              // Clever restoration: map to newly restored category if applicable
+              const parentId = restoredCategories.get(ch.parentId) || ch.parentId;
+              const overwrites = ch.permissionOverwrites.cache.map(o => ({
+                id: o.id, type: o.type, allow: o.allow.bitfield, deny: o.deny.bitfield
+              }));
+              const newCh = await guild.channels.create({
+                name: ch.name,
+                type: ch.type,
+                topic: ch.topic || null,
+                parent: parentId || null,
+                position: ch.position || 0,
+                permissionOverwrites: overwrites,
+                reason: 'Athena Anti-Nuke: Restored deleted channel'
+              });
+              if (categoryFlag) mapRestoredCategory(ch.id, newCh.id);
+              await notifyAndLog(guild, executor, eventType, punishResult, ` **#${ch.name}** restored (<#${newCh.id}>)`);
+            } catch (e) {
+              // Fallback for parent invalid
+              if (e.message.includes('CHANNEL_PARENT_INVALID') || e.message.includes('parent_id')) {
+                try {
+                  const newCh = await guild.channels.create({
+                    name: ch.name, type: ch.type,
+                    reason: 'Athena Anti-Nuke: Restored without parent (Parent Invalid)'
+                  });
+                  if (categoryFlag) mapRestoredCategory(ch.id, newCh.id);
+                  await notifyAndLog(guild, executor, eventType, punishResult, ` **#${ch.name}** restored (outside category)`);
+                } catch(e2) {
+                  await notifyAndLog(guild, executor, eventType, punishResult, ` Channel restore failed: ${e2.message}`);
+                }
+              } else {
+                await notifyAndLog(guild, executor, eventType, punishResult, ` Channel restore failed: ${e.message}`);
               }
-            } else {
-              rollbackResult = ` Channel restore failed: ${e.message}`;
             }
-            await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
+          }
+        });
+      };
+
+      // Queue the targeted channel
+      queueChannelRestoration(cachedChannel, isCategory);
+
+      // IMPLICIT RESTORATION: 
+      // If a category was deleted, Discord automatically deletes its children.
+      // We must scan the cache and queue its children since they don't get separate audit log events!
+      if (isCategory) {
+        for (const [id, ch] of deletedCache.entries()) {
+          if (ch.parentId === cachedChannel.id) {
+            queueChannelRestoration(ch, false);
           }
         }
-      });
+      }
+
       processRestorationQueue();
       return;
     } else {
