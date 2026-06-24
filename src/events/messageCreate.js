@@ -208,7 +208,13 @@ export default {
           stand: 'nod', sit: 'nod', trim: 'pat', dash: 'run'
         };
 
-        const mappedAction = actionMap[actionRaw];
+        let mappedAction = actionMap[actionRaw];
+        
+        const genericActions = ['poke', 'pat', 'hug', 'cuddle', 'stare', 'dance', 'smile', 'wave', 'nod', 'shrug', 'highfive'];
+
+        if (!mappedAction && targetUser && !commandMap.has(actionRaw)) {
+            mappedAction = genericActions[Math.floor(Math.random() * genericActions.length)];
+        }
         
         if (mappedAction) {
           try {
@@ -365,7 +371,7 @@ export default {
               if (actionSentences[actionRaw]) {
                 desc = `**<@${message.author.id}> ${actionSentences[actionRaw]}!**`;
               } else {
-                // Fallback for any unknown/default actions
+                // Fallback for any unknown/default actions dynamically triggered
                 let verb = actionRaw;
                 if (verb.endsWith('s') || verb.endsWith('h') || verb.endsWith('x') || verb.endsWith('z')) verb += 'es';
                 else if (verb.endsWith('y') && !['a','e','i','o','u'].includes(verb[verb.length-2])) verb = verb.slice(0, -1) + 'ies';
