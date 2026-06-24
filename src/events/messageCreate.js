@@ -199,7 +199,13 @@ export default {
           rotate: 'spin', revolve: 'spin', swing: 'spin', jiggle: 'shake', chop: 'slap',
           fire: 'shoot', train: 'punch', dress: 'pat', tag: 'poke', bath: 'pat', dump: 'yeet',
           bump: 'highfive', shut: 'slap', block: 'nope', strike: 'punch', push: 'slap', pull: 'cuddle',
-          taste: 'nom', thanks: 'smile'
+          taste: 'nom', thanks: 'smile', knock: 'poke', suck: 'nom', fly: 'dance', watch: 'stare',
+          pet: 'pat', ride: 'cuddle', shop: 'happy', arm: 'hug', touch: 'poke', rub: 'pat',
+          duet: 'dance', refuse: 'nope', no: 'nope', nothanks: 'nope', drop: 'yeet', cover: 'cuddle',
+          praise: 'pat', 'delete': 'yeet', devour: 'bite', chew: 'nom', hello: 'wave', hi: 'wave',
+          welcome: 'smile', buy: 'happy', sell: 'smug', purchase: 'happy', rage: 'pout', fury: 'punch',
+          question: 'stare', query: 'stare', doubt: 'shrug', send: 'yeet', receive: 'hug', grab: 'handhold',
+          stand: 'nod', sit: 'nod', trim: 'pat', dash: 'run'
         };
 
         const mappedAction = actionMap[actionRaw];
@@ -314,7 +320,45 @@ export default {
                 push: targetStr ? `pushes ${targetStr}` : 'is pushing things',
                 pull: targetStr ? `pulls ${targetStr} closer` : 'is pulling',
                 taste: targetStr ? `tastes ${targetStr}` : 'is tasting things',
-                thanks: targetStr ? `thanks ${targetStr}` : 'is thankful'
+                thanks: targetStr ? `thanks ${targetStr}` : 'is thankful',
+                knock: targetStr ? `knocks on ${targetStr}` : 'is knocking',
+                suck: targetStr ? `sucks on ${targetStr}` : 'is sucking',
+                fly: targetStr ? `flies with ${targetStr}` : 'is flying',
+                watch: targetStr ? `watches ${targetStr}` : 'is watching',
+                pet: targetStr ? `pets ${targetStr}` : 'is petting',
+                ride: targetStr ? `rides with ${targetStr}` : 'is riding',
+                shop: targetStr ? `shops with ${targetStr}` : 'is shopping',
+                arm: targetStr ? `arms ${targetStr}` : 'is armed',
+                touch: targetStr ? `touches ${targetStr}` : 'is touching things',
+                rub: targetStr ? `rubs ${targetStr}` : 'is rubbing',
+                duet: targetStr ? `duets with ${targetStr}` : 'is dueting',
+                refuse: targetStr ? `refuses ${targetStr}` : 'refuses',
+                no: targetStr ? `says no to ${targetStr}` : 'says no',
+                nothanks: targetStr ? `says no thanks to ${targetStr}` : 'says no thanks',
+                drop: targetStr ? `drops ${targetStr}` : 'is dropping things',
+                cover: targetStr ? `covers ${targetStr}` : 'is taking cover',
+                praise: targetStr ? `praises ${targetStr}` : 'is praising',
+                'delete': targetStr ? `deletes ${targetStr}` : 'is deleting things',
+                devour: targetStr ? `devours ${targetStr}` : 'is devouring',
+                chew: targetStr ? `chews on ${targetStr}` : 'is chewing',
+                hello: targetStr ? `says hello to ${targetStr}` : 'says hello',
+                hi: targetStr ? `says hi to ${targetStr}` : 'says hi',
+                welcome: targetStr ? `welcomes ${targetStr}` : 'says you are welcome',
+                buy: targetStr ? `buys from ${targetStr}` : 'is buying',
+                sell: targetStr ? `sells to ${targetStr}` : 'is selling',
+                purchase: targetStr ? `purchases from ${targetStr}` : 'is purchasing',
+                rage: targetStr ? `rages at ${targetStr}` : 'is raging',
+                fury: targetStr ? `unleashes fury on ${targetStr}` : 'is furious',
+                question: targetStr ? `questions ${targetStr}` : 'has a question',
+                query: targetStr ? `queries ${targetStr}` : 'has a query',
+                doubt: targetStr ? `doubts ${targetStr}` : 'is doubting',
+                send: targetStr ? `sends ${targetStr}` : 'is sending things',
+                receive: targetStr ? `receives ${targetStr}` : 'is receiving',
+                grab: targetStr ? `grabs ${targetStr}` : 'is grabbing',
+                stand: targetStr ? `stands with ${targetStr}` : 'is standing',
+                sit: targetStr ? `sits with ${targetStr}` : 'is sitting',
+                trim: targetStr ? `trims ${targetStr}` : 'is trimming',
+                dash: targetStr ? `dashes to ${targetStr}` : 'is dashing'
               };
 
               let desc = '';
