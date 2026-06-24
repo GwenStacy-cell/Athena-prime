@@ -67,6 +67,7 @@ import messageDeleteEvent from './src/events/messageDelete.js';
 import messageReactionAddEvent from './src/events/messageReactionAdd.js';
 import messageReactionRemoveEvent from './src/events/messageReactionRemove.js';
 import guildCreateEvent from './src/events/guildCreate.js';
+import guildAuditLogEntryCreateEvent from './src/events/guildAuditLogEntryCreate.js';
 import { scheduleAutoUnquarantine } from './src/commands/security.js';
 import db from './src/database.js';
 
@@ -94,7 +95,8 @@ const events = [
   messageReactionAddEvent,
   messageReactionRemoveEvent,
   messageDeleteEvent,
-  guildCreateEvent
+  guildCreateEvent,
+  guildAuditLogEntryCreateEvent
 ];
 
 // Register Events
