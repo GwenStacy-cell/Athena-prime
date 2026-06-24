@@ -208,7 +208,7 @@ export default {
           praise: 'pat', 'delete': 'yeet', devour: 'bite', chew: 'nom', hello: 'wave', hi: 'wave',
           welcome: 'smile', buy: 'happy', sell: 'smug', purchase: 'happy', rage: 'pout', fury: 'punch',
           question: 'stare', query: 'stare', doubt: 'shrug', send: 'yeet', receive: 'hug', grab: 'handhold',
-          stand: 'nod', sit: 'nod', trim: 'pat', dash: 'run'
+          stand: 'nod', sit: 'nod', trim: 'pat', dash: 'run', appreciate: 'appreciate', appriciate: 'appreciate'
         };
 
         let mappedAction = actionMap[actionRaw];
@@ -264,6 +264,7 @@ export default {
                 deal: targetStr ? `makes a deal with ${targetStr}` : 'wants to make a deal',
                 happy: targetStr ? `is happy with ${targetStr}` : 'is happy',
                 sad: targetStr ? `is sad with ${targetStr}` : 'is sad',
+                appreciate: targetStr ? `appreciates ${targetStr}` : 'feels appreciative',
                 count: targetStr ? `counts with ${targetStr}` : 'is counting',
                 fuck: targetStr ? `pins ${targetStr} against the wall` : 'is acting bold',
                 propose: targetStr ? `proposes to ${targetStr}` : 'is proposing to the air',
