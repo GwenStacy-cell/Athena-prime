@@ -1,5 +1,4 @@
-import { AuditLogEvent } from 'discord.js';
-import { checkAntiNuke } from '../utils/antinuke.js';
+import { cacheDeletedItem } from '../utils/antinuke.js';
 import db from '../database.js';
 
 export default {
@@ -9,6 +8,6 @@ export default {
 
     if (db.isModModeActive(emoji.guild.id)) return;
 
-    await checkAntiNuke(emoji.guild, 'Emoji Deletion', AuditLogEvent.EmojiDelete, emoji.id, emoji);
+    cacheDeletedItem(emoji.id, emoji);
   }
 };

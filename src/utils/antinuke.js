@@ -5,6 +5,52 @@ import { logToSecurityChannel, isBotOwnerSync } from './helpers.js';
 import { executeQuarantine } from '../commands/security.js';
 
 // ==========================================
+// ZERO-LATENCY RESTORATION CACHE
+// ==========================================
+export const deletedCache = new Map();
+export const restoredCategories = new Map();
+
+export function cacheDeletedItem(id, item) {
+  deletedCache.set(id, item);
+  setTimeout(() => deletedCache.delete(id), 60000); // 60s ttl
+}
+
+function mapRestoredCategory(oldId, newId) {
+  restoredCategories.set(oldId, newId);
+  setTimeout(() => restoredCategories.delete(oldId), 300000); // 5m ttl
+}
+
+// ==========================================
+// SMART RESTORATION QUEUE
+// ==========================================
+const restorationQueue = [];
+let isRestoring = false;
+
+async function processRestorationQueue() {
+  if (isRestoring || restorationQueue.length === 0) return;
+  isRestoring = true;
+
+  // Sort: Categories go first!
+  restorationQueue.sort((a, b) => {
+    if (a.isCategory && !b.isCategory) return -1;
+    if (!a.isCategory && b.isCategory) return 1;
+    return 0;
+  });
+
+  while (restorationQueue.length > 0) {
+    const task = restorationQueue.shift();
+    try {
+      await task.execute();
+    } catch (e) {
+      console.error('[AntiNuke] Task failed:', e);
+    }
+    await new Promise(r => setTimeout(r, 800)); // Prevent Discord rate limits
+  }
+
+  isRestoring = false;
+}
+
+// ==========================================
 // RATE TRACKER — In-memory action counter
 // Tracks: guildId:userId:eventType -> [timestamps]
 // Prevents punishing legitimate admins doing bulk ops
@@ -149,6 +195,191 @@ function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (db.isExtraOwner(guild.id, executor.id)) return true;  // extra owner
   if (db.isWhitelisted(guild, executor.id, eventType)) return true; // granular whitelist
   return false;
+}
+
+// ==========================================
+// ZERO-LATENCY ANTINUKE HANDLER
+// ==========================================
+export async function handleAuditLogEntry(guild, entry) {
+  const config = db.getGuildConfig(guild.id);
+  if (!config.antiNukeEnabled) return;
+
+  const { executor, target, action, executorId, targetId, createdAt } = entry;
+  if (!executor || !executorId) return;
+  if (executorId === guild.members.me?.id) return;
+  if (Date.now() - createdAt.getTime() > 20_000) return; // Ignore old
+  if (isAuthorized(guild, executor)) return;
+
+  let eventType = null;
+  let forceBan = false;
+
+  switch (action) {
+    case AuditLogEvent.ChannelDelete: eventType = 'Channel Deletion'; forceBan = true; break;
+    case AuditLogEvent.ChannelCreate: eventType = 'Channel Creation'; forceBan = true; break;
+    case AuditLogEvent.RoleDelete: eventType = 'Role Deletion'; forceBan = true; break;
+    case AuditLogEvent.RoleCreate: eventType = 'Role Creation'; forceBan = true; break;
+    case AuditLogEvent.EmojiDelete: eventType = 'Emoji Deletion'; forceBan = true; break;
+    case AuditLogEvent.EmojiCreate: eventType = 'Emoji Creation'; forceBan = true; break;
+    case AuditLogEvent.WebhookDelete: eventType = 'Webhook Deletion'; forceBan = true; break;
+    case AuditLogEvent.WebhookCreate: eventType = 'Webhook Creation'; forceBan = true; break;
+    default: return; // Only handling structural nukes here
+  }
+
+  // Punish INSTANTLY (skip tracker for strict events)
+  const originalPunishConfig = config.antiNukePunishment;
+  if (forceBan) config.antiNukePunishment = 'ban';
+  
+  const punishResult = await punish(guild, executor, eventType, config);
+  
+  if (forceBan) config.antiNukePunishment = originalPunishConfig;
+
+  let rollbackResult = 'Pending...';
+
+  if (action === AuditLogEvent.ChannelDelete) {
+    const cachedChannel = deletedCache.get(targetId);
+    if (cachedChannel) {
+      const isCategory = cachedChannel.type === 4; // GuildCategory
+      restorationQueue.push({
+        isCategory,
+        execute: async () => {
+          try {
+            // Clever restoration: map to newly restored category if applicable
+            const parentId = restoredCategories.get(cachedChannel.parentId) || cachedChannel.parentId;
+            const overwrites = cachedChannel.permissionOverwrites.cache.map(o => ({
+              id: o.id, type: o.type, allow: o.allow.bitfield, deny: o.deny.bitfield
+            }));
+            const newCh = await guild.channels.create({
+              name: cachedChannel.name,
+              type: cachedChannel.type,
+              topic: cachedChannel.topic || null,
+              parent: parentId || null,
+              position: cachedChannel.position || 0,
+              permissionOverwrites: overwrites,
+              reason: 'Athena Anti-Nuke: Restored deleted channel'
+            });
+            if (isCategory) mapRestoredCategory(cachedChannel.id, newCh.id);
+            rollbackResult = ` **#${cachedChannel.name}** restored (<#${newCh.id}>)`;
+            await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
+          } catch (e) {
+            // Fallback for parent invalid
+            if (e.message.includes('CHANNEL_PARENT_INVALID') || e.message.includes('parent_id')) {
+              try {
+                const newCh = await guild.channels.create({
+                  name: cachedChannel.name, type: cachedChannel.type,
+                  reason: 'Athena Anti-Nuke: Restored without parent (Parent Invalid)'
+                });
+                if (isCategory) mapRestoredCategory(cachedChannel.id, newCh.id);
+                rollbackResult = ` **#${cachedChannel.name}** restored (outside category)`;
+              } catch(e2) {
+                rollbackResult = ` Channel restore failed: ${e2.message}`;
+              }
+            } else {
+              rollbackResult = ` Channel restore failed: ${e.message}`;
+            }
+            await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
+          }
+        }
+      });
+      processRestorationQueue();
+      return;
+    } else {
+      rollbackResult = ` Channel cannot be auto-restored (not in cache)`;
+    }
+  }
+  else if (action === AuditLogEvent.RoleDelete) {
+    const r = deletedCache.get(targetId);
+    if (r) {
+      restorationQueue.push({
+        isCategory: false,
+        execute: async () => {
+          try {
+            await guild.roles.create({
+              name: r.name, color: r.color, hoist: r.hoist,
+              permissions: r.permissions.bitfield, mentionable: r.mentionable,
+              reason: 'Athena Anti-Nuke: Restored deleted role'
+            });
+            rollbackResult = ` Role **${r.name}** restored`;
+          } catch (e) { rollbackResult = ` Role restore failed: ${e.message}`; }
+          await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
+        }
+      });
+      processRestorationQueue();
+      return;
+    } else {
+      rollbackResult = ` Role cannot be auto-restored (not in cache)`;
+    }
+  }
+  else if (action === AuditLogEvent.EmojiDelete) {
+    const eData = deletedCache.get(targetId);
+    if (eData) {
+      restorationQueue.push({
+        isCategory: false,
+        execute: async () => {
+          try {
+            if (eData.url) {
+              await guild.emojis.create({ attachment: eData.url, name: eData.name, reason: 'Athena Anti-Nuke: Restored' });
+              rollbackResult = ` Emoji **${eData.name}** restored`;
+            } else {
+              rollbackResult = ` Emoji **${eData.name}** cannot be auto-restored`;
+            }
+          } catch (e) { rollbackResult = ` Emoji restore failed: ${e.message}`; }
+          await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
+        }
+      });
+      processRestorationQueue();
+      return;
+    } else {
+      rollbackResult = ` Emoji cannot be auto-restored (not in cache)`;
+    }
+  }
+  else if (action === AuditLogEvent.ChannelCreate) {
+    restorationQueue.push({
+      isCategory: false,
+      execute: async () => {
+        try {
+          const ch = await guild.channels.fetch(targetId).catch(() => null);
+          if (ch) await ch.delete('Athena Anti-Nuke: Removed unauthorized channel');
+          rollbackResult = ` Unauthorized channel deleted`;
+        } catch (e) { rollbackResult = ` Delete failed: ${e.message}`; }
+        await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
+      }
+    });
+    processRestorationQueue();
+    return;
+  }
+  else if (action === AuditLogEvent.RoleCreate) {
+    restorationQueue.push({
+      isCategory: false,
+      execute: async () => {
+        try {
+          const r = await guild.roles.fetch(targetId).catch(() => null);
+          if (r) await r.delete('Athena Anti-Nuke: Removed unauthorized role');
+          rollbackResult = ` Unauthorized role deleted`;
+        } catch (e) { rollbackResult = ` Delete failed: ${e.message}`; }
+        await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
+      }
+    });
+    processRestorationQueue();
+    return;
+  }
+  else if (action === AuditLogEvent.EmojiCreate) {
+    restorationQueue.push({
+      isCategory: false,
+      execute: async () => {
+        try {
+          const eObj = await guild.emojis.fetch(targetId).catch(() => null);
+          if (eObj) await eObj.delete('Athena Anti-Nuke: Removed unauthorized emoji');
+          rollbackResult = ` Unauthorized emoji deleted`;
+        } catch (e) { rollbackResult = ` Delete failed: ${e.message}`; }
+        await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
+      }
+    });
+    processRestorationQueue();
+    return;
+  }
+
+  // Fallback log
+  await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
 }
 
 // ==========================================

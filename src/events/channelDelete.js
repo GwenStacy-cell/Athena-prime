@@ -1,5 +1,4 @@
-import { AuditLogEvent } from 'discord.js';
-import { checkAntiNuke } from '../utils/antinuke.js';
+import { cacheDeletedItem } from '../utils/antinuke.js';
 import db from '../database.js';
 
 export default {
@@ -8,7 +7,7 @@ export default {
     if (!channel.guild) return;
     if (db.isModModeActive(channel.guild.id)) return;
 
-    // antinuke.js handles BOTH punishment AND restoration — do NOT duplicate here
-    await checkAntiNuke(channel.guild, 'Channel Deletion', AuditLogEvent.ChannelDelete, null, channel);
+    // Cache the channel so the audit log event can perfectly restore it
+    cacheDeletedItem(channel.id, channel);
   }
 };

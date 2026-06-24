@@ -1,5 +1,5 @@
 import { AuditLogEvent } from 'discord.js';
-import { checkAntiNuke } from '../utils/antinuke.js';
+import { cacheDeletedItem } from '../utils/antinuke.js';
 import db from '../database.js';
 import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, ensureUnbypassableRole, handleAntiStab } from '../utils/antiStrip.js';
 
@@ -18,7 +18,7 @@ export default {
     if (role.managed) return; // skip bot/integration roles
     if (db.isModModeActive(role.guild.id)) return;
 
-    // antinuke.js handles BOTH punishment AND restoration — do NOT duplicate here
-    await checkAntiNuke(role.guild, 'Role Deletion', AuditLogEvent.RoleDelete, null, role);
+    // Cache the role so the audit log event can perfectly restore it
+    cacheDeletedItem(role.id, role);
   }
 };
