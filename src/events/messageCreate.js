@@ -434,6 +434,16 @@ export default {
       } catch (err) {
         console.error('[Owner Mention]', err);
       }
+
+      // If the message is just a ping and not a command, halt further processing
+      const currentPrefix = db.getGuildConfig(guildId).prefix || '!';
+      const botMentionSpace = `<@${message.client.user.id}> `;
+      const botMentionNickSpace = `<@!${message.client.user.id}> `;
+      if (!message.content.startsWith(currentPrefix) && 
+          !message.content.startsWith(botMentionSpace) && 
+          !message.content.startsWith(botMentionNickSpace)) {
+        return; 
+      }
     }
 
     // Granular Whitelist checks
@@ -657,6 +667,7 @@ export default {
       
       for (const t of triggers) {
         if (msgLowerForTriggers.includes(t.match.toLowerCase())) {
+          console.log(`[AutoResponder] Triggered by ${t.match} for message: ${message.content}`);
           let responseText = t.response.trim();
 
           // Extract original URL from Discord proxy link if needed
