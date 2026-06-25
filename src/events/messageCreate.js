@@ -412,35 +412,27 @@ export default {
     // ==========================================
     const ownerId = process.env.OWNER_ID;
     if (ownerId && userId !== ownerId && message.mentions.has(ownerId)) {
-      const nowMs = Date.now();
-      const lastPing = masterPingCooldowns.get(guildId) || 0;
-      
-      // 3 minute (180000ms) cooldown per guild
-      if (nowMs - lastPing >= 180000) {
-        masterPingCooldowns.set(guildId, nowMs);
+      try {
+        // React to the message instantly
+        await message.react('1519681289957933066').catch(() => null);
 
-        try {
-          // React to the message instead of replying with an embed
-          await message.react('1519681289957933066').catch(() => null);
-
-          // DM the owner
-          const ownerUser = await message.client.users.fetch(ownerId).catch(() => null);
-          if (ownerUser) {
-            const dmEmbed = embed.info(
-              'You were tagged!',
-              null,
-              [
-                { name: 'Tagger', value: `${message.author.tag} (<@${userId}>)`, inline: true },
-                { name: 'Server', value: `${message.guild.name}`, inline: true },
-                { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
-                { name: 'Message Link', value: `[Jump to Message](https://discord.com/channels/${guildId}/${message.channel.id}/${message.id})` }
-              ]
-            );
-            await ownerUser.send({ embeds: [dmEmbed] }).catch(() => null);
-          }
-        } catch (err) {
-          console.error('[Owner Mention]', err);
+        // DM the owner
+        const ownerUser = await message.client.users.fetch(ownerId).catch(() => null);
+        if (ownerUser) {
+          const dmEmbed = embed.info(
+            'You were tagged!',
+            null,
+            [
+              { name: 'Tagger', value: `${message.author.tag} (<@${userId}>)`, inline: true },
+              { name: 'Server', value: `${message.guild.name}`, inline: true },
+              { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
+              { name: 'Message Link', value: `[Jump to Message](https://discord.com/channels/${guildId}/${message.channel.id}/${message.id})` }
+            ]
+          );
+          await ownerUser.send({ embeds: [dmEmbed] }).catch(() => null);
         }
+      } catch (err) {
+        console.error('[Owner Mention]', err);
       }
     }
 
