@@ -420,17 +420,8 @@ export default {
         masterPingCooldowns.set(guildId, nowMs);
 
         try {
-          const presence = getPresenceStatus(message.guild, ownerId);
-
-          const cfg = db.getGuildConfig(message.guild.id);
-          const embedColor = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
-
-          const ownerEmbed = new EmbedBuilder()
-            .setColor(embedColor)
-            .setDescription(`# You tagged my Master !\n\n> Status: **${presence.text.toUpperCase()}**\n\nYour ping has been forwarded through direct messages.\nAwait his arrival.`)
-            .setFooter({ text: `${message.client.user.username} Security • Today at ${new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false })} IST` });
-
-          await message.reply({ content: `<@${userId}>`, embeds: [ownerEmbed] }).catch(() => null);
+          // React to the message instead of replying with an embed
+          await message.react('1519681289957933066').catch(() => null);
 
           // DM the owner
           const ownerUser = await message.client.users.fetch(ownerId).catch(() => null);
