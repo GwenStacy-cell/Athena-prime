@@ -38,6 +38,12 @@ const gifEngines = [
       const res = await fetch(`https://api.otakugifs.xyz/gif?reaction=${action}`).then(r => r.json());
       return res.url ? [res.url] : [];
     } catch { return []; }
+  },
+  async (action) => {
+    try {
+      const res = await fetch(`https://g.tenor.com/v1/random?q=anime+${action}&key=LIVDSRZULELA&limit=10`).then(r => r.json());
+      return res?.results?.map(i => i.media[0].gif.url) || [];
+    } catch { return []; }
   }
 ];
 
