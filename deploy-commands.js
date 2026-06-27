@@ -18,9 +18,12 @@ if (!clientId || clientId === 'your_bot_client_id') {
   process.exit(1);
 }
 
+// Commands that are purely setup/admin/owner and don't need to consume our 100 global slash command limit
+const prefixOnlyCommands = ['enuke', 'testbirthday', 'extraowner', 'userblacklist', 'botwhitelist', 'trigger', 'jtcsetup', 'jtcdisable', 'invitesetup', 'invitedisable', 'xpsetup'];
+
 // Map the commands to the JSON structure required by Discord APIs
 const slashData = allCommands
-  .filter(cmd => !cmd.slashHidden)   // exclude prefix-only commands like enuke
+  .filter(cmd => !cmd.slashHidden && !prefixOnlyCommands.includes(cmd.name))   // exclude prefix-only commands like enuke
   .map(cmd => {
   return {
     name: cmd.name,
