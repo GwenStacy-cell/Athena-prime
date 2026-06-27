@@ -63,7 +63,7 @@ async function getCachedGif(action) {
 
   if (pool.length === 0) {
     const newUrls = await fetchFromEngines(action);
-    pool.push(...newUrls);
+    if (newUrls.length > 0) pool.push(...newUrls.sort(() => Math.random() - 0.5));
   }
 
   if (pool.length === 0) return null;
@@ -71,7 +71,7 @@ async function getCachedGif(action) {
 
   if (pool.length < 5) {
     fetchFromEngines(action).then(urls => {
-      if (urls.length > 0) pool.push(...urls);
+      if (urls.length > 0) pool.push(...urls.sort(() => Math.random() - 0.5));
     }).catch(() => null);
   }
   return url;
