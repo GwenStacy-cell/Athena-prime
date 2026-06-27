@@ -10,6 +10,7 @@ import statsDB from '../statsDB.js';
 import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
 import { Client } from 'nekos-best.js';
+import fetch from 'node-fetch';
 
 const nbClient = new Client();
 const gifCache = new Map();
