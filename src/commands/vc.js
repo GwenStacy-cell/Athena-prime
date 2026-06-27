@@ -5,19 +5,42 @@ import { isAuthorized } from '../utils/helpers.js';
 export const commands = [
   {
     name: 'vclock',
-    description: 'Locks the current voice channel by denying Connect permission to @everyone.',
+    description: 'Locks a voice channel by denying Connect and text permissions to @everyone.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageChannels],
+    options: [
+      {
+        name: 'channel',
+        description: 'The voice channel to lock (defaults to your current VC)',
+        type: 7,
+        required: false
+      }
+    ],
     async executePrefix(message) {
       if (!(await isAuthorized(message.author, message.guild))) {
         return message.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
       }
-      const vc = message.member.voice.channel;
-      if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel to use this command.')] });
+      
+      const args = message.content.trim().split(/ +/).slice(1);
+      let vc = message.member.voice.channel;
+      
+      if (args[0]) {
+        const parsedId = args[0].replace(/<#|>/g, '');
+        const targetChannel = message.guild.channels.cache.get(parsedId);
+        if (targetChannel && targetChannel.isVoiceBased()) {
+          vc = targetChannel;
+        } else {
+          return message.reply({ embeds: [embed.error('Error', 'Invalid voice channel provided.')] });
+        }
+      }
+      
+      if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel or provide a valid voice channel ID.')] });
       
       try {
         await vc.permissionOverwrites.edit(message.guild.roles.everyone, {
-          Connect: false
+          Connect: false,
+          SendMessages: false,
+          ReadMessageHistory: false
         });
         await message.reply({ embeds: [embed.success('VC Locked', `**${vc.name}** has been locked.`)] });
       } catch (err) {
@@ -26,13 +49,20 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')], ephemeral: true }).catch(() => null);
       }
-      const vc = interaction.member?.voice?.channel;
-      if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
+      
+      const targetChannel = interaction.options.getChannel('channel');
+      const vc = targetChannel && targetChannel.isVoiceBased() ? targetChannel : interaction.member?.voice?.channel;
+      
+      if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel or select one.')], ephemeral: true });
       
       try {
-        await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, { Connect: false });
+        await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, {
+          Connect: false,
+          SendMessages: false,
+          ReadMessageHistory: false
+        });
         await interaction.reply({ embeds: [embed.success('VC Locked', `**${vc.name}** has been locked.`)] });
       } catch (err) {
         await interaction.reply({ embeds: [embed.error('Error', 'Failed to lock.')], ephemeral: true });
@@ -41,17 +71,40 @@ export const commands = [
   },
   {
     name: 'vcunlock',
-    description: 'Unlocks the current voice channel for @everyone.',
+    description: 'Unlocks a voice channel for @everyone.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageChannels],
+    options: [
+      {
+        name: 'channel',
+        description: 'The voice channel to unlock (defaults to your current VC)',
+        type: 7,
+        required: false
+      }
+    ],
     async executePrefix(message) {
       if (!(await isAuthorized(message.author, message.guild))) return;
-      const vc = message.member.voice.channel;
-      if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')] });
+      
+      const args = message.content.trim().split(/ +/).slice(1);
+      let vc = message.member.voice.channel;
+      
+      if (args[0]) {
+        const parsedId = args[0].replace(/<#|>/g, '');
+        const targetChannel = message.guild.channels.cache.get(parsedId);
+        if (targetChannel && targetChannel.isVoiceBased()) {
+          vc = targetChannel;
+        } else {
+          return message.reply({ embeds: [embed.error('Error', 'Invalid voice channel provided.')] });
+        }
+      }
+      
+      if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel or provide a valid voice channel ID.')] });
       
       try {
         await vc.permissionOverwrites.edit(message.guild.roles.everyone, {
-          Connect: null
+          Connect: null,
+          SendMessages: null,
+          ReadMessageHistory: null
         });
         await message.reply({ embeds: [embed.success('VC Unlocked', `**${vc.name}** has been unlocked.`)] });
       } catch (err) {
@@ -62,11 +115,18 @@ export const commands = [
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
         return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')], ephemeral: true }).catch(() => null);
       }
-      const vc = interaction.member?.voice?.channel;
-      if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
+      
+      const targetChannel = interaction.options.getChannel('channel');
+      const vc = targetChannel && targetChannel.isVoiceBased() ? targetChannel : interaction.member?.voice?.channel;
+      
+      if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel or select one.')], ephemeral: true });
       
       try {
-        await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, { Connect: null });
+        await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, {
+          Connect: null,
+          SendMessages: null,
+          ReadMessageHistory: null
+        });
         await interaction.reply({ embeds: [embed.success('VC Unlocked', `**${vc.name}** has been unlocked.`)] });
       } catch (err) {
         await interaction.reply({ embeds: [embed.error('Error', 'Failed to unlock.')], ephemeral: true });
