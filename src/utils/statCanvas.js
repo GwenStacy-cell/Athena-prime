@@ -37,7 +37,8 @@ function drawText(ctx, text, x, y, font, color, align = 'left') {
   ctx.font = font;
   ctx.fillStyle = color;
   ctx.textAlign = align;
-  ctx.fillText(text, x, y);
+  const cleanText = typeof text === 'string' ? text.replace(/[^\x00-\x7F]/g, '').trim() : text;
+  ctx.fillText(cleanText || '?', x, y);
 }
 
 export async function generateStatCard(user, member, stats, ranks, topChannels, chartData, guild) {

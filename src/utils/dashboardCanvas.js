@@ -133,8 +133,8 @@ export async function generateDashboard(stats, accentColor) {
   const m = stats.metrics;
 
   // Row 1
-  drawBlock(ctx, 20 + (blockW+gapX)*0, gridY, blockW, blockH, 'ROLES', '◆', m.roles, accentColor);
-  drawBlock(ctx, 20 + (blockW+gapX)*1, gridY, blockW, blockH, 'ADMIN ROLES', '★', m.adminRoles, accentColor);
+  drawBlock(ctx, 20 + (blockW+gapX)*0, gridY, blockW, blockH, 'ROLES', '@', m.roles, accentColor);
+  drawBlock(ctx, 20 + (blockW+gapX)*1, gridY, blockW, blockH, 'ADMIN ROLES', '*', m.adminRoles, accentColor);
   drawBlock(ctx, 20 + (blockW+gapX)*2, gridY, blockW, blockH, 'THREAT ROLES', '!', m.threatRoles, accentColor);
   drawBlock(ctx, 20 + (blockW+gapX)*3, gridY, blockW, blockH, 'PERM RISK', '!!', m.permRisk, accentColor);
 
