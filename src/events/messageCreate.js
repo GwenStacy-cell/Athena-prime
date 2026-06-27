@@ -14,25 +14,57 @@ import { Client } from 'nekos-best.js';
 const nbClient = new Client();
 const gifCache = new Map();
 
+const gifEngines = [
+  async (action) => {
+    try {
+      const res = await nbClient.fetch(action, 10);
+      return res?.results?.map(r => r.url) || [];
+    } catch { return []; }
+  },
+  async (action) => {
+    try {
+      const res = await fetch(`https://nekos.life/api/v2/img/${action}`).then(r => r.json());
+      return res.url ? [res.url] : [];
+    } catch { return []; }
+  },
+  async (action) => {
+    try {
+      const res = await fetch(`https://api.purrbot.site/v2/img/sfw/${action}/gif`).then(r => r.json());
+      return res.link ? [res.link] : [];
+    } catch { return []; }
+  },
+  async (action) => {
+    try {
+      const res = await fetch(`https://api.otakugifs.xyz/gif?reaction=${action}`).then(r => r.json());
+      return res.url ? [res.url] : [];
+    } catch { return []; }
+  }
+];
+
+async function fetchFromEngines(action) {
+  const shuffled = [...gifEngines].sort(() => Math.random() - 0.5);
+  for (const engine of shuffled) {
+    const urls = await engine(action);
+    if (urls.length > 0) return urls;
+  }
+  return [];
+}
+
 async function getCachedGif(action) {
   if (!gifCache.has(action)) gifCache.set(action, []);
   const pool = gifCache.get(action);
 
   if (pool.length === 0) {
-    try {
-      const res = await nbClient.fetch(action, 20);
-      if (res && res.results) pool.push(...res.results.map(r => r.url));
-    } catch (err) {
-      console.error(`[Roleplay] Pool fetch failed for ${action}:`, err);
-    }
+    const newUrls = await fetchFromEngines(action);
+    pool.push(...newUrls);
   }
 
   if (pool.length === 0) return null;
   const url = pool.pop();
 
   if (pool.length < 5) {
-    nbClient.fetch(action, 20).then(res => {
-      if (res && res.results) pool.push(...res.results.map(r => r.url));
+    fetchFromEngines(action).then(urls => {
+      if (urls.length > 0) pool.push(...urls);
     }).catch(() => null);
   }
   return url;
