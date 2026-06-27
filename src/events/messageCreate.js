@@ -246,7 +246,8 @@ export default {
           question: 'stare', query: 'stare', doubt: 'shrug', send: 'yeet', receive: 'hug', grab: 'handhold',
           stand: 'nod', sit: 'nod', trim: 'pat', dash: 'run', appreciate: 'smile', appriciate: 'smile',
           compliment: 'smile', compliments: 'smile', complimenting: 'smile', complimented: 'smile',
-          praise: 'pat', confuse: 'confused', confused: 'confused', confusing: 'confused', confusion: 'confused'
+          praise: 'pat', confuse: 'confused', confused: 'confused', confusing: 'confused', confusion: 'confused',
+          blow: 'kiss', blows: 'kiss', blowing: 'kiss'
         };
 
         let mappedAction = actionMap[actionRaw];
@@ -315,6 +316,7 @@ export default {
                 eat: targetStr ? `takes a bite out of ${targetStr}` : 'is eating',
                 secure: targetStr ? `securely holds ${targetStr}` : 'is securing the area',
                 confused: targetStr ? `is confused by ${targetStr}` : 'is confused',
+                blow: targetStr ? `blows a kiss to ${targetStr}` : 'blows a kiss',
                 lock: targetStr ? `locks arms with ${targetStr}` : 'is locked in',
                 unlock: targetStr ? `unlocks ${targetStr}` : 'is unlocked',
                 tie: targetStr ? `ties up ${targetStr}` : 'is tying knots',
