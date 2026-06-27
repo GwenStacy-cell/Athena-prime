@@ -1,4 +1,4 @@
-import { REST, Routes, ActivityType } from 'discord.js';
+import { REST, Routes, ActivityType, EmbedBuilder } from 'discord.js';
 import chalk from 'chalk';
 import { allCommands } from '../commands/loader.js';
 import db from '../database.js';
@@ -81,13 +81,12 @@ export default {
           const owner = await client.users.fetch(data.ownerId).catch(() => null);
           const bumper = data.bumperId ? await client.users.fetch(data.bumperId).catch(() => null) : null;
           
-          const embedData = {
-            title: 'BUMP AVAILABLE',
-            description: `It has been 2 hours since the last bump! Please use the \`/bump\` command to bump **${guild.name}** again and help the server grow.`,
-            color: cfg.accentColor || '#00e5ff',
-            footer: { text: 'Athena Prime Automations' },
-            timestamp: new Date()
-          };
+          const embedData = new EmbedBuilder()
+            .setTitle('BUMP AVAILABLE')
+            .setDescription(`It has been 2 hours since the last bump! Please use the \`/bump\` command to bump **${guild.name}** again and help the server grow.`)
+            .setColor(cfg.accentColor || '#00e5ff')
+            .setFooter({ text: 'Athena Prime Automations' })
+            .setTimestamp();
 
           const pings = [];
           
