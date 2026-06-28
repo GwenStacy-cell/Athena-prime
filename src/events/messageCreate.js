@@ -42,7 +42,25 @@ const gifEngines = [
   },
   async (action) => {
     try {
-      const res = await fetch(`https://g.tenor.com/v1/random?q=anime+${action}&key=LIVDSRZULELA&limit=10`).then(r => r.json());
+      const tenorQueryMap = {
+        fry: 'anime cooking',
+        burn: 'anime burning fire',
+        trash: 'anime throw trash',
+        jail: 'anime behind bars',
+        arrest: 'anime police arrest',
+        ignore: 'anime ignoring',
+        avoid: 'anime dodging',
+        scratch: 'anime scratch',
+        touch: 'anime poking touch',
+        lean: 'anime lean on shoulder',
+        propose: 'anime marriage proposal ring',
+        release: 'anime letting go',
+        wiggle: 'anime wiggle cute',
+        heat: 'anime fire flame',
+        cool: 'anime ice freeze'
+      };
+      const query = tenorQueryMap[action] || `anime ${action}`;
+      const res = await fetch(`https://g.tenor.com/v1/random?q=${encodeURIComponent(query)}&key=LIVDSRZULELA&limit=10`).then(r => r.json());
       return res?.results?.map(i => i.media[0].gif.url) || [];
     } catch { return []; }
   }
