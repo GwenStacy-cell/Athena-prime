@@ -226,7 +226,7 @@ export default {
           salute: 'salute', run: 'run',
           arrest: 'arrest', ignore: 'ignore', avoid: 'avoid', jail: 'jail', burn: 'burn',
           fry: 'fry', heat: 'heat', cool: 'cool', trash: 'trash', scratch: 'scratch',
-          touch: 'touch', lean: 'lean', propose: 'propose', wiggle: 'wiggle',
+          touch: 'touch', lean: 'lean', propose: 'propose', wiggle: 'wiggle', release: 'release',
 
           // Synonyms & Requested
           lick: 'nom', fuck: 'kabedon', protect: 'cuddle', move: 'run',
@@ -373,6 +373,14 @@ export default {
                 bath: targetStr ? `bathes ${targetStr}` : 'is taking a bath',
                 dump: targetStr ? `dumps ${targetStr}` : 'is dumping things',
                 bump: targetStr ? `fist-bumps ${targetStr}` : 'is bumping fists',
+                fry: targetStr ? `fries ${targetStr}` : 'is frying things',
+                trash: targetStr ? `trashes ${targetStr}` : 'is trashing the place',
+                scratch: targetStr ? `scratches ${targetStr}` : 'is scratching',
+                touch: targetStr ? `touches ${targetStr}` : 'is touching things',
+                lean: targetStr ? `leans on ${targetStr}` : 'is leaning',
+                heat: targetStr ? `heats up ${targetStr}` : 'is heating up',
+                cool: targetStr ? `cools down ${targetStr}` : 'is cooling down',
+                release: targetStr ? `releases ${targetStr}` : 'is releasing things',
                 shut: targetStr ? `tells ${targetStr} to shut up` : 'wants everyone to shut up',
                 block: targetStr ? `blocks ${targetStr}` : 'is blocking things',
                 strike: targetStr ? `strikes ${targetStr}` : 'is striking',
