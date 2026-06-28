@@ -67,6 +67,28 @@ const gifEngines = [
 ];
 
 async function fetchFromEngines(action) {
+  const hardcodedGifs = {
+    fry: ['https://media.tenor.com/ErQASaRZS3EAAAAC/howl%E2%80%99s-moving-castle-anime.gif', 'https://media.tenor.com/AQIDiqxaVSkAAAAC/anime-cooking.gif', 'https://media.tenor.com/2Cq9Sfnk5vcAAAAC/sliced-onions-butter.gif'],
+    trash: ['https://media.tenor.com/LTtlQgsvSsUAAAAC/yeet-toradora.gif', 'https://media.tenor.com/o6BRGGiCWWEAAAAC/shizuka-kuze-takopi%27s-original-sin.gif', 'https://media.tenor.com/6FZT64ZUTTYAAAAC/hinamatsuri-hina.gif'],
+    jail: ['https://media.tenor.com/kSj9yMl4MA4AAAAC/england-imprisoned.gif', 'https://media.tenor.com/nNWvIrUsTTcAAAAC/vtuber-anime.gif'],
+    arrest: ['https://media.tenor.com/kSj9yMl4MA4AAAAC/england-imprisoned.gif', 'https://media.tenor.com/nNWvIrUsTTcAAAAC/vtuber-anime.gif'],
+    ignore: ['https://media.tenor.com/EG9HCausysEAAAAC/ayanokoji-looking.gif', 'https://media.tenor.com/PARu8FCvbW0AAAAC/my-little-monster-anime.gif', 'https://media.tenor.com/RqCaP2p0wc8AAAAC/anime-girl.gif'],
+    avoid: ['https://media.tenor.com/u8VZ1BwqkmwAAAAC/anime-speed-o-sound-sonic.gif', 'https://media.tenor.com/oWVbsK2kYwAAAAAC/azusa-aizawa-dodging-sword-attack-azusa-san.gif', 'https://media.tenor.com/5hRBNyArZ-0AAAAC/ok-dodge.gif'],
+    scratch: ['https://media.tenor.com/Y9ZTcGexxzIAAAAC/casca48.gif', 'https://media.tenor.com/xLvDvZSEM6YAAAAC/head-scratch-father.gif', 'https://media.tenor.com/xo5Rx8A1wiwAAAAC/anime-boy.gif'],
+    touch: ['https://media.tenor.com/5Lv85bUIWvAAAAAC/hanako-kun-face-grab.gif', 'https://media.tenor.com/At_qOx2HQEQAAAAC/ally-val-caress-hair.gif', 'https://media.tenor.com/Wth7fEpgZ7EAAAAC/neko-anime-girl.gif'],
+    lean: ['https://media.tenor.com/Btq_03Je4A8AAAAC/yu-yu-hakusho-yyh.gif', 'https://media.tenor.com/3h67BuTXFMgAAAAC/idolish7-yamato.gif', 'https://media.tenor.com/aLSflmFvBe4AAAAC/yuyushiki-kei-okano.gif'],
+    propose: ['https://media.tenor.com/Z-pDHtzQuOYAAAAC/umineko-shannon.gif', 'https://media.tenor.com/kK8gAeHtSPMAAAAC/marry-me.gif', 'https://media.tenor.com/QC9titwVLhAAAAAC/spy-x-family-yor-forger.gif'],
+    release: ['https://media.tenor.com/Frm37nXIQmsAAAAC/supersecretcodepp.gif', 'https://media.tenor.com/QLvltOQ58hoAAAAC/anime-hands.gif', 'https://media.tenor.com/70F_1B8GSvEAAAAC/vnc-vanitas.gif'],
+    heat: ['https://media.tenor.com/BIHh4y7c7zEAAAAC/vyes.gif', 'https://media.tenor.com/OO10I6aC3dsAAAAC/anime-blush-death.gif', 'https://media.tenor.com/HBl3WIbJrTYAAAAC/jujutsu-kaisen.gif'],
+    burn: ['https://media.tenor.com/BIHh4y7c7zEAAAAC/vyes.gif', 'https://media.tenor.com/OO10I6aC3dsAAAAC/anime-blush-death.gif', 'https://media.tenor.com/HBl3WIbJrTYAAAAC/jujutsu-kaisen.gif'],
+    cool: ['https://media.tenor.com/fFeI4SjjQKIAAAAC/hairi-takahara.gif', 'https://media.tenor.com/085VV9uwD9oAAAAC/anime-frieren.gif', 'https://media.tenor.com/EEITKf1uaSgAAAAC/gray-juvia.gif'],
+    wiggle: ['https://media.tenor.com/8N7jNn01TcwAAAAC/anime-wiggle.gif', 'https://media.tenor.com/Z82x4J-LpT8AAAAC/anime-dance.gif']
+  };
+
+  if (hardcodedGifs[action]) {
+    return [...hardcodedGifs[action]].sort(() => Math.random() - 0.5);
+  }
+
   const shuffled = [...gifEngines].sort(() => Math.random() - 0.5);
   for (const engine of shuffled) {
     const urls = await engine(action);
