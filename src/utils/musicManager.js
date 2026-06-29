@@ -69,11 +69,38 @@ export async function enqueue(guild, member, query) {
   
   try {
     if (!queue.player) {
-      queue.player = await shoukaku.joinVoiceChannel({
-        guildId: guild.id,
-        channelId: voiceChannel.id,
-        shardId: guild.shardId
-      });
+      let player = shoukaku.players.get(guild.id);
+      if (!player) {
+        try {
+          player = await shoukaku.joinVoiceChannel({
+            guildId: guild.id,
+            channelId: voiceChannel.id,
+            shardId: guild.shardId
+          });
+        } catch (err) {
+          if (err.message && err.message.includes('existing connection')) {
+            await shoukaku.leaveVoiceChannel(guild.id);
+            await new Promise(r => setTimeout(r, 500));
+            player = await shoukaku.joinVoiceChannel({
+              guildId: guild.id,
+              channelId: voiceChannel.id,
+              shardId: guild.shardId
+            });
+          } else {
+            throw err;
+          }
+        }
+      } else if (player.voiceChannelId !== voiceChannel.id) {
+        await player.node.joinChannel({
+          guildId: guild.id,
+          channelId: voiceChannel.id,
+          shardId: guild.shardId,
+          deaf: false,
+          mute: false
+        });
+      }
+      
+      queue.player = player;
       
       queue.player.on('end', () => {
         if (queue.songs.length > 0) {
