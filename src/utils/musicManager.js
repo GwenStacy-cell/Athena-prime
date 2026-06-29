@@ -92,7 +92,7 @@ export async function enqueue(guild, member, query) {
             throw err;
           }
         }
-      } else if (player.voiceChannelId !== voiceChannel.id) {
+      } else if (guild.members.me.voice.channelId !== voiceChannel.id) {
         await guild.members.me.voice.setChannel(voiceChannel.id).catch(() => null);
       }
       
@@ -259,10 +259,11 @@ async function updateNowPlayingEmbeds(guildId) {
     }
   }
   
-  if (queue.player && queue.player.voiceChannelId) {
+  if (queue.player) {
      try {
        const guild = global.client.guilds.cache.get(guildId);
-       const vc = guild.channels.cache.get(queue.player.voiceChannelId);
+       const vcId = guild.members.me.voice?.channelId;
+       const vc = guild.channels.cache.get(vcId);
        if (vc && vc.isTextBased()) {
          if (queue.nowPlayingMsgVcId) {
             try {
@@ -291,10 +292,11 @@ async function clearNowPlayingEmbeds(guildId) {
     queue.nowPlayingMsgMusicId = null;
   }
   
-  if (queue.player && queue.player.voiceChannelId) {
+  if (queue.player) {
     try {
        const guild = global.client.guilds.cache.get(guildId);
-       const vc = guild.channels.cache.get(queue.player.voiceChannelId);
+       const vcId = guild.members.me.voice?.channelId;
+       const vc = guild.channels.cache.get(vcId);
        if (vc && queue.nowPlayingMsgVcId) {
           const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
           if (msg) await msg.delete().catch(()=>null);
@@ -306,14 +308,15 @@ async function clearNowPlayingEmbeds(guildId) {
 
 async function broadcastAction(guildId, user, actionText) {
   const queue = getQueue(guildId);
-  if (!queue.player || !queue.player.voiceChannelId) return;
+  if (!queue.player) return;
   const cfg = db.getGuildConfig(guildId);
   const embed = new EmbedBuilder()
     .setColor(cfg.accentColor || '#ff0000')
     .setDescription(`**${user}** ${actionText}.`);
   try {
      const guild = global.client.guilds.cache.get(guildId);
-     const vc = guild.channels.cache.get(queue.player.voiceChannelId);
+     const vcId = guild.members.me.voice?.channelId;
+     const vc = guild.channels.cache.get(vcId);
      if (vc && vc.isTextBased()) {
         await vc.send({ embeds: [embed] }).catch(()=>null);
      }
