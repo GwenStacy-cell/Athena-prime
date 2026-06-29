@@ -42,6 +42,8 @@ const client = new Client({
   ]
 });
 
+global.client = client; // Make client globally accessible
+
 // Import event handlers manually for clean compile and zero runtime FS errors
 import readyEvent from './src/events/ready.js';
 import interactionCreateEvent from './src/events/interactionCreate.js';
