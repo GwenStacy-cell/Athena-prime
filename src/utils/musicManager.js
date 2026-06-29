@@ -18,7 +18,9 @@ export function getQueue(guildId) {
       isPlaying: false,
       loop: false,
       volume: 100,
-      isPreparing: false
+      isPreparing: false,
+      nowPlayingMsgMusicId: null,
+      nowPlayingMsgVcId: null
     });
   }
   return queues.get(guildId);
@@ -104,6 +106,7 @@ export async function enqueue(guild, member, query) {
           queue.current = null;
           queue.isPlaying = false;
           updatePlayerUI(guild.id);
+          clearNowPlayingEmbeds(guild.id);
           startLeaveTimeout(guild.id);
         }
       });
@@ -192,6 +195,7 @@ async function playResource(guildId, song) {
        await queue.player.playTrack({ track: { encoded: song.encoded } });
        queue.isPlaying = true;
        updatePlayerUI(guildId);
+       updateNowPlayingEmbeds(guildId);
     }
   } catch (error) {
     console.error(`Error streaming song:`, error);
@@ -211,6 +215,109 @@ function formatDuration(ms) {
   const mins = Math.floor(totalSecs / 60);
   const secs = totalSecs % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function buildNowPlayingEmbed(guildId) {
+  const queue = getQueue(guildId);
+  const cfg = db.getGuildConfig(guildId);
+  if (!queue.current) return null;
+  
+  const embed = new EmbedBuilder()
+    .setColor(cfg.accentColor || '#ff0000')
+    .setAuthor({ name: 'Now Playing', iconURL: global.client?.user?.displayAvatarURL() })
+    .setTitle(queue.current.title)
+    .setURL(queue.current.url)
+    .addFields(
+      { name: 'Duration', value: queue.current.duration, inline: true },
+      { name: 'Requested By', value: `<@${queue.current.requester.id}>`, inline: true },
+      { name: 'Songs Left in Queue', value: queue.songs.length.toString(), inline: true }
+    );
+    
+  if (cfg.musicCoverImage) embed.setThumbnail(cfg.musicCoverImage);
+  return embed;
+}
+
+async function updateNowPlayingEmbeds(guildId) {
+  const queue = getQueue(guildId);
+  if (!queue.current || !queue.isPlaying) return;
+  
+  const embed = buildNowPlayingEmbed(guildId);
+  if (!embed) return;
+  
+  if (queue.textChannel) {
+    if (queue.nowPlayingMsgMusicId) {
+       try {
+         const msg = await queue.textChannel.messages.fetch(queue.nowPlayingMsgMusicId);
+         if (msg) await msg.edit({ embeds: [embed] });
+       } catch (e) {
+         const newMsg = await queue.textChannel.send({ embeds: [embed] }).catch(()=>null);
+         if (newMsg) queue.nowPlayingMsgMusicId = newMsg.id;
+       }
+    } else {
+       const newMsg = await queue.textChannel.send({ embeds: [embed] }).catch(()=>null);
+       if (newMsg) queue.nowPlayingMsgMusicId = newMsg.id;
+    }
+  }
+  
+  if (queue.player && queue.player.voiceChannelId) {
+     try {
+       const guild = global.client.guilds.cache.get(guildId);
+       const vc = guild.channels.cache.get(queue.player.voiceChannelId);
+       if (vc && vc.isTextBased()) {
+         if (queue.nowPlayingMsgVcId) {
+            try {
+              const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
+              if (msg) await msg.edit({ embeds: [embed] });
+            } catch (e) {
+              const newMsg = await vc.send({ embeds: [embed] }).catch(()=>null);
+              if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
+            }
+         } else {
+            const newMsg = await vc.send({ embeds: [embed] }).catch(()=>null);
+            if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
+         }
+       }
+     } catch (e) { console.error('Failed to update VC embed:', e); }
+  }
+}
+
+async function clearNowPlayingEmbeds(guildId) {
+  const queue = getQueue(guildId);
+  if (queue.textChannel && queue.nowPlayingMsgMusicId) {
+    try {
+      const msg = await queue.textChannel.messages.fetch(queue.nowPlayingMsgMusicId);
+      if (msg) await msg.delete().catch(()=>null);
+    } catch(e) {}
+    queue.nowPlayingMsgMusicId = null;
+  }
+  
+  if (queue.player && queue.player.voiceChannelId) {
+    try {
+       const guild = global.client.guilds.cache.get(guildId);
+       const vc = guild.channels.cache.get(queue.player.voiceChannelId);
+       if (vc && queue.nowPlayingMsgVcId) {
+          const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
+          if (msg) await msg.delete().catch(()=>null);
+       }
+    } catch(e) {}
+    queue.nowPlayingMsgVcId = null;
+  }
+}
+
+async function broadcastAction(guildId, user, actionText) {
+  const queue = getQueue(guildId);
+  if (!queue.player || !queue.player.voiceChannelId) return;
+  const cfg = db.getGuildConfig(guildId);
+  const embed = new EmbedBuilder()
+    .setColor(cfg.accentColor || '#ff0000')
+    .setDescription(`**${user}** ${actionText}.`);
+  try {
+     const guild = global.client.guilds.cache.get(guildId);
+     const vc = guild.channels.cache.get(queue.player.voiceChannelId);
+     if (vc && vc.isTextBased()) {
+        await vc.send({ embeds: [embed] }).catch(()=>null);
+     }
+  } catch(e) {}
 }
 
 export async function updatePlayerUI(guildId) {
@@ -281,6 +388,7 @@ export async function handleInteraction(interaction) {
       queue.player.setPaused(false);
       await interaction.reply({ content: `${interaction.user} resumed the playback.` });
       setTimeout(() => interaction.deleteReply().catch(()=>null), 5000);
+      broadcastAction(interaction.guildId, interaction.user, 'resumed the playback');
     } else {
       await interaction.reply({ content: `The music is already playing.`, ephemeral: true });
     }
@@ -290,6 +398,7 @@ export async function handleInteraction(interaction) {
       queue.player.setPaused(true);
       await interaction.reply({ content: `${interaction.user} paused the playback.` });
       setTimeout(() => interaction.deleteReply().catch(()=>null), 5000);
+      broadcastAction(interaction.guildId, interaction.user, 'paused the playback');
     } else {
       await interaction.reply({ content: `The music is already paused.`, ephemeral: true });
     }
@@ -298,12 +407,15 @@ export async function handleInteraction(interaction) {
     if (queue.player) queue.player.stopTrack(); // Triggers 'end' event which plays next
     await interaction.reply({ content: `${interaction.user} skipped **${queue.current.title}**.` });
     setTimeout(() => interaction.deleteReply().catch(()=>null), 5000);
+    broadcastAction(interaction.guildId, interaction.user, `skipped **${queue.current.title}**`);
   } else if (action === 'stop') {
     queue.songs = [];
     queue.current = null;
     if (queue.player) queue.player.stopTrack();
     await interaction.reply({ content: `${interaction.user} stopped the music and cleared the queue.` });
     setTimeout(() => interaction.deleteReply().catch(()=>null), 5000);
+    clearNowPlayingEmbeds(interaction.guildId);
+    broadcastAction(interaction.guildId, interaction.user, 'stopped the music and cleared the queue');
     startLeaveTimeout(interaction.guildId);
   } else if (action === 'queue') {
     if (queue.songs.length === 0) return interaction.reply({ content: `The queue is currently empty.`, ephemeral: true });
