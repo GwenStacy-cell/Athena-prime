@@ -94,6 +94,8 @@ export async function enqueue(guild, member, query) {
   const voiceChannel = member.voice.channel;
   if (!voiceChannel) return { success: false, message: 'You need to be in a voice channel to play music!' };
   
+  queue.isPreparing = true;
+  
   const connection = getVoiceConnection(guild.id);
   if (!connection || connection.joinConfig.channelId !== voiceChannel.id) {
     queue.connection = joinVoiceChannel({
@@ -133,6 +135,7 @@ export async function enqueue(guild, member, query) {
         } else {
           updatePlayerUI(guild.id);
         }
+        queue.isPreparing = false;
         return { success: true, message: `Added playlist **${playlist.title}** (${songs.length} songs) to queue.` };
       } else if (type === 'sp_track' || type === 'sp_playlist' || type === 'sp_album') {
          if (play.is_expired()) await play.refreshToken();
@@ -161,6 +164,7 @@ export async function enqueue(guild, member, query) {
            } else {
              updatePlayerUI(guild.id);
            }
+           queue.isPreparing = false;
            return { success: true, message: `Added Spotify playlist **${sp_data.name}** (${songs.length} songs) to queue.` };
          }
       } else {
@@ -193,7 +197,10 @@ export async function enqueue(guild, member, query) {
       }
     }
     
-    if (!results || !results.length) return { success: false, message: 'No results found for that query.' };
+    if (!results || !results.length) {
+       queue.isPreparing = false;
+       return { success: false, message: 'No results found for that query.' };
+    }
     
     const song = {
       title: results[0].title,
@@ -212,9 +219,11 @@ export async function enqueue(guild, member, query) {
       updatePlayerUI(guild.id);
     }
     
+    queue.isPreparing = false;
     return { success: true, message: `Added **${song.title}** to queue.` };
   } catch (error) {
     console.error(`Music enqueue error:`, error);
+    queue.isPreparing = false;
     return { success: false, message: `An error occurred: ${error.message}` };
   }
 }
