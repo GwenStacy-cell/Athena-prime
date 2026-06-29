@@ -184,11 +184,14 @@ export async function enqueue(guild, member, query) {
     
     if (!results || !results.length) return { success: false, message: 'No results found for that query.' };
     
+    const min = Math.floor((results[0].durationInSec || 0) / 60);
+    const sec = ((results[0].durationInSec || 0) % 60).toString().padStart(2, '0');
+    
     const song = {
-      title: results[0].title,
+      title: results[0].title || results[0].name,
       url: results[0].url,
-      duration: results[0].durationRaw,
-      thumbnail: results[0].thumbnails?.[0]?.url,
+      duration: results[0].durationRaw || `${min}:${sec}`,
+      thumbnail: results[0].thumbnails?.[0]?.url || results[0].thumbnail,
       requester: member.user
     };
     

@@ -58,10 +58,14 @@ export const commands = [
       try {
         if (!focusedValue.startsWith('http')) {
           const results = await play.search(focusedValue, { limit: 5, source: { soundcloud: 'tracks' } });
-          const choices = results.map(r => ({
-            name: `${r.title} [${r.durationRaw}]`.substring(0, 100),
-            value: r.url
-          }));
+          const choices = results.map(r => {
+            const min = Math.floor((r.durationInSec || 0) / 60);
+            const sec = ((r.durationInSec || 0) % 60).toString().padStart(2, '0');
+            return {
+              name: `${r.name || r.title} [${min}:${sec}]`.substring(0, 100),
+              value: r.url
+            };
+          });
           await interaction.respond(choices);
         } else {
           await interaction.respond([]);
