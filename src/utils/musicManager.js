@@ -5,6 +5,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'disc
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';
 import yt from 'youtube-ext';
+import youtubedl from 'youtube-dl-exec';
 
 play.getFreeClientID().then((clientID) => {
   play.setToken({
@@ -233,30 +234,25 @@ async function playResource(guildId, song) {
   try {
     let playUrl = song.url;
     
-    // Bypass YouTube and Spotify stream restrictions by mapping to SoundCloud tracks natively
-    // We strictly use SoundCloud to prevent AWS IP bans on YouTube.
-    if (!playUrl || !playUrl.includes('soundcloud.com')) {
-      let cleanTitle = song.title
-          .replace(/\(official.*?\)/gi, '')
-          .replace(/\[official.*?\]/gi, '')
-          .replace(/\(music video\)/gi, '')
-          .replace(/\[music video\]/gi, '')
-          .replace(/\(lyric.*?\)/gi, '')
-          .replace(/official video/gi, '')
-          .replace(/official audio/gi, '')
-          .trim();
-          
-      const searched = await play.search(cleanTitle, { limit: 1, source: { soundcloud: 'tracks' } });
-      if (searched.length > 0) {
-        playUrl = searched[0].url;
-        song.thumbnail = song.thumbnail || searched[0].thumbnails?.[0]?.url;
-      } else {
-         throw new Error(`Could not find a streamable audio source for ${song.title}`);
-      }
-    }
+    let stream;
+    let resource;
     
-    const stream = await play.stream(playUrl);
-    const resource = createAudioResource(stream.stream, { inputType: stream.type });
+    // Bypass SoundCloud Go+ 30-second previews and YouTube captchas by using yt-dlp!
+    if (!playUrl || !playUrl.includes('soundcloud.com')) {
+      const targetUrl = playUrl || `ytsearch1:${song.title}`;
+      
+      const ytStream = youtubedl.exec(targetUrl, {
+        o: '-',
+        q: true,
+        f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
+        r: '100K'
+      }, { stdio: ['ignore', 'pipe', 'ignore'] });
+      
+      resource = createAudioResource(ytStream.stdout);
+    } else {
+      stream = await play.stream(playUrl);
+      resource = createAudioResource(stream.stream, { inputType: stream.type });
+    }
     
     if (resource && resource.playStream) {
       resource.playStream.on('error', err => {

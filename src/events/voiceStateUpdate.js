@@ -294,7 +294,7 @@ export default {
       const queues = (await import('../utils/musicManager.js')).default || new Map();
       const queue = (await import('../utils/musicManager.js')).getQueue(guild.id);
       
-      if (queue && (queue.isPlaying || queue.current || queue.songs.length > 0 || queue.isPreparing) && newState.channelId) {
+      if (queue && (queue.isPlaying || queue.current || queue.songs.length > 0 || queue.isPreparing)) {
          // Bot is playing music in a channel, leave it alone!
          return;
       }
