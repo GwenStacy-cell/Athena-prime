@@ -91,13 +91,7 @@ export async function enqueue(guild, member, query) {
           }
         }
       } else if (player.voiceChannelId !== voiceChannel.id) {
-        await player.node.joinChannel({
-          guildId: guild.id,
-          channelId: voiceChannel.id,
-          shardId: guild.shardId,
-          deaf: false,
-          mute: false
-        });
+        await guild.members.me.voice.setChannel(voiceChannel.id).catch(() => null);
       }
       
       queue.player = player;

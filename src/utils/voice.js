@@ -26,13 +26,7 @@ export async function connectToHomeVc(guild, channelId) {
        });
        console.log(`[Athena Prime] Joined Home VC "${channel.name}" in guild "${guild.name}" via Lavalink`);
     } else if (player.voiceChannelId !== channel.id) {
-       await player.node.joinChannel({
-         guildId: guild.id,
-         channelId: channel.id,
-         shardId: guild.shardId,
-         deaf: false,
-         mute: false
-       });
+       await guild.members.me.voice.setChannel(channel.id).catch(() => null);
        console.log(`[Athena Prime] Moved to Home VC "${channel.name}" in guild "${guild.name}" via Lavalink`);
     }
     return player;
@@ -56,13 +50,7 @@ export async function toggleBotDeafen(guild, deaf) {
     if (shoukaku) {
       const player = shoukaku.players.get(guild.id);
       if (player) {
-         await player.node.joinChannel({
-           guildId: guild.id,
-           channelId: me.voice.channelId,
-           shardId: guild.shardId,
-           deaf: deaf,
-           mute: false
-         });
+         await me.voice.setDeaf(deaf).catch(() => null);
          return { success: true };
       }
     }
