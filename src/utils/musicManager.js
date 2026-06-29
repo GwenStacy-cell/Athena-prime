@@ -246,10 +246,32 @@ async function playResource(guildId, song) {
           .replace(/official audio/gi, '')
           .trim();
           
-      const searched = await play.search(cleanTitle, { limit: 1, source: { soundcloud: 'tracks' } });
+      const searched = await play.search(cleanTitle, { limit: 10, source: { soundcloud: 'tracks' } });
       if (searched.length > 0) {
-        playUrl = searched[0].url;
-        song.thumbnail = song.thumbnail || searched[0].thumbnails?.[0]?.url;
+        const originalLower = cleanTitle.toLowerCase();
+        const wantsRemix = originalLower.includes('remix');
+        const wantsCover = originalLower.includes('cover');
+        const wantsSpedUp = originalLower.includes('sped') || originalLower.includes('nightcore');
+        const wantsSlowed = originalLower.includes('slowed') || originalLower.includes('reverb');
+        const wantsFeat = originalLower.includes('feat') || originalLower.includes('ft.');
+        
+        let bestTrack = null;
+        for (const track of searched) {
+           const trackLower = track.name.toLowerCase();
+           if (!wantsRemix && trackLower.includes('remix')) continue;
+           if (!wantsCover && trackLower.includes('cover')) continue;
+           if (!wantsSpedUp && (trackLower.includes('sped') || trackLower.includes('nightcore'))) continue;
+           if (!wantsSlowed && (trackLower.includes('slowed') || trackLower.includes('reverb'))) continue;
+           if (!wantsFeat && (trackLower.includes('feat') || trackLower.includes('ft.'))) continue;
+           
+           bestTrack = track;
+           break;
+        }
+        
+        bestTrack = bestTrack || searched[0]; // fallback if all were filtered out
+        
+        playUrl = bestTrack.url;
+        song.thumbnail = song.thumbnail || bestTrack.thumbnails?.[0]?.url;
       } else {
          throw new Error(`Could not find a streamable audio source for ${song.title}`);
       }
