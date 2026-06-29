@@ -10,6 +10,7 @@ import statsDB from '../statsDB.js';
 import { endGiveaway } from '../commands/giveaway.js';
 import { setupDashboardChannel, updateDashboardMessage } from '../utils/dashboardManager.js';
 import { startNewsJob } from '../jobs/newsJob.js';
+import { startMusicCleanupJob } from '../jobs/musicCleanupJob.js';
 
 export default {
   name: 'ready',
@@ -284,6 +285,9 @@ export default {
     // Start the News Feed Cron Job
     console.log(chalk.blue('⏳ Initializing News Feed Job...'));
     startNewsJob(client);
+
+    console.log(chalk.blue('⏳ Initializing Music Cleanup Job...'));
+    startMusicCleanupJob(client);
 
     // Periodically update JTC panels every 5 minutes to keep stats fresh
     setInterval(async () => {
