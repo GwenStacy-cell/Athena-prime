@@ -1,11 +1,8 @@
 import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import ffmpeg from 'fluent-ffmpeg';
-import ffmpegStatic from 'ffmpeg-static';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-
-ffmpeg.setFfmpegPath(ffmpegStatic);
 import db from '../database.js';
 import embed from '../embed.js';
 import { 

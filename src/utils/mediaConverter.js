@@ -2,10 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import ffmpeg from 'fluent-ffmpeg';
-import ffmpegStatic from 'ffmpeg-static';
 import { AttachmentBuilder } from 'discord.js';
-
-ffmpeg.setFfmpegPath(ffmpegStatic);
 
 const TEMP_DIR = path.resolve('temp_media');
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
