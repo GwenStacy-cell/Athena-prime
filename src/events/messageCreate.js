@@ -81,8 +81,7 @@ async function fetchFromEngines(action) {
     release: ['https://media.tenor.com/Frm37nXIQmsAAAAC/supersecretcodepp.gif', 'https://media.tenor.com/QLvltOQ58hoAAAAC/anime-hands.gif', 'https://media.tenor.com/70F_1B8GSvEAAAAC/vnc-vanitas.gif'],
     heat: ['https://media.tenor.com/BIHh4y7c7zEAAAAC/vyes.gif', 'https://media.tenor.com/OO10I6aC3dsAAAAC/anime-blush-death.gif', 'https://media.tenor.com/HBl3WIbJrTYAAAAC/jujutsu-kaisen.gif'],
     burn: ['https://media.tenor.com/BIHh4y7c7zEAAAAC/vyes.gif', 'https://media.tenor.com/OO10I6aC3dsAAAAC/anime-blush-death.gif', 'https://media.tenor.com/HBl3WIbJrTYAAAAC/jujutsu-kaisen.gif'],
-    cool: ['https://media.tenor.com/fFeI4SjjQKIAAAAC/hairi-takahara.gif', 'https://media.tenor.com/085VV9uwD9oAAAAC/anime-frieren.gif', 'https://media.tenor.com/EEITKf1uaSgAAAAC/gray-juvia.gif'],
-    wiggle: ['https://media.tenor.com/8N7jNn01TcwAAAAC/anime-wiggle.gif', 'https://media.tenor.com/Z82x4J-LpT8AAAAC/anime-dance.gif']
+    cool: ['https://media.tenor.com/fFeI4SjjQKIAAAAC/hairi-takahara.gif', 'https://media.tenor.com/085VV9uwD9oAAAAC/anime-frieren.gif', 'https://media.tenor.com/EEITKf1uaSgAAAAC/gray-juvia.gif']
   };
 
   if (hardcodedGifs[action]) {

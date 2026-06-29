@@ -290,17 +290,23 @@ export default {
       const homeVcId = config.homeVcId;
       if (!homeVcId) return;
 
+      // Ensure we don't yank the bot out if it's currently playing music!
+      const queues = (await import('../utils/musicManager.js')).default || new Map();
+      const queue = (await import('../utils/musicManager.js')).getQueue(guild.id);
+      
+      if (queue && (queue.isPlaying || queue.current || queue.songs.length > 0) && newState.channelId) {
+         // Bot is playing music in a channel, leave it alone!
+         return;
+      }
+
       if (newState.channelId !== homeVcId) {
         console.log(`[JTC] Bot voice state changed in ${guild.name}. Force restoring home VC...`);
         
-        // Only destroy the connection if the bot was fully disconnected.
-        // If it was just dragged to another VC, smoothly move it back without disconnecting.
         if (!newState.channelId) {
           const connection = getVoiceConnection(guild.id);
           if (connection) connection.destroy();
         }
 
-        // Reconnect immediately
         connectToHomeVc(guild, homeVcId);
       }
       return;

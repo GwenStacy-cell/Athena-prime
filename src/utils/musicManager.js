@@ -65,17 +65,15 @@ function startLeaveTimeout(guildId) {
     const cfg = db.getGuildConfig(guildId);
     const homeVcId = cfg.homeVcId;
     
-    if (queue.connection) {
-      queue.connection.destroy();
-      queue.connection = null;
-    }
-    
     if (homeVcId) {
       const client = global.client;
       if (client) {
         const guild = client.guilds.cache.get(guildId);
         if (guild) connectToHomeVc(guild, homeVcId);
       }
+    } else if (queue.connection) {
+      queue.connection.destroy();
+      queue.connection = null;
     }
     
   }, 3000);
