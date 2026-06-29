@@ -132,33 +132,30 @@ export default {
     });
 
     // Set custom rich activity presence
-    const watchingStatuses = [
-      'Athena Prime | Armed',
-      'Athena Prime | Secured',
-      'Athena Prime | Truly Unbypassable',
-      'Athena Prime | Dev Prince'
+    const customStatuses = [
+      'Armed',
+      'Secured',
+      'Truly Unbypassable',
+      'Dev Prince'
     ];
     let statusIndex = 0;
 
-    // Initial status
-    client.user.setPresence({
-      activities: [
-        { name: watchingStatuses[0], type: ActivityType.Watching },
-        { name: 'status', type: ActivityType.Custom, state: 'Truly Unbypassable' }
-      ],
-      status: 'online'
-    });
-
-    // Rotate Activity every 5 seconds
-    setInterval(() => {
-      statusIndex = (statusIndex + 1) % watchingStatuses.length;
+    const updatePresence = () => {
       client.user.setPresence({
         activities: [
-          { name: watchingStatuses[statusIndex], type: ActivityType.Watching },
-          { name: 'status', type: ActivityType.Custom, state: 'Truly Unbypassable' }
+          { name: 'status', type: ActivityType.Custom, state: customStatuses[statusIndex] }
         ],
         status: 'online'
       });
+    };
+
+    // Initial status
+    updatePresence();
+
+    // Rotate Activity every 5 seconds
+    setInterval(() => {
+      statusIndex = (statusIndex + 1) % customStatuses.length;
+      updatePresence();
     }, 5000);
 
     // Rotate Server Nickname every 30 minutes
