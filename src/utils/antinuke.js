@@ -168,8 +168,8 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
     `A dangerous server mutation was detected, blocked, and rolled back.`,
     [
       { name: ' Violator',   value: `${executor.tag} (\`${executor.id}\`)`, inline: true },
-      { name: '⚡ Action',     value: `\`${eventType}\``,                     inline: true },
-      { name: '⚖ Punishment', value: `**${punishResult}**`,                  inline: true },
+      { name: ' Action',     value: `\`${eventType}\``,                     inline: true },
+      { name: ' Punishment', value: `**${punishResult}**`,                  inline: true },
       { name: ' Rollback',   value: rollbackResult }
     ],
     'raid'
@@ -189,8 +189,8 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
           `A dangerous action was detected and contained on **${guild.name}**.`,
           [
             { name: ' Violator',    value: `**${executor.tag}** (\`${executor.id}\`)` },
-            { name: '⚡ Violation',   value: `\`${eventType}\`` },
-            { name: '⚖ Punishment',  value: `**${punishResult}**` },
+            { name: ' Violation',   value: `\`${eventType}\`` },
+            { name: ' Punishment',  value: `**${punishResult}**` },
             { name: ' Rollback',    value: rollbackResult + ' (Check security logs for more)' }
           ]
         )] }).catch(() => null);
@@ -538,7 +538,7 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
           await guild.emojis.create({ attachment: extraData.url, name: extraData.name, reason: 'Athena Anti-Nuke: Restored deleted emoji' });
           rollbackResult = ` Emoji **${extraData.name}** restored`;
         } else {
-          rollbackResult = `⚠ Emoji **${extraData.name}** cannot be auto-restored (missing URL cache)`;
+          rollbackResult = ` Emoji **${extraData.name}** cannot be auto-restored (missing URL cache)`;
         }
       } catch (e) { rollbackResult = ` Emoji restore failed: ${e.message}`; }
     }
@@ -572,7 +572,7 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
 
     else if (eventType === 'Member Ban' && extraData) {
       // extraData = { userId, username }
-      rollbackResult = `⚠ Banned member: **${extraData.username}** — unban manually if needed`;
+      rollbackResult = ` Banned member: **${extraData.username}** — unban manually if needed`;
     }
 
     await notifyAndLog(guild, executor, eventType, punishResult, rollbackResult);
@@ -906,7 +906,7 @@ export async function checkMassBan(guild, user) {
 
     const punishResult = await punish(guild, executor, 'Mass/Unauthorized Ban', config);
     await notifyAndLog(guild, executor, `Mass/Unauthorized Ban (${user.tag})`, punishResult,
-      `⚠ **${user.tag}** was banned — unban manually if needed`);
+      ` **${user.tag}** was banned — unban manually if needed`);
 
   } catch (err) {
     console.error('[AntiNuke] checkMassBan error:', err);

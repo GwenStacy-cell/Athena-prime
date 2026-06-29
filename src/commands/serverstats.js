@@ -28,7 +28,7 @@ export const commands = [
         const stats = db.getServerStats(message.guild.id);
         if (!stats) return message.reply({ embeds: [embed.warning('Not Setup', 'Server stats are not currently set up.')] });
         
-        const m = await message.reply('⏳ Disabling server stats and deleting channels...');
+        const m = await message.reply(' Disabling server stats and deleting channels...');
         
         for (const id of [stats.categoryId, stats.totalId, stats.humansId, stats.botsId]) {
           const ch = message.guild.channels.cache.get(id);
@@ -40,7 +40,7 @@ export const commands = [
       }
       
       if (action === 'setup') {
-        const m = await message.reply('⏳ Setting up server stats channels. This may take a moment...');
+        const m = await message.reply(' Setting up server stats channels. This may take a moment...');
         
         // Count members
         await message.guild.members.fetch().catch(() => null);

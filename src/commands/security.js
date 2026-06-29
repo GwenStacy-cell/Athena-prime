@@ -1351,7 +1351,7 @@ export const commands = [
         return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!massquarantine <@role> [reason]\``)] });
       }
       const reason = args.slice(1).join(' ').trim() || 'Mass quarantine by administrator';
-      const statusMsg = await message.reply({ embeds: [embed.info('Mass Quarantine Started', `⏳ Quarantining all members with role <@&${role.id}>...`)] });
+      const statusMsg = await message.reply({ embeds: [embed.info('Mass Quarantine Started', ` Quarantining all members with role <@&${role.id}>...`)] });
       const result = await handleMassQuarantine(message.guild, message.member, role, reason);
       await statusMsg.edit({ embeds: [result.embed] });
     },
@@ -1372,7 +1372,7 @@ export const commands = [
     permissions: [PermissionFlagsBits.Administrator],
     options: [],
     async executePrefix(message) {
-      const statusMsg = await message.reply({ embeds: [embed.info('Mass Unquarantine Started', '⏳ Releasing all quarantined members...')] });
+      const statusMsg = await message.reply({ embeds: [embed.info('Mass Unquarantine Started', ' Releasing all quarantined members...')] });
       const result = await handleMassUnquarantine(message.guild, message.member, message.client);
       await statusMsg.edit({ embeds: [result.embed] });
     },
@@ -1529,7 +1529,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
     const durationLabel = durationMs ? formatDuration(durationMs) : 'Until manually lifted';
     const dmEmbed = embed.danger(
       'Server Isolation Notice',
-      `⚠ You have been placed under **Quarantine** in **${guild.name}**.`,
+      ` You have been placed under **Quarantine** in **${guild.name}**.`,
       [
         { name: 'Reason', value: reason },
         { name: 'Duration', value: durationLabel, inline: true },
@@ -2138,7 +2138,7 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 *(Use \'antinuke config\' or individual commands to fine-tune)*`,
         [
           { name: ' Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '⚡ Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: ' Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
           { name: '� Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
           { name: '� Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
           { name: '� Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
@@ -2295,11 +2295,11 @@ async function getServerInfoEmbed(guild) {
     { name: '� Created', value: createdAt, inline: true },
     { name: '\u200b', value: '**── Security Status ──**' },
     { name: ' Anti-Nuke', value: antiNukeStatus, inline: true },
-    { name: '⚡ Anti-Spam', value: antiSpamStatus, inline: true },
+    { name: ' Anti-Spam', value: antiSpamStatus, inline: true },
     { name: '� Anti-Invite', value: antiInviteStatus, inline: true },
     { name: '� Anti-Link', value: antiLinkStatus, inline: true },
     { name: '� Raid Mode', value: raidModeStatus, inline: true },
-    { name: '⚠ Max Warns', value: `\`${config.maxWarnings}\``, inline: true }
+    { name: ' Max Warns', value: `\`${config.maxWarnings}\``, inline: true }
   ];
 
   const serverEmbed = embed.security(
@@ -2344,7 +2344,7 @@ async function getUserInfoEmbed(guild, member) {
     { name: '� User ID', value: `\`${member.id}\``, inline: true },
     { name: '� Account Created', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
     { name: '� Joined Server', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: true },
-    { name: '⚠ Active Warnings', value: `\`${warnings.length}\``, inline: true },
+    { name: ' Active Warnings', value: `\`${warnings.length}\``, inline: true },
     { name: ' Privileges', value: privileges.join(' | '), inline: true },
     { name: `� Roles [${member.roles.cache.size - 1}]`, value: roles }
   ];
@@ -2390,7 +2390,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
         `All Athena Prime protective layers are now **ACTIVE**.\nAnti-Nuke, Anti-Spam, Anti-Invite, Anti-Link, and Word Filter are fully armed!\n\n*(Use individual commands like \`antinuke config\` or \`linksallow\` to fine-tune)*`,
         [
           { name: ' Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '⚡ Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: ' Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
           { name: '� Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
           { name: '� Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
           { name: '� Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
@@ -2479,7 +2479,7 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
       embed: embed.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
         { name: '� Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set — run `/qrmanager setup`', inline: true },
         { name: '� Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set — run `/qrmanager setup`', inline: true },
-        { name: '� Quarantine VC',      value: vc      ? `<#${vc.id}>`      : '⚠ Not Set — use `/qrmanager setvc`', inline: true }
+        { name: '� Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set — use `/qrmanager setvc`', inline: true }
       ])
     };
   }
@@ -2520,7 +2520,7 @@ async function handleLinksAllow(guild, action, domain) {
       embed: embed.success(
         '� All Links Allowed',
         'The anti-link filter has been **completely disabled** for this server.\n\nAll users can now post any link freely.\n\nUse `/linksallow disallowall` to re-enable the filter.',
-        [{ name: '⚠ Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
+        [{ name: ' Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
       )
     };
   }
@@ -2656,7 +2656,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
       { name: '� Role',       value: `<@&${targetRole.id}>`, inline: true },
       { name: ' Quarantined', value: `\`${success}\``,       inline: true },
       { name: ' Failed',      value: `\`${failed}\``,        inline: true },
-      { name: '⏭ Skipped',    value: `\`${skipped}\``,       inline: true },
+      { name: ' Skipped',    value: `\`${skipped}\``,       inline: true },
       { name: '� Reason',     value: reason }
     ],
     'danger'
@@ -2670,7 +2670,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
         { name: '� Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
         { name: ' Quarantined',  value: `\`${success}\``,  inline: true },
         { name: ' Failed',       value: `\`${failed}\``,   inline: true },
-        { name: '⏭ Skipped',     value: `\`${skipped}\``,  inline: true },
+        { name: ' Skipped',     value: `\`${skipped}\``,  inline: true },
         { name: '� Reason',       value: reason,             inline: false },
         { name: '� Executed By',  value: `${moderator}`,    inline: true }
       ]

@@ -516,7 +516,7 @@ export default {
           } catch (err) {
             console.error('[Roleplay] Error fetching GIF:', err);
             // If it fails, silently fall through, but we should probably stop the unknown command error.
-            return message.reply({ content: `❌ Could not load a GIF for \`${actionRaw}\` at the moment.` }).catch(() => null);
+            return message.reply({ content: ` Could not load a GIF for \`${actionRaw}\` at the moment.` }).catch(() => null);
           }
         }
       }
@@ -955,13 +955,13 @@ export default {
       if (closest) {
         const suggestEmbed = embed.warn(
           'Unknown Command',
-          `${message.author} ❌ Command \`${triggerUsed}${commandName}\` not found.\n\n💡 Did you mean: \`${prefix}${closest}\`?\n\nUse \`${prefix}help\` for all commands.`
+          `${message.author}  Command \`${triggerUsed}${commandName}\` not found.\n\n Did you mean: \`${prefix}${closest}\`?\n\nUse \`${prefix}help\` for all commands.`
         );
         return message.reply({ embeds: [suggestEmbed] }).catch(() => null);
       } else {
         const notFoundEmbed = embed.warn(
           'Unknown Command',
-          `${message.author} ❌ Command \`${triggerUsed}${commandName}\` does not exist.\n\nUse \`${prefix}help\` for all available commands.`
+          `${message.author}  Command \`${triggerUsed}${commandName}\` does not exist.\n\nUse \`${prefix}help\` for all available commands.`
         );
         return message.reply({ embeds: [notFoundEmbed] }).catch(() => null);
       }
@@ -976,7 +976,7 @@ export default {
       if (!isBypass) {
         const hasPerms = cmd.permissions.every(perm => message.member.permissions.has(perm));
         if (!hasPerms) {
-          return message.reply({ embeds: [embed.danger('Access Denied', '🛡️ You do not possess the required permissions to execute this command.')] });
+          return message.reply({ embeds: [embed.danger('Access Denied', '️ You do not possess the required permissions to execute this command.')] });
         }
       }
     }

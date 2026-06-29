@@ -17,9 +17,9 @@ export default {
   once: true,
   async execute(client) {
     // Beautiful colored console log
-    console.log(chalk.hex('#FFD700').bold(`🚀 SUCCESS: Connected to Discord Gateway!`));
-    console.log(chalk.cyan(`🤖 Logged in as: ${chalk.bold(client.user.tag)} (ID: ${client.user.id})`));
-    console.log(chalk.yellow(`📈 Watching ${client.guilds.cache.size} server(s)...`));
+    console.log(chalk.hex('#FFD700').bold(` SUCCESS: Connected to Discord Gateway!`));
+    console.log(chalk.cyan(` Logged in as: ${chalk.bold(client.user.tag)} (ID: ${client.user.id})`));
+    console.log(chalk.yellow(` Watching ${client.guilds.cache.size} server(s)...`));
 
     // Daily Midnight IST Cron Job (00:00)
     new CronJob('0 0 * * *', async () => {
@@ -31,7 +31,7 @@ export default {
         const currentDay = now.getDate();
         const currentMonth = now.getMonth() + 1;
 
-        console.log(chalk.magenta(`🎉 Checking birthdays for ${currentDay}/${currentMonth} (IST)...`));
+        console.log(chalk.magenta(` Checking birthdays for ${currentDay}/${currentMonth} (IST)...`));
 
         const birthdayConfigs = db.cache.birthdays || {};
         for (const [guildId, config] of Object.entries(birthdayConfigs)) {
@@ -51,7 +51,7 @@ export default {
           }
         }
       } catch (err) {
-        console.error(chalk.red('❌ Error running birthday cron job:'), err);
+        console.error(chalk.red(' Error running birthday cron job:'), err);
       }
     }, null, true, 'Asia/Kolkata');
 
@@ -60,7 +60,7 @@ export default {
       const activeGiveaways = db.getActiveGiveaways();
       for (const gw of activeGiveaways) {
         if (!gw.ended && gw.endsAt <= Date.now()) {
-          console.log(chalk.blue(`⏳ Automatically ending giveaway: ${gw.messageId}`));
+          console.log(chalk.blue(` Automatically ending giveaway: ${gw.messageId}`));
           await endGiveaway(client, gw.messageId, gw);
         }
       }
@@ -126,7 +126,7 @@ export default {
       // Home VC
       const config = db.getGuildConfig(guild.id);
       if (config.homeVcId) {
-        console.log(chalk.blue(`⏳ Auto-connecting to Home VC for guild: ${guild.name}`));
+        console.log(chalk.blue(` Auto-connecting to Home VC for guild: ${guild.name}`));
         connectToHomeVc(guild, config.homeVcId);
       }
     });
@@ -263,7 +263,7 @@ export default {
 
     // Sync slash commands globally
     try {
-      console.log(chalk.blue('⏳ Fetching and caching invites...'));
+      console.log(chalk.blue(' Fetching and caching invites...'));
       client.invites = new Map();
       for (const [guildId, guild] of client.guilds.cache) {
         try {
@@ -277,13 +277,13 @@ export default {
           // ignore missing permissions
         }
       }
-      console.log(chalk.green('✅ Invite cache initialized.'));
+      console.log(chalk.green(' Invite cache initialized.'));
 
     // Start the News Feed Cron Job
-    console.log(chalk.blue('⏳ Initializing News Feed Job...'));
+    console.log(chalk.blue(' Initializing News Feed Job...'));
     startNewsJob(client);
 
-    console.log(chalk.blue('⏳ Initializing Music Cleanup Job...'));
+    console.log(chalk.blue(' Initializing Music Cleanup Job...'));
     startMusicCleanupJob(client);
 
     // Periodically update JTC panels every 5 minutes to keep stats fresh
@@ -317,7 +317,7 @@ export default {
         }
       }
       if (cachedCount > 0) {
-        console.log(`✅ Pre-cached ${cachedCount} MemberMove audit logs for Move Protection.`);
+        console.log(` Pre-cached ${cachedCount} MemberMove audit logs for Move Protection.`);
       }
     } catch (e) {
       console.error('Failed to pre-cache audit logs:', e);
@@ -349,7 +349,7 @@ export default {
       }
     }, 3 * 60 * 1000);
 
-      console.log(chalk.blue('⏳ Updating permissions for existing stats channels...'));
+      console.log(chalk.blue(' Updating permissions for existing stats channels...'));
       try {
         for (const guild of client.guilds.cache.values()) {
           const cfg = db.getGuildConfig(guild.id);
@@ -366,7 +366,7 @@ export default {
         console.error('Error updating existing stats channels:', err);
       }
 
-      console.log(chalk.blue('⏳ Syncing slash commands globally...'));
+      console.log(chalk.blue(' Syncing slash commands globally...'));
 
       const slashData = allCommands
         .filter(cmd => !cmd.hidden) // Skip hidden commands (e.g., enuke — prefix only)
@@ -393,12 +393,12 @@ export default {
         { body: slashData }
       );
 
-      console.log(chalk.hex('#FFD700').bold(`✅ Successfully synced all ${slashData.length} Slash Commands with Discord Gateway.`));
+      console.log(chalk.hex('#FFD700').bold(` Successfully synced all ${slashData.length} Slash Commands with Discord Gateway.`));
       console.log(chalk.hex('#FFD700').bold('\n============================================='));
-      console.log(chalk.hex('#FFD700').bold('🛡️  Athena Prime — God Level Security  🛡️'));
+      console.log(chalk.hex('#FFD700').bold('️  Athena Prime — God Level Security  ️'));
       console.log(chalk.hex('#FFD700').bold('=============================================\n'));
     } catch (error) {
-      console.error(chalk.red('❌ Error registering Slash Commands:'), error);
+      console.error(chalk.red(' Error registering Slash Commands:'), error);
     }
   }
 };

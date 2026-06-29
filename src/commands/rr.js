@@ -57,7 +57,7 @@ async function runInteractiveBuilder(message) {
   // Step 3: Entries
   const mappings = [];
   await channel.send({
-    embeds: [embed.info('Reaction Role Manager [3/3]', 'Now, add your roles one by one.\n\nFormat: `[emoji] [@role OR Role ID] [description]`\nExample: `🎤 123456789 The Singer Role`\n\nType `done` when you are finished.')]
+    embeds: [embed.info('Reaction Role Manager [3/3]', 'Now, add your roles one by one.\n\nFormat: `[emoji] [@role OR Role ID] [description]`\nExample: ` 123456789 The Singer Role`\n\nType `done` when you are finished.')]
   });
 
   while (true) {
@@ -69,7 +69,7 @@ async function runInteractiveBuilder(message) {
     const cleanedMsg = entryMsg.content.replace(/\|/g, '');
     const parts = cleanedMsg.trim().split(/\s+/);
     if (parts.length < 2) {
-      await channel.send({ content: '❌ Invalid format. Please use: `emoji @role [description]`' });
+      await channel.send({ content: ' Invalid format. Please use: `emoji @role [description]`' });
       continue;
     }
 
@@ -79,7 +79,7 @@ async function runInteractiveBuilder(message) {
 
     const roleId = roleStr.replace(/[^0-9]/g, '');
     if (!roleId || roleId.length < 17) {
-      await channel.send({ content: '❌ Invalid role tag or ID.' });
+      await channel.send({ content: ' Invalid role tag or ID.' });
       continue;
     }
 
@@ -90,7 +90,7 @@ async function runInteractiveBuilder(message) {
 
     // if fetch returned a Collection (which happens if roleId is empty, but we guarded against it)
     if (!role || !role.id) {
-      await channel.send({ content: '❌ Invalid role. Please tag a valid role or paste a valid Role ID.' });
+      await channel.send({ content: ' Invalid role. Please tag a valid role or paste a valid Role ID.' });
       continue;
     }
 
@@ -104,7 +104,7 @@ async function runInteractiveBuilder(message) {
     mappings.push({ emojiStr, emojiIdOrName, roleId: role.id, desc });
     
     const displayDesc = desc ? `**${desc}** -> ` : '';
-    await channel.send({ content: `✅ Added: ${emojiStr} | ${displayDesc}<@&${role.id}>\nType next entry, or \`done\`.` });
+    await channel.send({ content: ` Added: ${emojiStr} | ${displayDesc}<@&${role.id}>\nType next entry, or \`done\`.` });
   }
 
   if (mappings.length === 0) {

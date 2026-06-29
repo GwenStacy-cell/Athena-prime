@@ -155,7 +155,7 @@ export async function logToSecurityChannel(guild, embedObject) {
         channel = await guild.channels.create({
           name: 'security-logs',
           type: ChannelType.GuildText,
-          topic: '🛡️ Automated security audits and moderation records — Athena Prime',
+          topic: '️ Automated security audits and moderation records — Athena Prime',
           permissionOverwrites: [
             {
               id: guild.roles.everyone.id,
@@ -227,7 +227,7 @@ export async function getOrCreateQuarantineChannel(guild, quarantineRole) {
       channel = await guild.channels.create({
         name: 'quarantine-zone',
         type: ChannelType.GuildText,
-        topic: '🔒 Under Investigation - Restricted Access Area — Athena Prime',
+        topic: ' Under Investigation - Restricted Access Area — Athena Prime',
         permissionOverwrites: [
           {
             id: guild.roles.everyone.id,
@@ -406,20 +406,20 @@ export async function syncQuarantinePermissions(guild, quarantineRole, excludeCh
 export function getPresenceStatus(guild, ownerId) {
   try {
     const member = guild.members.cache.get(ownerId);
-    if (!member) return { text: 'UNKNOWN', emoji: '❓' };
+    if (!member) return { text: 'UNKNOWN', emoji: '' };
 
     const presence = member.presence;
-    if (!presence) return { text: 'OFFLINE', emoji: '⚫' };
+    if (!presence) return { text: 'OFFLINE', emoji: '' };
 
     switch (presence.status) {
       case 'online': return { text: 'ONLINE', emoji: '🟢' };
       case 'idle': return { text: 'IDLE', emoji: '🟡' };
-      case 'dnd': return { text: 'DO NOT DISTURB', emoji: '🔴' };
-      case 'offline': return { text: 'OFFLINE', emoji: '⚫' };
-      default: return { text: 'UNKNOWN', emoji: '❓' };
+      case 'dnd': return { text: 'DO NOT DISTURB', emoji: '' };
+      case 'offline': return { text: 'OFFLINE', emoji: '' };
+      default: return { text: 'UNKNOWN', emoji: '' };
     }
   } catch {
-    return { text: 'UNKNOWN', emoji: '❓' };
+    return { text: 'UNKNOWN', emoji: '' };
   }
 }
 

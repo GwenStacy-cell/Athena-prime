@@ -396,14 +396,14 @@ export default {
                   const sentMsg = await panelCh.send(sharedPanel).catch(e => console.error('[JTC] Interface channel send failed:', e.message));
                   if (sentMsg) {
                     db.setPanelMessageId(guild.id, sentMsg.id);
-                    console.log(`[JTC] ✅ Created persistent panel in #${panelCh.name}`);
+                    console.log(`[JTC]  Created persistent panel in #${panelCh.name}`);
                   }
                 }
               } finally {
                 setTimeout(() => client.jtcPanelLocks.delete(guild.id), 5000); // Release lock after 5s
               }
             } else if (existingMsg) {
-              console.log(`[JTC] ✅ Reusing existing panel in #${panelCh.name}`);
+              console.log(`[JTC]  Reusing existing panel in #${panelCh.name}`);
             }
           }
         }
@@ -416,14 +416,14 @@ export default {
               const freshChannel = await guild.channels.fetch(tempChannel.id).catch(() => null);
               if (!freshChannel) { console.warn('[JTC] VC channel gone before panel send'); return; }
               await freshChannel.send(vcPanel);
-              console.log(`[JTC] ✅ Sent panel to VC text: ${freshChannel.name}`);
+              console.log(`[JTC]  Sent panel to VC text: ${freshChannel.name}`);
             } catch (e) {
               attempt++;
               if (attempt < 3) {
-                console.warn(`[JTC] ⚠️ VC text send failed (attempt ${attempt}): ${e.message}, retrying in 2s...`);
+                console.warn(`[JTC] ️ VC text send failed (attempt ${attempt}): ${e.message}, retrying in 2s...`);
                 setTimeout(sendPanel, 2000);
               } else {
-                console.error(`[JTC] ❌ VC text send failed after 3 attempts: ${e.message}`);
+                console.error(`[JTC]  VC text send failed after 3 attempts: ${e.message}`);
               }
             }
           };
@@ -472,10 +472,10 @@ export default {
             db.removeJtcChannel(leftChannel.id);
             if (textChannel) {
               await textChannel.delete('JTC: Auto-cleanup of linked text channel').catch(() => null);
-              console.log(`[JTC] 🗑️ Deleted linked text room: ${textChannel.name}`);
+              console.log(`[JTC] ️ Deleted linked text room: ${textChannel.name}`);
             }
             await leftChannel.delete('JTC: All members left, auto-cleanup').catch(() => null);
-            console.log(`[JTC] 🗑️ Deleted empty room: ${leftChannel.name}`);
+            console.log(`[JTC] ️ Deleted empty room: ${leftChannel.name}`);
           }
         }
       }

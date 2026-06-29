@@ -47,7 +47,7 @@ export const commands = [
 
         const verifyEmbed = new EmbedBuilder()
           .setColor(accentColor)
-          .setTitle('🛡️ Server Verification')
+          .setTitle('️ Server Verification')
           .setDescription('Welcome to the server! To gain access to the rest of the channels, please verify that you are human by clicking the button below.')
           .setFooter({ text: 'Athena Prime Security System', iconURL: interaction.client.user.displayAvatarURL() });
 

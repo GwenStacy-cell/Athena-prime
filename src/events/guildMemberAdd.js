@@ -37,7 +37,7 @@ export default {
           // DM alert
           const bypassDM = embed.danger(
             'Quarantine Bypass Containment',
-            `⚠️ You tried to rejoin **${guild.name}** while your quarantine isolation was still active. Access has been re-restricted.`,
+            `️ You tried to rejoin **${guild.name}** while your quarantine isolation was still active. Access has been re-restricted.`,
             [{ name: 'Reason', value: 'Quarantine bypass attempt detected.' }]
           );
           await member.send({ embeds: [bypassDM] }).catch(() => null);

@@ -15,16 +15,16 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 // PRESET ACCENT COLORS — Pure, clean palette
 // ——————————————————————————————————————————
 const PRESETS = [
-  { label: 'Red',     hex: '#FF0000', emoji: '🔴' },
-  { label: 'Blue',    hex: '#0000FF', emoji: '🔵' },
+  { label: 'Red',     hex: '#FF0000', emoji: '' },
+  { label: 'Blue',    hex: '#0000FF', emoji: '' },
   { label: 'Cyan',    hex: '#00FFFF', emoji: '🩵' },
   { label: 'Green',   hex: '#00FF00', emoji: '🟢' },
   { label: 'Yellow',  hex: '#FFFF00', emoji: '🟡' },
   { label: 'Orange',  hex: '#FF8000', emoji: '🟠' },
   { label: 'Purple',  hex: '#8000FF', emoji: '🟣' },
   { label: 'Pink',    hex: '#FF00FF', emoji: '🩷' },
-  { label: 'White',   hex: '#FFFFFF', emoji: '⬜' },
-  { label: 'Black',   hex: '#010101', emoji: '⬛' },
+  { label: 'White',   hex: '#FFFFFF', emoji: '' },
+  { label: 'Black',   hex: '#010101', emoji: '' },
 ];
 
 function hexToInt(hex) {
@@ -90,17 +90,17 @@ export function buildAccentPanel(guild) {
     new ButtonBuilder()
       .setCustomId('accent_custom_hex')
       .setLabel('Custom Hex')
-      .setEmoji('🎨')
+      .setEmoji('')
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId('accent_reset')
       .setLabel('Reset to Default')
-      .setEmoji('🔄')
+      .setEmoji('')
       .setStyle(ButtonStyle.Danger),
     new ButtonBuilder()
       .setCustomId('accent_close')
       .setLabel('Close')
-      .setEmoji('✖️')
+      .setEmoji('️')
       .setStyle(ButtonStyle.Secondary)
   );
 
@@ -121,7 +121,7 @@ export async function handleAccentButton(interaction) {
 
   if (!isAuth) {
     return interaction.reply({
-      content: '🛡️ Only the **Server Owner** or **Administrators** can change the accent color.',
+      content: '️ Only the **Server Owner** or **Administrators** can change the accent color.',
       ephemeral: true
     });
   }
@@ -169,7 +169,7 @@ export async function handleAccentButton(interaction) {
     db.updateGuildConfig(guild.id, { accentColor: null });
     const panel = buildAccentPanel(guild);
     await interaction.update({ embeds: [panel.embed], components: panel.components });
-    await interaction.followUp({ content: '🔄 Accent color has been reset to default.', ephemeral: true });
+    await interaction.followUp({ content: ' Accent color has been reset to default.', ephemeral: true });
     return;
   }
 
@@ -190,7 +190,7 @@ export async function handleAccentModal(interaction) {
 
   if (!valid) {
     return interaction.reply({
-      content: `❌ **Invalid hex code:** \`${rawHex}\`\n\nPlease enter a valid 6-digit hex color code (e.g. \`#FF0000\` or \`FF0000\`).`,
+      content: ` **Invalid hex code:** \`${rawHex}\`\n\nPlease enter a valid 6-digit hex color code (e.g. \`#FF0000\` or \`FF0000\`).`,
       ephemeral: true
     });
   }

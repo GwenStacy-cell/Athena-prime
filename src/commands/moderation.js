@@ -612,7 +612,7 @@ export const commands = [
                       message.author.id === message.guild.ownerId ||
                       isExtraOwner(message.guild.id, message.author.id);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Access Denied', `${message.author} 🛡️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)] });
+        return message.reply({ embeds: [embed.danger('Access Denied', `${message.author} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)] });
       }
       const sentMsg = await message.reply({ embeds: [embed.info('Processing…', 'Fetching ban list and removing bans, please wait.')] });
       const result = await handleUnbanAll(message.guild, message.member);
@@ -623,7 +623,7 @@ export const commands = [
                       interaction.user.id === interaction.guild.ownerId ||
                       isExtraOwner(interaction.guild.id, interaction.user.id);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', `${interaction.user} 🛡️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', `${interaction.user} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)], ephemeral: true });
       }
       await interaction.deferReply();
       const result = await handleUnbanAll(interaction.guild, interaction.member);
@@ -676,7 +676,7 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.Administrator],
     async executePrefix(message) {
-      const m = await message.reply('⏳ Syncing all channels to their categories. This might take a while to respect Discord rate limits...');
+      const m = await message.reply(' Syncing all channels to their categories. This might take a while to respect Discord rate limits...');
       let success = 0;
       let failed = 0;
 
@@ -701,7 +701,7 @@ export const commands = [
       });
     },
     async executeSlash(interaction) {
-      await interaction.reply('⏳ Syncing all channels to their categories. This might take a while to respect Discord rate limits...');
+      await interaction.reply(' Syncing all channels to their categories. This might take a while to respect Discord rate limits...');
       let success = 0;
       let failed = 0;
 
@@ -771,7 +771,7 @@ async function handleUnmuteAll(guild, moderator) {
 export async function handleWarn(guild, moderator, target, reason, force = false) {
   // Owner immunity check
   if (!force && (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id))) {
-    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };
+    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.') };
   }
 
   if (!force && !canModerate(moderator, target)) {
@@ -878,7 +878,7 @@ async function handleClearWarns(guild, moderator, target) {
 async function handleTimeout(guild, moderator, target, durationStr, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };
+    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.') };
   }
 
   if (!canModerate(moderator, target)) {
@@ -928,7 +928,7 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
 async function handleKick(guild, moderator, target, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };
+    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.') };
   }
 
   if (!canModerate(moderator, target)) {
@@ -974,7 +974,7 @@ async function handleKick(guild, moderator, target, reason) {
 async function handleBan(guild, moderator, target, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be moderated.') };
+    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.') };
   }
 
   if (!canModerate(moderator, target)) {
@@ -1195,7 +1195,7 @@ async function handleUnban(guild, moderator, userId, reason) {
 async function handleBanById(guild, moderator, userId, reason, userObj = null) {
   // Protection check
   if (isBotOwnerSync(userId) || isExtraOwner(guild.id, userId)) {
-    return { embed: embed.danger('👑 Untouchable', '🛡️ This user is protected by **Athena Prime** and cannot be banned.') };
+    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be banned.') };
   }
 
   if (!isBotOwnerSync(moderator.id) && !moderator.permissions.has(PermissionFlagsBits.BanMembers)) {

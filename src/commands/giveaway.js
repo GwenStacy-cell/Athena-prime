@@ -47,7 +47,7 @@ export async function endGiveaway(client, messageId, gwData) {
     if (winners.length > 0) {
       const winEmbed = new EmbedBuilder()
         .setColor(accentColor)
-        .setDescription(`## 🎊 Giveaway Ended 🎊\n\n${EMOJI_WINNER}\n\n**Winner(s):** ${winners.map(id => `<@${id}>`).join(', ')}\n**Prize:** ${gwData.prize}\n\n*Congratulations! Please DM the host to claim your prize.*`);
+        .setDescription(`##  Giveaway Ended \n\n${EMOJI_WINNER}\n\n**Winner(s):** ${winners.map(id => `<@${id}>`).join(', ')}\n**Prize:** ${gwData.prize}\n\n*Congratulations! Please DM the host to claim your prize.*`);
 
       await channel.send({ content: `${winners.map(id => `<@${id}>`).join(', ')}`, embeds: [winEmbed] });
 
@@ -57,7 +57,7 @@ export async function endGiveaway(client, messageId, gwData) {
           const winnerUser = await client.users.fetch(winnerId);
           if (winnerUser) {
             const dmEmbed = new EmbedBuilder()
-              .setTitle('🎉 You Won a Giveaway! 🎉')
+              .setTitle(' You Won a Giveaway! ')
               .setDescription(`Congratulations! You won the **${gwData.prize}** giveaway in **${guild.name}**!\n\nPlease reach out to the host (<@${gwData.hostId}>) or open a ticket in the server to claim your prize.`)
               .setColor('#FFD700');
             await winnerUser.send({ embeds: [dmEmbed] }).catch(() => null);
@@ -69,7 +69,7 @@ export async function endGiveaway(client, messageId, gwData) {
     } else {
       const loseEmbed = new EmbedBuilder()
         .setColor(accentColor)
-        .setDescription(`## 🎊 Giveaway Ended 🎊\n\n${EMOJI_WINNER}\n\nNobody entered the giveaway! The prize **${gwData.prize}** goes unclaimed.`);
+        .setDescription(`##  Giveaway Ended \n\n${EMOJI_WINNER}\n\nNobody entered the giveaway! The prize **${gwData.prize}** goes unclaimed.`);
 
       await channel.send({ embeds: [loseEmbed] });
     }
@@ -78,7 +78,7 @@ export async function endGiveaway(client, messageId, gwData) {
     gwData.ended = true;
     db.saveGiveaway(messageId, gwData);
   } catch (error) {
-    console.error(chalk.red(`❌ Failed to end giveaway ${messageId}:`), error);
+    console.error(chalk.red(` Failed to end giveaway ${messageId}:`), error);
   }
 }
 

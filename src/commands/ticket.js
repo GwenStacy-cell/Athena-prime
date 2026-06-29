@@ -45,7 +45,7 @@ export const commands = [
 
         const ticketEmbed = new EmbedBuilder()
           .setColor(accentColor)
-          .setTitle('📩 Support Tickets')
+          .setTitle(' Support Tickets')
           .setDescription('Need help? Click the button below to open a private ticket. A text and voice channel will be created for you.')
           .setFooter({ text: 'Athena Prime Support System', iconURL: interaction.client.user.displayAvatarURL() });
 

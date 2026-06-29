@@ -203,7 +203,7 @@ async function playResource(guildId, song) {
     
     if (global.client && queue.textChannel) {
       const channel = global.client.channels.cache.get(queue.textChannel);
-      if (channel) channel.send(`⚠️ Audio Engine Crash: \`${error.message}\``).catch(()=>{});
+      if (channel) channel.send(`️ Audio Engine Crash: \`${error.message}\``).catch(()=>{});
     }
     if (queue.player) queue.player.stopTrack();
   }

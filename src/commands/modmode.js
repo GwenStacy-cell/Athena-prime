@@ -23,7 +23,7 @@ export function scheduleModModeExpiry(client, guildId, durationMs) {
         const logCh = guild.channels.cache.get(config.logChannelId);
         if (logCh) {
           await logCh.send({ embeds: [embed.warn(
-            '🔓 Modification Mode Expired',
+            ' Modification Mode Expired',
             '⏰ Modification mode has automatically expired after 30 minutes.\n\n**Auto-restore is now active again** — unauthorized channel/role deletions will be restored.'
           )] }).catch(() => null);
         }
@@ -77,7 +77,7 @@ export const commands = [
         interaction.user.id === interaction.guild?.ownerId ||
         db.isExtraOwner(interaction.guild?.id, interaction.user.id);
       if (!isAuthorized) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '🛡️ Only Bot Owner, Server Owner, or Extra Owners can use Modification Mode.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', '️ Only Bot Owner, Server Owner, or Extra Owners can use Modification Mode.')], ephemeral: true });
       }
 
       const action = interaction.options.getString('action');
@@ -92,7 +92,7 @@ async function handleModMode(guild, moderator, action, client) {
     if (db.isModModeActive(guild.id)) {
       const mm = db.getModMode(guild.id);
       const remaining = Math.ceil((mm.expiresAt - Date.now()) / 60000);
-      return { embed: embed.warn('Already Active', `🔧 Modification mode is already active.\n**Expires in:** \`${remaining} minute(s)\`\n\nUse \`/modmode stop\` to end it early.`) };
+      return { embed: embed.warn('Already Active', ` Modification mode is already active.\n**Expires in:** \`${remaining} minute(s)\`\n\nUse \`/modmode stop\` to end it early.`) };
     }
 
     const DURATION_MS = 30 * 60 * 1000; // fixed 30 minutes max
@@ -102,13 +102,13 @@ async function handleModMode(guild, moderator, action, client) {
 
     return {
       embed: embed.warn(
-        '🔧 Modification Mode ACTIVE',
+        ' Modification Mode ACTIVE',
         `Auto-restore of deleted channels/roles is **PAUSED** for **30 minutes**.\n\n` +
         `During this time you can freely delete, create, and reorganise channels and roles without the bot restoring them.\n\n` +
         `**Auto-expires:** <t:${Math.floor(expiresAt / 1000)}:R>\n` +
         `Use \`/modmode stop\` to end it early.`,
         [
-          { name: '🔨 Started By', value: `${moderator}`, inline: true },
+          { name: ' Started By', value: `${moderator}`, inline: true },
           { name: '⏰ Expires',    value: `<t:${Math.floor(expiresAt / 1000)}:F>`, inline: true }
         ]
       )
@@ -124,9 +124,9 @@ async function handleModMode(guild, moderator, action, client) {
 
     return {
       embed: embed.success(
-        '🔓 Modification Mode STOPPED',
+        ' Modification Mode STOPPED',
         `Auto-restore is now **active** again.\n\nAny unauthorized channel or role deletions will be automatically restored.`,
-        [{ name: '🔨 Stopped By', value: `${moderator}`, inline: true }]
+        [{ name: ' Stopped By', value: `${moderator}`, inline: true }]
       )
     };
   }

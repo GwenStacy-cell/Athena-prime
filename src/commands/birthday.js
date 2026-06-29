@@ -67,7 +67,7 @@ export const commands = [
     async executePrefix(message, args) {
       const isOwnerOrServerOwner = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
       if (!isOwnerOrServerOwner) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', '🛡️ This command is restricted to the **Server Owner** and **Bot Owner** only.')] });
+        return message.reply({ embeds: [embed.danger('Permission Denied', '️ This command is restricted to the **Server Owner** and **Bot Owner** only.')] });
       }
 
       const subcommand = args[0]?.toLowerCase();
@@ -115,7 +115,7 @@ export const commands = [
       const isOwnerOrServerOwner = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
 
       if (!isOwnerOrServerOwner) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', '🛡️ This command is restricted to the **Server Owner** and **Bot Owner** only.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', '️ This command is restricted to the **Server Owner** and **Bot Owner** only.')], ephemeral: true });
       }
 
       if (subcommand === 'setchannel') {
