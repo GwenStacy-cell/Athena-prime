@@ -236,7 +236,17 @@ async function playResource(guildId, song) {
     // If it's a Spotify track or YouTube track, we bypass YouTube stream restrictions
     // by streaming the equivalent track from SoundCloud.
     if (!playUrl || !playUrl.includes('soundcloud.com')) {
-      const searched = await play.search(song.title, { limit: 1, source: { soundcloud: 'tracks' } });
+      let cleanTitle = song.title
+          .replace(/\(official.*?\)/gi, '')
+          .replace(/\[official.*?\]/gi, '')
+          .replace(/\(music video\)/gi, '')
+          .replace(/\[music video\]/gi, '')
+          .replace(/\(lyric.*?\)/gi, '')
+          .replace(/official video/gi, '')
+          .replace(/official audio/gi, '')
+          .trim();
+          
+      const searched = await play.search(cleanTitle, { limit: 1, source: { soundcloud: 'tracks' } });
       if (searched.length > 0) {
         playUrl = searched[0].url;
         song.thumbnail = song.thumbnail || searched[0].thumbnails?.[0]?.url;

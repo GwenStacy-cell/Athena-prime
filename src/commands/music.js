@@ -60,9 +60,11 @@ export const commands = [
         if (!focusedValue.startsWith('http')) {
           const results = await yt.search(focusedValue);
           const choices = (results.videos || []).slice(0, 5).map(r => {
+            let cleanUrl = r.url;
+            if (cleanUrl.includes('&list=')) cleanUrl = cleanUrl.split('&list=')[0];
             return {
               name: `${r.title} [${r.duration?.text || '?'}]`.substring(0, 100),
-              value: r.url
+              value: cleanUrl
             };
           });
           await interaction.respond(choices);
