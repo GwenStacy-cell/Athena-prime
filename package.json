@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
+    "@distube/ytdl-core": "^4.16.12",
     "@fontsource/inter": "^5.2.8",
     "anime-actions": "^2.1.2",
     "better-sqlite3": "^12.11.1",
@@ -26,7 +27,8 @@
     "nekos-best.js": "^6.5.3",
     "node-fetch": "^3.3.2",
     "play-dl": "^1.9.7",
-    "rss-parser": "^3.13.0"
+    "rss-parser": "^3.13.0",
+    "youtube-ext": "^1.1.25"
   },
   "devDependencies": {
     "jimp": "^1.6.1",

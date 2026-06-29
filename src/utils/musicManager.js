@@ -4,9 +4,11 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'disc
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';
 
-play.setToken({
-  // Add Spotify tokens here if needed, otherwise fallback works
-});
+play.getFreeClientID().then((clientID) => {
+  play.setToken({
+    soundcloud: { client_id: clientID }
+  });
+}).catch(err => console.error('Failed to get SC client ID:', err));
 
 const queues = new Map(); 
 const leaveTimeouts = new Map();
@@ -195,11 +197,12 @@ async function playResource(guildId, song) {
   try {
     let playUrl = song.url;
     
-    if (song.isSpotify && !playUrl) {
-      const searched = await play.search(song.title, { limit: 1 });
+    // If it's a Spotify track or YouTube track, we bypass YouTube stream restrictions
+    // by streaming the equivalent track from SoundCloud.
+    if (!playUrl || !playUrl.includes('soundcloud.com')) {
+      const searched = await play.search(song.title, { limit: 1, source: { soundcloud: 'tracks' } });
       if (searched.length > 0) {
         playUrl = searched[0].url;
-        song.url = playUrl;
         song.thumbnail = song.thumbnail || searched[0].thumbnails?.[0]?.url;
       } else {
         queue.player.stop();
@@ -246,18 +249,18 @@ export async function updatePlayerUI(guildId) {
       embed.setImage(cfg.musicCoverImage);
     }
     
-    let desc = '⸻ discord.gg/athena is a highly engineered discord bot providing premium music streaming experience with instant playback and unlimited song requests ⸻\n\n';
-    desc += '**⸻ MUSIC PLAYER FEATURES**\n\n';
-    desc += '• **Instant** song search & playback\n';
-    desc += '• **Unlimited** song requests available\n';
-    desc += '• **High quality** audio streaming\n';
-    desc += '• **Queue** management system\n';
-    desc += '• **Voice controls** with buttons\n';
-    desc += '• **Auto-join** your voice channel\n\n';
-    desc += '**⸻ HOW TO USE**\n\n';
-    desc += '» **Join** any voice channel\n';
-    desc += '» **Type** song name in this channel\n';
-    desc += '» **Enjoy** instant high-quality music\n\n';
+    let desc = '⸻ Welcome to the Athena Prime Music Console, your dedicated gateway to a seamless, premium, and uninterrupted high-fidelity audio experience. ⸻\n\n';
+    desc += '**⸻ CORE CAPABILITIES**\n\n';
+    desc += '• **Instant Playback:** Lightning-fast audio streaming initialization.\n';
+    desc += '• **Unrestricted Access:** Unlimited song requests and playlist support.\n';
+    desc += '• **High-Fidelity Audio:** Crystal-clear streaming resolution.\n';
+    desc += '• **Advanced Queue Management:** Organize, skip, and manage your tracks.\n';
+    desc += '• **Interactive Interface:** Complete control via tactile dashboard buttons.\n';
+    desc += '• **Seamless Integration:** Automatic synchronization with your Voice Channels.\n\n';
+    desc += '**⸻ INSTRUCTIONS**\n\n';
+    desc += '» **Join** any active voice channel.\n';
+    desc += '» **Search** by typing a song name or pasting a URL directly in this channel.\n';
+    desc += '» **Control** your playback using the module below.\n\n';
 
     if (queue.current) {
       desc += `**⸻ NOW PLAYING**\n[${queue.current.title}](${queue.current.url}) [${queue.current.duration}]\nRequested by: ${queue.current.requester}\n\n`;
@@ -274,7 +277,8 @@ export async function updatePlayerUI(guildId) {
     embed.setDescription(desc);
     
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_playpause').setLabel(queue.isPlaying && queue.player.state.status !== AudioPlayerStatus.Paused ? 'Pause' : 'Play').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('music_play').setLabel('Play').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('music_pause').setLabel('Pause').setStyle(ButtonStyle.Primary),
       new ButtonBuilder().setCustomId('music_skip').setLabel('Skip').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('music_queue').setLabel('Queue').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Danger)
@@ -290,16 +294,27 @@ export async function handleInteraction(interaction) {
   const queue = getQueue(interaction.guildId);
   const action = interaction.customId.replace('music_', '');
   
-  if (action === 'playpause') {
+  if (action === 'play') {
     if (!queue.current) {
       return interaction.reply({ content: `There is no music playing.`, ephemeral: true });
     }
     if (queue.player.state.status === AudioPlayerStatus.Paused) {
       queue.player.unpause();
-      await interaction.reply({ content: `${interaction.user} resumed the music.`, ephemeral: false });
+      await interaction.reply({ content: `${interaction.user} resumed the playback.`, ephemeral: false });
     } else {
+      await interaction.reply({ content: `The music is already playing.`, ephemeral: true });
+    }
+    updatePlayerUI(interaction.guildId);
+    
+  } else if (action === 'pause') {
+    if (!queue.current) {
+      return interaction.reply({ content: `There is no music playing.`, ephemeral: true });
+    }
+    if (queue.player.state.status !== AudioPlayerStatus.Paused) {
       queue.player.pause();
-      await interaction.reply({ content: `${interaction.user} paused the music.`, ephemeral: false });
+      await interaction.reply({ content: `${interaction.user} paused the playback.`, ephemeral: false });
+    } else {
+      await interaction.reply({ content: `The music is already paused.`, ephemeral: true });
     }
     updatePlayerUI(interaction.guildId);
     
