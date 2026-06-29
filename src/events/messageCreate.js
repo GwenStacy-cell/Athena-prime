@@ -218,6 +218,26 @@ export default {
     const dbConfig = db.getGuildConfig(guildId);
 
     // ==========================================
+    // MUSIC PLAYER INTERCEPT
+    // ==========================================
+    if (dbConfig.musicChannelId && message.channel.id === dbConfig.musicChannelId) {
+      // It's in the music channel. Delete the user message immediately.
+      message.delete().catch(() => null);
+      
+      // If they sent text, treat it as a song request
+      if (message.content.trim().length > 0) {
+        import('../utils/musicManager.js').then(async (musicManager) => {
+          const res = await musicManager.enqueue(message.guild, message.member, message.content.trim());
+          if (!res.success) {
+             const m = await message.channel.send({ content: `${message.author}, ${res.message}` });
+             setTimeout(() => m.delete().catch(()=>null), 5000);
+          }
+        }).catch(err => console.error('Failed to load musicManager:', err));
+      }
+      return; // Do not process as a normal command
+    }
+
+    // ==========================================
     // XP & LEVELING (TEXT)
     // ==========================================
     const xpSystem = db.getXpSystem(guildId);

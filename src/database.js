@@ -162,6 +162,9 @@ class Database {
       if (cfg.allowedLinks === undefined) { cfg.allowedLinks = []; updated = true; }
       if (cfg.accentColor === undefined) { cfg.accentColor = null; updated = true; }
       if (cfg.rrDmsEnabled === undefined) { cfg.rrDmsEnabled = true; updated = true; }
+      if (cfg.musicChannelId === undefined) { cfg.musicChannelId = null; updated = true; }
+      if (cfg.musicMessageId === undefined) { cfg.musicMessageId = null; updated = true; }
+      if (cfg.musicCoverImage === undefined) { cfg.musicCoverImage = null; updated = true; }
       if (cfg.autoroleIds === undefined) { 
         cfg.autoroleIds = []; 
         if (cfg.autoroleId) {

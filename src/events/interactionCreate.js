@@ -78,6 +78,21 @@ export default {
     }
 
     // ==========================================
+    // 1.5. AUTOCOMPLETE
+    // ==========================================
+    if (interaction.isAutocomplete()) {
+      const cmd = commandMap.get(interaction.commandName);
+      if (cmd && cmd.autocomplete) {
+        try {
+          await cmd.autocomplete(interaction);
+        } catch (error) {
+          console.error(`Error executing autocomplete for ${cmd.name}:`, error);
+        }
+      }
+      return;
+    }
+
+    // ==========================================
     // 2. MODAL SUBMISSIONS
     // ==========================================
     if (interaction.isModalSubmit()) {
@@ -747,6 +762,18 @@ export default {
           return interaction.reply({ content: 'An unexpected error occurred while processing your ticket.', ephemeral: true }).catch(() => null);
         }
       }
+    }
+    
+    // ==========================================
+    // 7. MUSIC BUTTONS
+    // ==========================================
+    if (interaction.isButton() && interaction.customId.startsWith('music_')) {
+      import('../utils/musicManager.js').then(musicManager => {
+        musicManager.handleInteraction(interaction);
+      }).catch(err => {
+        console.error('Failed to handle music button interaction:', err);
+      });
+      return;
     }
 
       // Ticket Close Button
