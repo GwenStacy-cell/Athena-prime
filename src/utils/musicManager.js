@@ -1,16 +1,7 @@
-import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } from '@discordjs/voice';
 import fs from 'fs';
-import play from 'play-dl';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';
-import yt from 'youtube-ext';
-
-play.getFreeClientID().then((clientID) => {
-  play.setToken({
-    soundcloud: { client_id: clientID }
-  });
-}).catch(err => console.error('Failed to get SC client ID:', err));
 
 const queues = new Map(); 
 const leaveTimeouts = new Map();
@@ -18,8 +9,7 @@ const leaveTimeouts = new Map();
 export function getQueue(guildId) {
   if (!queues.has(guildId)) {
     queues.set(guildId, {
-      player: createAudioPlayer(),
-      connection: null,
+      player: null,
       songs: [],
       current: null,
       textChannelId: null,
@@ -27,31 +17,8 @@ export function getQueue(guildId) {
       textChannel: null,
       isPlaying: false,
       loop: false,
-      volume: 100
-    });
-    
-    const queue = queues.get(guildId);
-    
-    queue.player.on(AudioPlayerStatus.Idle, () => {
-      if (queue.songs.length > 0) {
-        queue.current = queue.songs.shift();
-        playResource(guildId, queue.current);
-      } else {
-        queue.current = null;
-        queue.isPlaying = false;
-        updatePlayerUI(guildId);
-        startLeaveTimeout(guildId);
-      }
-    });
-
-    queue.player.on('error', error => {
-      console.error(`Error playing audio in guild ${guildId}:`, error);
-      fs.writeFileSync('music_error_log.txt', String(error?.stack || error));
-      queue.player.stop();
-    });
-
-    queue.player.on('stateChange', (oldState, newState) => {
-      fs.appendFileSync('music_state_log.txt', `State changed: ${oldState.status} -> ${newState.status}\n`);
+      volume: 100,
+      isPreparing: false
     });
   }
   return queues.get(guildId);
@@ -59,24 +26,21 @@ export function getQueue(guildId) {
 
 function startLeaveTimeout(guildId) {
   if (leaveTimeouts.has(guildId)) clearTimeout(leaveTimeouts.get(guildId));
-  const timeout = setTimeout(() => {
+  const timeout = setTimeout(async () => {
     const queue = queues.get(guildId);
     if (!queue || queue.isPlaying) return;
     
-    const cfg = db.getGuildConfig(guildId);
-    const homeVcId = cfg.homeVcId;
-    
-    if (homeVcId) {
-      const client = global.client;
-      if (client) {
-        const guild = client.guilds.cache.get(guildId);
-        if (guild) connectToHomeVc(guild, homeVcId);
-      }
-    } else if (queue.connection) {
-      queue.connection.destroy();
-      queue.connection = null;
+    if (queue.player) {
+      const shoukaku = global.client.shoukaku;
+      await shoukaku.leaveVoiceChannel(guildId);
+      queue.player = null;
     }
     
+    const cfg = db.getGuildConfig(guildId);
+    if (cfg.homeVcId) {
+       const guild = global.client.guilds.cache.get(guildId);
+       if (guild) connectToHomeVc(guild, cfg.homeVcId);
+    }
   }, 3000);
   leaveTimeouts.set(guildId, timeout);
 }
@@ -95,122 +59,94 @@ export async function enqueue(guild, member, query) {
   if (!voiceChannel) return { success: false, message: 'You need to be in a voice channel to play music!' };
   
   queue.isPreparing = true;
-  
-  const connection = getVoiceConnection(guild.id);
-  if (!connection || connection.joinConfig.channelId !== voiceChannel.id) {
-    queue.connection = joinVoiceChannel({
-      channelId: voiceChannel.id,
-      guildId: guild.id,
-      adapterCreator: guild.voiceAdapterCreator,
-      selfMute: false,
-      selfDeaf: false
-    });
-    queue.connection.subscribe(queue.player);
-  } else if (!queue.connection) {
-    queue.connection = connection;
-    queue.connection.subscribe(queue.player);
-  }
-
   stopLeaveTimeout(guild.id);
   
+  const shoukaku = global.client.shoukaku;
+  if (!shoukaku) {
+     queue.isPreparing = false;
+     return { success: false, message: 'Lavalink node is not initialized yet.' };
+  }
+  
   try {
-    let results;
-    if (query.startsWith('http')) {
-      const type = await play.validate(query);
-      if (type === 'yt_playlist') {
-        const playlist = await play.playlist_info(query, { incomplete: true });
-        const videos = await playlist.all_videos();
-        const songs = videos.map(v => ({
-          title: v.title,
-          url: v.url,
-          duration: v.durationRaw,
-          thumbnail: v.thumbnails?.[0]?.url,
-          requester: member.user
-        }));
-        queue.songs.push(...songs);
-        
-        if (!queue.isPlaying && !queue.current) {
+    if (!queue.player) {
+      queue.player = await shoukaku.joinVoiceChannel({
+        guildId: guild.id,
+        channelId: voiceChannel.id,
+        shardId: guild.shardId
+      });
+      
+      queue.player.on('end', () => {
+        if (queue.songs.length > 0) {
           queue.current = queue.songs.shift();
           playResource(guild.id, queue.current);
         } else {
+          queue.current = null;
+          queue.isPlaying = false;
           updatePlayerUI(guild.id);
+          startLeaveTimeout(guild.id);
         }
-        queue.isPreparing = false;
-        return { success: true, message: `Added playlist **${playlist.title}** (${songs.length} songs) to queue.` };
-      } else if (type === 'sp_track' || type === 'sp_playlist' || type === 'sp_album') {
-         if (play.is_expired()) await play.refreshToken();
-         const sp_data = await play.spotify(query);
-         
-         if (type === 'sp_track') {
-           const searched = await play.search(`${sp_data.name} ${sp_data.artists[0].name}`, { limit: 1 });
-           if (!searched.length) return { success: false, message: 'Could not find that Spotify track on YouTube.' };
-           results = searched;
-         } else {
-           const tracks = await sp_data.all_tracks();
-           const songs = [];
-           for (const track of tracks) {
-              songs.push({
-                title: `${track.name} - ${track.artists[0].name}`,
-                url: null,
-                isSpotify: true,
-                duration: 'Unknown',
-                requester: member.user
-              });
-           }
-           queue.songs.push(...songs);
-           if (!queue.isPlaying && !queue.current) {
-             queue.current = queue.songs.shift();
-             playResource(guild.id, queue.current);
-           } else {
-             updatePlayerUI(guild.id);
-           }
-           queue.isPreparing = false;
-           return { success: true, message: `Added Spotify playlist **${sp_data.name}** (${songs.length} songs) to queue.` };
-         }
-      } else {
-        const info = await yt.videoInfo(query);
-        let mins = 0, secs = 0;
-        if (info.duration && info.duration.lengthSec) {
-          const totalSecs = parseInt(info.duration.lengthSec, 10) || 0;
-          mins = Math.floor(totalSecs / 60);
-          secs = totalSecs % 60;
-        }
-        results = [{
-           title: info.title,
-           url: query,
-           durationRaw: `${mins}:${secs.toString().padStart(2, '0')}`,
-           thumbnails: info.thumbnails
-        }];
-      }
-    } else {
-      const searchRes = await yt.search(query);
-      if (searchRes.videos && searchRes.videos.length > 0) {
-        const vid = searchRes.videos[0];
-        results = [{
-           title: vid.title,
-           url: vid.url,
-           durationRaw: vid.duration?.text || 'Unknown',
-           thumbnails: vid.thumbnails
-        }];
-      } else {
-        results = [];
-      }
+      });
+      
+      queue.player.on('error', (err) => {
+        console.error('Lavalink Player Error:', err);
+        fs.writeFileSync('music_error_log.txt', String(err));
+      });
     }
     
-    if (!results || !results.length) {
+    const node = shoukaku.options.nodeResolver(shoukaku.nodes);
+    if (!node) {
+      queue.isPreparing = false;
+      return { success: false, message: 'No available Lavalink nodes.' };
+    }
+    
+    let searchStr = query;
+    if (!query.startsWith('http')) searchStr = `ytsearch:${query}`;
+    
+    const result = await node.rest.resolve(searchStr);
+    
+    if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
        queue.isPreparing = false;
        return { success: false, message: 'No results found for that query.' };
     }
     
-    const song = {
-      title: results[0].title,
-      url: results[0].url,
-      duration: results[0].durationRaw,
-      thumbnail: results[0].thumbnails?.[0]?.url,
-      requester: member.user
-    };
+    let addedCount = 0;
+    let title = '';
     
-    queue.songs.push(song);
+    if (result.loadType === 'playlist') {
+       for (const track of result.data.tracks) {
+          queue.songs.push({
+            title: track.info.title,
+            url: track.info.uri,
+            duration: formatDuration(track.info.length),
+            encoded: track.encoded,
+            requester: member.user
+          });
+       }
+       addedCount = result.data.tracks.length;
+       title = result.data.info.name || 'Playlist';
+    } else if (result.loadType === 'track') {
+       const track = result.data;
+       queue.songs.push({
+          title: track.info.title,
+          url: track.info.uri,
+          duration: formatDuration(track.info.length),
+          encoded: track.encoded,
+          requester: member.user
+       });
+       addedCount = 1;
+       title = track.info.title;
+    } else if (result.loadType === 'search') {
+       const track = result.data[0];
+       queue.songs.push({
+          title: track.info.title,
+          url: track.info.uri,
+          duration: formatDuration(track.info.length),
+          encoded: track.encoded,
+          requester: member.user
+       });
+       addedCount = 1;
+       title = track.info.title;
+    }
     
     if (!queue.isPlaying && !queue.current) {
       queue.current = queue.songs.shift();
@@ -220,7 +156,7 @@ export async function enqueue(guild, member, query) {
     }
     
     queue.isPreparing = false;
-    return { success: true, message: `Added **${song.title}** to queue.` };
+    return { success: true, message: `Added **${title}**${addedCount > 1 ? ` (${addedCount} songs)` : ''} to queue.` };
   } catch (error) {
     console.error(`Music enqueue error:`, error);
     queue.isPreparing = false;
@@ -231,77 +167,29 @@ export async function enqueue(guild, member, query) {
 async function playResource(guildId, song) {
   const queue = getQueue(guildId);
   try {
-    let playUrl = song.url;
-    
-    // Bypass YouTube and Spotify stream restrictions by mapping to SoundCloud tracks natively
-    // We strictly use SoundCloud to prevent AWS IP bans on YouTube.
-    if (!playUrl || !playUrl.includes('soundcloud.com')) {
-      let cleanTitle = song.title
-          .replace(/\(official.*?\)/gi, '')
-          .replace(/\[official.*?\]/gi, '')
-          .replace(/\(music video\)/gi, '')
-          .replace(/\[music video\]/gi, '')
-          .replace(/\(lyric.*?\)/gi, '')
-          .replace(/official video/gi, '')
-          .replace(/official audio/gi, '')
-          .trim();
-          
-      const searched = await play.search(cleanTitle, { limit: 10, source: { soundcloud: 'tracks' } });
-      if (searched.length > 0) {
-        const originalLower = cleanTitle.toLowerCase();
-        const wantsRemix = originalLower.includes('remix');
-        const wantsCover = originalLower.includes('cover');
-        const wantsSpedUp = originalLower.includes('sped') || originalLower.includes('nightcore');
-        const wantsSlowed = originalLower.includes('slowed') || originalLower.includes('reverb');
-        const wantsFeat = originalLower.includes('feat') || originalLower.includes('ft.');
-        
-        let bestTrack = null;
-        for (const track of searched) {
-           const trackLower = track.name.toLowerCase();
-           if (!wantsRemix && trackLower.includes('remix')) continue;
-           if (!wantsCover && trackLower.includes('cover')) continue;
-           if (!wantsSpedUp && (trackLower.includes('sped') || trackLower.includes('nightcore'))) continue;
-           if (!wantsSlowed && (trackLower.includes('slowed') || trackLower.includes('reverb'))) continue;
-           if (!wantsFeat && (trackLower.includes('feat') || trackLower.includes('ft.'))) continue;
-           
-           bestTrack = track;
-           break;
-        }
-        
-        bestTrack = bestTrack || searched[0]; // fallback if all were filtered out
-        
-        playUrl = bestTrack.url;
-        song.thumbnail = song.thumbnail || bestTrack.thumbnails?.[0]?.url;
-      } else {
-         throw new Error(`Could not find a streamable audio source for ${song.title}`);
-      }
+    if (queue.player && song.encoded) {
+       await queue.player.playTrack({ track: song.encoded });
+       queue.isPlaying = true;
+       updatePlayerUI(guildId);
     }
-    
-    const stream = await play.stream(playUrl);
-    const resource = createAudioResource(stream.stream, { inputType: stream.type });
-    
-    if (resource && resource.playStream) {
-      resource.playStream.on('error', err => {
-         console.error('Resource stream error:', err);
-         fs.writeFileSync('music_resource_error.txt', String(err?.stack || err));
-      });
-    }
-    
-    queue.player.play(resource);
-    queue.isPlaying = true;
-    updatePlayerUI(guildId);
   } catch (error) {
     console.error(`Error streaming song:`, error);
     fs.writeFileSync('music_error_log.txt', String(error?.stack || error));
     
-    // Output error to Discord channel
     if (global.client && queue.textChannel) {
       const channel = global.client.channels.cache.get(queue.textChannel);
       if (channel) channel.send(`⚠️ Audio Engine Crash: \`${error.message}\``).catch(()=>{});
     }
-    
-    queue.player.stop();
+    if (queue.player) queue.player.stopTrack();
   }
+}
+
+function formatDuration(ms) {
+  if (!ms) return 'Unknown';
+  const totalSecs = Math.floor(ms / 1000);
+  const mins = Math.floor(totalSecs / 60);
+  const secs = totalSecs % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 export async function updatePlayerUI(guildId) {
@@ -328,18 +216,9 @@ export async function updatePlayerUI(guildId) {
       .setColor(cfg.accentColor || '#ff0000')
       .setAuthor({ name: 'Compact Music Player', iconURL: global.client?.user?.displayAvatarURL() });
 
-    if (cfg.musicCoverImage) {
-      embed.setImage(cfg.musicCoverImage);
-    }
+    if (cfg.musicCoverImage) embed.setImage(cfg.musicCoverImage);
     
     let desc = '⸻ Welcome to the Athena Prime Music Console, your dedicated gateway to a seamless, premium, and uninterrupted high-fidelity audio experience. ⸻\n\n';
-    desc += '**⸻ CORE CAPABILITIES**\n\n';
-    desc += '• **Instant Playback:** Lightning-fast audio streaming initialization.\n';
-    desc += '• **Unrestricted Access:** Unlimited song requests and playlist support.\n';
-    desc += '• **High-Fidelity Audio:** Crystal-clear streaming resolution.\n';
-    desc += '• **Advanced Queue Management:** Organize, skip, and manage your tracks.\n';
-    desc += '• **Interactive Interface:** Complete control via tactile dashboard buttons.\n';
-    desc += '• **Seamless Integration:** Automatic synchronization with your Voice Channels.\n\n';
     desc += '**⸻ INSTRUCTIONS**\n\n';
     desc += '» **Join** any active voice channel.\n';
     desc += '» **Search** by typing a song name or pasting a URL directly in this channel.\n';
@@ -349,9 +228,7 @@ export async function updatePlayerUI(guildId) {
       desc += `**⸻ NOW PLAYING**\n[${queue.current.title}](${queue.current.url}) [${queue.current.duration}]\nRequested by: ${queue.current.requester}\n\n`;
       if (queue.songs.length > 0) {
         desc += `**⸻ NEXT UP**\n[${queue.songs[0].title}](${queue.songs[0].url}) [${queue.songs[0].duration}]\n`;
-        if (queue.songs.length > 1) {
-          desc += `...and ${queue.songs.length - 1} more in queue.\n`;
-        }
+        if (queue.songs.length > 1) desc += `...and ${queue.songs.length - 1} more in queue.\n`;
       }
     } else {
       desc += '**Status:** ⸻ Ready to play';
@@ -370,7 +247,6 @@ export async function updatePlayerUI(guildId) {
     await message.edit({ embeds: [embed], components: [row] });
   } catch (error) {
     console.error(`Failed to update music UI for guild ${guildId}:`, error);
-    fs.writeFileSync('music_ui_error.txt', String(error?.stack || error));
   }
 }
 
@@ -379,47 +255,33 @@ export async function handleInteraction(interaction) {
   const action = interaction.customId.replace('music_', '');
   
   if (action === 'play') {
-    if (!queue.current) {
-      return interaction.reply({ content: `There is no music playing.`, ephemeral: true });
-    }
-    if (queue.player.state.status === AudioPlayerStatus.Paused) {
-      queue.player.unpause();
+    if (!queue.current) return interaction.reply({ content: `There is no music playing.`, ephemeral: true });
+    if (queue.player && queue.player.paused) {
+      queue.player.setPaused(false);
       await interaction.reply({ content: `${interaction.user} resumed the playback.`, ephemeral: false });
     } else {
       await interaction.reply({ content: `The music is already playing.`, ephemeral: true });
     }
-    updatePlayerUI(interaction.guildId);
-    
   } else if (action === 'pause') {
-    if (!queue.current) {
-      return interaction.reply({ content: `There is no music playing.`, ephemeral: true });
-    }
-    if (queue.player.state.status !== AudioPlayerStatus.Paused) {
-      queue.player.pause();
+    if (!queue.current) return interaction.reply({ content: `There is no music playing.`, ephemeral: true });
+    if (queue.player && !queue.player.paused) {
+      queue.player.setPaused(true);
       await interaction.reply({ content: `${interaction.user} paused the playback.`, ephemeral: false });
     } else {
       await interaction.reply({ content: `The music is already paused.`, ephemeral: true });
     }
-    updatePlayerUI(interaction.guildId);
-    
   } else if (action === 'skip') {
-    if (!queue.current) {
-      return interaction.reply({ content: `There is nothing to skip.`, ephemeral: true });
-    }
-    queue.player.stop();
+    if (!queue.current) return interaction.reply({ content: `There is nothing to skip.`, ephemeral: true });
+    if (queue.player) queue.player.stopTrack(); // Triggers 'end' event which plays next
     await interaction.reply({ content: `${interaction.user} skipped **${queue.current.title}**.`, ephemeral: false });
-    
   } else if (action === 'stop') {
     queue.songs = [];
     queue.current = null;
-    queue.player.stop();
+    if (queue.player) queue.player.stopTrack();
     await interaction.reply({ content: `${interaction.user} stopped the music and cleared the queue.`, ephemeral: false });
     startLeaveTimeout(interaction.guildId);
-    
   } else if (action === 'queue') {
-    if (queue.songs.length === 0) {
-      return interaction.reply({ content: `The queue is currently empty.`, ephemeral: true });
-    }
+    if (queue.songs.length === 0) return interaction.reply({ content: `The queue is currently empty.`, ephemeral: true });
     const qList = queue.songs.slice(0, 10).map((s, i) => `${i + 1}. **${s.title}** [${s.duration}]`).join('\n');
     let msg = `**Current Queue:**\n${qList}`;
     if (queue.songs.length > 10) msg += `\n*...and ${queue.songs.length - 10} more*`;

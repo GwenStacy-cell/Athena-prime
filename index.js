@@ -44,6 +44,18 @@ const client = new Client({
 
 global.client = client; // Make client globally accessible
 
+// Initialize Shoukaku (Lavalink wrapper)
+import { Shoukaku, Connectors } from 'shoukaku';
+const Nodes = [{
+    name: 'Public-Lavalink-Jirayu',
+    url: 'lavalink.jirayu.net:443',
+    auth: 'youshallnotpass',
+    secure: true
+}];
+const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), Nodes);
+shoukaku.on('error', (_, error) => console.error(chalk.red('Lavalink Node Error:'), error));
+global.client.shoukaku = shoukaku;
+
 // Import event handlers manually for clean compile and zero runtime FS errors
 import readyEvent from './src/events/ready.js';
 import interactionCreateEvent from './src/events/interactionCreate.js';

@@ -2,8 +2,6 @@ import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, Ac
 import db from '../database.js';
 import embed from '../embed.js';
 import { enqueue } from '../utils/musicManager.js';
-import play from 'play-dl';
-import yt from 'youtube-ext';
 
 export const commands = [
   {
@@ -58,16 +56,30 @@ export const commands = [
       
       try {
         if (!focusedValue.startsWith('http')) {
-          const results = await yt.search(focusedValue);
-          const choices = (results.videos || []).slice(0, 5).map(r => {
-            let cleanUrl = r.url;
-            if (cleanUrl.includes('&list=')) cleanUrl = cleanUrl.split('&list=')[0];
-            return {
-              name: `${r.title} [${r.duration?.text || '?'}]`.substring(0, 100),
-              value: cleanUrl
-            };
-          });
-          await interaction.respond(choices);
+          const shoukaku = global.client?.shoukaku;
+          if (!shoukaku) return interaction.respond([]);
+          
+          const node = shoukaku.options.nodeResolver(shoukaku.nodes);
+          if (!node) return interaction.respond([]);
+          
+          const result = await node.rest.resolve(`ytsearch:${focusedValue}`);
+          if (result && (result.loadType === 'search' || result.loadType === 'track')) {
+             const tracks = result.loadType === 'search' ? result.data : [result.data];
+             const choices = tracks.slice(0, 5).map(r => {
+                const ms = r.info.length;
+                const mins = Math.floor(ms / 60000);
+                const secs = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+                const duration = `${mins}:${secs}`;
+                
+                return {
+                  name: `${r.info.title} [${duration}]`.substring(0, 100),
+                  value: r.info.uri
+                };
+             });
+             await interaction.respond(choices);
+          } else {
+             await interaction.respond([]);
+          }
         } else {
           await interaction.respond([]);
         }

@@ -1,9 +1,7 @@
-import { joinVoiceChannel } from '@discordjs/voice';
-
 /**
  * Connect the bot to its designated Home VC in a guild
  */
-export function connectToHomeVc(guild, channelId) {
+export async function connectToHomeVc(guild, channelId) {
   if (!guild || !channelId) return null;
 
   const channel = guild.channels.cache.get(channelId);
@@ -13,15 +11,31 @@ export function connectToHomeVc(guild, channelId) {
   }
 
   try {
-    const connection = joinVoiceChannel({
-      channelId: channel.id,
-      guildId: guild.id,
-      adapterCreator: guild.voiceAdapterCreator,
-      selfMute: false,
-      selfDeaf: false
-    });
-    console.log(`[Athena Prime] Joined Home VC "${channel.name}" in guild "${guild.name}"`);
-    return connection;
+    const shoukaku = global.client?.shoukaku;
+    if (!shoukaku) return null;
+    
+    // Check if player already exists
+    let player = shoukaku.players.get(guild.id);
+    if (!player) {
+       player = await shoukaku.joinVoiceChannel({
+         guildId: guild.id,
+         channelId: channel.id,
+         shardId: guild.shardId,
+         deaf: false,
+         mute: false
+       });
+       console.log(`[Athena Prime] Joined Home VC "${channel.name}" in guild "${guild.name}" via Lavalink`);
+    } else if (player.voiceChannelId !== channel.id) {
+       await player.node.joinChannel({
+         guildId: guild.id,
+         channelId: channel.id,
+         shardId: guild.shardId,
+         deaf: false,
+         mute: false
+       });
+       console.log(`[Athena Prime] Moved to Home VC "${channel.name}" in guild "${guild.name}" via Lavalink`);
+    }
+    return player;
   } catch (error) {
     console.error(`[Athena Prime] Failed to join Home VC in guild ${guild.name}:`, error);
     return null;
@@ -38,25 +52,26 @@ export async function toggleBotDeafen(guild, deaf) {
       return { success: false, message: 'The bot is not currently in a voice channel.' };
     }
 
-    const channelId = me.voice.channelId;
-
-    // Update connection with the new selfDeaf setting without destroying it
-    const { joinVoiceChannel } = await import('@discordjs/voice');
-    joinVoiceChannel({
-      channelId,
-      guildId: guild.id,
-      adapterCreator: guild.voiceAdapterCreator,
-      selfMute: false,
-      selfDeaf: deaf
-    });
-
-    return { success: true };
+    const shoukaku = global.client?.shoukaku;
+    if (shoukaku) {
+      const player = shoukaku.players.get(guild.id);
+      if (player) {
+         await player.node.joinChannel({
+           guildId: guild.id,
+           channelId: me.voice.channelId,
+           shardId: guild.shardId,
+           deaf: deaf,
+           mute: false
+         });
+         return { success: true };
+      }
+    }
+    return { success: false, message: 'Bot voice player not found.' };
   } catch (err) {
     console.error('Failed to toggle deafen:', err);
     return { success: false, message: 'An error occurred while updating voice state.' };
   }
 }
-
 
 let vcStatusIndex = 0;
 let emojiIndex = 0;

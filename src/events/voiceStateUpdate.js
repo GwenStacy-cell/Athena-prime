@@ -1,5 +1,4 @@
 import { ChannelType, PermissionFlagsBits, AuditLogEvent } from 'discord.js';
-import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { buildControlPanel, buildSharedPanel } from '../commands/jtc.js';
@@ -303,8 +302,11 @@ export default {
         console.log(`[JTC] Bot voice state changed in ${guild.name}. Force restoring home VC...`);
         
         if (!newState.channelId) {
-          const connection = getVoiceConnection(guild.id);
-          if (connection) connection.destroy();
+          const shoukaku = global.client?.shoukaku;
+          if (shoukaku) {
+             const player = shoukaku.players.get(guild.id);
+             if (player) shoukaku.leaveVoiceChannel(guild.id);
+          }
         }
 
         connectToHomeVc(guild, homeVcId);
