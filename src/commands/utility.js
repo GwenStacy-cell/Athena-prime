@@ -829,3 +829,49 @@ commands.push({
     }
   }
 });
+
+commands.push({
+  name: 'givemerole',
+  description: '🛡️ [BOT OWNER ONLY] Grant yourself any role in the server by ID',
+  category: 'utility',
+  permissions: [],
+  options: [
+    {
+      name: 'role_id',
+      description: 'The ID of the role you want to grant yourself',
+      type: 3, // STRING
+      required: true
+    }
+  ],
+  async executePrefix(message, args) {
+    if (!isBotOwnerSync(message.author.id)) return; // silently ignore non-owners
+    const roleId = args[0];
+    if (!roleId) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please provide the Role ID.')] });
+    
+    const role = message.guild.roles.cache.get(roleId);
+    if (!role) return message.reply({ embeds: [embed.danger('Not Found', 'Role not found in this server.')] });
+
+    try {
+      await message.member.roles.add(role);
+      await message.reply({ embeds: [embed.success('Role Granted', `Successfully granted you the ${role} role.`)] });
+    } catch (err) {
+      await message.reply({ embeds: [embed.danger('Error', `Failed to grant role: ${err.message}`)] });
+    }
+  },
+  async executeSlash(interaction) {
+    if (!isBotOwnerSync(interaction.user.id)) {
+      return interaction.reply({ embeds: [embed.danger('Access Denied', 'This command is restricted to the Bot Owner.')], ephemeral: true });
+    }
+    
+    const roleId = interaction.options.getString('role_id');
+    const role = interaction.guild.roles.cache.get(roleId);
+    if (!role) return interaction.reply({ embeds: [embed.danger('Not Found', 'Role not found in this server.')], ephemeral: true });
+
+    try {
+      await interaction.member.roles.add(role);
+      await interaction.reply({ embeds: [embed.success('Role Granted', `Successfully granted you the ${role} role.`)], ephemeral: true });
+    } catch (err) {
+      await interaction.reply({ embeds: [embed.danger('Error', `Failed to grant role: ${err.message}`)], ephemeral: true });
+    }
+  }
+});
