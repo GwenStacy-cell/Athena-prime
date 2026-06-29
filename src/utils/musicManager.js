@@ -4,6 +4,7 @@ import play from 'play-dl';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';
+import yt from 'youtube-ext';
 
 play.getFreeClientID().then((clientID) => {
   play.setToken({
@@ -163,11 +164,22 @@ export async function enqueue(guild, member, query) {
            return { success: true, message: `Added Spotify playlist **${sp_data.name}** (${songs.length} songs) to queue.` };
          }
       } else {
-        const info = await play.video_info(query);
-        results = [info.video_details];
+        const info = await yt.videoInfo(query);
+        let mins = 0, secs = 0;
+        if (info.duration && info.duration.lengthSec) {
+          const totalSecs = parseInt(info.duration.lengthSec, 10) || 0;
+          mins = Math.floor(totalSecs / 60);
+          secs = totalSecs % 60;
+        }
+        results = [{
+           title: info.title,
+           url: query,
+           durationRaw: `${mins}:${secs.toString().padStart(2, '0')}`,
+           thumbnails: info.thumbnails
+        }];
       }
     } else {
-      results = await play.search(query, { limit: 1 });
+      results = await play.search(query, { limit: 1, source: { soundcloud: 'tracks' } });
     }
     
     if (!results || !results.length) return { success: false, message: 'No results found for that query.' };

@@ -57,7 +57,7 @@ export const commands = [
       
       try {
         if (!focusedValue.startsWith('http')) {
-          const results = await play.search(focusedValue, { limit: 5 });
+          const results = await play.search(focusedValue, { limit: 5, source: { soundcloud: 'tracks' } });
           const choices = results.map(r => ({
             name: `${r.title} [${r.durationRaw}]`.substring(0, 100),
             value: r.url
