@@ -148,7 +148,7 @@ export default {
       status: 'online'
     });
 
-    // Rotate Activity every 15 seconds
+    // Rotate Activity every 5 seconds
     setInterval(() => {
       statusIndex = (statusIndex + 1) % watchingStatuses.length;
       client.user.setPresence({
@@ -158,7 +158,7 @@ export default {
         ],
         status: 'online'
       });
-    }, 15000);
+    }, 5000);
 
     // Rotate Server Nickname every 30 minutes
     const nicknameSuffixes = [
