@@ -48,6 +48,10 @@ export function getQueue(guildId) {
       fs.writeFileSync('music_error_log.txt', String(error?.stack || error));
       queue.player.stop();
     });
+
+    queue.player.on('stateChange', (oldState, newState) => {
+      fs.appendFileSync('music_state_log.txt', `State changed: ${oldState.status} -> ${newState.status}\n`);
+    });
   }
   return queues.get(guildId);
 }
@@ -214,6 +218,12 @@ async function playResource(guildId, song) {
     
     const stream = await play.stream(playUrl);
     const resource = createAudioResource(stream.stream, { inputType: stream.type });
+    
+    resource.playStream.on('error', err => {
+       console.error('Resource stream error:', err);
+       fs.writeFileSync('music_resource_error.txt', String(err?.stack || err));
+    });
+    
     queue.player.play(resource);
     queue.isPlaying = true;
     updatePlayerUI(guildId);
