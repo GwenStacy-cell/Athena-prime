@@ -5,6 +5,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'disc
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';
 import yt from 'youtube-ext';
+import youtubedl from 'youtube-dl-exec';
 
 play.getFreeClientID().then((clientID) => {
   play.setToken({
@@ -234,35 +235,31 @@ async function playResource(guildId, song) {
     let playUrl = song.url;
     
     // If it's a Spotify track or YouTube track, we bypass YouTube stream restrictions
-    // by streaming the equivalent track from SoundCloud.
+    // by streaming the equivalent track using yt-dlp which bypasses the captchas!
+    let stream;
+    let resource;
+    
     if (!playUrl || !playUrl.includes('soundcloud.com')) {
-      let cleanTitle = song.title
-          .replace(/\(official.*?\)/gi, '')
-          .replace(/\[official.*?\]/gi, '')
-          .replace(/\(music video\)/gi, '')
-          .replace(/\[music video\]/gi, '')
-          .replace(/\(lyric.*?\)/gi, '')
-          .replace(/official video/gi, '')
-          .replace(/official audio/gi, '')
-          .trim();
-          
-      const searched = await play.search(cleanTitle, { limit: 1, source: { soundcloud: 'tracks' } });
-      if (searched.length > 0) {
-        playUrl = searched[0].url;
-        song.thumbnail = song.thumbnail || searched[0].thumbnails?.[0]?.url;
-      } else {
-        queue.player.stop();
-        return;
-      }
+      // Use yt-dlp to extract the raw stream bypassing captchas
+      const ytStream = youtubedl.exec(playUrl, {
+        o: '-',
+        q: true,
+        f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
+        r: '100K'
+      }, { stdio: ['ignore', 'pipe', 'ignore'] });
+      
+      resource = createAudioResource(ytStream.stdout);
+    } else {
+      stream = await play.stream(playUrl);
+      resource = createAudioResource(stream.stream, { inputType: stream.type });
     }
     
-    const stream = await play.stream(playUrl);
-    const resource = createAudioResource(stream.stream, { inputType: stream.type });
-    
-    resource.playStream.on('error', err => {
-       console.error('Resource stream error:', err);
-       fs.writeFileSync('music_resource_error.txt', String(err?.stack || err));
-    });
+    if (resource && resource.playStream) {
+      resource.playStream.on('error', err => {
+         console.error('Resource stream error:', err);
+         fs.writeFileSync('music_resource_error.txt', String(err?.stack || err));
+      });
+    }
     
     queue.player.play(resource);
     queue.isPlaying = true;
