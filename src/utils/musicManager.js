@@ -189,7 +189,7 @@ async function playResource(guildId, song) {
   const queue = getQueue(guildId);
   try {
     if (queue.player && song.encoded) {
-       await queue.player.playTrack({ track: song.encoded });
+       await queue.player.playTrack({ track: { encoded: song.encoded } });
        queue.isPlaying = true;
        updatePlayerUI(guildId);
     }
