@@ -28,7 +28,8 @@
     "play-dl": "^1.9.7",
     "rss-parser": "^3.13.0",
     "youtube-ext": "^1.1.25",
-    "youtube-dl-exec": "^3.0.10"
+    "youtube-dl-exec": "^3.0.10",
+    "ffmpeg-static": "^5.2.0"
   },
   "devDependencies": {
     "jimp": "^1.6.1",

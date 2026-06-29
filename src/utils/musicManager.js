@@ -270,6 +270,13 @@ async function playResource(guildId, song) {
   } catch (error) {
     console.error(`Error streaming song:`, error);
     fs.writeFileSync('music_error_log.txt', String(error?.stack || error));
+    
+    // Output error to Discord channel
+    if (global.client && queue.textChannel) {
+      const channel = global.client.channels.cache.get(queue.textChannel);
+      if (channel) channel.send(`⚠️ Audio Engine Crash: \`${error.message}\``).catch(()=>{});
+    }
+    
     queue.player.stop();
   }
 }
