@@ -29,7 +29,13 @@ export function startMusicCleanupJob(client) {
             const manualDeletable = toDelete.filter(m => (Date.now() - m.createdTimestamp) >= 1209600000);
             
             if (bulkDeletable.size > 0) {
-              await channel.bulkDelete(bulkDeletable, true).catch(() => null);
+              try {
+                await channel.bulkDelete(bulkDeletable, true);
+              } catch (err) {
+                for (const [id, msg] of bulkDeletable) {
+                  await msg.delete().catch(() => null);
+                }
+              }
             }
             
             // Fallback for older messages

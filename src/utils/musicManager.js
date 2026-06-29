@@ -279,7 +279,8 @@ export async function handleInteraction(interaction) {
     if (!queue.current) return interaction.reply({ content: `There is no music playing.`, ephemeral: true });
     if (queue.player && queue.player.paused) {
       queue.player.setPaused(false);
-      await interaction.reply({ content: `${interaction.user} resumed the playback.`, ephemeral: false });
+      await interaction.reply({ content: `${interaction.user} resumed the playback.` });
+      setTimeout(() => interaction.deleteReply().catch(()=>null), 5000);
     } else {
       await interaction.reply({ content: `The music is already playing.`, ephemeral: true });
     }
@@ -287,19 +288,22 @@ export async function handleInteraction(interaction) {
     if (!queue.current) return interaction.reply({ content: `There is no music playing.`, ephemeral: true });
     if (queue.player && !queue.player.paused) {
       queue.player.setPaused(true);
-      await interaction.reply({ content: `${interaction.user} paused the playback.`, ephemeral: false });
+      await interaction.reply({ content: `${interaction.user} paused the playback.` });
+      setTimeout(() => interaction.deleteReply().catch(()=>null), 5000);
     } else {
       await interaction.reply({ content: `The music is already paused.`, ephemeral: true });
     }
   } else if (action === 'skip') {
     if (!queue.current) return interaction.reply({ content: `There is nothing to skip.`, ephemeral: true });
     if (queue.player) queue.player.stopTrack(); // Triggers 'end' event which plays next
-    await interaction.reply({ content: `${interaction.user} skipped **${queue.current.title}**.`, ephemeral: false });
+    await interaction.reply({ content: `${interaction.user} skipped **${queue.current.title}**.` });
+    setTimeout(() => interaction.deleteReply().catch(()=>null), 5000);
   } else if (action === 'stop') {
     queue.songs = [];
     queue.current = null;
     if (queue.player) queue.player.stopTrack();
-    await interaction.reply({ content: `${interaction.user} stopped the music and cleared the queue.`, ephemeral: false });
+    await interaction.reply({ content: `${interaction.user} stopped the music and cleared the queue.` });
+    setTimeout(() => interaction.deleteReply().catch(()=>null), 5000);
     startLeaveTimeout(interaction.guildId);
   } else if (action === 'queue') {
     if (queue.songs.length === 0) return interaction.reply({ content: `The queue is currently empty.`, ephemeral: true });
