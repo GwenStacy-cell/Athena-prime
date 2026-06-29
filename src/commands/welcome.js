@@ -45,7 +45,7 @@ export function buildWelcomeEmbed(member, cfg) {
   else if (!cfg.title && !cfg.from) e.setDescription(`**Welcome to ${member.guild.name}!**`);
 
   if (cfg.thumbnail !== false) {
-    e.setThumbnail(cfg.thumbnailUrl || member.guild.members.me.displayAvatarURL({ dynamic: true, size: 256 }));
+    e.setThumbnail(cfg.thumbnailUrl || member.user.displayAvatarURL({ dynamic: true, size: 256 }));
   }
 
   if (cfg.image) e.setImage(cfg.image);
