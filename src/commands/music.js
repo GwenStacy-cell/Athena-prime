@@ -3,6 +3,7 @@ import db from '../database.js';
 import embed from '../embed.js';
 import { enqueue } from '../utils/musicManager.js';
 import play from 'play-dl';
+import yt from 'youtube-ext';
 
 export const commands = [
   {
@@ -57,12 +58,10 @@ export const commands = [
       
       try {
         if (!focusedValue.startsWith('http')) {
-          const results = await play.search(focusedValue, { limit: 5, source: { soundcloud: 'tracks' } });
-          const choices = results.map(r => {
-            const min = Math.floor((r.durationInSec || 0) / 60);
-            const sec = ((r.durationInSec || 0) % 60).toString().padStart(2, '0');
+          const results = await yt.search(focusedValue);
+          const choices = (results.videos || []).slice(0, 5).map(r => {
             return {
-              name: `${r.name || r.title} [${min}:${sec}]`.substring(0, 100),
+              name: `${r.title} [${r.duration?.text || '?'}]`.substring(0, 100),
               value: r.url
             };
           });

@@ -179,19 +179,27 @@ export async function enqueue(guild, member, query) {
         }];
       }
     } else {
-      results = await play.search(query, { limit: 1, source: { soundcloud: 'tracks' } });
+      const searchRes = await yt.search(query);
+      if (searchRes.videos && searchRes.videos.length > 0) {
+        const vid = searchRes.videos[0];
+        results = [{
+           title: vid.title,
+           url: vid.url,
+           durationRaw: vid.duration?.text || 'Unknown',
+           thumbnails: vid.thumbnails
+        }];
+      } else {
+        results = [];
+      }
     }
     
     if (!results || !results.length) return { success: false, message: 'No results found for that query.' };
     
-    const min = Math.floor((results[0].durationInSec || 0) / 60);
-    const sec = ((results[0].durationInSec || 0) % 60).toString().padStart(2, '0');
-    
     const song = {
-      title: results[0].title || results[0].name,
+      title: results[0].title,
       url: results[0].url,
-      duration: results[0].durationRaw || `${min}:${sec}`,
-      thumbnail: results[0].thumbnails?.[0]?.url || results[0].thumbnail,
+      duration: results[0].durationRaw,
+      thumbnail: results[0].thumbnails?.[0]?.url,
       requester: member.user
     };
     
