@@ -426,174 +426,174 @@ async function getHelpEmbeds(guild, client) {
 
   const fields = [
     {
-      name: h('SECURITY & FIREWALL'),
+      name: h('security & firewall'),
       value:
-        `\`${p}security\` **enable all** / **disable all** — Toggle all shields \`[MOD]\`\n` +
-        `\`${p}antinuke\` **config** — Open the interactive configuration panel \`[MOD]\`\n` +
-        `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** \`on|off\` \`[MOD]\`\n` +
+        `\`${p}security\` **enable all** / **disable all** — Toggle all shields \`[EXTRA OWNERS]\`\n` +
+        `\`${p}antinuke\` **config** — Open the interactive configuration panel \`[EXTRA OWNERS]\`\n` +
+        `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** \`on|off\` \`[EXTRA OWNERS]\`\n` +
         `\`/moveprotect\` **add|remove|list** \`@user\` — Prevent admins from moving protected users \`[SERVER OWNER]\`\n` +
-        `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid \`[MOD]\`\n` +
-        `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels \`[MOD]\`\n\n` +
-        `[!] You MUST whitelist friendly bots (\`${p}botwhitelist add <ID>\`). Unwhitelisted bots will be instantly banned.`
+        `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid \`[EXTRA OWNERS]\`\n` +
+        `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels \`[EXTRA OWNERS]\`\n\n` +
+        `You MUST whitelist friendly bots (\`${p}botwhitelist add <ID>\`). Unwhitelisted bots will be instantly banned.`
     },
     {
-      name: h('WHITELIST & PERMISSIONS'),
+      name: h('whitelist & permissions'),
       value:
-        `\`${p}whitelist\` **add** / **remove** / **list** \`@user|botId\` \`[events...]\` \`[MOD]\`\n` +
+        `\`${p}whitelist\` **add** / **remove** / **list** \`@user|botId\` \`[events...]\` \`[EXTRA OWNERS]\`\n` +
         `Events: \`all\` \`antinuke\` \`antibot\` \`antispam\` \`antilink\` \`antiinvite\` \`quarantine\`\n` +
-        `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots to join \`[MOD]\`\n` +
+        `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots to join \`[EXTRA OWNERS]\`\n` +
         `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access \`[SERVER OWNER]\``
     },
     {
-      name: h('LINK & INVITE FILTERS'),
+      name: h('link & invite filters'),
       value:
-        `\`${p}antilink\` **on** / **off** — Block all external links from non-moderators \`[MOD]\`\n` +
-        `\`${p}linksallow\` **add** / **remove** / **list** \`domain\` — Whitelist specific domains \`[MOD]\`\n` +
-        `\`${p}blacklist\` **add** / **remove** / **list** \`phrase\` — Auto-delete matching phrases \`[MOD]\``
+        `\`${p}antilink\` **on** / **off** — Block all external links from non-moderators \`[EXTRA OWNERS]\`\n` +
+        `\`${p}linksallow\` **add** / **remove** / **list** \`domain\` — Whitelist specific domains \`[EXTRA OWNERS]\`\n` +
+        `\`${p}blacklist\` **add** / **remove** / **list** \`phrase\` — Auto-delete matching phrases \`[EXTRA OWNERS]\``
     },
     {
-      name: h('QUARANTINE & ISOLATION'),
+      name: h('quarantine & isolation'),
       value:
-        `\`${p}quarantine\` \`@user\` \`[duration]\` \`[reason]\` — Strip roles and isolate (alias: \`${p}qr\`) \`[MOD]\`\n` +
-        `\`${p}unquarantine\` \`@user\` — Restore roles and release from isolation \`[MOD]\`\n` +
-        `\`${p}massquarantine\` \`@role\` — Quarantine all members of a role at once \`[MOD]\`\n` +
-        `\`${p}massunquarantine\` — Release all currently quarantined members \`[MOD]\`\n` +
-        `\`${p}qrmanager\` **setup** / **setrole** / **setchannel** / **setvc** / **status** \`[MOD]\`\n` +
-        `\`${p}lockdown\` **on** / **off** — Restrict channel to moderators only \`[MOD]\``
+        `\`${p}quarantine\` \`@user\` \`[duration]\` \`[reason]\` — Strip roles and isolate (alias: \`${p}qr\`) \`[EXTRA OWNERS]\`\n` +
+        `\`${p}unquarantine\` \`@user\` — Restore roles and release from isolation \`[EXTRA OWNERS]\`\n` +
+        `\`${p}massquarantine\` \`@role\` — Quarantine all members of a role at once \`[EXTRA OWNERS]\`\n` +
+        `\`${p}massunquarantine\` — Release all currently quarantined members \`[EXTRA OWNERS]\`\n` +
+        `\`${p}qrmanager\` **setup** / **setrole** / **setchannel** / **setvc** / **status** \`[EXTRA OWNERS]\`\n` +
+        `\`${p}lockdown\` **on** / **off** — Restrict channel to moderators only \`[EXTRA OWNERS]\``
     },
     {
-      name: h('MODERATION & THREADS'),
+      name: h('moderation & threads'),
       value:
-        `\`${p}warn\` \`@user\` \`reason\` — Issue a warning (auto-quarantine at threshold) \`[MOD]\`\n` +
-        `\`${p}warnings\` / \`${p}clearwarns\` \`@user\` — View or wipe warning history \`[MOD]\`\n` +
-        `\`/maxwarnings\` \`amount\` — Set the maximum warning threshold \`[MOD]\`\n` +
-        `\`${p}timeout\` \`@user\` \`dur\` — Timeout a member (e.g. \`5m\` \`1h\` \`1d\`) \`[MOD]\`\n` +
-        `\`${p}kick\` / \`${p}ban\` / \`${p}unban\` / \`${p}unbanall\` — Standard moderation actions \`[MOD]\`\n` +
-        `\`${p}addrole\` / \`${p}removerole\` \`@user\` \`@roles...\` — Safely assign/remove multiple roles \`[MOD]\`\n` +
-        `\`${p}striproles\` \`@user\` — Instantly strip all roles from a member \`[MOD]\`\n` +
-        `\`${p}sync\` / \`${p}syncall\` — Sync channel permissions with category \`[MOD]\`\n` +
-        `\`${p}purge\` \`1-100\` — Bulk-delete messages from current channel \`[MOD]\`\n` +
-        `\`${p}slowmode\` \`seconds\` — Set channel slowmode (0 = off) \`[MOD]\`\n` +
-        `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role \`[MOD]\`\n` +
-        `\`${p}createthread\` / \`${p}archivethread\` / \`${p}deletethread\` — Thread management \`[MOD]\``
+        `\`${p}warn\` \`@user\` \`reason\` — Issue a warning (auto-quarantine at threshold) \`[EXTRA OWNERS]\`\n` +
+        `\`${p}warnings\` / \`${p}clearwarns\` \`@user\` — View or wipe warning history \`[EXTRA OWNERS]\`\n` +
+        `\`/maxwarnings\` \`amount\` — Set the maximum warning threshold \`[EXTRA OWNERS]\`\n` +
+        `\`${p}timeout\` \`@user\` \`dur\` — Timeout a member (e.g. \`5m\` \`1h\` \`1d\`) \`[EXTRA OWNERS]\`\n` +
+        `\`${p}kick\` / \`${p}ban\` / \`${p}unban\` / \`${p}unbanall\` — Standard moderation actions \`[EXTRA OWNERS]\`\n` +
+        `\`${p}addrole\` / \`${p}removerole\` \`@user\` \`@roles...\` — Safely assign/remove multiple roles \`[EXTRA OWNERS]\`\n` +
+        `\`${p}striproles\` \`@user\` — Instantly strip all roles from a member \`[EXTRA OWNERS]\`\n` +
+        `\`${p}sync\` / \`${p}syncall\` — Sync channel permissions with category \`[EXTRA OWNERS]\`\n` +
+        `\`${p}purge\` \`1-100\` — Bulk-delete messages from current channel \`[EXTRA OWNERS]\`\n` +
+        `\`${p}slowmode\` \`seconds\` — Set channel slowmode (0 = off) \`[EXTRA OWNERS]\`\n` +
+        `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role \`[EXTRA OWNERS]\`\n` +
+        `\`${p}createthread\` / \`${p}archivethread\` / \`${p}deletethread\` — Thread management \`[EXTRA OWNERS]\``
     },
     {
-      name: h('MUSIC PLAYER'),
+      name: h('music player'),
       value:
-        `\`/setupmusic\` \`[image_url]\` — Create the Compact Music Player channel \`[MOD]\`\n` +
+        `\`/setupmusic\` \`[image_url]\` — Create the Compact Music Player channel \`[EXTRA OWNERS]\`\n` +
         `\`/play\` \`query\` — Play a song in your voice channel via URL or search \`[PUBLIC]\`\n` +
-        `[!] Use the dedicated Music Console channel to control playback (Play, Pause, Skip, Queue, Stop).`
+        `Use the dedicated Music Console channel to control playback (Play, Pause, Skip, Queue, Stop).`
     },
     {
-      name: h('ANNOUNCEMENTS & MESSAGING'),
+      name: h('announcements & messaging'),
       value:
-        `\`${p}say\` \`#channel\` \`message\` — Send an anonymous bot message \`[MOD]\`\n` +
-        `\`${p}announce\` \`#channel\` \`title | message\` — Post a styled announcement embed \`[MOD]\`\n` +
-        `\`${p}modmode\` **on** / **off** — Restrict all channels to moderators instantly \`[MOD]\``
+        `\`${p}say\` \`#channel\` \`message\` — Send an anonymous bot message \`[EXTRA OWNERS]\`\n` +
+        `\`${p}announce\` \`#channel\` \`title | message\` — Post a styled announcement embed \`[EXTRA OWNERS]\`\n` +
+        `\`${p}modmode\` **on** / **off** — Restrict all channels to moderators instantly \`[EXTRA OWNERS]\``
     },
     {
-      name: h('VOICE & JOIN-TO-CREATE'),
+      name: h('voice & join-to-create'),
       value:
-        `\`${p}theatermode\` **on/off** — Activates Movie Mode (Server mutes/deafens the entire VC) \`[MOD]\`\n` +
-        `\`${p}vclock\` / \`${p}vcunlock\` — Deny or restore Connect permissions for @everyone in your VC \`[MOD]\`\n` +
-        `\`${p}deafen\` / \`${p}undeafenall\` / \`${p}muteall\` / \`${p}unmuteall\` — VC member state control \`[MOD]\`\n` +
-        `\`${p}massmove\` \`dest\` / \`${p}massdc\` — Move or disconnect everyone in a VC \`[MOD]\`\n` +
-        `\`${p}jtcsetup\` \`#voicechannel\` — Designate the JTC creator channel \`[MOD]\`\n` +
-        `\`${p}jtcdisable\` — Remove the JTC system from this server \`[MOD]\`\n` +
+        `\`${p}theatermode\` **on/off** — Activates Movie Mode (Server mutes/deafens the entire VC) \`[EXTRA OWNERS]\`\n` +
+        `\`${p}vclock\` / \`${p}vcunlock\` — Deny or restore Connect permissions for @everyone in your VC \`[EXTRA OWNERS]\`\n` +
+        `\`${p}deafen\` / \`${p}undeafenall\` / \`${p}muteall\` / \`${p}unmuteall\` — VC member state control \`[EXTRA OWNERS]\`\n` +
+        `\`${p}massmove\` \`dest\` / \`${p}massdc\` — Move or disconnect everyone in a VC \`[EXTRA OWNERS]\`\n` +
+        `\`${p}jtcsetup\` \`#voicechannel\` — Designate the JTC creator channel \`[EXTRA OWNERS]\`\n` +
+        `\`${p}jtcdisable\` — Remove the JTC system from this server \`[EXTRA OWNERS]\`\n` +
         `\`${p}vc\` — Manage your personal JTC channel (rename, limit, privacy...) \`[PUBLIC]\`\n` +
-        `\`${p}sethomevc\` \`[channel]\` — Set bot's Home VC (auto-rejoin if moved) \`[MOD]\`\n` +
-        `\`${p}unsethomevc\` — Clear Home VC and disconnect the bot \`[MOD]\``
+        `\`${p}sethomevc\` \`[channel]\` — Set bot's Home VC (auto-rejoin if moved) \`[EXTRA OWNERS]\`\n` +
+        `\`${p}unsethomevc\` — Clear Home VC and disconnect the bot \`[EXTRA OWNERS]\``
     },
     {
-      name: h('VC DRAG'),
+      name: h('vc drag'),
       value:
-        `\`${p}vcdrag\` \`@user\` \`[interval]\` — Drag a user endlessly through VCs (default: 2s) \`[MOD]\`\n` +
-        `\`${p}vcdragstop\` \`@user\` — Stop the drag session for a specific user \`[MOD]\`\n` +
-        `\`${p}vcdraglist\` — View all currently active drag sessions \`[MOD]\``
+        `\`${p}vcdrag\` \`@user\` \`[interval]\` — Drag a user endlessly through VCs (default: 2s) \`[EXTRA OWNERS]\`\n` +
+        `\`${p}vcdragstop\` \`@user\` — Stop the drag session for a specific user \`[EXTRA OWNERS]\`\n` +
+        `\`${p}vcdraglist\` — View all currently active drag sessions \`[EXTRA OWNERS]\``
     },
     {
-      name: h('WELCOME & LEAVE'),
+      name: h('welcome & leave'),
       value:
-        `\`${p}welcome\` — Open the Welcome message manager \`[MOD]\`\n` +
-        `\`${p}leave\` — Open the Leave message manager \`[MOD]\`\n` +
-        `\`/autorole-config\` **add/remove/clear** — Manage roles auto-assigned to new members \`[MOD]\`\n` +
+        `\`${p}welcome\` — Open the Welcome message manager \`[EXTRA OWNERS]\`\n` +
+        `\`${p}leave\` — Open the Leave message manager \`[EXTRA OWNERS]\`\n` +
+        `\`/autorole-config\` **add/remove/clear** — Manage roles auto-assigned to new members \`[EXTRA OWNERS]\`\n` +
         `Supports \`{user}\` \`{server}\` \`{count}\` placeholders in custom embeds`
     },
     {
-      name: h('VERIFICATION & TICKETS'),
+      name: h('verification & tickets'),
       value:
-        `\`/verify setup\` \`@role\` — Deploy the server verification panel \`[MOD]\`\n` +
-        `\`/verify disable\` — Remove the verification system \`[MOD]\`\n` +
-        `\`/ticket setup\` \`#category\` \`@role\` — Deploy the support ticket panel \`[MOD]\``
+        `\`/verify setup\` \`@role\` — Deploy the server verification panel \`[EXTRA OWNERS]\`\n` +
+        `\`/verify disable\` — Remove the verification system \`[EXTRA OWNERS]\`\n` +
+        `\`/ticket setup\` \`#category\` \`@role\` — Deploy the support ticket panel \`[EXTRA OWNERS]\``
     },
     {
-      name: h('ENGAGEMENT & TRACKING'),
+      name: h('engagement & tracking'),
       value:
-        `\`${p}serverstats\` **setup** / **disable** — Create live auto-updating Member Count VCs \`[MOD]\`\n` +
-        `\`${p}rrsetup\` — Launch the interactive Reaction Role Menu builder \`[MOD]\`\n` +
-        `\`${p}rrdisable\` — Wipe all Reaction Role configurations from the server \`[MOD]\`\n` +
-        `\`${p}invitesetup\` \`#channel\` — Enable the Advanced Invite Tracker to log who invites who \`[MOD]\`\n` +
-        `\`${p}invitedisable\` — Disable Invite Tracking \`[MOD]\`\n` +
-        `[!] Reaction Role menus can be deleted simply by deleting the message in Discord!`
+        `\`${p}serverstats\` **setup** / **disable** — Create live auto-updating Member Count VCs \`[EXTRA OWNERS]\`\n` +
+        `\`${p}rrsetup\` — Launch the interactive Reaction Role Menu builder \`[EXTRA OWNERS]\`\n` +
+        `\`${p}rrdisable\` — Wipe all Reaction Role configurations from the server \`[EXTRA OWNERS]\`\n` +
+        `\`${p}invitesetup\` \`#channel\` — Enable the Advanced Invite Tracker to log who invites who \`[EXTRA OWNERS]\`\n` +
+        `\`${p}invitedisable\` — Disable Invite Tracking \`[EXTRA OWNERS]\`\n` +
+        `Reaction Role menus can be deleted simply by deleting the message in Discord!`
     },
     {
-      name: h('AUTO-RESPONDER'),
+      name: h('auto-responder'),
       value:
-        `\`${p}trigger\` **create** \`match | response\` — Add a custom keyword trigger \`[MOD]\`\n` +
-        `\`${p}trigger\` **remove** \`match\` — Delete a trigger \`[MOD]\`\n` +
-        `\`${p}trigger\` **list** — View all active triggers in this server \`[MOD]\``
+        `\`${p}trigger\` **create** \`match | response\` — Add a custom keyword trigger \`[EXTRA OWNERS]\`\n` +
+        `\`${p}trigger\` **remove** \`match\` — Delete a trigger \`[EXTRA OWNERS]\`\n` +
+        `\`${p}trigger\` **list** — View all active triggers in this server \`[EXTRA OWNERS]\``
     },
     {
-      name: h('NEWS FEED'),
+      name: h('news feed'),
       value:
-        `\`/news setup\` \`#channel\` \`[@role]\` — Setup the automated news feed \`[MOD]\`\n` +
-        `\`/news add\` \`[preset]\` \`[url]\` — Add a news source (e.g. BBC, CNN) \`[MOD]\`\n` +
-        `\`/news remove\` \`url\` — Remove a news source \`[MOD]\`\n` +
-        `\`/news list\` — View all active subscriptions \`[MOD]\``
+        `\`/news setup\` \`#channel\` \`[@role]\` — Setup the automated news feed \`[EXTRA OWNERS]\`\n` +
+        `\`/news add\` \`[preset]\` \`[url]\` — Add a news source (e.g. BBC, CNN) \`[EXTRA OWNERS]\`\n` +
+        `\`/news remove\` \`url\` — Remove a news source \`[EXTRA OWNERS]\`\n` +
+        `\`/news list\` — View all active subscriptions \`[EXTRA OWNERS]\``
     },
     {
-      name: h('CUSTOMIZATION'),
+      name: h('customization'),
       value:
         `\`${p}prefix\` \`new_prefix\` — Set a custom prefix for the server \`[SERVER OWNER]\`\n` +
-        `\`${p}accent\` — Set the embed accent color (10 pure presets + custom hex) \`[MOD]\`\n` +
-        `\`${p}autonick\` **on/off** / **sync** / **layout** \`[format]\` — Auto-format nicknames \`[MOD]\`\n` +
-        `\`${p}setguildavatar\` / \`${p}setguildbanner\` — Set bot's custom per-server avatar/banner \`[MOD]\`\n` +
-        `\`/steal\` \`:emoji: ...\` — Steal multiple emojis into your server \`[MOD]\``
+        `\`${p}accent\` — Set the embed accent color (10 pure presets + custom hex) \`[EXTRA OWNERS]\`\n` +
+        `\`${p}autonick\` **on/off** / **sync** / **layout** \`[format]\` — Auto-format nicknames \`[EXTRA OWNERS]\`\n` +
+        `\`${p}setguildavatar\` / \`${p}setguildbanner\` — Set bot's custom per-server avatar/banner \`[EXTRA OWNERS]\`\n` +
+        `\`/steal\` \`:emoji: ...\` — Steal multiple emojis into your server \`[EXTRA OWNERS]\``
     },
     {
-      name: h('LEVELING & XP ENGINE'),
+      name: h('leveling & xp engine'),
       value:
-        `\`/xpsetup\` — Launch the Interactive XP Control Panel (Milestones & Multipliers) \`[MOD]\`\n` +
+        `\`/xpsetup\` — Launch the Interactive XP Control Panel (Milestones & Multipliers) \`[EXTRA OWNERS]\`\n` +
         `\`/rank\` \`[@user]\` — View a graphic of your current level, XP, and progress \`[PUBLIC]\`\n` +
         `\`/leaderboard\` — View the server's top active members sorted by XP \`[PUBLIC]\``
     },
     {
-      name: h('MESSAGE STATISTICS'),
+      name: h('message statistics'),
       value:
-        `\`/setstatschannel\` \`#channel\` — Restrict stats usage to a specific channel \`[MOD]\`\n` +
+        `\`/setstatschannel\` \`#channel\` — Restrict stats usage to a specific channel \`[EXTRA OWNERS]\`\n` +
         `\`/stats me\` — View your personal server message statistics \`[PUBLIC]\`\n` +
         `\`/stats user\` \`@user\` — View message stats for a specific user \`[PUBLIC]\``
     },
     {
-      name: h('BIRTHDAYS & GIVEAWAYS'),
+      name: h('birthdays & giveaways'),
       value:
-        `\`${p}birthday\` **setchannel** \`#channel\` — Set the channel for birthday announcements \`[MOD]\`\n` +
-        `\`${p}birthday\` **set** / **remove** \`@user\` — Manage member birthdays \`[MOD]\`\n` +
-        `\`${p}testbirthday\` — Send a test birthday announcement \`[MOD]\`\n` +
-        `\`/giveaway start\` / \`end\` / \`reroll\` — Interactive button giveaway management \`[MOD]\``
+        `\`${p}birthday\` **setchannel** \`#channel\` — Set the channel for birthday announcements \`[EXTRA OWNERS]\`\n` +
+        `\`${p}birthday\` **set** / **remove** \`@user\` — Manage member birthdays \`[EXTRA OWNERS]\`\n` +
+        `\`${p}testbirthday\` — Send a test birthday announcement \`[EXTRA OWNERS]\`\n` +
+        `\`/giveaway start\` / \`end\` / \`reroll\` — Interactive button giveaway management \`[EXTRA OWNERS]\``
     },
     {
-      name: h('UTILITIES'),
+      name: h('utilities'),
       value:
         `\`/bump\` — Set a bump reminder and boost the server \`[PUBLIC]\`\n` +
         `\`${p}avatar\` / \`${p}banner\` \`[@user]\` — View a member's global/server avatar or banner \`[PUBLIC]\`\n` +
         `\`${p}status\` — Real-time security health overview \`[PUBLIC]\`\n` +
         `\`${p}serverinfo\` / \`${p}userinfo\` \`[@user]\` — View stats and profile information \`[PUBLIC]\`\n` +
         `\`${p}ping\` / \`${p}time\` — Check bot latency and Indian Standard Time (IST) \`[PUBLIC]\`\n` +
-        `\`${p}setup\` — Quick-bind log channel, quarantine VC and quarantine role \`[MOD]\`\n` +
+        `\`${p}setup\` — Quick-bind log channel, quarantine VC and quarantine role \`[EXTRA OWNERS]\`\n` +
         `\`${p}help\` — This command console \`[PUBLIC]\`\n\n` +
-        `[!] Every command works natively with \`${p}prefix\` and \`/slash\`.\n` +
-        `[!] Server Owners and Extra Owners universally bypass permission checks.`
+        `Every command works natively with \`${p}prefix\` and \`/slash\`.\n` +
+        `Server Owners and Extra Owners universally bypass permission checks.`
     }
   ];
 
