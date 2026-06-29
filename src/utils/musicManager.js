@@ -240,8 +240,11 @@ async function playResource(guildId, song) {
     let resource;
     
     if (!playUrl || !playUrl.includes('soundcloud.com')) {
+      // If it's a Spotify track, the url is null. We use yt-dlp's built-in search!
+      const targetUrl = playUrl || `ytsearch1:${song.title}`;
+      
       // Use yt-dlp to extract the raw stream bypassing captchas
-      const ytStream = youtubedl.exec(playUrl, {
+      const ytStream = youtubedl.exec(targetUrl, {
         o: '-',
         q: true,
         f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
