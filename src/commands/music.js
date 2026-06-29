@@ -114,24 +114,25 @@ async function setupMusicChannel(guild, commandChannel, imageUrl, interaction = 
       .setAuthor({ name: 'Compact Music Player', iconURL: global.client?.user?.displayAvatarURL() })
       .setImage(coverImage);
       
-    let desc = '⸻ discord.gg/athena is a highly engineered discord bot providing premium music streaming experience with instant playback and unlimited song requests ⸻\n\n';
-    desc += '**⸻ MUSIC PLAYER FEATURES**\n\n';
-    desc += '• **Instant** song search & playback\n';
-    desc += '• **Unlimited** song requests available\n';
-    desc += '• **High quality** audio streaming\n';
-    desc += '• **Queue** management system\n';
-    desc += '• **Voice controls** with buttons\n';
-    desc += '• **Auto-join** your voice channel\n\n';
-    desc += '**⸻ HOW TO USE**\n\n';
-    desc += '» **Join** any voice channel\n';
-    desc += '» **Type** song name in this channel\n';
-    desc += '» **Enjoy** instant high-quality music\n\n';
+    let desc = '⸻ Welcome to the Athena Prime Music Console, your dedicated gateway to a seamless, premium, and uninterrupted high-fidelity audio experience. ⸻\n\n';
+    desc += '**⸻ CORE CAPABILITIES**\n\n';
+    desc += '• **Instant Playback:** Lightning-fast audio streaming initialization.\n';
+    desc += '• **Unrestricted Access:** Unlimited song requests and playlist support.\n';
+    desc += '• **High-Fidelity Audio:** Crystal-clear streaming resolution.\n';
+    desc += '• **Advanced Queue Management:** Organize, skip, and manage your tracks.\n';
+    desc += '• **Interactive Interface:** Complete control via tactile dashboard buttons.\n';
+    desc += '• **Seamless Integration:** Automatic synchronization with your Voice Channels.\n\n';
+    desc += '**⸻ INSTRUCTIONS**\n\n';
+    desc += '» **Join** any active voice channel.\n';
+    desc += '» **Search** by typing a song name or pasting a URL directly in this channel.\n';
+    desc += '» **Control** your playback using the module below.\n\n';
     desc += '**Status:** ⸻ Ready to play';
     
     playerEmbed.setDescription(desc);
     
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_playpause').setLabel('Play').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('music_play').setLabel('Play').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('music_pause').setLabel('Pause').setStyle(ButtonStyle.Primary),
       new ButtonBuilder().setCustomId('music_skip').setLabel('Skip').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('music_queue').setLabel('Queue').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Danger)

@@ -1,4 +1,5 @@
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } from '@discordjs/voice';
+import fs from 'fs';
 import play from 'play-dl';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
@@ -44,6 +45,7 @@ export function getQueue(guildId) {
 
     queue.player.on('error', error => {
       console.error(`Error playing audio in guild ${guildId}:`, error);
+      fs.writeFileSync('music_error_log.txt', String(error?.stack || error));
       queue.player.stop();
     });
   }
@@ -217,6 +219,7 @@ async function playResource(guildId, song) {
     updatePlayerUI(guildId);
   } catch (error) {
     console.error(`Error streaming song:`, error);
+    fs.writeFileSync('music_error_log.txt', String(error?.stack || error));
     queue.player.stop();
   }
 }
@@ -287,6 +290,7 @@ export async function updatePlayerUI(guildId) {
     await message.edit({ embeds: [embed], components: [row] });
   } catch (error) {
     console.error(`Failed to update music UI for guild ${guildId}:`, error);
+    fs.writeFileSync('music_ui_error.txt', String(error?.stack || error));
   }
 }
 
