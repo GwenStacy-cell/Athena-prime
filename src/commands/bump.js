@@ -26,6 +26,14 @@ export const commands = [
     .addSubcommand(sub => sub
       .setName('list')
       .setDescription('List all currently configured bump ping roles')
+    )
+    .addSubcommand(sub => sub
+      .setName('off')
+      .setDescription('Disable the bump reminder system')
+    )
+    .addSubcommand(sub => sub
+      .setName('on')
+      .setDescription('Enable the bump reminder system')
     ),
 
   // Prefix Command Handler
@@ -63,7 +71,20 @@ export const commands = [
       return message.reply({ embeds: [embed.info('Bump Roles', `The following roles will be pinged when a bump is available:\n\n${roleList}`)] });
     }
 
-    return message.reply({ embeds: [embed.warn('Invalid Usage', 'Usage:\n`!bump add @role`\n`!bump remove @role`\n`!bump list`')] });
+    if (sub === 'off') {
+      cfg.bumpDisabled = true;
+      db.updateGuildConfig(message.guild.id, cfg);
+      db.deleteBumpReminder(message.guild.id);
+      return message.reply({ embeds: [embed.success('Bump Reminder Disabled', 'The bump reminder system has been turned OFF.')] });
+    }
+
+    if (sub === 'on') {
+      cfg.bumpDisabled = false;
+      db.updateGuildConfig(message.guild.id, cfg);
+      return message.reply({ embeds: [embed.success('Bump Reminder Enabled', 'The bump reminder system has been turned ON.')] });
+    }
+
+    return message.reply({ embeds: [embed.warn('Invalid Usage', 'Usage:\n`!bump add @role`\n`!bump remove @role`\n`!bump list`\n`!bump on`\n`!bump off`')] });
   },
 
   // Slash Command Handler
@@ -92,6 +113,19 @@ export const commands = [
       if (cfg.bumpRoleIds.length === 0) return interaction.reply({ embeds: [embed.info('Bump Roles', 'No roles are currently configured for bump reminders.')] });
       const roleList = cfg.bumpRoleIds.map(id => `<@&${id}>`).join('\n');
       return interaction.reply({ embeds: [embed.info('Bump Roles', `The following roles will be pinged when a bump is available:\n\n${roleList}`)] });
+    }
+
+    if (sub === 'off') {
+      cfg.bumpDisabled = true;
+      db.updateGuildConfig(interaction.guild.id, cfg);
+      db.deleteBumpReminder(interaction.guild.id);
+      return interaction.reply({ embeds: [embed.success('Bump Reminder Disabled', 'The bump reminder system has been turned OFF.')] });
+    }
+
+    if (sub === 'on') {
+      cfg.bumpDisabled = false;
+      db.updateGuildConfig(interaction.guild.id, cfg);
+      return interaction.reply({ embeds: [embed.success('Bump Reminder Enabled', 'The bump reminder system has been turned ON.')] });
     }
   }
 }

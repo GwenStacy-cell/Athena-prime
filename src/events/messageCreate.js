@@ -149,6 +149,9 @@ export default {
         }
         
         if (message.guild) {
+          const cfg = db.getGuildConfig(message.guild.id);
+          if (cfg && cfg.bumpDisabled) return;
+
           db.setBumpReminder(message.guild.id, {
             channelId: message.channel.id,
             ownerId: message.guild.ownerId,
