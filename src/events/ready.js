@@ -4,6 +4,7 @@ import { allCommands } from '../commands/loader.js';
 import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { ensureUnbypassableRole } from '../utils/antiStrip.js';
+import { updatePlayerUI } from '../utils/musicManager.js';
 import { CronJob } from 'cron';
 import { generateBirthdayMessage } from '../commands/birthday.js';
 import statsDB from '../statsDB.js';
@@ -125,8 +126,17 @@ export default {
 
       // Home VC
       const config = db.getGuildConfig(guild.id);
-      if (config && config.homeVcId) {
-        connectToHomeVc(guild, config.homeVcId);
+      if (config) {
+        if (config.homeVcId) {
+          setTimeout(() => {
+            connectToHomeVc(guild, config.homeVcId, true);
+          }, 4000);
+        }
+        
+        // Retroactively update existing music request channels with the new Repeat button
+        if (config.musicChannelId && config.musicMessageId) {
+          updatePlayerUI(guild.id).catch(() => null);
+        }
       }
     });
 
