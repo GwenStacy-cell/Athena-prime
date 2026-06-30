@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';
 
@@ -17,8 +18,10 @@ export function getQueue(guildId) {
       textChannel: null,
       isPlaying: false,
       loop: false,
+      queue: [],
       volume: 100,
       isPreparing: false,
+      repeatTrack: false,
       nowPlayingMsgMusicId: null,
       nowPlayingMsgVcId: null
     });
@@ -71,6 +74,9 @@ export async function enqueue(guild, member, query) {
   
   try {
     if (!queue.player) {
+      const nativeConn = getVoiceConnection(guild.id);
+      if (nativeConn) nativeConn.destroy();
+      
       let player = shoukaku.players.get(guild.id);
       if (!player) {
         try {
@@ -99,6 +105,10 @@ export async function enqueue(guild, member, query) {
       queue.player = player;
       
       queue.player.on('end', () => {
+        if (queue.repeatTrack && queue.current) {
+          queue.songs.unshift(queue.current);
+        }
+        
         if (queue.songs.length > 0) {
           queue.current = queue.songs.shift();
           playResource(guild.id, queue.current);
@@ -244,21 +254,6 @@ async function updateNowPlayingEmbeds(guildId) {
   const embed = buildNowPlayingEmbed(guildId);
   if (!embed) return;
   
-  if (queue.textChannel) {
-    if (queue.nowPlayingMsgMusicId) {
-       try {
-         const msg = await queue.textChannel.messages.fetch(queue.nowPlayingMsgMusicId);
-         if (msg) await msg.edit({ embeds: [embed] });
-       } catch (e) {
-         const newMsg = await queue.textChannel.send({ embeds: [embed] }).catch(()=>null);
-         if (newMsg) queue.nowPlayingMsgMusicId = newMsg.id;
-       }
-    } else {
-       const newMsg = await queue.textChannel.send({ embeds: [embed] }).catch(()=>null);
-       if (newMsg) queue.nowPlayingMsgMusicId = newMsg.id;
-    }
-  }
-  
   if (queue.player) {
      try {
        const guild = global.client.guilds.cache.get(guildId);
@@ -284,13 +279,6 @@ async function updateNowPlayingEmbeds(guildId) {
 
 async function clearNowPlayingEmbeds(guildId) {
   const queue = getQueue(guildId);
-  if (queue.textChannel && queue.nowPlayingMsgMusicId) {
-    try {
-      const msg = await queue.textChannel.messages.fetch(queue.nowPlayingMsgMusicId);
-      if (msg) await msg.delete().catch(()=>null);
-    } catch(e) {}
-    queue.nowPlayingMsgMusicId = null;
-  }
   
   if (queue.player) {
     try {
@@ -375,7 +363,11 @@ export async function updatePlayerUI(guildId) {
       new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Danger)
     );
     
-    await message.edit({ embeds: [embed], components: [row] });
+    const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('music_repeat').setLabel(queue.repeatTrack ? 'Repeat: ON' : 'Repeat: OFF').setStyle(queue.repeatTrack ? ButtonStyle.Success : ButtonStyle.Secondary)
+    );
+    
+    await message.edit({ embeds: [embed], components: [row, row2] });
   } catch (error) {
     console.error(`Failed to update music UI for guild ${guildId}:`, error);
   }
@@ -426,5 +418,9 @@ export async function handleInteraction(interaction) {
     let msg = `**Current Queue:**\n${qList}`;
     if (queue.songs.length > 10) msg += `\n*...and ${queue.songs.length - 10} more*`;
     return interaction.reply({ content: msg, ephemeral: true });
+  } else if (action === 'repeat') {
+    queue.repeatTrack = !queue.repeatTrack;
+    updatePlayerUI(interaction.guildId);
+    return interaction.reply({ content: `Track repeating is now **${queue.repeatTrack ? 'ON' : 'OFF'}**.`, ephemeral: true });
   }
 }
