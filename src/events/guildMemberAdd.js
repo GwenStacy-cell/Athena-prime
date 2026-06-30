@@ -124,11 +124,30 @@ export default {
         const oldInvites = member.client.invites?.get(guild.id) || new Map();
         
         let usedInvite = null;
+        const possibleInvites = [];
+
         for (const [code, invite] of newInvites) {
-          const oldUses = oldInvites.get(code) || 0;
-          if (invite.uses > oldUses) {
-            usedInvite = invite;
-            break;
+          if (oldInvites.has(code)) {
+            if (invite.uses > oldInvites.get(code)) {
+              possibleInvites.push(invite);
+            }
+          } else {
+            if (invite.uses > 0) {
+              possibleInvites.push(invite);
+            }
+          }
+        }
+
+        if (possibleInvites.length === 1) {
+          usedInvite = possibleInvites[0];
+        } else if (possibleInvites.length > 1) {
+          const withBaseline = possibleInvites.filter(i => oldInvites.has(i.code));
+          if (withBaseline.length === 1) {
+            usedInvite = withBaseline[0];
+          } else {
+            // Fallback: guess the most recently created invite among the candidates
+            possibleInvites.sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+            usedInvite = possibleInvites[0];
           }
         }
         
