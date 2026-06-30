@@ -54,9 +54,20 @@ const Nodes = [{
 }];
 const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), Nodes);
 shoukaku.on('error', (_, error) => console.error(chalk.red('Lavalink Node Error:'), error));
+shoukaku.on('ready', (name) => {
+  console.log(chalk.green(`Lavalink Node ${name} is ready! Auto-connecting to Home VCs...`));
+  const configs = db.getAllGuildConfigs();
+  for (const [guildId, config] of Object.entries(configs)) {
+    if (config.homeVcId) {
+      const guild = client.guilds.cache.get(guildId);
+      if (guild) connectToHomeVc(guild, config.homeVcId);
+    }
+  }
+});
 global.client.shoukaku = shoukaku;
 
 // Import event handlers manually for clean compile and zero runtime FS errors
+import { connectToHomeVc } from './src/utils/voice.js';
 import readyEvent from './src/events/ready.js';
 import interactionCreateEvent from './src/events/interactionCreate.js';
 import messageCreateEvent from './src/events/messageCreate.js';

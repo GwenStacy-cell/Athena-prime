@@ -122,15 +122,6 @@ export default {
     client.guilds.cache.forEach(guild => {
       // Unbypassable Role
       ensureUnbypassableRole(guild).catch(() => null);
-
-      // Home VC
-      const config = db.getGuildConfig(guild.id);
-      if (config.homeVcId) {
-        setTimeout(() => {
-          console.log(chalk.blue(` Auto-connecting to Home VC for guild: ${guild.name}`));
-          connectToHomeVc(guild, config.homeVcId);
-        }, 5000);
-      }
     });
 
     // Set custom rich activity presence
