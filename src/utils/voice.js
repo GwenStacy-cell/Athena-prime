@@ -5,13 +5,15 @@ const reconnectTimeouts = new Map();
 /**
  * Connect the bot to its designated Home VC in a guild
  */
-export async function connectToHomeVc(guild, channelId) {
+export async function connectToHomeVc(guild, channelId, force = false) {
   if (!guild || !channelId) return null;
 
-  // Prevent rapid reconnect loops
-  if (reconnectTimeouts.has(guild.id)) return null;
-  reconnectTimeouts.set(guild.id, true);
-  setTimeout(() => reconnectTimeouts.delete(guild.id), 3000);
+  // Prevent rapid reconnect loops unless forced (e.g. on startup)
+  if (!force) {
+    if (reconnectTimeouts.has(guild.id)) return null;
+    reconnectTimeouts.set(guild.id, true);
+    setTimeout(() => reconnectTimeouts.delete(guild.id), 3000);
+  }
 
   const channel = guild.channels.cache.get(channelId);
   if (!channel) {

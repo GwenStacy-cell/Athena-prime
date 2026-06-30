@@ -60,7 +60,7 @@ shoukaku.on('ready', (name) => {
   for (const [guildId, config] of Object.entries(configs)) {
     if (config.homeVcId) {
       const guild = client.guilds.cache.get(guildId);
-      if (guild) connectToHomeVc(guild, config.homeVcId);
+      if (guild) connectToHomeVc(guild, config.homeVcId, true);
     }
   }
 });
