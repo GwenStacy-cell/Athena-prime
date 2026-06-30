@@ -66,24 +66,26 @@ export function buildAccentPanel(guild) {
 
   // Row 1: Presets 1-5
   const row1 = new ActionRowBuilder().addComponents(
-    ...PRESETS.slice(0, 5).map(p =>
-      new ButtonBuilder()
+    ...PRESETS.slice(0, 5).map(p => {
+      const btn = new ButtonBuilder()
         .setCustomId(`accent_preset_${p.hex.replace('#', '')}`)
         .setLabel(p.label)
-        .setEmoji(p.emoji)
-        .setStyle(current?.toUpperCase() === p.hex.toUpperCase() ? ButtonStyle.Primary : ButtonStyle.Secondary)
-    )
+        .setStyle(current?.toUpperCase() === p.hex.toUpperCase() ? ButtonStyle.Primary : ButtonStyle.Secondary);
+      if (p.emoji) btn.setEmoji(p.emoji);
+      return btn;
+    })
   );
 
   // Row 2: Presets 6-10
   const row2 = new ActionRowBuilder().addComponents(
-    ...PRESETS.slice(5, 10).map(p =>
-      new ButtonBuilder()
+    ...PRESETS.slice(5, 10).map(p => {
+      const btn = new ButtonBuilder()
         .setCustomId(`accent_preset_${p.hex.replace('#', '')}`)
         .setLabel(p.label)
-        .setEmoji(p.emoji)
-        .setStyle(current?.toUpperCase() === p.hex.toUpperCase() ? ButtonStyle.Primary : ButtonStyle.Secondary)
-    )
+        .setStyle(current?.toUpperCase() === p.hex.toUpperCase() ? ButtonStyle.Primary : ButtonStyle.Secondary);
+      if (p.emoji) btn.setEmoji(p.emoji);
+      return btn;
+    })
   );
 
   // Row 3: Custom Hex + Reset + Close
@@ -91,17 +93,15 @@ export function buildAccentPanel(guild) {
     new ButtonBuilder()
       .setCustomId('accent_custom_hex')
       .setLabel('Custom Hex')
-      .setEmoji('')
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId('accent_reset')
       .setLabel('Reset to Default')
-      .setEmoji('')
       .setStyle(ButtonStyle.Danger),
     new ButtonBuilder()
       .setCustomId('accent_close')
       .setLabel('Close')
-      .setEmoji('️')
+      .setEmoji('✖️')
       .setStyle(ButtonStyle.Secondary)
   );
 
