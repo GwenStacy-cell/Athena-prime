@@ -1,6 +1,7 @@
 import { ChannelType, PermissionFlagsBits, AuditLogEvent } from 'discord.js';
 import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
+import { getVoiceConnection } from '@discordjs/voice';
 import { buildControlPanel, buildSharedPanel } from '../commands/jtc.js';
 import statsDB from '../statsDB.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
@@ -307,6 +308,8 @@ export default {
              const player = shoukaku.players.get(guild.id);
              if (player) shoukaku.leaveVoiceChannel(guild.id);
           }
+          const connection = getVoiceConnection(guild.id);
+          if (connection) connection.destroy();
         }
 
         connectToHomeVc(guild, homeVcId);

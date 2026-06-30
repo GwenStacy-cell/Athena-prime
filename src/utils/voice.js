@@ -1,4 +1,5 @@
 import { PermissionFlagsBits } from 'discord.js';
+import { joinVoiceChannel, getVoiceConnection } from '@discordjs/voice';
 
 const reconnectTimeouts = new Map();
 
@@ -22,25 +23,18 @@ export async function connectToHomeVc(guild, channelId, force = false) {
   }
 
   try {
-    const shoukaku = global.client?.shoukaku;
-    if (!shoukaku) return null;
-    
-    // Check if player already exists
-    let player = shoukaku.players.get(guild.id);
-    if (!player) {
-       player = await shoukaku.joinVoiceChannel({
-         guildId: guild.id,
+    let connection = getVoiceConnection(guild.id);
+    if (!connection || connection.joinConfig.channelId !== channel.id) {
+       connection = joinVoiceChannel({
          channelId: channel.id,
-         shardId: guild.shardId,
-         deaf: false,
-         mute: false
+         guildId: guild.id,
+         adapterCreator: guild.voiceAdapterCreator,
+         selfDeaf: false,
+         selfMute: false
        });
-       console.log(`[Athena Prime] Joined Home VC "${channel.name}" in guild "${guild.name}" via Lavalink`);
-    } else if (player.voiceChannelId !== channel.id) {
-       await guild.members.me.voice.setChannel(channel.id).catch(() => null);
-       console.log(`[Athena Prime] Moved to Home VC "${channel.name}" in guild "${guild.name}" via Lavalink`);
+       console.log(`[Athena Prime] Joined Home VC "${channel.name}" in guild "${guild.name}" via native voice`);
     }
-    return player;
+    return connection;
   } catch (error) {
     console.error(`[Athena Prime] Failed to join Home VC in guild ${guild.name}:`, error);
     return null;
