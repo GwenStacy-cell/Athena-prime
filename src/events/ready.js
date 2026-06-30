@@ -126,8 +126,10 @@ export default {
       // Home VC
       const config = db.getGuildConfig(guild.id);
       if (config.homeVcId) {
-        console.log(chalk.blue(` Auto-connecting to Home VC for guild: ${guild.name}`));
-        connectToHomeVc(guild, config.homeVcId);
+        setTimeout(() => {
+          console.log(chalk.blue(` Auto-connecting to Home VC for guild: ${guild.name}`));
+          connectToHomeVc(guild, config.homeVcId);
+        }, 5000);
       }
     });
 
