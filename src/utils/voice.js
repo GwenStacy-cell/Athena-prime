@@ -20,12 +20,6 @@ export async function connectToHomeVc(guild, channelId) {
   }
 
   try {
-    const me = guild.members.me;
-    if (!me.permissionsIn(channel).has(PermissionFlagsBits.Connect)) {
-      // console.warn(`[Athena Prime] Missing CONNECT permission for Home VC in ${guild.name}. Aborting.`);
-      return null;
-    }
-
     const shoukaku = global.client?.shoukaku;
     if (!shoukaku) return null;
     
