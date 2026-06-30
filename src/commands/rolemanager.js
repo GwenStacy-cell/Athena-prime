@@ -1,6 +1,6 @@
 import { PermissionFlagsBits } from 'discord.js';
 import embed from '../embed.js';
-import { isAuthorized } from '../utils/helpers.js';
+import { isAuthorized, isBotOwnerSync } from '../utils/helpers.js';
 
 export const commands = [
   {
@@ -37,7 +37,7 @@ export const commands = [
           failedRoles.push(`${role.name} (Bot hierarchy too low)`);
           continue;
         }
-        if (message.guild.ownerId !== message.author.id && role.position >= highestUserRole) {
+        if (!isBotOwnerSync(message.author.id) && message.guild.ownerId !== message.author.id && role.position >= highestUserRole) {
           failedRoles.push(`${role.name} (Your hierarchy too low)`);
           continue;
         }
@@ -86,7 +86,7 @@ export const commands = [
           failedRoles.push(`${role.name} (Bot hierarchy too low)`);
           continue;
         }
-        if (interaction.guild.ownerId !== interaction.user.id && role.position >= highestUserRole) {
+        if (!isBotOwnerSync(interaction.user.id) && interaction.guild.ownerId !== interaction.user.id && role.position >= highestUserRole) {
           failedRoles.push(`${role.name} (Your hierarchy too low)`);
           continue;
         }
@@ -139,7 +139,7 @@ export const commands = [
           failedRoles.push(`${role.name} (Bot hierarchy too low)`);
           continue;
         }
-        if (message.guild.ownerId !== message.author.id && role.position >= highestUserRole) {
+        if (!isBotOwnerSync(message.author.id) && message.guild.ownerId !== message.author.id && role.position >= highestUserRole) {
           failedRoles.push(`${role.name} (Your hierarchy too low)`);
           continue;
         }
@@ -187,7 +187,7 @@ export const commands = [
           failedRoles.push(`${role.name} (Bot hierarchy too low)`);
           continue;
         }
-        if (interaction.guild.ownerId !== interaction.user.id && role.position >= highestUserRole) {
+        if (!isBotOwnerSync(interaction.user.id) && interaction.guild.ownerId !== interaction.user.id && role.position >= highestUserRole) {
           failedRoles.push(`${role.name} (Your hierarchy too low)`);
           continue;
         }
@@ -230,7 +230,7 @@ export const commands = [
       );
 
       for (const [id, role] of rolesToRemove) {
-        if (role.position >= highestBotRole || (message.guild.ownerId !== message.author.id && role.position >= highestUserRole)) {
+        if (role.position >= highestBotRole || (!isBotOwnerSync(message.author.id) && message.guild.ownerId !== message.author.id && role.position >= highestUserRole)) {
           failedCount++;
           continue;
         }
@@ -269,7 +269,7 @@ export const commands = [
       );
 
       for (const [id, role] of rolesToRemove) {
-        if (role.position >= highestBotRole || (interaction.guild.ownerId !== interaction.user.id && role.position >= highestUserRole)) {
+        if (role.position >= highestBotRole || (!isBotOwnerSync(interaction.user.id) && interaction.guild.ownerId !== interaction.user.id && role.position >= highestUserRole)) {
           failedCount++;
           continue;
         }
