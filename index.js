@@ -56,13 +56,12 @@ const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), Nodes);
 shoukaku.on('error', (_, error) => console.error(chalk.red('Lavalink Node Error:'), error));
 shoukaku.on('ready', (name) => {
   console.log(chalk.green(`Lavalink Node ${name} is ready! Auto-connecting to Home VCs...`));
-  const configs = db.getAllGuildConfigs();
-  for (const [guildId, config] of Object.entries(configs)) {
-    if (config.homeVcId) {
-      const guild = client.guilds.cache.get(guildId);
-      if (guild) connectToHomeVc(guild, config.homeVcId, true);
+  client.guilds.cache.forEach(guild => {
+    const config = db.getGuildConfig(guild.id);
+    if (config && config.homeVcId) {
+      connectToHomeVc(guild, config.homeVcId, true);
     }
-  }
+  });
 });
 global.client.shoukaku = shoukaku;
 
