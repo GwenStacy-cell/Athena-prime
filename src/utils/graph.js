@@ -128,12 +128,12 @@ export async function generatePingGraph(pingValue, accentColorHex, guildsCount =
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 20px sans-serif';
   ctx.textAlign = 'left';
-  const title1 = 'NUKE PATTERN LOADING ';
+  const title1 = 'SYSTEM LATENCY ';
   ctx.fillText(title1, 50, 25);
   
   const titleWidth = ctx.measureText(title1).width;
   ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-  ctx.fillText('SERVER', 50 + titleWidth, 25);
+  ctx.fillText('HISTORY', 50 + titleWidth, 25);
 
   ctx.fillStyle = '#aaaaaa';
   ctx.font = '12px sans-serif';
