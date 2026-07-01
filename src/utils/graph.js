@@ -112,8 +112,8 @@ export async function generatePingGraph(pingValue, accentColorHex, guildsCount =
   }
 
   // Text labels
-  ctx.fillStyle = '#777777';
-  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = '#aaaaaa';
+  ctx.font = '12px sans-serif';
   ctx.textAlign = 'center';
   for(let i=0; i<10; i++) {
     ctx.fillText((i+1).toString(), 70 + (i * (660 / 9)), 225);
@@ -128,13 +128,15 @@ export async function generatePingGraph(pingValue, accentColorHex, guildsCount =
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 20px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('NUKE PATTERN LOADING ', 50, 25);
+  const title1 = 'NUKE PATTERN LOADING ';
+  ctx.fillText(title1, 50, 25);
   
+  const titleWidth = ctx.measureText(title1).width;
   ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-  ctx.fillText('SERVER', 315, 25);
+  ctx.fillText('SERVER', 50 + titleWidth, 25);
 
-  ctx.fillStyle = '#777777';
-  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = '#aaaaaa';
+  ctx.font = '12px sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText(`${patternsCount} patterns  •  ${guildsCount} guilds  •  cache 10`, 750, 25);
 
@@ -143,12 +145,12 @@ export async function generatePingGraph(pingValue, accentColorHex, guildsCount =
   ctx.rotate(-Math.PI/2);
   ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
   ctx.textAlign = 'center';
-  ctx.font = 'bold 12px sans-serif';
+  ctx.font = '12px sans-serif';
   ctx.fillText('Pattern Count', 0, 0);
   ctx.restore();
   
   ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-  ctx.font = 'bold 12px sans-serif';
+  ctx.font = '12px sans-serif';
   ctx.fillText('Confidence Levels', 400, 245);
 
   return canvas.toBuffer('image/png');
