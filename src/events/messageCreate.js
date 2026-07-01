@@ -814,14 +814,15 @@ export default {
     // 4. PREFIX-LESS COMMANDS: PING
     // ==========================================
     if (message.content.toLowerCase().trim() === 'ping') {
-      const { EmbedBuilder } = await import('discord.js');
+      const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
+      const { generatePingGraph } = await import('../utils/graph.js');
       const cfg = db.getGuildConfig(guildId);
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      const sent   = await message.reply({ content: '\u200b' });
-      const apiMs  = sent.createdTimestamp - message.createdTimestamp;
-      const wsMs   = Math.round(message.client.ws.ping);
+      const sent = await message.reply({ content: 'Calculating ping...' });
+      const apiMs = sent.createdTimestamp - message.createdTimestamp;
+      const wsMs  = Math.round(message.client.ws.ping);
 
       const dbStart = Date.now();
       db.getGuildConfig(guildId);
@@ -831,16 +832,16 @@ export default {
       const rGet = Math.floor(Math.random() * 2) + 1;
       const rDel = Math.floor(Math.random() * 2) + 1;
 
-      const e1 = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`> **| ${apiMs}MS |**`);
+      const buffer = await generatePingGraph(wsMs, accentHex);
+      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
-      const e2 = new EmbedBuilder()
+      const e = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`\u2800\n> **• PONG**\n> WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
-        .setThumbnail(message.author.displayAvatarURL({ size: 256 }));
+        .setDescription(`| ✅ ${message.author} **${apiMs}ms** | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
+        .setImage('attachment://ping_graph.png');
 
-      await sent.edit({ content: null, embeds: [e1, e2] });
+      await sent.delete().catch(() => null);
+      await message.reply({ embeds: [e], files: [attachment] });
       return;
     }
     // ==========================================
