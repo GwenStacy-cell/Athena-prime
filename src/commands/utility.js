@@ -55,9 +55,6 @@ export const commands = [
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      // Send placeholder — measures round-trip (API latency)
-      const sent  = await message.reply({ content: '\u200b' });
-      const apiMs = sent.createdTimestamp - message.createdTimestamp;
       const wsMs  = Math.round(message.client.ws.ping);
 
       // Measure real DB read latency
@@ -68,11 +65,14 @@ export const commands = [
       const rSet = Math.floor(Math.random() * 3) + 1;
       const rGet = Math.floor(Math.random() * 2) + 1;
       const rDel = Math.floor(Math.random() * 2) + 1;
+      
+      const buffer = await generatePingGraph(wsMs, accentHex);
+      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
         .setAuthor({ name: message.author.tag, iconURL: message.author.displayAvatarURL({ dynamic: true }) })
-        .setDescription(`> **| ${apiMs}MS |**`);
+        .setDescription(`> **| Calculating... |**`);
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
@@ -81,10 +81,11 @@ export const commands = [
         .setThumbnail(message.author.displayAvatarURL({ size: 256, dynamic: true }))
         .setImage('attachment://ping_graph.png');
 
-      const buffer = await generatePingGraph(wsMs, accentHex);
-      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
-
-      await sent.edit({ content: null, embeds: [e1, e2], files: [attachment] });
+      const sent = await message.reply({ embeds: [e1, e2], files: [attachment] });
+      const apiMs = sent.createdTimestamp - message.createdTimestamp;
+      
+      e1.setDescription(`> **| ${apiMs}MS |**`);
+      await sent.edit({ embeds: [e1, e2] });
     },
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
@@ -93,8 +94,6 @@ export const commands = [
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      const sent  = await interaction.reply({ content: '\u200b', fetchReply: true });
-      const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
       const wsMs  = Math.round(interaction.client.ws.ping);
 
       const dbStart = Date.now();
@@ -105,10 +104,13 @@ export const commands = [
       const rGet = Math.floor(Math.random() * 2) + 1;
       const rDel = Math.floor(Math.random() * 2) + 1;
 
+      const buffer = await generatePingGraph(wsMs, accentHex);
+      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
+
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
         .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
-        .setDescription(`> **| ${apiMs}MS |**`);
+        .setDescription(`> **| Calculating... |**`);
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
@@ -117,10 +119,11 @@ export const commands = [
         .setThumbnail(interaction.user.displayAvatarURL({ size: 256, dynamic: true }))
         .setImage('attachment://ping_graph.png');
 
-      const buffer = await generatePingGraph(wsMs, accentHex);
-      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
+      const sent = await interaction.reply({ embeds: [e1, e2], files: [attachment], fetchReply: true });
+      const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
 
-      await interaction.editReply({ content: null, embeds: [e1, e2], files: [attachment] });
+      e1.setDescription(`> **| ${apiMs}MS |**`);
+      await interaction.editReply({ embeds: [e1, e2] });
     }
   },
 
