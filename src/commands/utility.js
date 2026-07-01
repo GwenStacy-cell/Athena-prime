@@ -49,7 +49,8 @@ export const commands = [
     category: 'utility',
     permissions: [],
     async executePrefix(message) {
-      const { EmbedBuilder } = await import('discord.js');
+      const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
+      const { generatePingGraph } = await import('../utils/graph.js');
       const cfg = db.getGuildConfig(message.guild?.id || '0');
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
@@ -77,12 +78,17 @@ export const commands = [
         .setColor(accentInt)
         .setAuthor({ name: message.author.tag, iconURL: message.author.displayAvatarURL({ dynamic: true }) })
         .setDescription(`\u2800\n> **• PONG**\n> WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
-        .setThumbnail(message.author.displayAvatarURL({ size: 256, dynamic: true }));
+        .setThumbnail(message.author.displayAvatarURL({ size: 256, dynamic: true }))
+        .setImage('attachment://ping_graph.png');
 
-      await sent.edit({ content: null, embeds: [e1, e2] });
+      const buffer = await generatePingGraph(wsMs, accentHex);
+      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
+
+      await sent.edit({ content: null, embeds: [e1, e2], files: [attachment] });
     },
     async executeSlash(interaction) {
-      const { EmbedBuilder } = await import('discord.js');
+      const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
+      const { generatePingGraph } = await import('../utils/graph.js');
       const cfg = db.getGuildConfig(interaction.guild?.id || '0');
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
@@ -108,9 +114,13 @@ export const commands = [
         .setColor(accentInt)
         .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
         .setDescription(`\u2800\n> **• PONG**\n> WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
-        .setThumbnail(interaction.user.displayAvatarURL({ size: 256, dynamic: true }));
+        .setThumbnail(interaction.user.displayAvatarURL({ size: 256, dynamic: true }))
+        .setImage('attachment://ping_graph.png');
 
-      await interaction.editReply({ content: null, embeds: [e1, e2] });
+      const buffer = await generatePingGraph(wsMs, accentHex);
+      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
+
+      await interaction.editReply({ content: null, embeds: [e1, e2], files: [attachment] });
     }
   },
 
