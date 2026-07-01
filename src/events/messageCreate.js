@@ -837,7 +837,7 @@ export default {
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`| <:emoji_16:1521464002046328944> ${message.author} **${apiMs}ms** | WS : **${wsMs}ms** | DB : **${dbMs}ms** | Redis : SET : **${rSet}ms** GET : **${rGet}ms** DEL : **${rDel}ms**`)
+        .setDescription(`| <:emoji_16:1521464002046328944> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
         .setImage('attachment://ping_graph.png');
 
       await sent.delete().catch(() => null);
