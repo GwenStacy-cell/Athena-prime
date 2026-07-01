@@ -67,12 +67,12 @@ export const commands = [
       const rGet = Math.floor(Math.random() * 2) + 1;
       const rDel = Math.floor(Math.random() * 2) + 1;
 
-      const buffer = await generatePingGraph(wsMs, accentHex);
+      const buffer = await generatePingGraph(wsMs, accentHex, message.client.guilds.cache.size);
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`| ✅ ${message.author} **${apiMs}ms** | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
+        .setDescription(`| <:emoji_16:1521464002046328944> ${message.author} **${apiMs}ms** | WS : **${wsMs}ms** | DB : **${dbMs}ms** | Redis : SET : **${rSet}ms** GET : **${rGet}ms** DEL : **${rDel}ms**`)
         .setImage('attachment://ping_graph.png');
 
       await sent.delete().catch(() => null);
@@ -97,12 +97,12 @@ export const commands = [
       const rGet = Math.floor(Math.random() * 2) + 1;
       const rDel = Math.floor(Math.random() * 2) + 1;
 
-      const buffer = await generatePingGraph(wsMs, accentHex);
+      const buffer = await generatePingGraph(wsMs, accentHex, interaction.client.guilds.cache.size);
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`| ✅ ${interaction.user} **${apiMs}ms** | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms`)
+        .setDescription(`| <:emoji_16:1521464002046328944> ${interaction.user} **${apiMs}ms** | WS : **${wsMs}ms** | DB : **${dbMs}ms** | Redis : SET : **${rSet}ms** GET : **${rGet}ms** DEL : **${rDel}ms**`)
         .setImage('attachment://ping_graph.png');
 
       await sent.delete().catch(() => null);

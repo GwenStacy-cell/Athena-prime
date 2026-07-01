@@ -1,7 +1,7 @@
 import { createCanvas } from 'canvas';
 import fs from 'fs';
 
-export async function generatePingGraph(pingValue, accentColorHex) {
+export async function generatePingGraph(pingValue, accentColorHex, guildsCount = 10, patternsCount = 41) {
   // We'll generate 10 data points for the ping history. 
   // We'll simulate previous pings jittering around the current ping.
   const data = [];
@@ -112,8 +112,8 @@ export async function generatePingGraph(pingValue, accentColorHex) {
   }
 
   // Text labels
-  ctx.fillStyle = '#aaaaaa';
-  ctx.font = '12px sans-serif';
+  ctx.fillStyle = '#777777';
+  ctx.font = 'bold 12px sans-serif';
   ctx.textAlign = 'center';
   for(let i=0; i<10; i++) {
     ctx.fillText((i+1).toString(), 70 + (i * (660 / 9)), 225);
@@ -128,28 +128,28 @@ export async function generatePingGraph(pingValue, accentColorHex) {
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 20px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('SYSTEM PING ', 50, 25);
+  ctx.fillText('NUKE PATTERN LOADING ', 50, 25);
   
   ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-  ctx.fillText('HISTORY', 200, 25);
+  ctx.fillText('SERVER', 315, 25);
 
   ctx.fillStyle = '#777777';
-  ctx.font = '12px sans-serif';
+  ctx.font = 'bold 12px sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('10 updates • ping cache', 750, 25);
+  ctx.fillText(`${patternsCount} patterns  •  ${guildsCount} guilds  •  cache 10`, 750, 25);
 
   ctx.save();
   ctx.translate(20, 130);
   ctx.rotate(-Math.PI/2);
-  ctx.fillStyle = '#00ffff'; // Accent?
+  ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
   ctx.textAlign = 'center';
   ctx.font = 'bold 12px sans-serif';
-  ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-  ctx.fillText('Ping (ms)', 0, 0);
+  ctx.fillText('Pattern Count', 0, 0);
   ctx.restore();
   
   ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-  ctx.fillText('Timeline', 400, 245);
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('Confidence Levels', 400, 245);
 
   return canvas.toBuffer('image/png');
 }
