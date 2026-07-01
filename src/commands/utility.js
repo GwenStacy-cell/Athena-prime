@@ -85,7 +85,7 @@ export const commands = [
       const apiMs = sent.createdTimestamp - message.createdTimestamp;
       
       e1.setDescription(`> **| ${apiMs}MS |**`);
-      await sent.edit({ embeds: [e1, e2] });
+      await sent.edit({ embeds: [e1, e2], files: [attachment] });
     },
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
@@ -123,7 +123,7 @@ export const commands = [
       const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
 
       e1.setDescription(`> **| ${apiMs}MS |**`);
-      await interaction.editReply({ embeds: [e1, e2] });
+      await interaction.editReply({ embeds: [e1, e2], files: [attachment] });
     }
   },
 
