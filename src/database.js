@@ -812,6 +812,12 @@ class Database {
     return this.cache.birthdays[guildId];
   }
 
+  setBirthdayChannel(guildId, channelId) {
+    const config = this.getBirthdayConfig(guildId);
+    config.channelId = channelId;
+    this.save();
+  }
+
   setWelcomeChannel(guildId, channelId) {
     this.getGuildConfig(guildId);
     this.cache.guilds[guildId].welcomeChannel = channelId;
