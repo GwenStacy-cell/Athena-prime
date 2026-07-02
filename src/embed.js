@@ -80,8 +80,7 @@ export const embed = {
     }
 
     builder.setFooter({
-      text: footerText || FOOTER_TEXT,
-      iconURL: 'https://img.icons8.com/color/48/shield.png'
+      text: footerText || FOOTER_TEXT
     });
 
     if (author) {
