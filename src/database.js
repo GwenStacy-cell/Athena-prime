@@ -35,7 +35,8 @@ const DEFAULT_SCHEMA = {
   moveProtection: {},// guildId -> [userIds]
   botBlacklist: [],  // global list of userIds
   bumpReminders: {}, // guildId -> { channelId, bumperId, expiresAt }
-  editRatings: {}    // messageId -> { authorId, authorName, mediaUrl, votes: {} }
+  editRatings: {},   // messageId -> { authorId, authorName, mediaUrl, votes: {} }
+  rateChannels: {}   // guildId -> channelId
 };
 
 class Database {
@@ -76,6 +77,7 @@ class Database {
         this.cache.usersXp        = this.cache.usersXp        || {};
         this.cache.moveProtection = this.cache.moveProtection || {};
         this.cache.editRatings    = this.cache.editRatings    || {};
+        this.cache.rateChannels   = this.cache.rateChannels   || {};
       } else {
         this.save();
       }
@@ -1073,6 +1075,18 @@ class Database {
       delete this.cache.editRatings[messageId];
       this.save();
     }
+  }
+
+  // --- Rate Channels ---
+  getRateChannel(guildId) {
+    if (!this.cache.rateChannels) this.cache.rateChannels = {};
+    return this.cache.rateChannels[guildId] || null;
+  }
+
+  setRateChannel(guildId, channelId) {
+    if (!this.cache.rateChannels) this.cache.rateChannels = {};
+    this.cache.rateChannels[guildId] = channelId;
+    this.save();
   }
 }
 

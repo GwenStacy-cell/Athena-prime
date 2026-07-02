@@ -2,18 +2,31 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } fro
 import embed from '../embed.js';
 import db from '../database.js';
 
-// REPLACE THIS ID WITH YOUR SPECIFIC RATING CHANNEL ID
-export const ALLOWED_CHANNEL_ID = 'YOUR_CHANNEL_ID_HERE'; 
 
 export const commands = [
   {
     name: 'rate',
-    description: 'Post an edit for others to rate from 1 to 5 stars.',
+    description: 'Post an edit to be rated, or set the designated rating channel (Admin only).',
     aliases: ['edit'],
     executePrefix: async (message, args) => {
-      // Channel Check
-      if (message.channel.id !== ALLOWED_CHANNEL_ID && ALLOWED_CHANNEL_ID !== 'YOUR_CHANNEL_ID_HERE') {
-        return message.reply(`This command can only be used in <#${ALLOWED_CHANNEL_ID}>.`).then(m => setTimeout(() => m.delete().catch(() => null), 5000));
+      // Admin Setup Check
+      if (args.length > 0) {
+        const channelMatch = args[0].match(/<#(\d+)>/);
+        const isId = /^\d{17,19}$/.test(args[0]);
+        
+        if (channelMatch || isId) {
+          if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            return message.reply({ embeds: [embed.danger('Permission Denied', 'You must be a Server Administrator to set the rating channel.')] });
+          }
+          const channelId = channelMatch ? channelMatch[1] : args[0];
+          db.setRateChannel(message.guild.id, channelId);
+          return message.reply({ embeds: [embed.success('Channel Configured', `The designated edit rating channel is now <#${channelId}>.`)] });
+        }
+      }
+
+      const configuredChannel = db.getRateChannel(message.guild.id);
+      if (configuredChannel && message.channel.id !== configuredChannel) {
+        return message.reply(`This command can only be used in <#${configuredChannel}>.`).then(m => setTimeout(() => m.delete().catch(() => null), 5000));
       }
 
       // Extract Media URL
