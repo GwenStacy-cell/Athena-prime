@@ -50,7 +50,7 @@ export async function createRateMessage(message, mediaUrl) {
   // Setup Base Embed
   const rateEmbed = embed.build({
     title: `Rate ${message.author.username}'s Edit`,
-    description: `<a:1z:1517089474369032253> **Current Rating**\n0.0/5 (0 votes)\n\n**Media**\n[Click to view](${mediaUrl})\n\n**User Ratings**\n_No ratings yet_`,
+    description: `<a:1z:1517089474369032253> **Current Rating**\n0.0/5 (0 votes)\n\n**User Ratings**\n_No ratings yet_`,
     color: '#2b2d31'
   });
 
@@ -69,15 +69,13 @@ export async function createRateMessage(message, mediaUrl) {
   );
 
   try {
-    const sentMessage = await message.channel.send({ content: `Submitted by ${message.author}`, embeds: [rateEmbed], components: [row1, row2] });
+    const sentMessage = await message.reply({ embeds: [rateEmbed], components: [row1, row2] });
     
     db.createEditRating(sentMessage.id, {
       authorId: message.author.id,
       authorName: message.author.username,
       mediaUrl: mediaUrl
     });
-
-    await message.delete().catch(() => null);
 
   } catch (err) {
     console.error('Failed to post edit rating:', err);

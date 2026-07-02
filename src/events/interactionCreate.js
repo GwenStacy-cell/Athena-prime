@@ -402,7 +402,7 @@ export default {
 
         const updatedEmbed = embed.build({
           title: `Rate ${updatedRatingData.authorName}'s Edit`,
-          description: `<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**Media**\n[Click to view](${updatedRatingData.mediaUrl})\n\n**User Ratings**\n${userRatingsStr}`,
+          description: `<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${userRatingsStr}`,
           color: '#2b2d31'
         });
 
