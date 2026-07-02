@@ -428,9 +428,10 @@ export async function handleInteraction(interaction) {
       if (!title) return '';
       return title
         .replace(/\[.*?\]|\(.*?\)|\{.*?\}/g, '')
-        .replace(/official video|official lyric video|official music video|official audio|music video|lyric video|lyrics|audio|m\/v|mv|hd|hq|ft\.|feat\./gi, '')
+        .split('|')[0]
+        .replace(/official video|official lyric video|official music video|official audio|music video|video song|lyric video|lyrics|audio|m\/v|mv|hd|hq|ft\.|feat\./gi, '')
         .replace(/[\u3131-\uD79D]/g, '') 
-        .replace(/-|\||:/g, ' ')
+        .replace(/-|:/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
     };
