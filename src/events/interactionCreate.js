@@ -109,18 +109,66 @@ export default {
         await interaction.deferReply({ ephemeral: true });
 
         try {
-          const res = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(songName)}`);
-          if (!res.ok) throw new Error('API Error');
-          const data = await res.json();
-          
-          if (!data || data.length === 0 || !data[0].plainLyrics) {
-            return interaction.editReply({ embeds: [embed.danger('Lyrics Not Found', `Could not find any lyrics for **${songName}**.`)] });
+          let lyrics = null;
+          let trackName = songName;
+          let artistName = 'Unknown Artist';
+
+          try {
+            const res = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(songName)}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.length > 0 && data[0].plainLyrics) {
+                lyrics = data[0].plainLyrics;
+                trackName = data[0].trackName;
+                artistName = data[0].artistName;
+              }
+            }
+          } catch(e) {}
+
+          if (!lyrics) {
+            try {
+              const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(songName + " lyrics genius")}`;
+              const searchRes = await fetch(searchUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
+              const searchHtml = await searchRes.text();
+              const cheerio = await import('cheerio');
+              const $ = cheerio.load(searchHtml);
+              
+              let geniusUrl = null;
+              $('a.result__url').each((i, el) => {
+                const href = $(el).attr('href');
+                if (href && href.includes('genius.com')) {
+                  const match = href.match(/uddg=([^&]+)/);
+                  if (match) {
+                    geniusUrl = decodeURIComponent(match[1]);
+                    return false;
+                  }
+                }
+              });
+
+              if (geniusUrl) {
+                const lyricsRes = await fetch(geniusUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
+                const lyricsHtml = await lyricsRes.text();
+                const $$ = cheerio.load(lyricsHtml);
+                
+                let scraped = '';
+                $$('[data-lyrics-container="true"]').each((i, el) => {
+                  $$(el).find('br').replaceWith('\n');
+                  scraped += $$(el).text() + '\n\n';
+                });
+                
+                if (scraped.trim()) {
+                  lyrics = scraped.trim();
+                  artistName = 'Genius Lyrics';
+                }
+              }
+            } catch (e) {
+              console.error("Genius scraper fallback failed:", e);
+            }
           }
 
-          const firstSong = data[0];
-          const lyrics = firstSong.plainLyrics;
-          const trackName = firstSong.trackName;
-          const artistName = firstSong.artistName;
+          if (!lyrics) {
+            return interaction.editReply({ embeds: [embed.danger('Lyrics Not Found', `Could not find any lyrics for **${songName}**.`)] });
+          }
 
           const chunks = [];
           for (let i = 0; i < lyrics.length; i += 4000) {
