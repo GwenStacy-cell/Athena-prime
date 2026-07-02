@@ -97,7 +97,7 @@ export default {
     // 2. MODAL SUBMISSIONS
     // ==========================================
     if (interaction.isModalSubmit()) {
-      if (interaction.customId === 'music_lyrics_modal') {
+      if (interaction.customId.startsWith('music_lyrics_modal')) {
         const songName = interaction.fields.getTextInputValue('song_name');
         if (!songName) return interaction.reply({ content: 'You must provide a song name.', ephemeral: true });
 

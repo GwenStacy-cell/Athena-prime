@@ -438,8 +438,8 @@ export async function handleInteraction(interaction) {
     const defaultTitle = queue.current ? cleanSongTitle(queue.current.title) : '';
     
     const modal = new ModalBuilder()
-      .setCustomId('music_lyrics_modal')
-      .setTitle('Search Lyrics (V2)');
+      .setCustomId(`music_lyrics_modal_${Date.now()}`)
+      .setTitle('Search Lyrics');
 
     const songInput = new TextInputBuilder()
       .setCustomId('song_name')
