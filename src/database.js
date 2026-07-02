@@ -34,7 +34,8 @@ const DEFAULT_SCHEMA = {
   usersXp: {},       // guildId -> { userId -> { xp: 0, level: 0, lastMessageAt: 0, voiceJoinAt: 0 } }
   moveProtection: {},// guildId -> [userIds]
   botBlacklist: [],  // global list of userIds
-  bumpReminders: {}  // guildId -> { channelId, bumperId, expiresAt }
+  bumpReminders: {}, // guildId -> { channelId, bumperId, expiresAt }
+  editRatings: {}    // messageId -> { authorId, authorName, mediaUrl, votes: {} }
 };
 
 class Database {
@@ -74,6 +75,7 @@ class Database {
         this.cache.xpSystems      = this.cache.xpSystems      || {};
         this.cache.usersXp        = this.cache.usersXp        || {};
         this.cache.moveProtection = this.cache.moveProtection || {};
+        this.cache.editRatings    = this.cache.editRatings    || {};
       } else {
         this.save();
       }
@@ -1035,6 +1037,40 @@ class Database {
     if (!this.cache.bumpReminders) this.cache.bumpReminders = {};
     if (this.cache.bumpReminders[guildId]) {
       delete this.cache.bumpReminders[guildId];
+      this.save();
+    }
+  }
+  // --- Edit Ratings ---
+  getEditRating(messageId) {
+    if (!this.cache.editRatings) this.cache.editRatings = {};
+    return this.cache.editRatings[messageId];
+  }
+
+  createEditRating(messageId, data) {
+    if (!this.cache.editRatings) this.cache.editRatings = {};
+    this.cache.editRatings[messageId] = {
+      authorId: data.authorId,
+      authorName: data.authorName,
+      mediaUrl: data.mediaUrl,
+      votes: {}
+    };
+    this.save();
+  }
+
+  updateEditRating(messageId, userId, userName, starCount) {
+    if (!this.cache.editRatings) this.cache.editRatings = {};
+    if (this.cache.editRatings[messageId]) {
+      this.cache.editRatings[messageId].votes[userId] = { stars: starCount, name: userName };
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  deleteEditRating(messageId) {
+    if (!this.cache.editRatings) this.cache.editRatings = {};
+    if (this.cache.editRatings[messageId]) {
+      delete this.cache.editRatings[messageId];
       this.save();
     }
   }

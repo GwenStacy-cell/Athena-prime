@@ -361,6 +361,55 @@ export default {
         }
       }
 
+      // Edit Rating Buttons
+      if (interaction.customId.startsWith('rate_edit_')) {
+        const messageId = interaction.message.id;
+        const action = interaction.customId.replace('rate_edit_', '');
+        
+        const ratingData = db.getEditRating(messageId);
+        if (!ratingData) {
+          return interaction.reply({ content: 'Rating data for this edit is no longer available.', ephemeral: true });
+        }
+
+        if (action === 'delete') {
+          if (interaction.user.id !== ratingData.authorId && (!interaction.member || !interaction.member.permissions.has(PermissionFlagsBits.ManageMessages))) {
+            return interaction.reply({ content: 'Only the original poster or a moderator can remove this edit.', ephemeral: true });
+          }
+          await interaction.message.delete().catch(() => null);
+          db.deleteEditRating(messageId);
+          return interaction.reply({ content: 'Edit rating message removed.', ephemeral: true });
+        }
+
+        const starCount = parseInt(action);
+        if (isNaN(starCount) || starCount < 1 || starCount > 5) return;
+
+        // Ensure single vote
+        if (ratingData.votes[interaction.user.id]) {
+          return interaction.reply({ content: 'You have already rated this edit!', ephemeral: true });
+        }
+
+        db.updateEditRating(messageId, interaction.user.id, interaction.user.username, starCount);
+        
+        const updatedRatingData = db.getEditRating(messageId);
+        const votes = Object.values(updatedRatingData.votes);
+        const totalVotes = votes.length;
+        const sumStars = votes.reduce((acc, curr) => acc + curr.stars, 0);
+        const avgStars = totalVotes > 0 ? (sumStars / totalVotes).toFixed(1) : '0.0';
+
+        const recentVotes = Object.entries(updatedRatingData.votes).slice(-15);
+        let userRatingsStr = recentVotes.map(([uId, v]) => `${v.name}: ${'<a:1z:1517089474369032253>'.repeat(v.stars)}`).join('\n');
+        if (!userRatingsStr) userRatingsStr = '_No ratings yet_';
+
+        const updatedEmbed = embed.build({
+          title: `Rate ${updatedRatingData.authorName}'s Edit`,
+          description: `<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**Media**\n[Click to view](${updatedRatingData.mediaUrl})\n\n**User Ratings**\n${userRatingsStr}`,
+          color: '#2b2d31'
+        });
+
+        await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
+        return interaction.reply({ content: `You rated this edit ${starCount} <a:1z:1517089474369032253>`, ephemeral: true });
+      }
+
       // Autonick Manager Buttons
       if (interaction.customId === 'autonick_toggle') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
