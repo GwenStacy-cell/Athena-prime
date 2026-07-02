@@ -3,7 +3,7 @@ import embed from '../embed.js';
 import db from '../database.js';
 
 // REPLACE THIS ID WITH YOUR SPECIFIC RATING CHANNEL ID
-const ALLOWED_CHANNEL_ID = 'YOUR_CHANNEL_ID_HERE'; 
+export const ALLOWED_CHANNEL_ID = 'YOUR_CHANNEL_ID_HERE'; 
 
 export const commands = [
   {
@@ -28,47 +28,46 @@ export const commands = [
         return message.reply('Please attach an image/video or provide a link to your edit!').then(m => setTimeout(() => m.delete().catch(() => null), 5000));
       }
 
-      // Setup Base Embed
-      const rateEmbed = embed.build({
-        title: `Rate ${message.author.username}'s Edit`,
-        description: `<a:1z:1517089474369032253> **Current Rating**\n0.0/5 (0 votes)\n\n**Media**\n[Click to view](${mediaUrl})\n\n**User Ratings**\n_No ratings yet_`,
-        color: '#2b2d31' // Usually overridden by guild context if set
-      });
-
-      // Custom Star Emoji ID
-      const starEmoji = { id: '1517089474369032253' };
-
-      // Buttons Row 1 (Stars 1-5)
-      const row1 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('rate_edit_1').setLabel('1').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('rate_edit_2').setLabel('2').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('rate_edit_3').setLabel('3').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('rate_edit_4').setLabel('4').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('rate_edit_5').setLabel('5').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary)
-      );
-
-      // Buttons Row 2 (Remove)
-      const row2 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('rate_edit_delete').setLabel('Remove').setStyle(ButtonStyle.Danger)
-      );
-
-      try {
-        const sentMessage = await message.channel.send({ embeds: [rateEmbed], components: [row1, row2] });
-        
-        // Save to Database
-        db.createEditRating(sentMessage.id, {
-          authorId: message.author.id,
-          authorName: message.author.username,
-          mediaUrl: mediaUrl
-        });
-
-        // Delete user's message to keep the channel clean
-        await message.delete().catch(() => null);
-
-      } catch (err) {
-        console.error('Failed to post edit rating:', err);
-        message.reply('An error occurred while posting your edit.').catch(() => null);
-      }
+      await createRateMessage(message, mediaUrl);
     }
   }
 ];
+
+export async function createRateMessage(message, mediaUrl) {
+  // Setup Base Embed
+  const rateEmbed = embed.build({
+    title: `Rate ${message.author.username}'s Edit`,
+    description: `<a:1z:1517089474369032253> **Current Rating**\n0.0/5 (0 votes)\n\n**Media**\n[Click to view](${mediaUrl})\n\n**User Ratings**\n_No ratings yet_`,
+    color: '#2b2d31'
+  });
+
+  const starEmoji = { id: '1517089474369032253' };
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('rate_edit_1').setLabel('1').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('rate_edit_2').setLabel('2').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('rate_edit_3').setLabel('3').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('rate_edit_4').setLabel('4').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('rate_edit_5').setLabel('5').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('rate_edit_delete').setLabel('Remove').setStyle(ButtonStyle.Danger)
+  );
+
+  try {
+    const sentMessage = await message.channel.send({ content: `Submitted by ${message.author}`, embeds: [rateEmbed], components: [row1, row2] });
+    
+    db.createEditRating(sentMessage.id, {
+      authorId: message.author.id,
+      authorName: message.author.username,
+      mediaUrl: mediaUrl
+    });
+
+    await message.delete().catch(() => null);
+
+  } catch (err) {
+    console.error('Failed to post edit rating:', err);
+    message.reply('An error occurred while posting your edit.').catch(() => null);
+  }
+}

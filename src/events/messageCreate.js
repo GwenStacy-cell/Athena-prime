@@ -11,7 +11,7 @@ import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPre
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
 import { Client } from 'nekos-best.js';
 import fetch from 'node-fetch';
-
+import { ALLOWED_CHANNEL_ID, createRateMessage } from '../commands/rate.js';
 const nbClient = new Client();
 const gifCache = new Map();
 
@@ -169,6 +169,27 @@ export default {
 
     // Ignore globally blacklisted users
     if (db.isUserBotBlacklisted(message.author.id)) return;
+
+    // ==========================================
+    // AUTO-RATE LOGIC
+    // ==========================================
+    if (message.guild && message.channel.id === ALLOWED_CHANNEL_ID && ALLOWED_CHANNEL_ID !== 'YOUR_CHANNEL_ID_HERE') {
+      let mediaUrl = null;
+      if (message.attachments.size > 0) {
+        mediaUrl = message.attachments.first().url;
+      } else {
+        const urlMatch = message.content.match(/(https?:\/\/[^\s]+)/);
+        if (urlMatch) mediaUrl = urlMatch[0];
+      }
+
+      if (mediaUrl) {
+        const prefix = db.getGuildConfig(message.guild.id)?.prefix || '!';
+        if (!message.content.startsWith(prefix) || !message.content.toLowerCase().includes('rate')) {
+          // It's a media upload without the !rate command, automate it!
+          return createRateMessage(message, mediaUrl);
+        }
+      }
+    }
 
     // ==========================================
     // DM CONTEXT — spam commands for permitted users / bot owner
