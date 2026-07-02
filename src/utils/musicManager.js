@@ -445,8 +445,11 @@ export async function handleInteraction(interaction) {
       .setCustomId('song_name')
       .setLabel('Song Name')
       .setStyle(TextInputStyle.Short)
-      .setRequired(true)
-      .setValue(defaultTitle);
+      .setRequired(true);
+
+    if (defaultTitle) {
+      songInput.setValue(defaultTitle);
+    }
 
     const firstActionRow = new ActionRowBuilder().addComponents(songInput);
     modal.addComponents(firstActionRow);
