@@ -202,7 +202,7 @@ async function playResource(guildId, song) {
   const queue = getQueue(guildId);
   try {
     if (queue.player && song.encoded) {
-       await queue.player.playTrack({ track: { encoded: song.encoded } });
+       queue.player.playTrack({ track: { encoded: song.encoded } }).catch(console.error);
        queue.isPlaying = true;
        updatePlayerUI(guildId);
        updateNowPlayingEmbeds(guildId);
@@ -424,7 +424,18 @@ export async function handleInteraction(interaction) {
     updatePlayerUI(interaction.guildId);
     return interaction.reply({ content: `Track repeating is now **${queue.repeatTrack ? 'ON' : 'OFF'}**.`, ephemeral: true });
   } else if (action === 'lyrics') {
-    const defaultTitle = queue.current ? queue.current.title : '';
+    const cleanSongTitle = (title) => {
+      if (!title) return '';
+      return title
+        .replace(/\[.*?\]|\(.*?\)|\{.*?\}/g, '')
+        .replace(/official video|official lyric video|official music video|official audio|music video|lyric video|lyrics|audio|m\/v|mv|hd|hq|ft\.|feat\./gi, '')
+        .replace(/[\u3131-\uD79D]/g, '') 
+        .replace(/-|\||:/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+    
+    const defaultTitle = queue.current ? cleanSongTitle(queue.current.title) : '';
     
     const modal = new ModalBuilder()
       .setCustomId('music_lyrics_modal')
