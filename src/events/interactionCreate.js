@@ -400,10 +400,11 @@ export default {
         let userRatingsStr = recentVotes.map(([uId, v]) => `${v.name}: ${'<a:1z:1517089474369032253>'.repeat(v.stars)}`).join('\n');
         if (!userRatingsStr) userRatingsStr = '_No ratings yet_';
 
+        const guildConfig = interaction.guild ? db.getGuildConfig(interaction.guild.id) : null;
         const updatedEmbed = embed.build({
           title: `Rate ${updatedRatingData.authorName}'s Edit`,
           description: `<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${userRatingsStr}`,
-          color: '#2b2d31'
+          color: guildConfig?.accentColor || '#2b2d31'
         });
 
         await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
