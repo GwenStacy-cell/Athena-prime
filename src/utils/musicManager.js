@@ -439,7 +439,7 @@ export async function handleInteraction(interaction) {
     
     const modal = new ModalBuilder()
       .setCustomId('music_lyrics_modal')
-      .setTitle('Search Lyrics');
+      .setTitle('Search Lyrics (V2)');
 
     const songInput = new TextInputBuilder()
       .setCustomId('song_name')
