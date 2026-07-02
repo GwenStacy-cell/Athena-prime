@@ -28,6 +28,7 @@ import { commands as rolemanagerCmds } from './rolemanager.js';
 import { commands as theaterCmds } from './theater.js';
 import { commands as bumpCmds } from './bump.js';
 import { commands as musicCmds } from './music.js';
+import { commands as rateCmds } from './rate.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -59,7 +60,8 @@ export const allCommands = [
   ...rolemanagerCmds,
   ...theaterCmds,
   ...bumpCmds,
-  ...musicCmds
+  ...musicCmds,
+  ...rateCmds
 ];
 
 export const commandMap = new Map();
