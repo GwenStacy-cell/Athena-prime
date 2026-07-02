@@ -54,10 +54,22 @@ async function runInteractiveBuilder(message) {
   if (!titleMsg) return channel.send({ embeds: [embed.danger('Timeout', 'Setup cancelled.')] });
   const title = titleMsg.content;
 
+  // Step 2.5: Description
+  await channel.send({
+    embeds: [embed.info('Reaction Role Manager [3/5]', 'What should be the description of this menu? (Optional)\nType `skip` if you do not want a description.')]
+  });
+  
+  const menuDescMsg = await awaitReply();
+  if (!menuDescMsg) return channel.send({ embeds: [embed.danger('Timeout', 'Setup cancelled.')] });
+  let menuDescription = '';
+  if (menuDescMsg.content.trim().toLowerCase() !== 'skip') {
+    menuDescription = menuDescMsg.content.trim();
+  }
+
   // Step 3: Entries
   const mappings = [];
   await channel.send({
-    embeds: [embed.info('Reaction Role Manager [3/3]', 'Now, add your roles one by one.\n\nFormat: `[emoji] [@role OR Role ID] [description]`\nExample: ` 123456789 The Singer Role`\n\nType `done` when you are finished.')]
+    embeds: [embed.info('Reaction Role Manager [4/5]', 'Now, add your roles one by one.\n\nFormat: `[emoji] [@role OR Role ID] [description]`\nExample: ` 123456789 The Singer Role`\n\nType `done` when you are finished.')]
   });
 
   while (true) {
@@ -113,7 +125,7 @@ async function runInteractiveBuilder(message) {
 
   // Step 4: Image
   await channel.send({
-    embeds: [embed.info('Reaction Role Manager [4/4]', 'Would you like to attach an image to this menu? (Optional)\n\nPaste a valid image URL (e.g., ending in `.png`, `.gif`, `.jpg`) to add it as a large banner.\nOr type `thumb <url>` to add it as a small top-right thumbnail.\n\nType `skip` if you do not want an image.')]
+    embeds: [embed.info('Reaction Role Manager [5/5]', 'Would you like to attach an image to this menu? (Optional)\n\nPaste a valid image URL (e.g., ending in `.png`, `.gif`, `.jpg`) to add it as a large banner.\nOr type `thumb <url>` to add it as a small top-right thumbnail.\n\nType `skip` if you do not want an image.')]
   });
 
   const imageMsg = await awaitReply();
@@ -135,8 +147,25 @@ async function runInteractiveBuilder(message) {
     imageUrl = imageUrl.replace(/^<|>$/g, '');
   }
 
+  // Step 5: Footer
+  await channel.send({
+    embeds: [embed.info('Reaction Role Manager [Extra]', 'What should be the footer text? (Optional)\n\nType `default` to keep the standard Athena Prime Security footer.\nType `none` or `remove` to have no footer.\nOr just type your custom footer text.')]
+  });
+
+  const footerMsg = await awaitReply();
+  if (!footerMsg) return channel.send({ embeds: [embed.danger('Timeout', 'Setup cancelled.')] });
+  
+  let footerText = undefined;
+  const fContent = footerMsg.content.trim();
+  
+  if (fContent.toLowerCase() === 'none' || fContent.toLowerCase() === 'remove') {
+    footerText = '\u200B'; // zero width space to bypass fallback
+  } else if (fContent.toLowerCase() !== 'default') {
+    footerText = fContent;
+  }
+
   // Construct Aesthetic Embed Message
-  let textContent = '';
+  let textContent = menuDescription ? `${menuDescription}\n\n` : '';
   for (const m of mappings) {
     if (m.desc) {
       textContent += `${m.emojiStr} | <@&${m.roleId}> **${m.desc}**\n\n`;
@@ -145,10 +174,13 @@ async function runInteractiveBuilder(message) {
     }
   }
 
+  const guildConfig = db.getGuildConfig(message.guild.id) || {};
+
   const embedOptions = {
     title: title,
     description: textContent,
-    color: '#2b2d31'
+    color: guildConfig.accentColor || '#2b2d31',
+    footerText: footerText
   };
 
   if (imageUrl) {
