@@ -48,20 +48,26 @@ global.client = client; // Make client globally accessible
 import { Shoukaku, Connectors } from 'shoukaku';
 const Nodes = [
   {
-    name: 'Oops-Lavalink',
-    url: 'lavalink.oops.wtf:443',
-    auth: 'www.freelavalink.rest',
+    name: 'Kwiatekq',
+    url: 'node1.kwiatekq.eu:443',
+    auth: 'kwiatekq.eu',
     secure: true
   },
   {
-    name: 'Lexnet',
-    url: 'lavalink.lexnet.cc:443',
-    auth: 'lexn3tl@val!nk',
+    name: 'Lava-v4.ajie',
+    url: 'lava-v4.ajieblogs.eu.org:443',
+    auth: 'https://dsc.gg/ajidevserver',
     secure: true
   },
   {
-    name: 'Public-Lavalink-Jirayu',
-    url: 'lavalink.jirayu.net:443',
+    name: 'Lavalink-Vexanode',
+    url: 'lavalink.vexanode.cloud:443',
+    auth: 'vexanode.cloud',
+    secure: true
+  },
+  {
+    name: 'Darren',
+    url: 'lavalink.darrennathanael.com:443',
     auth: 'youshallnotpass',
     secure: true
   }
