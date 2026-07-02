@@ -118,15 +118,20 @@ export default {
             if (res.ok) {
               const data = await res.json();
               if (data && data.length > 0 && data[0].plainLyrics) {
-                const fetchedLyrics = data[0].plainLyrics;
-                // Heuristic: If it's a giant wall of text with no stanza breaks, discard it to use Genius
-                if (fetchedLyrics.includes('\n\n') || fetchedLyrics.split('\n').length <= 8) {
-                  lyrics = fetchedLyrics;
-                  trackName = data[0].trackName;
-                  artistName = data[0].artistName;
-                } else {
-                  console.log("LRCLIB returned poorly formatted lyrics, falling back to Genius...");
+                let fetchedLyrics = data[0].plainLyrics;
+                // Heuristic: If it's a giant wall of text with no stanza breaks, format it nicely
+                if (!fetchedLyrics.includes('\n\n') && fetchedLyrics.split('\n').length > 8) {
+                  const lines = fetchedLyrics.split('\n');
+                  const formattedLines = [];
+                  for (let i = 0; i < lines.length; i++) {
+                    formattedLines.push(lines[i]);
+                    if ((i + 1) % 4 === 0) formattedLines.push('');
+                  }
+                  fetchedLyrics = formattedLines.join('\n');
                 }
+                lyrics = fetchedLyrics;
+                trackName = data[0].trackName;
+                artistName = data[0].artistName;
               }
             }
           } catch(e) {}
