@@ -181,6 +181,9 @@ export default {
             return interaction.editReply({ embeds: [embed.danger('Lyrics Not Found', `Could not find any lyrics for **${songName}**.`)] });
           }
 
+          const cfg = db.getGuildConfig(interaction.guildId);
+          const accentColor = cfg?.accentColor || '#2b2d31';
+
           const chunks = [];
           for (let i = 0; i < lyrics.length; i += 4000) {
             chunks.push(lyrics.substring(i, i + 4000));
@@ -190,7 +193,8 @@ export default {
             const lyricsEmbed = embed.build({
               title: i === 0 ? `Lyrics: ${trackName}` : `Lyrics: ${trackName} (Part ${i + 1})`,
               description: chunks[i],
-              author: { name: artistName }
+              author: { name: artistName },
+              color: accentColor
             });
             await vc.send({ embeds: [lyricsEmbed] });
           }
