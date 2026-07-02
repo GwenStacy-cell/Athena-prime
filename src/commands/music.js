@@ -156,7 +156,8 @@ async function setupMusicChannel(guild, commandChannel, imageUrl, interaction = 
     );
     
     const row2 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_repeat').setLabel('Repeat: OFF').setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder().setCustomId('music_repeat').setLabel('Repeat: OFF').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('music_lyrics').setLabel('Lyrics').setStyle(ButtonStyle.Primary)
     );
     
     const message = await channel.send({ embeds: [playerEmbed], components: [row, row2] });

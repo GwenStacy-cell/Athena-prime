@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';
@@ -364,7 +364,8 @@ export async function updatePlayerUI(guildId) {
     );
     
     const row2 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_repeat').setLabel(queue.repeatTrack ? 'Repeat: ON' : 'Repeat: OFF').setStyle(queue.repeatTrack ? ButtonStyle.Success : ButtonStyle.Secondary)
+      new ButtonBuilder().setCustomId('music_repeat').setLabel(queue.repeatTrack ? 'Repeat: ON' : 'Repeat: OFF').setStyle(queue.repeatTrack ? ButtonStyle.Success : ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('music_lyrics').setLabel('Lyrics').setStyle(ButtonStyle.Primary)
     );
     
     await message.edit({ embeds: [embed], components: [row, row2] });
@@ -422,5 +423,23 @@ export async function handleInteraction(interaction) {
     queue.repeatTrack = !queue.repeatTrack;
     updatePlayerUI(interaction.guildId);
     return interaction.reply({ content: `Track repeating is now **${queue.repeatTrack ? 'ON' : 'OFF'}**.`, ephemeral: true });
+  } else if (action === 'lyrics') {
+    const defaultTitle = queue.current ? queue.current.title : '';
+    
+    const modal = new ModalBuilder()
+      .setCustomId('music_lyrics_modal')
+      .setTitle('Search Lyrics');
+
+    const songInput = new TextInputBuilder()
+      .setCustomId('song_name')
+      .setLabel('Song Name')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true)
+      .setValue(defaultTitle);
+
+    const firstActionRow = new ActionRowBuilder().addComponents(songInput);
+    modal.addComponents(firstActionRow);
+    
+    await interaction.showModal(modal);
   }
 }

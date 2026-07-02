@@ -11,6 +11,7 @@ import { handleJtcSelectMenu, handleJtcModal } from '../commands/jtc.js';
 import { handleWelcomeManagerButton, handleWelcomeManagerModal, handleWelcomeManagerMenu } from '../commands/welcome.js';
 import { handleAccentButton, handleAccentModal } from '../commands/accent.js';
 import { convertMp4ToGif, uploadGifToDiscord } from '../utils/mediaConverter.js';
+import fetch from 'node-fetch';
 
 export default {
   name: 'interactionCreate',
@@ -96,6 +97,53 @@ export default {
     // 2. MODAL SUBMISSIONS
     // ==========================================
     if (interaction.isModalSubmit()) {
+      if (interaction.customId === 'music_lyrics_modal') {
+        const songName = interaction.fields.getTextInputValue('song_name');
+        if (!songName) return interaction.reply({ content: 'You must provide a song name.', ephemeral: true });
+
+        const vc = interaction.member.voice?.channel;
+        if (!vc) {
+          return interaction.reply({ content: 'You must be in a Voice Channel to request lyrics.', ephemeral: true });
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+
+        try {
+          const res = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(songName)}`);
+          if (!res.ok) throw new Error('API Error');
+          const data = await res.json();
+          
+          if (!data || data.length === 0 || !data[0].plainLyrics) {
+            return interaction.editReply({ embeds: [embed.danger('Lyrics Not Found', `Could not find any lyrics for **${songName}**.`)] });
+          }
+
+          const firstSong = data[0];
+          const lyrics = firstSong.plainLyrics;
+          const trackName = firstSong.trackName;
+          const artistName = firstSong.artistName;
+
+          const chunks = [];
+          for (let i = 0; i < lyrics.length; i += 4000) {
+            chunks.push(lyrics.substring(i, i + 4000));
+          }
+
+          for (let i = 0; i < chunks.length; i++) {
+            const lyricsEmbed = embed.build({
+              title: i === 0 ? `Lyrics: ${trackName}` : `Lyrics: ${trackName} (Part ${i + 1})`,
+              description: chunks[i],
+              author: { name: artistName }
+            });
+            await vc.send({ embeds: [lyricsEmbed] });
+          }
+
+          return interaction.editReply({ content: `✅ Lyrics sent to <#${vc.id}>!` });
+
+        } catch (error) {
+          console.error('Lyrics error:', error);
+          return interaction.editReply({ embeds: [embed.error('Error', 'An error occurred while fetching the lyrics.')] });
+        }
+      }
+
       if (interaction.customId === 'autonick_modal') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
         
