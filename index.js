@@ -46,12 +46,26 @@ global.client = client; // Make client globally accessible
 
 // Initialize Shoukaku (Lavalink wrapper)
 import { Shoukaku, Connectors } from 'shoukaku';
-const Nodes = [{
+const Nodes = [
+  {
+    name: 'Oops-Lavalink',
+    url: 'lavalink.oops.wtf:443',
+    auth: 'www.freelavalink.rest',
+    secure: true
+  },
+  {
+    name: 'Lexnet',
+    url: 'lavalink.lexnet.cc:443',
+    auth: 'lexn3tl@val!nk',
+    secure: true
+  },
+  {
     name: 'Public-Lavalink-Jirayu',
     url: 'lavalink.jirayu.net:443',
     auth: 'youshallnotpass',
     secure: true
-}];
+  }
+];
 const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), Nodes);
 shoukaku.on('error', (_, error) => console.error(chalk.red('Lavalink Node Error:'), error));
 global.client.shoukaku = shoukaku;
