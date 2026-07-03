@@ -134,6 +134,58 @@ export const commands = [
     }
   },
   {
+    name: 'deafenall',
+    description: 'Deafens all members in your current voice channel.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.DeafenMembers],
+    async executePrefix(message) {
+      if (!(await isAuthorized(message.author, message.guild))) return;
+      const vc = message.member.voice.channel;
+      if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')] });
+      
+      let count = 0;
+      for (const [id, member] of vc.members) {
+        if (!member.voice.serverDeaf && !member.user.bot) {
+          try {
+            await member.voice.setDeaf(true);
+            count++;
+          } catch(e) {}
+        }
+      }
+      await message.reply({ embeds: [embed.success('Success', `Deafened **${count}** members in **${vc.name}**.`)] });
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')], ephemeral: true }).catch(() => null);
+      }
+      const vc = interaction.member?.voice?.channel;
+      if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')], ephemeral: true });
+      
+      await interaction.deferReply({ ephemeral: false });
+      await interaction.editReply({ embeds: [embed.info('Deafen All', 'Initiating mass deafen...')] }).catch(() => null);
+
+      let count = 0;
+      const promises = [];
+      vc.members.forEach(member => {
+        if (!member.voice.serverDeaf && !member.user.bot) {
+          promises.push(
+            member.voice.setDeaf(true)
+              .then(() => {
+                count++;
+                if (count % 15 === 0) {
+                  interaction.editReply({ embeds: [embed.info('Deafen All', `Deafening in progress...\n\n Deafened: **${count}**`)] }).catch(() => null);
+                }
+              })
+              .catch(() => null)
+          );
+        }
+      });
+      
+      await Promise.all(promises);
+      await interaction.editReply({ embeds: [embed.success('Success', `Deafened **${count}** members in **${vc.name}**.`)] }).catch(() => null);
+    }
+  },
+  {
     name: 'undeafenall',
     description: 'Undeafens all members in your current voice channel.',
     category: 'moderation',
