@@ -429,7 +429,9 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** \`on|off\` \`[extra owners]\`\n` +
         `\`/moveprotect\` **add|remove|list** \`@user\` — Prevent admins from moving protected users \`[server owner]\`\n` +
         `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid \`[extra owners]\`\n` +
-        `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels \`[extra owners]\`\n\n` +
+        `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels \`[extra owners]\`\n` +
+        `\`${p}spam\` **config** / \`${p}spampermit\` / \`${p}spamrevoke\` / \`${p}spamlist\` — Manage anti-spam \`[extra owners]\`\n` +
+        `\`${p}enuke\` — Emergency Nuke: Ban every non-whitelisted member \`[server owner]\`\n\n` +
         `You MUST whitelist friendly bots (\`${p}botwhitelist add <ID>\`). Unwhitelisted bots will be instantly banned.`
     },
     {
@@ -438,6 +440,7 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}whitelist\` **add** / **remove** / **list** \`@user|botId\` \`[events...]\` \`[extra owners]\`\n` +
         `Events: \`all\` \`antinuke\` \`antibot\` \`antispam\` \`antilink\` \`antiinvite\` \`quarantine\`\n` +
         `\`${p}botwhitelist\` **add** / **remove** / **list** \`botId\` — Permit trusted bots to join \`[extra owners]\`\n` +
+        `\`${p}userblacklist\` **add** / **remove** / **list** \`@user\` — Blacklist a user from the bot \`[extra owners]\`\n` +
         `\`${p}extraowner\` **add** / **remove** / **list** \`@user\` — Grant full bot access \`[server owner]\``
     },
     {
@@ -471,6 +474,7 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}purge\` \`1-100\` — Bulk-delete messages from current channel \`[extra owners]\`\n` +
         `\`${p}slowmode\` \`seconds\` — Set channel slowmode (0 = off) \`[extra owners]\`\n` +
         `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role \`[extra owners]\`\n` +
+        `\`${p}givemerole\` / \`${p}takemyrole\` \`@role\` — Self-assign or remove allowed roles \`[public]\`\n` +
         `\`${p}createthread\` / \`${p}archivethread\` / \`${p}deletethread\` — Thread management \`[extra owners]\``
     },
     {
@@ -492,7 +496,8 @@ async function getHelpEmbeds(guild, client) {
       value:
         `\`${p}theatermode\` **on/off** — Activates Movie Mode (Server mutes/deafens the entire VC) \`[extra owners]\`\n` +
         `\`${p}vclock\` / \`${p}vcunlock\` — Deny or restore Connect permissions for @everyone in your VC \`[extra owners]\`\n` +
-        `\`${p}deafen\` / \`${p}undeafenall\` / \`${p}muteall\` / \`${p}unmuteall\` — VC member state control \`[extra owners]\`\n` +
+        `\`${p}mute\` / \`${p}unmute\` / \`${p}deafen\` / \`${p}undeafen\` — VC member state control \`[extra owners]\`\n` +
+        `\`${p}muteall\` / \`${p}unmuteall\` / \`${p}deafenall\` / \`${p}undeafenall\` — Mass VC state control \`[extra owners]\`\n` +
         `\`${p}massmove\` \`dest\` / \`${p}massdc\` — Move or disconnect everyone in a VC \`[extra owners]\`\n` +
         `\`${p}jtcsetup\` \`#voicechannel\` — Designate the JTC creator channel \`[extra owners]\`\n` +
         `\`${p}jtcdisable\` — Remove the JTC system from this server \`[extra owners]\`\n` +
@@ -584,7 +589,8 @@ async function getHelpEmbeds(guild, client) {
         `\`/bump\` — Set a bump reminder and boost the server \`[public]\`\n` +
         `\`${p}avatar\` / \`${p}banner\` \`[@user]\` — View a member's global/server avatar or banner \`[public]\`\n` +
         `\`${p}status\` — Real-time security health overview \`[public]\`\n` +
-        `\`${p}serverinfo\` / \`${p}userinfo\` \`[@user]\` — View stats and profile information \`[public]\`\n` +
+        `\`${p}serverinfo\` / \`${p}serveroverview\` / \`${p}userinfo\` \`[@user]\` — View stats and profile information \`[public]\`\n` +
+        `\`/rate\` \`@user\` — Rate a user on a 5-star scale \`[public]\`\n` +
         `\`${p}ping\` / \`${p}time\` — Check bot latency and Indian Standard Time (IST) \`[public]\`\n` +
         `\`${p}setup\` — Quick-bind log channel, quarantine VC and quarantine role \`[extra owners]\`\n` +
         `\`${p}help\` — This command console \`[public]\`\n\n` +
