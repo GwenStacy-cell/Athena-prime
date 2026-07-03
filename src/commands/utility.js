@@ -587,7 +587,7 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}avatar\` / \`${p}banner\` \`[@user]\` — View a member's global/server avatar or banner \`[public]\`\n` +
         `\`${p}status\` — Real-time security health overview \`[public]\`\n` +
         `\`${p}serverinfo\` / \`${p}serveroverview\` / \`${p}userinfo\` \`[@user]\` — View stats and profile information \`[public]\`\n` +
-        `\`/rate\` \`@user\` — Rate a user on a 5-star scale \`[public]\`\n` +
+        `\`${p}rate\` \`[#channel]\` / \`[media_url]\` — Rate an edit, or bind rating channel \`[public]\`\n` +
         `\`${p}ping\` / \`${p}time\` — Check bot latency and Indian Standard Time (IST) \`[public]\`\n` +
         `\`${p}setup\` — Quick-bind log channel, quarantine VC and quarantine role \`[extra owners]\`\n` +
         `\`${p}help\` — This command console \`[public]\`\n\n` +
