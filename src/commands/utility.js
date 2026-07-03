@@ -429,9 +429,7 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}config\` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** \`on|off\` \`[extra owners]\`\n` +
         `\`/moveprotect\` **add|remove|list** \`@user\` — Prevent admins from moving protected users \`[server owner]\`\n` +
         `\`${p}raidmode\` **on** / **off** — Auto-quarantine every new join during a raid \`[extra owners]\`\n` +
-        `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels \`[extra owners]\`\n` +
-        `\`${p}spam\` **config** / \`${p}spampermit\` / \`${p}spamrevoke\` / \`${p}spamlist\` — Manage anti-spam \`[extra owners]\`\n` +
-        `\`${p}enuke\` — Emergency Nuke: Ban every non-whitelisted member \`[server owner]\`\n\n` +
+        `\`${p}emergency\` **mode** / **end** — Strip dangerous permissions and hide channels \`[extra owners]\`\n\n` +
         `You MUST whitelist friendly bots (\`${p}botwhitelist add <ID>\`). Unwhitelisted bots will be instantly banned.`
     },
     {
@@ -474,7 +472,6 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}purge\` \`1-100\` — Bulk-delete messages from current channel \`[extra owners]\`\n` +
         `\`${p}slowmode\` \`seconds\` — Set channel slowmode (0 = off) \`[extra owners]\`\n` +
         `\`${p}createrole\` / \`${p}deleterole\` — Create or delete a role \`[extra owners]\`\n` +
-        `\`${p}givemerole\` / \`${p}takemyrole\` \`@role\` — Self-assign or remove allowed roles \`[public]\`\n` +
         `\`${p}createthread\` / \`${p}archivethread\` / \`${p}deletethread\` — Thread management \`[extra owners]\``
     },
     {
