@@ -553,7 +553,7 @@ export default {
     if (ownerId && userId !== ownerId && message.mentions.has(ownerId)) {
       try {
         // React to the message instantly
-        await message.react('1519715561515384852').catch(() => null);
+        await message.react('1522714425235210400').catch(() => null);
 
         // DM the owner
         const ownerUser = await message.client.users.fetch(ownerId).catch(() => null);
