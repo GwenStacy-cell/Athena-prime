@@ -1233,46 +1233,7 @@ export const commands = [
     }
   },
 
-  // --- DEAFEN COMMAND --- Toggle bot’s own deafen status in VC
-  {
-    name: 'deafen',
-    description: "Toggles the bot's own server-deafen status in voice. (Bot Owner / Server Owner only)",
-    category: 'security',
-    permissions: [],
-    options: [
-      {
-        name: 'status',
-        description: 'Deafen or undeafen the bot',
-        type: 3,
-        required: true,
-        choices: [
-          { name: 'Deafen Bot',   value: 'deafen' },
-          { name: 'Undeafen Bot', value: 'undeafen' }
-        ]
-      }
-    ],
-    async executePrefix(message, args) {
-      const allowed = isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId;
-      if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can control the bot\'s deafen state.')] });
-      }
-      const status = args[0]?.toLowerCase();
-      if (status !== 'deafen' && status !== 'undeafen') {
-        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!deafen deafen\` or \`!deafen undeafen\``)] });
-      }
-      const result = await handleDeafen(message.guild, status === 'deafen');
-      await message.reply({ embeds: [result.embed] });
-    },
-    async executeSlash(interaction) {
-      const allowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
-      if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can control the bot\'s deafen state.')], ephemeral: true });
-      }
-      const status = interaction.options.getString('status');
-      const result = await handleDeafen(interaction.guild, status === 'deafen');
-      await interaction.reply({ embeds: [result.embed] });
-    }
-  },
+
 
   // --- LINKSALLOW COMMAND --- Whitelist domains from anti-link filter
   {
@@ -2479,7 +2440,9 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
       embed: embed.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
         { name: '� Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set — run `/qrmanager setup`', inline: true },
         { name: '� Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set — run `/qrmanager setup`', inline: true },
-        { name: '� Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set — use `/qrmanager setvc`', inline: true }
+        { name: ' Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set — run `/qrmanager setup`', inline: true },
+        { name: ' Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set — run `/qrmanager setup`', inline: true },
+        { name: ' Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set — use `/qrmanager setvc`', inline: true }
       ])
     };
   }
@@ -2488,28 +2451,6 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 }
 
 // ==========================================
-// DEAFEN — Toggle bot's own deafen status in VC
-// ==========================================
-async function handleDeafen(guild, deaf) {
-  const result = await toggleBotDeafen(guild, deaf);
-  if (!result.success) {
-    return {
-      embed: embed.warn(
-        deaf ? 'Cannot Deafen' : 'Cannot Undeafen',
-        result.message || 'The bot must be in a voice channel.'
-      )
-    };
-  }
-  return {
-    embed: embed.success(
-      deaf ? '� Bot Deafened' : '� Bot Undeafened',
-      deaf
-        ? 'The bot is now **server deafened** and will not process incoming audio.'
-        : 'The bot is now **undeafened** and can hear audio in the voice channel.'
-    )
-  };
-}
-
 // ==========================================
 // LINKSALLOW — Per-guild domain whitelist for anti-link filter
 // ==========================================

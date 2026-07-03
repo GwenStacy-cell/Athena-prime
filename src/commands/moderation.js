@@ -39,6 +39,130 @@ export const commands = [
     }
   },
 
+  // --- MUTE COMMAND ---
+  {
+    name: 'mute',
+    description: 'Server-mutes one or more members in voice channels.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.MuteMembers],
+    options: [
+      { name: 'user', description: 'The member to mute', type: 6, required: true },
+      { name: 'user2', description: 'Additional member', type: 6, required: false },
+      { name: 'user3', description: 'Additional member', type: 6, required: false }
+    ],
+    async executePrefix(message) {
+      const targets = message.mentions.members;
+      if (!targets.size) return message.reply({ embeds: [embed.warn('Usage', `${message.author} Mention members to mute: \`!mute @user1\``)] });
+      const result = await handleVcAction(message.guild, message.member, targets, 'mute');
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const targets = new Map();
+      for (let i = 1; i <= 3; i++) {
+        const u = interaction.options.getUser(i === 1 ? 'user' : `user${i}`);
+        if (u) {
+          const m = await interaction.guild.members.fetch(u.id).catch(() => null);
+          if (m) targets.set(m.id, m);
+        }
+      }
+      const result = await handleVcAction(interaction.guild, interaction.member, targets, 'mute');
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- UNMUTE COMMAND ---
+  {
+    name: 'unmute',
+    description: 'Server-unmutes one or more members in voice channels.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.MuteMembers],
+    options: [
+      { name: 'user', description: 'The member to unmute', type: 6, required: true },
+      { name: 'user2', description: 'Additional member', type: 6, required: false },
+      { name: 'user3', description: 'Additional member', type: 6, required: false }
+    ],
+    async executePrefix(message) {
+      const targets = message.mentions.members;
+      if (!targets.size) return message.reply({ embeds: [embed.warn('Usage', `${message.author} Mention members to unmute: \`!unmute @user1\``)] });
+      const result = await handleVcAction(message.guild, message.member, targets, 'unmute');
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const targets = new Map();
+      for (let i = 1; i <= 3; i++) {
+        const u = interaction.options.getUser(i === 1 ? 'user' : `user${i}`);
+        if (u) {
+          const m = await interaction.guild.members.fetch(u.id).catch(() => null);
+          if (m) targets.set(m.id, m);
+        }
+      }
+      const result = await handleVcAction(interaction.guild, interaction.member, targets, 'unmute');
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- DEAFEN COMMAND ---
+  {
+    name: 'deafen',
+    description: 'Server-deafens one or more members in voice channels.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.DeafenMembers],
+    options: [
+      { name: 'user', description: 'The member to deafen', type: 6, required: true },
+      { name: 'user2', description: 'Additional member', type: 6, required: false },
+      { name: 'user3', description: 'Additional member', type: 6, required: false }
+    ],
+    async executePrefix(message) {
+      const targets = message.mentions.members;
+      if (!targets.size) return message.reply({ embeds: [embed.warn('Usage', `${message.author} Mention members to deafen: \`!deafen @user1\``)] });
+      const result = await handleVcAction(message.guild, message.member, targets, 'deafen');
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const targets = new Map();
+      for (let i = 1; i <= 3; i++) {
+        const u = interaction.options.getUser(i === 1 ? 'user' : `user${i}`);
+        if (u) {
+          const m = await interaction.guild.members.fetch(u.id).catch(() => null);
+          if (m) targets.set(m.id, m);
+        }
+      }
+      const result = await handleVcAction(interaction.guild, interaction.member, targets, 'deafen');
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
+  // --- UNDEAFEN COMMAND ---
+  {
+    name: 'undeafen',
+    description: 'Server-undeafens one or more members in voice channels.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.DeafenMembers],
+    options: [
+      { name: 'user', description: 'The member to undeafen', type: 6, required: true },
+      { name: 'user2', description: 'Additional member', type: 6, required: false },
+      { name: 'user3', description: 'Additional member', type: 6, required: false }
+    ],
+    async executePrefix(message) {
+      const targets = message.mentions.members;
+      if (!targets.size) return message.reply({ embeds: [embed.warn('Usage', `${message.author} Mention members to undeafen: \`!undeafen @user1\``)] });
+      const result = await handleVcAction(message.guild, message.member, targets, 'undeafen');
+      await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      const targets = new Map();
+      for (let i = 1; i <= 3; i++) {
+        const u = interaction.options.getUser(i === 1 ? 'user' : `user${i}`);
+        if (u) {
+          const m = await interaction.guild.members.fetch(u.id).catch(() => null);
+          if (m) targets.set(m.id, m);
+        }
+      }
+      const result = await handleVcAction(interaction.guild, interaction.member, targets, 'undeafen');
+      await interaction.reply({ embeds: [result.embed] });
+    }
+  },
+
   // --- WARN COMMAND ---
   {
     name: 'warn',
@@ -1268,4 +1392,39 @@ async function handleUnbanAll(guild, moderator) {
     console.error(error);
     return { embed: embed.danger('UnbanAll Failed', `An error occurred: ${error.message}`) };
   }
+}
+
+// ==========================================
+// VOICE STATE CONTROL — mute/deafen users
+// ==========================================
+async function handleVcAction(guild, moderator, targets, action) {
+  let successCount = 0;
+  let failedCount = 0;
+  const isMute = action === 'mute' || action === 'unmute';
+  const isEnable = action === 'mute' || action === 'deafen';
+
+  for (const [id, member] of targets) {
+    if (!member.voice.channel) {
+      failedCount++;
+      continue;
+    }
+    try {
+      if (isMute) {
+        await member.voice.setMute(isEnable, `${action} by ${moderator.user.tag}`);
+      } else {
+        await member.voice.setDeaf(isEnable, `${action} by ${moderator.user.tag}`);
+      }
+      successCount++;
+    } catch {
+      failedCount++;
+    }
+  }
+
+  const actionName = action.charAt(0).toUpperCase() + action.slice(1);
+  const embedRes = embed.success(`${actionName} Complete`, `Processed **${targets.size}** member(s).`, [
+    { name: '✅ Success', value: `\`${successCount}\``, inline: true },
+    { name: '❌ Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
+  ]);
+
+  return { embed: embedRes };
 }
