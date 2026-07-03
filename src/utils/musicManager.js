@@ -400,10 +400,11 @@ export async function handleInteraction(interaction) {
     }
   } else if (action === 'skip') {
     if (!queue.current) return interaction.reply({ content: `There is nothing to skip.`, ephemeral: true });
+    const skippedTitle = queue.current.title;
     if (queue.player) queue.player.stopTrack(); // Triggers 'end' event which plays next
-    await interaction.reply({ content: `${interaction.user} skipped **${queue.current.title}**.` });
+    await interaction.reply({ content: `${interaction.user} skipped **${skippedTitle}**.` });
     setTimeout(() => interaction.deleteReply().catch(()=>null), 5000);
-    broadcastAction(interaction.guildId, interaction.user, `skipped **${queue.current.title}**`);
+    broadcastAction(interaction.guildId, interaction.user, `skipped **${skippedTitle}**`);
   } else if (action === 'stop') {
     queue.songs = [];
     queue.current = null;
