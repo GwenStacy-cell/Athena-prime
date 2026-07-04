@@ -2,10 +2,11 @@ import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 
-export default {
-  name: 'record',
-  description: 'Setup the voice logging channel',
-  aliases: ['voicelog', 'vclogs', 'setuplogs'],
+export const commands = [
+  {
+    name: 'record',
+    description: 'Setup the voice logging channel',
+    aliases: ['voicelog', 'vclogs', 'setuplogs'],
   async execute(message, args) {
     if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return message.channel.send({ embeds: [embed.error('Permission Denied', 'You need Administrator permissions to setup voice records.', [], message.guild.id)] });
@@ -37,4 +38,4 @@ export default {
       message.channel.send({ embeds: [embed.error('Setup Failed', 'Failed to create the voice records channel. Check my permissions.', [], message.guild.id)] });
     }
   }
-};
+];
