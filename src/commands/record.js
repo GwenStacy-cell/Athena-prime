@@ -7,7 +7,7 @@ export const commands = [
     name: 'record',
     description: 'Setup the voice logging channel',
     aliases: ['voicelog', 'vclogs', 'setuplogs'],
-  async execute(message, args) {
+  async executePrefix(message, args) {
     if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return message.channel.send({ embeds: [embed.error('Permission Denied', 'You need Administrator permissions to setup voice records.', [], message.guild.id)] });
     }
