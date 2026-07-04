@@ -173,6 +173,26 @@ export default {
     if (db.isUserBotBlacklisted(message.author.id)) return;
     
     // ==========================================
+    // DEBUG OCR COMMAND
+    // ==========================================
+    if (message.content === '?ocrtest') {
+      let testUrl = null;
+      if (message.reference && message.reference.messageId) {
+        const refMsg = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
+        if (refMsg && refMsg.attachments.size > 0) testUrl = refMsg.attachments.first().url;
+      }
+      if (message.attachments.size > 0) testUrl = message.attachments.first().url;
+      
+      if (testUrl) {
+        const { getRawOCRText } = await import('../utils/antiScam.js');
+        const text = await getRawOCRText(testUrl);
+        return message.channel.send(`\`\`\`\n${text.substring(0, 1900)}\n\`\`\``);
+      } else {
+        return message.channel.send('Please reply to an image or attach one with `?ocrtest`');
+      }
+    }
+    
+    // ==========================================
     // ANTI-SCAM OCR IMAGE SCANNER
     // ==========================================
     if (message.guild) {

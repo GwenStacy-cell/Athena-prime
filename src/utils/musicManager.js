@@ -144,7 +144,8 @@ export async function enqueue(guild, member, query) {
     
     let searchStr = query;
     if (!query.startsWith('http')) {
-      searchStr = `ytsearch:${query}`;
+      // Append 'official audio' to prevent ytsearch from returning covers/fan edits
+      searchStr = `ytsearch:${query} official audio`;
     }
     
     const result = await node.rest.resolve(searchStr);

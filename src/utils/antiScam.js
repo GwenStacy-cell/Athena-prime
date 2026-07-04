@@ -95,3 +95,32 @@ export async function scanImageForScam(url) {
     return false;
   }
 }
+
+export async function getRawOCRText(url) {
+  const worker = await workerPromise;
+  if (!worker) return 'Worker not ready';
+  
+  try {
+    const res = await fetch(url, { headers: { 'User-Agent': 'DiscordBot (https://discord.com, 1.0.0)' } });
+    if (!res.ok) return 'Fetch failed';
+    const buffer = await res.buffer();
+    const img = await loadImage(buffer);
+    const canvas = createCanvas(img.width, img.height);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+      const val = avg > 128 ? 255 : 0;
+      data[i] = val; data[i+1] = val; data[i+2] = val;
+    }
+    ctx.putImageData(imgData, 0, 0);
+    const { data: { text } } = await worker.recognize(canvas.toBuffer('image/png'));
+    return text || 'No text found';
+  } catch (e) {
+    return 'Error: ' + e.message;
+  }
+}
