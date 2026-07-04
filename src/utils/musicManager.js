@@ -144,7 +144,7 @@ export async function enqueue(guild, member, query) {
     
     let searchStr = query;
     if (!query.startsWith('http')) {
-      searchStr = `ytmsearch:${query}`;
+      searchStr = `ytsearch:${query}`;
     }
     
     const result = await node.rest.resolve(searchStr);
@@ -159,10 +159,10 @@ export async function enqueue(guild, member, query) {
     };
     
     let searchResult = result;
-    // Fallback to ytsearch if ytmsearch fails
+    // Fallback to soundcloud if ytsearch fails
     if (!searchResult || (searchResult.loadType !== 'track' && searchResult.loadType !== 'playlist' && searchResult.loadType !== 'search')) {
-       if (searchStr.startsWith('ytmsearch:')) {
-         searchResult = await node.rest.resolve(`ytsearch:${query}`);
+       if (searchStr.startsWith('ytsearch:')) {
+         searchResult = await node.rest.resolve(`scsearch:${query}`);
        }
     }
     
