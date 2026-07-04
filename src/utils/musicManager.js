@@ -104,7 +104,9 @@ export async function enqueue(guild, member, query) {
       
       queue.player = player;
       
-      queue.player.on('end', () => {
+      queue.player.on('end', (data) => {
+        if (data && data.reason === 'REPLACED') return;
+        
         if (queue.repeatTrack && queue.current) {
           queue.songs.unshift(queue.current);
         }
@@ -134,7 +136,7 @@ export async function enqueue(guild, member, query) {
     }
     
     let searchStr = query;
-    if (!query.startsWith('http')) searchStr = `ytsearch:${query}`;
+    if (!query.startsWith('http')) searchStr = `ytmsearch:${query}`;
     
     const result = await node.rest.resolve(searchStr);
     
