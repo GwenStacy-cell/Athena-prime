@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { createWorker } from 'tesseract.js';
+import { createCanvas, loadImage } from 'canvas';
 
 // Initialize a persistent worker to make OCR scanning as fast as possible
 let workerPromise = null;
@@ -39,7 +40,16 @@ export async function scanImageForScam(url) {
     if (!res.ok) return false;
     
     const buffer = await res.buffer();
-    const { data: { text } } = await worker.recognize(buffer);
+    
+    // Convert any image format (WebP/JPEG) to a standard PNG using Canvas
+    // so Tesseract doesn't crash on unsupported pixel buffers.
+    const img = await loadImage(buffer);
+    const canvas = createCanvas(img.width, img.height);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const pngBuffer = canvas.toBuffer('image/png');
+    
+    const { data: { text } } = await worker.recognize(pngBuffer);
     if (!text) return false;
     
     const lowerText = text.toLowerCase().replace(/\s+/g, ' ');
