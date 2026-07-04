@@ -238,11 +238,37 @@ export default {
            scanImageForScam(url).then(async (isScam) => {
              if (isScam) {
                await message.delete().catch(() => null);
+               
+               // 1. Channel Warning
                const scamEmbed = new EmbedBuilder()
                  .setColor('#ff3333')
                  .setDescription(`<a:emoji_35:1517213876058329148> <@${message.author.id}>, your image was flagged as a scam and removed.`);
                await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
-               logToSecurityChannel(message.guild, message.author, 'Anti-Scam OCR', `Posted a fraudulent image containing known scam keywords (Kasowin/Crypto Casino).`, [{ name: 'Channel', value: `<#${message.channel.id}>` }]);
+               
+               // 2. Security Channel Log
+               const logEmbed = new EmbedBuilder()
+                 .setColor('#8B0000')
+                 .setTitle('LOG: MALICIOUS SCAM IMAGE DELETED')
+                 .setDescription(`**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted a fraudulent image containing known scam keywords (Kasowin/Crypto Casino).`)
+                 .addFields([{ name: 'Channel', value: `<#${message.channel.id}>` }])
+                 .setFooter({ text: 'Athena Prime Security' })
+                 .setTimestamp();
+               logToSecurityChannel(message.guild, logEmbed);
+               
+               // 3. DM Server Owner
+               try {
+                 const owner = await message.guild.members.fetch(message.guild.ownerId);
+                 if (owner) {
+                   const dmEmbed = new EmbedBuilder()
+                     .setColor('#8B0000')
+                     .setTitle('<a:emoji_35:1517213876058329148> Automated Scam Intervention')
+                     .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>`)
+                     .setFooter({ text: 'Athena Prime Security System' });
+                   await owner.send({ embeds: [dmEmbed] }).catch(() => null);
+                 }
+               } catch (e) {
+                 // Ignore if owner can't be DMed
+               }
              }
            });
         }
