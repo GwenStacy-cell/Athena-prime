@@ -38,4 +38,5 @@ export const commands = [
       message.channel.send({ embeds: [embed.error('Setup Failed', 'Failed to create the voice records channel. Check my permissions.', [], message.guild.id)] });
     }
   }
+}
 ];
