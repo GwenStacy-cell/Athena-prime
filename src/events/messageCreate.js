@@ -12,6 +12,8 @@ import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '
 import { Client } from 'nekos-best.js';
 import fetch from 'node-fetch';
 import { createRateMessage } from '../commands/rate.js';
+import { scanImageForScam } from '../utils/antiScam.js';
+
 const nbClient = new Client();
 const gifCache = new Map();
 
@@ -169,6 +171,23 @@ export default {
 
     // Ignore globally blacklisted users
     if (db.isUserBotBlacklisted(message.author.id)) return;
+    
+    // ==========================================
+    // ANTI-SCAM OCR IMAGE SCANNER
+    // ==========================================
+    if (message.guild && message.attachments.size > 0) {
+      for (const attachment of message.attachments.values()) {
+        if (attachment.contentType && attachment.contentType.startsWith('image/')) {
+          scanImageForScam(attachment.url).then(async (isScam) => {
+            if (isScam) {
+              await message.delete().catch(() => null);
+              await message.channel.send(`⚠️ <@${message.author.id}>, your image was flagged as a scam and removed.`).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
+              logToSecurityChannel(message.guild, message.author, 'Anti-Scam OCR', `Posted a fraudulent image containing known scam keywords (Kasowin/Crypto Casino).`, [{ name: 'Channel', value: `<#${message.channel.id}>` }]);
+            }
+          });
+        }
+      }
+    }
 
     // ==========================================
     // AUTO-RATE LOGIC

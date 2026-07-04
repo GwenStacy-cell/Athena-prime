@@ -1,0 +1,57 @@
+import { createWorker } from 'tesseract.js';
+
+// Initialize a persistent worker to make OCR scanning as fast as possible
+let worker = null;
+
+async function initWorker() {
+  try {
+    worker = await createWorker('eng');
+  } catch (error) {
+    console.error('Failed to initialize Tesseract worker:', error);
+  }
+}
+initWorker();
+
+const scamKeywords = [
+  'kasowin',
+  'vyro project',
+  'promo code: bet',
+  'crypto casino',
+  'withdrawal success',
+  'mrbeast'
+];
+
+/**
+ * Scans an image URL for scam text.
+ * @param {string} url - The URL of the image.
+ * @returns {Promise<boolean>} - Returns true if scam text is detected.
+ */
+export async function scanImageForScam(url) {
+  if (!worker) return false;
+  
+  try {
+    const { data: { text } } = await worker.recognize(url);
+    if (!text) return false;
+    
+    const lowerText = text.toLowerCase().replace(/\s+/g, ' ');
+    
+    // Check if the text contains high-risk scam combinations
+    let threatScore = 0;
+    
+    for (const keyword of scamKeywords) {
+      if (lowerText.includes(keyword)) {
+        threatScore += 1;
+      }
+    }
+    
+    // If it mentions kasowin specifically, or has multiple red flags
+    if (lowerText.includes('kasowin') || threatScore >= 2) {
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('OCR Scanning Error:', error);
+    return false;
+  }
+}
