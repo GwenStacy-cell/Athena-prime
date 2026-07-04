@@ -260,13 +260,13 @@ function formatDuration(ms) {
 }
 
 function generateProgressBarImage(currentMs, totalMs, hexColor) {
-  const canvas = createCanvas(800, 30);
+  const canvas = createCanvas(800, 60);
   const ctx = canvas.getContext('2d');
   
   const progress = totalMs > 0 ? Math.min(Math.max(currentMs / totalMs, 0), 1) : 0;
   const barWidth = 760;
   const x = 20;
-  const y = 15;
+  const y = 20;
   const trackHeight = 6;
   const knobRadius = 10;
   
@@ -286,10 +286,28 @@ function generateProgressBarImage(currentMs, totalMs, hexColor) {
   }
   
   // Knob
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = hexColor;
   ctx.beginPath();
   ctx.arc(x + fillWidth, y, knobRadius, 0, Math.PI * 2);
   ctx.fill();
+  
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  
+  // Timestamps
+  ctx.font = '16px sans-serif';
+  ctx.fillStyle = '#a1a1aa';
+  ctx.textBaseline = 'top';
+  
+  const currentText = formatDuration(currentMs);
+  const totalText = totalMs > 0 ? formatDuration(totalMs) : 'LIVE';
+  
+  ctx.textAlign = 'left';
+  ctx.fillText(currentText, x, y + 20);
+  
+  ctx.textAlign = 'right';
+  ctx.fillText(totalText, x + barWidth, y + 20);
   
   return canvas.toBuffer('image/png');
 }
@@ -306,8 +324,7 @@ function buildNowPlayingEmbed(guildId) {
     .setURL(queue.current.url)
     .setDescription(
        `• Added by <@${queue.current.requester.id}>\n\n` +
-       `Queue Size: \`${queue.songs.length}\` · Volume: \`100%\` · Loop: \`${queue.repeatTrack ? 'On' : 'Off'}\`\n\n` +
-       `\`${formatDuration(queue.player?.position || 0)}\` <t:${Math.floor(Date.now()/1000)}:R> \`${queue.current.duration}\``
+       `Queue Size: \`${queue.songs.length}\` · Volume: \`100%\` · Loop: \`${queue.repeatTrack ? 'On' : 'Off'}\``
     );
     
   if (queue.current.artworkUrl) {
