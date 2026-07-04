@@ -241,18 +241,26 @@ export default {
                
                // 1. Channel Warning
                const scamEmbed = new EmbedBuilder()
-                 .setColor('#ff3333')
+                 .setColor('#ff0000') // Pure red
                  .setDescription(`<a:emoji_35:1517213876058329148> <@${message.author.id}>, your image was flagged as a scam and removed.`);
                await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
                
                // 2. Security Channel Log
                const logEmbed = new EmbedBuilder()
-                 .setColor('#8B0000')
+                 .setColor('#2b2d31') // Typical aesthetic dark theme accent, or fallback to default
                  .setTitle('LOG: MALICIOUS SCAM IMAGE DELETED')
-                 .setDescription(`**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted a fraudulent image containing known scam keywords (Kasowin/Crypto Casino).`)
+                 .setDescription(`**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted a fraudulent image containing known scam keywords (Mr. Beast/Kasowin/Crypto Casino).`)
                  .addFields([{ name: 'Channel', value: `<#${message.channel.id}>` }])
                  .setFooter({ text: 'Athena Prime Security' })
                  .setTimestamp();
+               
+               // Inherit server context accent color if possible by using the helper embed
+               try {
+                 const { default: createEmbed } = await import('../embed.js');
+                 const themedEmbed = createEmbed(message.guild.id);
+                 logEmbed.setColor(themedEmbed.data.color || '#2b2d31');
+               } catch(e) {}
+               
                logToSecurityChannel(message.guild, logEmbed);
                
                // 3. DM Server Owner
@@ -260,9 +268,9 @@ export default {
                  const owner = await message.guild.members.fetch(message.guild.ownerId);
                  if (owner) {
                    const dmEmbed = new EmbedBuilder()
-                     .setColor('#8B0000')
+                     .setColor('#ff0000') // Pure red for owner warning
                      .setTitle('<a:emoji_35:1517213876058329148> Automated Scam Intervention')
-                     .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>`)
+                     .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Crypto Casino`)
                      .setFooter({ text: 'Athena Prime Security System' });
                    await owner.send({ embeds: [dmEmbed] }).catch(() => null);
                  }
