@@ -144,7 +144,7 @@ export async function enqueue(guild, member, query) {
     
     let searchStr = query;
     if (!query.startsWith('http')) {
-      searchStr = `spsearch:${query}`;
+      searchStr = `ytmsearch:${query}`;
     }
     
     const result = await node.rest.resolve(searchStr);
@@ -159,10 +159,10 @@ export async function enqueue(guild, member, query) {
     };
     
     let searchResult = result;
-    // Fallback to ytsearch if spsearch fails or isn't supported by the node
+    // Fallback to ytsearch if ytmsearch fails
     if (!searchResult || (searchResult.loadType !== 'track' && searchResult.loadType !== 'playlist' && searchResult.loadType !== 'search')) {
-       if (searchStr.startsWith('spsearch:')) {
-         searchResult = await node.rest.resolve(`ytmsearch:${query}`);
+       if (searchStr.startsWith('ytmsearch:')) {
+         searchResult = await node.rest.resolve(`ytsearch:${query}`);
        }
     }
     
@@ -268,7 +268,7 @@ function formatDuration(ms) {
 }
 
 function generateProgressBarImage(currentMs, totalMs, hexColor) {
-  const canvas = createCanvas(800, 60);
+  const canvas = createCanvas(800, 75);
   const ctx = canvas.getContext('2d');
   
   const progress = totalMs > 0 ? Math.min(Math.max(currentMs / totalMs, 0), 1) : 0;
@@ -312,10 +312,10 @@ function generateProgressBarImage(currentMs, totalMs, hexColor) {
   const totalText = totalMs > 0 ? formatDuration(totalMs) : 'LIVE';
   
   ctx.textAlign = 'left';
-  ctx.fillText(currentText, x, y + 22);
+  ctx.fillText(currentText, x, y + 25);
   
   ctx.textAlign = 'right';
-  ctx.fillText(totalText, x + barWidth, y + 22);
+  ctx.fillText(totalText, x + barWidth, y + 25);
   
   return canvas.toBuffer('image/png');
 }
