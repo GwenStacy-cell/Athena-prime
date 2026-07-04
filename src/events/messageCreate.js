@@ -238,7 +238,10 @@ export default {
            scanImageForScam(url).then(async (isScam) => {
              if (isScam) {
                await message.delete().catch(() => null);
-               await message.channel.send(`⚠️ <@${message.author.id}>, your image was flagged as a scam and removed.`).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
+               const scamEmbed = new EmbedBuilder()
+                 .setColor('#ff3333')
+                 .setDescription(`<a:emoji_35:1517213876058329148> <@${message.author.id}>, your image was flagged as a scam and removed.`);
+               await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
                logToSecurityChannel(message.guild, message.author, 'Anti-Scam OCR', `Posted a fraudulent image containing known scam keywords (Kasowin/Crypto Casino).`, [{ name: 'Channel', value: `<#${message.channel.id}>` }]);
              }
            });
