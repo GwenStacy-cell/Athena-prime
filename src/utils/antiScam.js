@@ -24,6 +24,9 @@ const scamKeywords = [
   'mrbeast'
 ];
 
+// Deduplication cache to prevent messageCreate and messageUpdate from double-logging
+export const flaggedMessages = new Set();
+
 /**
  * Scans an image URL for scam text.
  * @param {string} url - The URL of the image.

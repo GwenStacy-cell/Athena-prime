@@ -12,7 +12,7 @@ import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '
 import { Client } from 'nekos-best.js';
 import fetch from 'node-fetch';
 import { createRateMessage } from '../commands/rate.js';
-import { scanImageForScam } from '../utils/antiScam.js';
+import { scanImageForScam, flaggedMessages } from '../utils/antiScam.js';
 
 const nbClient = new Client();
 const gifCache = new Map();
@@ -249,7 +249,9 @@ export default {
       if (urlsToScan.length > 0) {
         for (const url of urlsToScan) {
            scanImageForScam(url).then(async (isScam) => {
-             if (isScam) {
+             if (isScam && !flaggedMessages.has(message.id)) {
+               flaggedMessages.add(message.id);
+               
                await message.delete().catch(() => null);
                
                // 1. Channel Warning
