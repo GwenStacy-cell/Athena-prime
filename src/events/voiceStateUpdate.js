@@ -283,7 +283,9 @@ export default {
                 const leaveEmbed = new EmbedBuilder()
                   .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL() })
                   .setColor('#ff0000') // Pure red
-                  .setDescription(`<@${userId}> **left voice channel** <#${oldChannelId}>. (lasted ${durStr})`);
+                  .setDescription(`<@${userId}> left voice channel <#${oldChannelId}>. (lasted ${durStr})`)
+                  .setFooter({ text: guild.name, iconURL: guild.iconURL({ dynamic: true }) || undefined })
+                  .setTimestamp();
                 logChannel.send({ embeds: [leaveEmbed] }).catch(() => null);
               }
             }
@@ -305,7 +307,9 @@ export default {
               const joinEmbed = new EmbedBuilder()
                 .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL() })
                 .setColor('#00ff00') // Pure green
-                .setDescription(`<@${userId}> **joined voice channel** <#${newChannelId}>.`);
+                .setDescription(`<@${userId}> joined voice channel <#${newChannelId}>.`)
+                .setFooter({ text: guild.name, iconURL: guild.iconURL({ dynamic: true }) || undefined })
+                .setTimestamp();
               logChannel.send({ embeds: [joinEmbed] }).catch(() => null);
             }
           }
