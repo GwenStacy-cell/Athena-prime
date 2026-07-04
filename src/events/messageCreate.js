@@ -177,11 +177,24 @@ export default {
     // ==========================================
     if (message.content === '?ocrtest') {
       let testUrl = null;
+      
+      const getImageUrl = (msg) => {
+        if (!msg) return null;
+        if (msg.attachments && msg.attachments.size > 0) return msg.attachments.first().url;
+        if (msg.embeds && msg.embeds.length > 0 && msg.embeds[0].image) return msg.embeds[0].image.url;
+        if (msg.messageSnapshots && msg.messageSnapshots.size > 0) {
+          for (const snap of msg.messageSnapshots.values()) {
+             if (snap.message && snap.message.attachments && snap.message.attachments.size > 0) return snap.message.attachments.first().url;
+          }
+        }
+        return null;
+      };
+
       if (message.reference && message.reference.messageId) {
         const refMsg = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
-        if (refMsg && refMsg.attachments.size > 0) testUrl = refMsg.attachments.first().url;
+        testUrl = getImageUrl(refMsg);
       }
-      if (message.attachments.size > 0) testUrl = message.attachments.first().url;
+      if (!testUrl) testUrl = getImageUrl(message);
       
       if (testUrl) {
         const { getRawOCRText } = await import('../utils/antiScam.js');
