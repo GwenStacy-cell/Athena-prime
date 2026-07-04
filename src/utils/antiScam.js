@@ -119,7 +119,20 @@ export async function getRawOCRText(url) {
     }
     ctx.putImageData(imgData, 0, 0);
     const { data: { text } } = await worker.recognize(canvas.toBuffer('image/png'));
-    return text || 'No text found';
+    if (!text) return 'No text found';
+    
+    const lowerText = text.toLowerCase().replace(/\s+/g, ' ');
+    let threatScore = 0;
+    let matchedKeywords = [];
+    for (const keyword of scamKeywords) {
+      if (lowerText.includes(keyword)) {
+        threatScore += 1;
+        matchedKeywords.push(keyword);
+      }
+    }
+    const isScam = lowerText.includes('kasowin') || threatScore >= 2;
+    
+    return `**Threat Score:** ${threatScore}\n**Is Scam:** ${isScam}\n**Matches:** ${matchedKeywords.join(', ')}\n\n**Raw Text:**\n${text}`;
   } catch (e) {
     return 'Error: ' + e.message;
   }
