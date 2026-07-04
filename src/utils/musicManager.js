@@ -136,7 +136,9 @@ export async function enqueue(guild, member, query) {
     }
     
     let searchStr = query;
-    if (!query.startsWith('http')) searchStr = `ytmsearch:${query}`;
+    if (!query.startsWith('http')) {
+      searchStr = `ytsearch:${query} official audio`;
+    }
     
     const result = await node.rest.resolve(searchStr);
     
@@ -155,6 +157,7 @@ export async function enqueue(guild, member, query) {
             url: track.info.uri,
             duration: formatDuration(track.info.length),
             encoded: track.encoded,
+            artworkUrl: track.info.artworkUrl || null,
             requester: member.user
           });
        }
@@ -167,6 +170,7 @@ export async function enqueue(guild, member, query) {
           url: track.info.uri,
           duration: formatDuration(track.info.length),
           encoded: track.encoded,
+          artworkUrl: track.info.artworkUrl || null,
           requester: member.user
        });
        addedCount = 1;
@@ -178,6 +182,7 @@ export async function enqueue(guild, member, query) {
           url: track.info.uri,
           duration: formatDuration(track.info.length),
           encoded: track.encoded,
+          artworkUrl: track.info.artworkUrl || null,
           requester: member.user
        });
        addedCount = 1;
@@ -237,18 +242,27 @@ function buildNowPlayingEmbed(guildId) {
   const cfg = db.getGuildConfig(guildId);
   if (!queue.current) return null;
   
+  const progressBar = '⚪────────────────────────';
+  
   const embed = new EmbedBuilder()
     .setColor(cfg.accentColor || '#ff0000')
-    .setAuthor({ name: 'Now Playing', iconURL: global.client?.user?.displayAvatarURL() })
+    .setAuthor({ name: 'Now playing', iconURL: global.client?.user?.displayAvatarURL() })
     .setTitle(queue.current.title)
     .setURL(queue.current.url)
-    .addFields(
-      { name: 'Duration', value: queue.current.duration, inline: true },
-      { name: 'Requested By', value: `<@${queue.current.requester.id}>`, inline: true },
-      { name: 'Songs Left in Queue', value: queue.songs.length.toString(), inline: true }
+    .setDescription(
+       `• Added by <@${queue.current.requester.id}>\n` +
+       `• 🔊 ✨ ⸻ Audio Engine ⸻\n\n` +
+       `Queue Size: \`${queue.songs.length}\` · Volume: \`100%\` · Loop: \`${queue.repeatTrack ? 'On' : 'Off'}\`\n\n` +
+       `${progressBar}\n` +
+       `\`0:00\` <t:${Math.floor(Date.now()/1000)}:R> \`${queue.current.duration}\``
     );
     
-  if (cfg.musicCoverImage) embed.setThumbnail(cfg.musicCoverImage);
+  if (queue.current.artworkUrl) {
+    embed.setThumbnail(queue.current.artworkUrl);
+  } else if (cfg.musicCoverImage) {
+    embed.setThumbnail(cfg.musicCoverImage);
+  }
+  
   return embed;
 }
 
