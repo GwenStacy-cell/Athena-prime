@@ -532,6 +532,7 @@ async function getHelpEmbeds(guild, client) {
         `\`${p}rrdisable\` — Wipe all Reaction Role configurations from the server \`[extra owners]\`\n` +
         `\`${p}invitesetup\` \`#channel\` — Enable the Advanced Invite Tracker to log who invites who \`[extra owners]\`\n` +
         `\`${p}invitedisable\` — Disable Invite Tracking \`[extra owners]\`\n` +
+        `\`${p}record\` — Create a private #voice-records channel for VC join/leave logs \`[admin]\`\n` +
         `Reaction Role menus can be deleted simply by deleting the message in Discord!`
     },
     {
