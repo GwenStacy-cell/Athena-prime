@@ -1,4 +1,4 @@
-import { ChannelType, PermissionFlagsBits, AuditLogEvent } from 'discord.js';
+import { ChannelType, PermissionFlagsBits, AuditLogEvent, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { getVoiceConnection } from '@discordjs/voice';
@@ -268,6 +268,25 @@ export default {
                 db.setUserXp(guild.id, userId, userXp);
               }
             }
+            // --- VOICE LOGGING (Leave) ---
+            if (guildCfg && guildCfg.voiceLogChannel) {
+              const logChannel = guild.channels.cache.get(guildCfg.voiceLogChannel);
+              if (logChannel) {
+                const s = seconds % 60;
+                const m = Math.floor(seconds / 60) % 60;
+                const h = Math.floor(seconds / 3600);
+                let durStr = '';
+                if (h > 0) durStr = `${h}h ${m}m ${s}s`;
+                else if (m > 0) durStr = `${m}m ${s}s`;
+                else durStr = `${s}s`;
+                
+                const leaveEmbed = new EmbedBuilder()
+                  .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL() })
+                  .setColor('#ff0000') // Pure red
+                  .setDescription(`<@${userId}> **left voice channel** <#${oldChannelId}>. (lasted ${durStr})`);
+                logChannel.send({ embeds: [leaveEmbed] }).catch(() => null);
+              }
+            }
           }
           client.vcSessions.delete(userId);
         }
@@ -278,6 +297,18 @@ export default {
             channelId: newChannelId,
             joinTime: Date.now()
           });
+          
+          // --- VOICE LOGGING (Join) ---
+          if (guildCfg && guildCfg.voiceLogChannel) {
+            const logChannel = guild.channels.cache.get(guildCfg.voiceLogChannel);
+            if (logChannel) {
+              const joinEmbed = new EmbedBuilder()
+                .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL() })
+                .setColor('#00ff00') // Pure green
+                .setDescription(`<@${userId}> **joined voice channel** <#${newChannelId}>.`);
+              logChannel.send({ embeds: [joinEmbed] }).catch(() => null);
+            }
+          }
         }
       }
     }

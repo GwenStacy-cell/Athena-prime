@@ -107,6 +107,7 @@ class Database {
       this.cache.guilds[guildId] = {
         prefix: process.env.DEFAULT_PREFIX || '!',
         logChannel: null,
+        voiceLogChannel: null,
         muteRoleId: null,
         quarantineRoleId: null,
         quarantineChannelId: null,
