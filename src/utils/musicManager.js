@@ -137,10 +137,19 @@ export async function enqueue(guild, member, query) {
     
     let searchStr = query;
     if (!query.startsWith('http')) {
-      searchStr = `ytsearch:${query} official audio`;
+      searchStr = `ytsearch:${query}`;
     }
     
     const result = await node.rest.resolve(searchStr);
+    
+    const getThumbnail = (track) => {
+      if (track.info.artworkUrl) return track.info.artworkUrl;
+      if (track.info.uri && track.info.uri.includes('youtube.com/watch?v=')) {
+        const videoId = track.info.uri.split('v=')[1].split('&')[0];
+        return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+      }
+      return null;
+    };
     
     if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
        queue.isPreparing = false;
@@ -157,7 +166,7 @@ export async function enqueue(guild, member, query) {
             url: track.info.uri,
             duration: formatDuration(track.info.length),
             encoded: track.encoded,
-            artworkUrl: track.info.artworkUrl || null,
+            artworkUrl: getThumbnail(track),
             requester: member.user
           });
        }
@@ -170,7 +179,7 @@ export async function enqueue(guild, member, query) {
           url: track.info.uri,
           duration: formatDuration(track.info.length),
           encoded: track.encoded,
-          artworkUrl: track.info.artworkUrl || null,
+          artworkUrl: getThumbnail(track),
           requester: member.user
        });
        addedCount = 1;
@@ -182,7 +191,7 @@ export async function enqueue(guild, member, query) {
           url: track.info.uri,
           duration: formatDuration(track.info.length),
           encoded: track.encoded,
-          artworkUrl: track.info.artworkUrl || null,
+          artworkUrl: getThumbnail(track),
           requester: member.user
        });
        addedCount = 1;
@@ -242,7 +251,7 @@ function buildNowPlayingEmbed(guildId) {
   const cfg = db.getGuildConfig(guildId);
   if (!queue.current) return null;
   
-  const progressBar = '⚪────────────────────────';
+  const progressBar = '<:emoji_16:1521464002046328944>─────────────────────────';
   
   const embed = new EmbedBuilder()
     .setColor(cfg.accentColor || '#ff0000')
@@ -250,8 +259,7 @@ function buildNowPlayingEmbed(guildId) {
     .setTitle(queue.current.title)
     .setURL(queue.current.url)
     .setDescription(
-       `• Added by <@${queue.current.requester.id}>\n` +
-       `• 🔊 ✨ ⸻ Audio Engine ⸻\n\n` +
+       `• Added by <@${queue.current.requester.id}>\n\n` +
        `Queue Size: \`${queue.songs.length}\` · Volume: \`100%\` · Loop: \`${queue.repeatTrack ? 'On' : 'Off'}\`\n\n` +
        `${progressBar}\n` +
        `\`0:00\` <t:${Math.floor(Date.now()/1000)}:R> \`${queue.current.duration}\``
