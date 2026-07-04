@@ -144,7 +144,7 @@ export async function enqueue(guild, member, query) {
     
     let searchStr = query;
     if (!query.startsWith('http')) {
-      searchStr = `ytsearch:${query}`;
+      searchStr = `spsearch:${query}`;
     }
     
     const result = await node.rest.resolve(searchStr);
@@ -158,7 +158,15 @@ export async function enqueue(guild, member, query) {
       return null;
     };
     
-    if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
+    let searchResult = result;
+    // Fallback to ytsearch if spsearch fails or isn't supported by the node
+    if (!searchResult || (searchResult.loadType !== 'track' && searchResult.loadType !== 'playlist' && searchResult.loadType !== 'search')) {
+       if (searchStr.startsWith('spsearch:')) {
+         searchResult = await node.rest.resolve(`ytmsearch:${query}`);
+       }
+    }
+    
+    if (!searchResult || (searchResult.loadType !== 'track' && searchResult.loadType !== 'playlist' && searchResult.loadType !== 'search')) {
        queue.isPreparing = false;
        return { success: false, message: 'No results found for that query.' };
     }
@@ -166,8 +174,8 @@ export async function enqueue(guild, member, query) {
     let addedCount = 0;
     let title = '';
     
-    if (result.loadType === 'playlist') {
-       for (const track of result.data.tracks) {
+    if (searchResult.loadType === 'playlist') {
+       for (const track of searchResult.data.tracks) {
           queue.songs.push({
             title: track.info.title,
             url: track.info.uri,
@@ -177,10 +185,10 @@ export async function enqueue(guild, member, query) {
             requester: member.user
           });
        }
-       addedCount = result.data.tracks.length;
-       title = result.data.info.name || 'Playlist';
-    } else if (result.loadType === 'track') {
-       const track = result.data;
+       addedCount = searchResult.data.tracks.length;
+       title = searchResult.data.info.name || 'Playlist';
+    } else if (searchResult.loadType === 'track') {
+       const track = searchResult.data;
        queue.songs.push({
           title: track.info.title,
           url: track.info.uri,
@@ -191,8 +199,8 @@ export async function enqueue(guild, member, query) {
        });
        addedCount = 1;
        title = track.info.title;
-    } else if (result.loadType === 'search') {
-       const track = result.data[0];
+    } else if (searchResult.loadType === 'search') {
+       const track = searchResult.data[0];
        queue.songs.push({
           title: track.info.title,
           url: track.info.uri,
@@ -296,7 +304,7 @@ function generateProgressBarImage(currentMs, totalMs, hexColor) {
   ctx.stroke();
   
   // Timestamps
-  ctx.font = '16px sans-serif';
+  ctx.font = 'bold 24px sans-serif';
   ctx.fillStyle = '#a1a1aa';
   ctx.textBaseline = 'top';
   
@@ -304,10 +312,10 @@ function generateProgressBarImage(currentMs, totalMs, hexColor) {
   const totalText = totalMs > 0 ? formatDuration(totalMs) : 'LIVE';
   
   ctx.textAlign = 'left';
-  ctx.fillText(currentText, x, y + 20);
+  ctx.fillText(currentText, x, y + 22);
   
   ctx.textAlign = 'right';
-  ctx.fillText(totalText, x + barWidth, y + 20);
+  ctx.fillText(totalText, x + barWidth, y + 22);
   
   return canvas.toBuffer('image/png');
 }
@@ -323,7 +331,8 @@ function buildNowPlayingEmbed(guildId) {
     .setTitle(queue.current.title)
     .setURL(queue.current.url)
     .setDescription(
-       `• Added by <@${queue.current.requester.id}>\n\n` +
+       `Duration\n${queue.current.duration}\n\n` +
+       `Requested By\n<@${queue.current.requester.id}>\n\n` +
        `Queue Size: \`${queue.songs.length}\` · Volume: \`100%\` · Loop: \`${queue.repeatTrack ? 'On' : 'Off'}\``
     );
     
