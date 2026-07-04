@@ -269,9 +269,11 @@ export default {
                
                // Inherit server context accent color if possible by using the helper embed
                try {
-                 const { default: createEmbed } = await import('../embed.js');
-                 const themedEmbed = createEmbed(message.guild.id);
-                 logEmbed.setColor(themedEmbed.data.color || '#2b2d31');
+                 const { default: db } = await import('../database.js');
+                 const config = db.getGuildConfig(message.guild.id);
+                 if (config && config.accentColor) {
+                   logEmbed.setColor(config.accentColor);
+                 }
                } catch(e) {}
                
                logToSecurityChannel(message.guild, logEmbed);
