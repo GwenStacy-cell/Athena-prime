@@ -1,16 +1,17 @@
 import { createWorker } from 'tesseract.js';
 
 // Initialize a persistent worker to make OCR scanning as fast as possible
-let worker = null;
+let workerPromise = null;
 
 async function initWorker() {
   try {
-    worker = await createWorker('eng');
+    return await createWorker('eng');
   } catch (error) {
     console.error('Failed to initialize Tesseract worker:', error);
+    return null;
   }
 }
-initWorker();
+workerPromise = initWorker();
 
 const scamKeywords = [
   'kasowin',
@@ -27,6 +28,7 @@ const scamKeywords = [
  * @returns {Promise<boolean>} - Returns true if scam text is detected.
  */
 export async function scanImageForScam(url) {
+  const worker = await workerPromise;
   if (!worker) return false;
   
   try {

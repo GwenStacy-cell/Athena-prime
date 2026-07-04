@@ -175,16 +175,38 @@ export default {
     // ==========================================
     // ANTI-SCAM OCR IMAGE SCANNER
     // ==========================================
-    if (message.guild && message.attachments.size > 0) {
-      for (const attachment of message.attachments.values()) {
-        if (attachment.contentType && attachment.contentType.startsWith('image/')) {
-          scanImageForScam(attachment.url).then(async (isScam) => {
-            if (isScam) {
-              await message.delete().catch(() => null);
-              await message.channel.send(`⚠️ <@${message.author.id}>, your image was flagged as a scam and removed.`).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
-              logToSecurityChannel(message.guild, message.author, 'Anti-Scam OCR', `Posted a fraudulent image containing known scam keywords (Kasowin/Crypto Casino).`, [{ name: 'Channel', value: `<#${message.channel.id}>` }]);
+    if (message.guild) {
+      const allAttachments = [];
+      
+      // Get regular attachments
+      if (message.attachments) {
+        for (const attachment of message.attachments.values()) {
+          allAttachments.push(attachment);
+        }
+      }
+      
+      // Get attachments from forwarded messages (snapshots)
+      if (message.messageSnapshots) {
+        for (const snapshot of message.messageSnapshots.values()) {
+          if (snapshot.message && snapshot.message.attachments) {
+            for (const attachment of snapshot.message.attachments.values()) {
+              allAttachments.push(attachment);
             }
-          });
+          }
+        }
+      }
+      
+      if (allAttachments.length > 0) {
+        for (const attachment of allAttachments) {
+          if (attachment.contentType && attachment.contentType.startsWith('image/')) {
+            scanImageForScam(attachment.url).then(async (isScam) => {
+              if (isScam) {
+                await message.delete().catch(() => null);
+                await message.channel.send(`⚠️ <@${message.author.id}>, your image was flagged as a scam and removed.`).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
+                logToSecurityChannel(message.guild, message.author, 'Anti-Scam OCR', `Posted a fraudulent image containing known scam keywords (Kasowin/Crypto Casino).`, [{ name: 'Channel', value: `<#${message.channel.id}>` }]);
+              }
+            });
+          }
         }
       }
     }
