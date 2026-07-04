@@ -251,7 +251,7 @@ function buildNowPlayingEmbed(guildId) {
   const cfg = db.getGuildConfig(guildId);
   if (!queue.current) return null;
   
-  const progressBar = '<:emoji_16:1521464002046328944>─────────────────────────';
+  const progressBar = '⚪▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
   
   const embed = new EmbedBuilder()
     .setColor(cfg.accentColor || '#ff0000')
