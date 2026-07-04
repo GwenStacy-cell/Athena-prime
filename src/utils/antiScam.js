@@ -1,3 +1,4 @@
+import fetch from 'node-fetch';
 import { createWorker } from 'tesseract.js';
 
 // Initialize a persistent worker to make OCR scanning as fast as possible
@@ -32,7 +33,13 @@ export async function scanImageForScam(url) {
   if (!worker) return false;
   
   try {
-    const { data: { text } } = await worker.recognize(url);
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'DiscordBot (https://discord.com, 1.0.0)' }
+    });
+    if (!res.ok) return false;
+    
+    const buffer = await res.buffer();
+    const { data: { text } } = await worker.recognize(buffer);
     if (!text) return false;
     
     const lowerText = text.toLowerCase().replace(/\s+/g, ' ');
