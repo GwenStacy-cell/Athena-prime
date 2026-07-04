@@ -48,6 +48,12 @@ global.client = client; // Make client globally accessible
 import { Shoukaku, Connectors } from 'shoukaku';
 const Nodes = [
   {
+    name: 'Oops Premium',
+    url: 'lavalink.oops.wtf:443',
+    auth: 'www.freelavalink.rest',
+    secure: true
+  },
+  {
     name: 'AjieDev (EU)',
     url: 'lava-v4.ajieblogs.eu.org:443',
     auth: 'https://dsc.gg/ajidevserver',

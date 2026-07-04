@@ -1,5 +1,6 @@
 import fs from 'fs';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, AttachmentBuilder } from 'discord.js';
+import { createCanvas } from 'canvas';
 import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';
@@ -23,7 +24,8 @@ export function getQueue(guildId) {
       isPreparing: false,
       repeatTrack: false,
       nowPlayingMsgMusicId: null,
-      nowPlayingMsgVcId: null
+      nowPlayingMsgVcId: null,
+      progressInterval: null
     });
   }
   return queues.get(guildId);
@@ -106,6 +108,11 @@ export async function enqueue(guild, member, query) {
       
       queue.player.on('end', (data) => {
         if (data && data.reason === 'REPLACED') return;
+        
+        if (queue.progressInterval) {
+          clearInterval(queue.progressInterval);
+          queue.progressInterval = null;
+        }
         
         if (queue.repeatTrack && queue.current) {
           queue.songs.unshift(queue.current);
@@ -223,6 +230,12 @@ async function playResource(guildId, song) {
     if (queue.player && song.encoded) {
        queue.player.playTrack({ track: { encoded: song.encoded } }).catch(console.error);
        queue.isPlaying = true;
+       
+       if (queue.progressInterval) clearInterval(queue.progressInterval);
+       queue.progressInterval = setInterval(() => {
+          if (queue.isPlaying) updateNowPlayingEmbeds(guildId);
+       }, 10000);
+       
        updatePlayerUI(guildId);
        updateNowPlayingEmbeds(guildId);
     }
@@ -246,12 +259,45 @@ function formatDuration(ms) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+function generateProgressBarImage(currentMs, totalMs, hexColor) {
+  const canvas = createCanvas(800, 30);
+  const ctx = canvas.getContext('2d');
+  
+  const progress = totalMs > 0 ? Math.min(Math.max(currentMs / totalMs, 0), 1) : 0;
+  const barWidth = 760;
+  const x = 20;
+  const y = 15;
+  const trackHeight = 6;
+  const knobRadius = 10;
+  
+  // Background track (dark grey)
+  ctx.fillStyle = '#3f3f46';
+  ctx.beginPath();
+  ctx.roundRect(x, y - trackHeight/2, barWidth, trackHeight, trackHeight/2);
+  ctx.fill();
+  
+  // Filled track (accent color)
+  const fillWidth = barWidth * progress;
+  if (fillWidth > 0) {
+    ctx.fillStyle = hexColor;
+    ctx.beginPath();
+    ctx.roundRect(x, y - trackHeight/2, fillWidth, trackHeight, trackHeight/2);
+    ctx.fill();
+  }
+  
+  // Knob
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x + fillWidth, y, knobRadius, 0, Math.PI * 2);
+  ctx.fill();
+  
+  return canvas.toBuffer('image/png');
+}
+
 function buildNowPlayingEmbed(guildId) {
   const queue = getQueue(guildId);
   const cfg = db.getGuildConfig(guildId);
   if (!queue.current) return null;
-  
-  const progressBar = '⚪▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
   
   const embed = new EmbedBuilder()
     .setColor(cfg.accentColor || '#ff0000')
@@ -261,8 +307,7 @@ function buildNowPlayingEmbed(guildId) {
     .setDescription(
        `• Added by <@${queue.current.requester.id}>\n\n` +
        `Queue Size: \`${queue.songs.length}\` · Volume: \`100%\` · Loop: \`${queue.repeatTrack ? 'On' : 'Off'}\`\n\n` +
-       `${progressBar}\n` +
-       `\`0:00\` <t:${Math.floor(Date.now()/1000)}:R> \`${queue.current.duration}\``
+       `\`${formatDuration(queue.player?.position || 0)}\` <t:${Math.floor(Date.now()/1000)}:R> \`${queue.current.duration}\``
     );
     
   if (queue.current.artworkUrl) {
@@ -270,6 +315,8 @@ function buildNowPlayingEmbed(guildId) {
   } else if (cfg.musicCoverImage) {
     embed.setThumbnail(cfg.musicCoverImage);
   }
+  
+  embed.setImage('attachment://progress.png');
   
   return embed;
 }
@@ -281,6 +328,15 @@ async function updateNowPlayingEmbeds(guildId) {
   const embed = buildNowPlayingEmbed(guildId);
   if (!embed) return;
   
+  const cfg = db.getGuildConfig(guildId);
+  
+  // Calculate total duration in ms
+  const [mins, secs] = queue.current.duration.split(':').map(Number);
+  const totalMs = queue.current.duration === 'Unknown' ? 0 : (mins * 60 + secs) * 1000;
+  
+  const imgBuffer = generateProgressBarImage(queue.player?.position || 0, totalMs, cfg.accentColor || '#ff0000');
+  const attachment = new AttachmentBuilder(imgBuffer, { name: 'progress.png' });
+  
   if (queue.player) {
      try {
        const guild = global.client.guilds.cache.get(guildId);
@@ -290,13 +346,13 @@ async function updateNowPlayingEmbeds(guildId) {
          if (queue.nowPlayingMsgVcId) {
             try {
               const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
-              if (msg) await msg.edit({ embeds: [embed] });
+              if (msg) await msg.edit({ embeds: [embed], files: [attachment] });
             } catch (e) {
-              const newMsg = await vc.send({ embeds: [embed] }).catch(()=>null);
+              const newMsg = await vc.send({ embeds: [embed], files: [attachment] }).catch(()=>null);
               if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
             }
          } else {
-            const newMsg = await vc.send({ embeds: [embed] }).catch(()=>null);
+            const newMsg = await vc.send({ embeds: [embed], files: [attachment] }).catch(()=>null);
             if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
          }
        }
