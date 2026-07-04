@@ -212,7 +212,7 @@ export async function handleEnukeModal(interaction) {
       { name: ' Channels Deleted', value: `\`${results.channelsDeleted}\``, inline: true },
       { name: ' Roles Deleted', value: `\`${results.rolesDeleted}\``, inline: true },
       { name: ' Members Banned', value: `\`${results.membersBanned}\``, inline: true },
-      { name: '🟢 Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
+      { name: '<:emoji_16:1521464002046328944> Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
       { name: ' Errors', value: `\`${results.errors}\``, inline: true }
     ]
   });

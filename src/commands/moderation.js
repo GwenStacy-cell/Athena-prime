@@ -1422,7 +1422,7 @@ async function handleVcAction(guild, moderator, targets, action) {
 
   const actionName = action.charAt(0).toUpperCase() + action.slice(1);
   const embedRes = embed.success(`${actionName} Complete`, `Processed **${targets.size}** member(s).`, [
-    { name: '✅ Success', value: `\`${successCount}\``, inline: true },
+    { name: '<:emoji_16:1521464002046328944> Success', value: `\`${successCount}\``, inline: true },
     { name: '❌ Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
   ]);
 

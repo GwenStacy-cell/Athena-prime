@@ -199,7 +199,7 @@ export default {
             await vc.send({ embeds: [lyricsEmbed] });
           }
 
-          return interaction.editReply({ content: `✅ Lyrics sent to <#${vc.id}>!` });
+          return interaction.editReply({ content: `<:emoji_16:1521464002046328944> Lyrics sent to <#${vc.id}>!` });
 
         } catch (error) {
           console.error('Lyrics error:', error);
