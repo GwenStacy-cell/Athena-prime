@@ -233,6 +233,19 @@ export default {
         });
       }
       
+      // 4. Raw Text Links (e.g. pasted media links)
+      if (message.content) {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const links = message.content.match(urlRegex);
+        if (links) {
+          links.forEach(link => {
+            if (link.match(/\.(png|jpg|jpeg|webp|gif)(\?.*)?$/i) || link.includes('cdn.discordapp.com/attachments/') || link.includes('media.discordapp.net/attachments/')) {
+              urlsToScan.push(link);
+            }
+          });
+        }
+      }
+      
       if (urlsToScan.length > 0) {
         for (const url of urlsToScan) {
            scanImageForScam(url).then(async (isScam) => {
