@@ -48,28 +48,28 @@ global.client = client; // Make client globally accessible
 import { Shoukaku, Connectors } from 'shoukaku';
 const Nodes = [
   {
-    name: 'Kwiatekq',
-    url: 'node1.kwiatekq.eu:443',
-    auth: 'kwiatekq.eu',
-    secure: true
-  },
-  {
-    name: 'Lava-v4.ajie',
+    name: 'AjieDev (EU)',
     url: 'lava-v4.ajieblogs.eu.org:443',
     auth: 'https://dsc.gg/ajidevserver',
     secure: true
   },
   {
-    name: 'Lavalink-Vexanode',
-    url: 'lavalink.vexanode.cloud:443',
-    auth: 'vexanode.cloud',
+    name: 'DevamOP',
+    url: 'lavalink.devamop.in:443',
+    auth: 'DevamOP',
     secure: true
   },
   {
-    name: 'Darren',
-    url: 'lavalink.darrennathanael.com:443',
+    name: 'Jirayu v4',
+    url: 'lavalink.jirayu.net:13592',
     auth: 'youshallnotpass',
-    secure: true
+    secure: false
+  },
+  {
+    name: 'NyxBot SG1',
+    url: 'sg1-nodelink.nyxbot.app:3000',
+    auth: 'nyxbot.app/support',
+    secure: false
   }
 ];
 const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), Nodes);

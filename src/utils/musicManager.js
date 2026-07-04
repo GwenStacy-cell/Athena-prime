@@ -194,6 +194,9 @@ export async function enqueue(guild, member, query) {
   } catch (error) {
     console.error(`Music enqueue error:`, error);
     queue.isPreparing = false;
+    if (error.message && error.message.includes("Can't find any nodes")) {
+      return { success: false, message: `Music systems are currently connecting or all nodes are offline. Please try again in 15 seconds!` };
+    }
     return { success: false, message: `An error occurred: ${error.message}` };
   }
 }
