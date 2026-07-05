@@ -144,10 +144,24 @@ export async function enqueue(guild, member, query) {
     
     let searchStr = query;
     if (!query.startsWith('http')) {
-      searchStr = `ytsearch:${query}`;
+      searchStr = `spsearch:${query}`; // Default to Spotify search for best song matching
     }
     
-    const result = await node.rest.resolve(searchStr);
+    let result = await node.rest.resolve(searchStr);
+    
+    // Fallback to YouTube Music, then standard YouTube if Spotify plugin is missing or finds nothing
+    if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
+      if (searchStr.startsWith('spsearch:')) {
+         searchStr = `ytmsearch:${query}`;
+         result = await node.rest.resolve(searchStr);
+      }
+    }
+    if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
+      if (searchStr.startsWith('ytmsearch:')) {
+         searchStr = `ytsearch:${query}`;
+         result = await node.rest.resolve(searchStr);
+      }
+    }
     
     const getThumbnail = (track) => {
       if (track.info.artworkUrl) return track.info.artworkUrl;
@@ -159,12 +173,6 @@ export async function enqueue(guild, member, query) {
     };
     
     let searchResult = result;
-    // Fallback to soundcloud if ytsearch fails
-    if (!searchResult || (searchResult.loadType !== 'track' && searchResult.loadType !== 'playlist' && searchResult.loadType !== 'search')) {
-       if (searchStr.startsWith('ytsearch:')) {
-         searchResult = await node.rest.resolve(`scsearch:${query}`);
-       }
-    }
     
     if (!searchResult || (searchResult.loadType !== 'track' && searchResult.loadType !== 'playlist' && searchResult.loadType !== 'search')) {
        queue.isPreparing = false;
