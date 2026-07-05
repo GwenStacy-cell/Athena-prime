@@ -19,14 +19,9 @@ export const commands = [
     async executePrefix(message) {
       const embedsList = await getHelpEmbeds(message.guild, message.client);
       let first = true;
-      const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('dummy_line').setLabel('━━━━━━━━━━━━━━━━━━━━━━━━━━').setStyle(ButtonStyle.Secondary).setDisabled(true)
-      );
-      
       for (const embed of embedsList) {
         if (first) {
-          await message.reply({ embeds: [embed], components: [row] });
+          await message.reply({ embeds: [embed] });
           first = false;
         } else {
           await message.channel.send({ embeds: [embed] });
@@ -36,14 +31,9 @@ export const commands = [
     async executeSlash(interaction) {
       const embedsList = await getHelpEmbeds(interaction.guild, interaction.client);
       let first = true;
-      const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('dummy_line_slash').setLabel('━━━━━━━━━━━━━━━━━━━━━━━━━━').setStyle(ButtonStyle.Secondary).setDisabled(true)
-      );
-
       for (const embed of embedsList) {
         if (first) {
-          await interaction.reply({ embeds: [embed], components: [row] });
+          await interaction.reply({ embeds: [embed] });
           first = false;
         } else {
           await interaction.followUp({ embeds: [embed] });
@@ -621,16 +611,11 @@ async function getHelpEmbeds(guild, client) {
 
   let currentLength = description.length;
   let pageNumber = 1;
-  let addedTopSeparator = false;
 
   for (const field of fields) {
     const fieldLength = field.name.length + field.value.length;
     // Lowered threshold to perfectly split fields and avoid Interaction Failed limits
-    if (currentLength + fieldLength > 3000 || currentEmbed.data.fields?.length >= (pageNumber === 1 ? 9 : 10)) {
-      if (pageNumber === 1 && !addedTopSeparator) {
-        currentEmbed.addFields({ name: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', value: '\u200b' });
-        addedTopSeparator = true;
-      }
+    if (currentLength + fieldLength > 3000 || currentEmbed.data.fields?.length >= 10) {
       embeds.push(currentEmbed);
       pageNumber++;
       currentEmbed = new EmbedBuilder()
@@ -640,10 +625,6 @@ async function getHelpEmbeds(guild, client) {
     }
     currentEmbed.addFields(field);
     currentLength += fieldLength;
-  }
-  
-  if (pageNumber === 1 && !addedTopSeparator) {
-    currentEmbed.addFields({ name: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', value: '\u200b' });
   }
   
   embeds.push(currentEmbed);
