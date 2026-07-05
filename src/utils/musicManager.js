@@ -144,8 +144,7 @@ export async function enqueue(guild, member, query) {
     
     let searchStr = query;
     if (!query.startsWith('http')) {
-      // Append 'official audio' to prevent ytsearch from returning covers/fan edits
-      searchStr = `ytsearch:${query} official audio`;
+      searchStr = `ytmsearch:${query}`;
     }
     
     const result = await node.rest.resolve(searchStr);
@@ -160,9 +159,9 @@ export async function enqueue(guild, member, query) {
     };
     
     let searchResult = result;
-    // Fallback to soundcloud if ytsearch fails
+    // Fallback to soundcloud if ytmsearch fails
     if (!searchResult || (searchResult.loadType !== 'track' && searchResult.loadType !== 'playlist' && searchResult.loadType !== 'search')) {
-       if (searchStr.startsWith('ytsearch:')) {
+       if (searchStr.startsWith('ytmsearch:')) {
          searchResult = await node.rest.resolve(`scsearch:${query}`);
        }
     }
