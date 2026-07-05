@@ -19,9 +19,14 @@ export const commands = [
     async executePrefix(message) {
       const embedsList = await getHelpEmbeds(message.guild, message.client);
       let first = true;
+      const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('dummy_line').setLabel('━━━━━━━━━━━━━━━━━━━━━━━━━━').setStyle(ButtonStyle.Secondary).setDisabled(true)
+      );
+      
       for (const embed of embedsList) {
         if (first) {
-          await message.reply({ embeds: [embed] });
+          await message.reply({ embeds: [embed], components: [row] });
           first = false;
         } else {
           await message.channel.send({ embeds: [embed] });
@@ -31,9 +36,14 @@ export const commands = [
     async executeSlash(interaction) {
       const embedsList = await getHelpEmbeds(interaction.guild, interaction.client);
       let first = true;
+      const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('dummy_line_slash').setLabel('━━━━━━━━━━━━━━━━━━━━━━━━━━').setStyle(ButtonStyle.Secondary).setDisabled(true)
+      );
+
       for (const embed of embedsList) {
         if (first) {
-          await interaction.reply({ embeds: [embed] });
+          await interaction.reply({ embeds: [embed], components: [row] });
           first = false;
         } else {
           await interaction.followUp({ embeds: [embed] });
@@ -607,15 +617,20 @@ async function getHelpEmbeds(guild, client) {
   let currentEmbed = new EmbedBuilder()
     .setColor(accentColor)
     .setDescription(description)
-    .setImage('https://cdn.discordapp.com/attachments/1523073507913761080/1523431159566958612/banner_3.gif?ex=6a4c1554&is=6a4ac3d4&hm=6d61e7b07d015c432146dc424d816e033913b840e8432e92f67b4c568822142b&');
+    .setImage('https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4c1a2d&is=6a4ac8ad&hm=42ebf27b7f5f2ae9c2c6609e88a3b999094d553ababb3a13c14b4c6f14ebe6d9&');
 
   let currentLength = description.length;
   let pageNumber = 1;
+  let addedTopSeparator = false;
 
   for (const field of fields) {
     const fieldLength = field.name.length + field.value.length;
     // Lowered threshold to perfectly split fields and avoid Interaction Failed limits
-    if (currentLength + fieldLength > 3000 || currentEmbed.data.fields?.length >= 10) {
+    if (currentLength + fieldLength > 3000 || currentEmbed.data.fields?.length >= (pageNumber === 1 ? 9 : 10)) {
+      if (pageNumber === 1 && !addedTopSeparator) {
+        currentEmbed.addFields({ name: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', value: '\u200b' });
+        addedTopSeparator = true;
+      }
       embeds.push(currentEmbed);
       pageNumber++;
       currentEmbed = new EmbedBuilder()
@@ -625,6 +640,10 @@ async function getHelpEmbeds(guild, client) {
     }
     currentEmbed.addFields(field);
     currentLength += fieldLength;
+  }
+  
+  if (pageNumber === 1 && !addedTopSeparator) {
+    currentEmbed.addFields({ name: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', value: '\u200b' });
   }
   
   embeds.push(currentEmbed);
