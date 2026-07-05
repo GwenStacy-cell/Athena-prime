@@ -62,7 +62,7 @@ export const commands = [
           const node = shoukaku.options.nodeResolver(shoukaku.nodes);
           if (!node) return interaction.respond([]);
           
-          const result = await node.rest.resolve(`ytmsearch:${focusedValue}`);
+          const result = await node.rest.resolve(`ytsearch:${focusedValue}`);
           if (result && (result.loadType === 'search' || result.loadType === 'track')) {
              const tracks = result.loadType === 'search' ? result.data : [result.data];
              const choices = tracks.slice(0, 5).map(r => {
