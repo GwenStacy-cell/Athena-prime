@@ -606,7 +606,8 @@ async function getHelpEmbeds(guild, client) {
   const embeds = [];
   let currentEmbed = new EmbedBuilder()
     .setColor(accentColor)
-    .setDescription(description);
+    .setDescription(description)
+    .setImage('https://cdn.discordapp.com/attachments/1511630039144206389/1523426646663762050/banner_3.gif?ex=6a4c1120&is=6a4abfa0&hm=6b02d188259d57eba2d6bbf67094f5fd815424f5bb3ca9d2021de0ec2584a353&');
 
   let currentLength = description.length;
   let pageNumber = 1;
