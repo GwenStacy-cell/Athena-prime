@@ -144,20 +144,20 @@ export async function enqueue(guild, member, query) {
     
     let searchStr = query;
     if (!query.startsWith('http')) {
-      searchStr = `spsearch:${query}`; // Default to Spotify search for best song matching
+      searchStr = `ytmsearch:${query}`; // Default to YouTube Music for studio tracks without video dialogue
     }
     
     let result = await node.rest.resolve(searchStr);
     
-    // Fallback to YouTube Music, then standard YouTube if Spotify plugin is missing or finds nothing
+    // Fallback to Spotify, then standard YouTube
     if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
-      if (searchStr.startsWith('spsearch:')) {
-         searchStr = `ytmsearch:${query}`;
+      if (searchStr.startsWith('ytmsearch:')) {
+         searchStr = `spsearch:${query}`;
          result = await node.rest.resolve(searchStr);
       }
     }
     if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
-      if (searchStr.startsWith('ytmsearch:')) {
+      if (searchStr.startsWith('spsearch:')) {
          searchStr = `ytsearch:${query}`;
          result = await node.rest.resolve(searchStr);
       }

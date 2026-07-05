@@ -62,9 +62,9 @@ export const commands = [
           const node = shoukaku.options.nodeResolver(shoukaku.nodes);
           if (!node) return interaction.respond([]);
           
-          let result = await node.rest.resolve(`spsearch:${focusedValue}`);
+          let result = await node.rest.resolve(`ytmsearch:${focusedValue}`);
           if (!result || (result.loadType !== 'search' && result.loadType !== 'track')) {
-            result = await node.rest.resolve(`ytmsearch:${focusedValue}`);
+            result = await node.rest.resolve(`spsearch:${focusedValue}`);
           }
           if (!result || (result.loadType !== 'search' && result.loadType !== 'track')) {
             result = await node.rest.resolve(`ytsearch:${focusedValue}`);
