@@ -493,11 +493,11 @@ function buildHelpHomeEmbed(client, guildId) {
   const botId = client?.user?.id || '1347071663182676059';
 
   let description = `# Hey !!! , I am <@${botId}> ,\n\n`;
-  description += `<a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
+  description += `>>> <a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
   description += `<a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
   description += `<a:z_arrow_pink1:1523082728004653138> **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n`;
   
-  description += `________________________________________________\n`;
+  description += `**------------------------------------------------**\n`;
 
   let grid = '';
   for (let i = 0; i < helpModules.length; i++) {
@@ -513,7 +513,7 @@ function buildHelpHomeEmbed(client, guildId) {
     if (!isLeft) grid += '\n'; // Single newline to make rows closer like Secure
   }
   description += grid.trim() + '\n';
-  description += `________________________________________________`;
+  description += `**------------------------------------------------**`;
 
   return new EmbedBuilder()
     .setColor(accentColor)
