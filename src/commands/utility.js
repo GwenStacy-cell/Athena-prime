@@ -17,10 +17,14 @@ export const commands = [
     description: 'Show Athena Prime command menu',
     type: 1,
     async executePrefix(message) {
-      const embeds = [ buildHelpHomeEmbed(message.client, message.guild?.id) ];
-      const components = getHelpComponents('home');
-      
-      const reply = await message.reply({ embeds, components });
+      let reply;
+      try {
+        const embeds = [ buildHelpHomeEmbed(message.client, message.guild?.id) ];
+        const components = getHelpComponents('home');
+        reply = await message.reply({ embeds, components });
+      } catch (e) {
+        return message.reply({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
+      }
       const collector = reply.createMessageComponentCollector({ time: 300000 });
       
       let currentIdx = -1;
@@ -53,7 +57,12 @@ export const commands = [
       const embeds = [ buildHelpHomeEmbed(interaction.client, interaction.guild?.id) ];
       const components = getHelpComponents('home');
       
-      const reply = await interaction.reply({ embeds, components, fetchReply: true });
+      let reply;
+      try {
+        reply = await interaction.reply({ embeds, components, fetchReply: true });
+      } catch (e) {
+        return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, ephemeral: true }).catch(() => null);
+      }
       const collector = reply.createMessageComponentCollector({ time: 300000 });
       
       let currentIdx = -1;
