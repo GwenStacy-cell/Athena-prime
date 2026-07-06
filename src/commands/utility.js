@@ -30,9 +30,7 @@ export const commands = [
       let currentIdx = -1;
 
       collector.on('collect', async i => {
-        if (i.user.id !== message.author.id) {
-          return i.reply({ content: 'This menu is not for you!', ephemeral: true });
-        }
+        // Allow anyone to interact with the menu
         
         if (i.customId === 'help_delete') {
           return reply.delete().catch(() => null);
@@ -68,9 +66,7 @@ export const commands = [
       let currentIdx = -1;
 
       collector.on('collect', async i => {
-        if (i.user.id !== interaction.user.id) {
-          return i.reply({ content: 'This menu is not for you!', ephemeral: true });
-        }
+        // Allow anyone to interact with the menu
         
         if (i.customId === 'help_delete') {
           return interaction.deleteReply().catch(() => null);
