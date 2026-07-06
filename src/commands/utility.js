@@ -504,11 +504,13 @@ function buildHelpHomeEmbed(client, guildId) {
     const mod = helpModules[i];
     const col = i % 3;
     let label = mod.label;
-    let targetLength = 12; // Pad out to exactly 12 chars
-    let spaces = targetLength - label.length;
-    let padding = '\u00A0'.repeat(spaces > 0 ? spaces : 1);
     
-    grid += `${mod.emoji}**\`${label}\`**${padding}`;
+    let targetLength = 10; // Max length is 'Quarantine' and 'Moderation' (10 chars)
+    let spaces = targetLength - label.length;
+    let padding = '\u00A0'.repeat(spaces > 0 ? spaces : 0);
+    
+    // Padding INSIDE the codeblock with non-breaking spaces guarantees perfect monospaced alignment on mobile
+    grid += `${mod.emoji}**\`${label}${padding}\`** `;
     if (col === 2) grid += '\n'; // Break to new line after 3 columns
   }
   description += grid.trim() + '\n\n';
