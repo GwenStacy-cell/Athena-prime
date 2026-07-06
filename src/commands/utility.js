@@ -501,7 +501,7 @@ function buildHelpHomeEmbed(client, guildId) {
   description += `<a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
   description += `<a:z_arrow_pink1:1523082728004653138> **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n`;
   
-  description += `------------------------------------------------\n`;
+  description += `───────────────────────────────────────────────\n`;
 
   let grid = '';
   for (let i = 0; i < helpModules.length; i++) {
@@ -517,7 +517,7 @@ function buildHelpHomeEmbed(client, guildId) {
     if (!isLeft) grid += '\n'; // Single newline to make rows closer like Secure
   }
   description += grid.trim() + '\n';
-  description += `------------------------------------------------`;
+  description += `───────────────────────────────────────────────`;
 
   return new EmbedBuilder()
     .setColor(accentColor)
