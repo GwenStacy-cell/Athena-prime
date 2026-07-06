@@ -25,7 +25,7 @@ export const commands = [
       } catch (e) {
         return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
-      const collector = reply.createMessageComponentCollector({ idle: 10000 });
+      const collector = reply.createMessageComponentCollector({ idle: 30000 });
       
       let currentIdx = -1;
 
@@ -61,7 +61,7 @@ export const commands = [
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, ephemeral: true }).catch(() => null);
       }
-      const collector = reply.createMessageComponentCollector({ idle: 10000 });
+      const collector = reply.createMessageComponentCollector({ idle: 30000 });
       
       let currentIdx = -1;
 
