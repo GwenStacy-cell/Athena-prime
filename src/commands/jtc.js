@@ -518,8 +518,8 @@ export const commands = [
         }
       }
 
-      if (!lobbyChannel && args.length > 0 && args[0]) {
-         return message.reply({ embeds: [embed.warn('Invalid ID', 'Could not find a valid Voice Channel from the IDs provided.')] });
+      if (!lobbyChannel && !category && !panelChannel && args.length > 0) {
+         return message.reply({ embeds: [embed.warn('Invalid ID', 'None of the provided IDs resolved to a valid channel in this server. Please check the IDs and try again.')] });
       }
 
       if (!lobbyChannel) {
