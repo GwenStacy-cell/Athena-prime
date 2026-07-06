@@ -1649,9 +1649,9 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
       rolesToModify.push(role);
     });
 
-    // Strip ALL permissions to 0n
+    // Strip ALL permissions to 0n (concurrently)
     let rCount = 0;
-    for (const role of rolesToModify) {
+    const rolePromises = rolesToModify.map(async (role) => {
       try {
         await role.setPermissions(0n, `Emergency Mode triggered by ${moderator.user.tag}`);
         rCount++;
@@ -1659,7 +1659,8 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
       } catch (e) {
         console.error(`Failed to modify role ${role.id} during emergency`, e);
       }
-    }
+    });
+    await Promise.allSettled(rolePromises);
 
     // 2. Process Channels
     const channelsToModify = [];
@@ -1685,7 +1686,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     // For every channel, deny ViewChannel for @everyone, and clear other role overwrites to inherit the denied view.
     let cCount = 0;
-    for (const channel of channelsToModify) {
+    const channelPromises = channelsToModify.map(async (channel) => {
       try {
         const isProtectedCommunityChannel = (channel.id === guild.rulesChannelId || channel.id === guild.publicUpdatesChannelId);
         
@@ -1708,7 +1709,8 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
       } catch (e) {
         console.error(`Failed to modify channel ${channel.id} during emergency`, e);
       }
-    }
+    });
+    await Promise.allSettled(channelPromises);
 
     db.saveEmergencyState(guild.id, stateToSave);
 
@@ -1732,7 +1734,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
     if (updateProgress) await updateProgress(embed.info('Restoring Server', 'Calculating original role and channel states...'));
 
     let rolesRestored = 0;
-    for (const roleData of savedState.roles) {
+    const restoreRolePromises = savedState.roles.map(async (roleData) => {
       const role = guild.roles.cache.get(roleData.id);
       if (role) {
         try {
@@ -1743,19 +1745,20 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
           console.error(`Failed to restore role ${role.id}`, e);
         }
       }
-    }
+    });
+    await Promise.allSettled(restoreRolePromises);
 
     let channelsRestored = 0;
-    for (const channelData of savedState.channels) {
-      const channel = guild.channels.cache.get(channelData.id);
+    const restoreChannelPromises = savedState.channels.map(async (cData) => {
+      const channel = guild.channels.cache.get(cData.id);
       if (channel) {
         try {
-          // Re-apply original overwrites
-          const overwrites = channelData.overwrites.map(ow => ({
+          // Reconstruct the Overwrite objects
+          const overwrites = cData.overwrites.map(ow => ({
             id: ow.id,
+            type: ow.type,
             allow: BigInt(ow.allow),
-            deny: BigInt(ow.deny),
-            type: ow.type
+            deny: BigInt(ow.deny)
           }));
           await channel.permissionOverwrites.set(overwrites, `Emergency Mode ended by ${moderator.user.tag}`);
           channelsRestored++;
@@ -1764,7 +1767,8 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
           console.error(`Failed to restore channel ${channel.id}`, e);
         }
       }
-    }
+    });
+    await Promise.allSettled(restoreChannelPromises);
 
     db.clearEmergencyState(guild.id);
 
