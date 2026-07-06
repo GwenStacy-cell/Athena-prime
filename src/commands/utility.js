@@ -493,27 +493,27 @@ function buildHelpHomeEmbed(client, guildId) {
   const botId = client?.user?.id || '1347071663182676059';
 
   let description = `# Hey !!! , I am <@${botId}> ,\n\n`;
-  description += `>>> <a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
-  description += `<a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
-  description += `<a:z_arrow_pink1:1523082728004653138> **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n`;
+  description += `>>> <a:z_arrow_pink1:1523082728004653138>**Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
+  description += `<a:z_arrow_pink1:1523082728004653138>**To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
+  description += `<a:z_arrow_pink1:1523082728004653138>**Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n\n`;
   
-  description += `**------------------------------------------------**\n`;
+  description += `***\n\n`;
 
   let grid = '';
   for (let i = 0; i < helpModules.length; i++) {
     const mod = helpModules[i];
     const isLeft = i % 2 === 0;
     const padLength = isLeft ? 26 : 24;
-    let paddedLabel = ' ' + mod.label;
+    let paddedLabel = mod.label;
     while (paddedLabel.length < padLength) {
       paddedLabel += ' ';
     }
     paddedLabel += '\u00A0'; // preserve trailing spaces in codeblock
-    grid += `${mod.emoji} \`${paddedLabel}\`  `;
+    grid += `${mod.emoji}\`${paddedLabel}\`  `;
     if (!isLeft) grid += '\n'; // Single newline to make rows closer like Secure
   }
-  description += grid.trim() + '\n';
-  description += `**------------------------------------------------**`;
+  description += grid.trim() + '\n\n';
+  description += `***\n`;
 
   return new EmbedBuilder()
     .setColor(accentColor)
