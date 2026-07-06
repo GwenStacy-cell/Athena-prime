@@ -25,7 +25,7 @@ export const commands = [
       } catch (e) {
         return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
-      const collector = reply.createMessageComponentCollector({ time: 300000 });
+      const collector = reply.createMessageComponentCollector({ idle: 10000 });
       
       let currentIdx = -1;
 
@@ -49,7 +49,7 @@ export const commands = [
         await i.update({ embeds: [newEmbed], components: getHelpComponents(currentIdx === -1 ? 'home' : helpModules[currentIdx].id) }).catch(() => null);
       });
       
-      collector.on('end', () => reply.edit({ components: [] }).catch(() => null));
+      collector.on('end', () => reply.delete().catch(() => null));
     },
     async executeSlash(interaction) {
       const embeds = [ buildHelpHomeEmbed(interaction.client, interaction.guild?.id) ];
@@ -61,7 +61,7 @@ export const commands = [
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, ephemeral: true }).catch(() => null);
       }
-      const collector = reply.createMessageComponentCollector({ time: 300000 });
+      const collector = reply.createMessageComponentCollector({ idle: 10000 });
       
       let currentIdx = -1;
 
@@ -85,7 +85,7 @@ export const commands = [
         await i.update({ embeds: [newEmbed], components: getHelpComponents(currentIdx === -1 ? 'home' : helpModules[currentIdx].id) }).catch(() => null);
       });
       
-      collector.on('end', () => interaction.editReply({ components: [] }).catch(() => null));
+      collector.on('end', () => interaction.deleteReply().catch(() => null));
     }
   },
 
