@@ -509,11 +509,11 @@ export const commands = [
         const channel = await guild.channels.fetch(id).catch(() => null);
         if (!channel) continue;
 
-        if (channel.type === 2) { // GuildVoice
+        if (channel.isVoiceBased()) {
           lobbyChannel = channel;
         } else if (channel.type === 4) { // GuildCategory
           category = channel;
-        } else if (channel.type === 0) { // GuildText
+        } else if (channel.isTextBased()) {
           panelChannel = channel;
         }
       }
