@@ -21,9 +21,9 @@ export const commands = [
       try {
         const embeds = [ buildHelpHomeEmbed(message.client, message.guild?.id) ];
         const components = getHelpComponents('home');
-        reply = await message.reply({ embeds, components });
+        reply = await message.channel.send({ embeds, components });
       } catch (e) {
-        return message.reply({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
+        return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
       const collector = reply.createMessageComponentCollector({ time: 300000 });
       
@@ -497,9 +497,9 @@ function buildHelpHomeEmbed(client, guildId) {
   const botId = client?.user?.id || '1347071663182676059';
 
   let description = `# Hey !!! , I am <@${botId}> ,\n\n`;
-  description += `**» Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
-  description += `**» To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
-  description += `**» Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n\n`;
+  description += `<a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
+  description += `<a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
+  description += `<a:z_arrow_pink1:1523082728004653138> **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n`;
   
   description += `------------------------------------------------\n`;
 
@@ -514,7 +514,7 @@ function buildHelpHomeEmbed(client, guildId) {
     }
     paddedLabel += '\u00A0'; // preserve trailing spaces in codeblock
     grid += `${mod.emoji} \`${paddedLabel}\`  `;
-    if (!isLeft) grid += '\n\n';
+    if (!isLeft) grid += '\n'; // Single newline to make rows closer like Secure
   }
   description += grid.trim() + '\n';
   description += `------------------------------------------------`;
