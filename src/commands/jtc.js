@@ -496,7 +496,7 @@ export const commands = [
       { name: 'panel_id', description: 'Or paste Panel text channel ID here', type: 3, required: false }
     ],
     async executePrefix(message, args) {
-      if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) return;
+      if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(message.author.id)) return;
       const guild = message.guild;
 
       let lobbyChannel = null;
@@ -544,6 +544,9 @@ export const commands = [
       });
     },
     async executeSlash(interaction) {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ embeds: [embed.warn('Unauthorized', 'You need Manage Server permissions to use this.')], ephemeral: true });
+      }
       await interaction.deferReply({ ephemeral: true });
       const guild = interaction.guild;
 
@@ -594,11 +597,14 @@ export const commands = [
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [],
     async executePrefix(message) {
-      if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) return;
+      if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(message.author.id)) return;
       db.clearJtcConfig(message.guild.id);
       return message.reply({ embeds: [embed.danger('JTC Disabled', 'The Join to Create system has been turned off.')] });
     },
     async executeSlash(interaction) {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ embeds: [embed.warn('Unauthorized', 'You need Manage Server permissions to use this.')], ephemeral: true });
+      }
       db.clearJtcConfig(interaction.guild.id);
       return interaction.reply({ embeds: [embed.danger('JTC Disabled', 'The Join to Create system has been turned off.')], ephemeral: true });
     }
