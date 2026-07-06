@@ -538,8 +538,7 @@ function getHelpComponents(selectedModuleId = 'home') {
     {
       label: 'Home Menu',
       description: 'Return to the main help menu',
-      value: 'home',
-      emoji: '🏠'
+      value: 'home'
     }
   ]);
 
@@ -555,23 +554,23 @@ function getHelpComponents(selectedModuleId = 'home') {
 
   const btnPrev = new ButtonBuilder()
     .setCustomId('help_prev')
-    .setEmoji('◀️')
+    .setLabel('Previous')
     .setStyle(ButtonStyle.Secondary);
 
   const btnNext = new ButtonBuilder()
     .setCustomId('help_next')
-    .setEmoji('▶️')
+    .setLabel('Next')
     .setStyle(ButtonStyle.Secondary);
 
   const btnRefresh = new ButtonBuilder()
     .setCustomId('help_home')
-    .setEmoji('🔄')
+    .setLabel('Home')
     .setStyle(ButtonStyle.Secondary);
     
   const btnDelete = new ButtonBuilder()
     .setCustomId('help_delete')
-    .setEmoji('✖️')
-    .setStyle(ButtonStyle.Secondary);
+    .setLabel('Delete')
+    .setStyle(ButtonStyle.Danger);
 
   const row1 = new ActionRowBuilder().addComponents(selectMenu);
   const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
