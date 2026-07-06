@@ -1655,7 +1655,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
       try {
         await role.setPermissions(0n, `Emergency Mode triggered by ${moderator.user.tag}`);
         rCount++;
-        if (rCount % 5 === 0 && updateProgress) await updateProgress(embed.warn('Emergency Protocol Initiated', `Stripping permissions: **${rCount} / ${rolesToModify.length}** roles processed...`));
+        if (rCount % 10 === 0 && updateProgress) updateProgress(embed.warn('Emergency Protocol Initiated', `Stripping permissions: **${rCount} / ${rolesToModify.length}** roles processed...`)).catch(()=>null);
       } catch (e) {
         console.error(`Failed to modify role ${role.id} during emergency`, e);
       }
@@ -1704,7 +1704,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
         ], `Emergency Mode triggered by ${moderator.user.tag}`);
         
         cCount++;
-        if (cCount % 5 === 0 && updateProgress) await updateProgress(embed.warn('Emergency Protocol Initiated', `Hiding channels: **${cCount} / ${channelsToModify.length}** channels processed...`));
+        if (cCount % 20 === 0 && updateProgress) updateProgress(embed.warn('Emergency Protocol Initiated', `Hiding channels: **${cCount} / ${channelsToModify.length}** channels processed...`)).catch(()=>null);
       } catch (e) {
         console.error(`Failed to modify channel ${channel.id} during emergency`, e);
       }
@@ -1738,7 +1738,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
         try {
           await role.setPermissions(BigInt(roleData.perms), `Emergency Mode ended by ${moderator.user.tag}`);
           rolesRestored++;
-          if (rolesRestored % 5 === 0 && updateProgress) await updateProgress(embed.info('Restoring Server', `Restoring permissions: **${rolesRestored} / ${savedState.roles.length}** roles processed...`));
+          if (rolesRestored % 20 === 0 && updateProgress) updateProgress(embed.info('Restoring Server', `Restoring permissions: **${rolesRestored} / ${savedState.roles.length}** roles processed...`)).catch(()=>null);
         } catch(e) {
           console.error(`Failed to restore role ${role.id}`, e);
         }
@@ -1759,7 +1759,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
           }));
           await channel.permissionOverwrites.set(overwrites, `Emergency Mode ended by ${moderator.user.tag}`);
           channelsRestored++;
-          if (channelsRestored % 5 === 0 && updateProgress) await updateProgress(embed.info('Restoring Server', `Restoring channels: **${channelsRestored} / ${savedState.channels.length}** channels processed...`));
+          if (channelsRestored % 20 === 0 && updateProgress) updateProgress(embed.info('Restoring Server', `Restoring channels: **${channelsRestored} / ${savedState.channels.length}** channels processed...`)).catch(()=>null);
         } catch(e) {
           console.error(`Failed to restore channel ${channel.id}`, e);
         }
