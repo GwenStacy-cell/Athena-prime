@@ -484,28 +484,73 @@ export const commands = [
   // ─── JTCSETUP ───
   {
     name: 'jtcsetup',
-    description: ' Set up the Join to Create system. (Admin only)',
+    description: 'Set up the Join to Create system. (Admin only)',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [
-      { name: 'channel', description: 'Existing VC to use as lobby (leave empty to auto-create)', type: 7, required: false, channel_types: [2] },
-      { name: 'category', description: 'Category for temp channels (leave empty to use lobby\'s category)', type: 7, required: false, channel_types: [4] },
-      { name: 'panel_channel', description: 'Text channel to send control panels to (leave empty = VC text chat)', type: 7, required: false, channel_types: [0] }
+      { name: 'channel', description: 'Select VC lobby (or use channel_id)', type: 7, required: false, channel_types: [2] },
+      { name: 'channel_id', description: 'Or paste VC lobby ID here', type: 3, required: false },
+      { name: 'category', description: 'Select Category (or use category_id)', type: 7, required: false, channel_types: [4] },
+      { name: 'category_id', description: 'Or paste Category ID here', type: 3, required: false },
+      { name: 'panel_channel', description: 'Select Panel text channel (or use panel_id)', type: 7, required: false, channel_types: [0] },
+      { name: 'panel_id', description: 'Or paste Panel text channel ID here', type: 3, required: false }
     ],
-    async executePrefix(message) {
-      return message.reply({ embeds: [embed.info('Use Slash Command', 'Please use `/jtcsetup` for this command.')] });
+    async executePrefix(message, args) {
+      if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) return;
+      const guild = message.guild;
+
+      let lobbyChannel = args[0] ? await guild.channels.fetch(args[0].replace(/\D/g, '')).catch(()=>null) : null;
+      let category = args[1] ? await guild.channels.fetch(args[1].replace(/\D/g, '')).catch(()=>null) : null;
+      let panelChannel = args[2] ? await guild.channels.fetch(args[2].replace(/\D/g, '')).catch(()=>null) : null;
+
+      if (!lobbyChannel && args[0]) {
+         return message.reply({ embeds: [embed.warn('Invalid ID', 'Could not find the specified lobby channel.')] });
+      }
+
+      if (!lobbyChannel) {
+        const cat = await guild.channels.create({ name: '➕ Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
+        lobbyChannel = await guild.channels.create({ name: '➕ Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
+        category = cat;
+      }
+
+      const categoryId = category?.id || lobbyChannel.parentId;
+      const panelChannelId = panelChannel?.id || null;
+      db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
+
+      return message.reply({
+        embeds: [embed.success('JTC System Activated 🚀', [
+          `**Lobby Channel:** ${lobbyChannel}`,
+          `**Category:** ${categoryId ? `<#${categoryId}>` : 'Same as lobby'}`,
+          `**Panel Channel:** ${panelChannelId ? `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
+          '',
+          'When someone joins the lobby, a private voice channel and control panel will be created automatically.',
+          'To disable: `/jtcdisable`'
+        ].join('\n'))]
+      });
     },
     async executeSlash(interaction) {
       await interaction.deferReply({ ephemeral: true });
       const guild = interaction.guild;
 
       let lobbyChannel = interaction.options.getChannel('channel');
+      const lobbyIdStr = interaction.options.getString('channel_id');
+      if (!lobbyChannel && lobbyIdStr) lobbyChannel = await guild.channels.fetch(lobbyIdStr.trim().replace(/\D/g, '')).catch(()=>null);
+      
+      if (!lobbyChannel && lobbyIdStr) {
+         return interaction.editReply({ embeds: [embed.warn('Invalid ID', 'Could not find the specified lobby channel.')] });
+      }
+
       let category = interaction.options.getChannel('category');
-      const panelChannel = interaction.options.getChannel('panel_channel');
+      const categoryIdStr = interaction.options.getString('category_id');
+      if (!category && categoryIdStr) category = await guild.channels.fetch(categoryIdStr.trim().replace(/\D/g, '')).catch(()=>null);
+
+      let panelChannel = interaction.options.getChannel('panel_channel');
+      const panelIdStr = interaction.options.getString('panel_id');
+      if (!panelChannel && panelIdStr) panelChannel = await guild.channels.fetch(panelIdStr.trim().replace(/\D/g, '')).catch(()=>null);
 
       if (!lobbyChannel) {
-        const cat = await guild.channels.create({ name: '� Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
-        lobbyChannel = await guild.channels.create({ name: ' Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
+        const cat = await guild.channels.create({ name: '➕ Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
+        lobbyChannel = await guild.channels.create({ name: '➕ Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
         category = cat;
       }
 
@@ -514,7 +559,7 @@ export const commands = [
       db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
 
       await interaction.editReply({
-        embeds: [embed.success('JTC System Activated ', [
+        embeds: [embed.success('JTC System Activated 🚀', [
           `**Lobby Channel:** ${lobbyChannel}`,
           `**Category:** ${categoryId ? `<#${categoryId}>` : 'Same as lobby'}`,
           `**Panel Channel:** ${panelChannelId ? `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
