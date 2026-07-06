@@ -496,10 +496,10 @@ function buildHelpHomeEmbed(client, guildId) {
   const prefix = config?.prefix || '!';
   const botId = client?.user?.id || '1347071663182676059';
 
-  let description = `**Hey !!! , I am <@${botId}> ,**\n\n`;
-  description += `Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n\n`;
-  description += `<a:Dark4luvontop:1514999633179316305> **To set Custom Prefix use <@${botId}>** \`${prefix}prefix " your custom prefix "\`\n\n`;
-  description += `<a:Dark4luvontop:1514999633179316305> **Hint :** To Know more use " Tag the Bot and Type Guide for details and usage "\n\n`;
+  let description = `# Hey !!! , I am <@${botId}> ,\n\n`;
+  description += `> <a:Dark4luvontop:1514999633179316305> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n>\n`;
+  description += `> <a:Dark4luvontop:1514999633179316305> **To set Custom Prefix use <@${botId}>** \`${prefix}prefix " your custom prefix "\`\n>\n`;
+  description += `> <a:Dark4luvontop:1514999633179316305> **Hint :** To Know more use " Tag the Bot and Type Guide for details and usage "\n\n`;
   
   description += `───────────────────────────────\n`;
 
@@ -583,7 +583,7 @@ function getHelpComponents(selectedModuleId = 'home') {
     .setStyle(ButtonStyle.Danger);
 
   const row1 = new ActionRowBuilder().addComponents(selectMenu);
-  const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
+  const row2 = new ActionRowBuilder().addComponents(btnPrev, btnRefresh, btnNext, btnDelete);
 
   return [row1, row2];
 }
