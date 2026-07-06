@@ -532,6 +532,11 @@ export const commands = [
       const panelChannelId = panelChannel?.id || null;
       db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
 
+      if (panelChannel) {
+        const sharedPanel = buildSharedPanel(guild.id);
+        await panelChannel.send(sharedPanel).catch(() => null);
+      }
+
       return message.reply({
         embeds: [embed.success('JTC System Activated 🚀', [
           `**Lobby Channel:** ${lobbyChannel}`,
@@ -575,6 +580,11 @@ export const commands = [
       const categoryId = category?.id || lobbyChannel.parentId;
       const panelChannelId = panelChannel?.id || null;
       db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
+
+      if (panelChannel) {
+        const sharedPanel = buildSharedPanel(guild.id);
+        await panelChannel.send(sharedPanel).catch(() => null);
+      }
 
       await interaction.editReply({
         embeds: [embed.success('JTC System Activated 🚀', [
