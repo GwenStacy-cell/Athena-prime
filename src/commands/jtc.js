@@ -586,5 +586,49 @@ export const commands = [
         ])], ephemeral: true });
       }
     }
+  },
+  {
+    name: 'jtc',
+    description: 'Join to Create management commands.',
+    category: 'utility',
+    permissions: [],
+    options: [
+      {
+        name: 'add',
+        description: 'Permit a user to join your locked JTC channel.',
+        type: 1,
+        options: [
+          {
+            name: 'user',
+            description: 'The user to permit',
+            type: 6, // USER type
+            required: true
+          }
+        ]
+      }
+    ],
+    async executePrefix(message) {
+      return message.reply({ embeds: [embed.info('Use Slash Command', 'Please use `/jtc add @user` to permit a user.')] });
+    },
+    async executeSlash(interaction) {
+      const sub = interaction.options.getSubcommand();
+      const member = interaction.member;
+      const vcChannel = member.voice?.channel;
+
+      if (!vcChannel) return interaction.reply({ embeds: [embed.warn('Not In Voice', 'You must be in a voice channel to use this.')], ephemeral: true });
+      const jtcData = db.getJtcChannel(vcChannel.id);
+      if (!jtcData) return interaction.reply({ embeds: [embed.warn('Not A JTC Channel', 'This only works in a Join to Create channel.')], ephemeral: true });
+
+      // Only the channel owner or an admin can permit someone
+      if (jtcData.ownerId !== member.id && !member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return interaction.reply({ embeds: [embed.warn('Unauthorized', 'Only the channel owner can permit users.')], ephemeral: true });
+      }
+
+      if (sub === 'add') {
+        const targetUser = interaction.options.getUser('user');
+        await vcChannel.permissionOverwrites.edit(targetUser.id, { Connect: true, ViewChannel: true });
+        return interaction.reply({ embeds: [embed.success('User Permitted ', `<@${targetUser.id}> can now join your channel even when locked or ghosted.`)] });
+      }
+    }
   }
 ];
