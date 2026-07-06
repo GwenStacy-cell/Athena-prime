@@ -538,7 +538,8 @@ function getHelpComponents(selectedModuleId = 'home') {
     {
       label: 'Home Menu',
       description: 'Return to the main help menu',
-      value: 'home'
+      value: 'home',
+      emoji: '<:home:1523765738655973589>'
     }
   ]);
 
@@ -554,22 +555,22 @@ function getHelpComponents(selectedModuleId = 'home') {
 
   const btnPrev = new ButtonBuilder()
     .setCustomId('help_prev')
-    .setLabel('Previous')
+    .setEmoji('<:previous:1523766004839088301>')
     .setStyle(ButtonStyle.Secondary);
 
   const btnNext = new ButtonBuilder()
     .setCustomId('help_next')
-    .setLabel('Next')
+    .setEmoji('<:next:1523766065576935475>')
     .setStyle(ButtonStyle.Secondary);
 
   const btnRefresh = new ButtonBuilder()
     .setCustomId('help_home')
-    .setLabel('Home')
+    .setEmoji('<:home:1523765738655973589>')
     .setStyle(ButtonStyle.Secondary);
     
   const btnDelete = new ButtonBuilder()
     .setCustomId('help_delete')
-    .setLabel('Delete')
+    .setEmoji('<:delete:1523766340752642109>')
     .setStyle(ButtonStyle.Danger);
 
   const row1 = new ActionRowBuilder().addComponents(selectMenu);
