@@ -499,12 +499,27 @@ export const commands = [
       if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) return;
       const guild = message.guild;
 
-      let lobbyChannel = args[0] ? await guild.channels.fetch(args[0].replace(/\D/g, '')).catch(()=>null) : null;
-      let category = args[1] ? await guild.channels.fetch(args[1].replace(/\D/g, '')).catch(()=>null) : null;
-      let panelChannel = args[2] ? await guild.channels.fetch(args[2].replace(/\D/g, '')).catch(()=>null) : null;
+      let lobbyChannel = null;
+      let category = null;
+      let panelChannel = null;
 
-      if (!lobbyChannel && args[0]) {
-         return message.reply({ embeds: [embed.warn('Invalid ID', 'Could not find the specified lobby channel.')] });
+      for (const arg of args) {
+        const id = arg.replace(/\D/g, '');
+        if (!id) continue;
+        const channel = await guild.channels.fetch(id).catch(() => null);
+        if (!channel) continue;
+
+        if (channel.type === 2) { // GuildVoice
+          lobbyChannel = channel;
+        } else if (channel.type === 4) { // GuildCategory
+          category = channel;
+        } else if (channel.type === 0) { // GuildText
+          panelChannel = channel;
+        }
+      }
+
+      if (!lobbyChannel && args.length > 0 && args[0]) {
+         return message.reply({ embeds: [embed.warn('Invalid ID', 'Could not find a valid Voice Channel from the IDs provided.')] });
       }
 
       if (!lobbyChannel) {
