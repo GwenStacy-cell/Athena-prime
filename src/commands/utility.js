@@ -497,20 +497,27 @@ function buildHelpHomeEmbed(client, guildId) {
   const botId = client?.user?.id || '1347071663182676059';
 
   let description = `# Hey !!! , I am <@${botId}> ,\n\n`;
-  description += `> <a:Dark4luvontop:1514999633179316305> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n>\n`;
-  description += `> <a:Dark4luvontop:1514999633179316305> **To set Custom Prefix use <@${botId}>** \`${prefix}prefix " your custom prefix "\`\n>\n`;
-  description += `> <a:Dark4luvontop:1514999633179316305> **Hint :** To Know more use " Tag the Bot and Type Guide for details and usage "\n\n`;
+  description += `**» Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
+  description += `**» To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
+  description += `**» Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n\n`;
   
-  description += `───────────────────────────────\n`;
+  description += `------------------------------------------------\n`;
 
   let grid = '';
   for (let i = 0; i < helpModules.length; i++) {
     const mod = helpModules[i];
-    grid += `${mod.emoji} \`${mod.label}\`  `;
-    if ((i + 1) % 2 === 0) grid += '\n\n';
+    const isLeft = i % 2 === 0;
+    const padLength = isLeft ? 26 : 24;
+    let paddedLabel = ' ' + mod.label;
+    while (paddedLabel.length < padLength) {
+      paddedLabel += ' ';
+    }
+    paddedLabel += '\u00A0'; // preserve trailing spaces in codeblock
+    grid += `${mod.emoji} \`${paddedLabel}\`  `;
+    if (!isLeft) grid += '\n\n';
   }
   description += grid.trim() + '\n';
-  description += `───────────────────────────────`;
+  description += `------------------------------------------------`;
 
   return new EmbedBuilder()
     .setColor(accentColor)
@@ -528,7 +535,7 @@ function buildModuleEmbed(moduleId, guildId) {
   if (!mod) return null;
 
   let desc = mod.commands.map(cmd => cmd.replace(/!/g, prefix)).join('\n\n');
-  desc += `\n\n───────────────────────────────`;
+  desc += `\n\n------------------------------------------------`;
 
   return new EmbedBuilder()
     .setColor(accentColor)
@@ -583,7 +590,7 @@ function getHelpComponents(selectedModuleId = 'home') {
     .setStyle(ButtonStyle.Danger);
 
   const row1 = new ActionRowBuilder().addComponents(selectMenu);
-  const row2 = new ActionRowBuilder().addComponents(btnPrev, btnRefresh, btnNext, btnDelete);
+  const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
 
   return [row1, row2];
 }
