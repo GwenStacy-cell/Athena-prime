@@ -578,23 +578,60 @@ export { handleBackup };
 // FIXJTC — Updates JTC panels globally to apply current accent color
 // ==========================================
 async function handleFixJtc(message) {
-  const sent = await message.reply('Starting global JTC panel sync...');
+  const sent = await message.reply('Starting global JTC panel sync. This might take a moment...');
   let successCount = 0;
   let failCount = 0;
 
   try {
-    const { syncPanel } = await import('./jtc.js');
+    const { syncPanel, buildSharedPanel } = await import('./jtc.js');
+    const { default: db } = await import('../database.js');
     
     for (const guild of message.client.guilds.cache.values()) {
       try {
-        const success = await syncPanel(guild);
+        let success = await syncPanel(guild);
+        
+        // If standard sync failed (missing DB entry), do a deep search
+        if (!success) {
+          const channels = guild.channels.cache.filter(c => c.type === 0); // GuildText
+          for (const channel of channels.values()) {
+            if (!channel.viewable) continue;
+            const messages = await channel.messages.fetch({ limit: 50 }).catch(() => null);
+            if (!messages) continue;
+
+            const panels = Array.from(messages.filter(m => m.author.id === message.client.user.id && (
+              m.embeds[0]?.title?.includes('Voice Channel Control Panel') ||
+              m.components?.[0]?.components?.[0]?.content?.includes('Voice Channel Control Panel') ||
+              m.components?.[0]?.components?.[0]?.components?.[0]?.content?.includes('Voice Channel Control Panel')
+            )).values());
+
+            if (panels.length > 0) {
+              panels.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+              const truePanel = panels[0];
+              
+              const newPanel = buildSharedPanel(guild);
+              newPanel.embeds = [];
+              newPanel.content = '';
+              await truePanel.edit(newPanel).catch(() => null);
+
+              // Save to database for future fast-syncs
+              const cfg = db.getJtcConfig(guild.id);
+              db.setJtcConfig(guild.id, cfg?.lobbyChannelId, cfg?.categoryId, channel.id);
+              db.setPanelMessageId(guild.id, truePanel.id);
+              
+              success = true;
+              break;
+            }
+          }
+        }
+        
         if (success) successCount++;
+        else failCount++;
       } catch (e) {
         failCount++;
       }
     }
     
-    await sent.edit(`✅ **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped: \`${failCount}\` servers.`);
+    await sent.edit(`✅ **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
   } catch (e) {
     await sent.edit(`❌ **Error during sync:** \`${e.message}\``);
   }
