@@ -5,7 +5,11 @@ import {
   ButtonBuilder,
   ButtonStyle,
   StringSelectMenuBuilder,
-  EmbedBuilder
+  EmbedBuilder,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  SeparatorBuilder,
+  MessageFlags
 } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
@@ -57,19 +61,6 @@ function getAccent(guildId) {
 // Two dropdowns: Channel Settings + Channel Permissions
 // ==========================================
 export function buildControlPanel(vcChannel, ownerMember) {
-  const panelEmbed = new EmbedBuilder()
-    .setColor(getAccent(vcChannel.guild.id))
-    .setTitle(' Welcome to your own temporary voice channel')
-    .setDescription(
-      `Control your channel using the menus below\n` +
-      `• Use the dropdowns to manage settings and permissions\n` +
-      `• Alternatively use \`/vc\` commands\n\n` +
-      `**Channel:** ${vcChannel}\n` +
-      `**Owner:** ${ownerMember}`
-    )
-    .setTimestamp();
-
-  // ── Channel Settings Dropdown ──
   const settingsMenu = new StringSelectMenuBuilder()
     .setCustomId('jtc_settings_menu')
     .setPlaceholder('Channel Settings')
@@ -87,7 +78,6 @@ export function buildControlPanel(vcChannel, ownerMember) {
       { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: getEmoji('info') }
     ]);
 
-  // ── Channel Permissions Dropdown ──
   const permsMenu = new StringSelectMenuBuilder()
     .setCustomId('jtc_perms_menu')
     .setPlaceholder('Channel Permissions')
@@ -102,10 +92,26 @@ export function buildControlPanel(vcChannel, ownerMember) {
       { label: 'Transfer', description: 'Transfer ownership to another user', value: 'jtc_transfer', emoji: getEmoji('transfer') }
     ]);
 
-  const row1 = new ActionRowBuilder().addComponents(settingsMenu);
-  const row2 = new ActionRowBuilder().addComponents(permsMenu);
+  const container = new ContainerBuilder()
+    .setAccentColor(getAccent(vcChannel.guild.id))
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `**⚙️ Temporary Channel Controls Interface**\n\n` +
+        `Control your channel using the menus below\n` +
+        `• Use the dropdowns to manage settings and permissions\n` +
+        `• Alternatively use \`/vc\` commands\n\n` +
+        `**Channel:** ${vcChannel}\n` +
+        `**Owner:** ${ownerMember}`
+      )
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent('**Channel Settings**'))
+    .addActionRowComponents(new ActionRowBuilder().addComponents(settingsMenu))
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent('**Channel Permissions**'))
+    .addActionRowComponents(new ActionRowBuilder().addComponents(permsMenu));
 
-  return { embeds: [panelEmbed], components: [row1, row2] };
+  return { flags: MessageFlags.IsComponentsV2, components: [container] };
 }
 
 // ==========================================
@@ -113,17 +119,6 @@ export function buildControlPanel(vcChannel, ownerMember) {
 // Generic, no channel/owner info. All interactions are ephemeral.
 // ==========================================
 export function buildSharedPanel(guildId) {
-  const panelEmbed = new EmbedBuilder()
-    .setColor(getAccent(guildId))
-    .setTitle(' Voice Channel Control Panel')
-    .setDescription(
-      `**Manage your temporary voice channel using the menus below.**\n\n` +
-      `• Join the ** Join to Create** lobby first\n` +
-      `• Use the dropdowns to control your room\n` +
-      `• Alternatively use \`/vc\` slash commands\n\n` +
-      `>  Only **you** can see the responses — fully private.`
-    );
-
   const settingsMenu = new StringSelectMenuBuilder()
     .setCustomId('jtc_settings_menu')
     .setPlaceholder('Channel Settings')
@@ -155,10 +150,26 @@ export function buildSharedPanel(guildId) {
       { label: 'Transfer', description: 'Transfer ownership to another user', value: 'jtc_transfer', emoji: getEmoji('transfer') }
     ]);
 
-  const row1 = new ActionRowBuilder().addComponents(settingsMenu);
-  const row2 = new ActionRowBuilder().addComponents(permsMenu);
+  const container = new ContainerBuilder()
+    .setAccentColor(getAccent(guildId))
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `**⚙️ Voice Channel Control Panel**\n\n` +
+        `**Manage your temporary voice channel using the menus below.**\n\n` +
+        `• Join the **Join to Create** lobby first\n` +
+        `• Use the dropdowns to control your room\n` +
+        `• Alternatively use \`/vc\` slash commands\n\n` +
+        `>  Only **you** can see the responses — fully private.`
+      )
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent('**Channel Settings**'))
+    .addActionRowComponents(new ActionRowBuilder().addComponents(settingsMenu))
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent('**Channel Permissions**'))
+    .addActionRowComponents(new ActionRowBuilder().addComponents(permsMenu));
 
-  return { embeds: [panelEmbed], components: [row1, row2] };
+  return { flags: MessageFlags.IsComponentsV2, components: [container] };
 }
 
 // ==========================================
