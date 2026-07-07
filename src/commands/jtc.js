@@ -530,11 +530,25 @@ export const commands = [
 
       const categoryId = category?.id || lobbyChannel.parentId;
       const panelChannelId = panelChannel?.id || null;
-      db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
 
       if (panelChannel) {
+        // Delete old panels to prevent duplicates
+        const messages = await panelChannel.messages.fetch({ limit: 20 }).catch(() => null);
+        if (messages) {
+          const panels = messages.filter(m => m.author.id === message.client.user.id && m.embeds[0]?.title === 'Voice Channel Control Panel');
+          for (const p of panels.values()) await p.delete().catch(() => null);
+        }
+
         const sharedPanel = buildSharedPanel(guild.id);
-        await panelChannel.send(sharedPanel).catch(() => null);
+        const sentMsg = await panelChannel.send(sharedPanel).catch(() => null);
+        if (sentMsg) {
+          db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
+          db.setPanelMessageId(guild.id, sentMsg.id);
+        } else {
+          db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
+        }
+      } else {
+        db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
       }
 
       return message.reply({
@@ -579,11 +593,25 @@ export const commands = [
 
       const categoryId = category?.id || lobbyChannel.parentId;
       const panelChannelId = panelChannel?.id || null;
-      db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
 
       if (panelChannel) {
+        // Delete old panels to prevent duplicates
+        const messages = await panelChannel.messages.fetch({ limit: 20 }).catch(() => null);
+        if (messages) {
+          const panels = messages.filter(m => m.author.id === interaction.client.user.id && m.embeds[0]?.title === 'Voice Channel Control Panel');
+          for (const p of panels.values()) await p.delete().catch(() => null);
+        }
+
         const sharedPanel = buildSharedPanel(guild.id);
-        await panelChannel.send(sharedPanel).catch(() => null);
+        const sentMsg = await panelChannel.send(sharedPanel).catch(() => null);
+        if (sentMsg) {
+          db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
+          db.setPanelMessageId(guild.id, sentMsg.id);
+        } else {
+          db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
+        }
+      } else {
+        db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
       }
 
       await interaction.editReply({
