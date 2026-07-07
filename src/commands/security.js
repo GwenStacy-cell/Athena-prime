@@ -1728,7 +1728,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     let errorWarning = '';
     if (rErrors > 0 || cErrors > 0) {
-      errorWarning = `\n\n**⚠️ WARNING:** Failed to modify ${rErrors} roles and ${cErrors} channels (likely due to missing permissions or rate limits). Ensure the bot's role is placed at the top and it has Administrator privileges.`;
+      errorWarning = `\n\n<a:alert1:1521456941858029720> **WARNING:** Failed to modify ${rErrors} roles and ${cErrors} channels. (Note: Discord prevents bots from hiding Community Default/Onboarding channels). Ensure the bot's role is placed at the top and has Administrator privileges.`;
     }
 
     return { embed: embed.danger('EMERGENCY MODE ACTIVATED', `All channels have been hidden and all permissions have been stripped from roles. Use \`!end emergency\` or \`/endemergency\` to restore the server.${errorWarning}`) };
@@ -1793,7 +1793,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     let errorWarning = '';
     if (rErrors > 0 || cErrors > 0) {
-      errorWarning = `\n\n**⚠️ WARNING:** Failed to restore ${rErrors} roles and ${cErrors} channels. You may need to fix them manually.`;
+      errorWarning = `\n\n<a:alert1:1521456941858029720> **WARNING:** Failed to restore ${rErrors} roles and ${cErrors} channels. You may need to fix them manually.`;
     }
 
     return { embed: embed.success('Emergency Mode Ended', `All permissions and channel visibilities have been restored.${errorWarning}`) };
