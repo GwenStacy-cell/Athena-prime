@@ -125,6 +125,27 @@ export function buildControlPanel(vcChannel, ownerMember) {
   return { flags: MessageFlags.IsComponentsV2, components: [container] };
 }
 
+// Helper to sync the panel message for a guild
+export async function syncPanel(guild) {
+  const { default: db } = await import('../database.js');
+  const cfg = db.getJtcConfig(guild.id);
+  if (!cfg?.panelChannelId || !cfg?.panelMessageId) return false;
+
+  const channel = await guild.channels.fetch(cfg.panelChannelId).catch(() => null);
+  if (!channel) return false;
+
+  const msg = await channel.messages.fetch(cfg.panelMessageId).catch(() => null);
+  if (!msg) return false;
+
+  const newPanel = buildSharedPanel(guild);
+  // Clear standard embeds array to avoid API errors with ContainerBuilder payload
+  newPanel.embeds = [];
+  newPanel.content = '';
+  
+  await msg.edit(newPanel).catch(() => null);
+  return true;
+}
+
 // ==========================================
 // SHARED PANEL — one persistent message in the interface channel
 // Generic, no channel/owner info. All interactions are ephemeral.

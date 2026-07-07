@@ -158,6 +158,12 @@ export async function handleAccentButton(interaction) {
     const panel = buildAccentPanel(guild);
     await interaction.update({ embeds: [panel.embed], components: panel.components });
 
+    // Sync JTC Panel if exists
+    try {
+      const { syncPanel } = await import('./jtc.js');
+      await syncPanel(guild);
+    } catch(e) {}
+
     // Send confirmation as a follow-up
     const executorAvatarURL = interaction.user.displayAvatarURL({ size: 256 });
     const savedEmbed = buildSavedEmbed(guild, colorName, hex, executorAvatarURL);
@@ -170,6 +176,12 @@ export async function handleAccentButton(interaction) {
     db.updateGuildConfig(guild.id, { accentColor: null });
     const panel = buildAccentPanel(guild);
     await interaction.update({ embeds: [panel.embed], components: panel.components });
+
+    // Sync JTC Panel if exists
+    try {
+      const { syncPanel } = await import('./jtc.js');
+      await syncPanel(guild);
+    } catch(e) {}
     await interaction.followUp({ content: ' Accent color has been reset to default.', ephemeral: true });
     return;
   }
@@ -207,6 +219,12 @@ export async function handleAccentModal(interaction) {
   // Update the panel
   const panel = buildAccentPanel(interaction.guild);
   await interaction.update({ embeds: [panel.embed], components: panel.components });
+
+  // Sync JTC Panel if exists
+  try {
+    const { syncPanel } = await import('./jtc.js');
+    await syncPanel(interaction.guild);
+  } catch(e) {}
 
   // Send confirmation follow-up
   const executorAvatarURL = interaction.user.displayAvatarURL({ size: 256 });
