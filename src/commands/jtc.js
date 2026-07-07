@@ -53,12 +53,12 @@ function getEmoji(key) {
 }
 
 function getAccent(guild) {
-  if (!guild) return 0x2b2d31;
+  if (!guild) return 0x2f3136;
   const cfg = db.getGuildConfig(guild.id);
   if (cfg?.accentColor) {
     return parseInt(cfg.accentColor.replace('#', ''), 16);
   }
-  return guild.members?.me?.displayColor || 0x2b2d31;
+  return 0x2f3136; // Matches config.colors.dark
 }
 
 // ==========================================
