@@ -109,7 +109,7 @@ export function buildControlPanel(vcChannel, ownerMember) {
           )
         )
         .setThumbnailAccessory(
-          new ThumbnailBuilder().setURL('https://cdn.discordapp.com/attachments/1523073507913761080/1524136093715267663/eva_jtc.png')
+          new ThumbnailBuilder().setURL('https://cdn.discordapp.com/attachments/1459993139740803116/1524137943663378492/eva_jtc_1.png')
         )
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
@@ -173,7 +173,7 @@ export function buildSharedPanel(guildId) {
           )
         )
         .setThumbnailAccessory(
-          new ThumbnailBuilder().setURL('https://cdn.discordapp.com/attachments/1523073507913761080/1524136093715267663/eva_jtc.png')
+          new ThumbnailBuilder().setURL('https://cdn.discordapp.com/attachments/1459993139740803116/1524137943663378492/eva_jtc_1.png')
         )
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
