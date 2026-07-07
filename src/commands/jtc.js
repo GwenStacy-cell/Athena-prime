@@ -67,7 +67,6 @@ export function buildControlPanel(vcChannel, ownerMember) {
       `**Channel:** ${vcChannel}\n` +
       `**Owner:** ${ownerMember}`
     )
-    .setFooter({ text: 'Athena Prime • Join to Create' })
     .setTimestamp();
 
   // ── Channel Settings Dropdown ──
@@ -122,9 +121,8 @@ export function buildSharedPanel(guildId) {
       `• Join the ** Join to Create** lobby first\n` +
       `• Use the dropdowns to control your room\n` +
       `• Alternatively use \`/vc\` slash commands\n\n` +
-      `> � Only **you** can see the responses — fully private.`
-    )
-    .setFooter({ text: 'Athena Prime • Join to Create' });
+      `>  Only **you** can see the responses — fully private.`
+    );
 
   const settingsMenu = new StringSelectMenuBuilder()
     .setCustomId('jtc_settings_menu')
