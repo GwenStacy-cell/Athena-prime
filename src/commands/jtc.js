@@ -105,8 +105,8 @@ export function buildControlPanel(vcChannel, ownerMember) {
           new TextDisplayBuilder().setContent(
             `# <a:emoji_85:1517491799696867358> Voice Channel Control Panel\n\n` +
             `**Manage your temporary voice channel using the menus below.**\n\n` +
-            `• **Take control:** Use the dropdowns to manage your room\n` +
-            `• **Quick access:** Alternatively use \`/vc\` slash commands\n\n` +
+            `<a:Dark4luvontop:1518275045963726949> **Take control:** Use the dropdowns to manage your room\n` +
+            `<a:Dark4luvontop:1518275045963726949> **Quick access:** Alternatively use \`/vc\` slash commands\n\n` +
             `**Channel:** ${vcChannel}\n` +
             `**Owner:** ${ownerMember}`
           )
@@ -169,10 +169,10 @@ export function buildSharedPanel(guild) {
           new TextDisplayBuilder().setContent(
             `# <a:emoji_85:1517491799696867358> Voice Channel Control Panel\n\n` +
             `**Manage your temporary voice channel using the menus below.**\n\n` +
-            `• **Join first:** Connect to the **Join to Create** lobby\n` +
-            `• **Take control:** Use the dropdowns to manage your room\n` +
-            `• **Quick access:** Alternatively use \`/vc\` slash commands\n` +
-            `• **Stay private:** All interactions are hidden from others\n\n` +
+            `<a:Dark4luvontop:1518275045963726949> **Join first:** Connect to the **Join to Create** lobby\n` +
+            `<a:Dark4luvontop:1518275045963726949> **Take control:** Use the dropdowns to manage your room\n` +
+            `<a:Dark4luvontop:1518275045963726949> **Quick access:** Alternatively use \`/vc\` slash commands\n` +
+            `<a:Dark4luvontop:1518275045963726949> **Stay private:** All interactions are hidden from others\n\n` +
             `> Only **you** can see the responses — fully private.`
           )
         )
