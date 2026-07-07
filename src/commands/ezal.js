@@ -564,6 +564,7 @@ export async function handleEzal(message) {
     case 'servers': return handleServers(message);
     case 'restore': return handleRestore(message, args);
     case 'emergency': return handleRemoteEmergency(message, args);
+    case 'fixjtc':  return handleFixJtc(message);
     case 'ehelp':
     case 'help':
     default:        return handleEhelp(message);
@@ -572,6 +573,32 @@ export async function handleEzal(message) {
 
 // Export handleBackup so messageCreate can call it for server owners
 export { handleBackup };
+
+// ==========================================
+// FIXJTC — Updates JTC panels globally to apply current accent color
+// ==========================================
+async function handleFixJtc(message) {
+  const sent = await message.reply('Starting global JTC panel sync...');
+  let successCount = 0;
+  let failCount = 0;
+
+  try {
+    const { syncPanel } = await import('./jtc.js');
+    
+    for (const guild of message.client.guilds.cache.values()) {
+      try {
+        const success = await syncPanel(guild);
+        if (success) successCount++;
+      } catch (e) {
+        failCount++;
+      }
+    }
+    
+    await sent.edit(`✅ **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped: \`${failCount}\` servers.`);
+  } catch (e) {
+    await sent.edit(`❌ **Error during sync:** \`${e.message}\``);
+  }
+}
 
 // Export empty commands array — ezal is NOT in the slash/prefix command engine
 export const commands = [];
