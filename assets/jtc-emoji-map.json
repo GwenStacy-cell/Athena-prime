@@ -1,74 +1,21 @@
 {
-  "name": {
-    "id": "1513268637459546262",
-    "name": "jtc_name"
-  },
-  "limit": {
-    "id": "1513268641301270713",
-    "name": "jtc_limit"
-  },
-  "status": {
-    "id": "1513268645705285653",
-    "name": "jtc_status"
-  },
-  "game": {
-    "id": "1513268649656455239",
-    "name": "jtc_game"
-  },
-  "lfm": {
-    "id": "1513268653561221171",
-    "name": "jtc_lfm"
-  },
-  "bitrate": {
-    "id": "1513268657550000219",
-    "name": "jtc_bitrate"
-  },
-  "region": {
-    "id": "1513268661480325172",
-    "name": "jtc_region"
-  },
-  "text": {
-    "id": "1513268665506861207",
-    "name": "jtc_text"
-  },
-  "nsfw": {
-    "id": "1513268669298245923",
-    "name": "jtc_nsfw"
-  },
-  "claim": {
-    "id": "1513268672972718121",
-    "name": "jtc_claim"
-  },
-  "lock": {
-    "id": "1513268677158637792",
-    "name": "jtc_lock"
-  },
-  "unlock": {
-    "id": "1513268681340092519",
-    "name": "jtc_unlock"
-  },
-  "permit": {
-    "id": "1513268685337395410",
-    "name": "jtc_permit"
-  },
-  "reject": {
-    "id": "1513268689322115173",
-    "name": "jtc_reject"
-  },
-  "invite": {
-    "id": "1513268693612630218",
-    "name": "jtc_invite"
-  },
-  "ghost": {
-    "id": "1513268697752670228",
-    "name": "jtc_ghost"
-  },
-  "unghost": {
-    "id": "1513268701619818596",
-    "name": "jtc_unghost"
-  },
-  "transfer": {
-    "id": "1513268705797210373",
-    "name": "jtc_transfer"
-  }
+  "name": { "id": "1524007047107186768", "name": "jtc_name" },
+  "limit": { "id": "1524088902783209594", "name": "limit_jtc" },
+  "status": { "id": "1524089009163337758", "name": "status_jtc" },
+  "game": { "id": "1524108621997281372", "name": "jtc_game" },
+  "lfm": { "id": "1524111455404953663", "name": "info_jtc" },
+  "bitrate": { "id": "1524108267993825371", "name": "bitrate_jtc" },
+  "region": { "id": "1524108185726615713", "name": "region_jtc" },
+  "text": { "id": "1524111281265574028", "name": "jtc_text" },
+  "nsfw": { "id": "1524111345736220785", "name": "nsfw_jtc" },
+  "claim": { "id": "1524111402061529271", "name": "claim_jtc" },
+  "info": { "id": "1524111455404953663", "name": "info_jtc" },
+  "lock": { "id": "1524116446412800322", "name": "lock_vc" },
+  "unlock": { "id": "1524116629154435072", "name": "unlock_vc" },
+  "ghost": { "id": "1524112821783232672", "name": "ghost_jtc" },
+  "unghost": { "id": "1524121252812423228", "name": "unghost_jtc" },
+  "permit": { "id": "1524120618864214206", "name": "permit_jtc" },
+  "reject": { "id": "1524118914525827072", "name": "reject_jtc" },
+  "invite": { "id": "1524117778586406933", "name": "invite_jtc" },
+  "transfer": { "id": "1524117354458648818", "name": "transfer_jtc" }
 }
