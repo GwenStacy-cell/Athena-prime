@@ -9,6 +9,8 @@ import {
   ContainerBuilder,
   TextDisplayBuilder,
   SeparatorBuilder,
+  SectionBuilder,
+  ThumbnailBuilder,
   MessageFlags
 } from 'discord.js';
 import db from '../database.js';
@@ -94,15 +96,21 @@ export function buildControlPanel(vcChannel, ownerMember) {
 
   const container = new ContainerBuilder()
     .setAccentColor(getAccent(vcChannel.guild.id))
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `**⚙️ Temporary Channel Controls Interface**\n\n` +
-        `Control your channel using the menus below\n` +
-        `• Use the dropdowns to manage settings and permissions\n` +
-        `• Alternatively use \`/vc\` commands\n\n` +
-        `**Channel:** ${vcChannel}\n` +
-        `**Owner:** ${ownerMember}`
-      )
+    .addSectionComponents(
+      new SectionBuilder()
+        .addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(
+            `**⚙️ Temporary Channel Controls Interface**\n\n` +
+            `Control your channel using the menus below\n` +
+            `• Use the dropdowns to manage settings and permissions\n` +
+            `• Alternatively use \`/vc\` commands\n\n` +
+            `**Channel:** ${vcChannel}\n` +
+            `**Owner:** ${ownerMember}`
+          )
+        )
+        .setThumbnailAccessory(
+          new ThumbnailBuilder().setURL('https://cdn.discordapp.com/attachments/1523073507913761080/1524136093715267663/eva_jtc.png')
+        )
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(new TextDisplayBuilder().setContent('**Channel Settings**'))
@@ -152,15 +160,21 @@ export function buildSharedPanel(guildId) {
 
   const container = new ContainerBuilder()
     .setAccentColor(getAccent(guildId))
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `**⚙️ Voice Channel Control Panel**\n\n` +
-        `**Manage your temporary voice channel using the menus below.**\n\n` +
-        `• Join the **Join to Create** lobby first\n` +
-        `• Use the dropdowns to control your room\n` +
-        `• Alternatively use \`/vc\` slash commands\n\n` +
-        `>  Only **you** can see the responses — fully private.`
-      )
+    .addSectionComponents(
+      new SectionBuilder()
+        .addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(
+            `**⚙️ Voice Channel Control Panel**\n\n` +
+            `**Manage your temporary voice channel using the menus below.**\n\n` +
+            `• Join the **Join to Create** lobby first\n` +
+            `• Use the dropdowns to control your room\n` +
+            `• Alternatively use \`/vc\` slash commands\n\n` +
+            `>  Only **you** can see the responses — fully private.`
+          )
+        )
+        .setThumbnailAccessory(
+          new ThumbnailBuilder().setURL('https://cdn.discordapp.com/attachments/1523073507913761080/1524136093715267663/eva_jtc.png')
+        )
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(new TextDisplayBuilder().setContent('**Channel Settings**'))
