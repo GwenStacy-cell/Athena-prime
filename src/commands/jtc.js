@@ -100,10 +100,10 @@ export function buildControlPanel(vcChannel, ownerMember) {
       new SectionBuilder()
         .addTextDisplayComponents(
           new TextDisplayBuilder().setContent(
-            `**⚙️ Temporary Channel Controls Interface**\n\n` +
-            `Control your channel using the menus below\n` +
-            `• Use the dropdowns to manage settings and permissions\n` +
-            `• Alternatively use \`/vc\` commands\n\n` +
+            `# <a:emoji_85:1517491799696867358> Voice Channel Control Panel\n\n` +
+            `**Manage your temporary voice channel using the menus below.**\n\n` +
+            `• **Take control:** Use the dropdowns to manage your room\n` +
+            `• **Quick access:** Alternatively use \`/vc\` slash commands\n\n` +
             `**Channel:** ${vcChannel}\n` +
             `**Owner:** ${ownerMember}`
           )
@@ -164,12 +164,13 @@ export function buildSharedPanel(guildId) {
       new SectionBuilder()
         .addTextDisplayComponents(
           new TextDisplayBuilder().setContent(
-            `**⚙️ Voice Channel Control Panel**\n\n` +
+            `# <a:emoji_85:1517491799696867358> Voice Channel Control Panel\n\n` +
             `**Manage your temporary voice channel using the menus below.**\n\n` +
-            `• Join the **Join to Create** lobby first\n` +
-            `• Use the dropdowns to control your room\n` +
-            `• Alternatively use \`/vc\` slash commands\n\n` +
-            `>  Only **you** can see the responses — fully private.`
+            `• **Join first:** Connect to the **Join to Create** lobby\n` +
+            `• **Take control:** Use the dropdowns to manage your room\n` +
+            `• **Quick access:** Alternatively use \`/vc\` slash commands\n` +
+            `• **Stay private:** All interactions are hidden from others\n\n` +
+            `> Only **you** can see the responses — fully private.`
           )
         )
         .setThumbnailAccessory(
