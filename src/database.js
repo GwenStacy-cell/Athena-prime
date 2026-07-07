@@ -683,13 +683,24 @@ class Database {
     const existing = this.cache.jtc[guildId];
     const sameChannel = existing?.panelChannelId === panelChannelId;
     const panelMessageId = (sameChannel ? existing?.panelMessageId : null) || null;
-    this.cache.jtc[guildId] = { lobbyChannelId, categoryId, panelChannelId, panelMessageId };
+    const secondaryLobbyChannelId = existing?.secondaryLobbyChannelId || null;
+    this.cache.jtc[guildId] = { lobbyChannelId, categoryId, panelChannelId, panelMessageId, secondaryLobbyChannelId };
     this.save();
   }
 
   setPanelMessageId(guildId, messageId) {
     if (!this.cache.jtc?.[guildId]) return;
     this.cache.jtc[guildId].panelMessageId = messageId;
+    this.cache.jtc[guildId].panelMessageId = messageId;
+    this.save();
+  }
+
+  setSecondaryJtcConfig(guildId, secondaryLobbyChannelId) {
+    if (!this.cache.jtc) this.cache.jtc = {};
+    if (!this.cache.jtc[guildId]) {
+      this.cache.jtc[guildId] = { lobbyChannelId: null, categoryId: null, panelChannelId: null, panelMessageId: null };
+    }
+    this.cache.jtc[guildId].secondaryLobbyChannelId = secondaryLobbyChannelId;
     this.save();
   }
 

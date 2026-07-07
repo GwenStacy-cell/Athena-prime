@@ -369,7 +369,7 @@ export default {
     // ==========================================
     const jtcConfig = db.getJtcConfig(guild.id);
 
-    if (jtcConfig && newState.channelId === jtcConfig.lobbyChannelId) {
+    if (jtcConfig && (newState.channelId === jtcConfig.lobbyChannelId || (jtcConfig.secondaryLobbyChannelId && newState.channelId === jtcConfig.secondaryLobbyChannelId))) {
       const member = newState.member;
       if (!member) return;
 

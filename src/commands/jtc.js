@@ -598,6 +598,84 @@ export const commands = [
       });
     }
   },
+  // ─── SECONDARY JTC SETUP ───
+  {
+    name: 'secondaryjtc',
+    description: 'Set up a secondary Join to Create lobby. (Admin only)',
+    category: 'utility',
+    permissions: [PermissionFlagsBits.ManageGuild],
+    options: [
+      { name: 'channel', description: 'Select VC lobby (or use channel_id)', type: 7, required: false, channel_types: [2] },
+      { name: 'channel_id', description: 'Or paste VC lobby ID here', type: 3, required: false }
+    ],
+    async executePrefix(message, args) {
+      if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(message.author.id)) return;
+      const guild = message.guild;
+
+      let lobbyChannel = null;
+
+      for (const arg of args) {
+        const id = arg.replace(/\D/g, '');
+        if (!id) continue;
+        const channel = await guild.channels.fetch(id).catch(() => null);
+        if (channel && channel.isVoiceBased()) {
+          lobbyChannel = channel;
+          break;
+        }
+      }
+
+      if (!lobbyChannel && args.length > 0) {
+         return message.reply({ embeds: [embed.warn('Invalid ID', 'The provided ID did not resolve to a valid voice channel in this server.')] });
+      }
+
+      if (!lobbyChannel) {
+        const jtcConfig = db.getJtcConfig(guild.id);
+        const parentId = jtcConfig?.categoryId || null;
+        lobbyChannel = await guild.channels.create({ name: '➕ Secondary JTC', type: ChannelType.GuildVoice, parent: parentId, reason: 'Athena Prime Secondary JTC Setup' });
+      }
+
+      db.setSecondaryJtcConfig(guild.id, lobbyChannel.id);
+
+      return message.reply({
+        embeds: [embed.success('Secondary JTC System Activated 🚀', [
+          `**Secondary Lobby:** ${lobbyChannel}`,
+          '',
+          'When someone joins this lobby, a voice channel will be created automatically, just like the primary lobby.'
+        ].join('\n'))]
+      });
+    },
+    async executeSlash(interaction) {
+      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ embeds: [embed.warn('Unauthorized', 'You need Manage Server permissions to use this.')], ephemeral: true });
+      }
+      await interaction.deferReply({ ephemeral: true });
+      const guild = interaction.guild;
+
+      let lobbyChannel = interaction.options.getChannel('channel');
+      const lobbyIdStr = interaction.options.getString('channel_id');
+      if (!lobbyChannel && lobbyIdStr) lobbyChannel = await guild.channels.fetch(lobbyIdStr.trim().replace(/\D/g, '')).catch(()=>null);
+      
+      if (!lobbyChannel && lobbyIdStr) {
+         return interaction.editReply({ embeds: [embed.warn('Invalid ID', 'Could not find the specified lobby channel.')] });
+      }
+
+      if (!lobbyChannel) {
+        const jtcConfig = db.getJtcConfig(guild.id);
+        const parentId = jtcConfig?.categoryId || null;
+        lobbyChannel = await guild.channels.create({ name: '➕ Secondary JTC', type: ChannelType.GuildVoice, parent: parentId, reason: 'Athena Prime Secondary JTC Setup' });
+      }
+
+      db.setSecondaryJtcConfig(guild.id, lobbyChannel.id);
+
+      await interaction.editReply({
+        embeds: [embed.success('Secondary JTC System Activated 🚀', [
+          `**Secondary Lobby:** ${lobbyChannel}`,
+          '',
+          'When someone joins this lobby, a voice channel will be created automatically, just like the primary lobby.'
+        ].join('\n'))]
+      });
+    }
+  },
 
   // ─── JTCDISABLE ───
   {
