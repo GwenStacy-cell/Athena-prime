@@ -85,7 +85,7 @@ export function buildControlPanel(vcChannel, ownerMember) {
       { label: 'Text', description: 'Create a temporary text channel', value: 'jtc_text', emoji: getEmoji('text') },
       { label: 'NSFW', description: 'Toggle NSFW on your channel', value: 'jtc_nsfw', emoji: getEmoji('nsfw') },
       { label: 'Claim', description: 'Claim ownership of the channel', value: 'jtc_claim', emoji: getEmoji('claim') },
-      { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: 'ℹ' }
+      { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: getEmoji('info') }
     ]);
 
   // ── Channel Permissions Dropdown ──
@@ -140,7 +140,7 @@ export function buildSharedPanel(guildId) {
       { label: 'Text', description: 'Create a temporary text channel', value: 'jtc_text', emoji: getEmoji('text') },
       { label: 'NSFW', description: 'Toggle NSFW on your channel', value: 'jtc_nsfw', emoji: getEmoji('nsfw') },
       { label: 'Claim', description: 'Claim ownership of the channel', value: 'jtc_claim', emoji: getEmoji('claim') },
-      { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: 'ℹ' }
+      { label: 'Info', description: 'Show channel details', value: 'jtc_info', emoji: getEmoji('info') }
     ]);
 
   const permsMenu = new StringSelectMenuBuilder()
