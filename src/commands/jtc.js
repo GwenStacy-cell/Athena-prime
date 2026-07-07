@@ -52,10 +52,13 @@ function getEmoji(key) {
   return fallbacks[key] || '';
 }
 
-function getAccent(guildId) {
-  if (!guildId) return 0x5865F2;
-  const cfg = db.getGuildConfig(guildId);
-  return cfg?.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x5865F2;
+function getAccent(guild) {
+  if (!guild) return 0x2b2d31;
+  const cfg = db.getGuildConfig(guild.id);
+  if (cfg?.accentColor) {
+    return parseInt(cfg.accentColor.replace('#', ''), 16);
+  }
+  return guild.members?.me?.displayColor || 0x2b2d31;
 }
 
 // ==========================================
@@ -95,7 +98,7 @@ export function buildControlPanel(vcChannel, ownerMember) {
     ]);
 
   const container = new ContainerBuilder()
-    .setAccentColor(getAccent(vcChannel.guild.id))
+    .setAccentColor(getAccent(vcChannel.guild))
     .addSectionComponents(
       new SectionBuilder()
         .addTextDisplayComponents(
@@ -126,7 +129,7 @@ export function buildControlPanel(vcChannel, ownerMember) {
 // SHARED PANEL — one persistent message in the interface channel
 // Generic, no channel/owner info. All interactions are ephemeral.
 // ==========================================
-export function buildSharedPanel(guildId) {
+export function buildSharedPanel(guild) {
   const settingsMenu = new StringSelectMenuBuilder()
     .setCustomId('jtc_settings_menu')
     .setPlaceholder('Channel Settings')
@@ -159,7 +162,7 @@ export function buildSharedPanel(guildId) {
     ]);
 
   const container = new ContainerBuilder()
-    .setAccentColor(getAccent(guildId))
+    .setAccentColor(getAccent(guild))
     .addSectionComponents(
       new SectionBuilder()
         .addTextDisplayComponents(
@@ -283,7 +286,7 @@ export async function handleJtcSelectMenu(interaction) {
   // ── LFM — post Looking For Members message ──
   if (value === 'jtc_lfm') {
     const lfmEmbed = new EmbedBuilder()
-      .setColor(getAccent(guild.id))
+      .setColor(getAccent(guild))
       .setTitle('� Looking for Members!')
       .setDescription(`**${member.displayName}** is looking for members to join their voice channel!\n\n**Channel:** ${vcChannel}\n**Slots Available:** ${vcChannel.userLimit === 0 ? 'Unlimited' : vcChannel.userLimit - vcChannel.members.size}`)
       .setFooter({ text: 'Join their channel to play together!' })
@@ -479,7 +482,7 @@ export async function handleJtcModal(interaction) {
 
     const invite = await vcChannel.createInvite({ maxAge: 300, maxUses: 1, reason: 'JTC Invite' }).catch(() => null);
     const dmEmbed = new EmbedBuilder()
-      .setColor(getAccent(guild.id))
+      .setColor(getAccent(guild))
       .setTitle(' You\'ve been invited!')
       .setDescription(`**${member.displayName}** has invited you to join their voice channel in **${guild.name}**.\n\n**Channel:** ${vcChannel.name}\n\n${invite ? `[Click to Join](${invite.url})` : 'Join the server and look for their channel.'}`)
       .setFooter({ text: 'Athena Prime • Join to Create' });
@@ -563,7 +566,7 @@ export const commands = [
           for (const p of panels.values()) await p.delete().catch(() => null);
         }
 
-        const sharedPanel = buildSharedPanel(guild.id);
+        const sharedPanel = buildSharedPanel(guild);
         const sentMsg = await panelChannel.send(sharedPanel).catch(() => null);
         if (sentMsg) {
           db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
@@ -626,7 +629,7 @@ export const commands = [
           for (const p of panels.values()) await p.delete().catch(() => null);
         }
 
-        const sharedPanel = buildSharedPanel(guild.id);
+        const sharedPanel = buildSharedPanel(guild);
         const sentMsg = await panelChannel.send(sharedPanel).catch(() => null);
         if (sentMsg) {
           db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
