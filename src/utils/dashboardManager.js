@@ -171,7 +171,8 @@ export async function updateDashboardMessage(guild, client) {
 
         return; // Success
       } catch (err) {
-        // Messages deleted, we'll post new ones
+        console.error(`[Dashboard Sync] Failed to edit messages in ${guild.id}:`, err);
+        // Messages deleted or failed to edit, we'll post new ones
       }
     }
 
