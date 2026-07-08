@@ -160,6 +160,15 @@ export async function updateDashboardMessage(guild, client) {
         const m3 = await channel.messages.fetch(msgIds[2]);
         await m3.edit({ embeds: [embedAm], files: [fileAm] });
         
+        // Cleanup duplicates if any exist
+        const fetched = await channel.messages.fetch({ limit: 50 }).catch(() => null);
+        if (fetched) {
+          const rogueMessages = fetched.filter(m => m.author.id === client.user.id && !msgIds.includes(m.id));
+          for (const m of rogueMessages.values()) {
+            await m.delete().catch(() => {});
+          }
+        }
+
         return; // Success
       } catch (err) {
         // Messages deleted, we'll post new ones
@@ -168,8 +177,13 @@ export async function updateDashboardMessage(guild, client) {
 
     // Post new messages if missing
     // First clear old messages in channel
-    const fetched = await channel.messages.fetch({ limit: 10 });
-    await channel.bulkDelete(fetched.filter(m => m.author.id === client.user.id)).catch(() => {});
+    const fetched = await channel.messages.fetch({ limit: 50 }).catch(() => null);
+    if (fetched) {
+      const botMessages = fetched.filter(m => m.author.id === client.user.id);
+      for (const m of botMessages.values()) {
+        await m.delete().catch(() => {});
+      }
+    }
 
     const m1 = await channel.send({ embeds: [embedDb], files: [fileDb] });
     const m2 = await channel.send({ embeds: [embedTo], files: [fileTo] });
