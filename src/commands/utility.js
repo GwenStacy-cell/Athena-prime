@@ -491,14 +491,16 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
   const prefix = config?.prefix || '!';
   const botId = client?.user?.id || '1347071663182676059';
 
-  let description = '';
+  let rawComponents = [];
 
   if (moduleId === 'home') {
-    description = `# Hey !!! , I am <@${botId}> ,\n\n`;
-    description += `\u00BB Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n\n`;
-    description += `\u00BB To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`\n\n`;
-    description += `\u00BB Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\n`;
-    description += `- - -\n\n`;
+    let topText = `# Hey !!! , I am <@${botId}> ,\n\n`;
+    topText += `• ⚬ – **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
+    topText += `• ⚬ – **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
+    topText += `• ⚬ – **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**`;
+
+    rawComponents.push({ type: 10, content: topText });
+    rawComponents.push({ type: 14, divider: true });
 
     let grid = '';
     for (let i = 0; i < helpModules.length; i++) {
@@ -511,14 +513,17 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
       grid += `${mod.emoji} **\` ${label}${padding} \`** `;
       if (col === 2) grid += '\n'; 
     }
-    description += grid.trim() + '\n\n';
-    description += `- - -\n`;
+    
+    rawComponents.push({ type: 10, content: grid.trim() });
+    rawComponents.push({ type: 14, divider: true });
+
   } else {
     const mod = helpModules.find(m => m.id === moduleId);
     if (mod) {
-      description = `# ${mod.emoji} ${mod.label.toUpperCase()}\n\n`;
-      description += mod.commands.map(cmd => cmd.replace(/!/g, prefix)).join('\n\n');
-      description += `\n\n- - -`;
+      let description = `# ${mod.emoji} ${mod.label.toUpperCase()}\n\n`;
+      description += mod.commands.map(cmd => `**${cmd.replace(/!/g, prefix)}**`).join('\n\n');
+      rawComponents.push({ type: 10, content: description });
+      rawComponents.push({ type: 14, divider: true });
     }
   }
 
@@ -555,26 +560,17 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
 
   const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
 
+  rawComponents.push({ type: 12, items: [{ media: { url: HELP_GIF } }] });
+  rawComponents.push({ type: 14, divider: true });
+  rawComponents.push(row1.toJSON());
+  rawComponents.push({ type: 14, divider: true });
+  rawComponents.push(row2.toJSON());
+
   // Raw Container JSON
   const rawContainer = {
     type: 17,
     accent_color: accentInt,
-    components: [
-      {
-        type: 10,
-        content: description
-      },
-      {
-        type: 12,
-        items: [
-          { media: { url: HELP_GIF } }
-        ]
-      },
-      { type: 14, divider: true },
-      row1.toJSON(),
-      { type: 14, divider: true },
-      row2.toJSON()
-    ]
+    components: rawComponents
   };
 
   return rawContainer;
