@@ -103,9 +103,9 @@ export async function generateDashboard(stats, accentColor) {
   ctx.shadowBlur = 0;
 
   // Progress Bar Bg
-  const barX = 230;
+  const barX = 260;
   const barY = 70;
-  const barW = 500;
+  const barW = 470;
   const barH = 25;
   drawRoundedRect(ctx, barX, barY, barW, barH, 12);
   ctx.fillStyle = '#2A2C31';

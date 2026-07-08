@@ -152,13 +152,13 @@ export async function updateDashboardMessage(guild, client) {
     if (msgIds.length === 3) {
       try {
         const m1 = await channel.messages.fetch(msgIds[0]);
-        await m1.edit({ embeds: [embedDb], files: [fileDb], attachments: [] });
+        await m1.edit({ embeds: [embedDb], files: [fileDb] });
 
         const m2 = await channel.messages.fetch(msgIds[1]);
-        await m2.edit({ embeds: [embedTo], files: [fileTo], attachments: [] });
+        await m2.edit({ embeds: [embedTo], files: [fileTo] });
 
         const m3 = await channel.messages.fetch(msgIds[2]);
-        await m3.edit({ embeds: [embedAm], files: [fileAm], attachments: [] });
+        await m3.edit({ embeds: [embedAm], files: [fileAm] });
         
         // Cleanup duplicates if any exist
         const fetched = await channel.messages.fetch({ limit: 50 }).catch(() => null);
