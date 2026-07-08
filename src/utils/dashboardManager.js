@@ -152,13 +152,13 @@ export async function updateDashboardMessage(guild, client) {
     if (msgIds.length === 3) {
       try {
         const m1 = await channel.messages.fetch(msgIds[0]);
-        await m1.edit({ embeds: [embedDb], files: [fileDb] });
+        await m1.edit({ embeds: [embedDb], files: [fileDb], attachments: [] });
 
         const m2 = await channel.messages.fetch(msgIds[1]);
-        await m2.edit({ embeds: [embedTo], files: [fileTo] });
+        await m2.edit({ embeds: [embedTo], files: [fileTo], attachments: [] });
 
         const m3 = await channel.messages.fetch(msgIds[2]);
-        await m3.edit({ embeds: [embedAm], files: [fileAm] });
+        await m3.edit({ embeds: [embedAm], files: [fileAm], attachments: [] });
         
         // Cleanup duplicates if any exist
         const fetched = await channel.messages.fetch({ limit: 50 }).catch(() => null);
@@ -228,6 +228,14 @@ export async function setupDashboardChannel(guild, client) {
         SendMessages: false,
         AddReactions: false
       });
+      await targetChannel.permissionOverwrites.edit(client.user.id, {
+        ViewChannel: true,
+        SendMessages: true,
+        EmbedLinks: true,
+        AttachFiles: true,
+        ReadMessageHistory: true,
+        ManageMessages: true
+      });
     } catch (e) {
       console.error('Failed to update dashboard channel permissions:', e);
     }
@@ -248,7 +256,7 @@ export async function setupDashboardChannel(guild, client) {
         },
         {
           id: client.user.id,
-          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks, PermissionFlagsBits.AttachFiles]
+          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks, PermissionFlagsBits.AttachFiles, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageMessages]
         }
       ]
     });
