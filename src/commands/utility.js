@@ -570,7 +570,9 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
           { media: { url: HELP_GIF } }
         ]
       },
+      { type: 14, divider: true },
       row1.toJSON(),
+      { type: 14, divider: true },
       row2.toJSON()
     ]
   };
