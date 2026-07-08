@@ -566,7 +566,7 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
   rawComponents.push({ type: 14, divider: true });
   rawComponents.push(row2.toJSON());
   rawComponents.push({ type: 14, divider: true });
-  rawComponents.push({ type: 10, content: '-# Athena Prime Unbypassable Security !!' });
+  rawComponents.push({ type: 10, content: '-# **Athena Prime Unbypassable Security !!**' });
 
   // Raw Container JSON
   const rawContainer = {
