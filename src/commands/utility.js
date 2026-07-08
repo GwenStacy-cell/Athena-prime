@@ -19,8 +19,8 @@ export const commands = [
     async executePrefix(message) {
       let reply;
       try {
-        const msgPayload = buildHelpMessage(message.client, message.guild?.id, 'home');
-        reply = await message.reply(msgPayload);
+        const components = buildHelpContainer(message.client, message.guild?.id, 'home');
+        reply = await message.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
         return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
@@ -44,18 +44,18 @@ export const commands = [
           else currentIdx = helpModules.findIndex(m => m.id === val);
         }
 
-        const newPayload = buildHelpMessage(message.client, message.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update(newPayload).catch(() => null);
+        const newComponents = buildHelpContainer(message.client, message.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
+        await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
       
       collector.on('end', () => reply.delete().catch(() => null));
     },
     async executeSlash(interaction) {
-      const msgPayload = buildHelpMessage(interaction.client, interaction.guild?.id, 'home');
+      const components = buildHelpContainer(interaction.client, interaction.guild?.id, 'home');
       
       let reply;
       try {
-        reply = await interaction.reply({ ...msgPayload, fetchReply: true });
+        reply = await interaction.reply({ components: [components], fetchReply: true, flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, ephemeral: true }).catch(() => null);
       }
@@ -79,8 +79,8 @@ export const commands = [
           else currentIdx = helpModules.findIndex(m => m.id === val);
         }
 
-        const newPayload = buildHelpMessage(interaction.client, interaction.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update(newPayload).catch(() => null);
+        const newComponents = buildHelpContainer(interaction.client, interaction.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
+        await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
       
       collector.on('end', () => interaction.deleteReply().catch(() => null));
@@ -484,20 +484,23 @@ const helpModules = [
 
 const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
 
-function buildHelpMessage(client, guildId, moduleId = 'home') {
+function buildHelpContainer(client, guildId, moduleId = 'home') {
   const config = db.getGuildConfig(guildId || '0');
   const accentColor = config?.accentColor || '#3b82f6';
+  const accentInt = parseInt(accentColor.replace('#', ''), 16);
   const prefix = config?.prefix || '!';
   const botId = client?.user?.id || '1347071663182676059';
-  const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
 
-  const embed = new EmbedBuilder().setColor(accentColor);
+  let rawComponents = [];
 
   if (moduleId === 'home') {
     let topText = `# Hey !!! , I am <@${botId}> ,\n\n`;
-    topText += `<a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
-    topText += `<a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
-    topText += `<a:z_arrow_pink1:1523082728004653138> **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n\n`;
+    topText += `> <a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
+    topText += `> <a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
+    topText += `> <a:z_arrow_pink1:1523082728004653138> **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**`;
+
+    rawComponents.push({ type: 10, content: topText });
+    rawComponents.push({ type: 14, divider: true });
 
     let grid = '';
     for (let i = 0; i < helpModules.length; i++) {
@@ -511,16 +514,16 @@ function buildHelpMessage(client, guildId, moduleId = 'home') {
       if (col === 2) grid += '\n'; 
     }
     
-    embed.setDescription(topText + grid.trim());
-    embed.setImage(HELP_GIF);
+    rawComponents.push({ type: 10, content: grid.trim() });
+    rawComponents.push({ type: 14, divider: true });
 
   } else {
     const mod = helpModules.find(m => m.id === moduleId);
     if (mod) {
       let description = `# ${mod.emoji} ${mod.label.toUpperCase()}\n\n`;
-      description += mod.commands.map(cmd => `**${cmd.replace(/!/g, prefix)}**`).join('\n\n');
-      embed.setDescription(description);
-      embed.setImage(HELP_GIF);
+      description += mod.commands.map(cmd => `> **${cmd.replace(/!/g, prefix)}**`).join('\n\n');
+      rawComponents.push({ type: 10, content: description });
+      rawComponents.push({ type: 14, divider: true });
     }
   }
 
@@ -555,7 +558,22 @@ function buildHelpMessage(client, guildId, moduleId = 'home') {
   const row1 = new ActionRowBuilder().addComponents(selectMenu);
   const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
 
-  return { embeds: [embed], components: [row1, row2] };
+  const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
+
+  rawComponents.push({ type: 12, items: [{ media: { url: HELP_GIF } }] });
+  rawComponents.push({ type: 14, divider: true });
+  rawComponents.push(row1.toJSON());
+  rawComponents.push({ type: 14, divider: true });
+  rawComponents.push(row2.toJSON());
+
+  // Raw Container JSON
+  const rawContainer = {
+    type: 17,
+    accent_color: accentInt,
+    components: rawComponents
+  };
+
+  return rawContainer;
 }
 
 
