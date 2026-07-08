@@ -20,7 +20,7 @@ export const commands = [
       let reply;
       try {
         const components = buildHelpContainer(message.client, message.guild?.id, 'home');
-        reply = await message.reply({ components, flags: MessageFlags.IsComponentsV2 });
+        reply = await message.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
         return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
@@ -45,7 +45,7 @@ export const commands = [
         }
 
         const newComponents = buildHelpContainer(message.client, message.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update({ components: newComponents, flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+        await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
       
       collector.on('end', () => reply.delete().catch(() => null));
@@ -55,7 +55,7 @@ export const commands = [
       
       let reply;
       try {
-        reply = await interaction.reply({ components, fetchReply: true, flags: MessageFlags.IsComponentsV2 });
+        reply = await interaction.reply({ components: [components], fetchReply: true, flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, ephemeral: true }).catch(() => null);
       }
@@ -80,7 +80,7 @@ export const commands = [
         }
 
         const newComponents = buildHelpContainer(interaction.client, interaction.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update({ components: newComponents, flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+        await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
       
       collector.on('end', () => interaction.deleteReply().catch(() => null));
@@ -495,9 +495,9 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
 
   if (moduleId === 'home') {
     description = `# Hey !!! , I am <@${botId}> ,\n\n`;
-    description += `>>> <a:z_arrow_pink1:1523082728004653138>**Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
-    description += `<a:z_arrow_pink1:1523082728004653138>**To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
-    description += `<a:z_arrow_pink1:1523082728004653138>**Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n\n`;
+    description += `\u00BB Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n\n`;
+    description += `\u00BB To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`\n\n`;
+    description += `\u00BB Hint : To Know more use " Tag the Bot and Type Guide for details and usage "\n\n`;
     description += `- - -\n\n`;
 
     let grid = '';
@@ -505,10 +505,10 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
       const mod = helpModules[i];
       const col = i % 3;
       let label = mod.shortLabel || mod.label;
-      let targetLength = 10; 
+      let targetLength = 11; 
       let spaces = targetLength - label.length;
       let padding = '\u00A0'.repeat(spaces > 0 ? spaces : 0);
-      grid += `${mod.emoji}**\`${label}${padding}\`** `;
+      grid += `${mod.emoji} **\` ${label}${padding} \`** `;
       if (col === 2) grid += '\n'; 
     }
     description += grid.trim() + '\n\n';
@@ -545,37 +545,37 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
     ]);
   }
 
-  const btnPrev = new ButtonBuilder()
-    .setCustomId('help_prev')
-    .setEmoji('<:previous:1523766004839088301>')
-    .setStyle(ButtonStyle.Secondary);
+  const btnPrev = new ButtonBuilder().setCustomId('help_prev').setEmoji('<:previous:1523766004839088301>').setStyle(ButtonStyle.Secondary);
+  const btnNext = new ButtonBuilder().setCustomId('help_next').setEmoji('<:next:1523766065576935475>').setStyle(ButtonStyle.Secondary);
+  const btnRefresh = new ButtonBuilder().setCustomId('help_home').setEmoji('<:home:1523765738655973589>').setStyle(ButtonStyle.Secondary);
+  const btnDelete = new ButtonBuilder().setCustomId('help_delete').setEmoji('<:delete:1523766340752642109>').setStyle(ButtonStyle.Danger);
 
-  const btnNext = new ButtonBuilder()
-    .setCustomId('help_next')
-    .setEmoji('<:next:1523766065576935475>')
-    .setStyle(ButtonStyle.Secondary);
+  const row1 = new ActionRowBuilder().addComponents(selectMenu);
+  const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
 
-  const btnRefresh = new ButtonBuilder()
-    .setCustomId('help_home')
-    .setEmoji('<:home:1523765738655973589>')
-    .setStyle(ButtonStyle.Secondary);
-    
-  const btnDelete = new ButtonBuilder()
-    .setCustomId('help_delete')
-    .setEmoji('<:delete:1523766340752642109>')
-    .setStyle(ButtonStyle.Danger);
+  const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
 
-  const container = new ContainerBuilder()
-    .setAccentColor(accentInt)
-    .addSectionComponents(
-      new SectionBuilder()
-        .addTextDisplayComponents(new TextDisplayBuilder().setContent(description))
-        .setThumbnailAccessory(new ThumbnailBuilder().setURL(HELP_GIF))
-    )
-    .addActionRowComponents(new ActionRowBuilder().addComponents(selectMenu))
-    .addActionRowComponents(new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete));
+  // Raw Container JSON
+  const rawContainer = {
+    type: 17,
+    accent_color: accentInt,
+    components: [
+      {
+        type: 10,
+        content: description
+      },
+      {
+        type: 12,
+        items: [
+          { media: { url: HELP_GIF } }
+        ]
+      },
+      row1.toJSON(),
+      row2.toJSON()
+    ]
+  };
 
-  return [container];
+  return rawContainer;
 }
 
 
