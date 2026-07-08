@@ -19,8 +19,9 @@ export const commands = [
     async executePrefix(message) {
       let reply;
       try {
-        const components = buildHelpContainer(message.client, message.guild?.id, 'home');
-        reply = await message.reply({ components, flags: MessageFlags.IsComponentsV2 });
+        const embeds = [ buildHelpHomeEmbed(message.client, message.guild?.id) ];
+        const components = getHelpComponents('home', message.guild?.id);
+        reply = await message.reply({ embeds, components });
       } catch (e) {
         return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
@@ -44,18 +45,19 @@ export const commands = [
           else currentIdx = helpModules.findIndex(m => m.id === val);
         }
 
-        const newComponents = buildHelpContainer(message.client, message.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update({ components: newComponents, flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+        const newEmbed = currentIdx === -1 ? buildHelpHomeEmbed(message.client, message.guild?.id) : buildModuleEmbed(helpModules[currentIdx].id, message.guild?.id);
+        await i.update({ embeds: [newEmbed], components: getHelpComponents(currentIdx === -1 ? 'home' : helpModules[currentIdx].id, message.guild?.id) }).catch(() => null);
       });
       
       collector.on('end', () => reply.delete().catch(() => null));
     },
     async executeSlash(interaction) {
-      const components = buildHelpContainer(interaction.client, interaction.guild?.id, 'home');
+      const embeds = [ buildHelpHomeEmbed(interaction.client, interaction.guild?.id) ];
+      const components = getHelpComponents('home', interaction.guild?.id);
       
       let reply;
       try {
-        reply = await interaction.reply({ components, fetchReply: true, flags: MessageFlags.IsComponentsV2 });
+        reply = await interaction.reply({ embeds, components, fetchReply: true });
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, ephemeral: true }).catch(() => null);
       }
@@ -79,8 +81,8 @@ export const commands = [
           else currentIdx = helpModules.findIndex(m => m.id === val);
         }
 
-        const newComponents = buildHelpContainer(interaction.client, interaction.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update({ components: newComponents, flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+        const newEmbed = currentIdx === -1 ? buildHelpHomeEmbed(interaction.client, interaction.guild?.id) : buildModuleEmbed(helpModules[currentIdx].id, interaction.guild?.id);
+        await i.update({ embeds: [newEmbed], components: getHelpComponents(currentIdx === -1 ? 'home' : helpModules[currentIdx].id, interaction.guild?.id) }).catch(() => null);
       });
       
       collector.on('end', () => interaction.deleteReply().catch(() => null));
@@ -484,44 +486,62 @@ const helpModules = [
 
 const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
 
-function buildHelpContainer(client, guildId, moduleId = 'home') {
+function buildHelpHomeEmbed(client, guildId) {
   const config = db.getGuildConfig(guildId || '0');
   const accentColor = config?.accentColor || '#3b82f6';
-  const accentInt = parseInt(accentColor.replace('#', ''), 16);
   const prefix = config?.prefix || '!';
   const botId = client?.user?.id || '1347071663182676059';
 
-  let description = '';
+  let description = `# Hey !!! , I am <@${botId}> ,\n\n`;
+  description += `>>> <a:z_arrow_pink1:1523082728004653138>**Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
+  description += `<a:z_arrow_pink1:1523082728004653138>**To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
+  description += `<a:z_arrow_pink1:1523082728004653138>**Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n\n`;
+  
+  description += `- - -\n\n`;
 
-  if (moduleId === 'home') {
-    description = `# Hey !!! , I am <@${botId}> ,\n\n`;
-    description += `>>> <a:z_arrow_pink1:1523082728004653138>**Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
-    description += `<a:z_arrow_pink1:1523082728004653138>**To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
-    description += `<a:z_arrow_pink1:1523082728004653138>**Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**\n\n`;
-    description += `- - -\n\n`;
-
-    let grid = '';
-    for (let i = 0; i < helpModules.length; i++) {
-      const mod = helpModules[i];
-      const col = i % 3;
-      let label = mod.shortLabel || mod.label;
-      let targetLength = 10; 
-      let spaces = targetLength - label.length;
-      let padding = '\u00A0'.repeat(spaces > 0 ? spaces : 0);
-      grid += `${mod.emoji}**\`${label}${padding}\`** `;
-      if (col === 2) grid += '\n'; 
-    }
-    description += grid.trim() + '\n\n';
-    description += `- - -\n`;
-  } else {
-    const mod = helpModules.find(m => m.id === moduleId);
-    if (mod) {
-      description = `# ${mod.emoji} ${mod.label.toUpperCase()}\n\n`;
-      description += mod.commands.map(cmd => cmd.replace(/!/g, prefix)).join('\n\n');
-      description += `\n\n- - -`;
-    }
+  let grid = '';
+  for (let i = 0; i < helpModules.length; i++) {
+    const mod = helpModules[i];
+    const col = i % 3;
+    let label = mod.shortLabel || mod.label;
+    
+    let targetLength = 10;
+    let spaces = targetLength - label.length;
+    let padding = '\u00A0'.repeat(spaces > 0 ? spaces : 0);
+    
+    grid += `${mod.emoji}**\`${label}${padding}\`** `;
+    if (col === 2) grid += '\n';
   }
+  description += grid.trim() + '\n\n';
+  description += `- - -\n`;
 
+  return new EmbedBuilder()
+    .setColor(accentColor)
+    .setDescription(description)
+    .setThumbnail('https://cdn.discordapp.com/attachments/1459993139740803116/1524139805959786536/eva_jtc_2.png')
+    .setImage(HELP_GIF);
+}
+
+function buildModuleEmbed(moduleId, guildId) {
+  const config = db.getGuildConfig(guildId || '0');
+  const accentColor = config?.accentColor || '#3b82f6';
+  const prefix = config?.prefix || '!';
+  
+  const mod = helpModules.find(m => m.id === moduleId);
+  if (!mod) return null;
+
+  let desc = mod.commands.map(cmd => cmd.replace(/!/g, prefix)).join('\n\n');
+  desc += `\n\n- - -`;
+
+  return new EmbedBuilder()
+    .setColor(accentColor)
+    .setTitle(`${mod.emoji} ${mod.label.toUpperCase()}`)
+    .setDescription(desc)
+    .setThumbnail('https://cdn.discordapp.com/attachments/1459993139740803116/1524139805959786536/eva_jtc_2.png')
+    .setImage(HELP_GIF);
+}
+
+function getHelpComponents(selectedModuleId = 'home', guildId = '0') {
   const selectMenu = new StringSelectMenuBuilder()
     .setCustomId('help_module_select')
     .setPlaceholder('Click to view modules');
@@ -565,17 +585,10 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
     .setEmoji('<:delete:1523766340752642109>')
     .setStyle(ButtonStyle.Danger);
 
-  const container = new ContainerBuilder()
-    .setAccentColor(accentInt)
-    .addSectionComponents(
-      new SectionBuilder()
-        .addTextDisplayComponents(new TextDisplayBuilder().setContent(description))
-        .setThumbnailAccessory(new ThumbnailBuilder().setURL(HELP_GIF))
-    )
-    .addActionRowComponents(new ActionRowBuilder().addComponents(selectMenu))
-    .addActionRowComponents(new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete));
+  const row1 = new ActionRowBuilder().addComponents(selectMenu);
+  const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
 
-  return [container];
+  return [row1, row2];
 }
 
 
