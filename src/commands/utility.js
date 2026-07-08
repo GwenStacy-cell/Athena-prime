@@ -495,9 +495,9 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
 
   if (moduleId === 'home') {
     let topText = `# Hey !!! , I am <@${botId}> ,\n\n`;
-    topText += `<a:z_arrow_pink1:1523082728004653138> Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:\n\n`;
-    topText += `<a:z_arrow_pink1:1523082728004653138> To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`\n\n`;
-    topText += `<a:z_arrow_pink1:1523082728004653138> Hint : To Know more use " Tag the Bot and Type Guide for details and usage "`;
+    topText += `<a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
+    topText += `<a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
+    topText += `<a:z_arrow_pink1:1523082728004653138> **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**`;
 
     rawComponents.push({ type: 10, content: topText });
     rawComponents.push({ type: 14, divider: true });
@@ -521,7 +521,7 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
     const mod = helpModules.find(m => m.id === moduleId);
     if (mod) {
       let description = `# ${mod.emoji} ${mod.label.toUpperCase()}\n\n`;
-      description += mod.commands.map(cmd => cmd.replace(/!/g, prefix)).join('\n\n');
+      description += mod.commands.map(cmd => `**${cmd.replace(/!/g, prefix)}**`).join('\n\n');
       rawComponents.push({ type: 10, content: description });
       rawComponents.push({ type: 14, divider: true });
     }
