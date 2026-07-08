@@ -172,6 +172,11 @@ export async function updateDashboardMessage(guild, client) {
         return; // Success
       } catch (err) {
         console.error(`[Dashboard Sync] Failed to edit messages in ${guild.id}:`, err);
+        // Let's print exactly which one failed
+        try {
+          const c = await guild.channels.fetch('1512546472355299473').catch(() => null);
+          if (c) c.send(`**DEBUG:** Failed to edit dashboard in ${guild.id}. Error: \`${err.message}\``).catch(() => null);
+        } catch(e) {}
         // Messages deleted or failed to edit, we'll post new ones
       }
     }
