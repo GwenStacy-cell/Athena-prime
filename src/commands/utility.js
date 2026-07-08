@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, SeparatorBuilder, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
@@ -20,8 +20,8 @@ export const commands = [
       let reply;
       try {
         const embeds = [ buildHelpHomeEmbed(message.client, message.guild?.id) ];
-        const components = getHelpComponents('home');
-        reply = await message.reply({ embeds, components });
+        const components = getHelpComponents('home', message.guild?.id);
+        reply = await message.reply({ embeds, components, flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
         return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
@@ -46,18 +46,18 @@ export const commands = [
         }
 
         const newEmbed = currentIdx === -1 ? buildHelpHomeEmbed(message.client, message.guild?.id) : buildModuleEmbed(helpModules[currentIdx].id, message.guild?.id);
-        await i.update({ embeds: [newEmbed], components: getHelpComponents(currentIdx === -1 ? 'home' : helpModules[currentIdx].id) }).catch(() => null);
+        await i.update({ embeds: [newEmbed], flags: MessageFlags.IsComponentsV2, components: getHelpComponents(currentIdx === -1 ? 'home' : helpModules[currentIdx].id, message.guild?.id) }).catch(() => null);
       });
       
       collector.on('end', () => reply.delete().catch(() => null));
     },
     async executeSlash(interaction) {
       const embeds = [ buildHelpHomeEmbed(interaction.client, interaction.guild?.id) ];
-      const components = getHelpComponents('home');
+      const components = getHelpComponents('home', interaction.guild?.id);
       
       let reply;
       try {
-        reply = await interaction.reply({ embeds, components, fetchReply: true });
+        reply = await interaction.reply({ embeds, components, fetchReply: true, flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, ephemeral: true }).catch(() => null);
       }
@@ -82,7 +82,7 @@ export const commands = [
         }
 
         const newEmbed = currentIdx === -1 ? buildHelpHomeEmbed(interaction.client, interaction.guild?.id) : buildModuleEmbed(helpModules[currentIdx].id, interaction.guild?.id);
-        await i.update({ embeds: [newEmbed], components: getHelpComponents(currentIdx === -1 ? 'home' : helpModules[currentIdx].id) }).catch(() => null);
+        await i.update({ embeds: [newEmbed], flags: MessageFlags.IsComponentsV2, components: getHelpComponents(currentIdx === -1 ? 'home' : helpModules[currentIdx].id, interaction.guild?.id) }).catch(() => null);
       });
       
       collector.on('end', () => interaction.deleteReply().catch(() => null));
@@ -540,7 +540,11 @@ function buildModuleEmbed(moduleId, guildId) {
     .setImage(HELP_GIF);
 }
 
-function getHelpComponents(selectedModuleId = 'home') {
+function getHelpComponents(selectedModuleId = 'home', guildId = '0') {
+  const config = db.getGuildConfig(guildId);
+  const accentColor = config?.accentColor || '#3b82f6';
+  const accentInt = parseInt(accentColor.replace('#', ''), 16);
+
   const selectMenu = new StringSelectMenuBuilder()
     .setCustomId('help_module_select')
     .setPlaceholder('Click to view modules');
@@ -584,10 +588,12 @@ function getHelpComponents(selectedModuleId = 'home') {
     .setEmoji('<:delete:1523766340752642109>')
     .setStyle(ButtonStyle.Danger);
 
-  const row1 = new ActionRowBuilder().addComponents(selectMenu);
-  const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
+  const container = new ContainerBuilder()
+    .setAccentColor(accentInt)
+    .addActionRowComponents(new ActionRowBuilder().addComponents(selectMenu))
+    .addActionRowComponents(new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete));
 
-  return [row1, row2];
+  return [container];
 }
 
 
