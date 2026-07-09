@@ -37,7 +37,8 @@ const DEFAULT_SCHEMA = {
   bumpReminders: {}, // guildId -> { channelId, bumperId, expiresAt }
   editRatings: {},   // messageId -> { authorId, authorName, mediaUrl, votes: {} }
   rateChannels: {},  // guildId -> channelId
-  likedSongs: {}     // userId -> [ { title, url, duration, artworkUrl } ]
+  likedSongs: {},    // userId -> [ { title, url, duration, artworkUrl } ]
+  bannedServers: []  // global list of banned guild IDs
 };
 
 class Database {
@@ -1128,6 +1129,35 @@ class Database {
     }
     this.save();
     return added;
+  }
+
+  // ==========================================
+  // SERVER BANNING
+  // ==========================================
+  addBannedServer(guildId) {
+    if (!this.cache.bannedServers) this.cache.bannedServers = [];
+    if (!this.cache.bannedServers.includes(guildId)) {
+      this.cache.bannedServers.push(guildId);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  removeBannedServer(guildId) {
+    if (!this.cache.bannedServers) return false;
+    const idx = this.cache.bannedServers.indexOf(guildId);
+    if (idx > -1) {
+      this.cache.bannedServers.splice(idx, 1);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  isServerBanned(guildId) {
+    if (!this.cache.bannedServers) return false;
+    return this.cache.bannedServers.includes(guildId);
   }
 }
 

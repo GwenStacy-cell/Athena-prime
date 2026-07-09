@@ -1,9 +1,17 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import db from '../database.js';
 
 export default {
   name: 'guildCreate',
   async execute(guild) {
     if (!guild || !guild.client) return;
+
+    if (db.isServerBanned(guild.id)) {
+      try {
+        await guild.leave();
+      } catch (e) {}
+      return;
+    }
 
     try {
       const client = guild.client;

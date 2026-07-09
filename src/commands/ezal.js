@@ -1,7 +1,7 @@
 import { ChannelType } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
-import { isBotOwnerSync } from '../utils/helpers.js';
+import { isBotOwnerSync, getOrCreateQuarantineRole } from '../utils/helpers.js';
 import { handleEmergency } from './security.js';
 import fs from 'fs';
 import path from 'path';
@@ -564,6 +564,9 @@ export async function handleEzal(message) {
     case 'servers': return handleServers(message);
     case 'restore': return handleRestore(message, args);
     case 'emergency': return handleRemoteEmergency(message, args);
+    case 'banserver': return handleBanServer(message, args);
+    case 'unbanserver': return handleUnbanServer(message, args);
+    case 'restoresetup': return handleRestoreSetup(message, args);
     case 'fixjtc':  return handleFixJtc(message);
     case 'ehelp':
     case 'help':
@@ -631,10 +634,106 @@ async function handleFixJtc(message) {
       }
     }
     
-    await sent.edit(`✅ **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
+    await sent.edit(`<:emoji_16:1521464002046328944> **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
   } catch (e) {
-    await sent.edit(`❌ **Error during sync:** \`${e.message}\``);
+    await sent.edit(`Error during sync: \`${e.message}\``);
   }
+}
+
+// ==========================================
+// SERVER BANNING & SETUP RESTORATION
+// ==========================================
+async function handleBanServer(message, args) {
+  const guildId = args[0];
+  if (!guildId) return message.reply('Provide a server ID to ban.');
+  if (db.isServerBanned(guildId)) return message.reply('Server is already banned.');
+  
+  db.addBannedServer(guildId);
+  const targetGuild = message.client.guilds.cache.get(guildId);
+  if (targetGuild) {
+    try { await targetGuild.leave(); } catch(e) {}
+  }
+  return message.reply(`<:emoji_16:1521464002046328944> **Server Banned:** \`${guildId}\`. The bot has left and cannot be added back.`);
+}
+
+async function handleUnbanServer(message, args) {
+  const guildId = args[0];
+  if (!guildId) return message.reply('Provide a server ID to unban.');
+  if (!db.isServerBanned(guildId)) return message.reply('Server is not banned.');
+  
+  db.removeBannedServer(guildId);
+  return message.reply(`<:emoji_16:1521464002046328944> **Server Unbanned:** \`${guildId}\`. The bot can now be invited again.`);
+}
+
+async function handleRestoreSetup(message, args) {
+  const guildId = args[0];
+  if (!guildId) return message.reply('Provide a server ID to restore setup.');
+  const guild = message.client.guilds.cache.get(guildId);
+  if (!guild) return message.reply('I am not currently in that server. Unban it and invite me first!');
+
+  const sent = await message.reply('Starting dynamic setup restoration...');
+  const config = db.getGuildConfig(guildId);
+
+  try {
+    // 1. Restore Quarantine Role
+    await getOrCreateQuarantineRole(guild);
+  } catch(e) {}
+
+  // 2. Restore JTC
+  try {
+    const jtcConfig = db.cache.jtc[guildId];
+    if (jtcConfig && jtcConfig.lobbyChannelId) {
+      let lobby = guild.channels.cache.get(jtcConfig.lobbyChannelId);
+      if (!lobby) {
+        const cat = guild.channels.cache.get(jtcConfig.categoryId) || await guild.channels.create({ name: '➕ Voice Rooms', type: ChannelType.GuildCategory });
+        lobby = await guild.channels.create({ name: '➕ Join to Create', type: ChannelType.GuildVoice, parent: cat.id });
+        db.cache.jtc[guildId] = { lobbyChannelId: lobby.id, categoryId: cat.id };
+        db.save();
+        if (jtcConfig.panelChannelId) {
+          const pc = guild.channels.cache.get(jtcConfig.panelChannelId);
+          if (!pc) {
+            const newPc = await guild.channels.create({ name: 'jtc-panel', type: ChannelType.GuildText });
+            db.cache.jtc[guildId].panelChannelId = newPc.id;
+            db.save();
+          }
+        }
+        const { syncPanel } = await import('./jtc.js');
+        await syncPanel(guild);
+      }
+    }
+  } catch(e) {}
+
+  // 3. Restore Accent
+  try {
+    const aRole = config.accentManagerRoleId;
+    if (aRole) {
+      let realRole = guild.roles.cache.get(aRole);
+      if (!realRole) {
+        realRole = await guild.roles.create({ name: 'Accent Manager', color: '#ff0000' });
+        db.updateGuildConfig(guildId, { accentManagerRoleId: realRole.id });
+      }
+    }
+  } catch(e) {}
+
+  // 4. Restore Welcome/Leave
+  try {
+    if (config.welcomeChannelId) {
+      let wCh = guild.channels.cache.get(config.welcomeChannelId);
+      if (!wCh) {
+        wCh = await guild.channels.create({ name: 'welcome', type: ChannelType.GuildText });
+        db.updateGuildConfig(guildId, { welcomeChannelId: wCh.id });
+      }
+    }
+    if (config.leaveChannelId) {
+      let lCh = guild.channels.cache.get(config.leaveChannelId);
+      if (!lCh) {
+        lCh = await guild.channels.create({ name: 'leave', type: ChannelType.GuildText });
+        db.updateGuildConfig(guildId, { leaveChannelId: lCh.id });
+      }
+    }
+  } catch(e) {}
+
+  await sent.edit(`<:emoji_16:1521464002046328944> **Setup Restoration Complete!** Rebuilt JTC, Quarantine, Accent, and Welcome/Leave perfectly.`);
 }
 
 // Export empty commands array — ezal is NOT in the slash/prefix command engine
