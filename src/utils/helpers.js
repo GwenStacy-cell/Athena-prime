@@ -194,7 +194,7 @@ export async function getOrCreateQuarantineRole(guild) {
     if (!role) {
       role = await guild.roles.create({
         name: 'Quarantined',
-        color: '#ff3333',
+        color: '#ff0000',
         hoist: true,
         reason: 'Athena Prime automatic quarantine role creation',
         permissions: [] // Zero global permissions
