@@ -2457,9 +2457,9 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 
     return {
       embed: embed.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
-        { name: '🛡️ Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set — run `/qrmanager setup`', inline: true },
-        { name: '🛡️ Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set — run `/qrmanager setup`', inline: true },
-        { name: '🛡️ Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set — use `/qrmanager setvc`', inline: true }
+        { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set — run `/qrmanager setup`', inline: true },
+        { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set — run `/qrmanager setup`', inline: true },
+        { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set — use `/qrmanager setvc`', inline: true }
       ])
     };
   }
