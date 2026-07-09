@@ -546,7 +546,12 @@ function handleEhelp(message) {
     }
   ];
 
-  return message.reply({ embeds: [embed.info('Ezal — Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields)] });
+  const sent = await message.reply({ embeds: [embed.info('Ezal — Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields)] });
+  setTimeout(() => {
+    sent.delete().catch(() => null);
+    message.delete().catch(() => null);
+  }, 60000);
+  return sent;
 }
 
 // ==========================================
