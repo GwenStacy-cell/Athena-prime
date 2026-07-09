@@ -18,6 +18,7 @@ import {
 } from '../utils/helpers.js';
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
+import { StringSelectMenuBuilder } from 'discord.js';
 
 // Toggle emoji constants — used throughout all security/config embeds
 const TOGGLE_ON  = '<:on:1514996865030946847>';
@@ -1342,7 +1343,59 @@ export const commands = [
       const result = await handleMassUnquarantine(interaction.guild, interaction.member, interaction.client);
       await interaction.editReply({ embeds: [result.embed] });
     }
+  },
+
+  // --- SCAN SERVER COMMAND ---
+  {
+    name: 'scanserver',
+    description: 'Scan the server for unauthorized bots and manage them.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    async executePrefix(message) {
+      if (!isBotOwnerOrServerOwnerStrict(message.member) && !isExtraOwner(message.member)) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', 'Only Server Owners and Extra Owners can scan the server.')] });
+      }
+      const result = await handleScanServer(message.guild);
+      message.reply(result);
+    }
+  },
+  // --- LOCK APPS COMMAND ---
+  {
+    name: 'lockapps',
+    description: 'Lock or unlock application commands for @everyone server-wide.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    async executePrefix(message, args) {
+      if (!isBotOwnerOrServerOwnerStrict(message.member) && !isExtraOwner(message.member)) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', 'Only Server Owners and Extra Owners can lock apps.')] });
+      }
+      const mode = args[0]?.toLowerCase();
+      if (mode !== 'on' && mode !== 'off') {
+        return message.reply({ embeds: [embed.warn('Invalid Usage', 'Usage: `!lockapps on` or `!lockapps off`')] });
+      }
+      const statusMsg = await message.reply({ embeds: [embed.info('Updating Channels', 'Processing permissions for all channels. This may take a moment...')] });
+      
+      const allow = mode === 'off';
+      let successCount = 0;
+      
+      for (const channel of message.guild.channels.cache.values()) {
+        if (!channel.isTextBased() && channel.type !== ChannelType.GuildVoice) continue;
+        try {
+           await channel.permissionOverwrites.edit(message.guild.roles.everyone, {
+             UseApplicationCommands: allow ? null : false
+           });
+           successCount++;
+        } catch(e) {}
+      }
+      
+      if (allow) {
+        await statusMsg.edit({ embeds: [embed.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`)] });
+      } else {
+        await statusMsg.edit({ embeds: [embed.success('Apps Locked', `Successfully locked application commands in ${successCount} channels for @everyone.`)] });
+      }
+    }
   }
+
 ];
 
 // Helper to check for Bot Owner exclusively
@@ -2731,5 +2784,61 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const e = embed.success('Security Shield Sequence', currentText);
     await updateMessageFn(e);
     await new Promise(r => setTimeout(r, 800));
+  }
+}
+
+
+
+async function handleScanServer(guild) {
+  const config = db.getGuildConfig(guild.id);
+  const whitelistedIds = config.botWhitelist || [];
+  
+  await guild.members.fetch(); // Ensure cache is populated
+  const allBots = guild.members.cache.filter(m => m.user.bot);
+  
+  const unauthorizedBots = [];
+  const whitelistedBots = [];
+  
+  allBots.forEach(bot => {
+     if (whitelistedIds.includes(bot.id) || bot.id === guild.client.user.id) {
+       whitelistedBots.push(bot);
+     } else {
+       unauthorizedBots.push(bot);
+     }
+  });
+  
+  let desc = `Total Bots Found: **${allBots.size}**\nWhitelisted: **${whitelistedBots.length}**\nUnauthorized: **${unauthorizedBots.length}**\n\n`;
+  
+  if (unauthorizedBots.length > 0) {
+    desc += `**Unauthorized Bots:**\n`;
+    unauthorizedBots.forEach(b => {
+       desc += `• <@${b.id}> (` + b.user.tag + `)\n`;
+    });
+    
+    const embedMsg = embed.warn('Server Bot Scanner', desc);
+    
+    const options = unauthorizedBots.map(b => ({
+      label: b.user.username.substring(0, 100),
+      description: b.id,
+      value: b.id
+    })).slice(0, 25);
+    
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId('scanserver_ban')
+      .setPlaceholder('Select an unauthorized bot to ban')
+      .addOptions(options);
+      
+    const banAllBtn = new ButtonBuilder()
+      .setCustomId('scanserver_banall')
+      .setLabel('Ban All Unauthorized')
+      .setStyle(ButtonStyle.Danger);
+      
+    const row1 = new ActionRowBuilder().addComponents(selectMenu);
+    const row2 = new ActionRowBuilder().addComponents(banAllBtn);
+    
+    return { embeds: [embedMsg], components: [row1, row2] };
+  } else {
+    desc += `*All bots in the server are currently whitelisted.*`;
+    return { embeds: [embed.success('Server Bot Scanner', desc)] };
   }
 }

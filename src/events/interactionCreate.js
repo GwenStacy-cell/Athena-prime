@@ -6,7 +6,7 @@ import db from '../database.js';
 import { getAntinukeConfigPanel } from '../commands/security.js';
 import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
 import { handleSpamModal, handleSpamMoreButton } from '../commands/spam.js';
-import { isBotOwnerSync, canModerate } from '../utils/helpers.js';
+import { isBotOwnerSync, canModerate, isExtraOwner, isBotOwnerOrServerOwnerStrict } from '../utils/helpers.js';
 import { handleJtcSelectMenu, handleJtcModal } from '../commands/jtc.js';
 import { handleWelcomeManagerButton, handleWelcomeManagerModal, handleWelcomeManagerMenu } from '../commands/welcome.js';
 import { handleAccentButton, handleAccentModal } from '../commands/accent.js';
@@ -520,6 +520,40 @@ export default {
 
         await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
         return interaction.reply({ content: `You rated this edit ${starCount} <a:1z:1517089474369032253>`, ephemeral: true });
+      }
+
+
+      // --- SCANSERVER INTERACTIONS ---
+      if (interaction.customId === 'scanserver_ban' && interaction.isStringSelectMenu()) {
+         if (!isBotOwnerOrServerOwnerStrict(interaction.member) && !isExtraOwner(interaction.member)) {
+           return interaction.reply({ content: 'Permission Denied.', ephemeral: true });
+         }
+         const botId = interaction.values[0];
+         try {
+           await interaction.guild.members.ban(botId, { reason: 'Unauthorized Bot (Scan Server)' });
+           await interaction.reply({ content: `Successfully banned bot <@${botId}>.`, ephemeral: true });
+         } catch(e) {
+           await interaction.reply({ content: `Failed to ban bot: ${e.message}`, ephemeral: true });
+         }
+      }
+      if (interaction.customId === 'scanserver_banall' && interaction.isButton()) {
+         if (!isBotOwnerOrServerOwnerStrict(interaction.member) && !isExtraOwner(interaction.member)) {
+           return interaction.reply({ content: 'Permission Denied.', ephemeral: true });
+         }
+         await interaction.deferReply({ ephemeral: true });
+         const config = db.getGuildConfig(interaction.guild.id);
+         const whitelistedIds = config.botWhitelist || [];
+         const allBots = interaction.guild.members.cache.filter(m => m.user.bot);
+         let count = 0;
+         for (const bot of allBots.values()) {
+           if (!whitelistedIds.includes(bot.id) && bot.id !== interaction.client.user.id) {
+             try {
+               await interaction.guild.members.ban(bot.id, { reason: 'Unauthorized Bot (Scan Server Mass Ban)' });
+               count++;
+             } catch(e) {}
+           }
+         }
+         await interaction.editReply({ content: `Successfully banned ${count} unauthorized bots.` });
       }
 
       // Autonick Manager Buttons
