@@ -381,7 +381,12 @@ export default {
       if (message.content.trim().length > 0) {
         import('../utils/musicManager.js').then(async (musicManager) => {
           const res = await musicManager.enqueue(message.guild, message.member, message.content.trim());
-          if (!res.success) {
+          if (res.success) {
+             const cfg = db.getGuildConfig(message.guild.id);
+             const msgData = musicManager.buildAddedToQueueMsg(res.trackObj, cfg.accentColor);
+             const m = await message.channel.send(msgData);
+             setTimeout(() => m.delete().catch(()=>null), 10000);
+          } else if (!res.success) {
              const m = await message.channel.send({ content: `${message.author}, ${res.message}` });
              setTimeout(() => m.delete().catch(()=>null), 5000);
           }

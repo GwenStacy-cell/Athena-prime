@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
-import { enqueue } from '../utils/musicManager.js';
+import { enqueue, buildAddedToQueueMsg } from '../utils/musicManager.js';
 
 export const commands = [
   {
@@ -100,7 +100,9 @@ export const commands = [
       const res = await enqueue(message.guild, message.member, query);
       
       if (res.success) {
-        message.reply({ embeds: [embed.success('Queued', res.message)] });
+        const db = require('../database.js').default;
+        const cfg = db.getGuildConfig(message.guild.id);
+        message.reply(buildAddedToQueueMsg(res.trackObj, cfg.accentColor));
       } else {
         message.reply({ embeds: [embed.danger('Error', res.message)] });
       }
@@ -113,7 +115,9 @@ export const commands = [
       const res = await enqueue(interaction.guild, interaction.member, query);
       
       if (res.success) {
-        interaction.editReply({ embeds: [embed.success('Queued', res.message)] });
+        const db = require('../database.js').default;
+        const cfg = db.getGuildConfig(interaction.guildId);
+        interaction.editReply(buildAddedToQueueMsg(res.trackObj, cfg.accentColor));
       } else {
         interaction.editReply({ embeds: [embed.danger('Error', res.message)] });
       }

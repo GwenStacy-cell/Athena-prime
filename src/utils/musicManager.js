@@ -347,15 +347,24 @@ queue.player.on('error', (err) => {
        title = track.info.title;
     }
     
+    
     if (!queue.isPlaying && !queue.current) {
       queue.current = queue.songs.shift();
       playResource(guild.id, queue.current);
     } else {
       updatePlayerUI(guild.id);
     }
+
+    const { EmbedBuilder } = require('discord.js');
+    const cfg = db.getGuildConfig(guild.id);
+    const accent = cfg.accentColor || '#ff0000';
     
-    queue.isPreparing = false;
-    return { success: true, message: `Added **${title}**${addedCount > 1 ? ` (${addedCount} songs)` : ''} to queue.` };
+    return { 
+      success: true, 
+      trackObj: queue.current || queue.songs[queue.songs.length - 1],
+      message: `Added **${title}** to queue.`
+    };
+
   } catch (error) {
     console.error(`Music enqueue error:`, error);
     queue.isPreparing = false;
@@ -456,34 +465,10 @@ function generateProgressBarImage(currentMs, totalMs, hexColor) {
 
 
 
-function buildNowPlayingEmbed(guildId) {
-  const queue = getQueue(guildId);
-  const cfg = db.getGuildConfig(guildId);
-  if (!queue.current) return null;
-  
-  const embed = new EmbedBuilder()
-    .setColor('#2b2d31') // Blend with dark theme
-    .setTitle(`<:author:1524687847662161971> ${queue.current.title.substring(0, 250)}`)
-    .setURL(queue.current.url)
-    .setDescription(`By ${queue.current.author || 'Unknown'}\n\n<:tickred:1524687857929945159> Requested by: <@${queue.current.requester.id}>`);
-
-  if (queue.current.artworkUrl) {
-    embed.setThumbnail(queue.current.artworkUrl);
-  } else if (cfg.musicCoverImage) {
-    embed.setThumbnail(cfg.musicCoverImage);
-  }
-  
-  embed.setImage('attachment://progress.png');
-  
-  return embed;
-}
 
 async function updateNowPlayingEmbeds(guildId) {
   const queue = getQueue(guildId);
   if (!queue.current || !queue.isPlaying) return;
-  
-  const embed = buildNowPlayingEmbed(guildId);
-  if (!embed) return;
   
   const cfg = db.getGuildConfig(guildId);
   
@@ -491,7 +476,7 @@ async function updateNowPlayingEmbeds(guildId) {
   const [mins, secs] = queue.current.duration.split(':').map(Number);
   const totalMs = queue.current.duration === 'Unknown' ? 0 : (mins * 60 + secs) * 1000;
   
-  const imgBuffer = generateProgressBarImage(queue.player?.position || 0, totalMs, cfg.accentColor || '#ff0000');
+  const imgBuffer = await generateNowPlayingImage(queue.current, queue.player?.position || 0, totalMs, cfg.accentColor || '#ff0000');
   const attachment = new AttachmentBuilder(imgBuffer, { name: 'progress.png' });
   
   if (queue.player) {
@@ -503,13 +488,14 @@ async function updateNowPlayingEmbeds(guildId) {
          if (queue.nowPlayingMsgVcId) {
             try {
               const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
-              if (msg) await msg.edit({ embeds: [embed], files: [attachment] });
+              // Send JUST the attachment as requested (no embed)
+              if (msg) await msg.edit({ embeds: [], files: [attachment] });
             } catch (e) {
-              const newMsg = await vc.send({ embeds: [embed], files: [attachment] }).catch(()=>null);
+              const newMsg = await vc.send({ embeds: [], files: [attachment] }).catch(()=>null);
               if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
             }
          } else {
-            const newMsg = await vc.send({ embeds: [embed], files: [attachment] }).catch(()=>null);
+            const newMsg = await vc.send({ embeds: [], files: [attachment] }).catch(()=>null);
             if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
          }
        }
@@ -519,7 +505,6 @@ async function updateNowPlayingEmbeds(guildId) {
 
 async function clearNowPlayingEmbeds(guildId) {
   const queue = getQueue(guildId);
-  
   if (queue.player) {
     try {
        const guild = global.client.guilds.cache.get(guildId);
@@ -533,6 +518,7 @@ async function clearNowPlayingEmbeds(guildId) {
     queue.nowPlayingMsgVcId = null;
   }
 }
+
 
 
 export async function updatePlayerUI(guildId) {
@@ -667,4 +653,24 @@ export async function handleInteraction(interaction) {
   } else if (action === 'lyrics') {
      // Lyrics modal code
   }
+}
+
+
+export function buildAddedToQueueMsg(track, accentColor = '#ff0000') {
+  const { EmbedBuilder } = require('discord.js');
+  const embed = new EmbedBuilder()
+    .setColor(accentColor);
+    
+  let desc = `# 🎵 [${track.title.substring(0, 100)}](${track.url})\n`;
+  desc += `By ${track.author || 'Unknown'}\n\n`;
+  
+  const platformIcon = track.url.includes('spotify') ? '<:spotify:123> Spotify' : '▶️ YouTube';
+  desc += `${platformIcon} • ${track.duration} • 🔴 <@${track.requester.id}>`;
+  
+  embed.setDescription(desc);
+  if (track.artworkUrl) {
+    embed.setThumbnail(track.artworkUrl);
+  }
+  
+  return { embeds: [embed] };
 }
