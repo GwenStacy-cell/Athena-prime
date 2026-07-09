@@ -100,7 +100,7 @@ export const commands = [
       const res = await enqueue(message.guild, message.member, query);
       
       if (res.success) {
-        const db = require('../database.js').default;
+                const { default: db } = await import("../database.js");
         const cfg = db.getGuildConfig(message.guild.id);
         message.reply(buildAddedToQueueMsg(res.trackObj, cfg.accentColor));
       } else {
@@ -115,8 +115,7 @@ export const commands = [
       const res = await enqueue(interaction.guild, interaction.member, query);
       
       if (res.success) {
-        const db = require('../database.js').default;
-        const cfg = db.getGuildConfig(interaction.guildId);
+                const cfg = db.getGuildConfig(interaction.guildId);
         interaction.editReply(buildAddedToQueueMsg(res.trackObj, cfg.accentColor));
       } else {
         interaction.editReply({ embeds: [embed.danger('Error', res.message)] });

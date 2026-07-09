@@ -145,8 +145,7 @@ export async function enqueue(guild, member, query) {
                 if (vc && vc.members) {
                    const members = Array.from(vc.members.values()).filter(m => !m.user.bot);
                    for (const member of members.sort(() => 0.5 - Math.random())) {
-                      const db = require('../database.js').default;
-                      const likedSongs = db.getLikedSongs(member.id);
+                                            const likedSongs = db.getLikedSongs(member.id);
                       if (likedSongs && likedSongs.length > 0) {
                          // Find one not in history recently
                          const unplayed = likedSongs.filter(ls => !queue.history.slice(-10).some(h => h.url === ls.url));
@@ -251,10 +250,10 @@ queue.player.on('error', (err) => {
     if (query.includes('spotify.com/track/')) {
        try {
           const fetch = (await import('node-fetch')).default;
-          const cheerio = require('cheerio');
+          const { load } = await import('cheerio');
           const res = await fetch(query);
           const html = await res.text();
-          const $ = cheerio.load(html);
+          const $ = load(html);
           const title = $('meta[property="og:title"]').attr('content');
           const desc = $('meta[property="og:description"]').attr('content');
           if (title) {
@@ -355,8 +354,7 @@ queue.player.on('error', (err) => {
       updatePlayerUI(guild.id);
     }
 
-    const { EmbedBuilder } = require('discord.js');
-    const cfg = db.getGuildConfig(guild.id);
+        const cfg = db.getGuildConfig(guild.id);
     const accent = cfg.accentColor || '#ff0000';
     
     return { 
@@ -410,58 +408,118 @@ function formatDuration(ms) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-function generateProgressBarImage(currentMs, totalMs, hexColor) {
-  const canvas = createCanvas(800, 75);
+
+async function generateNowPlayingImage(track, currentMs, totalMs, hexColor) {
+  // createCanvas and loadImage are imported globally (wait, loadImage is not. Let's use dynamic import)
+  const { createCanvas, loadImage } = await import('canvas');
+  const canvas = createCanvas(800, 250);
   const ctx = canvas.getContext('2d');
   
-  const progress = totalMs > 0 ? Math.min(Math.max(currentMs / totalMs, 0), 1) : 0;
-  const barWidth = 760;
-  const x = 20;
-  const y = 20;
-  const trackHeight = 6;
-  const knobRadius = 10;
+  ctx.clearRect(0, 0, 800, 250);
+
+  const drawCard = (x, y, w, h, radius, color) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + w - radius, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+    ctx.lineTo(x + w, y + h - radius);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    ctx.lineTo(x + radius, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.fill();
+  };
   
-  // Background track (dark grey)
+  const cardColor = '#111214'; 
+  drawCard(0, 0, 520, 130, 20, cardColor);
+  drawCard(0, 150, 520, 100, 20, cardColor);
+  drawCard(540, 0, 260, 250, 20, cardColor);
+
+  if (track.artworkUrl) {
+    try {
+      const img = await loadImage(track.artworkUrl);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(540 + 20, 0);
+      ctx.lineTo(540 + 260 - 20, 0);
+      ctx.quadraticCurveTo(540 + 260, 0, 540 + 260, 20);
+      ctx.lineTo(540 + 260, 250 - 20);
+      ctx.quadraticCurveTo(540 + 260, 250, 540 + 260 - 20, 250);
+      ctx.lineTo(540 + 20, 250);
+      ctx.quadraticCurveTo(540, 250, 540, 250 - 20);
+      ctx.lineTo(540, 20);
+      ctx.quadraticCurveTo(540, 0, 540 + 20, 0);
+      ctx.clip();
+      
+      const scale = Math.max(260 / img.width, 250 / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      const x = 540 + (260 - w) / 2;
+      const y = (250 - h) / 2;
+      ctx.drawImage(img, x, y, w, h);
+      ctx.restore();
+    } catch (e) { console.error('Failed to load artwork for canvas', e); }
+  }
+
+  ctx.fillStyle = hexColor;
+  ctx.font = 'bold 36px Inter, sans-serif';
+  let titleStr = track.title || 'Unknown Title';
+  if (titleStr.length > 25) titleStr = titleStr.substring(0, 25) + '...';
+  ctx.fillText(titleStr, 30, 55);
+
+  ctx.fillStyle = '#80848e';
+  ctx.font = '24px Inter, sans-serif';
+  let authorStr = `By ${track.author || 'Unknown'}`;
+  if (authorStr.length > 35) authorStr = authorStr.substring(0, 35) + '...';
+  ctx.fillText(authorStr, 30, 100);
+
+  const barWidth = 440;
+  const barX = 40;
+  const barY = 200;
+  const trackHeight = 10;
+  const knobRadius = 12;
+  
   ctx.fillStyle = '#3f3f46';
   ctx.beginPath();
-  ctx.roundRect(x, y - trackHeight/2, barWidth, trackHeight, trackHeight/2);
+  ctx.roundRect(barX, barY - trackHeight/2, barWidth, trackHeight, trackHeight/2);
   ctx.fill();
   
-  // Filled track (accent color)
+  const progress = totalMs > 0 ? Math.min(Math.max(currentMs / totalMs, 0), 1) : 0;
   const fillWidth = barWidth * progress;
+  
   if (fillWidth > 0) {
     ctx.fillStyle = hexColor;
     ctx.beginPath();
-    ctx.roundRect(x, y - trackHeight/2, fillWidth, trackHeight, trackHeight/2);
+    ctx.roundRect(barX, barY - trackHeight/2, fillWidth, trackHeight, trackHeight/2);
     ctx.fill();
   }
   
-  // Knob
   ctx.fillStyle = hexColor;
   ctx.beginPath();
-  ctx.arc(x + fillWidth, y, knobRadius, 0, Math.PI * 2);
+  ctx.arc(barX + fillWidth, barY, knobRadius, 0, Math.PI * 2);
   ctx.fill();
   
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  const formatTime = (ms) => {
+    const totalSec = Math.floor(ms / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = Math.floor(totalSec % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
   
-  // Timestamps
-  ctx.font = 'bold 24px sans-serif';
-  ctx.fillStyle = '#a1a1aa';
-  ctx.textBaseline = 'top';
+  ctx.fillStyle = hexColor;
+  ctx.font = 'bold 16px Inter, sans-serif';
+  ctx.fillText(formatTime(currentMs), barX, barY + 30);
   
-  const currentText = formatDuration(currentMs);
-  const totalText = totalMs > 0 ? formatDuration(totalMs) : 'LIVE';
-  
-  ctx.textAlign = 'left';
-  ctx.fillText(currentText, x, y + 25);
-  
-  ctx.textAlign = 'right';
-  ctx.fillText(totalText, x + barWidth, y + 25);
-  
+  const totalStr = formatTime(totalMs);
+  const totalW = ctx.measureText(totalStr).width;
+  ctx.fillText(totalStr, barX + barWidth - totalW, barY + 30);
+
   return canvas.toBuffer('image/png');
 }
+
 
 
 
@@ -632,8 +690,7 @@ export async function handleInteraction(interaction) {
     return interaction.reply({ content: `Autoplay is now **${queue.autoplay ? 'ON' : 'OFF'}**.`, ephemeral: true });
   } else if (action === 'like') {
     if (!queue.current) return interaction.reply({ content: `Nothing is playing to like!`, ephemeral: true });
-    const db = require('../database.js').default;
-    const added = db.toggleLikedSong(interaction.user.id, queue.current);
+        const added = db.toggleLikedSong(interaction.user.id, queue.current);
     return interaction.reply({ content: added ? `🤍 Added **${queue.current.title}** to your Liked Songs! (Autoplay will prioritize these)` : `Removed from Liked Songs.`, ephemeral: true });
   } else if (action === 'voldown') {
     queue.volume = Math.max(0, queue.volume - 10);
@@ -657,8 +714,7 @@ export async function handleInteraction(interaction) {
 
 
 export function buildAddedToQueueMsg(track, accentColor = '#ff0000') {
-  const { EmbedBuilder } = require('discord.js');
-  const embed = new EmbedBuilder()
+    const embed = new EmbedBuilder()
     .setColor(accentColor);
     
   let desc = `# 🎵 [${track.title.substring(0, 100)}](${track.url})\n`;
