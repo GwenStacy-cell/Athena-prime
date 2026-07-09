@@ -1356,7 +1356,7 @@ export const commands = [
         return message.reply({ embeds: [embed.danger('Permission Denied', 'Only Server Owners and Extra Owners can scan the server.')] });
       }
       const result = await handleScanServer(message.guild);
-      message.reply(result);
+      await message.reply(result);
     }
   },
   // --- LOCK APPS COMMAND ---
@@ -1393,6 +1393,33 @@ export const commands = [
       } else {
         await statusMsg.edit({ embeds: [embed.success('Apps Locked', `Successfully locked application commands in ${successCount} channels for @everyone.`)] });
       }
+    }
+  },
+  // --- UNLOCK APPS COMMAND ---
+  {
+    name: 'unlockapps',
+    description: 'Unlock application commands for @everyone server-wide.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    async executePrefix(message, args) {
+      if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) && !isExtraOwner(message.guild.id, message.author.id)) {
+        return message.reply({ embeds: [embed.danger('Permission Denied', 'Only Server Owners and Extra Owners can unlock apps.')] });
+      }
+      const statusMsg = await message.reply({ embeds: [embed.info('Updating Channels', 'Processing permissions for all channels. This may take a moment...')] });
+      
+      let successCount = 0;
+      
+      for (const channel of message.guild.channels.cache.values()) {
+        if (!channel.isTextBased() && channel.type !== ChannelType.GuildVoice) continue;
+        try {
+           await channel.permissionOverwrites.edit(message.guild.roles.everyone, {
+             UseApplicationCommands: null
+           });
+           successCount++;
+        } catch(e) {}
+      }
+      
+      await statusMsg.edit({ embeds: [embed.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`)] });
     }
   }
 
@@ -2811,9 +2838,14 @@ async function handleScanServer(guild) {
   
   if (unauthorizedBots.length > 0) {
     desc += `**Unauthorized Bots:**\n`;
-    unauthorizedBots.forEach(b => {
+    const botsToShow = unauthorizedBots.slice(0, 40);
+    botsToShow.forEach(b => {
        desc += `• <@${b.id}> (` + b.user.tag + `)\n`;
     });
+    
+    if (unauthorizedBots.length > 40) {
+      desc += `\n*...and ${unauthorizedBots.length - 40} more.*`;
+    }
     
     const embedMsg = embed.warn('Server Bot Scanner', desc);
     
