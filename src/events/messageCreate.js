@@ -13,6 +13,7 @@ import { Client } from 'nekos-best.js';
 import fetch from 'node-fetch';
 import { createRateMessage } from '../commands/rate.js';
 import { scanImageForScam, flaggedMessages } from '../utils/antiScam.js';
+import { createMockInteraction } from '../utils/mockInteraction.js';
 
 const nbClient = new Client();
 const gifCache = new Map();
@@ -1142,10 +1143,12 @@ export default {
     }
 
     try {
-      if (!cmd.executePrefix) {
-        return message.reply({ embeds: [embed.warn('Slash Command Only', `This command is designed exclusively as a slash command. Please type \`/${commandName}\` to use it.`)] }).catch(() => null);
+      if (!cmd.executePrefix && cmd.executeSlash) {
+        const mockInteraction = createMockInteraction(message, args, cmd);
+        await cmd.executeSlash(mockInteraction);
+      } else if (cmd.executePrefix) {
+        await cmd.executePrefix(message, args);
       }
-      await cmd.executePrefix(message, args);
     } catch (error) {
       console.error(error);
       const errEmbed = embed.danger('Execution Error', `An unexpected error occurred while executing this command.`);
