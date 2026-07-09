@@ -303,15 +303,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
     };
   }
 
-  // Target must currently be in a voice channel
-  if (!target.voice.channel) {
-    return {
-      embed: embed.warn(
-        'VC Drag Failed',
-        `${target} is not currently in any voice channel. Ask them to join one first.`
-      )
-    };
-  }
+  // (We no longer fail if they aren't in a VC initially, the drag will just wait for them to join)
 
   // Bot needs Move Members permission
   const botMember = guild.members.me;
@@ -366,12 +358,8 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
       // Re-fetch target member state
       const freshMember = await guild.members.fetch(target.id).catch(() => null);
       if (!freshMember || !freshMember.voice.channelId) {
-        // User left all VCs — stop session automatically
-        const session = activeDrags.get(sessionKey);
-        if (session) {
-          clearInterval(session.timer);
-          activeDrags.delete(sessionKey);
-        }
+        // User left all VCs or left the server completely
+        // Do NOT clear the timer! We wait silently until they join again.
         return;
       }
 
