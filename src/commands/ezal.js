@@ -709,7 +709,7 @@ async function handleRestoreSetup(message, args) {
     if (aRole) {
       let realRole = guild.roles.cache.get(aRole);
       if (!realRole) {
-        realRole = await guild.roles.create({ name: 'Accent Manager', color: '#ff0000' });
+        realRole = await guild.roles.create({ name: 'Accent Manager', color: config.accentColor || '#ff0000' });
         db.updateGuildConfig(guildId, { accentManagerRoleId: realRole.id });
       }
     }
