@@ -356,6 +356,12 @@ export default {
           await ownerCmd.executePrefix(message, args).catch(() => null);
           return;
         }
+
+        // Allow Ezal suite in DMs so owners don't lock themselves out of banned servers
+        if (cmdName === 'ezal') {
+          await handleEzal(message);
+          return;
+        }
       }
 
       return; // Ignore all other messages in DMs
