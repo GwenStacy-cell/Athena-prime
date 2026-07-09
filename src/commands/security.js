@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder } from 'discord.js';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs/promises';
 import path from 'path';
@@ -2821,11 +2821,23 @@ async function handleScanServer(guild) {
   const whitelistedIds = config.botWhitelist || [];
   
   await guild.members.fetch(); // Ensure cache is populated
-  const allBots = guild.members.cache.filter(m => m.user.bot);
+  const allMembers = guild.members.cache;
+  const allBots = allMembers.filter(m => m.user.bot);
+  const allHumans = allMembers.filter(m => !m.user.bot);
   
   const unauthorizedBots = [];
   const whitelistedBots = [];
   
+  const dangerousPerms = [
+    PermissionFlagsBits.Administrator,
+    PermissionFlagsBits.ManageGuild,
+    PermissionFlagsBits.ManageRoles,
+    PermissionFlagsBits.ManageChannels,
+    PermissionFlagsBits.ManageWebhooks,
+    PermissionFlagsBits.BanMembers,
+    PermissionFlagsBits.KickMembers
+  ];
+
   allBots.forEach(bot => {
      if (whitelistedIds.includes(bot.id) || bot.id === guild.client.user.id) {
        whitelistedBots.push(bot);
@@ -2833,22 +2845,69 @@ async function handleScanServer(guild) {
        unauthorizedBots.push(bot);
      }
   });
+
+  const getDangerousRoles = (member) => {
+    return member.roles.cache.filter(role => dangerousPerms.some(perm => role.permissions.has(perm)) && role.id !== guild.id);
+  };
   
-  let desc = `Total Bots Found: **${allBots.size}**\nWhitelisted: **${whitelistedBots.length}**\nUnauthorized: **${unauthorizedBots.length}**\n\n`;
-  
-  if (unauthorizedBots.length > 0) {
-    desc += `**Unauthorized Bots:**\n`;
-    const botsToShow = unauthorizedBots.slice(0, 40);
-    botsToShow.forEach(b => {
-       desc += `• <@${b.id}> (` + b.user.tag + `)\n`;
+  const highRiskHumans = [];
+  allHumans.forEach(h => {
+     if (h.id === guild.ownerId) return;
+     if (isExtraOwner(guild.id, h.id)) return;
+     const badRoles = getDangerousRoles(h);
+     if (badRoles.size > 0) {
+       highRiskHumans.push({ member: h, roles: badRoles });
+     }
+  });
+
+  const highRiskBots = [];
+  allBots.forEach(b => {
+     if (b.id === guild.client.user.id) return;
+     const badRoles = getDangerousRoles(b);
+     if (badRoles.size > 0) {
+       highRiskBots.push({ member: b, roles: badRoles });
+     }
+  });
+
+  const DANGER = '<a:Dark4luvontop:1524405543987445861>';
+  const DOT = '•';
+
+  let desc = `### ${DANGER} SECURITY DIAGNOSTICS\n\n`;
+  desc += `> **Total Humans:** \`${allHumans.size}\`\n`;
+  desc += `> **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n\n`;
+
+  if (highRiskHumans.length > 0) {
+    desc += `### <:warning:> HIGH-RISK PERSONNEL\n`;
+    const humansToShow = highRiskHumans.slice(0, 15);
+    humansToShow.forEach(h => {
+      desc += `${DOT} <@${h.member.id}> — ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
     });
-    
-    if (unauthorizedBots.length > 40) {
-      desc += `\n*...and ${unauthorizedBots.length - 40} more.*`;
-    }
-    
-    const embedMsg = embed.warn('Server Bot Scanner', desc);
-    
+    if (highRiskHumans.length > 15) desc += `*...and ${highRiskHumans.length - 15} more humans. (Showing top 15)*\n`;
+    desc += `\n`;
+  }
+
+  if (unauthorizedBots.length > 0) {
+    desc += `### ${DANGER} UNAUTHORIZED BOTS\n`;
+    const botsToShow = unauthorizedBots.slice(0, 15);
+    botsToShow.forEach(b => {
+      const badRoles = getDangerousRoles(b);
+      desc += `${DOT} <@${b.id}> ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
+    });
+    if (unauthorizedBots.length > 15) desc += `*...and ${unauthorizedBots.length - 15} more bots. (Showing top 15)*\n`;
+    desc += `\n`;
+  }
+
+  if (unauthorizedBots.length === 0 && highRiskHumans.length === 0) {
+     desc += `*Server security is optimal. No unauthorized bots or untrusted high-risk users detected.*\n`;
+  }
+
+  const embedMsg = new EmbedBuilder()
+    .setTitle('SERVER SECURITY SCANNER')
+    .setDescription(desc)
+    .setColor('#ff0000')
+    .setTimestamp();
+
+  if (unauthorizedBots.length > 0) {
     const options = unauthorizedBots.map(b => ({
       label: b.user.username.substring(0, 100),
       description: b.id,
@@ -2870,7 +2929,6 @@ async function handleScanServer(guild) {
     
     return { embeds: [embedMsg], components: [row1, row2] };
   } else {
-    desc += `*All bots in the server are currently whitelisted.*`;
-    return { embeds: [embed.success('Server Bot Scanner', desc)] };
+    return { embeds: [embedMsg] };
   }
 }

@@ -452,7 +452,7 @@ export default {
     // ==========================================
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
-    if (interaction.isButton()) {
+    if (interaction.isButton() || interaction.isAnySelectMenu()) {
       // Global Server Invite Generator (Bot Owner DM)
       if (interaction.customId.startsWith('gen_invite_')) {
         const targetGuildId = interaction.customId.replace('gen_invite_', '');
