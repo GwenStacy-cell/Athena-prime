@@ -221,11 +221,13 @@ export async function enqueue(guild, member, query) {
           queue.current = null;
           queue.isPlaying = false;
           updatePlayerUI(guild.id);
+          clearNowPlayingEmbeds(guild.id);
           startLeaveTimeout(guild.id);
         } else {
           queue.current = null;
           queue.isPlaying = false;
           updatePlayerUI(guild.id);
+          clearNowPlayingEmbeds(guild.id);
           startLeaveTimeout(guild.id);
         }
       });
@@ -373,11 +375,11 @@ async function playResource(guildId, song) {
        
        if (queue.progressInterval) clearInterval(queue.progressInterval);
        queue.progressInterval = setInterval(() => {
-          if (queue.isPlaying) updatePlayerUI(guildId);
+          if (queue.isPlaying) updateNowPlayingEmbeds(guildId);
        }, 10000);
        
        updatePlayerUI(guildId);
-       
+       updateNowPlayingEmbeds(guildId);
     }
   } catch (error) {
     console.error(`Error streaming song:`, error);
@@ -453,6 +455,86 @@ function generateProgressBarImage(currentMs, totalMs, hexColor) {
 }
 
 
+
+function buildNowPlayingEmbed(guildId) {
+  const queue = getQueue(guildId);
+  const cfg = db.getGuildConfig(guildId);
+  if (!queue.current) return null;
+  
+  const embed = new EmbedBuilder()
+    .setColor('#2b2d31') // Blend with dark theme
+    .setTitle(`<:author:1524687847662161971> ${queue.current.title.substring(0, 250)}`)
+    .setURL(queue.current.url)
+    .setDescription(`By ${queue.current.author || 'Unknown'}\n\n<:tickred:1524687857929945159> Requested by: <@${queue.current.requester.id}>`);
+
+  if (queue.current.artworkUrl) {
+    embed.setThumbnail(queue.current.artworkUrl);
+  } else if (cfg.musicCoverImage) {
+    embed.setThumbnail(cfg.musicCoverImage);
+  }
+  
+  embed.setImage('attachment://progress.png');
+  
+  return embed;
+}
+
+async function updateNowPlayingEmbeds(guildId) {
+  const queue = getQueue(guildId);
+  if (!queue.current || !queue.isPlaying) return;
+  
+  const embed = buildNowPlayingEmbed(guildId);
+  if (!embed) return;
+  
+  const cfg = db.getGuildConfig(guildId);
+  
+  // Calculate total duration in ms
+  const [mins, secs] = queue.current.duration.split(':').map(Number);
+  const totalMs = queue.current.duration === 'Unknown' ? 0 : (mins * 60 + secs) * 1000;
+  
+  const imgBuffer = generateProgressBarImage(queue.player?.position || 0, totalMs, cfg.accentColor || '#ff0000');
+  const attachment = new AttachmentBuilder(imgBuffer, { name: 'progress.png' });
+  
+  if (queue.player) {
+     try {
+       const guild = global.client.guilds.cache.get(guildId);
+       const vcId = guild.members.me.voice?.channelId;
+       const vc = guild.channels.cache.get(vcId);
+       if (vc && vc.isTextBased()) {
+         if (queue.nowPlayingMsgVcId) {
+            try {
+              const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
+              if (msg) await msg.edit({ embeds: [embed], files: [attachment] });
+            } catch (e) {
+              const newMsg = await vc.send({ embeds: [embed], files: [attachment] }).catch(()=>null);
+              if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
+            }
+         } else {
+            const newMsg = await vc.send({ embeds: [embed], files: [attachment] }).catch(()=>null);
+            if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
+         }
+       }
+     } catch (e) { console.error('Failed to update VC embed:', e); }
+  }
+}
+
+async function clearNowPlayingEmbeds(guildId) {
+  const queue = getQueue(guildId);
+  
+  if (queue.player) {
+    try {
+       const guild = global.client.guilds.cache.get(guildId);
+       const vcId = guild.members.me.voice?.channelId;
+       const vc = guild.channels.cache.get(vcId);
+       if (vc && queue.nowPlayingMsgVcId) {
+          const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
+          if (msg) await msg.delete().catch(()=>null);
+       }
+    } catch(e) {}
+    queue.nowPlayingMsgVcId = null;
+  }
+}
+
+
 export async function updatePlayerUI(guildId) {
   const queue = getQueue(guildId);
   const cfg = db.getGuildConfig(guildId);
@@ -473,36 +555,29 @@ export async function updatePlayerUI(guildId) {
     const message = await queue.textChannel.messages.fetch(cfg.musicMessageId);
     if (!message) return;
     
-    if (!queue.current) {
-        const embed = new EmbedBuilder()
-          .setColor(cfg.accentColor || '#ff0000')
-          .setAuthor({ name: 'Compact Music Player', iconURL: global.client?.user?.displayAvatarURL() })
-          .setDescription('⸻ Ready to play music ⸻\n\nJoin a VC and type a song name or paste a link here.');
-        if (cfg.musicCoverImage) embed.setImage(cfg.musicCoverImage);
-        await message.edit({ embeds: [embed], components: [], files: [] });
-        return;
-    }
-
     const embed = new EmbedBuilder()
-      .setColor('#2b2d31') // Blend with dark theme
-      .setTitle(`<:author:1524687847662161971> ${queue.current.title.substring(0, 250)}`)
-      .setURL(queue.current.url)
-      .setDescription(`By ${queue.current.author || 'Unknown'}\n\n<:tickred:1524687857929945159> Requested by: <@${queue.current.requester.id}>`);
+      .setColor(cfg.accentColor || '#ff0000')
+      .setAuthor({ name: 'Compact Music Player', iconURL: global.client?.user?.displayAvatarURL() });
 
-    if (queue.current.artworkUrl) {
-      embed.setThumbnail(queue.current.artworkUrl);
-    } else if (cfg.musicCoverImage) {
-      embed.setThumbnail(cfg.musicCoverImage);
+    if (cfg.musicCoverImage) embed.setImage(cfg.musicCoverImage);
+    
+    let desc = '⸻ Welcome to the Athena Prime Music Console, your dedicated gateway to a seamless, premium, and uninterrupted high-fidelity audio experience. ⸻\n\n';
+    desc += '**⸻ INSTRUCTIONS**\n\n';
+    desc += '» **Join** any active voice channel.\n';
+    desc += '» **Search** by typing a song name or pasting a URL directly in this channel.\n';
+    desc += '» **Control** your playback using the module below.\n\n';
+
+    if (queue.current) {
+      desc += `**⸻ NOW PLAYING**\n[${queue.current.title}](${queue.current.url}) [${queue.current.duration}]\nRequested by: ${queue.current.requester}\n\n`;
+      if (queue.songs.length > 0) {
+        desc += `**⸻ NEXT UP**\n[${queue.songs[0].title}](${queue.songs[0].url}) [${queue.songs[0].duration}]\n`;
+        if (queue.songs.length > 1) desc += `...and ${queue.songs.length - 1} more in queue.\n`;
+      }
+    } else {
+      desc += '**Status:** ⸻ Ready to play';
     }
     
-    embed.setImage('attachment://progress.png');
-
-    // Calculate total duration in ms
-    const [mins, secs] = queue.current.duration.split(':').map(Number);
-    const totalMs = queue.current.duration === 'Unknown' ? 0 : (mins * 60 + secs) * 1000;
-    
-    const imgBuffer = generateProgressBarImage(queue.player?.position || 0, totalMs, cfg.accentColor || '#ff0000');
-    const attachment = new AttachmentBuilder(imgBuffer, { name: 'progress.png' });
+    embed.setDescription(desc);
     
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('music_prev').setLabel('Prev').setStyle(ButtonStyle.Secondary).setEmoji('⏮️'),
@@ -526,7 +601,7 @@ export async function updatePlayerUI(guildId) {
       new ButtonBuilder().setCustomId('music_volup').setLabel('Vol+').setStyle(ButtonStyle.Success).setEmoji('<:volume:1524687855354380359>')
     );
     
-    await message.edit({ embeds: [embed], components: [row1, row2, row3, row4], files: [attachment] });
+    await message.edit({ embeds: [embed], components: [row1, row2, row3, row4], files: [] });
   } catch (error) {
     console.error(`Failed to update music UI for guild ${guildId}:`, error);
   }
