@@ -1151,7 +1151,7 @@ export default {
       }
     } catch (error) {
       console.error(error);
-      const errEmbed = embed.danger('Execution Error', `An unexpected error occurred while executing this command.`);
+      const errEmbed = embed.danger('Execution Error', `An unexpected error occurred while executing this command.\n\n\`\`\`js\n${error.message}\n\`\`\``);
       await message.reply({ embeds: [errEmbed] }).catch(() => null);
     }
   }

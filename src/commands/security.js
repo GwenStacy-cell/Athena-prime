@@ -2901,6 +2901,10 @@ async function handleScanServer(guild) {
      desc += `*Server security is optimal. No unauthorized bots or untrusted high-risk users detected.*\n`;
   }
 
+  if (desc.length > 4096) {
+    desc = desc.substring(0, 4090) + '...';
+  }
+
   const embedMsg = new EmbedBuilder()
     .setTitle('SERVER SECURITY SCANNER')
     .setDescription(desc)
