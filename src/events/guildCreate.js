@@ -25,12 +25,25 @@ export default {
 
       const botOwner = await client.users.fetch(ownerId).catch(() => null);
 
+      // Attempt to find who added the bot
+      let addedBy = "Someone";
+      try {
+        const { AuditLogEvent } = await import('discord.js');
+        const auditLogs = await guild.fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: 1 });
+        const logEntry = auditLogs.entries.first();
+        if (logEntry && logEntry.targetId === client.user.id) {
+          addedBy = `**${logEntry.executor.username}** (\`${logEntry.executor.id}\`)`;
+        }
+      } catch (err) {
+        // Missing View Audit Log permission or log not generated yet
+      }
+
       if (db.isServerBanned(guild.id)) {
         if (botOwner) {
           const embed = new EmbedBuilder()
             .setColor(0xFF0000)
             .setTitle('Banned Server Addition Attempt')
-            .setDescription(`Someone tried to add me to a banned server. I have automatically left it.`)
+            .setDescription(`${addedBy} tried to add me to a banned server. I have automatically left it.`)
             .addFields(
               { name: 'Server Name', value: `${guild.name}`, inline: true },
               { name: 'Server ID', value: `\`${guild.id}\``, inline: true },
@@ -50,7 +63,7 @@ export default {
       const embed = new EmbedBuilder()
         .setColor(0x5865F2)
         .setTitle('New Server Joined')
-        .setDescription(`I have just been added to a new server.`)
+        .setDescription(`${addedBy} just added me to a new server.`)
         .addFields(
           { name: 'Server Name', value: `${guild.name}`, inline: true },
           { name: 'Server ID', value: `\`${guild.id}\``, inline: true },
