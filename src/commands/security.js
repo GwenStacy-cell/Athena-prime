@@ -2877,7 +2877,7 @@ async function handleScanServer(guild) {
   desc += `> **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n\n`;
 
   if (highRiskHumans.length > 0) {
-    desc += `### <:warning:> HIGH-RISK PERSONNEL\n`;
+    desc += `### <a:Dark4luvontop:1524405545690202253> HIGH-RISK PERSONNEL\n`;
     const humansToShow = highRiskHumans.slice(0, 15);
     humansToShow.forEach(h => {
       desc += `${DOT} <@${h.member.id}> — ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
