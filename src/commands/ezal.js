@@ -518,7 +518,7 @@ async function handleRemoteEmergency(message, args) {
   else await message.reply({ embeds: [result.embed] });
 }
 
-function handleEhelp(message) {
+async function handleEhelp(message) {
   const fields = [
     {
       name: 'Backup System',
