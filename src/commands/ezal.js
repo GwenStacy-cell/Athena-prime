@@ -532,7 +532,10 @@ function handleEhelp(message) {
       name: 'Server Management',
       value:
         '`ezal servers` — List all servers the bot is in with their backup IDs and stats\n' +
-        '`ezal emergency <serverId> [mode|end]` — Trigger emergency mode remotely'
+        '`ezal emergency <serverId> [mode|end]` — Trigger emergency mode remotely\n' +
+        '`ezal banserver <serverId>` — Ban a server and force leave instantly\n' +
+        '`ezal unbanserver <serverId>` — Unban a server to allow invites\n' +
+        '`ezal restoresetup <serverId>` — Dynamically restore JTC, Welcome, Leave, Accent, and Quarantine setups'
     },
     {
       name: 'Access',
