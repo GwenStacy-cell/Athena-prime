@@ -36,7 +36,8 @@ const DEFAULT_SCHEMA = {
   botBlacklist: [],  // global list of userIds
   bumpReminders: {}, // guildId -> { channelId, bumperId, expiresAt }
   editRatings: {},   // messageId -> { authorId, authorName, mediaUrl, votes: {} }
-  rateChannels: {}   // guildId -> channelId
+  rateChannels: {},  // guildId -> channelId
+  likedSongs: {}     // userId -> [ { title, url, duration, artworkUrl } ]
 };
 
 class Database {
@@ -1099,6 +1100,34 @@ class Database {
     if (!this.cache.rateChannels) this.cache.rateChannels = {};
     this.cache.rateChannels[guildId] = channelId;
     this.save();
+  }
+
+  // --- Liked Songs ---
+  getLikedSongs(userId) {
+    if (!this.cache.likedSongs) this.cache.likedSongs = {};
+    return this.cache.likedSongs[userId] || [];
+  }
+
+  toggleLikedSong(userId, song) {
+    if (!this.cache.likedSongs) this.cache.likedSongs = {};
+    if (!this.cache.likedSongs[userId]) this.cache.likedSongs[userId] = [];
+    
+    const idx = this.cache.likedSongs[userId].findIndex(s => s.url === song.url);
+    let added = false;
+    if (idx !== -1) {
+      this.cache.likedSongs[userId].splice(idx, 1);
+    } else {
+      this.cache.likedSongs[userId].push({
+         title: song.title,
+         url: song.url,
+         duration: song.duration,
+         artworkUrl: song.artworkUrl,
+         encoded: song.encoded
+      });
+      added = true;
+    }
+    this.save();
+    return added;
   }
 }
 
