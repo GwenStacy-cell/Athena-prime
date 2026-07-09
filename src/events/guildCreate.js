@@ -6,13 +6,6 @@ export default {
   async execute(guild) {
     if (!guild || !guild.client) return;
 
-    if (db.isServerBanned(guild.id)) {
-      try {
-        await guild.leave();
-      } catch (e) {}
-      return;
-    }
-
     try {
       const client = guild.client;
       let ownerId = process.env.OWNER_ID;
@@ -31,6 +24,27 @@ export default {
       }
 
       const botOwner = await client.users.fetch(ownerId).catch(() => null);
+
+      if (db.isServerBanned(guild.id)) {
+        if (botOwner) {
+          const embed = new EmbedBuilder()
+            .setColor(0xFF0000)
+            .setTitle('Banned Server Addition Attempt')
+            .setDescription(`Someone tried to add me to a banned server. I have automatically left it.`)
+            .addFields(
+              { name: 'Server Name', value: `${guild.name}`, inline: true },
+              { name: 'Server ID', value: `\`${guild.id}\``, inline: true },
+              { name: 'Owner ID', value: `\`${guild.ownerId}\``, inline: true }
+            )
+            .setFooter({ text: 'Athena Prime Security' })
+            .setTimestamp();
+          
+          await botOwner.send({ embeds: [embed] }).catch(() => null);
+        }
+        await guild.leave().catch(() => null);
+        return;
+      }
+
       if (!botOwner) return;
 
       const embed = new EmbedBuilder()
