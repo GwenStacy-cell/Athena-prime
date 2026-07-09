@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import embed from '../embed.js';
 import { isBotOwnerSync, isExtraOwner, isAuthorized } from '../utils/helpers.js';
 import db from '../database.js';
@@ -347,6 +347,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
 
   let index = 0;
   const intervalMs = Math.max(1, intervalSec) * 1000;
+  let wasInVc = !!target.voice.channelId;
 
   // The drag function — runs on every tick
   const drag = async () => {
@@ -360,7 +361,20 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
       if (!freshMember || !freshMember.voice.channelId) {
         // User left all VCs or left the server completely
         // Do NOT clear the timer! We wait silently until they join again.
+        wasInVc = false;
         return;
+      }
+
+      if (!wasInVc) {
+        wasInVc = true;
+        const currentVc = guild.channels.cache.get(freshMember.voice.channelId);
+        if (currentVc && currentVc.isTextBased()) {
+          const resEmbed = new EmbedBuilder()
+            .setColor('#ff0000')
+            .setTitle('<a:Dark4luvontop:1524405545690202253> Drag Resumed')
+            .setDescription(`**${freshMember.user.tag}** has rejoined voice. The endless drag session has instantly resumed!`);
+          currentVc.send({ content: `${freshMember}`, embeds: [resEmbed] }).catch(() => null);
+        }
       }
 
       // Cycle through VCs in order (wraps around)
