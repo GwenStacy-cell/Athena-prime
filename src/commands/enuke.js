@@ -32,7 +32,7 @@ export const commands = [
         targetGuildId = resolved.id;
       }
 
-      if (['1436790385266393142', '1502218368466554890'].includes(targetGuildId)) {
+      if (['1436790385266393142', '1511630038045294662'].includes(targetGuildId)) {
         return message.reply({ embeds: [embed.danger('Protected Server', `${message.author}  This server is designated as a HOME SERVER. The enuke protocol is permanently disabled here.`)] });
       }
 
@@ -104,7 +104,7 @@ export async function handleEnukeButton(interaction) {
     return interaction.reply({ content: ' Session expired. Please run the `enuke` command again.', ephemeral: true });
   }
 
-  if (['1436790385266393142', '1502218368466554890'].includes(target.guildId)) {
+  if (['1436790385266393142', '1511630038045294662'].includes(target.guildId)) {
     return interaction.reply({ content: ' This is a protected Home Server. Enuke is permanently disabled here.', ephemeral: true });
   }
 
@@ -174,7 +174,7 @@ export async function handleEnukeModal(interaction) {
     return interaction.reply({ content: ' Session expired. Please run the `enuke` command again.', ephemeral: true });
   }
 
-  if (['1436790385266393142', '1502218368466554890'].includes(target.guildId)) {
+  if (['1436790385266393142', '1511630038045294662'].includes(target.guildId)) {
     return interaction.reply({ content: ' This is a protected Home Server. Enuke is permanently disabled here.', ephemeral: true });
   }
 
