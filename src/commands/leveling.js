@@ -74,6 +74,10 @@ export const commands = [
     category: 'admin',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [],
+    async executePrefix(message) {
+      const payload = await buildXpDashboard(message.guild.id);
+      await message.reply(payload);
+    },
     async executeSlash(interaction) {
       const payload = await buildXpDashboard(interaction.guild.id);
       await interaction.reply({ ...payload, ephemeral: true });

@@ -1142,6 +1142,9 @@ export default {
     }
 
     try {
+      if (!cmd.executePrefix) {
+        return message.reply({ embeds: [embed.warn('Slash Command Only', `This command is designed exclusively as a slash command. Please type \`/${commandName}\` to use it.`)] }).catch(() => null);
+      }
       await cmd.executePrefix(message, args);
     } catch (error) {
       console.error(error);
