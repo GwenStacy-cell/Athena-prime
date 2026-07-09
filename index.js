@@ -31,7 +31,8 @@ const client = new Client({
     GatewayIntentBits.GuildWebhooks,       // Required for webhook events
     GatewayIntentBits.GuildInvites,        // Required for invite tracking
     GatewayIntentBits.GuildEmojisAndStickers, // Required for emoji events
-    GatewayIntentBits.GuildMessageReactions // Required for reaction roles
+    GatewayIntentBits.GuildMessageReactions, // Required for reaction roles
+    GatewayIntentBits.DirectMessages       // Required to receive owner DMs
   ],
   partials: [
     Partials.User,
