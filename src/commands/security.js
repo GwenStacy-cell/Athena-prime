@@ -2816,7 +2816,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 
 
 
-async function handleScanServer(guild) {
+export async function handleScanServer(guild, page = 0) {
   const config = db.getGuildConfig(guild.id);
   const whitelistedIds = config.botWhitelist || [];
   
@@ -2851,9 +2851,13 @@ async function handleScanServer(guild) {
   };
   
   const highRiskHumans = [];
+  const trustedHumans = [];
+  
   allHumans.forEach(h => {
-     if (h.id === guild.ownerId) return;
-     if (isExtraOwner(guild.id, h.id)) return;
+     if (h.id === guild.ownerId || isExtraOwner(guild.id, h.id)) {
+       trustedHumans.push(h);
+       return;
+     }
      const badRoles = getDangerousRoles(h);
      if (badRoles.size > 0) {
        highRiskHumans.push({ member: h, roles: badRoles });
@@ -2869,31 +2873,67 @@ async function handleScanServer(guild) {
      }
   });
 
+  const ITEMS_PER_PAGE = 15;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(highRiskHumans.length / ITEMS_PER_PAGE),
+    Math.ceil(unauthorizedBots.length / ITEMS_PER_PAGE),
+    Math.ceil(whitelistedBots.length / ITEMS_PER_PAGE),
+    Math.ceil(trustedHumans.length / ITEMS_PER_PAGE)
+  );
+  
+  if (page < 0) page = 0;
+  if (page >= totalPages) page = totalPages - 1;
+
+  const startIdx = page * ITEMS_PER_PAGE;
+  const endIdx = startIdx + ITEMS_PER_PAGE;
+
   const DANGER = '<a:Dark4luvontop:1524405543987445861>';
+  const WARNING = '<a:Dark4luvontop:1524405545690202253>';
   const DOT = '•';
 
   let desc = `### ${DANGER} SECURITY DIAGNOSTICS\n\n`;
   desc += `> **Total Humans:** \`${allHumans.size}\`\n`;
   desc += `> **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n\n`;
 
-  if (highRiskHumans.length > 0) {
-    desc += `### <a:Dark4luvontop:1524405545690202253> HIGH-RISK PERSONNEL\n`;
-    const humansToShow = highRiskHumans.slice(0, 15);
+  if (trustedHumans.length > 0) {
+    desc += `### <:emoji_16:1521464002046328944> TRUSTED PERSONNEL\n`;
+    const humansToShow = trustedHumans.slice(startIdx, endIdx);
     humansToShow.forEach(h => {
-      desc += `${DOT} <@${h.member.id}> — ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
+      desc += `${DOT} <@${h.id}> (\`${h.user.username}\`)\n`;
     });
-    if (highRiskHumans.length > 15) desc += `*...and ${highRiskHumans.length - 15} more humans. (Showing top 15)*\n`;
+    if (trustedHumans.length > endIdx) desc += `*...and ${trustedHumans.length - endIdx} more.*\n`;
+    desc += `\n`;
+  }
+
+  if (whitelistedBots.length > 0) {
+    desc += `### <:emoji_16:1521464002046328944> WHITELISTED BOTS\n`;
+    const botsToShow = whitelistedBots.slice(startIdx, endIdx);
+    botsToShow.forEach(b => {
+      desc += `${DOT} <@${b.id}> (\`${b.user.username}\`)\n`;
+    });
+    if (whitelistedBots.length > endIdx) desc += `*...and ${whitelistedBots.length - endIdx} more.*\n`;
+    desc += `\n`;
+  }
+
+  if (highRiskHumans.length > 0) {
+    desc += `### ${WARNING} HIGH-RISK PERSONNEL\n`;
+    const humansToShow = highRiskHumans.slice(startIdx, endIdx);
+    humansToShow.forEach(h => {
+      desc += `${DOT} <@${h.member.id}> (\`${h.member.user.username}\`) — ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
+    });
+    if (highRiskHumans.length > endIdx) desc += `*...and ${highRiskHumans.length - endIdx} more.*\n`;
     desc += `\n`;
   }
 
   if (unauthorizedBots.length > 0) {
     desc += `### ${DANGER} UNAUTHORIZED BOTS\n`;
-    const botsToShow = unauthorizedBots.slice(0, 15);
+    const botsToShow = unauthorizedBots.slice(startIdx, endIdx);
     botsToShow.forEach(b => {
       const badRoles = getDangerousRoles(b);
-      desc += `${DOT} <@${b.id}> ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
+      desc += `${DOT} <@${b.id}> (\`${b.user.username}\`) ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
     });
-    if (unauthorizedBots.length > 15) desc += `*...and ${unauthorizedBots.length - 15} more bots. (Showing top 15)*\n`;
+    if (unauthorizedBots.length > endIdx) desc += `*...and ${unauthorizedBots.length - endIdx} more.*\n`;
     desc += `\n`;
   }
 
@@ -2909,7 +2949,27 @@ async function handleScanServer(guild) {
     .setTitle('SERVER SECURITY SCANNER')
     .setDescription(desc)
     .setColor('#ff0000')
+    .setFooter({ text: `Page ${page + 1} of ${totalPages}` })
     .setTimestamp();
+
+  const components = [];
+
+  // Pagination buttons
+  if (totalPages > 1) {
+    const prevBtn = new ButtonBuilder()
+      .setCustomId(`scanserver_prev_${page}`)
+      .setEmoji('<:previous:1523766004839088301>')
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(page === 0);
+      
+    const nextBtn = new ButtonBuilder()
+      .setCustomId(`scanserver_next_${page}`)
+      .setEmoji('<:next:1523766065576935475>')
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(page === totalPages - 1);
+      
+    components.push(new ActionRowBuilder().addComponents(prevBtn, nextBtn));
+  }
 
   if (unauthorizedBots.length > 0) {
     const options = unauthorizedBots.map(b => ({
@@ -2919,20 +2979,18 @@ async function handleScanServer(guild) {
     })).slice(0, 25);
     
     const selectMenu = new StringSelectMenuBuilder()
-      .setCustomId('scanserver_ban')
+      .setCustomId(`scanserver_ban_${page}`)
       .setPlaceholder('Select an unauthorized bot to ban')
       .addOptions(options);
       
     const banAllBtn = new ButtonBuilder()
-      .setCustomId('scanserver_banall')
+      .setCustomId(`scanserver_banall_${page}`)
       .setLabel('Ban All Unauthorized')
       .setStyle(ButtonStyle.Danger);
       
-    const row1 = new ActionRowBuilder().addComponents(selectMenu);
-    const row2 = new ActionRowBuilder().addComponents(banAllBtn);
-    
-    return { embeds: [embedMsg], components: [row1, row2] };
-  } else {
-    return { embeds: [embedMsg] };
+    components.push(new ActionRowBuilder().addComponents(selectMenu));
+    components.push(new ActionRowBuilder().addComponents(banAllBtn));
   }
+  
+  return { embeds: [embedMsg], components: components };
 }

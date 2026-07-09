@@ -3,7 +3,7 @@ import { buildXpDashboard } from '../commands/leveling.js';
 import commandMap from '../commands/loader.js';
 import embed, { setGuildContext } from '../embed.js';
 import db from '../database.js';
-import { getAntinukeConfigPanel } from '../commands/security.js';
+import { getAntinukeConfigPanel, handleScanServer } from '../commands/security.js';
 import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
 import { handleSpamModal, handleSpamMoreButton } from '../commands/spam.js';
 import { isBotOwnerSync, canModerate, isExtraOwner, isBotOwnerOrServerOwnerStrict } from '../utils/helpers.js';
@@ -524,36 +524,50 @@ export default {
 
 
       // --- SCANSERVER INTERACTIONS ---
-      if (interaction.customId === 'scanserver_ban' && interaction.isStringSelectMenu()) {
+      if (interaction.customId.startsWith('scanserver_')) {
          if (!isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild) && !isExtraOwner(interaction.guild.id, interaction.user.id)) {
            return interaction.reply({ content: 'Permission Denied.', ephemeral: true });
          }
-         const botId = interaction.values[0];
-         try {
-           await interaction.guild.members.ban(botId, { reason: 'Unauthorized Bot (Scan Server)' });
-           await interaction.reply({ content: `Successfully banned bot <@${botId}>.`, ephemeral: true });
-         } catch(e) {
-           await interaction.reply({ content: `Failed to ban bot: ${e.message}`, ephemeral: true });
+
+         const parts = interaction.customId.split('_');
+         const action = parts[1]; // prev, next, ban, banall
+         const page = parseInt(parts[2]) || 0;
+
+         if (action === 'prev') {
+           const payload = await handleScanServer(interaction.guild, page - 1);
+           return interaction.update(payload);
          }
-      }
-      if (interaction.customId === 'scanserver_banall' && interaction.isButton()) {
-         if (!isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild) && !isExtraOwner(interaction.guild.id, interaction.user.id)) {
-           return interaction.reply({ content: 'Permission Denied.', ephemeral: true });
+         
+         if (action === 'next') {
+           const payload = await handleScanServer(interaction.guild, page + 1);
+           return interaction.update(payload);
          }
-         await interaction.deferReply({ ephemeral: true });
-         const config = db.getGuildConfig(interaction.guild.id);
-         const whitelistedIds = config.botWhitelist || [];
-         const allBots = interaction.guild.members.cache.filter(m => m.user.bot);
-         let count = 0;
-         for (const bot of allBots.values()) {
-           if (!whitelistedIds.includes(bot.id) && bot.id !== interaction.client.user.id) {
-             try {
-               await interaction.guild.members.ban(bot.id, { reason: 'Unauthorized Bot (Scan Server Mass Ban)' });
-               count++;
-             } catch(e) {}
+
+         if (action === 'ban' && interaction.isStringSelectMenu()) {
+           const botId = interaction.values[0];
+           try {
+             await interaction.guild.members.ban(botId, { reason: 'Unauthorized Bot (Scan Server)' });
+           } catch(e) {}
+           // Update UI instantly to remove the bot from the list
+           const payload = await handleScanServer(interaction.guild, page);
+           return interaction.update(payload);
+         }
+
+         if (action === 'banall' && interaction.isButton()) {
+           await interaction.deferUpdate();
+           const config = db.getGuildConfig(interaction.guild.id);
+           const whitelistedIds = config.botWhitelist || [];
+           const allBots = interaction.guild.members.cache.filter(m => m.user.bot);
+           for (const bot of allBots.values()) {
+             if (!whitelistedIds.includes(bot.id) && bot.id !== interaction.client.user.id) {
+               try {
+                 await interaction.guild.members.ban(bot.id, { reason: 'Unauthorized Bot (Scan Server Mass Ban)' });
+               } catch(e) {}
+             }
            }
+           const payload = await handleScanServer(interaction.guild, 0); // Reset to page 0
+           return interaction.editReply(payload);
          }
-         await interaction.editReply({ content: `Successfully banned ${count} unauthorized bots.` });
       }
 
       // Autonick Manager Buttons
