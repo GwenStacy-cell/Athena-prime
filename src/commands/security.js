@@ -2896,42 +2896,42 @@ export async function handleScanServer(guild, page = 0) {
   desc += `> **Total Humans:** \`${allHumans.size}\`\n`;
   desc += `> **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n\n`;
 
-  if (trustedHumans.length > 0) {
+  const humansToShow = trustedHumans.slice(startIdx, endIdx);
+  if (humansToShow.length > 0) {
     desc += `### <:emoji_16:1521464002046328944> TRUSTED PERSONNEL\n`;
-    const humansToShow = trustedHumans.slice(startIdx, endIdx);
     humansToShow.forEach(h => {
-      desc += `${DOT} <@${h.id}> (\`${h.user.username}\`)\n`;
+      desc += `${DOT} **@${h.user.username}** [\`${h.id}\`]\n`;
     });
     if (trustedHumans.length > endIdx) desc += `*...and ${trustedHumans.length - endIdx} more.*\n`;
     desc += `\n`;
   }
 
-  if (whitelistedBots.length > 0) {
+  const whitelistedBotsToShow = whitelistedBots.slice(startIdx, endIdx);
+  if (whitelistedBotsToShow.length > 0) {
     desc += `### <:emoji_16:1521464002046328944> WHITELISTED BOTS\n`;
-    const botsToShow = whitelistedBots.slice(startIdx, endIdx);
-    botsToShow.forEach(b => {
-      desc += `${DOT} <@${b.id}> (\`${b.user.username}\`)\n`;
+    whitelistedBotsToShow.forEach(b => {
+      desc += `${DOT} **@${b.user.username}** [\`${b.id}\`]\n`;
     });
     if (whitelistedBots.length > endIdx) desc += `*...and ${whitelistedBots.length - endIdx} more.*\n`;
     desc += `\n`;
   }
 
-  if (highRiskHumans.length > 0) {
+  const highRiskHumansToShow = highRiskHumans.slice(startIdx, endIdx);
+  if (highRiskHumansToShow.length > 0) {
     desc += `### ${WARNING} HIGH-RISK PERSONNEL\n`;
-    const humansToShow = highRiskHumans.slice(startIdx, endIdx);
-    humansToShow.forEach(h => {
-      desc += `${DOT} <@${h.member.id}> (\`${h.member.user.username}\`) — ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
+    highRiskHumansToShow.forEach(h => {
+      desc += `${DOT} **@${h.member.user.username}** [\`${h.member.id}\`] — ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
     });
     if (highRiskHumans.length > endIdx) desc += `*...and ${highRiskHumans.length - endIdx} more.*\n`;
     desc += `\n`;
   }
 
-  if (unauthorizedBots.length > 0) {
+  const unauthorizedBotsToShow = unauthorizedBots.slice(startIdx, endIdx);
+  if (unauthorizedBotsToShow.length > 0) {
     desc += `### ${DANGER} UNAUTHORIZED BOTS\n`;
-    const botsToShow = unauthorizedBots.slice(startIdx, endIdx);
-    botsToShow.forEach(b => {
+    unauthorizedBotsToShow.forEach(b => {
       const badRoles = getDangerousRoles(b);
-      desc += `${DOT} <@${b.id}> (\`${b.user.username}\`) ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
+      desc += `${DOT} **@${b.user.username}** [\`${b.id}\`] ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
     });
     if (unauthorizedBots.length > endIdx) desc += `*...and ${unauthorizedBots.length - endIdx} more.*\n`;
     desc += `\n`;
