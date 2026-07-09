@@ -1352,7 +1352,7 @@ export const commands = [
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
     async executePrefix(message) {
-      if (!isBotOwnerOrServerOwnerStrict(message.member) && !isExtraOwner(message.member)) {
+      if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) && !isExtraOwner(message.guild.id, message.author.id)) {
         return message.reply({ embeds: [embed.danger('Permission Denied', 'Only Server Owners and Extra Owners can scan the server.')] });
       }
       const result = await handleScanServer(message.guild);
@@ -1366,7 +1366,7 @@ export const commands = [
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
     async executePrefix(message, args) {
-      if (!isBotOwnerOrServerOwnerStrict(message.member) && !isExtraOwner(message.member)) {
+      if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) && !isExtraOwner(message.guild.id, message.author.id)) {
         return message.reply({ embeds: [embed.danger('Permission Denied', 'Only Server Owners and Extra Owners can lock apps.')] });
       }
       const mode = args[0]?.toLowerCase();

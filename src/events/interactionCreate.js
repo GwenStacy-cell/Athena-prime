@@ -525,7 +525,7 @@ export default {
 
       // --- SCANSERVER INTERACTIONS ---
       if (interaction.customId === 'scanserver_ban' && interaction.isStringSelectMenu()) {
-         if (!isBotOwnerOrServerOwnerStrict(interaction.member) && !isExtraOwner(interaction.member)) {
+         if (!isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild) && !isExtraOwner(interaction.guild.id, interaction.user.id)) {
            return interaction.reply({ content: 'Permission Denied.', ephemeral: true });
          }
          const botId = interaction.values[0];
@@ -537,7 +537,7 @@ export default {
          }
       }
       if (interaction.customId === 'scanserver_banall' && interaction.isButton()) {
-         if (!isBotOwnerOrServerOwnerStrict(interaction.member) && !isExtraOwner(interaction.member)) {
+         if (!isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild) && !isExtraOwner(interaction.guild.id, interaction.user.id)) {
            return interaction.reply({ content: 'Permission Denied.', ephemeral: true });
          }
          await interaction.deferReply({ ephemeral: true });
