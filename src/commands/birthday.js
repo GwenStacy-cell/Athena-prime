@@ -62,6 +62,11 @@ export const commands = [
         options: [
           { name: 'user', description: 'The user', type: 6, required: true }
         ]
+      },
+      {
+        name: 'list',
+        description: 'List all birthdays set in the server',
+        type: 1
       }
     ],
     async executePrefix(message, args) {
@@ -108,7 +113,37 @@ export const commands = [
         }
       }
 
-      return message.reply({ embeds: [embed.info('Help', 'Subcommands: `setchannel #channel`, `set @user DD MM`, `remove @user`')] });
+      if (subcommand === 'list') {
+        const config = db.getBirthdayConfig(message.guild.id);
+        const users = config?.users || {};
+        const userIds = Object.keys(users);
+
+        if (userIds.length === 0) {
+          return message.reply({ embeds: [embed.info('Birthdays', 'No birthdays have been set in this server yet.')] });
+        }
+
+        const sorted = userIds.map(id => ({ id, ...users[id] })).sort((a, b) => {
+          if (a.month !== b.month) return a.month - b.month;
+          return a.day - b.day;
+        });
+
+        const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        let desc = '';
+        sorted.forEach(u => {
+          desc += `🎂 <@${u.id}> — **${u.day} ${monthNames[u.month]}**\n`;
+        });
+
+        const listEmbed = new EmbedBuilder()
+          .setColor(db.getGuildConfig(message.guild.id)?.accentColor || '#ff0099')
+          .setTitle('<a:cheers:1517075669547483206> Server Birthdays')
+          .setDescription(desc)
+          .setFooter({ text: `Total Birthdays: ${userIds.length}` });
+
+        return message.reply({ embeds: [listEmbed] });
+      }
+
+      return message.reply({ embeds: [embed.info('Help', 'Subcommands: `setchannel #channel`, `set @user DD MM`, `remove @user`, `list`')] });
     },
     async executeSlash(interaction) {
       const subcommand = interaction.options.getSubcommand();
@@ -145,6 +180,36 @@ export const commands = [
         } else {
           return interaction.reply({ embeds: [embed.warn('Not Found', `No birthday saved for ${user}.`)], ephemeral: true });
         }
+      }
+
+      if (subcommand === 'list') {
+        const config = db.getBirthdayConfig(interaction.guild.id);
+        const users = config?.users || {};
+        const userIds = Object.keys(users);
+
+        if (userIds.length === 0) {
+          return interaction.reply({ embeds: [embed.info('Birthdays', 'No birthdays have been set in this server yet.')], ephemeral: true });
+        }
+
+        const sorted = userIds.map(id => ({ id, ...users[id] })).sort((a, b) => {
+          if (a.month !== b.month) return a.month - b.month;
+          return a.day - b.day;
+        });
+
+        const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        let desc = '';
+        sorted.forEach(u => {
+          desc += `🎂 <@${u.id}> — **${u.day} ${monthNames[u.month]}**\n`;
+        });
+
+        const listEmbed = new EmbedBuilder()
+          .setColor(db.getGuildConfig(interaction.guild.id)?.accentColor || '#ff0099')
+          .setTitle('<a:cheers:1517075669547483206> Server Birthdays')
+          .setDescription(desc)
+          .setFooter({ text: `Total Birthdays: ${userIds.length}` });
+
+        return interaction.reply({ embeds: [listEmbed], ephemeral: true });
       }
     }
   },
