@@ -1625,7 +1625,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
   }
 }
 
-export async function executeUnquarantine(guild, targetMember, moderator) {
+export async function executeUnquarantine(guild, targetMember, moderator, context = null) {
   const record = db.getQuarantine(guild.id, targetMember.id);
   if (!record) {
     return { success: false, message: `**${targetMember.user.tag}** has no active quarantine records on disk.` };
@@ -1655,11 +1655,20 @@ export async function executeUnquarantine(guild, targetMember, moderator) {
     db.removeQuarantine(guild.id, targetMember.id);
 
     // DM target user
-    const dmEmbed = embed.success(
-      'Isolation Terminated',
-      `� Your quarantine status has been lifted in **${guild.name}**! Your original access privileges have been fully restored.`,
-      []
-    );
+    let dmEmbed;
+    if (context === 'raidmode') {
+      dmEmbed = embed.success(
+        'Raid Mode Ended',
+        `🛡️ The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
+        []
+      );
+    } else {
+      dmEmbed = embed.success(
+        'Isolation Terminated',
+        `🚨 Your quarantine status has been lifted in **${guild.name}**! Your original access privileges have been fully restored.`,
+        []
+      );
+    }
     await targetMember.send({ embeds: [dmEmbed] }).catch(() => null);
 
     // Log the event
@@ -1925,7 +1934,7 @@ async function handleRaidMode(guild, moderator, mode) {
     return { embed: resEmbed };
   } else {
     // Automatically mass unquarantine everyone caught in the raid
-    const unquarantineResult = await handleMassUnquarantine(guild, moderator, guild.client);
+    const unquarantineResult = await handleMassUnquarantine(guild, moderator, guild.client, 'raidmode');
     
     let releaseNote = '';
     if (unquarantineResult.embed.data.title !== 'Nothing to Release') {
@@ -2729,7 +2738,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
 // ==========================================
 // MASS UNQUARANTINE — Release all quarantined members in a guild
 // ==========================================
-async function handleMassUnquarantine(guild, moderator, client) {
+async function handleMassUnquarantine(guild, moderator, client, context = null) {
   const quarantined = db.getQuarantinedInGuild(guild.id);
 
   if (!quarantined || quarantined.length === 0) {
@@ -2755,7 +2764,7 @@ async function handleMassUnquarantine(guild, moderator, client) {
         continue;
       }
 
-      const result = await executeUnquarantine(guild, member, moderator);
+      const result = await executeUnquarantine(guild, member, moderator, context);
       if (result.success) success++;
       else failed++;
     } catch { failed++; }

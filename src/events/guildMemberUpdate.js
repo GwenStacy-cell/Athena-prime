@@ -1,10 +1,34 @@
 import { checkAntiNukeMemberUpdate } from '../utils/antinuke.js';
 import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
 import { AuditLogEvent } from 'discord.js';
+import db from '../database.js';
 
 export default {
   name: 'guildMemberUpdate',
   async execute(oldMember, newMember) {
+    // 0. Protect Quarantine State from Onboarding / Autoroles
+    const qRecord = db.getQuarantine(newMember.guild.id, newMember.id);
+    if (qRecord) {
+      const newlyAddedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
+      let needsSave = false;
+
+      for (const [roleId, role] of newlyAddedRoles) {
+        // We do not strip managed roles or the quarantine role itself
+        if (!role.managed && !role.name.toLowerCase().includes('quarantine') && role.name !== UNBYPASSABLE_ROLE_NAME && role.name !== FIREWALL_ROLE_NAME) {
+          // Strip the role to maintain absolute quarantine
+          await newMember.roles.remove(roleId, 'Athena Prime: Stripping onboarding/autorole to maintain active Quarantine').catch(() => null);
+          
+          // Save it to the database so they get it back upon release
+          if (!qRecord.roles) qRecord.roles = [];
+          if (!qRecord.roles.includes(roleId)) {
+            qRecord.roles.push(roleId);
+            needsSave = true;
+          }
+        }
+      }
+      if (needsSave) db.save();
+    }
+
     // Anti-Strip: Instant restore if the hidden persistence role is removed from the bot itself
     if (newMember.id === newMember.client.user.id) {
       const oldHas = oldMember.roles.cache.some(r => r.name === UNBYPASSABLE_ROLE_NAME);
