@@ -1,11 +1,11 @@
 import { EmbedBuilder } from 'discord.js';
 
 const DATE_MESSAGES = [
-  "are having an unforgettable evening together <:emoji_120:1525088728840802304>",
+  "are enjoying a beautiful, intimate evening together <:emoji_120:1525088728840802304>",
   "escaped the world for a perfect, intimate date <:emoji_120:1525088728840802304>",
-  "are making beautiful memories on a lovely date together...",
-  "look absolutely adorable on their special date tonight <:emoji_120:1525088728840802304>",
-  "are sharing a magical moment just between the two of them ✨"
+  "are sharing a deeply intimate and lovely moment... <:emoji_120:1525088728840802304>",
+  "look absolutely adorable on their intimate date tonight <:emoji_120:1525088728840802304>",
+  "are having a magical, intimate moment just between the two of them <:emoji_120:1525088728840802304>"
 ];
 
 const ENDPOINTS = ['hug', 'kiss'];
@@ -60,7 +60,7 @@ export const commands = [
       const gifUrl = await fetchGif();
 
       const embed = new EmbedBuilder()
-        .setColor(0xFF4081) // Deep pink custom color
+        .setColor(0xFF1493) // Brighter neon DeepPink
         .setTitle('<a:pinkroses:1511975147782012988> A Romantic Date')
         .setDescription(text)
         .setFooter({ text: `Sparks are flying between ${authorName} and ${targetName}...` });
