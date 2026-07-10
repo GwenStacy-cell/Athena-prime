@@ -29,40 +29,7 @@ export const commands = [
     name: 'date',
     description: 'Go on a special date with someone!',
     aliases: ['go-on-date'],
-    options: [
-      {
-        name: 'user',
-        description: 'The user you want to go on a date with',
-        type: 6, // ApplicationCommandOptionType.User
-        required: true
-      }
-    ],
-
-    async executeSlash(interaction) {
-      await interaction.deferReply();
-      const targetUser = interaction.options.getUser('user');
-      const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      
-      const authorName = interaction.member?.nickname || interaction.user.displayName;
-      const targetName = targetMember?.nickname || targetUser.displayName;
-
-      const randomMsg = DATE_MESSAGES[Math.floor(Math.random() * DATE_MESSAGES.length)];
-      const text = `**${authorName}** and **${targetName}** ${randomMsg}`;
-
-      const gifUrl = await fetchGif();
-
-      const embed = new EmbedBuilder()
-        .setColor(0xFF69B4) // Pink color for romance
-        .setTitle('🌹 A Special Date')
-        .setDescription(text)
-        .setFooter({ text: `Love is in the air for ${authorName} and ${targetName}` });
-
-      if (gifUrl) {
-        embed.setImage(gifUrl);
-      }
-
-      await interaction.editReply({ embeds: [embed] });
-    },
+    hidden: true, // Makes it a prefix-only command
 
     async executePrefix(message, args) {
       if (!args.length && !message.mentions.users.size) {
