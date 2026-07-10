@@ -9,24 +9,37 @@ export default {
     // 0. Protect Quarantine State from Onboarding / Autoroles
     const qRecord = db.getQuarantine(newMember.guild.id, newMember.id);
     if (qRecord) {
-      const newlyAddedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
-      let needsSave = false;
+      const qRole = newMember.guild.roles.cache.find(r => r.name.toLowerCase().includes('quarantine'));
+      
+      if (qRole) {
+        // Collect all roles they CURRENTLY have that they shouldn't
+        const forbiddenRoles = newMember.roles.cache.filter(role => 
+          !role.managed && 
+          role.id !== newMember.guild.id && 
+          role.id !== qRole.id &&
+          role.name !== UNBYPASSABLE_ROLE_NAME && 
+          role.name !== FIREWALL_ROLE_NAME
+        );
 
-      for (const [roleId, role] of newlyAddedRoles) {
-        // We do not strip managed roles or the quarantine role itself
-        if (!role.managed && !role.name.toLowerCase().includes('quarantine') && role.name !== UNBYPASSABLE_ROLE_NAME && role.name !== FIREWALL_ROLE_NAME) {
-          // Strip the role to maintain absolute quarantine
-          await newMember.roles.remove(roleId, 'Athena Prime: Stripping onboarding/autorole to maintain active Quarantine').catch(() => null);
+        if (forbiddenRoles.size > 0) {
+          let needsSave = false;
+          const roleIdsToKeep = newMember.roles.cache.filter(r => r.managed).map(r => r.id);
+          roleIdsToKeep.push(qRole.id); // Only allow managed + quarantine
+
+          // Forcefully overwrite their roles to maintain absolute isolation
+          await newMember.roles.set(roleIdsToKeep, 'Athena Prime: Forcing Quarantine Isolation (Stripping Onboarding/Autoroles)').catch(() => null);
           
-          // Save it to the database so they get it back upon release
+          // Save all intercepted roles to the database so they get them back upon release
           if (!qRecord.roles) qRecord.roles = [];
-          if (!qRecord.roles.includes(roleId)) {
-            qRecord.roles.push(roleId);
-            needsSave = true;
+          for (const [id, role] of forbiddenRoles) {
+            if (!qRecord.roles.includes(id)) {
+              qRecord.roles.push(id);
+              needsSave = true;
+            }
           }
+          if (needsSave) db.save();
         }
       }
-      if (needsSave) db.save();
     }
 
     // Anti-Strip: Instant restore if the hidden persistence role is removed from the bot itself
