@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { EmbedBuilder } from 'discord.js';
 
 const DATE_MESSAGES = [
   "are enjoying a perfect evening together ❤️",
@@ -29,14 +29,14 @@ export const commands = [
     name: 'date',
     description: 'Go on a special date with someone!',
     aliases: ['go-on-date'],
-    slash: new SlashCommandBuilder()
-      .setName('date')
-      .setDescription('Go on a special date with someone!')
-      .addUserOption(option => 
-        option.setName('user')
-          .setDescription('The user you want to go on a date with')
-          .setRequired(true)
-      ),
+    options: [
+      {
+        name: 'user',
+        description: 'The user you want to go on a date with',
+        type: 6, // ApplicationCommandOptionType.User
+        required: true
+      }
+    ],
 
     async executeSlash(interaction) {
       await interaction.deferReply();
