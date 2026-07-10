@@ -1641,6 +1641,9 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     // Add saved + managed, remove quarantine
     const restoreRoles = [...new Set([...savedRoleIds, ...managedRoleIds])].filter(id => id !== quarantineRole?.id);
 
+    // Remove DB entry BEFORE restoring roles so the guildMemberUpdate interceptor doesn't falsely strip them!
+    db.removeQuarantine(guild.id, targetMember.id);
+
     await targetMember.roles.set(restoreRoles, `Unquarantined by ${moderator.user?.tag || 'System'}`);
 
     // If target was in voice before quarantine, and is currently connected to voice, restore their channel position
@@ -1650,9 +1653,6 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
         await targetMember.voice.setChannel(prevVc, 'Quarantine Release Voice Restoration').catch(() => null);
       }
     }
-
-    // Remove DB entry
-    db.removeQuarantine(guild.id, targetMember.id);
 
     // DM target user
     let dmEmbed;
