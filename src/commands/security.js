@@ -1924,9 +1924,19 @@ async function handleRaidMode(guild, moderator, mode) {
     logToSecurityChannel(guild, embed.log('Raid Mode Active', `Administrator **${moderator.user.tag}** turned ON Guild Raid Mode.`, [], 'raid'));
     return { embed: resEmbed };
   } else {
+    // Automatically mass unquarantine everyone caught in the raid
+    const unquarantineResult = await handleMassUnquarantine(guild, moderator, guild.client);
+    
+    let releaseNote = '';
+    if (unquarantineResult.embed.data.title !== 'Nothing to Release') {
+       releaseNote = `\n\n**Auto-Release Triggered:**\n${unquarantineResult.embed.data.description}`;
+    } else {
+       releaseNote = `\n\n*(No quarantined accounts to release)*`;
+    }
+
     const resEmbed = embed.success(
       'Raid Mode Disengaged',
-      ` **Server Raid Protection is now OFF.**\nNew accounts can join normally.`,
+      ` **Server Raid Protection is now OFF.**\nNew accounts can join normally.${releaseNote}`,
       [{ name: 'Lifted by', value: `${moderator}` }]
     );
     logToSecurityChannel(guild, embed.log(
