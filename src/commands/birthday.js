@@ -131,7 +131,7 @@ export const commands = [
         
         let desc = '';
         sorted.forEach(u => {
-          desc += `🎂 <@${u.id}> — **${u.day} ${monthNames[u.month]}**\n`;
+          desc += `<a:Star2:1516523061468205227> <@${u.id}> — **${u.day} ${monthNames[u.month]}**\n`;
         });
 
         const listEmbed = new EmbedBuilder()
@@ -200,7 +200,7 @@ export const commands = [
         
         let desc = '';
         sorted.forEach(u => {
-          desc += `🎂 <@${u.id}> — **${u.day} ${monthNames[u.month]}**\n`;
+          desc += `<a:Star2:1516523061468205227> <@${u.id}> — **${u.day} ${monthNames[u.month]}**\n`;
         });
 
         const listEmbed = new EmbedBuilder()

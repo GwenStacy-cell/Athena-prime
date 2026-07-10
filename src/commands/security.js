@@ -1659,13 +1659,13 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     if (context === 'raidmode') {
       dmEmbed = embed.success(
         'Raid Mode Ended',
-        `🛡️ The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
+        `<:emoji_16:1521464002046328944> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
         []
       );
     } else {
       dmEmbed = embed.success(
         'Isolation Terminated',
-        `🚨 Your quarantine status has been lifted in **${guild.name}**! Your original access privileges have been fully restored.`,
+        `<:emoji_16:1521464002046328944> Your quarantine status has been lifted in **${guild.name}**! Your original access privileges have been fully restored.`,
         []
       );
     }
@@ -1927,7 +1927,7 @@ async function handleRaidMode(guild, moderator, mode) {
   if (enabled) {
     const resEmbed = embed.raid(
       'Raid Mode Engaged',
-      `� **Server Raid Protection is now ACTIVE.**\nAll joining accounts will be automatically quarantined immediately to protect the server until deactivated.`,
+      `�<:emoji_16:1521464002046328944> **Server Raid Protection is now ACTIVE.**\nAll joining accounts will be automatically quarantined immediately to protect the server until deactivated.`,
       [{ name: 'Enforced by', value: `${moderator}` }]
     );
     logToSecurityChannel(guild, embed.log('Raid Mode Active', `Administrator **${moderator.user.tag}** turned ON Guild Raid Mode.`, [], 'raid'));
