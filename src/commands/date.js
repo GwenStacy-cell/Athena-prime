@@ -1,11 +1,11 @@
 import { EmbedBuilder } from 'discord.js';
 
 const DATE_MESSAGES = [
-  "are enjoying a perfect evening together ❤️",
-  "are sharing a beautiful, intimate moment together...",
-  "went on a lovely date and had an amazing time!",
-  "are looking incredibly cute together today 💕",
-  "spent a wonderful time making beautiful memories ✨"
+  "are having an unforgettable evening together <:emoji_120:1525088728840802304>",
+  "escaped the world for a perfect, intimate date <:emoji_120:1525088728840802304>",
+  "are making beautiful memories on a lovely date together...",
+  "look absolutely adorable on their special date tonight <:emoji_120:1525088728840802304>",
+  "are sharing a magical moment just between the two of them ✨"
 ];
 
 const ENDPOINTS = ['hug', 'kiss'];
@@ -60,10 +60,10 @@ export const commands = [
       const gifUrl = await fetchGif();
 
       const embed = new EmbedBuilder()
-        .setColor(0xFF69B4) // Pink color for romance
-        .setTitle('🌹 A Special Date')
+        .setColor(0xFF4081) // Deep pink custom color
+        .setTitle('<a:pinkroses:1511975147782012988> A Romantic Date')
         .setDescription(text)
-        .setFooter({ text: `Love is in the air for ${authorName} and ${targetName}` });
+        .setFooter({ text: `Sparks are flying between ${authorName} and ${targetName}...` });
 
       if (gifUrl) {
         embed.setImage(gifUrl);
