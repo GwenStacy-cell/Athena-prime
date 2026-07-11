@@ -140,7 +140,7 @@ export const commands = [
           const row2 = new ActionRowBuilder().addComponents(emojiBtn);
 
           const setupMsg = await message.reply({ 
-            embeds: [embed.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.')],
+            embeds: [embed.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.\n\n⚠️ **Note:** Discord limits voice channel renames to **2 times every 10 minutes**. If your changes don\'t apply immediately, please wait a few minutes for the rate limit to expire.')],
             components: [row1, row2]
           });
 
