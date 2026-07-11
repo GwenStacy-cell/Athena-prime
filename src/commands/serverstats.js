@@ -1,6 +1,24 @@
-import { PermissionFlagsBits, ChannelType, ApplicationCommandOptionType } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, ApplicationCommandOptionType, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
+
+export async function updateServerStatsChannels(guild, stats) {
+  await guild.members.fetch().catch(() => null);
+  const total = guild.memberCount;
+  const bots = guild.members.cache.filter(member => member.user.bot).size;
+  const humans = total - bots;
+  
+  const totalCh = guild.channels.cache.get(stats.totalId);
+  const humansCh = guild.channels.cache.get(stats.humansId);
+  const botsCh = guild.channels.cache.get(stats.botsId);
+  
+  const e = stats.emoji || '❗';
+  const f = stats.font || 'standard';
+
+  if (totalCh) await totalCh.setName(formatServerStatChannelName('USERS', total, e, f)).catch(() => null);
+  if (humansCh) await humansCh.setName(formatServerStatChannelName('MEMBERS', humans, e, f)).catch(() => null);
+  if (botsCh) await botsCh.setName(formatServerStatChannelName('BOTS', bots, e, f)).catch(() => null);
+}
 
 export function formatServerStatChannelName(type, count, prefixEmoji = '❗', fontStyle = 'standard') {
   const fonts = {
@@ -100,7 +118,69 @@ export const commands = [
         }
 
         if (!newEmoji && !newFont) {
-           return message.reply({ embeds: [embed.info('Config Usage', 'Usage: `!serverstats config <emoji> <font>`\nExample: `!serverstats config 📊 bold`\nAvailable fonts: `standard, bold, smallcaps, serif, script, gothic, mono`')] });
+          const fontSelect = new StringSelectMenuBuilder()
+            .setCustomId('serverstats_font')
+            .setPlaceholder('Select a Font Style')
+            .addOptions([
+              { label: 'Standard', value: 'standard' },
+              { label: 'Bold', value: 'bold' },
+              { label: 'Small Caps', value: 'smallcaps' },
+              { label: 'Serif', value: 'serif' },
+              { label: 'Script', value: 'script' },
+              { label: 'Gothic', value: 'gothic' },
+              { label: 'Monospace', value: 'mono' }
+            ]);
+
+          const emojiBtn = new ButtonBuilder()
+            .setCustomId('serverstats_emoji')
+            .setLabel('Set Custom Emoji')
+            .setStyle(ButtonStyle.Primary);
+
+          const row1 = new ActionRowBuilder().addComponents(fontSelect);
+          const row2 = new ActionRowBuilder().addComponents(emojiBtn);
+
+          const setupMsg = await message.reply({ 
+            embeds: [embed.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.')],
+            components: [row1, row2]
+          });
+
+          const collector = setupMsg.createMessageComponentCollector({ filter: i => i.user.id === message.author.id, time: 120000 });
+          
+          collector.on('collect', async i => {
+            if (i.customId === 'serverstats_font') {
+              const selected = i.values[0];
+              const updated = db.getServerStats(message.guild.id);
+              updated.font = selected;
+              db.saveServerStats(message.guild.id, updated);
+              await updateServerStatsChannels(message.guild, updated);
+              await i.reply({ content: `<:emoji_16:1521464002046328944> Font updated to **${selected}**!`, ephemeral: true });
+            } else if (i.customId === 'serverstats_emoji') {
+              const modal = new ModalBuilder()
+                .setCustomId('serverstats_emoji_modal')
+                .setTitle('Set Custom Emoji');
+                
+              const input = new TextInputBuilder()
+                .setCustomId('emoji_input')
+                .setLabel('Enter your emoji (e.g. <a:name:id>)')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
+                
+              const modalRow = new ActionRowBuilder().addComponents(input);
+              modal.addComponents(modalRow);
+              await i.showModal(modal);
+              
+              try {
+                const modalSubmit = await i.awaitModalSubmit({ time: 60000, filter: m => m.user.id === message.author.id });
+                const emojiVal = modalSubmit.fields.getTextInputValue('emoji_input');
+                const updated = db.getServerStats(message.guild.id);
+                updated.emoji = emojiVal;
+                db.saveServerStats(message.guild.id, updated);
+                await updateServerStatsChannels(message.guild, updated);
+                await modalSubmit.reply({ content: `<:emoji_16:1521464002046328944> Emoji updated to ${emojiVal}!`, ephemeral: true });
+              } catch(err) {}
+            }
+          });
+          return;
         }
 
         const updatedStats = { ...stats };
@@ -110,23 +190,9 @@ export const commands = [
         db.saveServerStats(message.guild.id, updatedStats);
         
         // Trigger manual update right away
-        await message.guild.members.fetch().catch(() => null);
-        const total = message.guild.memberCount;
-        const bots = message.guild.members.cache.filter(member => member.user.bot).size;
-        const humans = total - bots;
-        
-        const totalCh = message.guild.channels.cache.get(stats.totalId);
-        const humansCh = message.guild.channels.cache.get(stats.humansId);
-        const botsCh = message.guild.channels.cache.get(stats.botsId);
-        
-        const e = updatedStats.emoji || '❗';
-        const f = updatedStats.font || 'standard';
+        await updateServerStatsChannels(message.guild, updatedStats);
 
-        if (totalCh) await totalCh.setName(formatServerStatChannelName('USERS', total, e, f)).catch(() => null);
-        if (humansCh) await humansCh.setName(formatServerStatChannelName('MEMBERS', humans, e, f)).catch(() => null);
-        if (botsCh) await botsCh.setName(formatServerStatChannelName('BOTS', bots, e, f)).catch(() => null);
-
-        return message.reply({ embeds: [embed.success('Stats Configured', `Server stats font/emoji updated to **${f}** with emoji **${e}**!`)] });
+        return message.reply({ embeds: [embed.success('Stats Configured', `Server stats font/emoji updated to **${newFont || 'standard'}** with emoji **${newEmoji || 'none'}**!`)] });
       }
 
       if (action === 'setup') {
@@ -227,23 +293,9 @@ export const commands = [
         db.saveServerStats(interaction.guild.id, updatedStats);
         
         // Trigger manual update right away
-        await interaction.guild.members.fetch().catch(() => null);
-        const total = interaction.guild.memberCount;
-        const bots = interaction.guild.members.cache.filter(member => member.user.bot).size;
-        const humans = total - bots;
-        
-        const totalCh = interaction.guild.channels.cache.get(stats.totalId);
-        const humansCh = interaction.guild.channels.cache.get(stats.humansId);
-        const botsCh = interaction.guild.channels.cache.get(stats.botsId);
-        
-        const e = updatedStats.emoji || '❗';
-        const f = updatedStats.font || 'standard';
+        await updateServerStatsChannels(interaction.guild, updatedStats);
 
-        if (totalCh) await totalCh.setName(formatServerStatChannelName('USERS', total, e, f)).catch(() => null);
-        if (humansCh) await humansCh.setName(formatServerStatChannelName('MEMBERS', humans, e, f)).catch(() => null);
-        if (botsCh) await botsCh.setName(formatServerStatChannelName('BOTS', bots, e, f)).catch(() => null);
-
-        return interaction.editReply({ embeds: [embed.success('Stats Configured', `Server stats font/emoji updated to **${f}** with emoji **${e}**!`)] });
+        return interaction.editReply({ embeds: [embed.success('Stats Configured', `Server stats font/emoji updated to **${updatedStats.font}** with emoji **${updatedStats.emoji}**!`)] });
       }
 
       if (action === 'setup') {
