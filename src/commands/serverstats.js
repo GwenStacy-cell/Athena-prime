@@ -15,9 +15,15 @@ export async function updateServerStatsChannels(guild, stats) {
   const e = stats.emoji || '❗';
   const f = stats.font || 'standard';
 
-  if (totalCh) await totalCh.setName(formatServerStatChannelName('USERS', total, e, f)).catch(() => null);
-  if (humansCh) await humansCh.setName(formatServerStatChannelName('MEMBERS', humans, e, f)).catch(() => null);
-  if (botsCh) await botsCh.setName(formatServerStatChannelName('BOTS', bots, e, f)).catch(() => null);
+  const tName = formatServerStatChannelName('USERS', total, e, f);
+  const hName = formatServerStatChannelName('MEMBERS', humans, e, f);
+  const bName = formatServerStatChannelName('BOTS', bots, e, f);
+
+  console.log(`[ServerStats] Attempting to rename channels in ${guild.name} to font: ${f}`);
+
+  if (totalCh && totalCh.name !== tName) await totalCh.setName(tName).catch(err => console.error(`[ServerStats] Failed to rename Total VC:`, err.message));
+  if (humansCh && humansCh.name !== hName) await humansCh.setName(hName).catch(err => console.error(`[ServerStats] Failed to rename Humans VC:`, err.message));
+  if (botsCh && botsCh.name !== bName) await botsCh.setName(bName).catch(err => console.error(`[ServerStats] Failed to rename Bots VC:`, err.message));
 }
 
 export function formatServerStatChannelName(type, count, prefixEmoji = '❗', fontStyle = 'standard') {
