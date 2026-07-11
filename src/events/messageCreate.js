@@ -15,6 +15,8 @@ import { createRateMessage } from '../commands/rate.js';
 import { scanImageForScam, flaggedMessages } from '../utils/antiScam.js';
 import { createMockInteraction } from '../utils/mockInteraction.js';
 
+export { getCachedGif };
+
 const nbClient = new Client();
 const gifCache = new Map();
 
@@ -60,7 +62,8 @@ const gifEngines = [
         release: 'anime letting go',
         wiggle: 'anime wiggle cute',
         heat: 'anime fire flame',
-        cool: 'anime ice freeze'
+        cool: 'anime ice freeze',
+        date: 'anime couple date romantic'
       };
       const query = tenorQueryMap[action] || `anime ${action}`;
       const res = await fetch(`https://g.tenor.com/v1/random?q=${encodeURIComponent(query)}&key=LIVDSRZULELA&limit=10`).then(r => r.json());
@@ -84,17 +87,26 @@ async function fetchFromEngines(action) {
     release: ['https://media.tenor.com/Frm37nXIQmsAAAAC/supersecretcodepp.gif', 'https://media.tenor.com/QLvltOQ58hoAAAAC/anime-hands.gif', 'https://media.tenor.com/70F_1B8GSvEAAAAC/vnc-vanitas.gif'],
     heat: ['https://media.tenor.com/BIHh4y7c7zEAAAAC/vyes.gif', 'https://media.tenor.com/OO10I6aC3dsAAAAC/anime-blush-death.gif', 'https://media.tenor.com/HBl3WIbJrTYAAAAC/jujutsu-kaisen.gif'],
     burn: ['https://media.tenor.com/BIHh4y7c7zEAAAAC/vyes.gif', 'https://media.tenor.com/OO10I6aC3dsAAAAC/anime-blush-death.gif', 'https://media.tenor.com/HBl3WIbJrTYAAAAC/jujutsu-kaisen.gif'],
-    cool: ['https://media.tenor.com/fFeI4SjjQKIAAAAC/hairi-takahara.gif', 'https://media.tenor.com/085VV9uwD9oAAAAC/anime-frieren.gif', 'https://media.tenor.com/EEITKf1uaSgAAAAC/gray-juvia.gif']
+    cool: ['https://media.tenor.com/fFeI4SjjQKIAAAAC/hairi-takahara.gif', 'https://media.tenor.com/085VV9uwD9oAAAAC/anime-frieren.gif', 'https://media.tenor.com/EEITKf1uaSgAAAAC/gray-juvia.gif'],
+    date: ['https://nekos.best/api/v2/kiss/265e12ad-eaff-4309-bcba-e7ba8173e580.gif', 'https://nekos.best/api/v2/hug/2c898eb2-71a0-4cf2-a79c-176510764d80.gif']
   };
 
+  const results = [];
   if (hardcodedGifs[action]) {
-    return [...hardcodedGifs[action]].sort(() => Math.random() - 0.5);
+    results.push(...hardcodedGifs[action]);
   }
 
   const shuffled = [...gifEngines].sort(() => Math.random() - 0.5);
   for (const engine of shuffled) {
     const urls = await engine(action);
-    if (urls.length > 0) return urls;
+    if (urls.length > 0) {
+       results.push(...urls);
+       break;
+    }
+  }
+  
+  if (results.length > 0) {
+    return results.sort(() => Math.random() - 0.5);
   }
   return [];
 }

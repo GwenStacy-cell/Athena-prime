@@ -1,4 +1,5 @@
 import { EmbedBuilder } from 'discord.js';
+import { getCachedGif } from '../events/messageCreate.js';
 
 const DATE_MESSAGES = [
   "are enjoying a beautiful, intimate evening together <:emoji_120:1525088728840802304>",
@@ -7,22 +8,6 @@ const DATE_MESSAGES = [
   "look absolutely adorable on their intimate date tonight <:emoji_120:1525088728840802304>",
   "are having a magical, intimate moment just between the two of them <:emoji_120:1525088728840802304>"
 ];
-
-const ENDPOINTS = ['hug', 'kiss'];
-
-async function fetchGif() {
-  const endpoint = ENDPOINTS[Math.floor(Math.random() * ENDPOINTS.length)];
-  try {
-    const res = await fetch(`https://nekos.best/api/v2/${endpoint}`, {
-      headers: { 'User-Agent': 'DiscordBot/1.0' }
-    });
-    const data = await res.json();
-    return data.results[0].url;
-  } catch (err) {
-    console.error('Nekos Best API Error:', err);
-    return null; // fallback will be handled
-  }
-}
 
 export const commands = [
   {
@@ -57,7 +42,7 @@ export const commands = [
       const randomMsg = DATE_MESSAGES[Math.floor(Math.random() * DATE_MESSAGES.length)];
       const text = `**${authorName}** and **${targetName}** ${randomMsg}`;
 
-      const gifUrl = await fetchGif();
+      const gifUrl = await getCachedGif('date');
 
       const embed = new EmbedBuilder()
         .setColor(0xFF1493) // Brighter neon DeepPink
