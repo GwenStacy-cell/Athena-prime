@@ -152,8 +152,8 @@ export const commands = [
               const updated = db.getServerStats(message.guild.id);
               updated.font = selected;
               db.saveServerStats(message.guild.id, updated);
-              await updateServerStatsChannels(message.guild, updated);
               await i.reply({ content: `<:emoji_16:1521464002046328944> Font updated to **${selected}**!`, ephemeral: true });
+              updateServerStatsChannels(message.guild, updated).catch(() => null);
             } else if (i.customId === 'serverstats_emoji') {
               const modal = new ModalBuilder()
                 .setCustomId('serverstats_emoji_modal')
@@ -175,8 +175,8 @@ export const commands = [
                 const updated = db.getServerStats(message.guild.id);
                 updated.emoji = emojiVal;
                 db.saveServerStats(message.guild.id, updated);
-                await updateServerStatsChannels(message.guild, updated);
                 await modalSubmit.reply({ content: `<:emoji_16:1521464002046328944> Emoji updated to ${emojiVal}!`, ephemeral: true });
+                updateServerStatsChannels(message.guild, updated).catch(() => null);
               } catch(err) {}
             }
           });
