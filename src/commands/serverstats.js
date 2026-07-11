@@ -21,9 +21,12 @@ export async function updateServerStatsChannels(guild, stats) {
 
   console.log(`[ServerStats] Attempting to rename channels in ${guild.name} to font: ${f}`);
 
-  if (totalCh && totalCh.name !== tName) await totalCh.setName(tName).catch(err => console.error(`[ServerStats] Failed to rename Total VC:`, err.message));
-  if (humansCh && humansCh.name !== hName) await humansCh.setName(hName).catch(err => console.error(`[ServerStats] Failed to rename Humans VC:`, err.message));
-  if (botsCh && botsCh.name !== bName) await botsCh.setName(bName).catch(err => console.error(`[ServerStats] Failed to rename Bots VC:`, err.message));
+  let lastErr = null;
+  if (totalCh && totalCh.name !== tName) await totalCh.setName(tName).catch(err => { lastErr = err; });
+  if (humansCh && humansCh.name !== hName) await humansCh.setName(hName).catch(err => { lastErr = err; });
+  if (botsCh && botsCh.name !== bName) await botsCh.setName(bName).catch(err => { lastErr = err; });
+  
+  if (lastErr) throw lastErr;
 }
 
 export function formatServerStatChannelName(type, count, prefixEmoji = '❗', fontStyle = 'standard') {
@@ -158,8 +161,14 @@ export const commands = [
               const updated = db.getServerStats(message.guild.id);
               updated.font = selected;
               db.saveServerStats(message.guild.id, updated);
-              await i.reply({ content: `<:emoji_16:1521464002046328944> Font updated to **${selected}**!`, ephemeral: true });
-              updateServerStatsChannels(message.guild, updated).catch(() => null);
+              
+              await i.deferReply({ ephemeral: true });
+              try {
+                await updateServerStatsChannels(message.guild, updated);
+                await i.editReply({ content: `<:emoji_16:1521464002046328944> Font updated to **${selected}**!` });
+              } catch (err) {
+                await i.editReply({ content: `⚠️ Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour font choice **${selected}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
+              }
             } else if (i.customId === 'serverstats_emoji') {
               const modal = new ModalBuilder()
                 .setCustomId('serverstats_emoji_modal')
@@ -177,12 +186,18 @@ export const commands = [
               
               try {
                 const modalSubmit = await i.awaitModalSubmit({ time: 60000, filter: m => m.user.id === message.author.id });
+                await modalSubmit.deferReply({ ephemeral: true });
                 const emojiVal = modalSubmit.fields.getTextInputValue('emoji_input');
                 const updated = db.getServerStats(message.guild.id);
                 updated.emoji = emojiVal;
                 db.saveServerStats(message.guild.id, updated);
-                await modalSubmit.reply({ content: `<:emoji_16:1521464002046328944> Emoji updated to ${emojiVal}!`, ephemeral: true });
-                updateServerStatsChannels(message.guild, updated).catch(() => null);
+                
+                try {
+                  await updateServerStatsChannels(message.guild, updated);
+                  await modalSubmit.editReply({ content: `<:emoji_16:1521464002046328944> Emoji updated to ${emojiVal}!` });
+                } catch (err) {
+                  await modalSubmit.editReply({ content: `⚠️ Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour emoji choice **${emojiVal}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
+                }
               } catch(err) {}
             }
           });
@@ -195,10 +210,12 @@ export const commands = [
         
         db.saveServerStats(message.guild.id, updatedStats);
         
-        // Trigger manual update right away
-        await updateServerStatsChannels(message.guild, updatedStats);
-
-        return message.reply({ embeds: [embed.success('Stats Configured', `Server stats font/emoji updated to **${newFont || 'standard'}** with emoji **${newEmoji || 'none'}**!`)] });
+        try {
+          await updateServerStatsChannels(message.guild, updatedStats);
+          return message.reply({ embeds: [embed.success('Stats Configured', `Server stats font/emoji updated to **${newFont || 'standard'}** with emoji **${newEmoji || 'none'}**!`)] });
+        } catch (err) {
+          return message.reply({ embeds: [embed.warning('Stats Configured, but Discord Ratelimited', `Server stats config updated!\n\n⚠️ **Discord rejected the immediate channel rename!**\nError: \`${err.message}\`\n\nYour choices are saved and will automatically apply in ~10 minutes.`)] });
+        }
       }
 
       if (action === 'setup') {
