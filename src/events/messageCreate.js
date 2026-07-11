@@ -20,34 +20,68 @@ export { getCachedGif };
 const nbClient = new Client();
 const gifCache = new Map();
 
+function mapAnimeAction(action) {
+  const map = {
+    date: ['kiss', 'hug', 'cuddle'],
+    propose: ['kiss', 'hug'],
+    arrest: ['slap', 'bite'],
+    jail: ['cry', 'bored'],
+    trash: ['yeet', 'slap', 'kick'],
+    fry: ['smug', 'happy'],
+    burn: ['smug', 'bite'],
+    ignore: ['stare', 'bored', 'shrug'],
+    avoid: ['dance', 'run', 'dodge'],
+    scratch: ['pat', 'poke'],
+    touch: ['poke', 'pat'],
+    lean: ['cuddle', 'sleep'],
+    release: ['wave', 'smile'],
+    heat: ['blush', 'sweat'],
+    cool: ['smug', 'stare']
+  };
+  
+  if (map[action]) {
+    const choices = map[action];
+    return choices[Math.floor(Math.random() * choices.length)];
+  }
+  return action;
+}
+
 const gifEngines = [
   async (action) => {
     try {
-      const res = await nbClient.fetch(action, 10);
+      const mapped = mapAnimeAction(action);
+      const res = await nbClient.fetch(mapped, 10);
       return res?.results?.map(r => r.url) || [];
     } catch { return []; }
   },
   async (action) => {
     try {
-      const res = await fetch(`https://nekos.life/api/v2/img/${action}`).then(r => r.json());
+      const mapped = mapAnimeAction(action);
+      const res = await fetch(`https://nekos.life/api/v2/img/${mapped}`).then(r => r.json());
       return res.url ? [res.url] : [];
     } catch { return []; }
   },
   async (action) => {
     try {
-      const res = await fetch(`https://api.purrbot.site/v2/img/sfw/${action}/gif`).then(r => r.json());
+      const mapped = mapAnimeAction(action);
+      const res = await fetch(`https://api.purrbot.site/v2/img/sfw/${mapped}/gif`).then(r => r.json());
       return res.link ? [res.link] : [];
     } catch { return []; }
   },
   async (action) => {
     try {
-      const res = await fetch(`https://api.otakugifs.xyz/gif?reaction=${action}`).then(r => r.json());
+      const mapped = mapAnimeAction(action);
+      const res = await fetch(`https://api.otakugifs.xyz/gif?reaction=${mapped}`).then(r => r.json());
       return res.url ? [res.url] : [];
     } catch { return []; }
   },
   async (action) => {
     try {
+      const tenorKey = process.env.TENOR_API_KEY;
+      if (!tenorKey) return []; // Require Tenor API Key for v2
+      
       const tenorQueryMap = {
+
         fry: 'anime cooking',
         burn: 'anime burning fire',
         trash: 'anime throw trash',
@@ -66,8 +100,8 @@ const gifEngines = [
         date: 'anime couple date romantic'
       };
       const query = tenorQueryMap[action] || `anime ${action}`;
-      const res = await fetch(`https://g.tenor.com/v1/random?q=${encodeURIComponent(query)}&key=LIVDSRZULELA&limit=10`).then(r => r.json());
-      return res?.results?.map(i => i.media[0].gif.url) || [];
+      const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${tenorKey}&client_key=athena_prime&limit=10`).then(r => r.json());
+      return res?.results?.map(i => i.media_formats.gif.url) || [];
     } catch { return []; }
   }
 ];
