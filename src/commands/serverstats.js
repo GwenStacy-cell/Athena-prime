@@ -262,7 +262,21 @@ export const commands = [
         }
       }
       
-      return message.reply({ embeds: [embed.info('Server Stats', 'Usage: `!serverstats setup`, `!serverstats disable`, or `!serverstats config <emoji> <font>`')] });
+      if (action === 'test') {
+        const stats = db.getServerStats(message.guild.id);
+        if (!stats) return message.reply('Stats not setup.');
+        const totalCh = message.guild.channels.cache.get(stats.totalId);
+        if (!totalCh) return message.reply('Channel not found in cache.');
+        try {
+          await totalCh.setName(totalCh.name + '1');
+          await totalCh.setName(totalCh.name.slice(0, -1));
+          return message.reply('Success! I can rename the channel.');
+        } catch (err) {
+          return message.reply(`Discord rejected the rename! Error: \`${err.message}\``);
+        }
+      }
+      
+      return message.reply({ embeds: [embed.info('Server Stats', 'Usage: `!serverstats setup`, `!serverstats disable`, or `!serverstats config`')] });
     },
     executeSlash: async (interaction) => {
       await interaction.deferReply();
