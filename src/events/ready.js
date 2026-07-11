@@ -12,6 +12,7 @@ import { endGiveaway } from '../commands/giveaway.js';
 import { setupDashboardChannel, updateDashboardMessage } from '../utils/dashboardManager.js';
 import { startNewsJob } from '../jobs/newsJob.js';
 import { startMusicCleanupJob } from '../jobs/musicCleanupJob.js';
+import { formatServerStatChannelName } from '../commands/serverstats.js';
 
 export default {
   name: 'ready',
@@ -255,14 +256,21 @@ export default {
           const humansCh = guild.channels.cache.get(stats.humansId);
           const botsCh = guild.channels.cache.get(stats.botsId);
 
-          if (totalCh && totalCh.name !== `❗・USERS: ${total}`) {
-            await totalCh.setName(`❗・USERS: ${total}`).catch(() => null);
+          const e = stats.emoji || '❗';
+          const f = stats.font || 'standard';
+
+          const totalName = formatServerStatChannelName('USERS', total, e, f);
+          const humansName = formatServerStatChannelName('MEMBERS', humans, e, f);
+          const botsName = formatServerStatChannelName('BOTS', bots, e, f);
+
+          if (totalCh && totalCh.name !== totalName) {
+            await totalCh.setName(totalName).catch(() => null);
           }
-          if (humansCh && humansCh.name !== `❗・MEMBERS: ${humans}`) {
-            await humansCh.setName(`❗・MEMBERS: ${humans}`).catch(() => null);
+          if (humansCh && humansCh.name !== humansName) {
+            await humansCh.setName(humansName).catch(() => null);
           }
-          if (botsCh && botsCh.name !== `❗・BOTS: ${bots}`) {
-            await botsCh.setName(`❗・BOTS: ${bots}`).catch(() => null);
+          if (botsCh && botsCh.name !== botsName) {
+            await botsCh.setName(botsName).catch(() => null);
           }
         } catch (e) {
           // Ignore API errors
