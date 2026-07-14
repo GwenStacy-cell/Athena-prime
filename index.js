@@ -83,6 +83,14 @@ const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), Nodes);
 shoukaku.on('error', (_, error) => console.error(chalk.red('Lavalink Node Error:'), error));
 global.client.shoukaku = shoukaku;
 
+process.on('unhandledRejection', (error) => {
+  console.error(chalk.red.bold('Unhandled Promise Rejection:'), error);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error(chalk.red.bold('Uncaught Exception:'), error);
+});
+
 // Import event handlers manually for clean compile and zero runtime FS errors
 import { connectToHomeVc } from './src/utils/voice.js';
 import readyEvent from './src/events/ready.js';

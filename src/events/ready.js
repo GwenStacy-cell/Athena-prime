@@ -313,7 +313,6 @@ export default {
     }, 5 * 60 * 1000);
 
     try {
-      const db = (await import('./database.js')).default;
       const protectedGuildIds = Object.keys(db.cache.moveProtection || {});
       
       client.auditLogCounts = new Map();
@@ -401,7 +400,7 @@ export default {
               ? cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
               : null
           };
-        });
+        }).slice(0, 100);
 
       const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN || client.token);
 
