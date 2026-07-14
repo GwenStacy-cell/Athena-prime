@@ -1,5 +1,5 @@
-import { execSync, spawn } from 'child_process';
-import fs from 'fs';
+const { execSync, spawn } = require('child_process');
+const fs = require('fs');
 
 const repoUrl = 'https://github.com/GwenStacy-cell/Athena-prime.git';
 
