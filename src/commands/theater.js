@@ -32,7 +32,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')], flags: 64 });
       }
       await interaction.deferReply();
       const status = interaction.options.getString('status');

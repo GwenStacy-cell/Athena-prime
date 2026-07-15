@@ -15,7 +15,7 @@ import { startMusicCleanupJob } from '../jobs/musicCleanupJob.js';
 import { formatServerStatChannelName } from '../commands/serverstats.js';
 
 export default {
-  name: 'ready',
+  name: 'clientReady',
   once: true,
   async execute(client) {
     // Beautiful colored console log

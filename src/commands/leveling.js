@@ -80,7 +80,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       const payload = await buildXpDashboard(interaction.guild.id);
-      await interaction.reply({ ...payload, ephemeral: true });
+      await interaction.reply({ ...payload, flags: 64 });
     }
   },
 
@@ -94,11 +94,11 @@ export const commands = [
     async executeSlash(interaction) {
       const system = db.getXpSystem(interaction.guild.id);
       if (!system || !system.enabled) {
-        return interaction.reply({ content: 'The XP system is currently disabled.', ephemeral: true });
+        return interaction.reply({ content: 'The XP system is currently disabled.', flags: 64 });
       }
 
       if (system.cmdChannelId && interaction.channelId !== system.cmdChannelId) {
-        return interaction.reply({ content: `Please use this command in <#${system.cmdChannelId}>.`, ephemeral: true });
+        return interaction.reply({ content: `Please use this command in <#${system.cmdChannelId}>.`, flags: 64 });
       }
 
       await interaction.deferReply();
@@ -133,11 +133,11 @@ export const commands = [
     async executeSlash(interaction) {
       const system = db.getXpSystem(interaction.guild.id);
       if (!system || !system.enabled) {
-        return interaction.reply({ content: 'The XP system is currently disabled.', ephemeral: true });
+        return interaction.reply({ content: 'The XP system is currently disabled.', flags: 64 });
       }
 
       if (system.cmdChannelId && interaction.channelId !== system.cmdChannelId) {
-        return interaction.reply({ content: `Please use this command in <#${system.cmdChannelId}>.`, ephemeral: true });
+        return interaction.reply({ content: `Please use this command in <#${system.cmdChannelId}>.`, flags: 64 });
       }
 
       await interaction.deferReply();

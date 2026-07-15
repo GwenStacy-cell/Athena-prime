@@ -76,7 +76,7 @@ async function sendBanner(context, user) {
 
   if (!bannerUrl) {
     const err = embed.warn('No Banner', `${fetchedUser.username} does not have a custom profile banner.`);
-    if (context.reply) return context.reply({ embeds: [err], ephemeral: true });
+    if (context.reply) return context.reply({ embeds: [err], flags: 64 });
   }
 
   const e = new EmbedBuilder()

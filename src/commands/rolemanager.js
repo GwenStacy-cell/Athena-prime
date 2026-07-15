@@ -59,7 +59,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission to use this command.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission to use this command.')], flags: 64 });
       }
       
       await interaction.deferReply();
@@ -160,7 +160,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')], flags: 64 });
       }
       
       await interaction.deferReply();
@@ -247,7 +247,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')], flags: 64 });
       }
       
       await interaction.deferReply();

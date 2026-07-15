@@ -123,7 +123,7 @@ export async function handleAccentButton(interaction) {
   if (!isAuth) {
     return interaction.reply({
       content: '️ Only the **Server Owner** or **Administrators** can change the accent color.',
-      ephemeral: true
+      flags: 64
     });
   }
 
@@ -182,7 +182,7 @@ export async function handleAccentButton(interaction) {
       const { syncPanel } = await import('./jtc.js');
       await syncPanel(guild);
     } catch(e) {}
-    await interaction.followUp({ content: ' Accent color has been reset to default.', ephemeral: true });
+    await interaction.followUp({ content: ' Accent color has been reset to default.', flags: 64 });
     return;
   }
 
@@ -204,7 +204,7 @@ export async function handleAccentModal(interaction) {
   if (!valid) {
     return interaction.reply({
       content: ` **Invalid hex code:** \`${rawHex}\`\n\nPlease enter a valid 6-digit hex color code (e.g. \`#FF0000\` or \`FF0000\`).`,
-      ephemeral: true
+      flags: 64
     });
   }
 

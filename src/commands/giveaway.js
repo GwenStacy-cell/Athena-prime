@@ -130,7 +130,7 @@ export const commands = [
 
         const durationMs = ms(durationStr);
         if (!durationMs || durationMs < 10000) {
-          return interaction.reply({ embeds: [embed.warn('Invalid Duration', 'Please provide a valid duration (minimum 10 seconds). Examples: `10m`, `1h`, `2d`.')], ephemeral: true });
+          return interaction.reply({ embeds: [embed.warn('Invalid Duration', 'Please provide a valid duration (minimum 10 seconds). Examples: `10m`, `1h`, `2d`.')], flags: 64 });
         }
 
         const endsAt = Date.now() + durationMs;
@@ -153,7 +153,7 @@ export const commands = [
             .setEmoji(EMOJI_JOIN)
         );
 
-        await interaction.reply({ content: 'Starting giveaway...', ephemeral: true });
+        await interaction.reply({ content: 'Starting giveaway...', flags: 64 });
 
         const message = await interaction.channel.send({ embeds: [gwEmbed], components: [joinButton] });
 
@@ -175,10 +175,10 @@ export const commands = [
         const gwData = db.getGiveaway(messageId);
         
         if (!gwData) {
-          return interaction.reply({ embeds: [embed.warn('Not Found', 'No active giveaway found with that Message ID in the database.')], ephemeral: true });
+          return interaction.reply({ embeds: [embed.warn('Not Found', 'No active giveaway found with that Message ID in the database.')], flags: 64 });
         }
 
-        await interaction.reply({ content: 'Ending giveaway...', ephemeral: true });
+        await interaction.reply({ content: 'Ending giveaway...', flags: 64 });
         await endGiveaway(interaction.client, messageId, gwData);
         await interaction.editReply({ content: 'Giveaway ended!' });
       }
@@ -189,12 +189,12 @@ export const commands = [
         const gwData = db.getGiveaway(messageId);
         
         if (!gwData || !gwData.ended) {
-          return interaction.reply({ embeds: [embed.warn('Not Found', 'No ended giveaway found with that Message ID in the database. Active giveaways must be ended first.')], ephemeral: true });
+          return interaction.reply({ embeds: [embed.warn('Not Found', 'No ended giveaway found with that Message ID in the database. Active giveaways must be ended first.')], flags: 64 });
         }
 
         const participants = gwData.participants || [];
         if (participants.length === 0) {
-          return interaction.reply({ embeds: [embed.warn('Cannot Reroll', 'Nobody entered this giveaway!')], ephemeral: true });
+          return interaction.reply({ embeds: [embed.warn('Cannot Reroll', 'Nobody entered this giveaway!')], flags: 64 });
         }
 
         const newWinnerId = participants[Math.floor(Math.random() * participants.length)];

@@ -716,54 +716,54 @@ export async function handleInteraction(interaction) {
   if (action === 'play') {
     // legacy support if button still exists
   } else if (action === 'pause') {
-    if (!queue.current) return interaction.reply({ content: `There is no music playing.`, ephemeral: true });
+    if (!queue.current) return interaction.reply({ content: `There is no music playing.`, flags: 64 });
     if (queue.player) {
       queue.player.setPaused(!queue.player.paused);
       updatePlayerUI(interaction.guildId);
-      await interaction.reply({ content: queue.player.paused ? `Playback paused.` : `Playback resumed.`, ephemeral: true });
+      await interaction.reply({ content: queue.player.paused ? `Playback paused.` : `Playback resumed.`, flags: 64 });
     }
   } else if (action === 'skip') {
-    if (!queue.current) return interaction.reply({ content: `There is nothing to skip.`, ephemeral: true });
+    if (!queue.current) return interaction.reply({ content: `There is nothing to skip.`, flags: 64 });
     if (queue.player) queue.player.stopTrack(); // Triggers 'end' event which plays next
-    await interaction.reply({ content: `Skipped track.`, ephemeral: true });
+    await interaction.reply({ content: `Skipped track.`, flags: 64 });
   } else if (action === 'prev') {
-    if (queue.history.length === 0) return interaction.reply({ content: `No previous tracks.`, ephemeral: true });
+    if (queue.history.length === 0) return interaction.reply({ content: `No previous tracks.`, flags: 64 });
     queue.songs.unshift(queue.history.pop());
     if (queue.player) queue.player.stopTrack();
-    await interaction.reply({ content: `Playing previous track.`, ephemeral: true });
+    await interaction.reply({ content: `Playing previous track.`, flags: 64 });
   } else if (action === 'stop') {
     queue.songs = [];
     queue.history = [];
     if (queue.player) queue.player.stopTrack();
     updatePlayerUI(interaction.guildId);
-    await interaction.reply({ content: `Stopped playback and cleared queue.`, ephemeral: true });
+    await interaction.reply({ content: `Stopped playback and cleared queue.`, flags: 64 });
   } else if (action === 'repeat') {
     queue.repeatTrack = !queue.repeatTrack;
     updatePlayerUI(interaction.guildId);
-    return interaction.reply({ content: `Repeat is now **${queue.repeatTrack ? 'ON' : 'OFF'}**.`, ephemeral: true });
+    return interaction.reply({ content: `Repeat is now **${queue.repeatTrack ? 'ON' : 'OFF'}**.`, flags: 64 });
   } else if (action === 'autoplay') {
     queue.autoplay = !queue.autoplay;
     updatePlayerUI(interaction.guildId);
-    return interaction.reply({ content: `Autoplay is now **${queue.autoplay ? 'ON' : 'OFF'}**.`, ephemeral: true });
+    return interaction.reply({ content: `Autoplay is now **${queue.autoplay ? 'ON' : 'OFF'}**.`, flags: 64 });
   } else if (action === 'like') {
-    if (!queue.current) return interaction.reply({ content: `Nothing is playing to like!`, ephemeral: true });
+    if (!queue.current) return interaction.reply({ content: `Nothing is playing to like!`, flags: 64 });
         const added = db.toggleLikedSong(interaction.user.id, queue.current);
-    return interaction.reply({ content: added ? `🤍 Added **${queue.current.title}** to your Liked Songs! (Autoplay will prioritize these)` : `Removed from Liked Songs.`, ephemeral: true });
+    return interaction.reply({ content: added ? `🤍 Added **${queue.current.title}** to your Liked Songs! (Autoplay will prioritize these)` : `Removed from Liked Songs.`, flags: 64 });
   } else if (action === 'voldown') {
     queue.volume = Math.max(0, queue.volume - 10);
     if (queue.player) queue.player.setGlobalVolume(queue.volume);
     updatePlayerUI(interaction.guildId);
-    return interaction.reply({ content: `Volume decreased to ${queue.volume}%`, ephemeral: true });
+    return interaction.reply({ content: `Volume decreased to ${queue.volume}%`, flags: 64 });
   } else if (action === 'volup') {
     queue.volume = Math.min(200, queue.volume + 10);
     if (queue.player) queue.player.setGlobalVolume(queue.volume);
     updatePlayerUI(interaction.guildId);
-    return interaction.reply({ content: `Volume increased to ${queue.volume}%`, ephemeral: true });
+    return interaction.reply({ content: `Volume increased to ${queue.volume}%`, flags: 64 });
   } else if (action === 'volreset') {
     queue.volume = 100;
     if (queue.player) queue.player.setGlobalVolume(queue.volume);
     updatePlayerUI(interaction.guildId);
-    return interaction.reply({ content: `Volume reset to 100%`, ephemeral: true });
+    return interaction.reply({ content: `Volume reset to 100%`, flags: 64 });
   } else if (action === 'lyrics') {
      // Lyrics modal code
   }

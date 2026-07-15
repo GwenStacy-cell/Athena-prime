@@ -42,7 +42,7 @@ export async function scanImageForScam(url) {
     });
     if (!res.ok) return false;
     
-    const buffer = await res.buffer();
+    const buffer = await res.arrayBuffer().then(buf => Buffer.from(buf));
     
     // Convert any image format (WebP/JPEG) to a standard PNG using Canvas
     // so Tesseract doesn't crash on unsupported pixel buffers.
@@ -109,7 +109,7 @@ export async function getRawOCRText(url) {
   try {
     const res = await fetch(url, { headers: { 'User-Agent': 'DiscordBot (https://discord.com, 1.0.0)' } });
     if (!res.ok) return 'Fetch failed';
-    const buffer = await res.buffer();
+    const buffer = await res.arrayBuffer().then(buf => Buffer.from(buf));
     const img = await loadImage(buffer);
     const canvas = createCanvas(img.width, img.height);
     const ctx = canvas.getContext('2d');

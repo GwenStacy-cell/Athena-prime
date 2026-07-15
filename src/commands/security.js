@@ -149,11 +149,11 @@ export const commands = [
       const durationMs = parseDuration(durationStr);
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      if (!target) return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
+      if (!target) return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], flags: 64 });
 
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
       if (result.success) await interaction.reply({ embeds: [result.embed] });
-      else await interaction.reply({ embeds: [embed.danger('Quarantine Failed', result.message)], ephemeral: true });
+      else await interaction.reply({ embeds: [embed.danger('Quarantine Failed', result.message)], flags: 64 });
     }
   },
 
@@ -188,10 +188,10 @@ export const commands = [
       const reason = interaction.options.getString('reason') || 'No reason provided';
       const durationMs = parseDuration(durationStr);
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      if (!target) return interaction.reply({ embeds: [embed.warn('Error', 'Member not found.')], ephemeral: true });
+      if (!target) return interaction.reply({ embeds: [embed.warn('Error', 'Member not found.')], flags: 64 });
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
       if (result.success) await interaction.reply({ embeds: [result.embed] });
-      else await interaction.reply({ embeds: [embed.danger('Quarantine Failed', result.message)], ephemeral: true });
+      else await interaction.reply({ embeds: [embed.danger('Quarantine Failed', result.message)], flags: 64 });
     }
   },
 
@@ -227,14 +227,14 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], flags: 64 });
       }
 
       const result = await executeUnquarantine(interaction.guild, target, interaction.member);
       if (result.success) {
         await interaction.reply({ embeds: [result.embed] });
       } else {
-        await interaction.reply({ embeds: [embed.danger('Unquarantine Failed', result.message)], ephemeral: true });
+        await interaction.reply({ embeds: [embed.danger('Unquarantine Failed', result.message)], flags: 64 });
       }
     }
   },
@@ -272,7 +272,7 @@ export const commands = [
       const action = interaction.options.getString('action');
       let statusMsg = null;
       const updateProgress = async (embedData) => {
-        if (!statusMsg) statusMsg = await interaction.reply({ embeds: [embedData], fetchReply: true }).catch(() => null);
+        if (!statusMsg) statusMsg = await interaction.reply({ embeds: [embedData], withResponse: true }).catch(() => null);
         else await interaction.editReply({ embeds: [embedData] }).catch(() => null);
       };
       const result = await handleEmergency(interaction.guild, interaction.member, action, updateProgress);
@@ -298,7 +298,7 @@ export const commands = [
     async executeSlash(interaction) {
       let statusMsg = null;
       const updateProgress = async (embedData) => {
-        if (!statusMsg) statusMsg = await interaction.reply({ embeds: [embedData], fetchReply: true }).catch(() => null);
+        if (!statusMsg) statusMsg = await interaction.reply({ embeds: [embedData], withResponse: true }).catch(() => null);
         else await interaction.editReply({ embeds: [embedData] }).catch(() => null);
       };
       const result = await handleEmergency(interaction.guild, interaction.member, 'end', updateProgress);
@@ -428,7 +428,7 @@ export const commands = [
       const eventsStr = interaction.options.getString('events');
 
       if (action !== 'list' && !targetUser) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user parameter for this action.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user parameter for this action.`)], flags: 64 });
       }
 
       let events = ['all'];
@@ -482,7 +482,7 @@ export const commands = [
       const phrase = interaction.options.getString('phrase');
 
       if (action !== 'list' && !phrase) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a phrase parameter for this action.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a phrase parameter for this action.`)], flags: 64 });
       }
 
       const result = await handleBlacklist(interaction.guild, interaction.member, action, phrase);
@@ -667,14 +667,14 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`)], flags: 64 });
       }
 
       const voiceChannel = interaction.options.getChannel('channel');
       let channel = voiceChannel || interaction.member?.voice?.channel;
 
       if (!channel || channel.type !== ChannelType.GuildVoice) {
-        return interaction.reply({ embeds: [embed.warn('Setup Error', `${interaction.user} Please specify a Voice Channel or join one first.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Setup Error', `${interaction.user} Please specify a Voice Channel or join one first.`)], flags: 64 });
       }
 
       db.updateGuildConfig(interaction.guild.id, { homeVcId: channel.id });
@@ -711,7 +711,7 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`)], flags: 64 });
       }
 
       db.updateGuildConfig(interaction.guild.id, { homeVcId: null });
@@ -775,12 +775,12 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], flags: 64 });
       }
 
       const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
       if (!url) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`)], flags: 64 });
       }
 
       await interaction.deferReply();
@@ -847,12 +847,12 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)], flags: 64 });
       }
 
       const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
       if (!url) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`)], flags: 64 });
       }
 
       await interaction.deferReply();
@@ -919,14 +919,14 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** and **Server Owner** can manage extra owners.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** and **Server Owner** can manage extra owners.`)], flags: 64 });
       }
 
       const action = interaction.options.getString('action');
       const targetUser = interaction.options.getUser('user');
 
       if (action !== 'list' && !targetUser) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user for this action.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user for this action.`)], flags: 64 });
       }
 
       const result = await handleExtraOwner(interaction.guild, interaction.member, action, targetUser);
@@ -976,14 +976,14 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!isBotOwnerSync(interaction.user.id)) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** can manage the global bot blacklist.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** can manage the global bot blacklist.`)], flags: 64 });
       }
 
       const action = interaction.options.getString('action');
       let targetId = interaction.options.getString('user_id')?.replace(/[<@!>]/g, '');
 
       if (action !== 'list' && !targetId) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user ID.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user ID.`)], flags: 64 });
       }
 
       const result = await handleBotBlacklist(action, targetId);
@@ -1032,12 +1032,12 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** and **Server Owner** can manage the bot whitelist.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** and **Server Owner** can manage the bot whitelist.`)], flags: 64 });
       }
       const action = interaction.options.getString('action');
       const botId = interaction.options.getString('bot_id');
       if (action !== 'list' && !botId) {
-        return interaction.reply({ embeds: [embed.warn('Error', `${interaction.user} Please provide the bot's User ID.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Error', `${interaction.user} Please provide the bot's User ID.`)], flags: 64 });
       }
       const result = await handleBotWhitelist(interaction.guild, action, botId);
       await interaction.reply({ embeds: [result.embed] });
@@ -1117,7 +1117,7 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], flags: 64 });
       }
 
       const result = await getUserInfoEmbed(interaction.guild, target);
@@ -1168,7 +1168,7 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.')], flags: 64 });
       }
       const action = interaction.options.getString('action');
       const enable = action === 'enable_all';
@@ -1280,7 +1280,7 @@ export const commands = [
       const domain = interaction.options.getString('domain');
       const nodomainActions = ['list', 'allowall', 'disallowall'];
       if (!nodomainActions.includes(action) && !domain) {
-        return interaction.reply({ embeds: [embed.warn('Missing Domain', 'Please provide a domain name.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Missing Domain', 'Please provide a domain name.')], flags: 64 });
       }
       const result = await handleLinksAllow(interaction.guild, action, domain);
       await interaction.reply({ embeds: [result.embed] });

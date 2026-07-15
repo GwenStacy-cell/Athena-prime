@@ -18,7 +18,7 @@ export default {
   async execute(interaction) {
     if (interaction.user && db.isUserBotBlacklisted(interaction.user.id)) {
       if (interaction.isRepliable()) {
-        await interaction.reply({ content: 'You have been globally blacklisted from using Athena Prime commands.', ephemeral: true }).catch(() => null);
+        await interaction.reply({ content: 'You have been globally blacklisted from using Athena Prime commands.', flags: 64 }).catch(() => null);
       }
       return;
     }
@@ -34,7 +34,7 @@ export default {
       if (!cmd) {
         return interaction.reply({
           embeds: [embed.warn('Unknown Command', `${interaction.user}  The command \`/${interaction.commandName}\` was not recognized.\n\nUse \`/help\` to see all available commands.`)],
-          ephemeral: true
+          flags: 64
         });
       }
 
@@ -54,7 +54,7 @@ export default {
           if (!hasPerms) {
             return interaction.reply({
               embeds: [embed.danger('Access Denied', `${interaction.user}  You do not possess the required permissions to execute this command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)],
-              ephemeral: true
+              flags: 64
             });
           }
         }
@@ -70,9 +70,9 @@ export default {
         );
 
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ embeds: [errEmbed], ephemeral: true }).catch(() => null);
+          await interaction.followUp({ embeds: [errEmbed], flags: 64 }).catch(() => null);
         } else {
-          await interaction.reply({ embeds: [errEmbed], ephemeral: true }).catch(() => null);
+          await interaction.reply({ embeds: [errEmbed], flags: 64 }).catch(() => null);
         }
       }
       return;
@@ -99,14 +99,14 @@ export default {
     if (interaction.isModalSubmit()) {
       if (interaction.customId.startsWith('music_lyrics_modal')) {
         const songName = interaction.fields.getTextInputValue('song_name');
-        if (!songName) return interaction.reply({ content: 'You must provide a song name.', ephemeral: true });
+        if (!songName) return interaction.reply({ content: 'You must provide a song name.', flags: 64 });
 
         const vc = interaction.member.voice?.channel;
         if (!vc) {
-          return interaction.reply({ content: 'You must be in a Voice Channel to request lyrics.', ephemeral: true });
+          return interaction.reply({ content: 'You must be in a Voice Channel to request lyrics.', flags: 64 });
         }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
           let lyrics = null;
@@ -208,12 +208,12 @@ export default {
       }
 
       if (interaction.customId === 'autonick_modal') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         
         const layout = interaction.fields.getTextInputValue('layout') || '{name}';
         
         if (!layout.includes('{name}')) {
-          return interaction.reply({ content: 'Your layout must include the `{name}` placeholder!', ephemeral: true });
+          return interaction.reply({ content: 'Your layout must include the `{name}` placeholder!', flags: 64 });
         }
         
         let cfg = db.getGuildConfig(interaction.guild.id);
@@ -238,7 +238,7 @@ export default {
         } catch (error) {
           console.error('Error handling Enuke modal:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: ' An error occurred during the nuke sequence.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' An error occurred during the nuke sequence.', flags: 64 }).catch(() => null);
           }
         }
         return;
@@ -251,7 +251,7 @@ export default {
         } catch (error) {
           console.error('Error handling Spam modal:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: ' An error occurred with the spam command.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' An error occurred with the spam command.', flags: 64 }).catch(() => null);
           }
         }
         return;
@@ -264,7 +264,7 @@ export default {
         } catch (error) {
           console.error('Error handling JTC modal:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: ' An error occurred with the voice channel action.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' An error occurred with the voice channel action.', flags: 64 }).catch(() => null);
           }
         }
         return;
@@ -287,7 +287,7 @@ export default {
         } catch (error) {
           console.error('Error handling Accent modal:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: ' Failed to apply accent color.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' Failed to apply accent color.', flags: 64 }).catch(() => null);
           }
         }
         return;
@@ -308,7 +308,7 @@ export default {
           await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
         } catch (err) {
           console.error('Ann text modal error:', err);
-          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', flags: 64 }).catch(() => null);
         }
         return;
       }
@@ -371,7 +371,7 @@ export default {
           await interaction.editReply({ embeds: [oldEmbed] }).catch(() => null);
         } catch (err) {
           console.error('Ann media modal error:', err);
-          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', flags: 64 }).catch(() => null);
         }
         return;
       }
@@ -384,12 +384,12 @@ export default {
           const channelId = chanInput.replace(/[^0-9]/g, '');
           
           if (!channelId) {
-            return interaction.reply({ content: 'Invalid channel ID provided.', ephemeral: true });
+            return interaction.reply({ content: 'Invalid channel ID provided.', flags: 64 });
           }
 
           const channel = interaction.guild.channels.cache.get(channelId);
           if (!channel) {
-            return interaction.reply({ content: 'I could not find that channel in this server.', ephemeral: true });
+            return interaction.reply({ content: 'I could not find that channel in this server.', flags: 64 });
           }
 
           const oldEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
@@ -397,20 +397,20 @@ export default {
           await interaction.update({ embeds: [oldEmbed] }).catch(() => null);
         } catch (err) {
           console.error('Ann channel modal error:', err);
-          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', flags: 64 }).catch(() => null);
         }
         return;
       }
 
       if (interaction.customId === 'xp_announce_modal') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         try {
           const chanInput = interaction.fields.getTextInputValue('xp_channel_id');
           const channelId = chanInput.replace(/[^0-9]/g, '');
           
-          if (!channelId) return interaction.reply({ content: 'Invalid channel ID.', ephemeral: true });
+          if (!channelId) return interaction.reply({ content: 'Invalid channel ID.', flags: 64 });
           const channel = interaction.guild.channels.cache.get(channelId);
-          if (!channel) return interaction.reply({ content: 'I could not find that channel in this server.', ephemeral: true });
+          if (!channel) return interaction.reply({ content: 'I could not find that channel in this server.', flags: 64 });
 
           const system = db.getXpSystem(interaction.guild.id);
           system.announceChannelId = channel.id;
@@ -420,20 +420,20 @@ export default {
           return interaction.update(payload).catch(() => null);
         } catch (err) {
           console.error('XP announce modal error:', err);
-          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', flags: 64 }).catch(() => null);
         }
         return;
       }
 
       if (interaction.customId === 'xp_cmd_modal') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         try {
           const chanInput = interaction.fields.getTextInputValue('xp_channel_id');
           const channelId = chanInput.replace(/[^0-9]/g, '');
           
-          if (!channelId) return interaction.reply({ content: 'Invalid channel ID.', ephemeral: true });
+          if (!channelId) return interaction.reply({ content: 'Invalid channel ID.', flags: 64 });
           const channel = interaction.guild.channels.cache.get(channelId);
-          if (!channel) return interaction.reply({ content: 'I could not find that channel in this server.', ephemeral: true });
+          if (!channel) return interaction.reply({ content: 'I could not find that channel in this server.', flags: 64 });
 
           const system = db.getXpSystem(interaction.guild.id);
           system.cmdChannelId = channel.id;
@@ -443,7 +443,7 @@ export default {
           return interaction.update(payload).catch(() => null);
         } catch (err) {
           console.error('XP cmd modal error:', err);
-          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', ephemeral: true }).catch(() => null);
+          if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: 'Something went wrong.', flags: 64 }).catch(() => null);
         }
         return;
       }
@@ -457,18 +457,18 @@ export default {
       if (interaction.customId.startsWith('gen_invite_')) {
         const targetGuildId = interaction.customId.replace('gen_invite_', '');
         const targetGuild = interaction.client.guilds.cache.get(targetGuildId);
-        if (!targetGuild) return interaction.reply({ content: 'I am no longer in that server or it is not cached.', ephemeral: true });
+        if (!targetGuild) return interaction.reply({ content: 'I am no longer in that server or it is not cached.', flags: 64 });
         
         try {
           const channels = await targetGuild.channels.fetch();
           const textChannel = channels.find(c => c && c.type === 0 && c.permissionsFor(interaction.client.user.id)?.has(PermissionFlagsBits.CreateInstantInvite));
-          if (!textChannel) return interaction.reply({ content: 'Could not find a text channel where I have permission to create invites.', ephemeral: true });
+          if (!textChannel) return interaction.reply({ content: 'Could not find a text channel where I have permission to create invites.', flags: 64 });
           
           const invite = await textChannel.createInvite({ maxAge: 86400, maxUses: 1, reason: 'Requested by Bot Owner' });
-          return interaction.reply({ content: `Here is your invite to **${targetGuild.name}**:\n${invite.url}`, ephemeral: true });
+          return interaction.reply({ content: `Here is your invite to **${targetGuild.name}**:\n${invite.url}`, flags: 64 });
         } catch (err) {
           console.error('Invite gen error:', err);
-          return interaction.reply({ content: 'An error occurred while generating the invite.', ephemeral: true });
+          return interaction.reply({ content: 'An error occurred while generating the invite.', flags: 64 });
         }
       }
 
@@ -479,16 +479,16 @@ export default {
         
         const ratingData = db.getEditRating(messageId);
         if (!ratingData) {
-          return interaction.reply({ content: 'Rating data for this edit is no longer available.', ephemeral: true });
+          return interaction.reply({ content: 'Rating data for this edit is no longer available.', flags: 64 });
         }
 
         if (action === 'delete') {
           if (interaction.user.id !== ratingData.authorId && (!interaction.member || !interaction.member.permissions.has(PermissionFlagsBits.ManageMessages))) {
-            return interaction.reply({ content: 'Only the original poster or a moderator can remove this edit.', ephemeral: true });
+            return interaction.reply({ content: 'Only the original poster or a moderator can remove this edit.', flags: 64 });
           }
           await interaction.message.delete().catch(() => null);
           db.deleteEditRating(messageId);
-          return interaction.reply({ content: 'Edit rating message removed.', ephemeral: true });
+          return interaction.reply({ content: 'Edit rating message removed.', flags: 64 });
         }
 
         const starCount = parseInt(action);
@@ -496,7 +496,7 @@ export default {
 
         // Ensure single vote
         if (ratingData.votes[interaction.user.id]) {
-          return interaction.reply({ content: 'You have already rated this edit!', ephemeral: true });
+          return interaction.reply({ content: 'You have already rated this edit!', flags: 64 });
         }
 
         db.updateEditRating(messageId, interaction.user.id, interaction.user.username, starCount);
@@ -519,14 +519,14 @@ export default {
         });
 
         await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
-        return interaction.reply({ content: `You rated this edit ${starCount} <a:1z:1517089474369032253>`, ephemeral: true });
+        return interaction.reply({ content: `You rated this edit ${starCount} <a:1z:1517089474369032253>`, flags: 64 });
       }
 
 
       // --- SCANSERVER INTERACTIONS ---
       if (interaction.customId.startsWith('scanserver_')) {
          if (!isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild) && !isExtraOwner(interaction.guild.id, interaction.user.id)) {
-           return interaction.reply({ content: 'Permission Denied.', ephemeral: true });
+           return interaction.reply({ content: 'Permission Denied.', flags: 64 });
          }
 
          const parts = interaction.customId.split('_');
@@ -572,7 +572,7 @@ export default {
 
       // Autonick Manager Buttons
       if (interaction.customId === 'autonick_toggle') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         let cfg = db.getGuildConfig(interaction.guild.id);
         if (!cfg.autonick) cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
         
@@ -585,7 +585,7 @@ export default {
       }
 
       if (interaction.customId === 'autonick_edit') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         
         let cfg = db.getGuildConfig(interaction.guild.id);
         const currentLayout = cfg.autonick?.layout || '{name}';
@@ -609,10 +609,10 @@ export default {
       }
 
       if (interaction.customId === 'autonick_sync') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         let cfg = db.getGuildConfig(interaction.guild.id);
         if (!cfg.autonick?.enabled) {
-          return interaction.reply({ content: 'You must enable Autonick before syncing.', ephemeral: true });
+          return interaction.reply({ content: 'You must enable Autonick before syncing.', flags: 64 });
         }
         
         await interaction.deferReply({ ephemeral: false });
@@ -645,7 +645,7 @@ export default {
       }
 
       if (interaction.customId === 'autonick_restore') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         
         await interaction.deferReply({ ephemeral: false });
         await interaction.editReply({ embeds: [embed.info('Restoring Names', 'Starting to restore all nicknames to original Discord usernames...')] }).catch(() => null);
@@ -673,7 +673,7 @@ export default {
 
       // XP Manager Buttons
       if (interaction.customId === 'xp_toggle') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         const system = db.getXpSystem(interaction.guild.id);
         system.enabled = !system.enabled;
         db.setXpSystem(interaction.guild.id, system);
@@ -682,7 +682,7 @@ export default {
       }
 
       if (interaction.customId === 'xp_clear') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         const system = db.getXpSystem(interaction.guild.id);
         system.roleRewards = {};
         system.multipliers = {};
@@ -694,7 +694,7 @@ export default {
       }
 
       if (interaction.customId === 'xp_save') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         const payload = await buildXpDashboard(interaction.guild.id);
         // Turn embed green to indicate save
         payload.embeds[0].data.color = 0x2ECC71;
@@ -705,7 +705,7 @@ export default {
       }
 
       if (interaction.customId === 'xp_set_announce') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
         const modal = new ModalBuilder().setCustomId('xp_announce_modal').setTitle('Set Announce Channel');
         const chanInput = new TextInputBuilder()
@@ -718,7 +718,7 @@ export default {
       }
 
       if (interaction.customId === 'xp_set_cmd') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
         const modal = new ModalBuilder().setCustomId('xp_cmd_modal').setTitle('Set Command Channel');
         const chanInput = new TextInputBuilder()
@@ -804,14 +804,14 @@ export default {
         const channelIdMatch = footerText.match(/Target Channel: (\d+)/);
         
         if (!channelIdMatch) {
-          return interaction.reply({ content: 'You must set a Target Channel before publishing!', ephemeral: true });
+          return interaction.reply({ content: 'You must set a Target Channel before publishing!', flags: 64 });
         }
         
         const channelId = channelIdMatch[1];
         const targetChannel = interaction.guild.channels.cache.get(channelId);
         
         if (!targetChannel) {
-          return interaction.reply({ content: 'The selected target channel no longer exists.', ephemeral: true });
+          return interaction.reply({ content: 'The selected target channel no longer exists.', flags: 64 });
         }
         
         const finalEmbed = EmbedBuilder.from(currentEmbed);
@@ -821,11 +821,11 @@ export default {
         
         try {
           await targetChannel.send({ embeds: [finalEmbed] });
-          await interaction.reply({ content: `Announcement published seamlessly to <#${channelId}>!`, ephemeral: true });
+          await interaction.reply({ content: `Announcement published seamlessly to <#${channelId}>!`, flags: 64 });
           await interaction.message.delete().catch(() => null); // Clean up the builder
         } catch (err) {
           console.error('Publish error:', err);
-          return interaction.reply({ content: 'I lack permissions to post in that channel.', ephemeral: true });
+          return interaction.reply({ content: 'I lack permissions to post in that channel.', flags: 64 });
         }
         return;
       }
@@ -838,7 +838,7 @@ export default {
         } catch (error) {
           console.error('Error handling Enuke button:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: ' Failed to open Enuke Manager.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' Failed to open Enuke Manager.', flags: 64 }).catch(() => null);
           }
         }
         return;
@@ -849,28 +849,28 @@ export default {
         try {
           const verifyData = db.getVerification(interaction.guild.id);
           if (!verifyData || !verifyData.roleId) {
-            return interaction.reply({ content: 'The verification system is currently disabled or improperly configured.', ephemeral: true });
+            return interaction.reply({ content: 'The verification system is currently disabled or improperly configured.', flags: 64 });
           }
           const role = interaction.guild.roles.cache.get(verifyData.roleId);
           if (!role) {
-            return interaction.reply({ content: 'The verification role no longer exists on this server!', ephemeral: true });
+            return interaction.reply({ content: 'The verification role no longer exists on this server!', flags: 64 });
           }
           
           // Ensure we have a full GuildMember object, not an APIInteractionGuildMember
           const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
           if (!member) {
-            return interaction.reply({ content: 'Could not resolve your server profile.', ephemeral: true });
+            return interaction.reply({ content: 'Could not resolve your server profile.', flags: 64 });
           }
 
           if (member.roles.cache.has(role.id)) {
-            return interaction.reply({ content: 'You are already verified!', ephemeral: true });
+            return interaction.reply({ content: 'You are already verified!', flags: 64 });
           }
           
           await member.roles.add(role);
-          return interaction.reply({ content: `<a:emoji_18:1517214419996643509> You have been successfully verified! Access granted.`, ephemeral: true });
+          return interaction.reply({ content: `<a:emoji_18:1517214419996643509> You have been successfully verified! Access granted.`, flags: 64 });
         } catch (err) {
           console.error('Verify error:', err);
-          return interaction.reply({ content: 'I do not have permission to assign the verification role. Please contact an admin.', ephemeral: true }).catch(() => null);
+          return interaction.reply({ content: 'I do not have permission to assign the verification role. Please contact an admin.', flags: 64 }).catch(() => null);
         }
       }
 
@@ -879,12 +879,12 @@ export default {
         try {
           const ticketConfig = db.getTickets(interaction.guild.id);
           if (!ticketConfig || !ticketConfig.categoryId) {
-            return interaction.reply({ content: 'The ticket system is not fully configured.', ephemeral: true });
+            return interaction.reply({ content: 'The ticket system is not fully configured.', flags: 64 });
           }
 
           const category = interaction.guild.channels.cache.get(ticketConfig.categoryId);
           if (!category) {
-            return interaction.reply({ content: 'The ticket category could not be found.', ephemeral: true });
+            return interaction.reply({ content: 'The ticket category could not be found.', flags: 64 });
           }
 
           // Ensure activeTickets is an object
@@ -893,11 +893,11 @@ export default {
           // Check if user already has an active ticket
           for (const [tId, ticket] of Object.entries(activeTickets)) {
             if (ticket.ownerId === interaction.user.id) {
-              return interaction.reply({ content: `You already have an open ticket in <#${ticket.textId}>!`, ephemeral: true });
+              return interaction.reply({ content: `You already have an open ticket in <#${ticket.textId}>!`, flags: 64 });
             }
           }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         try {
           const permissionOverwrites = [
@@ -968,7 +968,7 @@ export default {
       } catch (err) {
         console.error('Ticket open error:', err);
         if (!interaction.replied && !interaction.deferred) {
-          return interaction.reply({ content: 'An unexpected error occurred while processing your ticket.', ephemeral: true }).catch(() => null);
+          return interaction.reply({ content: 'An unexpected error occurred while processing your ticket.', flags: 64 }).catch(() => null);
         }
       }
     }
@@ -992,7 +992,7 @@ export default {
         const ticketData = ticketConfig.activeTickets[ticketId];
 
         if (!ticketData) {
-          return interaction.reply({ content: 'This ticket is no longer tracked in the database.', ephemeral: true });
+          return interaction.reply({ content: 'This ticket is no longer tracked in the database.', flags: 64 });
         }
 
         // To prevent misclicks, let's defer update and immediately delete the channels
@@ -1016,7 +1016,7 @@ export default {
       if (interaction.customId === 'gw_join') {
         const gwData = db.getGiveaway(interaction.message.id);
         if (!gwData) {
-          return interaction.reply({ content: 'This giveaway has already ended or is invalid!', ephemeral: true });
+          return interaction.reply({ content: 'This giveaway has already ended or is invalid!', flags: 64 });
         }
         
         const joined = db.addGiveawayParticipant(interaction.message.id, interaction.user.id);
@@ -1029,9 +1029,9 @@ export default {
         await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
 
         if (joined) {
-          return interaction.reply({ content: `<a:emoji_56:1517212375022047284> You have successfully entered the giveaway!`, ephemeral: true });
+          return interaction.reply({ content: `<a:emoji_56:1517212375022047284> You have successfully entered the giveaway!`, flags: 64 });
         } else {
-          return interaction.reply({ content: `You have successfully left the giveaway.`, ephemeral: true });
+          return interaction.reply({ content: `You have successfully left the giveaway.`, flags: 64 });
         }
       }
 
@@ -1045,7 +1045,7 @@ export default {
         } catch (error) {
           console.error('Error handling spam more button:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '\u274c Failed to send more spam.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: '\u274c Failed to send more spam.', flags: 64 }).catch(() => null);
           }
         }
         return;
@@ -1068,7 +1068,7 @@ export default {
         } catch (error) {
           console.error('Error handling Accent button:', error);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: ' Failed to process accent action.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' Failed to process accent action.', flags: 64 }).catch(() => null);
           }
         }
         return;
@@ -1099,7 +1099,7 @@ export default {
       if (!isBtnBypass && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
         return interaction.reply({
           content: ' Access Denied: You must possess the **Administrator** permission to adjust security panel configurations.',
-          ephemeral: true
+          flags: 64
         });
       }
 
@@ -1152,7 +1152,7 @@ export default {
         } catch (err) {
           console.error('[JTC SelectMenu]', err);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: ' An error occurred.', ephemeral: true }).catch(() => null);
+            await interaction.reply({ content: ' An error occurred.', flags: 64 }).catch(() => null);
           }
         }
       }
@@ -1176,7 +1176,7 @@ export default {
     // ==========================================
     if (interaction.isRoleSelectMenu()) {
       if (interaction.customId === 'xp_add_reward') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         const system = db.getXpSystem(interaction.guild.id);
         const selectedRoles = interaction.values;
         
@@ -1198,7 +1198,7 @@ export default {
       }
 
       if (interaction.customId === 'xp_add_multiplier') {
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', ephemeral: true });
+        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) return interaction.reply({ content: 'Unauthorized.', flags: 64 });
         const system = db.getXpSystem(interaction.guild.id);
         const selectedRoles = interaction.values;
         

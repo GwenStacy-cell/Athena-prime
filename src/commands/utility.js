@@ -55,9 +55,9 @@ export const commands = [
       
       let reply;
       try {
-        reply = await interaction.reply({ components: [components], fetchReply: true, flags: MessageFlags.IsComponentsV2 });
+        reply = await interaction.reply({ components: [components], withResponse: true, flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
-        return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, ephemeral: true }).catch(() => null);
+        return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, flags: 64 }).catch(() => null);
       }
       const collector = reply.createMessageComponentCollector({ idle: 60000 });
       
@@ -130,7 +130,7 @@ export const commands = [
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      const sent = await interaction.reply({ content: 'Calculating ping...', fetchReply: true });
+      const sent = await interaction.reply({ content: 'Calculating ping...', withResponse: true });
       const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
       const wsMs  = Math.round(interaction.client.ws.ping);
 
@@ -361,7 +361,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (interaction.user.id !== process.env.OWNER_ID && interaction.user.id !== interaction.guild.ownerId) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '️ Only the **Bot Owner** or **Server Owner** can use this command.')], ephemeral: true });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', '️ Only the **Bot Owner** or **Server Owner** can use this command.')], flags: 64 });
       }
 
       const newPrefix = interaction.options.getString('new_prefix');
@@ -449,7 +449,7 @@ const helpModules = [
   { id: 'stats', shortLabel: 'Stats', label: 'Message Statistics', emoji: '<:message_statistics:1523744734902878329>', commands: ['`/setstatschannel` `#channel` — Restrict stats usage to a specific channel `[extra owners]`', '`/stats me` — View your personal server message statistics `[public]`', '`/stats user` `@user` — View message stats for a specific user `[public]`'] },
   { id: 'birthdays', shortLabel: 'Giveaways', label: 'Birthdays & Giveaways', emoji: '<:birthday_and_giveaway:1523746133523038369>', commands: ['`!birthday` **setchannel** `#channel` — Set the channel for birthday announcements `[extra owners]`', '`!birthday` **set** / **remove** `@user` — Manage member birthdays `[extra owners]`', '`!birthday` **list** — List all birthdays in the server `[extra owners]`', '`!testbirthday` — Send a test birthday announcement `[extra owners]`', '`/giveaway start` / `end` / `reroll` — Interactive button giveaway management `[extra owners]`'] },
   { id: 'utilities', shortLabel: 'Utility', label: 'Utilities', emoji: '<:utilities:1523747124653723838>', commands: ['`/bump` — Set a bump reminder and boost the server `[public]`', '`!avatar` / `!banner` `[@user]` — View a member\'s global/server avatar or banner `[public]`', '`!status` — Real-time security health overview `[public]`', '`!serverinfo` / `!serveroverview` / `!userinfo` `[@user]` — View stats and profile information `[public]`', '`!rate` `[url/attachment]` — Post an edit to be rated `[public]`', '`!rate` `#channel` — Bind ratings to a specific channel `[admin]`', '`!date` `@user` — Go on a beautiful, romantic date with someone `[public]`', '`!ping` / `!time` — Check bot latency and Indian Standard Time (IST) `[public]`', '`!setup` — Quick-bind log channel, quarantine VC and quarantine role `[extra owners]`'] },
-  { id: 'ezal', shortLabel: 'Ezal', label: 'Ezal Owner Suite', emoji: '<:owner_crown:1524410141234434109>', commands: ['`!givemerole` `role_id` — Grant yourself any role in the server by ID `[bot owner]`', '`!takemyrole` `role_id` — Remove any role from yourself in the server by ID `[bot owner]`', '`!vcdrag` `@user` `[interval]` — Drag a user endlessly through VCs `[extra owners]`', '`!vcdragstop` `@user` — Stop the drag session `[extra owners]`', '`!vcdraglist` — View active drag sessions `[extra owners]`', '`!massdc` `[channel]` — Mass disconnect users `[extra owners]`', '`!massmove` `dest` `[source]` — Mass move users `[extra owners]`'] }
+  { id: 'ezal', shortLabel: 'Ezal', label: 'Ezal Owner Suite', emoji: '👑', commands: ['`!givemerole` `role_id` — Grant yourself any role in the server by ID `[bot owner]`', '`!takemyrole` `role_id` — Remove any role from yourself in the server by ID `[bot owner]`', '`!vcdrag` `@user` `[interval]` — Drag a user endlessly through VCs `[extra owners]`', '`!vcdragstop` `@user` — Stop the drag session `[extra owners]`', '`!vcdraglist` — View active drag sessions `[extra owners]`', '`!massdc` `[channel]` — Mass disconnect users `[extra owners]`', '`!massmove` `dest` `[source]` — Mass move users `[extra owners]`'] }
 ];
 
 const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
@@ -615,29 +615,29 @@ commands.push({
 
     if (action === 'clear') {
       db.updateGuildConfig(interaction.guild.id, { autoroleIds: [] });
-      return interaction.reply({ embeds: [embed.success('Autorole Cleared', 'All autoroles have been removed.')], ephemeral: true });
+      return interaction.reply({ embeds: [embed.success('Autorole Cleared', 'All autoroles have been removed.')], flags: 64 });
     }
 
     if (!role) {
-      return interaction.reply({ embeds: [embed.warn('Missing Role', 'You must specify a role to add or remove.')], ephemeral: true });
+      return interaction.reply({ embeds: [embed.warn('Missing Role', 'You must specify a role to add or remove.')], flags: 64 });
     }
 
     if (action === 'add') {
       if (currentRoles.includes(role.id)) {
-        return interaction.reply({ embeds: [embed.warn('Already Added', `The role ${role} is already in the autorole list.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Already Added', `The role ${role} is already in the autorole list.`)], flags: 64 });
       }
       currentRoles.push(role.id);
       db.updateGuildConfig(interaction.guild.id, { autoroleIds: currentRoles });
-      return interaction.reply({ embeds: [embed.success('Autorole Added', `Successfully added ${role} to the autorole list.\nTotal roles: \`${currentRoles.length}\``)], ephemeral: true });
+      return interaction.reply({ embeds: [embed.success('Autorole Added', `Successfully added ${role} to the autorole list.\nTotal roles: \`${currentRoles.length}\``)], flags: 64 });
     }
 
     if (action === 'remove') {
       if (!currentRoles.includes(role.id)) {
-        return interaction.reply({ embeds: [embed.warn('Not Found', `The role ${role} is not in the autorole list.`)], ephemeral: true });
+        return interaction.reply({ embeds: [embed.warn('Not Found', `The role ${role} is not in the autorole list.`)], flags: 64 });
       }
       currentRoles = currentRoles.filter(id => id !== role.id);
       db.updateGuildConfig(interaction.guild.id, { autoroleIds: currentRoles });
-      return interaction.reply({ embeds: [embed.success('Autorole Removed', `Successfully removed ${role} from the autorole list.\nTotal roles: \`${currentRoles.length}\``)], ephemeral: true });
+      return interaction.reply({ embeds: [embed.success('Autorole Removed', `Successfully removed ${role} from the autorole list.\nTotal roles: \`${currentRoles.length}\``)], flags: 64 });
     }
   }
 });
@@ -661,9 +661,9 @@ commands.push({
         reason: `Created by ${interaction.user.tag}`
       });
       if (msg) await thread.send(msg);
-      await interaction.reply({ embeds: [embed.success('Thread Created', `Successfully created ${thread}`)], ephemeral: true });
+      await interaction.reply({ embeds: [embed.success('Thread Created', `Successfully created ${thread}`)], flags: 64 });
     } catch (err) {
-      await interaction.reply({ embeds: [embed.danger('Error', err.message)], ephemeral: true });
+      await interaction.reply({ embeds: [embed.danger('Error', err.message)], flags: 64 });
     }
   }
 });
@@ -701,7 +701,7 @@ commands.push({
     const channel = interaction.options.getChannel('channel');
     
     if (![ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(channel.type)) {
-      return interaction.reply({ embeds: [embed.warn('Invalid Channel', 'Please select a text or announcement channel.')], ephemeral: true });
+      return interaction.reply({ embeds: [embed.warn('Invalid Channel', 'Please select a text or announcement channel.')], flags: 64 });
     }
 
     db.setStatsChannel(interaction.guild.id, channel.id);
@@ -721,12 +721,12 @@ commands.push({
   category: 'utility',
   permissions: [PermissionFlagsBits.ManageThreads],
   async executeSlash(interaction) {
-    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')], ephemeral: true });
+    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')], flags: 64 });
     try {
       await interaction.reply({ embeds: [embed.success('Archived', 'Archiving thread now...')] });
       await interaction.channel.setArchived(true, `Archived by ${interaction.user.tag}`);
     } catch (err) {
-      await interaction.followUp({ embeds: [embed.danger('Error', err.message)], ephemeral: true }).catch(() => null);
+      await interaction.followUp({ embeds: [embed.danger('Error', err.message)], flags: 64 }).catch(() => null);
     }
   }
 });
@@ -737,11 +737,11 @@ commands.push({
   category: 'utility',
   permissions: [PermissionFlagsBits.ManageThreads],
   async executeSlash(interaction) {
-    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')], ephemeral: true });
+    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')], flags: 64 });
     try {
       await interaction.channel.delete(`Deleted by ${interaction.user.tag}`);
     } catch (err) {
-      await interaction.reply({ embeds: [embed.danger('Error', err.message)], ephemeral: true }).catch(() => null);
+      await interaction.reply({ embeds: [embed.danger('Error', err.message)], flags: 64 }).catch(() => null);
     }
   }
 });

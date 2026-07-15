@@ -33,7 +33,7 @@ export const commands = [
       const guildId = interaction.guild.id;
 
       if (subcommand === 'setup') {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
         
         const role = interaction.options.getRole('role');
         
@@ -72,7 +72,7 @@ export const commands = [
       } 
       
       else if (subcommand === 'disable') {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
         
         const verifyData = db.getVerification(guildId);
         if (verifyData.messageId && verifyData.channelId) {

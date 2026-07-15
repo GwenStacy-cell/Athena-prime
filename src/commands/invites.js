@@ -25,7 +25,7 @@ export const commands = [
       await setupInviteTracker(message.guild, message.channel, message.member, null, targetChannel);
     },
     executeSlash: async (interaction) => {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: 64 });
       const targetChannel = interaction.options.getChannel('channel');
       await setupInviteTracker(interaction.guild, interaction.channel, interaction.member, interaction, targetChannel);
     }
@@ -41,7 +41,7 @@ export const commands = [
     },
     executeSlash: async (interaction) => {
       db.updateGuildConfig(interaction.guild.id, { inviteChannelId: null });
-      return interaction.reply({ embeds: [embed.success('Invite Tracker Disabled', 'Invite tracking has been turned off.')], ephemeral: true });
+      return interaction.reply({ embeds: [embed.success('Invite Tracker Disabled', 'Invite tracking has been turned off.')], flags: 64 });
     }
   }
 ];

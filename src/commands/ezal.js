@@ -164,14 +164,12 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     const roleData = backupData.roles[i];
     try {
       const newRole = await withTimeout(
-        guild.roles.create({
-          name:        roleData.name,
-          color:       roleData.color,
+        guild.roles.create({ name:        roleData.name,
+          colors: { primaryColor:  },
           permissions: BigInt(roleData.permissions),
           hoist:       roleData.hoist,
           mentionable: roleData.mentionable,
-          reason:      'Athena Prime — Backup Restore'
-        }),
+          reason:      'Athena Prime — Backup Restore' }),
         12000,
         `role:${roleData.name}`
       );
@@ -717,7 +715,7 @@ async function handleRestoreSetup(message, args) {
     if (aRole) {
       let realRole = guild.roles.cache.get(aRole);
       if (!realRole) {
-        realRole = await guild.roles.create({ name: 'Accent Manager', color: config.accentColor || '#ff0000' });
+        realRole = await guild.roles.create({ name: 'Accent Manager', colors: { primaryColor:  } });
         db.updateGuildConfig(guildId, { accentManagerRoleId: realRole.id });
       }
     }
