@@ -219,6 +219,9 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
+      if (args[0] && args[0].toLowerCase() === 'music') {
+        return message.reply({ embeds: [embed.warn('Command Redirect', 'To setup the Music Player, please use the `!setupmusic` command instead!')] });
+      }
       const channel = message.mentions.channels.first();
       const role = message.mentions.roles.first();
       
