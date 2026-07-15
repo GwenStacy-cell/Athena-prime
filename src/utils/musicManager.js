@@ -4,6 +4,7 @@ import { createCanvas } from 'canvas';
 import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';
+import { fetchSpotifyData } from './spotify.js';
 
 const queues = new Map(); 
 const leaveTimeouts = new Map();
@@ -276,23 +277,49 @@ export async function enqueue(guild, member, query) {
     let searchStr = query;
     let fallbackSearch = null;
     
-    // Spotify scraper fallback for better accuracy
-    if (query.includes('spotify.com/track/')) {
+    // Native Spotify Integration
+    if (query.includes('spotify.com/')) {
        try {
-          const fetch = (await import('node-fetch')).default;
-          const { load } = await import('cheerio');
-          const res = await fetch(query);
-          const html = await res.text();
-          const $ = load(html);
-          const title = $('meta[property="og:title"]').attr('content');
-          const desc = $('meta[property="og:description"]').attr('content');
-          if (title) {
-             const artist = desc ? desc.split('·')[0].trim() : '';
-             searchStr = `ytmsearch:${title} ${artist} audio`;
-             fallbackSearch = `ytsearch:${title} ${artist} audio`;
+          const spotifyData = await fetchSpotifyData(query);
+          if (spotifyData) {
+             if (spotifyData.type === 'track') {
+                searchStr = spotifyData.queries[0];
+                fallbackSearch = searchStr;
+             } else if (spotifyData.type === 'playlist') {
+                const firstQuery = spotifyData.queries.shift();
+                searchStr = firstQuery;
+                fallbackSearch = firstQuery;
+                
+                // Background async loading for the rest to avoid interaction timeout
+                setTimeout(async () => {
+                   let count = 0;
+                   for (const q of spotifyData.queries) {
+                       let res = await node.rest.resolve(q);
+                       if (res && res.loadType === 'search') {
+                          const t = res.data[0];
+                          queue.songs.push({
+                            title: t.info.title,
+                            url: t.info.uri,
+                            duration: formatDuration(t.info.length),
+                            encoded: t.encoded,
+                            artworkUrl: getThumbnail(t),
+                            requester: member.user,
+                            author: t.info.author
+                          });
+                          count++;
+                       }
+                       // Avoid Lavalink ratelimits when resolving hundreds of tracks
+                       await new Promise(r => setTimeout(r, 200));
+                   }
+                   if (count > 0 && queue.textChannel) {
+                       const tc = global.client.channels.cache.get(queue.textChannel);
+                       if (tc) tc.send(`✅ Finished loading **${count}** remaining tracks from **${spotifyData.title}**!`);
+                   }
+                }, 1000);
+             }
           }
        } catch (e) {
-          console.error('Spotify scraper failed:', e);
+          console.error('Spotify native fetch failed:', e);
        }
     } else if (!query.startsWith('http')) {
       searchStr = `ytmsearch:${query} audio`; // Add audio to get exact tracks, avoid music videos
