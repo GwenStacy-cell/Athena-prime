@@ -50,7 +50,7 @@ export async function fetchSpotifyData(url) {
       const data = await res.json();
       return {
         type: 'track',
-        queries: [`ytmsearch:${data.name} ${data.artists[0].name} audio`]
+        queries: [`ytmsearch:${data.name} ${data.artists[0].name}`]
       };
     } 
     else if (url.includes('/album/')) {
@@ -61,7 +61,7 @@ export async function fetchSpotifyData(url) {
       if (!res.ok) return null;
       const data = await res.json();
       
-      const queries = data.tracks.items.map(track => `ytmsearch:${track.name} ${track.artists[0].name} audio`);
+      const queries = data.tracks.items.map(track => `ytmsearch:${track.name} ${track.artists[0].name}`);
       return { type: 'playlist', title: data.name, queries };
     }
     else if (url.includes('/playlist/')) {
@@ -75,7 +75,7 @@ export async function fetchSpotifyData(url) {
       const queries = [];
       for (const item of data.tracks.items) {
         if (item.track && item.track.name) {
-           queries.push(`ytmsearch:${item.track.name} ${item.track.artists[0].name} audio`);
+           queries.push(`ytmsearch:${item.track.name} ${item.track.artists[0].name}`);
         }
       }
       return { type: 'playlist', title: data.name, queries };

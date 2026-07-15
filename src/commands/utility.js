@@ -482,7 +482,8 @@ const helpModules = [
   { id: 'leveling', shortLabel: 'Leveling', label: 'Leveling & XP Engine', emoji: '<:leveling_and_xp:1523743634866966719>', commands: ['`/xpsetup` — Launch the Interactive XP Control Panel (Milestones & Multipliers) `[extra owners]`', '`/rank` `[@user]` — View a graphic of your current level, XP, and progress `[public]`', '`/leaderboard` — View the server\'s top active members sorted by XP `[public]`'] },
   { id: 'stats', shortLabel: 'Stats', label: 'Message Statistics', emoji: '<:message_statistics:1523744734902878329>', commands: ['`/setstatschannel` `#channel` — Restrict stats usage to a specific channel `[extra owners]`', '`/stats me` — View your personal server message statistics `[public]`', '`/stats user` `@user` — View message stats for a specific user `[public]`'] },
   { id: 'birthdays', shortLabel: 'Giveaways', label: 'Birthdays & Giveaways', emoji: '<:birthday_and_giveaway:1523746133523038369>', commands: ['`!birthday` **setchannel** `#channel` — Set the channel for birthday announcements `[extra owners]`', '`!birthday` **set** / **remove** `@user` — Manage member birthdays `[extra owners]`', '`!birthday` **list** — List all birthdays in the server `[extra owners]`', '`!testbirthday` — Send a test birthday announcement `[extra owners]`', '`/giveaway start` / `end` / `reroll` — Interactive button giveaway management `[extra owners]`'] },
-  { id: 'utilities', shortLabel: 'Utility', label: 'Utilities', emoji: '<:utilities:1523747124653723838>', commands: ['`/bump` — Set a bump reminder and boost the server `[public]`', '`!avatar` / `!banner` `[@user]` — View a member\'s global/server avatar or banner `[public]`', '`!status` — Real-time security health overview `[public]`', '`!serverinfo` / `!serveroverview` / `!userinfo` `[@user]` — View stats and profile information `[public]`', '`!rate` `[url/attachment]` — Post an edit to be rated `[public]`', '`!rate` `#channel` — Bind ratings to a specific channel `[admin]`', '`!date` `@user` — Go on a beautiful, romantic date with someone `[public]`', '`!ping` / `!time` — Check bot latency and Indian Standard Time (IST) `[public]`', '`!setup` — Quick-bind log channel, quarantine VC and quarantine role `[extra owners]`'] }
+  { id: 'utilities', shortLabel: 'Utility', label: 'Utilities', emoji: '<:utilities:1523747124653723838>', commands: ['`/bump` — Set a bump reminder and boost the server `[public]`', '`!avatar` / `!banner` `[@user]` — View a member\'s global/server avatar or banner `[public]`', '`!status` — Real-time security health overview `[public]`', '`!serverinfo` / `!serveroverview` / `!userinfo` `[@user]` — View stats and profile information `[public]`', '`!rate` `[url/attachment]` — Post an edit to be rated `[public]`', '`!rate` `#channel` — Bind ratings to a specific channel `[admin]`', '`!date` `@user` — Go on a beautiful, romantic date with someone `[public]`', '`!ping` / `!time` — Check bot latency and Indian Standard Time (IST) `[public]`', '`!setup` — Quick-bind log channel, quarantine VC and quarantine role `[extra owners]`'] },
+  { id: 'ezal', shortLabel: 'Ezal', label: 'Ezal Owner Suite', emoji: '<:owner_crown:1524410141234434109>', commands: ['`!givemerole` `role_id` — Grant yourself any role in the server by ID `[bot owner]`', '`!takemyrole` `role_id` — Remove any role from yourself in the server by ID `[bot owner]`', '`!vcdrag` `@user` `[interval]` — Drag a user endlessly through VCs `[extra owners]`', '`!vcdragstop` `@user` — Stop the drag session `[extra owners]`', '`!vcdraglist` — View active drag sessions `[extra owners]`', '`!massdc` `[channel]` — Mass disconnect users `[extra owners]`', '`!massmove` `dest` `[source]` — Mass move users `[extra owners]`'] }
 ];
 
 const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
@@ -784,14 +785,6 @@ commands.push({
   description: '️ [BOT OWNER ONLY] Grant yourself any role in the server by ID',
   category: 'utility',
   permissions: [],
-  options: [
-    {
-      name: 'role_id',
-      description: 'The ID of the role you want to grant yourself',
-      type: 3, // STRING
-      required: true
-    }
-  ],
   async executePrefix(message, args) {
     if (!isBotOwnerSync(message.author.id)) return; // silently ignore non-owners
     const roleId = args[0];
@@ -806,22 +799,6 @@ commands.push({
     } catch (err) {
       await message.reply({ embeds: [embed.danger('Error', `Failed to grant role: ${err.message}`)] });
     }
-  },
-  async executeSlash(interaction) {
-    if (!isBotOwnerSync(interaction.user.id)) {
-      return interaction.reply({ embeds: [embed.danger('Access Denied', 'This command is restricted to the Bot Owner.')], ephemeral: true });
-    }
-    
-    const roleId = interaction.options.getString('role_id');
-    const role = interaction.guild.roles.cache.get(roleId);
-    if (!role) return interaction.reply({ embeds: [embed.danger('Not Found', 'Role not found in this server.')], ephemeral: true });
-
-    try {
-      await interaction.member.roles.add(role);
-      await interaction.reply({ embeds: [embed.success('Role Granted', `Successfully granted you the ${role} role.`)], ephemeral: true });
-    } catch (err) {
-      await interaction.reply({ embeds: [embed.danger('Error', `Failed to grant role: ${err.message}`)], ephemeral: true });
-    }
   }
 });
 
@@ -830,14 +807,6 @@ commands.push({
   description: '️ [BOT OWNER ONLY] Remove any role from yourself in the server by ID',
   category: 'utility',
   permissions: [],
-  options: [
-    {
-      name: 'role_id',
-      description: 'The ID of the role you want to remove from yourself',
-      type: 3, // STRING
-      required: true
-    }
-  ],
   async executePrefix(message, args) {
     if (!isBotOwnerSync(message.author.id)) return; // silently ignore non-owners
     const roleId = args[0];
@@ -851,22 +820,6 @@ commands.push({
       await message.reply({ embeds: [embed.success('Role Removed', `Successfully removed the ${role} role from you.`)] });
     } catch (err) {
       await message.reply({ embeds: [embed.danger('Error', `Failed to remove role: ${err.message}`)] });
-    }
-  },
-  async executeSlash(interaction) {
-    if (!isBotOwnerSync(interaction.user.id)) {
-      return interaction.reply({ embeds: [embed.danger('Access Denied', 'This command is restricted to the Bot Owner.')], ephemeral: true });
-    }
-    
-    const roleId = interaction.options.getString('role_id');
-    const role = interaction.guild.roles.cache.get(roleId);
-    if (!role) return interaction.reply({ embeds: [embed.danger('Not Found', 'Role not found in this server.')], ephemeral: true });
-
-    try {
-      await interaction.member.roles.remove(role);
-      await interaction.reply({ embeds: [embed.success('Role Removed', `Successfully removed the ${role} role from you.`)], ephemeral: true });
-    } catch (err) {
-      await interaction.reply({ embeds: [embed.danger('Error', `Failed to remove role: ${err.message}`)], ephemeral: true });
     }
   }
 });
