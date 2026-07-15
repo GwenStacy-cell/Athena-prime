@@ -18,12 +18,12 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 const PRESETS = [
   { label: 'Red',     hex: '#FF0000', emoji: '' },
   { label: 'Blue',    hex: '#0000FF', emoji: '' },
-  { label: 'Cyan',    hex: '#00FFFF', emoji: '🩵' },
-  { label: 'Green',   hex: '#00FF00', emoji: '<:emoji_16:1521464002046328944>' },
-  { label: 'Yellow',  hex: '#FFFF00', emoji: '🟡' },
-  { label: 'Orange',  hex: '#FF8000', emoji: '🟠' },
-  { label: 'Purple',  hex: '#8000FF', emoji: '🟣' },
-  { label: 'Pink',    hex: '#FF00FF', emoji: '🩷' },
+  { label: 'Cyan',    hex: '#00FFFF', emoji: '' },
+  { label: 'Green',   hex: '#00FF00', emoji: '' },
+  { label: 'Yellow',  hex: '#FFFF00', emoji: '' },
+  { label: 'Orange',  hex: '#FF8000', emoji: '' },
+  { label: 'Purple',  hex: '#8000FF', emoji: '' },
+  { label: 'Pink',    hex: '#FF00FF', emoji: '' },
   { label: 'White',   hex: '#FFFFFF', emoji: '' },
   { label: 'Black',   hex: '#010101', emoji: '' },
 ];
@@ -101,7 +101,6 @@ export function buildAccentPanel(guild) {
     new ButtonBuilder()
       .setCustomId('accent_close')
       .setLabel('Close')
-      .setEmoji('✖️')
       .setStyle(ButtonStyle.Secondary)
   );
 
