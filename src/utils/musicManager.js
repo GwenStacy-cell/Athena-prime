@@ -82,6 +82,14 @@ export async function enqueue(guild, member, query) {
       if (nativeConn) nativeConn.destroy();
       
       let player = shoukaku.players.get(guild.id);
+      
+      // If Shoukaku thinks it has a player but the bot was manually disconnected, clean it up first
+      if (player && !guild.members.me.voice.channelId) {
+         await shoukaku.leaveVoiceChannel(guild.id);
+         await new Promise(r => setTimeout(r, 500));
+         player = null;
+      }
+
       if (!player) {
         try {
           player = await shoukaku.joinVoiceChannel({
@@ -108,6 +116,16 @@ export async function enqueue(guild, member, query) {
       
       queue.player = player;
       queue.player.setGlobalVolume(queue.volume);
+      
+      // Apply High-Fidelity EQ for better audio clarity
+      queue.player.setEqualizer([
+        { band: 0, gain: 0.15 }, // Bass
+        { band: 1, gain: 0.10 }, // Bass
+        { band: 2, gain: 0.05 }, // Low-mid
+        { band: 12, gain: 0.05 }, // High-mid
+        { band: 13, gain: 0.10 }, // Treble
+        { band: 14, gain: 0.10 }  // Treble
+      ]);
       
       
       queue.player.on('end', async (data) => {
@@ -172,7 +190,7 @@ export async function enqueue(guild, member, query) {
                    const author = queue.current.author ? queue.current.author.replace(/- Topic/i, '').trim() : '';
                    
                    // Fetch related tracks by searching for the same artist or similar vibe
-                   let result = await node.rest.resolve(`ytmsearch:${cleanTitle} ${author} related`);
+                   let result = await node.rest.resolve(`ytmsearch:${author} mix audio`);
                    if (!result || result.loadType !== 'search' || result.data.length === 0) {
                       result = await node.rest.resolve(`ytmsearch:${author} top tracks audio`);
                    }
@@ -230,9 +248,21 @@ export async function enqueue(guild, member, query) {
           startLeaveTimeout(guild.id);
         }
       });
-queue.player.on('error', (err) => {
+      queue.player.on('error', (err) => {
         console.error('Lavalink Player Error:', err);
         fs.writeFileSync('music_error_log.txt', String(err));
+      });
+
+      queue.player.on('closed', (data) => {
+        // Voice channel closed or bot disconnected manually
+        if (data.code === 4014 || data.code === 4006 || data.code === 4009) {
+          queue.player = null;
+          queue.isPlaying = false;
+          queue.current = null;
+          queue.songs = [];
+          updatePlayerUI(guild.id);
+          clearNowPlayingEmbeds(guild.id);
+        }
       });
     }
     
