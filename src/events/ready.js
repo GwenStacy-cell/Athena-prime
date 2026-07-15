@@ -385,7 +385,7 @@ export default {
       console.log(chalk.blue(' Syncing slash commands globally...'));
 
       const slashData = allCommands
-        .filter(cmd => !cmd.hidden) // Skip hidden commands (e.g., enuke — prefix only)
+        .filter(cmd => !cmd.hidden && typeof cmd.executeSlash === 'function') // Skip hidden and prefix-only commands
         .map(cmd => {
           // Map options and build proper REST format
           if (cmd.slashDef && typeof cmd.slashDef.toJSON === 'function') {

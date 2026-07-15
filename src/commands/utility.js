@@ -198,26 +198,7 @@ export const commands = [
     description: 'Configures bot logs channel, quarantine voice, or settings.',
     category: 'utility',
     permissions: [PermissionFlagsBits.Administrator],
-    options: [
-      {
-        name: 'logchannel',
-        description: 'Designate the text channel for security logs',
-        type: 7, // Channel
-        required: false
-      },
-      {
-        name: 'quarantinevc',
-        description: 'Designate the Voice Channel for isolating quarantined users',
-        type: 7, // Channel
-        required: false
-      },
-      {
-        name: 'quarantinerole',
-        description: 'Designate an existing role as the Quarantine role',
-        type: 8, // Role
-        required: false
-      }
-    ],
+    options: [],
     async executePrefix(message, args) {
       if (args[0] && args[0].toLowerCase() === 'music') {
         return message.reply({ embeds: [embed.warn('Command Redirect', 'To setup the Music Player, please use the `!setupmusic` command instead!')] });
@@ -237,21 +218,6 @@ export const commands = [
 
       const result = await handleSetup(message.guild, channel, role, voiceChannel);
       await message.reply({ embeds: [result.embed] });
-    },
-    async executeSlash(interaction) {
-      const channel = interaction.options.getChannel('logchannel');
-      const voiceChannel = interaction.options.getChannel('quarantinevc');
-      const role = interaction.options.getRole('quarantinerole');
-
-      if (channel && channel.type !== ChannelType.GuildText) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Logs channel must be a text channel.`)], ephemeral: true });
-      }
-      if (voiceChannel && voiceChannel.type !== ChannelType.GuildVoice) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Quarantine VC must be a voice channel.`)], ephemeral: true });
-      }
-
-      const result = await handleSetup(interaction.guild, channel, role, voiceChannel);
-      await interaction.reply({ embeds: [result.embed] });
     }
   },
 
