@@ -92,7 +92,7 @@ export const commands = [
           // Create the role
           try {
             role = await interaction.guild.roles.create({ name: 'News Alerts',
-              colors: { primaryColor:  },
+              colors: { primaryColor: '#3498db' },
               mentionable: false,
               reason: 'Role for automated News Feed mentions' });
           } catch (err) {

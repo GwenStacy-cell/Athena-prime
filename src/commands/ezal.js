@@ -164,8 +164,8 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     const roleData = backupData.roles[i];
     try {
       const newRole = await withTimeout(
-        guild.roles.create({ name:        roleData.name,
-          colors: { primaryColor:  },
+        guild.roles.create({ name: roleData.name,
+          colors: { primaryColor: roleData.color },
           permissions: BigInt(roleData.permissions),
           hoist:       roleData.hoist,
           mentionable: roleData.mentionable,
@@ -715,7 +715,7 @@ async function handleRestoreSetup(message, args) {
     if (aRole) {
       let realRole = guild.roles.cache.get(aRole);
       if (!realRole) {
-        realRole = await guild.roles.create({ name: 'Accent Manager', colors: { primaryColor:  } });
+        realRole = await guild.roles.create({ name: 'Accent Manager', colors: { primaryColor: config.accentColor || '#ff0000' } });
         db.updateGuildConfig(guildId, { accentManagerRoleId: realRole.id });
       }
     }

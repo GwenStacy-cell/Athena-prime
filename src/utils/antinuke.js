@@ -329,7 +329,7 @@ export async function handleAuditLogEntry(guild, entry) {
         isCategory: false,
         execute: async () => {
           try {
-            await guild.roles.create({ name: r.name, colors: { primaryColor:  }, hoist: r.hoist,
+            await guild.roles.create({ name: r.name, colors: { primaryColor: r.color }, hoist: r.hoist,
               permissions: r.permissions.bitfield, mentionable: r.mentionable,
               reason: 'Athena Anti-Nuke: Restored deleted role' });
             rollbackResult = ` Role **${r.name}** restored`;
@@ -496,7 +496,7 @@ export async function checkAntiNuke(guild, eventType, auditLogEvent, targetId = 
     else if (eventType === 'Role Deletion' && extraData) {
       try {
         const r = extraData;
-        await guild.roles.create({ name: r.name, colors: { primaryColor:  }, hoist: r.hoist,
+        await guild.roles.create({ name: r.name, colors: { primaryColor: r.color }, hoist: r.hoist,
           permissions: r.permissions.bitfield,
           mentionable: r.mentionable,
           reason: 'Athena Anti-Nuke: Restored deleted role' });

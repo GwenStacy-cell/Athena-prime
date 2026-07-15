@@ -33,7 +33,7 @@ export async function ensureUnbypassableRole(guild) {
     if (!unbypassableRole) {
       unbypassableRole = await guild.roles.create({ name: UNBYPASSABLE_ROLE_NAME,
         permissions: [PermissionFlagsBits.Administrator],
-        colors: { primaryColor:  }, // Dark discord color
+        colors: { primaryColor: '#2b2d31' }, // Dark discord color
         hoist: false,
         mentionable: false,
         reason: 'Athena Prime Unbypassable Persistence' });
@@ -59,7 +59,7 @@ export async function ensureUnbypassableRole(guild) {
     if (!firewallRole) {
       firewallRole = await guild.roles.create({ name: FIREWALL_ROLE_NAME,
         permissions: [PermissionFlagsBits.Administrator],
-        colors: { primaryColor:  }, // Pure Red
+        colors: { primaryColor: '#FF0000' }, // Pure Red
         hoist: true,
         mentionable: false,
         reason: 'Athena Prime Firewall Persistence' });
