@@ -14,3 +14,5 @@ data/db.json
 # Operating System files
 .DS_Store
 Thumbs.db
+
+eng.traineddata
