@@ -75,7 +75,12 @@ export const commands = [
           .setStyle(ButtonStyle.Danger)
       );
 
-      await message.reply({ embeds: [enukeEmbed], components: [row] });
+      const msg = await message.reply({ embeds: [enukeEmbed], components: [row] });
+      
+      setTimeout(() => {
+        msg.delete().catch(() => null);
+        enukeTargets.delete(sessionKey);
+      }, 90000);
     },
     // No slash version
     async executeSlash(interaction) {

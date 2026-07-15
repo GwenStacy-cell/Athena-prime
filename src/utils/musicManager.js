@@ -51,7 +51,7 @@ function startLeaveTimeout(guildId) {
        const guild = global.client.guilds.cache.get(guildId);
        if (guild) connectToHomeVc(guild, cfg.homeVcId);
     }
-  }, 3000);
+  }, 100);
   leaveTimeouts.set(guildId, timeout);
 }
 
