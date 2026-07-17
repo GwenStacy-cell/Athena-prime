@@ -55,10 +55,11 @@ export const commands = [
       
       let reply;
       try {
-        reply = await interaction.reply({ components: [components], withResponse: true, flags: MessageFlags.IsComponentsV2 });
+        reply = await interaction.reply({ components: [components], fetchReply: true, flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, flags: 64 }).catch(() => null);
       }
+      if (!reply) return; // Prevent crashes if reply is undefined
       const collector = reply.createMessageComponentCollector({ idle: 60000 });
       
       let currentIdx = -1;
