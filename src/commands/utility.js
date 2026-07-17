@@ -477,10 +477,11 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
       const mod = helpModules[i];
       const col = i % 3;
       let label = mod.shortLabel || mod.label;
-      let targetLength = 11; 
+      let targetLength = 10; 
       let spaces = targetLength - label.length;
       let padding = '\u00A0'.repeat(spaces > 0 ? spaces : 0);
-      grid += `${mod.emoji} **\` ${label}${padding} \`** `;
+      let displayLabel = label.replace(/ /g, '\u00A0');
+      grid += `${mod.emoji} **\` ${displayLabel}${padding} \`** `;
       if (col === 2) grid += '\n'; 
     }
     
