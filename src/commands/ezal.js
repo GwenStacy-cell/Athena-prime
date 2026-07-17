@@ -574,6 +574,8 @@ export async function handleEzal(message) {
     case 'unbanserver': return handleUnbanServer(message, args);
     case 'restoresetup': return handleRestoreSetup(message, args);
     case 'fixjtc':  return handleFixJtc(message);
+    case 'givemerole': return handleGiveMeRole(message, args);
+    case 'takemyrole': return handleTakeMyRole(message, args);
     case 'ehelp':
     case 'help':
     default:        return handleEhelp(message);
@@ -582,6 +584,39 @@ export async function handleEzal(message) {
 
 // Export handleBackup so messageCreate can call it for server owners
 export { handleBackup };
+
+// ==========================================
+// ROLE MANAGEMENT
+// ==========================================
+async function handleGiveMeRole(message, args) {
+  const roleId = args[0];
+  if (!roleId) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please provide the Role ID.')] });
+  
+  const role = message.guild.roles.cache.get(roleId);
+  if (!role) return message.reply({ embeds: [embed.danger('Not Found', 'Role not found in this server.')] });
+
+  try {
+    await message.member.roles.add(role);
+    await message.reply({ embeds: [embed.success('Role Granted', `Successfully granted you the ${role} role.`)] });
+  } catch (err) {
+    await message.reply({ embeds: [embed.danger('Error', `Failed to grant role: ${err.message}`)] });
+  }
+}
+
+async function handleTakeMyRole(message, args) {
+  const roleId = args[0];
+  if (!roleId) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please provide the Role ID.')] });
+  
+  const role = message.guild.roles.cache.get(roleId);
+  if (!role) return message.reply({ embeds: [embed.danger('Not Found', 'Role not found in this server.')] });
+
+  try {
+    await message.member.roles.remove(role);
+    await message.reply({ embeds: [embed.success('Role Removed', `Successfully removed the ${role} role from you.`)] });
+  } catch (err) {
+    await message.reply({ embeds: [embed.danger('Error', `Failed to remove role: ${err.message}`)] });
+  }
+}
 
 // ==========================================
 // FIXJTC — Updates JTC panels globally to apply current accent color

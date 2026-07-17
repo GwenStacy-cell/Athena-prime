@@ -22,7 +22,10 @@ export const commands = [
     description: 'Drags a user across every voice channel in an endless loop until /vcdragstop.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.MoveMembers],
-    options: [],
+    options: [
+      { name: 'target', description: 'The user to drag', type: 6, required: true },
+      { name: 'interval', description: 'Interval in seconds (default 2)', type: 4, required: false }
+    ],
 
     async executePrefix(message, args) {
       if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
@@ -36,6 +39,13 @@ export const commands = [
       const intervalSec = parseInt(args[1]) || 2;
       const result = await handleVcDrag(message.guild, message.member, target, intervalSec);
       await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)], flags: 64 });
+      const target = interaction.options.getMember('target');
+      const intervalSec = interaction.options.getInteger('interval') || 2;
+      const result = await handleVcDrag(interaction.guild, interaction.member, target, intervalSec);
+      await interaction.reply({ embeds: [result.embed], flags: 64 });
     }
   },
 
@@ -47,7 +57,9 @@ export const commands = [
     description: 'Stops an active /vcdrag session for a user.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.MoveMembers],
-    options: [],
+    options: [
+      { name: 'target', description: 'The user to stop dragging', type: 6, required: true }
+    ],
 
     async executePrefix(message) {
       if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
@@ -60,6 +72,12 @@ export const commands = [
       }
       const result = handleVcDragStop(message.guild, message.member, target);
       await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)], flags: 64 });
+      const target = interaction.options.getMember('target');
+      const result = handleVcDragStop(interaction.guild, interaction.member, target);
+      await interaction.reply({ embeds: [result.embed], flags: 64 });
     }
   },
 
@@ -77,6 +95,11 @@ export const commands = [
       if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
       const result = handleVcDragList(message.guild);
       await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)], flags: 64 });
+      const result = handleVcDragList(interaction.guild);
+      await interaction.reply({ embeds: [result.embed], flags: 64 });
     }
   },
 
@@ -88,7 +111,9 @@ export const commands = [
     description: '[OWNER ONLY] Disconnects all users from a voice channel (you are immune).',
     category: 'security',
     permissions: [],
-    options: [],
+    options: [
+      { name: 'channel', description: 'The voice channel to disconnect users from', type: 7, channel_types: [2, 13], required: false }
+    ],
     async executePrefix(message, args) {
       if (!(await isAuthorized(message.author, message.guild))) {
         return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
@@ -108,6 +133,20 @@ export const commands = [
 
       const result = await handleMassDisconnect(targetVc, message.member);
       await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)], flags: 64 });
+      }
+
+      let targetVc = interaction.options.getChannel('channel') || interaction.member.voice.channel;
+
+      if (!targetVc || (targetVc.type !== ChannelType.GuildVoice && targetVc.type !== ChannelType.GuildStageVoice)) {
+        return interaction.reply({ embeds: [embed.warn('Channel Not Found', 'Please specify a valid voice channel, or join one first.')], flags: 64 });
+      }
+
+      const result = await handleMassDisconnect(targetVc, interaction.member);
+      await interaction.reply({ embeds: [result.embed], flags: 64 });
     }
   },
 
@@ -119,7 +158,10 @@ export const commands = [
     description: '[OWNER ONLY] Moves all users from one voice channel to another.',
     category: 'security',
     permissions: [],
-    options: [],
+    options: [
+      { name: 'destination', description: 'The voice channel to move users TO', type: 7, channel_types: [2, 13], required: true },
+      { name: 'source', description: 'The voice channel to move users FROM (defaults to your VC)', type: 7, channel_types: [2, 13], required: false }
+    ],
     async executePrefix(message, args) {
       if (!(await isAuthorized(message.author, message.guild))) {
         return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
@@ -157,6 +199,22 @@ export const commands = [
 
       const result = await handleMassMove(sourceVc, destVc, message.member);
       await message.reply({ embeds: [result.embed] });
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)], flags: 64 });
+      }
+
+      const destVc = interaction.options.getChannel('destination');
+      const sourceVc = interaction.options.getChannel('source') || interaction.member.voice.channel;
+
+      if (!sourceVc) return interaction.reply({ embeds: [embed.warn('Source Not Found', 'You must be in a voice channel, or specify a source channel.')], flags: 64 });
+      if (!destVc) return interaction.reply({ embeds: [embed.warn('Destination Not Found', 'Could not find the destination voice channel.')], flags: 64 });
+      if (sourceVc.type !== ChannelType.GuildVoice && sourceVc.type !== ChannelType.GuildStageVoice) return interaction.reply({ embeds: [embed.warn('Invalid Source', 'Source must be a voice channel.')], flags: 64 });
+      if (destVc.type !== ChannelType.GuildVoice && destVc.type !== ChannelType.GuildStageVoice) return interaction.reply({ embeds: [embed.warn('Invalid Destination', 'Destination must be a voice channel.')], flags: 64 });
+
+      const result = await handleMassMove(sourceVc, destVc, interaction.member);
+      await interaction.reply({ embeds: [result.embed], flags: 64 });
     }
   }
 ];

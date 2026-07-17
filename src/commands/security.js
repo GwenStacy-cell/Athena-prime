@@ -877,6 +877,7 @@ export const commands = [
     description: 'Manages extra owners who are immune to all moderation and can use all bot commands.',
     category: 'security',
     permissions: [],
+    slashHidden: true,
     options: [
       {
         name: 'action',
@@ -940,6 +941,7 @@ export const commands = [
     description: '[BOT OWNER ONLY] Globally block a user from using Athena Prime commands.',
     category: 'security',
     permissions: [],
+    slashHidden: true,
     options: [
       {
         name: 'action',
@@ -997,6 +999,7 @@ export const commands = [
     description: 'Manages trusted bots that are allowed to be in the server (Anti-Nuke bot guard).',
     category: 'security',
     permissions: [],
+    slashHidden: true,
     options: [
       {
         name: 'action',
