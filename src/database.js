@@ -44,6 +44,9 @@ const DEFAULT_SCHEMA = {
 class Database {
   constructor() {
     this.cache = DEFAULT_SCHEMA;
+    this.saveTimeout = null;
+    this.isSaving = false;
+    this.needsSave = false;
     this.load();
   }
 
@@ -90,17 +93,37 @@ class Database {
   }
 
   save() {
-    try {
-      const replacer = (key, value) => {
-        if (typeof value === 'bigint') return value.toString();
-        // Skip circular Discord.js references if any sneak in
-        if (value && typeof value === 'object' && value.client) return undefined;
-        return value;
-      };
-      fs.writeFileSync(DB_FILE, JSON.stringify(this.cache, replacer, 2), 'utf8');
-    } catch (error) {
-      console.error('Error saving database:', error);
-    }
+    this.needsSave = true;
+    if (this.saveTimeout) return; // Debounce already in progress
+    
+    // Debounce the save by 1 second to batch multiple rapid changes
+    this.saveTimeout = setTimeout(async () => {
+      this.saveTimeout = null;
+      if (this.isSaving) {
+        // If a save is currently writing to disk, try again next tick
+        this.save();
+        return;
+      }
+      
+      this.isSaving = true;
+      this.needsSave = false;
+      
+      try {
+        const replacer = (key, value) => {
+          if (typeof value === 'bigint') return value.toString();
+          // Skip circular Discord.js references if any sneak in
+          if (value && typeof value === 'object' && value.client) return undefined;
+          return value;
+        };
+        const dataStr = JSON.stringify(this.cache, replacer, 2);
+        await fs.promises.writeFile(DB_FILE, dataStr, 'utf8');
+      } catch (error) {
+        console.error('Error saving database:', error);
+      } finally {
+        this.isSaving = false;
+        if (this.needsSave) this.save(); // Process any changes that happened during the async write
+      }
+    }, 1000);
   }
 
   // Guild Configurations

@@ -97,7 +97,7 @@ const gifEngines = [
         wiggle: 'anime wiggle cute',
         heat: 'anime fire flame',
         cool: 'anime ice freeze',
-        date: 'anime couple date romantic'
+        date: 'anime boy and girl romantic date'
       };
       const query = tenorQueryMap[action] || `anime ${action}`;
       const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${tenorKey}&client_key=athena_prime&limit=10`).then(r => r.json());
@@ -145,21 +145,33 @@ async function fetchFromEngines(action) {
   return [];
 }
 
+const recentGifs = new Set();
 async function getCachedGif(action) {
   if (!gifCache.has(action)) gifCache.set(action, []);
   const pool = gifCache.get(action);
 
   if (pool.length === 0) {
     const newUrls = await fetchFromEngines(action);
-    if (newUrls.length > 0) pool.push(...newUrls.sort(() => Math.random() - 0.5));
+    if (newUrls.length > 0) {
+      pool.push(...newUrls.filter(u => !recentGifs.has(u)).sort(() => Math.random() - 0.5));
+    }
   }
 
   if (pool.length === 0) return null;
   const url = pool.pop();
+  
+  recentGifs.add(url);
+  if (recentGifs.size > 100) {
+    const firstItem = recentGifs.values().next().value;
+    recentGifs.delete(firstItem);
+  }
 
   if (pool.length < 5) {
     fetchFromEngines(action).then(urls => {
-      if (urls.length > 0) pool.push(...urls.sort(() => Math.random() - 0.5));
+      if (urls.length > 0) {
+        const unique = urls.filter(u => !recentGifs.has(u) && !pool.includes(u));
+        pool.push(...unique.sort(() => Math.random() - 0.5));
+      }
     }).catch(() => null);
   }
   return url;

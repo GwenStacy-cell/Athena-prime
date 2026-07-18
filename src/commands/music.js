@@ -100,9 +100,16 @@ export const commands = [
       const res = await enqueue(message.guild, message.member, query);
       
       if (res.success) {
-                const { default: db } = await import("../database.js");
+        const { default: db } = await import("../database.js");
         const cfg = db.getGuildConfig(message.guild.id);
-        message.reply(buildAddedToQueueMsg(res.trackObj, cfg.accentColor));
+        const replyPayload = buildAddedToQueueMsg(res.trackObj, cfg.accentColor);
+        if (cfg.musicChannelId && message.channel.id !== cfg.musicChannelId) {
+          const redirectEmbed = new EmbedBuilder()
+            .setColor(cfg.accentColor || '#ff0000')
+            .setDescription(`**[Control Playback Here](https://discord.com/channels/${message.guild.id}/${cfg.musicChannelId})**\nIf you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
+          replyPayload.embeds.push(redirectEmbed);
+        }
+        message.reply(replyPayload);
       } else {
         message.reply({ embeds: [embed.danger('Error', res.message)] });
       }
@@ -115,8 +122,15 @@ export const commands = [
       const res = await enqueue(interaction.guild, interaction.member, query);
       
       if (res.success) {
-                const cfg = db.getGuildConfig(interaction.guildId);
-        interaction.editReply(buildAddedToQueueMsg(res.trackObj, cfg.accentColor));
+        const cfg = db.getGuildConfig(interaction.guildId);
+        const replyPayload = buildAddedToQueueMsg(res.trackObj, cfg.accentColor);
+        if (cfg.musicChannelId && interaction.channelId !== cfg.musicChannelId) {
+          const redirectEmbed = new EmbedBuilder()
+            .setColor(cfg.accentColor || '#ff0000')
+            .setDescription(`**[Control Playback Here](https://discord.com/channels/${interaction.guild.id}/${cfg.musicChannelId})**\nIf you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
+          replyPayload.embeds.push(redirectEmbed);
+        }
+        interaction.editReply(replyPayload);
       } else {
         interaction.editReply({ embeds: [embed.danger('Error', res.message)] });
       }

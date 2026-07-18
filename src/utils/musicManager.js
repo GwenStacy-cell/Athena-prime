@@ -322,8 +322,8 @@ export async function enqueue(guild, member, query) {
           console.error('Spotify native fetch failed:', e);
        }
     } else if (!query.startsWith('http')) {
-      searchStr = `ytmsearch:${query} audio`; // Add audio to get exact tracks, avoid music videos
-      fallbackSearch = `ytsearch:${query} audio`;
+      searchStr = `ytsearch:${query}`; // Perfect YouTube search for exact matches
+      fallbackSearch = `ytmsearch:${query}`;
     }
     
     let result = await node.rest.resolve(searchStr);
@@ -680,14 +680,15 @@ export async function updatePlayerUI(guildId) {
     
     embed.setDescription(desc);
     
+    const isPaused = queue.player && queue.player.paused;
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('music_prev').setLabel('Prev').setStyle(ButtonStyle.Secondary).setEmoji('⏮️'),
-      new ButtonBuilder().setCustomId('music_pause').setLabel(queue.player && queue.player.paused ? 'Resume' : 'Pause').setStyle(ButtonStyle.Primary).setEmoji('⏯️'),
-      new ButtonBuilder().setCustomId('music_skip').setLabel('Skip').setStyle(ButtonStyle.Secondary).setEmoji('⏭️')
+      new ButtonBuilder().setCustomId('music_pause').setLabel(isPaused ? 'Resume' : 'Pause').setStyle(ButtonStyle.Primary).setEmoji(isPaused ? '<:play:1528165307150241852>' : '<:pause_:1528165159686770740>'),
+      new ButtonBuilder().setCustomId('music_skip').setLabel('Skip').setStyle(ButtonStyle.Secondary).setEmoji('<:skip:1528165408807588050>')
     );
     
     const row2 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Danger).setEmoji('⏹️')
+      new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Danger).setEmoji('<:stop:1528165509508632821>')
     );
     
     const row3 = new ActionRowBuilder().addComponents(
@@ -697,7 +698,7 @@ export async function updatePlayerUI(guildId) {
     );
 
     const row4 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_voldown').setLabel('Vol-').setStyle(ButtonStyle.Danger).setEmoji('<:volume:1524687855354380359>'),
+      new ButtonBuilder().setCustomId('music_voldown').setLabel('Vol-').setStyle(ButtonStyle.Danger).setEmoji('<:volumedown:1528156479075516526>'),
       new ButtonBuilder().setCustomId('music_volreset').setLabel(`${queue.volume}%`).setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('music_volup').setLabel('Vol+').setStyle(ButtonStyle.Success).setEmoji('<:volume:1524687855354380359>')
     );
@@ -774,11 +775,11 @@ export function buildAddedToQueueMsg(track, accentColor = '#ff0000') {
     const embed = new EmbedBuilder()
     .setColor(accentColor);
     
-  let desc = `# 🎵 [${track.title.substring(0, 100)}](${track.url})\n`;
+  let desc = `# <:music:1528159649780732046> [${track.title.substring(0, 100)}](${track.url})\n`;
   desc += `By ${track.author || 'Unknown'}\n\n`;
   
-  const platformIcon = track.url.includes('spotify') ? '<:spotify:123> Spotify' : '▶️ YouTube';
-  desc += `${platformIcon} • ${track.duration} • 🔴 <@${track.requester.id}>`;
+  const platformIcon = track.url.includes('spotify') ? '<:spotify:1528161641601044690>' : '<:ytlogo:1528154904944709722>';
+  desc += `${platformIcon} • ${track.duration} • <:author:1524687847662161971> <@${track.requester.id}>`;
   
   embed.setDescription(desc);
   if (track.artworkUrl) {
