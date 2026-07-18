@@ -322,8 +322,8 @@ export async function enqueue(guild, member, query) {
           console.error('Spotify native fetch failed:', e);
        }
     } else if (!query.startsWith('http')) {
-      searchStr = `ytsearch:${query}`; // Perfect YouTube search for exact matches
-      fallbackSearch = `ytmsearch:${query}`;
+      searchStr = `ytmsearch:${query}`; // Perfect YouTube Music search for studio tracks
+      fallbackSearch = `ytsearch:${query}`;
     }
     
     let result = await node.rest.resolve(searchStr);
@@ -521,14 +521,14 @@ async function generateNowPlayingImage(track, currentMs, totalMs, hexColor) {
     } catch (e) { console.error('Failed to load artwork for canvas', e); }
   }
 
-  ctx.fillStyle = hexColor;
-  ctx.font = 'bold 36px Inter, sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px sans-serif';
   let titleStr = track.title || 'Unknown Title';
   if (titleStr.length > 25) titleStr = titleStr.substring(0, 25) + '...';
   ctx.fillText(titleStr, 30, 55);
 
-  ctx.fillStyle = '#80848e';
-  ctx.font = '24px Inter, sans-serif';
+  ctx.fillStyle = '#b9bbbe';
+  ctx.font = '24px sans-serif';
   let authorStr = `By ${track.author || 'Unknown'}`;
   if (authorStr.length > 35) authorStr = authorStr.substring(0, 35) + '...';
   ctx.fillText(authorStr, 30, 100);
@@ -566,8 +566,8 @@ async function generateNowPlayingImage(track, currentMs, totalMs, hexColor) {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
   
-  ctx.fillStyle = hexColor;
-  ctx.font = 'bold 16px Inter, sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 16px sans-serif';
   ctx.fillText(formatTime(currentMs), barX, barY + 30);
   
   const totalStr = formatTime(totalMs);
@@ -601,16 +601,26 @@ async function updateNowPlayingEmbeds(guildId) {
        const vc = guild.channels.cache.get(vcId);
        if (vc && vc.isTextBased()) {
          const nowPlayingEmbed = buildAddedToQueueMsg(queue.current, cfg.accentColor).embeds[0];
+         nowPlayingEmbed.data.title = "🎶 Now Playing"; // Differentiate from "Added to Queue"
+         
+         const embedsToSend = [nowPlayingEmbed];
+         if (cfg.musicChannelId && vc.id !== cfg.musicChannelId) {
+            const controlEmbed = new EmbedBuilder()
+              .setColor(cfg.accentColor || '#ff0000')
+              .setDescription(`**[Control Playback Here](https://discord.com/channels/${guildId}/${cfg.musicChannelId})**\nIf you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
+            embedsToSend.push(controlEmbed);
+         }
+
          if (queue.nowPlayingMsgVcId) {
             try {
               const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
-              if (msg) await msg.edit({ embeds: [nowPlayingEmbed], files: [attachment] });
+              if (msg) await msg.edit({ embeds: embedsToSend, files: [attachment] });
             } catch (e) {
-              const newMsg = await vc.send({ embeds: [nowPlayingEmbed], files: [attachment] }).catch(()=>null);
+              const newMsg = await vc.send({ embeds: embedsToSend, files: [attachment] }).catch(()=>null);
               if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
             }
          } else {
-            const newMsg = await vc.send({ embeds: [nowPlayingEmbed], files: [attachment] }).catch(()=>null);
+            const newMsg = await vc.send({ embeds: embedsToSend, files: [attachment] }).catch(()=>null);
             if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
          }
        }
