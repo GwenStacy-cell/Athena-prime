@@ -106,7 +106,7 @@ export const commands = [
         if (cfg.musicChannelId && message.channel.id !== cfg.musicChannelId) {
           const redirectEmbed = new EmbedBuilder()
             .setColor(cfg.accentColor || '#ff0000')
-            .setDescription(`**[Control Playback Here](https://discord.com/channels/${message.guild.id}/${cfg.musicChannelId})**\nIf you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
+            .setDescription(`-# **[Control Playback Here](https://discord.com/channels/${message.guild.id}/${cfg.musicChannelId})**\n-# If you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
           replyPayload.embeds.push(redirectEmbed);
         }
         message.reply(replyPayload);
@@ -127,7 +127,7 @@ export const commands = [
         if (cfg.musicChannelId && interaction.channelId !== cfg.musicChannelId) {
           const redirectEmbed = new EmbedBuilder()
             .setColor(cfg.accentColor || '#ff0000')
-            .setDescription(`**[Control Playback Here](https://discord.com/channels/${interaction.guild.id}/${cfg.musicChannelId})**\nIf you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
+            .setDescription(`-# **[Control Playback Here](https://discord.com/channels/${interaction.guild.id}/${cfg.musicChannelId})**\n-# If you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
           replyPayload.embeds.push(redirectEmbed);
         }
         interaction.editReply(replyPayload);

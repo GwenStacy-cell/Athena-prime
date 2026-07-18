@@ -607,7 +607,7 @@ async function updateNowPlayingEmbeds(guildId) {
          if (cfg.musicChannelId && vc.id !== cfg.musicChannelId) {
             const controlEmbed = new EmbedBuilder()
               .setColor(cfg.accentColor || '#ff0000')
-              .setDescription(`**[Control Playback Here](https://discord.com/channels/${guildId}/${cfg.musicChannelId})**\nIf you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
+              .setDescription(`-# **[Control Playback Here](https://discord.com/channels/${guildId}/${cfg.musicChannelId})**\n-# If you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
             embedsToSend.push(controlEmbed);
          }
 
