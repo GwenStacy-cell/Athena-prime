@@ -171,16 +171,16 @@ async function setupMusicChannel(guild, commandChannel, imageUrl, interaction = 
     playerEmbed.setDescription(desc);
     
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_play').setLabel('Play').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId('music_pause').setLabel('Pause').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('music_play').setLabel('Play').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId('music_pause').setLabel('Pause').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('music_skip').setLabel('Skip').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('music_queue').setLabel('Queue').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Danger)
+      new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Secondary)
     );
     
     const row2 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('music_repeat').setLabel('Repeat: OFF').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId('music_lyrics').setLabel('Lyrics').setStyle(ButtonStyle.Primary)
+      new ButtonBuilder().setCustomId('music_lyrics').setLabel('Lyrics').setStyle(ButtonStyle.Secondary)
     );
     
     const message = await channel.send({ embeds: [playerEmbed], components: [row, row2] });

@@ -683,24 +683,24 @@ export async function updatePlayerUI(guildId) {
     const isPaused = queue.player && queue.player.paused;
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('music_prev').setLabel('Prev').setStyle(ButtonStyle.Secondary).setEmoji('⏮️'),
-      new ButtonBuilder().setCustomId('music_pause').setLabel(isPaused ? 'Resume' : 'Pause').setStyle(ButtonStyle.Primary).setEmoji(isPaused ? '<:play:1528165307150241852>' : '<:pause_:1528165159686770740>'),
+      new ButtonBuilder().setCustomId('music_pause').setLabel(isPaused ? 'Resume' : 'Pause').setStyle(ButtonStyle.Secondary).setEmoji(isPaused ? '<:play:1528165307150241852>' : '<:pause_:1528165159686770740>'),
       new ButtonBuilder().setCustomId('music_skip').setLabel('Skip').setStyle(ButtonStyle.Secondary).setEmoji('<:skip:1528165408807588050>')
     );
     
     const row2 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Danger).setEmoji('<:stop:1528165509508632821>')
+      new ButtonBuilder().setCustomId('music_stop').setLabel('Stop').setStyle(ButtonStyle.Secondary).setEmoji('<:stop:1528165509508632821>')
     );
     
     const row3 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('music_like').setLabel('Like').setStyle(ButtonStyle.Secondary).setEmoji('🤍'),
-      new ButtonBuilder().setCustomId('music_autoplay').setLabel('Autoplay').setStyle(queue.autoplay ? ButtonStyle.Success : ButtonStyle.Secondary).setEmoji('<:autoplay:1524695881339764767>'),
-      new ButtonBuilder().setCustomId('music_repeat').setLabel('Replay').setStyle(queue.repeatTrack ? ButtonStyle.Success : ButtonStyle.Secondary).setEmoji('🔁')
+      new ButtonBuilder().setCustomId('music_autoplay').setLabel(queue.autoplay ? 'Autoplay (ON)' : 'Autoplay').setStyle(ButtonStyle.Secondary).setEmoji('<:autoplay:1524695881339764767>'),
+      new ButtonBuilder().setCustomId('music_repeat').setLabel(queue.repeatTrack ? 'Replay (ON)' : 'Replay').setStyle(ButtonStyle.Secondary).setEmoji('🔁')
     );
 
     const row4 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_voldown').setLabel('Vol-').setStyle(ButtonStyle.Danger).setEmoji('<:volumedown:1528156479075516526>'),
+      new ButtonBuilder().setCustomId('music_voldown').setLabel('Vol-').setStyle(ButtonStyle.Secondary).setEmoji('<:volumedown:1528156479075516526>'),
       new ButtonBuilder().setCustomId('music_volreset').setLabel(`${queue.volume}%`).setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId('music_volup').setLabel('Vol+').setStyle(ButtonStyle.Success).setEmoji('<:volume:1524687855354380359>')
+      new ButtonBuilder().setCustomId('music_volup').setLabel('Vol+').setStyle(ButtonStyle.Secondary).setEmoji('<:volume:1524687855354380359>')
     );
     
     await message.edit({ embeds: [embed], components: [row1, row2, row3, row4], files: [] });
