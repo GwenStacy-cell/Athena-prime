@@ -25,7 +25,7 @@ export const commands = [
       
       if (args[0]) {
         const parsedId = args[0].replace(/<#|>/g, '');
-        const found = message.guild.channels.cache.get(parsedId);
+        const found = await message.guild.channels.fetch(parsedId).catch(() => null);
         if (found) targetChannel = found;
         else return message.reply({ embeds: [embed.error('Error', 'Invalid channel provided.')] });
       } else if (message.member.voice.channel) {
@@ -81,7 +81,7 @@ export const commands = [
       
       if (args[0]) {
         const parsedId = args[0].replace(/<#|>/g, '');
-        const found = message.guild.channels.cache.get(parsedId);
+        const found = await message.guild.channels.fetch(parsedId).catch(() => null);
         if (found) targetChannel = found;
         else return message.reply({ embeds: [embed.error('Error', 'Invalid channel provided.')] });
       } else if (message.member.voice.channel) {
