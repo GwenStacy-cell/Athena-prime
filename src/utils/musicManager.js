@@ -326,10 +326,10 @@ export async function enqueue(guild, member, query) {
       const spotifyQuery = await searchSpotifyTrack(query);
       if (spotifyQuery) {
         searchStr = `spsearch:${spotifyQuery}`;
-        fallbackSearch = `ytsearch:${spotifyQuery} audio`;
+        fallbackSearch = `ytmsearch:${spotifyQuery} audio`;
       } else {
         searchStr = `spsearch:${query}`; // Try node's native LavaSrc plugin first
-        fallbackSearch = `ytsearch:${query} audio`; // Fallback to YouTube with audio suffix
+        fallbackSearch = `ytmsearch:${query}`; // Fallback to YouTube Music
       }
     }
     
@@ -359,7 +359,7 @@ export async function enqueue(guild, member, query) {
 
     if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
       if (searchStr.startsWith('spsearch:')) {
-         searchStr = `ytsearch:${query}`;
+         searchStr = `ytmsearch:${query}`;
          result = await node.rest.resolve(searchStr);
       }
     }
@@ -465,7 +465,7 @@ async function playResource(guildId, song) {
                const node = shoukaku.options.nodeResolver(shoukaku.nodes);
                if (node) {
                    const cleanAuthor = song.author ? song.author.replace(/- Topic/i, '').trim() : '';
-                   const searchStr = `ytsearch:${song.title} ${cleanAuthor} audio`;
+                   const searchStr = `ytmsearch:${song.title} ${cleanAuthor}`;
                    const ytRes = await node.rest.resolve(searchStr);
                    if (ytRes && ytRes.data && ytRes.data.length > 0) {
                        song.encoded = ytRes.data[0].encoded;
