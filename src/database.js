@@ -1029,6 +1029,44 @@ class Database {
     }
     return false;
   }
+
+  // --------------------------------------------------------------------------
+  // VC Protection System (Mute/Deafen)
+  // --------------------------------------------------------------------------
+  getVcProtectedUsers(guildId) {
+    if (!this.cache.vcProtection) this.cache.vcProtection = {};
+    if (!this.cache.vcProtection[guildId]) {
+      this.cache.vcProtection[guildId] = [];
+      this.save();
+    }
+    return this.cache.vcProtection[guildId];
+  }
+
+  isVcProtected(guildId, userId) {
+    const protectedUsers = this.getVcProtectedUsers(guildId);
+    return protectedUsers.includes(userId);
+  }
+
+  addVcProtectedUser(guildId, userId) {
+    const protectedUsers = this.getVcProtectedUsers(guildId);
+    if (!protectedUsers.includes(userId)) {
+      protectedUsers.push(userId);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  removeVcProtectedUser(guildId, userId) {
+    let protectedUsers = this.getVcProtectedUsers(guildId);
+    const initialLen = protectedUsers.length;
+    this.cache.vcProtection[guildId] = protectedUsers.filter(id => id !== userId);
+    if (this.cache.vcProtection[guildId].length < initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
   // Global Bot Blacklist (Flags)
   getBotBlacklist() {
     return this.cache.botBlacklist || [];

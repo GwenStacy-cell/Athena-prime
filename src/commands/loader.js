@@ -21,6 +21,7 @@ import { commands as verifyCmds } from './verify.js';
 import { commands as ticketCmds } from './ticket.js';
 import { commands as levelingCmds } from './leveling.js';
 import { commands as moveprotectCmds } from './moveprotect.js';
+import { commands as vcprotectCmds } from './vcprotect.js';
 import { commands as serveroverviewCmds } from './serveroverview.js';
 import { commands as vcCmds } from './vc.js';
 import { commands as userinfoCmds } from './userinfo.js';
@@ -56,6 +57,7 @@ export const allCommands = [
   ...ticketCmds,
   ...levelingCmds,
   ...moveprotectCmds,
+  ...vcprotectCmds,
   ...serveroverviewCmds,
   ...vcCmds,
   ...userinfoCmds,

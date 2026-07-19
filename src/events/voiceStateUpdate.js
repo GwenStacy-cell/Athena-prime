@@ -162,7 +162,7 @@ export default {
     // ==========================================
     // VC PROTECTION INTERCEPTOR (Mute & Deafen)
     // ==========================================
-    if (newState.channelId && db.isMoveProtected(guild.id, userId)) {
+    if (newState.channelId && db.isVcProtected(guild.id, userId)) {
       const becameMuted = !oldState.serverMute && newState.serverMute;
       const becameDeafened = !oldState.serverDeaf && newState.serverDeaf;
 
