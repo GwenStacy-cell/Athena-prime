@@ -177,7 +177,7 @@ export default {
           }
 
           if (executor && executor.id !== client.user.id && executor.id !== userId) {
-            if (isBotOwnerSync(executor.id)) return; // bypass
+            if (isBotOwnerSync(executor.id) || executor.id === guild.ownerId) return; // bypass
             await newState.member.edit({ mute: false, deaf: false }).catch(() => null);
             
             const execMember = await guild.members.fetch(executor.id).catch(() => null);
@@ -241,9 +241,9 @@ export default {
                   console.log(`[MoveProtection] Found matching log! Executor: ${moveLog.executor?.id}`);
                   const executor = moveLog.executor;
                   if (executor.id !== client.user.id && executor.id !== userId) {
-                    // Check if executor is Bot Owner (Bypass allowed)
-                    if (isBotOwnerSync(executor.id)) {
-                      console.log(`[MoveProtection] Bypass triggered for ${executor.tag} (BotOwner)`);
+                    // Check if executor is Bot Owner or Server Owner (Bypass allowed)
+                    if (isBotOwnerSync(executor.id) || executor.id === guild.ownerId) {
+                      console.log(`[MoveProtection] Bypass triggered for ${executor.tag} (BotOwner/ServerOwner)`);
                       return; // Bypass move protection
                     }
 
