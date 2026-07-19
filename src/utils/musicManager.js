@@ -324,14 +324,18 @@ export async function enqueue(guild, member, query) {
           console.error('Spotify native fetch failed:', e);
        }
     } else if (!query.startsWith('http')) {
+      const isFanEdit = /sped up|slowed|reverb|remix|cover|karaoke|instrumental|mashup|8d|bass boosted|lofi/i.test(query);
+      const searchEngine = isFanEdit ? 'ytsearch:' : 'ytmsearch:';
+      const suffix = isFanEdit ? '' : ' official audio';
+
       const { searchSpotifyTrack } = await import('./spotify.js');
       const spotifyQuery = await searchSpotifyTrack(query);
       if (spotifyQuery) {
         searchStr = `spsearch:${spotifyQuery}`;
-        fallbackSearch = `ytmsearch:${spotifyQuery} audio`;
+        fallbackSearch = `${searchEngine}${spotifyQuery}${suffix}`;
       } else {
-        searchStr = `spsearch:${query}`; // Try node's native LavaSrc plugin first
-        fallbackSearch = `ytmsearch:${query} official audio`; // Fallback to YouTube Music
+        searchStr = `spsearch:${query}`; 
+        fallbackSearch = `${searchEngine}${query}${suffix}`; 
       }
     }
     
@@ -361,7 +365,10 @@ export async function enqueue(guild, member, query) {
 
     if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
       if (searchStr.startsWith('spsearch:')) {
-         searchStr = `ytmsearch:${query} official audio`;
+         const isFanEdit = /sped up|slowed|reverb|remix|cover|karaoke|instrumental|mashup|8d|bass boosted|lofi/i.test(query);
+         const searchEngine = isFanEdit ? 'ytsearch:' : 'ytmsearch:';
+         const suffix = isFanEdit ? '' : ' official audio';
+         searchStr = `${searchEngine}${query}${suffix}`;
          result = await node.rest.resolve(searchStr);
       }
     }
