@@ -49,21 +49,9 @@ global.client = client; // Make client globally accessible
 import { Shoukaku, Connectors } from 'shoukaku';
 const Nodes = [
   {
-    name: 'AjieDev (EU)',
-    url: 'lava-v4.ajieblogs.eu.org:443',
-    auth: 'https://dsc.gg/ajidevserver',
-    secure: true
-  },
-  {
-    name: 'Jirayu v4',
-    url: 'lavalink.jirayu.net:13592',
-    auth: 'youshallnotpass',
-    secure: false
-  },
-  {
-    name: 'NyxBot SG1',
-    url: 'sg1-nodelink.nyxbot.app:3000',
-    auth: 'nyxbot.app/support',
+    name: 'Athena AWS Premium',
+    url: '13.220.49.104:2333',
+    auth: 'Prince12',
     secure: false
   }
 ];
