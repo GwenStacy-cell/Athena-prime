@@ -471,100 +471,13 @@ function formatDuration(ms) {
   const secs = totalSecs % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
-
-
-async function generateNowPlayingImage(track, currentMs, totalMs, hexColor) {
-  // createCanvas and loadImage are imported globally (wait, loadImage is not. Let's use dynamic import)
-  const { createCanvas, loadImage } = await import('canvas');
-  const canvas = createCanvas(800, 250);
-  const ctx = canvas.getContext('2d');
+function createTextProgressBar(currentMs, totalMs) {
+  const size = 15;
+  const progress = totalMs === 0 ? 0 : Math.min(currentMs / totalMs, 1);
+  const activeCount = Math.round(progress * size);
+  const inactiveCount = size - activeCount;
   
-  ctx.clearRect(0, 0, 800, 250);
-
-  const drawCard = (x, y, w, h, radius, color) => {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + w - radius, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
-    ctx.lineTo(x + w, y + h - radius);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
-    ctx.lineTo(x + radius, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
-    ctx.fill();
-  };
-  
-  const cardColor = '#111214'; 
-  drawCard(0, 0, 520, 130, 20, cardColor);
-  drawCard(0, 150, 520, 100, 20, cardColor);
-  drawCard(540, 0, 260, 250, 20, cardColor);
-
-  if (track.artworkUrl) {
-    try {
-      const img = await loadImage(track.artworkUrl);
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(540 + 20, 0);
-      ctx.lineTo(540 + 260 - 20, 0);
-      ctx.quadraticCurveTo(540 + 260, 0, 540 + 260, 20);
-      ctx.lineTo(540 + 260, 250 - 20);
-      ctx.quadraticCurveTo(540 + 260, 250, 540 + 260 - 20, 250);
-      ctx.lineTo(540 + 20, 250);
-      ctx.quadraticCurveTo(540, 250, 540, 250 - 20);
-      ctx.lineTo(540, 20);
-      ctx.quadraticCurveTo(540, 0, 540 + 20, 0);
-      ctx.clip();
-      
-      const scale = Math.max(260 / img.width, 250 / img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
-      const x = 540 + (260 - w) / 2;
-      const y = (250 - h) / 2;
-      ctx.drawImage(img, x, y, w, h);
-      ctx.restore();
-    } catch (e) { console.error('Failed to load artwork for canvas', e); }
-  }
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 36px sans-serif';
-  let titleStr = track.title || 'Unknown Title';
-  if (titleStr.length > 25) titleStr = titleStr.substring(0, 25) + '...';
-  ctx.fillText(titleStr, 30, 55);
-
-  ctx.fillStyle = '#b9bbbe';
-  ctx.font = '24px sans-serif';
-  let authorStr = `By ${track.author || 'Unknown'}`;
-  if (authorStr.length > 35) authorStr = authorStr.substring(0, 35) + '...';
-  ctx.fillText(authorStr, 30, 100);
-
-  const barWidth = 440;
-  const barX = 40;
-  const barY = 200;
-  const trackHeight = 10;
-  const knobRadius = 12;
-  
-  ctx.fillStyle = '#3f3f46';
-  ctx.beginPath();
-  ctx.roundRect(barX, barY - trackHeight/2, barWidth, trackHeight, trackHeight/2);
-  ctx.fill();
-  
-  const progress = totalMs > 0 ? Math.min(Math.max(currentMs / totalMs, 0), 1) : 0;
-  const fillWidth = barWidth * progress;
-  
-  if (fillWidth > 0) {
-    ctx.fillStyle = hexColor;
-    ctx.beginPath();
-    ctx.roundRect(barX, barY - trackHeight/2, fillWidth, trackHeight, trackHeight/2);
-    ctx.fill();
-  }
-  
-  ctx.fillStyle = hexColor;
-  ctx.beginPath();
-  ctx.arc(barX + fillWidth, barY, knobRadius, 0, Math.PI * 2);
-  ctx.fill();
+  const bar = '▬'.repeat(activeCount) + '🔘' + '▬'.repeat(inactiveCount);
   
   const formatTime = (ms) => {
     const totalSec = Math.floor(ms / 1000);
@@ -573,20 +486,8 @@ async function generateNowPlayingImage(track, currentMs, totalMs, hexColor) {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
   
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 16px sans-serif';
-  ctx.fillText(formatTime(currentMs), barX, barY + 30);
-  
-  const totalStr = formatTime(totalMs);
-  const totalW = ctx.measureText(totalStr).width;
-  ctx.fillText(totalStr, barX + barWidth - totalW, barY + 30);
-
-  return canvas.toBuffer('image/png');
+  return `\`${formatTime(currentMs)}\` ${bar} \`${formatTime(totalMs)}\``;
 }
-
-
-
-
 
 async function updateNowPlayingEmbeds(guildId) {
   const queue = getQueue(guildId);
@@ -598,9 +499,6 @@ async function updateNowPlayingEmbeds(guildId) {
   const [mins, secs] = queue.current.duration.split(':').map(Number);
   const totalMs = queue.current.duration === 'Unknown' ? 0 : (mins * 60 + secs) * 1000;
   
-  const imgBuffer = await generateNowPlayingImage(queue.current, queue.player?.position || 0, totalMs, cfg.accentColor || '#ff0000');
-  const attachment = new AttachmentBuilder(imgBuffer, { name: 'progress.png' });
-  
   if (queue.player) {
      try {
        const guild = global.client.guilds.cache.get(guildId);
@@ -609,7 +507,9 @@ async function updateNowPlayingEmbeds(guildId) {
        if (vc && vc.isTextBased()) {
          const nowPlayingEmbed = buildAddedToQueueMsg(queue.current, cfg.accentColor).embeds[0];
          nowPlayingEmbed.data.title = "🎶 Now Playing"; // Differentiate from "Added to Queue"
-         nowPlayingEmbed.setImage('attachment://progress.png'); // FIX THE GLITCH
+         
+         const textBar = createTextProgressBar(queue.player?.position || 0, totalMs);
+         nowPlayingEmbed.setDescription(nowPlayingEmbed.data.description + `\n\n${textBar}`);
          
          const embedsToSend = [nowPlayingEmbed];
          if (cfg.musicChannelId && vc.id !== cfg.musicChannelId) {
@@ -622,13 +522,13 @@ async function updateNowPlayingEmbeds(guildId) {
          if (queue.nowPlayingMsgVcId) {
             try {
               const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
-              if (msg) await msg.edit({ embeds: embedsToSend, files: [attachment] });
+              if (msg) await msg.edit({ embeds: embedsToSend });
             } catch (e) {
-              const newMsg = await vc.send({ embeds: embedsToSend, files: [attachment] }).catch(()=>null);
+              const newMsg = await vc.send({ embeds: embedsToSend }).catch(()=>null);
               if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
             }
          } else {
-            const newMsg = await vc.send({ embeds: embedsToSend, files: [attachment] }).catch(()=>null);
+            const newMsg = await vc.send({ embeds: embedsToSend }).catch(()=>null);
             if (newMsg) queue.nowPlayingMsgVcId = newMsg.id;
          }
        }
