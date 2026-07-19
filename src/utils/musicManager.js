@@ -328,8 +328,8 @@ export async function enqueue(guild, member, query) {
         searchStr = spotifyQuery;
         fallbackSearch = `ytsearch:${query}`;
       } else {
-        searchStr = `ytsearch:${query}`; // Default to standard YouTube search for accuracy
-        fallbackSearch = `ytmsearch:${query}`;
+        searchStr = `spsearch:${query}`; // Try node's native LavaSrc plugin first
+        fallbackSearch = `ytmsearch:${query}`; // Fallback to YouTube Music
       }
     }
     
