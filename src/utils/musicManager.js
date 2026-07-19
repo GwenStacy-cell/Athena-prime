@@ -278,21 +278,54 @@ export async function enqueue(guild, member, query) {
     
     let searchStr = query;
     let fallbackSearch = null;
-    
-    // Native Spotify Integration
-    if (query.includes('spotify.com/')) {
+    let spotifyData = null;
+    let result = null;
+
+    if (!query.startsWith('http')) {
+      const isFanEdit = /sped up|slowed|reverb|remix|cover|karaoke|instrumental|mashup|8d|bass boosted|lofi/i.test(query);
+      const searchEngine = isFanEdit ? 'ytsearch:' : 'ytmsearch:';
+      const suffix = isFanEdit ? '' : ' official audio';
+
+      const { searchSpotifyTrack } = await import('./spotify.js');
+      const spotifyQuery = await searchSpotifyTrack(query);
+      if (spotifyQuery) {
+        searchStr = `spsearch:${spotifyQuery}`;
+        fallbackSearch = `${searchEngine}${spotifyQuery}${suffix}`;
+      } else {
+        searchStr = `spsearch:${query}`; 
+        fallbackSearch = `${searchEngine}${query}${suffix}`; 
+      }
+    }
+
+    // Try ALL connected nodes for native resolution first (especially important for Spotify URLs to use LavaSrc natively)
+    if (searchStr.startsWith('spsearch:') || searchStr.includes('spotify.com/')) {
+       for (const n of global.client.shoukaku.nodes.values()) {
+          try {
+             let res = await n.rest.resolve(searchStr);
+             if (res && res.loadType !== 'empty' && res.loadType !== 'NO_MATCHES' && res.loadType !== 'error') {
+                 result = res;
+                 break; // Found a node that natively supports this!
+             }
+          } catch(e) {}
+       }
+    } else {
+       result = await node.rest.resolve(searchStr);
+    }
+
+    // If native resolution failed and it's a Spotify URL, use our manual API fetcher as fallback
+    if ((!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) && query.includes('spotify.com/')) {
        try {
-          const spotifyData = await fetchSpotifyData(query);
+          const { fetchSpotifyData } = await import('./spotify.js');
+          spotifyData = await fetchSpotifyData(query);
           if (spotifyData) {
              if (spotifyData.type === 'track') {
                 searchStr = spotifyData.queries[0];
-                fallbackSearch = searchStr;
+                result = await node.rest.resolve(searchStr);
              } else if (spotifyData.type === 'playlist') {
-                const firstQuery = spotifyData.queries.shift();
-                searchStr = firstQuery;
-                fallbackSearch = firstQuery;
+                searchStr = spotifyData.queries.shift();
+                result = await node.rest.resolve(searchStr);
                 
-                // Background async loading for the rest to avoid interaction timeout
+                // Background async loading for the rest of the playlist
                 setTimeout(async () => {
                    let count = 0;
                    for (const q of spotifyData.queries) {
@@ -310,7 +343,6 @@ export async function enqueue(guild, member, query) {
                           });
                           count++;
                        }
-                       // Avoid Lavalink ratelimits when resolving hundreds of tracks
                        await new Promise(r => setTimeout(r, 200));
                    }
                    if (count > 0 && queue.textChannel) {
@@ -321,42 +353,11 @@ export async function enqueue(guild, member, query) {
              }
           }
        } catch (e) {
-          console.error('Spotify native fetch failed:', e);
+          console.error('Spotify fallback fetch failed:', e);
        }
-    } else if (!query.startsWith('http')) {
-      const isFanEdit = /sped up|slowed|reverb|remix|cover|karaoke|instrumental|mashup|8d|bass boosted|lofi/i.test(query);
-      const searchEngine = isFanEdit ? 'ytsearch:' : 'ytmsearch:';
-      const suffix = isFanEdit ? '' : ' official audio';
+    }
 
-      const { searchSpotifyTrack } = await import('./spotify.js');
-      const spotifyQuery = await searchSpotifyTrack(query);
-      if (spotifyQuery) {
-        searchStr = `spsearch:${spotifyQuery}`;
-        fallbackSearch = `${searchEngine}${spotifyQuery}${suffix}`;
-      } else {
-        searchStr = `spsearch:${query}`; 
-        fallbackSearch = `${searchEngine}${query}${suffix}`; 
-      }
-    }
-    
-    let result = null;
-    
-    // If it's a Spotify search or Spotify URL, try ALL connected nodes because some might not have the LavaSrc plugin installed
-    if (searchStr.startsWith('spsearch:') || searchStr.includes('spotify.com/')) {
-       for (const n of global.client.shoukaku.nodes.values()) {
-          try {
-             let res = await n.rest.resolve(searchStr);
-             if (res && res.loadType !== 'empty' && res.loadType !== 'NO_MATCHES' && res.loadType !== 'error') {
-                 result = res;
-                 break; // Found a node that supports LavaSrc and resolved the track/URL!
-             }
-          } catch(e) {}
-       }
-    } else {
-       result = await node.rest.resolve(searchStr);
-    }
-    
-    // Fallback if not found
+    // Fallback if not found natively or via manual Spotify fetch
     if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
       if (fallbackSearch) {
          result = await node.rest.resolve(fallbackSearch);

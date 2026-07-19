@@ -38,7 +38,7 @@ async function getSpotifyToken() {
 
 function getSearchEngine(name) {
   const isFanEdit = /sped up|slowed|reverb|remix|cover|karaoke|instrumental|mashup|8d|bass boosted|lofi/i.test(name);
-  return isFanEdit ? 'ytsearch:' : 'ytmsearch:';
+  return { engine: isFanEdit ? 'ytsearch:' : 'ytmsearch:', isFanEdit };
 }
 
 export async function fetchSpotifyData(url) {
@@ -53,9 +53,10 @@ export async function fetchSpotifyData(url) {
       });
       if (!res.ok) return null;
       const data = await res.json();
+      const { engine, isFanEdit } = getSearchEngine(data.name);
       return {
         type: 'track',
-        queries: [`${getSearchEngine(data.name)}${data.name} ${data.artists[0].name}`]
+        queries: [`${engine}${data.name}${isFanEdit ? '' : ' ' + data.artists[0].name}`]
       };
     } 
     else if (url.includes('/album/')) {
@@ -66,7 +67,10 @@ export async function fetchSpotifyData(url) {
       if (!res.ok) return null;
       const data = await res.json();
       
-      const queries = data.tracks.items.map(track => `${getSearchEngine(track.name)}${track.name} ${track.artists[0].name}`);
+      const queries = data.tracks.items.map(track => {
+         const { engine, isFanEdit } = getSearchEngine(track.name);
+         return `${engine}${track.name}${isFanEdit ? '' : ' ' + track.artists[0].name}`;
+      });
       return { type: 'playlist', title: data.name, queries };
     }
     else if (url.includes('/playlist/')) {
@@ -80,7 +84,8 @@ export async function fetchSpotifyData(url) {
       const queries = [];
       for (const item of data.tracks.items) {
         if (item.track && item.track.name) {
-           queries.push(`${getSearchEngine(item.track.name)}${item.track.name} ${item.track.artists[0].name}`);
+           const { engine, isFanEdit } = getSearchEngine(item.track.name);
+           queries.push(`${engine}${item.track.name}${isFanEdit ? '' : ' ' + item.track.artists[0].name}`);
         }
       }
       return { type: 'playlist', title: data.name, queries };
