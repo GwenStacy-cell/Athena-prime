@@ -105,7 +105,7 @@ export const commands = [
         const result = await spamUserDm(message.client, targetUser.id, text, count, userId);
         // Button goes in the channel where command was run
         const row = buildSpamMoreRow(userId, null, targetUser.id, text, 'user_dm');
-        await message.channel.send({
+        await message.author.send({
           embeds: [result.success
             ? embed.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM with your message **${count}x**.`)
             : embed.warn('DM Spam Failed', result.message)
@@ -116,8 +116,8 @@ export const commands = [
         // Spam current channel via webhook
         await executeChannelSpam(message.channel, text, count);
         const row = buildSpamMoreRow(userId, message.channel.id, null, text, 'channel');
-        await message.channel.send({
-          embeds: [embed.success('Channel Spam Deployed ', `Message sent **${count}x** anonymously in this channel.`)],
+        await message.author.send({
+          embeds: [embed.success('Channel Spam Deployed ', `Message sent **${count}x** anonymously in <#${message.channel.id}>.`)],
           components: [row]
         }).catch(() => null);
       }
