@@ -4,6 +4,7 @@ import embed from '../embed.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 import { isUserInDragSessionDummy } from './vcdrag.js';
 
+export const commands = [
   {
     name: 'vcprotect',
     description: 'Manage mute/deafen protection for users (Server Owner & Bot Owner only).',
