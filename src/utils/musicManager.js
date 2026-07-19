@@ -281,6 +281,18 @@ export async function enqueue(guild, member, query) {
     let spotifyData = null;
     let result = null;
 
+    const resolveMultiNode = async (searchQuery) => {
+       for (const n of global.client.shoukaku.nodes.values()) {
+          try {
+             const res = await n.rest.resolve(searchQuery);
+             if (res && res.loadType !== 'empty' && res.loadType !== 'NO_MATCHES' && res.loadType !== 'error') {
+                 return res;
+             }
+          } catch(e) {}
+       }
+       return null;
+    };
+
     if (!query.startsWith('http')) {
       const isFanEdit = /sped up|slowed|reverb|remix|cover|karaoke|instrumental|mashup|8d|bass boosted|lofi/i.test(query);
       const searchEngine = isFanEdit ? 'ytsearch:' : 'ytmsearch:';
@@ -297,21 +309,10 @@ export async function enqueue(guild, member, query) {
       }
     }
 
-    // Try ALL connected nodes for native resolution first (only for spsearch text queries)
-    if (searchStr.startsWith('spsearch:')) {
-       for (const n of global.client.shoukaku.nodes.values()) {
-          try {
-             let res = await n.rest.resolve(searchStr);
-             if (res && res.loadType !== 'empty' && res.loadType !== 'NO_MATCHES' && res.loadType !== 'error') {
-                 result = res;
-                 break; // Found a node that natively supports this!
-             }
-          } catch(e) {}
-       }
-    } else if (!searchStr.includes('spotify.com/')) {
-       result = await node.rest.resolve(searchStr);
+    // Try ALL connected nodes to bypass potential YouTube rate limits on a single node
+    if (!searchStr.includes('spotify.com/')) {
+       result = await resolveMultiNode(searchStr);
     }
-
     // If native resolution failed and it's a Spotify URL, use our manual API fetcher as fallback
     if ((!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) && query.includes('spotify.com/')) {
        try {
@@ -320,16 +321,16 @@ export async function enqueue(guild, member, query) {
           if (spotifyData) {
              if (spotifyData.type === 'track') {
                 searchStr = spotifyData.queries[0];
-                result = await node.rest.resolve(searchStr);
+                result = await resolveMultiNode(searchStr);
              } else if (spotifyData.type === 'playlist') {
                 searchStr = spotifyData.queries.shift();
-                result = await node.rest.resolve(searchStr);
+                result = await resolveMultiNode(searchStr);
                 
                 // Background async loading for the rest of the playlist
                 setTimeout(async () => {
                    let count = 0;
                    for (const q of spotifyData.queries) {
-                       let res = await node.rest.resolve(q);
+                       let res = await resolveMultiNode(q);
                        if (res && res.loadType === 'search') {
                           const t = res.data[0];
                           queue.songs.push({
@@ -352,18 +353,18 @@ export async function enqueue(guild, member, query) {
                 }, 1000);
              }
           } else {
-             result = await node.rest.resolve(query); // Fallback to native LavaSrc if our scraper completely fails
+             result = await resolveMultiNode(query); // Fallback to native LavaSrc if our scraper completely fails
           }
        } catch (e) {
           console.error('Spotify fallback fetch failed:', e);
-          result = await node.rest.resolve(query);
+          result = await resolveMultiNode(query);
        }
     }
 
     // Fallback if not found natively or via manual Spotify fetch
     if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
       if (fallbackSearch) {
-         result = await node.rest.resolve(fallbackSearch);
+         result = await resolveMultiNode(fallbackSearch);
       }
     }
 
@@ -373,7 +374,7 @@ export async function enqueue(guild, member, query) {
          const searchEngine = isFanEdit ? 'ytsearch:' : 'ytmsearch:';
          const suffix = isFanEdit ? '' : ' official audio';
          searchStr = `${searchEngine}${query}${suffix}`;
-         result = await node.rest.resolve(searchStr);
+         result = await resolveMultiNode(searchStr);
       }
     }
     
