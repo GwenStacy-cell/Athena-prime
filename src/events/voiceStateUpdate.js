@@ -159,7 +159,38 @@ export default {
         }
       });
     }
+    // ==========================================
+    // VC PROTECTION INTERCEPTOR (Mute & Deafen)
+    // ==========================================
+    if (newState.channelId && db.isMoveProtected(guild.id, userId)) {
+      const becameMuted = !oldState.serverMute && newState.serverMute;
+      const becameDeafened = !oldState.serverDeaf && newState.serverDeaf;
 
+      if (becameMuted || becameDeafened) {
+        console.log(`[VcProtect] Protected user ${userId} was muted/deafened. Reverting...`);
+        setTimeout(async () => {
+          const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberUpdate }).catch(() => null);
+          let executor = null;
+          if (auditLogs) {
+            const log = auditLogs.entries.find(e => e.target.id === userId && (Date.now() - e.createdTimestamp) < 15000 && (e.changes.some(c => c.key === 'mute' && c.new === true) || e.changes.some(c => c.key === 'deaf' && c.new === true)));
+            if (log) executor = log.executor;
+          }
+
+          if (executor && executor.id !== client.user.id && executor.id !== userId) {
+            if (isBotOwnerSync(executor.id)) return; // bypass
+            await newState.member.edit({ mute: false, deaf: false }).catch(() => null);
+            
+            const execMember = await guild.members.fetch(executor.id).catch(() => null);
+            if (execMember) {
+              await handleWarn(guild, guild.members.me, execMember, `Automated: Illegally muting/deafening protected user <@${userId}>`, true);
+            }
+          } else if (!executor) {
+            // Revert just in case audit log missed it
+            await newState.member.edit({ mute: false, deaf: false }).catch(() => null);
+          }
+        }, 3000);
+      }
+    }
     // ==========================================
     // STATS TRACKER & VOICE XP
     // ==========================================
