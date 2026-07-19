@@ -50,7 +50,7 @@ export async function fetchSpotifyData(url) {
       const data = await res.json();
       return {
         type: 'track',
-        queries: [`ytmsearch:${data.name} ${data.artists[0].name}`]
+        queries: [`ytsearch:${data.name} ${data.artists[0].name} audio`]
       };
     } 
     else if (url.includes('/album/')) {
@@ -99,7 +99,7 @@ export async function searchSpotifyTrack(query) {
     const data = await res.json();
     if (data.tracks && data.tracks.items.length > 0) {
       const track = data.tracks.items[0];
-      return `ytmsearch:${track.name} ${track.artists[0].name}`;
+      return `${track.name} ${track.artists[0].name}`;
     }
   } catch (error) {
     console.error('Spotify Search Error:', error);

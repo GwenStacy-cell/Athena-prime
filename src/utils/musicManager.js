@@ -325,11 +325,11 @@ export async function enqueue(guild, member, query) {
       const { searchSpotifyTrack } = await import('./spotify.js');
       const spotifyQuery = await searchSpotifyTrack(query);
       if (spotifyQuery) {
-        searchStr = spotifyQuery;
-        fallbackSearch = `ytsearch:${query}`;
+        searchStr = `spsearch:${spotifyQuery}`;
+        fallbackSearch = `ytsearch:${spotifyQuery} audio`;
       } else {
         searchStr = `spsearch:${query}`; // Try node's native LavaSrc plugin first
-        fallbackSearch = `ytmsearch:${query}`; // Fallback to YouTube Music
+        fallbackSearch = `ytsearch:${query} audio`; // Fallback to YouTube with audio suffix
       }
     }
     
