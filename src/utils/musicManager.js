@@ -351,9 +351,12 @@ export async function enqueue(guild, member, query) {
                    }
                 }, 1000);
              }
+          } else {
+             result = await node.rest.resolve(query); // Fallback to native LavaSrc if our scraper completely fails
           }
        } catch (e) {
           console.error('Spotify fallback fetch failed:', e);
+          result = await node.rest.resolve(query);
        }
     }
 

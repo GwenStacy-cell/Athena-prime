@@ -43,8 +43,30 @@ function getSearchEngine(name) {
 
 export async function fetchSpotifyData(url) {
   const t = await getSpotifyToken();
-  if (!t) return null; // Fallback to old scraper if no token
-
+  if (!t) {
+    // API keys missing. Fallback to HTML title scraping!
+    try {
+      const res = await fetch(url);
+      const html = await res.text();
+      const titleMatch = html.match(/<title>(.*?)<\/title>/);
+      if (titleMatch) {
+         let title = titleMatch[1].replace(' | Spotify', '').trim();
+         if (url.includes('/track/')) {
+            const parts = title.split(' - song and lyrics by ');
+            const trackName = parts[0];
+            const artistName = parts[1] || '';
+            const { engine, isFanEdit } = getSearchEngine(trackName);
+            return {
+               type: 'track',
+               queries: [`${engine}${trackName}${isFanEdit ? '' : ' ' + artistName}`]
+            };
+         }
+      }
+    } catch (e) {
+       console.error('HTML scraper fallback failed:', e);
+    }
+    return null;
+  }
   try {
     if (url.includes('/track/')) {
       const id = url.split('/track/')[1].split('?')[0];
