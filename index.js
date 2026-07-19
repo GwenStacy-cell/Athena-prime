@@ -56,7 +56,21 @@ const Nodes = [
   }
 ];
 const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), Nodes);
-shoukaku.on('error', (_, error) => console.error(chalk.red('Lavalink Node Error:'), error));
+shoukaku.on('ready', (name) => {
+  console.log(`✅ Lavalink node "${name}" is ready!`);
+});
+
+shoukaku.on('error', (name, error) => {
+  console.error(`❌ Lavalink node "${name}" error:`, error);
+});
+
+shoukaku.on('close', (name, code, reason) => {
+  console.log(`🔌 Lavalink node "${name}" closed (${code}): ${reason}`);
+});
+
+shoukaku.on('debug', (name, info) => {
+  console.log(`[${name}] ${info}`);
+});
 global.client.shoukaku = shoukaku;
 
 process.on('unhandledRejection', (error) => {
