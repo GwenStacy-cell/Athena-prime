@@ -312,7 +312,7 @@ export async function enqueue(guild, member, query) {
     // Try ALL connected nodes to bypass potential YouTube rate limits on a single node
     result = await resolveMultiNode(searchStr);
     // If native resolution failed and it's a Spotify URL, use our manual API fetcher as fallback
-    if ((!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) && query.includes('spotify.com/')) {
+    if ((!result || result.loadType === 'empty' || result.loadType === 'NO_MATCHES' || result.loadType === 'error') && query.includes('spotify.com/')) {
        try {
           const { fetchSpotifyData } = await import('./spotify.js');
           spotifyData = await fetchSpotifyData(query);
