@@ -392,7 +392,8 @@ export async function enqueue(guild, member, query) {
             encoded: track.encoded,
             artworkUrl: getThumbnail(track),
             requester: member.user,
-          author: track.info.author
+          author: track.info.author,
+          sourceName: track.info.sourceName
        });
        }
        addedCount = searchResult.data.tracks.length;
@@ -406,7 +407,8 @@ export async function enqueue(guild, member, query) {
           encoded: track.encoded,
           artworkUrl: getThumbnail(track),
           requester: member.user,
-          author: track.info.author
+          author: track.info.author,
+          sourceName: track.info.sourceName
        });
        addedCount = 1;
        title = track.info.title;
@@ -419,7 +421,8 @@ export async function enqueue(guild, member, query) {
           encoded: track.encoded,
           artworkUrl: getThumbnail(track),
           requester: member.user,
-          author: track.info.author
+          author: track.info.author,
+          sourceName: track.info.sourceName
        });
        addedCount = 1;
        title = track.info.title;
@@ -456,6 +459,21 @@ async function playResource(guildId, song) {
   const queue = getQueue(guildId);
   try {
     if (queue.player && song.encoded) {
+       if (song.sourceName === 'spotify') {
+           try {
+               const shoukaku = global.client.shoukaku;
+               const node = shoukaku.options.nodeResolver(shoukaku.nodes);
+               if (node) {
+                   const cleanAuthor = song.author ? song.author.replace(/- Topic/i, '').trim() : '';
+                   const searchStr = `ytsearch:${song.title} ${cleanAuthor} audio`;
+                   const ytRes = await node.rest.resolve(searchStr);
+                   if (ytRes && ytRes.data && ytRes.data.length > 0) {
+                       song.encoded = ytRes.data[0].encoded;
+                   }
+               }
+           } catch(e) { console.error('Failed to re-resolve Spotify audio:', e); }
+       }
+       
        queue.player.playTrack({ track: { encoded: song.encoded } }).catch(console.error);
        queue.isPlaying = true;
        
