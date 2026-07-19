@@ -335,14 +335,14 @@ export async function enqueue(guild, member, query) {
     
     let result = null;
     
-    // If it's a Spotify search, try ALL connected nodes because some might not have the LavaSrc plugin installed
-    if (searchStr.startsWith('spsearch:')) {
+    // If it's a Spotify search or Spotify URL, try ALL connected nodes because some might not have the LavaSrc plugin installed
+    if (searchStr.startsWith('spsearch:') || searchStr.includes('spotify.com/')) {
        for (const n of global.client.shoukaku.nodes.values()) {
           try {
              let res = await n.rest.resolve(searchStr);
              if (res && res.loadType !== 'empty' && res.loadType !== 'NO_MATCHES' && res.loadType !== 'error') {
                  result = res;
-                 break; // Found a node that supports spsearch and found the track!
+                 break; // Found a node that supports LavaSrc and resolved the track/URL!
              }
           } catch(e) {}
        }
