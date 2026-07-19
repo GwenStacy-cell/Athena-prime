@@ -471,21 +471,7 @@ async function playResource(guildId, song) {
   const queue = getQueue(guildId);
   try {
     if (queue.player && song.encoded) {
-       if (song.sourceName === 'spotify') {
-           try {
-               const shoukaku = global.client.shoukaku;
-               const node = shoukaku.options.nodeResolver(shoukaku.nodes);
-               if (node) {
-                   const cleanAuthor = song.author ? song.author.replace(/- Topic/i, '').trim() : '';
-                   const searchStr = `ytmsearch:${song.title} ${cleanAuthor}`;
-                   const ytRes = await node.rest.resolve(searchStr);
-                   if (ytRes && ytRes.data && ytRes.data.length > 0) {
-                       song.encoded = ytRes.data[0].encoded;
-                   }
-               }
-           } catch(e) { console.error('Failed to re-resolve Spotify audio:', e); }
-       }
-       
+
        queue.player.playTrack({ track: { encoded: song.encoded } }).catch(console.error);
        queue.isPlaying = true;
        
