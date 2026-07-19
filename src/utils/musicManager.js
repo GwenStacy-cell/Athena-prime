@@ -297,8 +297,8 @@ export async function enqueue(guild, member, query) {
       }
     }
 
-    // Try ALL connected nodes for native resolution first (especially important for Spotify URLs to use LavaSrc natively)
-    if (searchStr.startsWith('spsearch:') || searchStr.includes('spotify.com/')) {
+    // Try ALL connected nodes for native resolution first (only for spsearch text queries)
+    if (searchStr.startsWith('spsearch:')) {
        for (const n of global.client.shoukaku.nodes.values()) {
           try {
              let res = await n.rest.resolve(searchStr);
@@ -308,7 +308,7 @@ export async function enqueue(guild, member, query) {
              }
           } catch(e) {}
        }
-    } else {
+    } else if (!searchStr.includes('spotify.com/')) {
        result = await node.rest.resolve(searchStr);
     }
 
