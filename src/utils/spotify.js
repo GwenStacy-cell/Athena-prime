@@ -50,7 +50,7 @@ export async function fetchSpotifyData(url) {
       const data = await res.json();
       return {
         type: 'track',
-        queries: [`ytsearch:${data.name} ${data.artists[0].name} audio`]
+        queries: [`ytmsearch:${data.name} ${data.artists[0].name}`]
       };
     } 
     else if (url.includes('/album/')) {
