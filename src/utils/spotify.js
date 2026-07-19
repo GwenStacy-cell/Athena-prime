@@ -86,3 +86,23 @@ export async function fetchSpotifyData(url) {
   
   return null;
 }
+
+export async function searchSpotifyTrack(query) {
+  const t = await getSpotifyToken();
+  if (!t) return null;
+  
+  try {
+    const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
+      headers: { 'Authorization': `Bearer ${t}` }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.tracks && data.tracks.items.length > 0) {
+      const track = data.tracks.items[0];
+      return `ytmsearch:${track.name} ${track.artists[0].name}`;
+    }
+  } catch (error) {
+    console.error('Spotify Search Error:', error);
+  }
+  return null;
+}

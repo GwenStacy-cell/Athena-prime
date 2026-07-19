@@ -322,8 +322,15 @@ export async function enqueue(guild, member, query) {
           console.error('Spotify native fetch failed:', e);
        }
     } else if (!query.startsWith('http')) {
-      searchStr = `ytsearch:${query}`; // Default to standard YouTube search for accuracy
-      fallbackSearch = `ytmsearch:${query}`;
+      const { searchSpotifyTrack } = await import('./spotify.js');
+      const spotifyQuery = await searchSpotifyTrack(query);
+      if (spotifyQuery) {
+        searchStr = spotifyQuery;
+        fallbackSearch = `ytsearch:${query}`;
+      } else {
+        searchStr = `ytsearch:${query}`; // Default to standard YouTube search for accuracy
+        fallbackSearch = `ytmsearch:${query}`;
+      }
     }
     
     let result = await node.rest.resolve(searchStr);
