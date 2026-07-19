@@ -17,11 +17,16 @@ workerPromise = initWorker();
 
 const scamKeywords = [
   'kasowin',
+  'helawin',
   'vyro project',
+  'vyro',
   'promo code: bet',
   'crypto casino',
   'withdrawal success',
-  'mrbeast'
+  'mrbeast',
+  'mr beast',
+  'mr. beast',
+  'mr.beast'
 ];
 
 // Deduplication cache to prevent messageCreate and messageUpdate from double-logging
@@ -87,8 +92,8 @@ export async function scanImageForScam(url) {
       }
     }
     
-    // If it mentions kasowin specifically, or has multiple red flags
-    if (lowerText.includes('kasowin') || threatScore >= 2) {
+    // If it mentions kasowin or helawin specifically, or has multiple red flags
+    if (lowerText.includes('kasowin') || lowerText.includes('helawin') || threatScore >= 2) {
       return true;
     }
     

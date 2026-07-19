@@ -323,7 +323,7 @@ export default {
                const logEmbed = new EmbedBuilder()
                  .setColor('#2b2d31') // Typical aesthetic dark theme accent, or fallback to default
                  .setTitle('LOG: MALICIOUS SCAM IMAGE DELETED')
-                 .setDescription(`**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted a fraudulent image containing known scam keywords (Mr. Beast/Kasowin/Crypto Casino).`)
+                 .setDescription(`**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted a fraudulent image containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).`)
                  .addFields([{ name: 'Channel', value: `<#${message.channel.id}>` }])
                  .setFooter({ text: 'Athena Prime Security' })
                  .setTimestamp();
@@ -346,7 +346,7 @@ export default {
                    const dmEmbed = new EmbedBuilder()
                      .setColor('#ff0000') // Pure red for owner warning
                      .setTitle('<a:emoji_35:1517213876058329148> Automated Scam Intervention')
-                     .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Crypto Casino`)
+                     .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
                      .setFooter({ text: 'Athena Prime Security System' });
                    await owner.send({ embeds: [dmEmbed] }).catch(() => null);
                  }
