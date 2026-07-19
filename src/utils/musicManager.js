@@ -96,7 +96,8 @@ export async function enqueue(guild, member, query) {
           player = await shoukaku.joinVoiceChannel({
             guildId: guild.id,
             channelId: voiceChannel.id,
-            shardId: guild.shardId
+            shardId: guild.shardId,
+            deaf: true
           });
         } catch (err) {
           if (err.message && err.message.includes('existing connection')) {
@@ -105,7 +106,8 @@ export async function enqueue(guild, member, query) {
             player = await shoukaku.joinVoiceChannel({
               guildId: guild.id,
               channelId: voiceChannel.id,
-              shardId: guild.shardId
+              shardId: guild.shardId,
+              deaf: true
             });
           } else {
             throw err;
@@ -329,7 +331,7 @@ export async function enqueue(guild, member, query) {
         fallbackSearch = `ytmsearch:${spotifyQuery} audio`;
       } else {
         searchStr = `spsearch:${query}`; // Try node's native LavaSrc plugin first
-        fallbackSearch = `ytmsearch:${query}`; // Fallback to YouTube Music
+        fallbackSearch = `ytmsearch:${query} official audio`; // Fallback to YouTube Music
       }
     }
     
@@ -359,7 +361,7 @@ export async function enqueue(guild, member, query) {
 
     if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
       if (searchStr.startsWith('spsearch:')) {
-         searchStr = `ytmsearch:${query}`;
+         searchStr = `ytmsearch:${query} official audio`;
          result = await node.rest.resolve(searchStr);
       }
     }
