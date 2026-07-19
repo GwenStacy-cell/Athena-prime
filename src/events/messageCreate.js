@@ -1166,10 +1166,7 @@ export default {
 
     const args = message.content.slice(usedPrefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
-
-    // These are handled by dedicated prefix-less handlers — skip to avoid double response
-    if (commandName === 'ezal' || commandName === 'backup' || commandName === 'enuke' || commandName === 'spam' || commandName === 'qr') return;
-
+    
     const cmd = commandMap.get(commandName);
 
     // Intelligent command error correction with fuzzy matching
