@@ -49,9 +49,9 @@ function startLeaveTimeout(guildId) {
     const cfg = db.getGuildConfig(guildId);
     if (cfg.homeVcId) {
        const guild = global.client.guilds.cache.get(guildId);
-       if (guild) connectToHomeVc(guild, cfg.homeVcId);
+       if (guild) setTimeout(() => connectToHomeVc(guild, cfg.homeVcId), 2000);
     }
-  }, 100);
+  }, 1000);
   leaveTimeouts.set(guildId, timeout);
 }
 
@@ -322,8 +322,8 @@ export async function enqueue(guild, member, query) {
           console.error('Spotify native fetch failed:', e);
        }
     } else if (!query.startsWith('http')) {
-      searchStr = `ytmsearch:${query}`; // Perfect YouTube Music search for studio tracks
-      fallbackSearch = `ytsearch:${query}`;
+      searchStr = `ytsearch:${query}`; // Default to standard YouTube search for accuracy
+      fallbackSearch = `ytmsearch:${query}`;
     }
     
     let result = await node.rest.resolve(searchStr);
@@ -744,7 +744,7 @@ export async function handleInteraction(interaction) {
   } else if (action === 'pause') {
     if (!queue.current) return interaction.reply({ content: `There is no music playing.`, flags: 64 });
     if (queue.player) {
-      queue.player.setPaused(!queue.player.paused);
+      await queue.player.setPaused(!queue.player.paused);
       updatePlayerUI(interaction.guildId);
       await interaction.reply({ content: queue.player.paused ? `Playback paused.` : `Playback resumed.`, flags: 64 });
       const emoji = queue.player.paused ? '<:pause_:1528165159686770740>' : '<:play:1528165307150241852>';
@@ -752,19 +752,19 @@ export async function handleInteraction(interaction) {
     }
   } else if (action === 'skip') {
     if (!queue.current) return interaction.reply({ content: `There is nothing to skip.`, flags: 64 });
-    if (queue.player) queue.player.stopTrack(); // Triggers 'end' event which plays next
+    if (queue.player) await queue.player.stopTrack(); // Triggers 'end' event which plays next
     await interaction.reply({ content: `Skipped track.`, flags: 64 });
     announceToVC(`<:skip:1528165408807588050> **${interaction.user.displayName}** skipped the track.`);
   } else if (action === 'prev') {
     if (queue.history.length === 0) return interaction.reply({ content: `No previous tracks.`, flags: 64 });
     queue.songs.unshift(queue.history.pop());
-    if (queue.player) queue.player.stopTrack();
+    if (queue.player) await queue.player.stopTrack();
     await interaction.reply({ content: `Playing previous track.`, flags: 64 });
     announceToVC(`⏮️ **${interaction.user.displayName}** returned to the previous track.`);
   } else if (action === 'stop') {
     queue.songs = [];
     queue.history = [];
-    if (queue.player) queue.player.stopTrack();
+    if (queue.player) await queue.player.stopTrack();
     updatePlayerUI(interaction.guildId);
     await interaction.reply({ content: `Stopped playback and cleared queue.`, flags: 64 });
     announceToVC(`<:stop:1528165509508632821> **${interaction.user.displayName}** stopped the playback and cleared the queue.`);
