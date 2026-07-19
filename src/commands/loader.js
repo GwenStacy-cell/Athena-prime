@@ -24,6 +24,7 @@ import { commands as moveprotectCmds } from './moveprotect.js';
 import { commands as vcprotectCmds } from './vcprotect.js';
 import { commands as serveroverviewCmds } from './serveroverview.js';
 import { commands as vcCmds } from './vc.js';
+import { commands as hideCmds } from './hide.js';
 import { commands as userinfoCmds } from './userinfo.js';
 import { commands as rolemanagerCmds } from './rolemanager.js';
 import { commands as theaterCmds } from './theater.js';
@@ -60,6 +61,7 @@ export const allCommands = [
   ...vcprotectCmds,
   ...serveroverviewCmds,
   ...vcCmds,
+  ...hideCmds,
   ...userinfoCmds,
   ...rolemanagerCmds,
   ...theaterCmds,
