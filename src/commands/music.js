@@ -102,7 +102,7 @@ export const commands = [
       if (res.success) {
         const { default: db } = await import("../database.js");
         const cfg = db.getGuildConfig(message.guild.id);
-        const replyPayload = buildAddedToQueueMsg(res.trackObj, cfg.accentColor);
+        const replyPayload = { embeds: [embed.success('Track Queued', res.message)] };
         if (cfg.musicChannelId && message.channel.id !== cfg.musicChannelId) {
           const redirectEmbed = new EmbedBuilder()
             .setColor(cfg.accentColor || '#ff0000')
@@ -123,7 +123,7 @@ export const commands = [
       
       if (res.success) {
         const cfg = db.getGuildConfig(interaction.guildId);
-        const replyPayload = buildAddedToQueueMsg(res.trackObj, cfg.accentColor);
+        const replyPayload = { embeds: [embed.success('Track Queued', res.message)] };
         if (cfg.musicChannelId && interaction.channelId !== cfg.musicChannelId) {
           const redirectEmbed = new EmbedBuilder()
             .setColor(cfg.accentColor || '#ff0000')

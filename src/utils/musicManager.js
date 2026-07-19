@@ -602,6 +602,7 @@ async function updateNowPlayingEmbeds(guildId) {
        if (vc && vc.isTextBased()) {
          const nowPlayingEmbed = buildAddedToQueueMsg(queue.current, cfg.accentColor).embeds[0];
          nowPlayingEmbed.data.title = "🎶 Now Playing"; // Differentiate from "Added to Queue"
+         nowPlayingEmbed.setImage('attachment://progress.png'); // FIX THE GLITCH
          
          const embedsToSend = [nowPlayingEmbed];
          if (cfg.musicChannelId && vc.id !== cfg.musicChannelId) {
