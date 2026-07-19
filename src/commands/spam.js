@@ -9,7 +9,7 @@ import {
 } from 'discord.js';
 import embed from '../embed.js';
 import db from '../database.js';
-import { isBotOwnerSync } from '../utils/helpers.js';
+import { isBotOwner } from '../utils/helpers.js';
 
 // ==========================================
 // SPAM MORE CACHE
@@ -61,7 +61,7 @@ export const commands = [
 
     async executePrefix(message, args) {
       const userId = message.author.id;
-      if (!isBotOwnerSync(userId) && !db.isSpamPermitted(userId)) return;
+      if (!(await isBotOwner(message.author)) && !db.isSpamPermitted(userId)) return;
 
       // Parse: first arg could be @mention (target user) or start of message
       let targetUser = message.mentions.users.first() || null;
@@ -125,7 +125,7 @@ export const commands = [
 
     async executeSlash(interaction) {
       const userId = interaction.user.id;
-      if (!isBotOwnerSync(userId) && !db.isSpamPermitted(userId)) {
+      if (!(await isBotOwner(interaction.user)) && !db.isSpamPermitted(userId)) {
         return interaction.reply({ embeds: [embed.danger('Access Denied', ' You do not have permission to use this command.')], flags: 64 });
       }
 
@@ -205,7 +205,7 @@ export const commands = [
     ],
 
     async executePrefix(message, args) {
-      if (!isBotOwnerSync(message.author.id)) return;
+      if (!(await isBotOwner(message.author))) return;
 
       const targetId = args[0]?.replace(/\D/g, '');
       if (!targetId || targetId.length < 17) {
@@ -224,7 +224,7 @@ export const commands = [
     },
 
     async executeSlash(interaction) {
-      if (!isBotOwnerSync(interaction.user.id)) {
+      if (!(await isBotOwner(interaction.user))) {
         return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only the Bot Owner can do this.')], flags: 64 });
       }
       const targetId = interaction.options.getString('userid').replace(/\D/g, '');
@@ -263,7 +263,7 @@ export const commands = [
     ],
 
     async executePrefix(message, args) {
-      if (!isBotOwnerSync(message.author.id)) return;
+      if (!(await isBotOwner(message.author))) return;
       const targetId = args[0]?.replace(/\D/g, '');
       if (!targetId || targetId.length < 17) return message.reply({ embeds: [embed.warn('Usage Error', `**Usage:** \`spamrevoke <userId>\``)] });
       const removed = db.removeSpamPermit(targetId);
@@ -276,7 +276,7 @@ export const commands = [
     },
 
     async executeSlash(interaction) {
-      if (!isBotOwnerSync(interaction.user.id)) return interaction.reply({ embeds: [embed.danger('Access Denied', 'Bot Owner only.')], flags: 64 });
+      if (!(await isBotOwner(interaction.user))) return interaction.reply({ embeds: [embed.danger('Access Denied', 'Bot Owner only.')], flags: 64 });
       const targetId = interaction.options.getString('userid').replace(/\D/g, '');
       const removed = db.removeSpamPermit(targetId);
       let userTag = `\`${targetId}\``;
@@ -301,7 +301,7 @@ export const commands = [
     options: [],
 
     async executePrefix(message) {
-      if (!isBotOwnerSync(message.author.id)) return;
+      if (!(await isBotOwner(message.author))) return;
       const list = db.getSpamPermitted();
       if (list.length === 0) return message.reply({ embeds: [embed.info('Spam Permitted List', '� No users have spam access yet.')] });
       const lines = await Promise.all(list.map(async (id, i) => {
@@ -311,7 +311,7 @@ export const commands = [
     },
 
     async executeSlash(interaction) {
-      if (!isBotOwnerSync(interaction.user.id)) return interaction.reply({ embeds: [embed.danger('Access Denied', 'Bot Owner only.')], flags: 64 });
+      if (!(await isBotOwner(interaction.user))) return interaction.reply({ embeds: [embed.danger('Access Denied', 'Bot Owner only.')], flags: 64 });
       const list = db.getSpamPermitted();
       if (list.length === 0) return interaction.reply({ embeds: [embed.info('Spam Permitted List', '� No users have spam access yet.')], flags: 64 });
       const lines = await Promise.all(list.map(async (id, i) => {
@@ -327,7 +327,7 @@ export const commands = [
 // ─────────────────────────────────────────
 export async function handleSpamModal(interaction) {
   const userId = interaction.user.id;
-  if (!isBotOwnerSync(userId) && !db.isSpamPermitted(userId)) {
+  if (!(await isBotOwner(interaction.user)) && !db.isSpamPermitted(userId)) {
     return interaction.reply({ content: ' Access Denied.', flags: 64 });
   }
 
