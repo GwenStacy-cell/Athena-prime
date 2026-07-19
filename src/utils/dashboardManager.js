@@ -126,25 +126,26 @@ export async function updateDashboardMessage(guild, client) {
     const toBuffer = await generateTimeoutCard(stats.timeoutLogs, accentColor);
     const amBuffer = await generateAutomodCard(stats.automodLogs, accentColor);
 
-    const fileDb = new AttachmentBuilder(dbBuffer, { name: 'dashboard.png' });
-    const fileTo = new AttachmentBuilder(toBuffer, { name: 'timeout.png' });
-    const fileAm = new AttachmentBuilder(amBuffer, { name: 'automod.png' });
+    const timestamp = Date.now();
+    const fileDb = new AttachmentBuilder(dbBuffer, { name: `dashboard_${timestamp}.png` });
+    const fileTo = new AttachmentBuilder(toBuffer, { name: `timeout_${timestamp}.png` });
+    const fileAm = new AttachmentBuilder(amBuffer, { name: `automod_${timestamp}.png` });
 
     const embedDb = new EmbedBuilder()
       .setColor(accentInt)
       .setTitle("ATHENA'S SECURITY DASHBOARD")
       .setDescription(`**Status:** **${stats.metrics.firewall === 'Active' ? 'PROTECTED' : 'VULNERABLE'}**\n**Last Sync:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Live Monitoring:** **Active**`)
-      .setImage('attachment://dashboard.png');
+      .setImage(`attachment://dashboard_${timestamp}.png`);
 
     const embedTo = new EmbedBuilder()
       .setColor(accentInt)
       .setTitle("ADMIN INTERVENTION & TIMEOUTS")
-      .setImage('attachment://timeout.png');
+      .setImage(`attachment://timeout_${timestamp}.png`);
 
     const embedAm = new EmbedBuilder()
       .setColor(accentInt)
       .setTitle("AUTOMATED SECURITY EVENTS")
-      .setImage('attachment://automod.png');
+      .setImage(`attachment://automod_${timestamp}.png`);
 
     let msgIds = cfg.dashboardMessageIds || [];
     
@@ -175,8 +176,9 @@ export async function updateDashboardMessage(guild, client) {
           console.log(`[Dashboard Sync] Old messages not found in ${guild.id}. Reposting dashboard...`);
         } else {
           console.error(`[Dashboard Sync] Failed to edit messages in ${guild.id}:`, err.message);
+          return;
         }
-        // Messages deleted or failed to edit, we'll post new ones
+        // Messages deleted or failed to edit (and it was 10008), we'll post new ones
       }
     }
 
