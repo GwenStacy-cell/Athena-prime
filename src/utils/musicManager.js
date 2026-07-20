@@ -319,6 +319,26 @@ export async function enqueue(guild, member, query) {
                        isFallback: true
                      };
                      
+                     const diffMs = targetMs > 0 ? (bestTrack.info.length - targetMs) : 0;
+                     const sign = diffMs > 0 ? '+' : '';
+                     console.log(
+`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Spotify Track
+Title      : ${failedTrack.title}
+Artist     : ${failedTrack.author || 'Unknown'}
+Duration   : ${targetMs}ms
+
+Searching  :
+ytmsearch:${failedTrack.title} ${failedTrack.author || ''}
+
+Selected   :
+YouTube
+Title      : ${bestTrack.info.title}
+Duration   : ${bestTrack.info.length}ms
+Difference : ${sign}${diffMs}ms
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+                     );
+                     
                      // Keep existing player alive and play directly
                      queue.current = newTrack;
                      queue.isPlaying = true;
