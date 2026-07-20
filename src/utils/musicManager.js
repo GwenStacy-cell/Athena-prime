@@ -288,12 +288,18 @@ export async function enqueue(guild, member, query) {
                      
                      let candidates = [];
                      
+                     const normalize = (str) => {
+                         if (!str) return '';
+                         return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/gi, '').trim();
+                     };
+                     
                      for (const t of searchData) {
                          let score = 0;
-                         const tTitle = t.info.title.toLowerCase();
-                         const fTitle = failedTrack.title.toLowerCase();
-                         const tAuthor = t.info.author.toLowerCase();
-                         const fAuthor = (failedTrack.author || '').toLowerCase();
+                         const rawTTitle = t.info.title.toLowerCase();
+                         const tTitle = normalize(t.info.title);
+                         const fTitle = normalize(failedTrack.title);
+                         const tAuthor = normalize(t.info.author);
+                         const fAuthor = normalize(failedTrack.author);
                          
                          // Title match
                          if (tTitle === fTitle) score += 20;
@@ -302,36 +308,50 @@ export async function enqueue(guild, member, query) {
                          // Artist match
                          if (tAuthor && fAuthor) {
                             if (tAuthor === fAuthor) score += 10;
-                            else if (tTitle.includes(fAuthor) || tAuthor.includes(fAuthor)) score += 3;
+                            else if (tAuthor.includes(fAuthor) || fAuthor.includes(tAuthor)) score += 3;
                          }
                          
                          // Official channel bonuses
-                         if (tAuthor.includes('official') || tTitle.includes('official audio')) score += 8;
-                         if (tAuthor.includes('- topic')) score += 7;
+                         if (tAuthor.includes('official') || rawTTitle.includes('official audio') || rawTTitle.includes('official music video') || rawTTitle.includes('official video')) score += 8;
+                         if (tAuthor.includes('topic')) score += 7;
                          if (tAuthor.includes('vevo')) score += 5;
+                         
+                         // ISRC match
+                         if (t.info.isrc && failedTrack.isrc && t.info.isrc === failedTrack.isrc) {
+                             score += 50;
+                         }
                          
                          // Duration match
                          if (targetMs > 0) {
                              const diff = Math.abs(t.info.length - targetMs);
                              if (diff <= 2000) score += 5;
                              else if (diff <= 5000) score += 3;
-                             else if (diff > 60000) score -= 10;
+                             else if (diff <= 15000) score += 1;
+                             else if (diff <= 30000) score += 0;
+                             else if (diff <= 60000) score -= 3;
+                             else score -= 10;
                          }
                          
                          // Penalties for fan edits / live versions
-                         if (tTitle.includes('live')) score -= 8;
-                         if (tTitle.includes('cover')) score -= 8;
-                         if (tTitle.includes('remix') && !fTitle.includes('remix')) score -= 6;
-                         if (tTitle.includes('nightcore')) score -= 5;
-                         if (tTitle.includes('8d')) score -= 5;
-                         if (tTitle.includes('slowed')) score -= 4;
-                         if (tTitle.includes('reverb')) score -= 4;
-                         if (tTitle.includes('karaoke')) score -= 4;
+                         if (rawTTitle.includes('live')) score -= 8;
+                         if (rawTTitle.includes('cover')) score -= 8;
+                         if (rawTTitle.includes('remix') && !fTitle.includes('remix')) score -= 6;
+                         if (rawTTitle.includes('nightcore')) score -= 5;
+                         if (rawTTitle.includes('8d')) score -= 5;
+                         if (rawTTitle.includes('slowed')) score -= 4;
+                         if (rawTTitle.includes('reverb')) score -= 4;
+                         if (rawTTitle.includes('karaoke')) score -= 4;
                          
                          candidates.push({ track: t, score: score, diffMs: targetMs > 0 ? (t.info.length - targetMs) : 0 });
                      }
                      
-                     candidates.sort((a, b) => b.score - a.score);
+                     if (candidates.length === 0) return;
+                     
+                     candidates.sort((a, b) => {
+                         if (b.score !== a.score) return b.score - a.score;
+                         return Math.abs(a.diffMs) - Math.abs(b.diffMs);
+                     });
+                     
                      const bestCandidate = candidates[0];
                      const bestTrack = bestCandidate.track;
                      
@@ -356,6 +376,7 @@ Spotify Track
 Title      : ${failedTrack.title}
 Artist     : ${failedTrack.author || 'Unknown'}
 Duration   : ${targetMs}ms
+ISRC       : ${failedTrack.isrc || 'N/A'}
 
 Candidates:
 ${candidatesLog.trim()}
@@ -540,9 +561,10 @@ ${candidatesLog.trim()}
             encoded: track.encoded,
             artworkUrl: getThumbnail(track),
             requester: member.user,
-          author: track.info.author,
-          sourceName: track.info.sourceName
-       });
+            author: track.info.author,
+            sourceName: track.info.sourceName,
+            isrc: track.info.isrc
+          });
        }
        addedCount = searchResult.data.tracks.length;
        title = searchResult.data.info.name || 'Playlist';
