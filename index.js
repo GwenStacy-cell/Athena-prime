@@ -50,7 +50,7 @@ import { Shoukaku, Connectors } from 'shoukaku';
 const Nodes = [
   {
     name: 'Athena AWS Premium',
-    url: '13.220.49.104:2333',
+    url: '54.91.178.110:2333',
     auth: 'Prince12',
     secure: false
   }
