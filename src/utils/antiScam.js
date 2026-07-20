@@ -33,6 +33,29 @@ const scamKeywords = [
 export const flaggedMessages = new Set();
 
 /**
+ * Scans a text string for scam content.
+ * @param {string} text - The text to scan.
+ * @returns {boolean} - Returns true if scam text is detected.
+ */
+export function scanTextForScam(text) {
+  if (!text) return false;
+  const lowerText = text.toLowerCase().replace(/\s+/g, ' ');
+  
+  let threatScore = 0;
+  for (const keyword of scamKeywords) {
+    if (lowerText.includes(keyword)) {
+      threatScore += 1;
+    }
+  }
+  
+  if (lowerText.includes('kasowin') || lowerText.includes('helawin') || threatScore >= 2) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Scans an image URL for scam text.
  * @param {string} url - The URL of the image.
  * @returns {Promise<boolean>} - Returns true if scam text is detected.

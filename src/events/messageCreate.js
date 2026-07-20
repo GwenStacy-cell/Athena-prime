@@ -12,7 +12,7 @@ import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '
 import { Client } from 'nekos-best.js';
 import fetch from 'node-fetch';
 import { createRateMessage } from '../commands/rate.js';
-import { scanImageForScam, flaggedMessages } from '../utils/antiScam.js';
+import { scanImageForScam, scanTextForScam, flaggedMessages } from '../utils/antiScam.js';
 import { createMockInteraction } from '../utils/mockInteraction.js';
 
 export { getCachedGif };
@@ -265,12 +265,58 @@ export default {
     }
     
     // ==========================================
-    // ANTI-SCAM OCR IMAGE SCANNER
+    // ANTI-SCAM TEXT & IMAGE SCANNER
     // ==========================================
     if (message.guild) {
+      // 1. Text & Link Scanning
+      if (message.content && scanTextForScam(message.content)) {
+        if (!flaggedMessages.has(message.id)) {
+          flaggedMessages.add(message.id);
+          
+          await message.delete().catch(() => null);
+          
+          // Channel Warning
+          const scamEmbed = new EmbedBuilder()
+            .setColor('#ff0000') // Pure red
+            .setDescription(`<a:emoji_35:1517213876058329148> <@${message.author.id}>, your message was flagged as a scam and removed.`);
+          await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
+          
+          // Security Channel Log
+          const logEmbed = new EmbedBuilder()
+            .setColor('#2b2d31')
+            .setTitle('LOG: MALICIOUS SCAM TEXT DELETED')
+            .setDescription(`**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted fraudulent text/link containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).`)
+            .addFields([{ name: 'Channel', value: `<#${message.channel.id}>` }])
+            .setFooter({ text: 'Athena Prime Security' })
+            .setTimestamp();
+          
+          try {
+            const { default: db } = await import('../database.js');
+            const config = db.getGuildConfig(message.guild.id);
+            if (config && config.accentColor) logEmbed.setColor(config.accentColor);
+          } catch(e) {}
+          
+          logToSecurityChannel(message.guild, logEmbed);
+          
+          // DM Server Owner
+          try {
+            const owner = await message.guild.members.fetch(message.guild.ownerId);
+            if (owner) {
+              const dmEmbed = new EmbedBuilder()
+                .setColor('#ff0000') // Pure red for owner warning
+                .setTitle('<a:emoji_35:1517213876058329148> Automated Scam Intervention')
+                .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam message in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
+                .setFooter({ text: 'Athena Prime Security System' });
+              await owner.send({ embeds: [dmEmbed] }).catch(() => null);
+            }
+          } catch (e) {}
+        }
+        return; // Stop processing further for scam messages
+      }
+
       const urlsToScan = [];
       
-      // 1. Regular Attachments
+      // 2. Regular Attachments
       if (message.attachments.size > 0) {
         message.attachments.forEach(att => urlsToScan.push(att.url));
       }
