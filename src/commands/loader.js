@@ -33,6 +33,7 @@ import { commands as musicCmds } from './music.js';
 import { commands as rateCmds } from './rate.js';
 import { commands as recordCmds } from './record.js';
 import { commands as dateCmds } from './date.js';
+import { commands as topCmds } from './top.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -69,7 +70,8 @@ export const allCommands = [
   ...musicCmds,
   ...rateCmds,
   ...recordCmds,
-  ...dateCmds
+  ...dateCmds,
+  ...topCmds
 ];
 
 export const commandMap = new Map();

@@ -8,6 +8,8 @@ export const commands = [
   {
     name: 'stats',
     description: 'View server statistics and insights',
+    // Statbot-style aliases: s?me, s?u, s?stats, s?statsme
+    aliases: ['me', 'u', 'statsme', 'statme', 'mystat', 'mystats'],
     category: 'utility',
     options: [
       {
@@ -56,8 +58,8 @@ export const commands = [
       const chartData = statsDB.getChartData(guildId, userId);
 
       // Verify they have some data
-      if (userStats.msg_30d === 0 && userStats.vc_30d === 0) {
-        return interaction.editReply({ embeds: [embed.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 30 days.`)] });
+      if (userStats.msg_14d === 0 && userStats.vc_14d === 0) {
+        return interaction.editReply({ embeds: [embed.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 14 days.`)] });
       }
 
       try {
@@ -107,8 +109,8 @@ export const commands = [
       const chartData = statsDB.getChartData(guildId, userId);
 
       // Verify they have some data
-      if (userStats.msg_30d === 0 && userStats.vc_30d === 0) {
-        return message.reply({ embeds: [embed.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 30 days.`)] });
+      if (userStats.msg_14d === 0 && userStats.vc_14d === 0) {
+        return message.reply({ embeds: [embed.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 14 days.`)] });
       }
 
       const m = await message.reply(' Generating your stats... Please wait.');

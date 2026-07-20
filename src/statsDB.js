@@ -102,16 +102,15 @@ export function pruneOldStats() {
 }
 
 export function getUserStats(guildId, userId) {
-  // 1d = today
-  // 7d = past 7 days including today
-  // 30d = past 30 days including today
-  
+  // 1d = today, 7d = last 7 days, 14d = last 14 days, 30d = last 30 days
   const stmt = db.prepare(`
     SELECT 
       SUM(CASE WHEN date = date('now') THEN messages ELSE 0 END) as d1_msg,
       SUM(CASE WHEN date = date('now') THEN voice_seconds ELSE 0 END) as d1_vc,
       SUM(CASE WHEN date >= date('now', '-6 days') THEN messages ELSE 0 END) as d7_msg,
       SUM(CASE WHEN date >= date('now', '-6 days') THEN voice_seconds ELSE 0 END) as d7_vc,
+      SUM(CASE WHEN date >= date('now', '-13 days') THEN messages ELSE 0 END) as d14_msg,
+      SUM(CASE WHEN date >= date('now', '-13 days') THEN voice_seconds ELSE 0 END) as d14_vc,
       SUM(messages) as d30_msg,
       SUM(voice_seconds) as d30_vc
     FROM user_activity
@@ -120,12 +119,14 @@ export function getUserStats(guildId, userId) {
   
   const row = stmt.get(guildId, userId) || {};
   return {
-    msg_1d: row.d1_msg || 0,
-    msg_7d: row.d7_msg || 0,
+    msg_1d:  row.d1_msg  || 0,
+    msg_7d:  row.d7_msg  || 0,
+    msg_14d: row.d14_msg || 0,
     msg_30d: row.d30_msg || 0,
-    vc_1d: row.d1_vc || 0,
-    vc_7d: row.d7_vc || 0,
-    vc_30d: row.d30_vc || 0
+    vc_1d:   row.d1_vc   || 0,
+    vc_7d:   row.d7_vc   || 0,
+    vc_14d:  row.d14_vc  || 0,
+    vc_30d:  row.d30_vc  || 0
   };
 }
 
@@ -335,6 +336,28 @@ export function getServerOverviewStats(guildId) {
   };
 }
 
+export function getTopMembers(guildId, limit = 10) {
+  return db.prepare(`
+    SELECT user_id, SUM(messages) as total
+    FROM user_activity
+    WHERE guild_id = ? AND date >= date('now', '-13 days') AND messages > 0
+    GROUP BY user_id
+    ORDER BY total DESC
+    LIMIT ?
+  `).all(guildId, limit);
+}
+
+export function getTopVoiceMembers(guildId, limit = 10) {
+  return db.prepare(`
+    SELECT user_id, SUM(voice_seconds) as total
+    FROM user_activity
+    WHERE guild_id = ? AND date >= date('now', '-13 days') AND voice_seconds > 0
+    GROUP BY user_id
+    ORDER BY total DESC
+    LIMIT ?
+  `).all(guildId, limit);
+}
+
 export default {
   logMessage,
   logVoice,
@@ -343,5 +366,7 @@ export default {
   getServerRanks,
   getTopChannels,
   getChartData,
-  getServerOverviewStats
+  getServerOverviewStats,
+  getTopMembers,
+  getTopVoiceMembers
 };
