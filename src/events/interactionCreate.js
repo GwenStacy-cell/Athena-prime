@@ -477,16 +477,16 @@ export default {
         
         const ratingData = db.getEditRating(messageId);
         if (!ratingData) {
-          return interaction.reply({ content: 'Rating data for this edit is no longer available.' });
+          return interaction.reply({ content: 'Rating data for this edit is no longer available.', flags: 64 });
         }
 
         if (action === 'delete') {
           if (interaction.user.id !== ratingData.authorId && (!interaction.member || !interaction.member.permissions.has(PermissionFlagsBits.ManageMessages))) {
-            return interaction.reply({ content: 'Only the original poster or a moderator can remove this edit.' });
+            return interaction.reply({ content: 'Only the original poster or a moderator can remove this edit.', flags: 64 });
           }
           await interaction.message.delete().catch(() => null);
           db.deleteEditRating(messageId);
-          return interaction.reply({ content: 'Edit rating message removed.' });
+          return interaction.reply({ content: 'Edit rating message removed.', flags: 64 });
         }
 
         const starCount = parseInt(action);
@@ -494,7 +494,7 @@ export default {
 
         // Ensure single vote
         if (ratingData.votes[interaction.user.id]) {
-          return interaction.reply({ content: 'You have already rated this edit!' });
+          return interaction.reply({ content: 'You have already rated this edit!', flags: 64 });
         }
 
         db.updateEditRating(messageId, interaction.user.id, interaction.user.username, starCount);
@@ -517,7 +517,7 @@ export default {
         });
 
         await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
-        return interaction.reply({ content: `You rated this edit ${starCount} <a:1z:1517089474369032253>` });
+        return interaction.reply({ content: `You rated this edit ${starCount} <a:1z:1517089474369032253>`, flags: 64 });
       }
 
 
