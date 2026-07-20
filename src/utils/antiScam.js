@@ -85,14 +85,31 @@ export async function scanImageForScam(url) {
     ctx.drawImage(img, 0, 0);
     
     // Pre-process image: Convert to high-contrast Black & White
-    // This dramatically improves OCR accuracy on dark mode screenshots!
+    // We determine if it's dark mode by counting pixels, then ensure we output Black Text on White Background
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imgData.data;
+    
+    let lightPixels = 0;
+    let darkPixels = 0;
+    
     for (let i = 0; i < data.length; i += 4) {
-      // Calculate grayscale average
       const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-      // Threshold at 128 (pure B&W)
-      const val = avg > 128 ? 255 : 0;
+      if (avg > 128) lightPixels++;
+      else darkPixels++;
+    }
+    
+    const isDarkMode = darkPixels > lightPixels;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+      let val;
+      if (isDarkMode) {
+        // Dark mode: invert so light text becomes black (0), dark bg becomes white (255)
+        val = avg > 128 ? 0 : 255;
+      } else {
+        // Light mode: dark text becomes black (0), light bg becomes white (255)
+        val = avg > 128 ? 255 : 0;
+      }
       data[i] = val;
       data[i+1] = val;
       data[i+2] = val;
@@ -146,9 +163,25 @@ export async function getRawOCRText(url) {
     ctx.drawImage(img, 0, 0);
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imgData.data;
+    
+    let lightPixels = 0;
+    let darkPixels = 0;
     for (let i = 0; i < data.length; i += 4) {
       const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-      const val = avg > 128 ? 255 : 0;
+      if (avg > 128) lightPixels++;
+      else darkPixels++;
+    }
+    
+    const isDarkMode = darkPixels > lightPixels;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+      let val;
+      if (isDarkMode) {
+        val = avg > 128 ? 0 : 255;
+      } else {
+        val = avg > 128 ? 255 : 0;
+      }
       data[i] = val; data[i+1] = val; data[i+2] = val;
     }
     ctx.putImageData(imgData, 0, 0);
