@@ -286,6 +286,8 @@ export async function enqueue(guild, member, query) {
                      
                      const searchData = result.loadType === 'track' ? [result.data] : result.data.slice(0, 5);
                      
+                     let candidates = [];
+                     
                      for (const t of searchData) {
                          let score = 0;
                          const tTitle = t.info.title.toLowerCase();
@@ -293,23 +295,45 @@ export async function enqueue(guild, member, query) {
                          const tAuthor = t.info.author.toLowerCase();
                          const fAuthor = (failedTrack.author || '').toLowerCase();
                          
-                         if (tTitle.includes(fTitle) || fTitle.includes(tTitle)) score += 5;
-                         if (tAuthor && (tTitle.includes(fAuthor) || tAuthor.includes(fAuthor))) score += 3;
+                         // Title match
+                         if (tTitle === fTitle) score += 20;
+                         else if (tTitle.includes(fTitle) || fTitle.includes(tTitle)) score += 5;
                          
+                         // Artist match
+                         if (tAuthor && fAuthor) {
+                            if (tAuthor === fAuthor) score += 10;
+                            else if (tTitle.includes(fAuthor) || tAuthor.includes(fAuthor)) score += 3;
+                         }
+                         
+                         // Official channel bonuses
+                         if (tAuthor.includes('official') || tTitle.includes('official audio')) score += 8;
+                         if (tAuthor.includes('- topic')) score += 7;
+                         if (tAuthor.includes('vevo')) score += 5;
+                         
+                         // Duration match
                          if (targetMs > 0) {
                              const diff = Math.abs(t.info.length - targetMs);
-                             if (diff < 5000) score += 5;
-                             else if (diff < 15000) score += 3;
-                             else if (diff > 60000) score -= 2;
+                             if (diff <= 2000) score += 5;
+                             else if (diff <= 5000) score += 3;
+                             else if (diff > 60000) score -= 10;
                          }
-                         if (tTitle.includes('live')) score -= 2;
-                         if (tTitle.includes('cover')) score -= 2;
                          
-                         if (score > bestScore) {
-                             bestScore = score;
-                             bestTrack = t;
-                         }
+                         // Penalties for fan edits / live versions
+                         if (tTitle.includes('live')) score -= 8;
+                         if (tTitle.includes('cover')) score -= 8;
+                         if (tTitle.includes('remix') && !fTitle.includes('remix')) score -= 6;
+                         if (tTitle.includes('nightcore')) score -= 5;
+                         if (tTitle.includes('8d')) score -= 5;
+                         if (tTitle.includes('slowed')) score -= 4;
+                         if (tTitle.includes('reverb')) score -= 4;
+                         if (tTitle.includes('karaoke')) score -= 4;
+                         
+                         candidates.push({ track: t, score: score, diffMs: targetMs > 0 ? (t.info.length - targetMs) : 0 });
                      }
+                     
+                     candidates.sort((a, b) => b.score - a.score);
+                     const bestCandidate = candidates[0];
+                     const bestTrack = bestCandidate.track;
                      
                      const newTrack = {
                        ...failedTrack,
@@ -319,8 +343,13 @@ export async function enqueue(guild, member, query) {
                        isFallback: true
                      };
                      
-                     const diffMs = targetMs > 0 ? (bestTrack.info.length - targetMs) : 0;
-                     const sign = diffMs > 0 ? '+' : '';
+                     let candidatesLog = '';
+                     for (let i = 0; i < Math.min(3, candidates.length); i++) {
+                        const c = candidates[i];
+                        const sign = c.diffMs > 0 ? '+' : '';
+                        candidatesLog += `${i+1}. ${c.track.info.title} — ${c.track.info.author}\n   Score: ${c.score}\n   Duration: ${c.track.info.length}ms\n   Δ ${sign}${c.diffMs}ms\n\n`;
+                     }
+
                      console.log(
 `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Spotify Track
@@ -328,14 +357,8 @@ Title      : ${failedTrack.title}
 Artist     : ${failedTrack.author || 'Unknown'}
 Duration   : ${targetMs}ms
 
-Searching  :
-ytmsearch:${failedTrack.title} ${failedTrack.author || ''}
-
-Selected   :
-YouTube
-Title      : ${bestTrack.info.title}
-Duration   : ${bestTrack.info.length}ms
-Difference : ${sign}${diffMs}ms
+Candidates:
+${candidatesLog.trim()}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
                      );
                      
