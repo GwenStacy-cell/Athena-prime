@@ -15,22 +15,20 @@ async function initWorker() {
 }
 workerPromise = initWorker();
 
-const scamKeywords = [
-  'kasowin',
-  'helawin',
-  'vyro project',
-  'vyro',
-  'promo code: bet',
-  'crypto casino',
-  'withdrawal success',
-  'mrbeast',
-  'mr beast',
-  'mr. beast',
-  'mr.beast'
-];
-
-// Deduplication cache to prevent messageCreate and messageUpdate from double-logging
 export const flaggedMessages = new Set();
+
+function calculateThreatScore(lowerText) {
+  if (lowerText.includes('kasowin') || lowerText.includes('helawin') || lowerText.includes('vyro')) return 10;
+  
+  let threatScore = 0;
+  if (lowerText.includes('mrbeast') || lowerText.includes('mr beast') || lowerText.match(/mr\.?\s*beast/)) threatScore += 1;
+  if (lowerText.includes('crypto') || lowerText.includes('usdt') || lowerText.includes('tether')) threatScore += 1;
+  if (lowerText.includes('withdrawal') || lowerText.includes('deposit')) threatScore += 1;
+  if (lowerText.includes('promo code') || lowerText.includes('bonus') || lowerText.match(/promo/)) threatScore += 1;
+  if (lowerText.includes('5600') || lowerText.includes('5,600')) threatScore += 1;
+  
+  return threatScore;
+}
 
 /**
  * Scans a text string for scam content.
@@ -40,19 +38,7 @@ export const flaggedMessages = new Set();
 export function scanTextForScam(text) {
   if (!text) return false;
   const lowerText = text.toLowerCase().replace(/\s+/g, ' ');
-  
-  let threatScore = 0;
-  for (const keyword of scamKeywords) {
-    if (lowerText.includes(keyword)) {
-      threatScore += 1;
-    }
-  }
-  
-  if (lowerText.includes('kasowin') || lowerText.includes('helawin') || threatScore >= 2) {
-    return true;
-  }
-  
-  return false;
+  return calculateThreatScore(lowerText) >= 2;
 }
 
 /**
@@ -122,22 +108,7 @@ export async function scanImageForScam(url) {
     if (!text) return false;
     
     const lowerText = text.toLowerCase().replace(/\s+/g, ' ');
-    
-    // Check if the text contains high-risk scam combinations
-    let threatScore = 0;
-    
-    for (const keyword of scamKeywords) {
-      if (lowerText.includes(keyword)) {
-        threatScore += 1;
-      }
-    }
-    
-    // If it mentions kasowin or helawin specifically, or has multiple red flags
-    if (lowerText.includes('kasowin') || lowerText.includes('helawin') || threatScore >= 2) {
-      return true;
-    }
-    
-    return false;
+    return calculateThreatScore(lowerText) >= 2;
   } catch (error) {
     const msg = String(error);
     if (!msg.includes('Unsupported image type') && !msg.includes('Image too small') && !msg.includes('Line cannot be recognized')) {
