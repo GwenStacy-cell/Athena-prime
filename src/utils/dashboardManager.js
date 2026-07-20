@@ -172,9 +172,11 @@ export async function updateDashboardMessage(guild, client) {
 
         return; // Success
       } catch (err) {
-        if (err.code !== 10008) {
+        if (err.code === 10008) {
+          console.log(`[Dashboard Sync] Old messages not found in ${guild.id}. (msgIds: ${msgIds.join(', ')}). Reposting dashboard...`);
+        } else {
           console.error(`[Dashboard Sync] Failed to edit messages in ${guild.id}:`, err.message);
-          return;
+          return; // Stop here, don't delete and repost!
         }
         // Messages deleted or failed to edit (and it was 10008), we'll post new ones
       }
