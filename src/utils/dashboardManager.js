@@ -157,7 +157,7 @@ export async function updateDashboardMessage(guild, client) {
         try { m2 = await channel.messages.fetch(msgIds[1]); } catch(e) { throw new Error(`Fetch m2 failed: ${e.code}`); }
         try { m3 = await channel.messages.fetch(msgIds[2]); } catch(e) { throw new Error(`Fetch m3 failed: ${e.code}`); }
         
-        try { await m1.edit({ embeds: [embedDb], files: [fileDb], attachments: [] }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
+        try { await m1.edit({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
         try { await m2.edit({ embeds: [embedTo], files: [fileTo], attachments: [] }); } catch(e) { throw new Error(`Edit m2 failed: ${e.code}`); }
         try { await m3.edit({ embeds: [embedAm], files: [fileAm], attachments: [] }); } catch(e) { throw new Error(`Edit m3 failed: ${e.code}`); }
         
@@ -191,7 +191,7 @@ export async function updateDashboardMessage(guild, client) {
       }
     }
 
-    const m1 = await channel.send({ embeds: [embedDb], files: [fileDb] });
+    const m1 = await channel.send({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb] });
     const m2 = await channel.send({ embeds: [embedTo], files: [fileTo] });
     const m3 = await channel.send({ embeds: [embedAm], files: [fileAm] });
 
