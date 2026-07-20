@@ -183,6 +183,12 @@ export async function handleWelcomeManagerButton(interaction) {
     return interaction.update(getManagerPanel(guildId, typeStr));
   }
   
+  if (action === 'channel') {
+    const selectedChannel = interaction.values[0];
+    setConfig(guildId, { ...cfg, channelId: selectedChannel });
+    return interaction.update(getManagerPanel(guildId, typeStr));
+  }
+  
   if (action === 'toggles') {
     setConfig(guildId, { ...cfg, thumbnail: !(cfg.thumbnail !== false), timestamp: !(cfg.timestamp !== false) });
     return interaction.update(getManagerPanel(guildId, typeStr));
