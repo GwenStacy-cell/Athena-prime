@@ -97,7 +97,7 @@ export async function enqueue(guild, member, query) {
             guildId: guild.id,
             channelId: voiceChannel.id,
             shardId: guild.shardId,
-            deaf: true
+            deaf: false
           });
         } catch (err) {
           if (err.message && err.message.includes('existing connection')) {
@@ -107,7 +107,7 @@ export async function enqueue(guild, member, query) {
               guildId: guild.id,
               channelId: voiceChannel.id,
               shardId: guild.shardId,
-              deaf: true
+              deaf: false
             });
           } else {
             throw err;
