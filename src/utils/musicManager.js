@@ -472,7 +472,7 @@ async function playResource(guildId, song) {
   try {
     if (queue.player && song.encoded) {
 
-       queue.player.playTrack({ track: song.encoded }).catch(console.error);
+       await queue.player.playTrack({ track: song.encoded });
        queue.isPlaying = true;
        
        if (queue.progressInterval) clearInterval(queue.progressInterval);
