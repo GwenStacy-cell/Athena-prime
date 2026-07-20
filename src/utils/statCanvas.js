@@ -20,12 +20,13 @@ function tryRegisterFont(file, opts) {
 tryRegisterFont('NotoSans-Bold.ttf',    { family: 'NotoSans', weight: 'bold' });
 tryRegisterFont('NotoSans-Regular.ttf', { family: 'NotoSans', weight: 'normal' });
 tryRegisterFont('NotoSansCJK-Regular.otf', { family: 'NotoSansCJK', weight: 'normal' });
+tryRegisterFont('NotoSansMath-Regular.ttf', { family: 'NotoSansMath', weight: 'normal' });
 tryRegisterFont('Roboto-Bold.ttf',      { family: 'Roboto', weight: 'bold' });
 tryRegisterFont('Roboto-Regular.ttf',   { family: 'Roboto', weight: 'normal' });
 
-// Font stacks: NotoSans handles most Unicode, Roboto is the visual style font
-const FONT_NORMAL = '"NotoSans", "NotoSansCJK", "Roboto", sans-serif';
-const FONT_BOLD   = '"NotoSans", "NotoSansCJK", "Roboto", sans-serif';
+// Font stacks: NotoSans handles most Unicode, Math handles math alphanumeric, Roboto is the visual style font, Segoe UI Emoji handles UI icons natively on Windows
+const FONT_NORMAL = '"NotoSans", "NotoSansCJK", "NotoSansMath", "Segoe UI Emoji", "Roboto", sans-serif';
+const FONT_BOLD   = '"NotoSans", "NotoSansCJK", "NotoSansMath", "Segoe UI Emoji", "Roboto", sans-serif';
 
 // ============================================================
 // STATBOT EXACT COLOR PALETTE
