@@ -45,7 +45,7 @@ export const commands = [
       const target = interaction.options.getMember('target');
       const intervalSec = interaction.options.getInteger('interval') || 2;
       const result = await handleVcDrag(interaction.guild, interaction.member, target, intervalSec);
-      await interaction.reply({ embeds: [result.embed], flags: 64 });
+      await interaction.reply({ embeds: [result.embed] });
     }
   },
 
@@ -77,7 +77,7 @@ export const commands = [
       if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)], flags: 64 });
       const target = interaction.options.getMember('target');
       const result = handleVcDragStop(interaction.guild, interaction.member, target);
-      await interaction.reply({ embeds: [result.embed], flags: 64 });
+      await interaction.reply({ embeds: [result.embed] });
     }
   },
 
@@ -99,7 +99,7 @@ export const commands = [
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)], flags: 64 });
       const result = handleVcDragList(interaction.guild);
-      await interaction.reply({ embeds: [result.embed], flags: 64 });
+      await interaction.reply({ embeds: [result.embed] });
     }
   },
 
@@ -214,7 +214,7 @@ export const commands = [
       if (destVc.type !== ChannelType.GuildVoice && destVc.type !== ChannelType.GuildStageVoice) return interaction.reply({ embeds: [embed.warn('Invalid Destination', 'Destination must be a voice channel.')], flags: 64 });
 
       const result = await handleMassMove(sourceVc, destVc, interaction.member);
-      await interaction.reply({ embeds: [result.embed], flags: 64 });
+      await interaction.reply({ embeds: [result.embed] });
     }
   }
 ];
