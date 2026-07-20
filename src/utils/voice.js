@@ -29,7 +29,7 @@ export async function connectToHomeVc(guild, channelId, force = false) {
          channelId: channel.id,
          guildId: guild.id,
          adapterCreator: guild.voiceAdapterCreator,
-         selfDeaf: true,
+         selfDeaf: false,
          selfMute: false
        });
        console.log(`[Athena Prime] Joined Home VC "${channel.name}" in guild "${guild.name}" via native voice`);
