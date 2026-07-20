@@ -729,9 +729,7 @@ export async function generateServerOverviewImage(guild, stats) {
 // ============================================================
 // TOP LEADERBOARD IMAGE — matches Statbot's s?top output
 // ============================================================
-export async function generateTopImage(guild, topMembers, type = 'messages') {
-  const typeLabel = type === 'voice' ? 'Voice' : 'Message';
-  const typeUnit  = type === 'voice' ? 'hours' : 'msgs';
+export async function generateTopImage(guild, topMsgMembers, topVoiceMembers) {
   const ROWS_PER_COL = 5;
   const ROW_H = 46;
   const HEADER_H = 100;
@@ -771,48 +769,49 @@ export async function generateTopImage(guild, topMembers, type = 'messages') {
 
   // ---- SECTION TITLE ----
   const SEC_Y = ICON_CY + ICON_R + 20;
-  ctx.font = `bold 20px ${FONT_BOLD}`;
-  ctx.fillStyle = C.white;
-  ctx.fillText(`# Top ${typeLabel} Members`, PAD, SEC_Y + 22);
-
-  // ---- 2-COLUMN GRID ----
-  const GRID_Y = SEC_Y + SECTION_TITLE_H;
   const COL_GAP = 14;
   const COL_W = Math.floor((W - PAD * 2 - COL_GAP) / 2);
 
-  for (let i = 0; i < Math.min(topMembers.length, 10); i++) {
-    const isRight = i >= ROWS_PER_COL;
-    const rowIdx  = isRight ? i - ROWS_PER_COL : i;
-    const colX    = PAD + (isRight ? COL_W + COL_GAP : 0);
-    const rowY    = GRID_Y + rowIdx * ROW_H;
+  ctx.font = `bold 20px ${FONT_BOLD}`;
+  ctx.fillStyle = C.white;
+  ctx.fillText(`# Top Messages`, PAD, SEC_Y + 22);
+  ctx.fillText(`# Top Voice`, PAD + COL_W + COL_GAP, SEC_Y + 22);
 
-    const member = topMembers[i];
-    const rank   = i + 1;
+  // ---- 2-COLUMN GRID ----
+  const GRID_Y = SEC_Y + SECTION_TITLE_H;
+
+  const drawRow = (member, rank, typeUnit, colX, rowY) => {
     const name   = safeText(member.username) || `User ${rank}`;
     const count  = formatNumber(member.total) + ` ${typeUnit}`;
 
-    // Row background
     drawPanel(ctx, colX, rowY, COL_W, ROW_H - 6, 8, C.panel, true);
 
-    // Rank number
     ctx.font = `bold 18px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     ctx.textAlign = 'right';
     ctx.fillText(String(rank), colX + 36, rowY + 26);
     ctx.textAlign = 'left';
 
-    // Username
     ctx.font = `16px ${FONT_NORMAL}`;
     ctx.fillStyle = C.white;
     const maxNameW = COL_W - 56 - 80;
     ctx.fillText(truncateText(ctx, name, maxNameW), colX + 46, rowY + 26);
 
-    // Count (bold, right-aligned)
     ctx.font = `bold 18px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     ctx.textAlign = 'right';
     ctx.fillText(count, colX + COL_W - 14, rowY + 26);
     ctx.textAlign = 'left';
+  };
+
+  // Messages (Left)
+  for (let i = 0; i < Math.min(topMsgMembers.length, ROWS_PER_COL); i++) {
+    drawRow(topMsgMembers[i], i + 1, 'msgs', PAD, GRID_Y + i * ROW_H);
+  }
+
+  // Voice (Right)
+  for (let i = 0; i < Math.min(topVoiceMembers.length, ROWS_PER_COL); i++) {
+    drawRow(topVoiceMembers[i], i + 1, 'hours', PAD + COL_W + COL_GAP, GRID_Y + i * ROW_H);
   }
 
   // Footer

@@ -6,52 +6,41 @@ import embed from '../embed.js';
 export const commands = [
   {
     name: 'top',
-    description: 'View the top message members in this server',
-    // Statbot-style aliases: s?top
+    description: 'View the top message and voice members in this server',
     aliases: ['leaderboard', 'lb', 'topmsg', 'toplb', 'toplist'],
     category: 'utility',
-    options: [
-      {
-        name: 'type',
-        description: 'What to rank by',
-        type: ApplicationCommandOptionType.String,
-        required: false,
-        choices: [
-          { name: 'Messages', value: 'messages' },
-          { name: 'Voice', value: 'voice' }
-        ]
-      }
-    ],
+    options: [], // removed type option
 
     async executePrefix(message, args) {
-      const type = args[0]?.toLowerCase() === 'voice' || args[0]?.toLowerCase() === 'vc' ? 'voice' : 'messages';
-
       const waitMsg = await message.reply({ embeds: [embed.info('Loading...', 'Building top members leaderboard...')] });
 
       try {
-        const rawTop = type === 'voice'
-          ? statsDB.getTopVoiceMembers(message.guild.id, 10)
-          : statsDB.getTopMembers(message.guild.id, 10);
+        const rawMsgTop = statsDB.getTopMembers(message.guild.id, 5) || [];
+        const rawVoiceTop = statsDB.getTopVoiceMembers(message.guild.id, 5) || [];
 
-        if (!rawTop || rawTop.length === 0) {
+        if (rawMsgTop.length === 0 && rawVoiceTop.length === 0) {
           return waitMsg.edit({ embeds: [embed.info('No Data', 'No activity data found for this server yet.')] });
         }
 
-        // Resolve usernames
-        const topMembers = await Promise.all(rawTop.map(async (row) => {
-          try {
-            const member = await message.guild.members.fetch(row.user_id).catch(() => null);
-            const username = member?.user?.username
-              || member?.displayName
-              || (await message.client.users.fetch(row.user_id).catch(() => null))?.username
-              || `User ${row.user_id.slice(-4)}`;
-            return { user_id: row.user_id, username, total: row.total };
-          } catch {
-            return { user_id: row.user_id, username: `User ${row.user_id.slice(-4)}`, total: row.total };
-          }
-        }));
+        const resolveMembers = async (rawTop) => {
+          return Promise.all(rawTop.map(async (row) => {
+            try {
+              const member = await message.guild.members.fetch(row.user_id).catch(() => null);
+              const username = member?.user?.username
+                || member?.displayName
+                || (await message.client.users.fetch(row.user_id).catch(() => null))?.username
+                || `User ${row.user_id.slice(-4)}`;
+              return { user_id: row.user_id, username, total: row.total };
+            } catch {
+              return { user_id: row.user_id, username: `User ${row.user_id.slice(-4)}`, total: row.total };
+            }
+          }));
+        };
 
-        const buffer = await generateTopImage(message.guild, topMembers, type);
+        const topMsgMembers = await resolveMembers(rawMsgTop);
+        const topVoiceMembers = await resolveMembers(rawVoiceTop);
+
+        const buffer = await generateTopImage(message.guild, topMsgMembers, topVoiceMembers);
         const attachment = new AttachmentBuilder(buffer, { name: 'top-members.png' });
 
         await waitMsg.delete().catch(() => null);
@@ -64,31 +53,34 @@ export const commands = [
 
     async executeSlash(interaction) {
       await interaction.deferReply();
-      const type = interaction.options.getString('type') || 'messages';
 
       try {
-        const rawTop = type === 'voice'
-          ? statsDB.getTopVoiceMembers(interaction.guild.id, 10)
-          : statsDB.getTopMembers(interaction.guild.id, 10);
+        const rawMsgTop = statsDB.getTopMembers(interaction.guild.id, 5) || [];
+        const rawVoiceTop = statsDB.getTopVoiceMembers(interaction.guild.id, 5) || [];
 
-        if (!rawTop || rawTop.length === 0) {
+        if (rawMsgTop.length === 0 && rawVoiceTop.length === 0) {
           return interaction.editReply({ embeds: [embed.info('No Data', 'No activity data found for this server yet.')] });
         }
 
-        const topMembers = await Promise.all(rawTop.map(async (row) => {
-          try {
-            const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
-            const username = member?.user?.username
-              || member?.displayName
-              || (await interaction.client.users.fetch(row.user_id).catch(() => null))?.username
-              || `User ${row.user_id.slice(-4)}`;
-            return { user_id: row.user_id, username, total: row.total };
-          } catch {
-            return { user_id: row.user_id, username: `User ${row.user_id.slice(-4)}`, total: row.total };
-          }
-        }));
+        const resolveMembers = async (rawTop) => {
+          return Promise.all(rawTop.map(async (row) => {
+            try {
+              const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
+              const username = member?.user?.username
+                || member?.displayName
+                || (await interaction.client.users.fetch(row.user_id).catch(() => null))?.username
+                || `User ${row.user_id.slice(-4)}`;
+              return { user_id: row.user_id, username, total: row.total };
+            } catch {
+              return { user_id: row.user_id, username: `User ${row.user_id.slice(-4)}`, total: row.total };
+            }
+          }));
+        };
 
-        const buffer = await generateTopImage(interaction.guild, topMembers, type);
+        const topMsgMembers = await resolveMembers(rawMsgTop);
+        const topVoiceMembers = await resolveMembers(rawVoiceTop);
+
+        const buffer = await generateTopImage(interaction.guild, topMsgMembers, topVoiceMembers);
         const attachment = new AttachmentBuilder(buffer, { name: 'top-members.png' });
 
         await interaction.editReply({ files: [attachment] });
