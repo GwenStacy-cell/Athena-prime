@@ -281,9 +281,6 @@ export async function enqueue(guild, member, query) {
                      };
                      const targetMs = timeToMs(failedTrack.duration);
                      
-                     let bestTrack = result.data[0];
-                     let bestScore = -1;
-                     
                      const searchData = result.loadType === 'track' ? [result.data] : result.data.slice(0, 5);
                      
                      let candidates = [];
