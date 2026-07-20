@@ -209,3 +209,31 @@ client.once('ready', async () => {
     console.log(chalk.cyan(`⏰ Restored ${restored} auto-unquarantine timer(s) from database.`));
   }
 });
+
+// Graceful Shutdown to ensure DB flushes
+function handleShutdown(signal) {
+  console.log(chalk.yellow(`\n[System] Received ${signal}, initiating graceful shutdown...`));
+  import('./src/database.js').then(({ default: db }) => {
+    // Force immediate save if pending
+    if (db.needsSave || db.saveTimeout) {
+      console.log(chalk.yellow('[System] Flushing database to disk...'));
+      clearTimeout(db.saveTimeout);
+      db.saveTimeout = null;
+      try {
+        const fs = require('fs');
+        const data = JSON.stringify(db.cache, null, 2);
+        fs.writeFileSync(db.dbPath, data, 'utf8');
+        console.log(chalk.green('[System] Database saved successfully.'));
+      } catch (e) {
+        console.error('[System] Failed to save database during shutdown:', e);
+      }
+    }
+    process.exit(0);
+  }).catch(err => {
+    console.error('Error loading db during shutdown:', err);
+    process.exit(0);
+  });
+}
+
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+process.on('SIGINT', () => handleShutdown('SIGINT'));
