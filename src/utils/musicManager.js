@@ -255,9 +255,41 @@ export async function enqueue(guild, member, query) {
         console.error('Lavalink Player Error:', err);
         fs.writeFileSync('music_error_log.txt', String(err));
       });
-      queue.player.on('exception', (err) => {
+      queue.player.on('exception', async (err) => {
         console.error('Lavalink Track Exception:', err);
         fs.writeFileSync('music_exception_log.txt', JSON.stringify(err, null, 2));
+        
+        // Graceful Fallback for LavaSrc Mirror Crashes (Spotify -> YouTube)
+        if (err.exception?.cause?.includes('TrackNotFoundException') && queue.current) {
+           const failedTrack = queue.current;
+           if (failedTrack.url?.includes('spotify.com') && !failedTrack.isFallback) {
+               console.log(`[Fallback] LavaSrc mirror failed for ${failedTrack.title}. Searching YouTube directly...`);
+               const node = global.client.shoukaku.options.nodeResolver(global.client.shoukaku.nodes);
+               if (node) {
+                  const fallbackQuery = `ytmsearch:${failedTrack.title} ${failedTrack.author || ''}`;
+                  const result = await node.rest.resolve(fallbackQuery);
+                  
+                  if (result && (result.loadType === 'search' || result.loadType === 'track') && result.data.length > 0) {
+                     const fallbackData = result.data[0];
+                     const newTrack = {
+                       ...failedTrack,
+                       url: fallbackData.info.uri,
+                       encoded: fallbackData.encoded,
+                       isFallback: true
+                     };
+                     
+                     // Re-inject the fallback track to the front of the queue
+                     // The 'end' event will immediately trigger and play this!
+                     queue.songs.unshift(newTrack);
+                     
+                     if (queue.textChannel) {
+                        const tc = global.client.channels.cache.get(queue.textChannel);
+                        if (tc) tc.send(`⚠️ **LavaSrc Mirror Failed**. Falling back to YouTube Music for \`${failedTrack.title}\`...`).catch(()=>{});
+                     }
+                  }
+               }
+           }
+        }
       });
       queue.player.on('stuck', (data) => {
         console.error('Lavalink Track Stuck:', data);
