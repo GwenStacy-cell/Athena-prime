@@ -57,7 +57,7 @@ export const commands = [
       try {
         reply = await interaction.reply({ components: [components], fetchReply: true, flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
-        return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\``, flags: 64 }).catch(() => null);
+        return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
       if (!reply) return; // Prevent crashes if reply is undefined
       const collector = reply.createMessageComponentCollector({ idle: 60000 });
@@ -276,8 +276,7 @@ export const commands = [
           embeds: [embed.warn(
             'No Emojis Found',
             'Provide at least one custom emoji to steal.\n\nExample: `:pog: :lol: :hype:`'
-          )],
-          ephemeral: !!context.options // make ephemeral if slash command
+          )]
         });
       }
 
@@ -362,7 +361,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (interaction.user.id !== process.env.OWNER_ID && interaction.user.id !== interaction.guild.ownerId) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '️ Only the **Bot Owner** or **Server Owner** can use this command.')], flags: 64 });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', '️ Only the **Bot Owner** or **Server Owner** can use this command.')] });
       }
 
       const newPrefix = interaction.options.getString('new_prefix');
@@ -616,29 +615,29 @@ commands.push({
 
     if (action === 'clear') {
       db.updateGuildConfig(interaction.guild.id, { autoroleIds: [] });
-      return interaction.reply({ embeds: [embed.success('Autorole Cleared', 'All autoroles have been removed.')], flags: 64 });
+      return interaction.reply({ embeds: [embed.success('Autorole Cleared', 'All autoroles have been removed.')] });
     }
 
     if (!role) {
-      return interaction.reply({ embeds: [embed.warn('Missing Role', 'You must specify a role to add or remove.')], flags: 64 });
+      return interaction.reply({ embeds: [embed.warn('Missing Role', 'You must specify a role to add or remove.')] });
     }
 
     if (action === 'add') {
       if (currentRoles.includes(role.id)) {
-        return interaction.reply({ embeds: [embed.warn('Already Added', `The role ${role} is already in the autorole list.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.warn('Already Added', `The role ${role} is already in the autorole list.`)] });
       }
       currentRoles.push(role.id);
       db.updateGuildConfig(interaction.guild.id, { autoroleIds: currentRoles });
-      return interaction.reply({ embeds: [embed.success('Autorole Added', `Successfully added ${role} to the autorole list.\nTotal roles: \`${currentRoles.length}\``)], flags: 64 });
+      return interaction.reply({ embeds: [embed.success('Autorole Added', `Successfully added ${role} to the autorole list.\nTotal roles: \`${currentRoles.length}\``)] });
     }
 
     if (action === 'remove') {
       if (!currentRoles.includes(role.id)) {
-        return interaction.reply({ embeds: [embed.warn('Not Found', `The role ${role} is not in the autorole list.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.warn('Not Found', `The role ${role} is not in the autorole list.`)] });
       }
       currentRoles = currentRoles.filter(id => id !== role.id);
       db.updateGuildConfig(interaction.guild.id, { autoroleIds: currentRoles });
-      return interaction.reply({ embeds: [embed.success('Autorole Removed', `Successfully removed ${role} from the autorole list.\nTotal roles: \`${currentRoles.length}\``)], flags: 64 });
+      return interaction.reply({ embeds: [embed.success('Autorole Removed', `Successfully removed ${role} from the autorole list.\nTotal roles: \`${currentRoles.length}\``)] });
     }
   }
 });
@@ -662,9 +661,9 @@ commands.push({
         reason: `Created by ${interaction.user.tag}`
       });
       if (msg) await thread.send(msg);
-      await interaction.reply({ embeds: [embed.success('Thread Created', `Successfully created ${thread}`)], flags: 64 });
+      await interaction.reply({ embeds: [embed.success('Thread Created', `Successfully created ${thread}`)] });
     } catch (err) {
-      await interaction.reply({ embeds: [embed.danger('Error', err.message)], flags: 64 });
+      await interaction.reply({ embeds: [embed.danger('Error', err.message)] });
     }
   }
 });
@@ -702,7 +701,7 @@ commands.push({
     const channel = interaction.options.getChannel('channel');
     
     if (![ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(channel.type)) {
-      return interaction.reply({ embeds: [embed.warn('Invalid Channel', 'Please select a text or announcement channel.')], flags: 64 });
+      return interaction.reply({ embeds: [embed.warn('Invalid Channel', 'Please select a text or announcement channel.')] });
     }
 
     db.setStatsChannel(interaction.guild.id, channel.id);
@@ -722,12 +721,12 @@ commands.push({
   category: 'utility',
   permissions: [PermissionFlagsBits.ManageThreads],
   async executeSlash(interaction) {
-    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')], flags: 64 });
+    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')] });
     try {
       await interaction.reply({ embeds: [embed.success('Archived', 'Archiving thread now...')] });
       await interaction.channel.setArchived(true, `Archived by ${interaction.user.tag}`);
     } catch (err) {
-      await interaction.followUp({ embeds: [embed.danger('Error', err.message)], flags: 64 }).catch(() => null);
+      await interaction.followUp({ embeds: [embed.danger('Error', err.message)] }).catch(() => null);
     }
   }
 });
@@ -738,11 +737,11 @@ commands.push({
   category: 'utility',
   permissions: [PermissionFlagsBits.ManageThreads],
   async executeSlash(interaction) {
-    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')], flags: 64 });
+    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')] });
     try {
       await interaction.channel.delete(`Deleted by ${interaction.user.tag}`);
     } catch (err) {
-      await interaction.reply({ embeds: [embed.danger('Error', err.message)], flags: 64 }).catch(() => null);
+      await interaction.reply({ embeds: [embed.danger('Error', err.message)] }).catch(() => null);
     }
   }
 });

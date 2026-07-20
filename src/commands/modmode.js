@@ -77,7 +77,7 @@ export const commands = [
         interaction.user.id === interaction.guild?.ownerId ||
         db.isExtraOwner(interaction.guild?.id, interaction.user.id);
       if (!isAuthorized) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '️ Only Bot Owner, Server Owner, or Extra Owners can use Modification Mode.')], flags: 64 });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', '️ Only Bot Owner, Server Owner, or Extra Owners can use Modification Mode.')] });
       }
 
       const action = interaction.options.getString('action');

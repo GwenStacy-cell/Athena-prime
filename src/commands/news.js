@@ -96,7 +96,7 @@ export const commands = [
               mentionable: false,
               reason: 'Role for automated News Feed mentions' });
           } catch (err) {
-            return interaction.reply({ embeds: [embed.danger('Permission Error', 'I lack the "Manage Roles" permission to dynamically create a news ping role. Please create one manually and provide it, or give me Manage Roles.')], flags: 64 });
+            return interaction.reply({ embeds: [embed.danger('Permission Error', 'I lack the "Manage Roles" permission to dynamically create a news ping role. Please create one manually and provide it, or give me Manage Roles.')] });
           }
         }
 
@@ -110,7 +110,7 @@ export const commands = [
         const customUrl = interaction.options.getString('custom_url');
 
         if (!preset && !customUrl) {
-          return interaction.reply({ embeds: [embed.warn('Missing Input', 'You must select a preset source OR provide a custom RSS URL.')], flags: 64 });
+          return interaction.reply({ embeds: [embed.warn('Missing Input', 'You must select a preset source OR provide a custom RSS URL.')] });
         }
 
         let name = 'Custom Feed';
@@ -147,7 +147,7 @@ export const commands = [
         if (removed) {
           return interaction.reply({ embeds: [embed.success('Feed Removed', `Successfully unsubscribed from \`${url}\`.`)] });
         } else {
-          return interaction.reply({ embeds: [embed.warn('Not Found', 'Could not find a feed matching that exact URL. Use \`/news list\` to check your active URLs.')], flags: 64 });
+          return interaction.reply({ embeds: [embed.warn('Not Found', 'Could not find a feed matching that exact URL. Use \`/news list\` to check your active URLs.')] });
         }
       }
 

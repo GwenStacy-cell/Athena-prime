@@ -34,7 +34,7 @@ export const commands = [
     async executeSlash(interaction) {
       const cfg = db.getGuildConfig(interaction.guild.id);
       if (cfg.statsChannelId && interaction.channel.id !== cfg.statsChannelId) {
-        return interaction.reply({ embeds: [embed.warn('Wrong Channel', `Please use this command in <#${cfg.statsChannelId}>.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.warn('Wrong Channel', `Please use this command in <#${cfg.statsChannelId}>.`)] });
       }
 
       await interaction.deferReply();

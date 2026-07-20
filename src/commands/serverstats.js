@@ -162,7 +162,7 @@ export const commands = [
               updated.font = selected;
               db.saveServerStats(message.guild.id, updated);
               
-              await i.deferReply({ flags: 64 });
+              await i.deferReply();
               try {
                 await updateServerStatsChannels(message.guild, updated);
                 await i.editReply({ content: `<:emoji_16:1521464002046328944> Font updated to **${selected}**!` });
@@ -186,7 +186,7 @@ export const commands = [
               
               try {
                 const modalSubmit = await i.awaitModalSubmit({ time: 60000, filter: m => m.user.id === message.author.id });
-                await modalSubmit.deferReply({ flags: 64 });
+                await modalSubmit.deferReply();
                 const emojiVal = modalSubmit.fields.getTextInputValue('emoji_input');
                 const updated = db.getServerStats(message.guild.id);
                 updated.emoji = emojiVal;

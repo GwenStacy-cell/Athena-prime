@@ -150,13 +150,13 @@ export const commands = [
       const isOwnerOrServerOwner = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
 
       if (!isOwnerOrServerOwner) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', '️ This command is restricted to the **Server Owner** and **Bot Owner** only.')], flags: 64 });
+        return interaction.reply({ embeds: [embed.danger('Permission Denied', '️ This command is restricted to the **Server Owner** and **Bot Owner** only.')] });
       }
 
       if (subcommand === 'setchannel') {
         const channel = interaction.options.getChannel('channel');
         db.setBirthdayChannel(interaction.guild.id, channel.id);
-        return interaction.reply({ embeds: [embed.success('Success', `Birthday wishes will now be sent to ${channel}`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.success('Success', `Birthday wishes will now be sent to ${channel}`)] });
       }
 
       if (subcommand === 'set') {
@@ -165,20 +165,20 @@ export const commands = [
         const month = interaction.options.getInteger('month');
 
         if (day < 1 || day > 31 || month < 1 || month > 12) {
-          return interaction.reply({ embeds: [embed.warn('Invalid Date', 'Please provide a valid day (1-31) and month (1-12).')], flags: 64 });
+          return interaction.reply({ embeds: [embed.warn('Invalid Date', 'Please provide a valid day (1-31) and month (1-12).')] });
         }
 
         db.setBirthday(interaction.guild.id, user.id, day, month);
-        return interaction.reply({ embeds: [embed.success('Success', `Saved birthday for ${user} on **${day}/${month}**!`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.success('Success', `Saved birthday for ${user} on **${day}/${month}**!`)] });
       }
 
       if (subcommand === 'remove') {
         const user = interaction.options.getUser('user');
         const removed = db.removeBirthday(interaction.guild.id, user.id);
         if (removed) {
-          return interaction.reply({ embeds: [embed.success('Success', `Removed birthday for ${user}.`)], flags: 64 });
+          return interaction.reply({ embeds: [embed.success('Success', `Removed birthday for ${user}.`)] });
         } else {
-          return interaction.reply({ embeds: [embed.warn('Not Found', `No birthday saved for ${user}.`)], flags: 64 });
+          return interaction.reply({ embeds: [embed.warn('Not Found', `No birthday saved for ${user}.`)] });
         }
       }
 
@@ -188,7 +188,7 @@ export const commands = [
         const userIds = Object.keys(users);
 
         if (userIds.length === 0) {
-          return interaction.reply({ embeds: [embed.info('Birthdays', 'No birthdays have been set in this server yet.')], flags: 64 });
+          return interaction.reply({ embeds: [embed.info('Birthdays', 'No birthdays have been set in this server yet.')] });
         }
 
         const sorted = userIds.map(id => ({ id, ...users[id] })).sort((a, b) => {
@@ -209,7 +209,7 @@ export const commands = [
           .setDescription(desc)
           .setFooter({ text: `Total Birthdays: ${userIds.length}` });
 
-        return interaction.reply({ embeds: [listEmbed], flags: 64 });
+        return interaction.reply({ embeds: [listEmbed] });
       }
     }
   },
@@ -228,7 +228,7 @@ export const commands = [
       await message.channel.send(msg);
     },
     async executeSlash(interaction) {
-      return interaction.reply({ content: 'This is a prefix-only hidden command (`!testbirthday @user`).', flags: 64 });
+      return interaction.reply({ content: 'This is a prefix-only hidden command (`!testbirthday @user`).' });
     }
   }
 ];

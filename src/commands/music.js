@@ -28,7 +28,7 @@ export const commands = [
     },
     
     async executeSlash(interaction) {
-      await interaction.deferReply({ flags: 64 });
+      await interaction.deferReply();
       const imageUrl = interaction.options.getString('image_url');
       await setupMusicChannel(interaction.guild, interaction.channel, imageUrl, interaction);
     }

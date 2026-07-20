@@ -35,7 +35,7 @@ export const commands = [
       const guildId = interaction.guild.id;
 
       if (subcommand === 'setup') {
-        await interaction.deferReply({ flags: 64 });
+        await interaction.deferReply();
         
         const category = interaction.options.getChannel('category');
         const role = interaction.options.getRole('staff_role');

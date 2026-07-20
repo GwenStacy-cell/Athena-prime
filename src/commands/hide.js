@@ -44,7 +44,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')], flags: 64 });
+        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
       }
 
       let targetChannel = interaction.options.getChannel('channel') || (interaction.member.voice.channel ? interaction.member.voice.channel : interaction.channel);
@@ -55,7 +55,7 @@ export const commands = [
         });
         await interaction.reply({ embeds: [embed.success('Channel Hidden', `**${targetChannel.name}** is now hidden from @everyone.`)] });
       } catch (err) {
-        await interaction.reply({ embeds: [embed.error('Error', 'Failed to hide the channel. Check my permissions.')], flags: 64 });
+        await interaction.reply({ embeds: [embed.error('Error', 'Failed to hide the channel. Check my permissions.')] });
       }
     }
   },
@@ -99,7 +99,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')], flags: 64 });
+        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
       }
 
       let targetChannel = interaction.options.getChannel('channel') || (interaction.member.voice.channel ? interaction.member.voice.channel : interaction.channel);
@@ -110,7 +110,7 @@ export const commands = [
         });
         await interaction.reply({ embeds: [embed.success('Channel Unhidden', `**${targetChannel.name}** is now visible to @everyone.`)] });
       } catch (err) {
-        await interaction.reply({ embeds: [embed.error('Error', 'Failed to unhide the channel. Check my permissions.')], flags: 64 });
+        await interaction.reply({ embeds: [embed.error('Error', 'Failed to unhide the channel. Check my permissions.')] });
       }
     }
   }

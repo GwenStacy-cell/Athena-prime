@@ -36,7 +36,7 @@ export const commands = [
     async executeSlash(interaction) {
       // Security Check: Only Server Owner and Bot Owner
       if (interaction.user.id !== interaction.guild.ownerId && !isBotOwnerSync(interaction.user.id)) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only the **Server Owner** and **Bot Owner** can use the mute/deafen protection command.')], flags: 64 });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only the **Server Owner** and **Bot Owner** can use the mute/deafen protection command.')] });
       }
 
       const subCommand = interaction.options.getSubcommand();

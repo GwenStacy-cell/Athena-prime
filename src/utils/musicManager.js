@@ -845,64 +845,64 @@ export async function handleInteraction(interaction) {
   if (action === 'play') {
     // legacy support if button still exists
   } else if (action === 'pause') {
-    if (!queue.current) return interaction.reply({ content: `There is no music playing.`, flags: 64 });
+    if (!queue.current) return interaction.reply({ content: `There is no music playing.` });
     if (queue.player) {
       await queue.player.setPaused(!queue.player.paused);
       updatePlayerUI(interaction.guildId);
-      await interaction.reply({ content: queue.player.paused ? `Playback paused.` : `Playback resumed.`, flags: 64 });
+      await interaction.reply({ content: queue.player.paused ? `Playback paused.` : `Playback resumed.` });
       const emoji = queue.player.paused ? '<:pause_:1528165159686770740>' : '<:play:1528165307150241852>';
       announceToVC(`${emoji} **${interaction.user.displayName}** ${queue.player.paused ? 'paused' : 'resumed'} the playback.`);
     }
   } else if (action === 'skip') {
-    if (!queue.current) return interaction.reply({ content: `There is nothing to skip.`, flags: 64 });
+    if (!queue.current) return interaction.reply({ content: `There is nothing to skip.` });
     if (queue.player) await queue.player.stopTrack(); // Triggers 'end' event which plays next
-    await interaction.reply({ content: `Skipped track.`, flags: 64 });
+    await interaction.reply({ content: `Skipped track.` });
     announceToVC(`<:skip:1528165408807588050> **${interaction.user.displayName}** skipped the track.`);
   } else if (action === 'prev') {
-    if (queue.history.length === 0) return interaction.reply({ content: `No previous tracks.`, flags: 64 });
+    if (queue.history.length === 0) return interaction.reply({ content: `No previous tracks.` });
     queue.songs.unshift(queue.history.pop());
     if (queue.player) await queue.player.stopTrack();
-    await interaction.reply({ content: `Playing previous track.`, flags: 64 });
+    await interaction.reply({ content: `Playing previous track.` });
     announceToVC(`⏮️ **${interaction.user.displayName}** returned to the previous track.`);
   } else if (action === 'stop') {
     queue.songs = [];
     queue.history = [];
     if (queue.player) await queue.player.stopTrack();
     updatePlayerUI(interaction.guildId);
-    await interaction.reply({ content: `Stopped playback and cleared queue.`, flags: 64 });
+    await interaction.reply({ content: `Stopped playback and cleared queue.` });
     announceToVC(`<:stop:1528165509508632821> **${interaction.user.displayName}** stopped the playback and cleared the queue.`);
   } else if (action === 'repeat') {
     queue.repeatTrack = !queue.repeatTrack;
     updatePlayerUI(interaction.guildId);
-    await interaction.reply({ content: `Repeat is now **${queue.repeatTrack ? 'ON' : 'OFF'}**.`, flags: 64 });
+    await interaction.reply({ content: `Repeat is now **${queue.repeatTrack ? 'ON' : 'OFF'}**.` });
     announceToVC(`🔁 **${interaction.user.displayName}** turned repeat **${queue.repeatTrack ? 'ON' : 'OFF'}**.`);
   } else if (action === 'autoplay') {
     queue.autoplay = !queue.autoplay;
     updatePlayerUI(interaction.guildId);
-    await interaction.reply({ content: `Autoplay is now **${queue.autoplay ? 'ON' : 'OFF'}**.`, flags: 64 });
+    await interaction.reply({ content: `Autoplay is now **${queue.autoplay ? 'ON' : 'OFF'}**.` });
     announceToVC(`<:autoplay:1524695881339764767> **${interaction.user.displayName}** turned autoplay **${queue.autoplay ? 'ON' : 'OFF'}**.`);
   } else if (action === 'like') {
-    if (!queue.current) return interaction.reply({ content: `Nothing is playing to like!`, flags: 64 });
+    if (!queue.current) return interaction.reply({ content: `Nothing is playing to like!` });
     const added = db.toggleLikedSong(interaction.user.id, queue.current);
-    await interaction.reply({ content: added ? `🤍 Added **${queue.current.title}** to your Liked Songs! (Autoplay will prioritize these)` : `Removed from Liked Songs.`, flags: 64 });
+    await interaction.reply({ content: added ? `🤍 Added **${queue.current.title}** to your Liked Songs! (Autoplay will prioritize these)` : `Removed from Liked Songs.` });
     if (added) announceToVC(`🤍 **${interaction.user.displayName}** liked the current song!`);
   } else if (action === 'voldown') {
     queue.volume = Math.max(0, queue.volume - 10);
     if (queue.player) queue.player.setGlobalVolume(queue.volume);
     updatePlayerUI(interaction.guildId);
-    await interaction.reply({ content: `Volume decreased to ${queue.volume}%`, flags: 64 });
+    await interaction.reply({ content: `Volume decreased to ${queue.volume}%` });
     announceToVC(`<:volumedown:1528156479075516526> **${interaction.user.displayName}** decreased the volume to **${queue.volume}%**.`);
   } else if (action === 'volup') {
     queue.volume = Math.min(200, queue.volume + 10);
     if (queue.player) queue.player.setGlobalVolume(queue.volume);
     updatePlayerUI(interaction.guildId);
-    await interaction.reply({ content: `Volume increased to ${queue.volume}%`, flags: 64 });
+    await interaction.reply({ content: `Volume increased to ${queue.volume}%` });
     announceToVC(`<:volume:1524687855354380359> **${interaction.user.displayName}** increased the volume to **${queue.volume}%**.`);
   } else if (action === 'volreset') {
     queue.volume = 100;
     if (queue.player) queue.player.setGlobalVolume(queue.volume);
     updatePlayerUI(interaction.guildId);
-    await interaction.reply({ content: `Volume reset to 100%`, flags: 64 });
+    await interaction.reply({ content: `Volume reset to 100%` });
     announceToVC(`🔊 **${interaction.user.displayName}** reset the volume to **100%**.`);
   } else if (action === 'lyrics') {
      // Lyrics modal code

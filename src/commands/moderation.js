@@ -199,7 +199,7 @@ export const commands = [
       
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found in this server.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found in this server.`)] });
       }
 
       const result = await handleWarn(interaction.guild, interaction.member, target, reason);
@@ -231,7 +231,7 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
       }
 
       const result = await handleWarnings(interaction.guild, target);
@@ -266,7 +266,7 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
       }
 
       const result = await handleClearWarns(interaction.guild, interaction.member, target);
@@ -322,7 +322,7 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
       }
 
       const result = await handleTimeout(interaction.guild, interaction.member, target, durationStr, reason);
@@ -365,7 +365,7 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
       }
 
       const result = await handleKick(interaction.guild, interaction.member, target, reason);
@@ -518,7 +518,7 @@ export const commands = [
       if (channelId) {
         const remoteChannel = interaction.client.channels.cache.get(channelId);
         if (!remoteChannel) {
-          return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Could not find a channel with that ID. Make sure the bot is in that server.`)], flags: 64 });
+          return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Could not find a channel with that ID. Make sure the bot is in that server.`)] });
         }
         channel = remoteChannel;
       }
@@ -527,25 +527,25 @@ export const commands = [
       const sendableTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice];
 
       if (!sendableTypes.includes(channel.type)) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target must be a text channel, announcement channel, thread, or voice channel.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target must be a text channel, announcement channel, thread, or voice channel.`)] });
       }
 
       // Check bot has permission to send in the target channel
       const targetGuild = channel.guild;
       if (!targetGuild) {
-         return interaction.reply({ embeds: [embed.danger('Error', 'Target must be a server channel.')], flags: 64 });
+         return interaction.reply({ embeds: [embed.danger('Error', 'Target must be a server channel.')] });
       }
 
       const botMember = targetGuild.members.me;
       if (!channel.permissionsFor(botMember).has(PermissionFlagsBits.SendMessages)) {
-        return interaction.reply({ embeds: [embed.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}.\n\nGrant me access to that channel first.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}.\n\nGrant me access to that channel first.`)] });
       }
 
       try {
         await channel.send(text);
-        await interaction.reply({ embeds: [embed.success('Message Dispatched', `Message successfully sent to ${channel}.`)], flags: 64 });
+        await interaction.reply({ embeds: [embed.success('Message Dispatched', `Message successfully sent to ${channel}.`)] });
       } catch (err) {
-        await interaction.reply({ embeds: [embed.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)], flags: 64 }).catch(() => null);
+        await interaction.reply({ embeds: [embed.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)] }).catch(() => null);
       }
     }
   },
@@ -649,7 +649,7 @@ export const commands = [
     async executeSlash(interaction) {
       const amount = interaction.options.getInteger('amount');
       const result = await handlePurge(interaction.guild, interaction.channel, interaction.member, amount);
-      await interaction.reply({ embeds: [result.embed], flags: 64 });
+      await interaction.reply({ embeds: [result.embed] });
     }
   },
 
@@ -747,7 +747,7 @@ export const commands = [
                       interaction.user.id === interaction.guild.ownerId ||
                       isExtraOwner(interaction.guild.id, interaction.user.id);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', `${interaction.user} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)], flags: 64 });
+        return interaction.reply({ embeds: [embed.danger('Access Denied', `${interaction.user} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)] });
       }
       await interaction.deferReply();
       const result = await handleUnbanAll(interaction.guild, interaction.member);

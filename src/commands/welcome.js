@@ -146,7 +146,7 @@ function getManagerPanel(guildId, type) {
     new ButtonBuilder().setCustomId(`${prefix}reset`).setLabel('Reset All').setStyle(ButtonStyle.Danger)
   );
 
-  return { embeds: [e], components: [channelSelectRow, row1, row2, row3], flags: 64 };
+  return { embeds: [e], components: [channelSelectRow, row1, row2, row3] };
 }
 
 // ============================================================
@@ -194,13 +194,13 @@ export async function handleWelcomeManagerButton(interaction) {
   }
 
   if (action === 'test') {
-    if (!cfg.channelId) return interaction.reply({ embeds: [embed.warn('Channel Not Set', 'Please select a channel first.')], flags: 64 });
+    if (!cfg.channelId) return interaction.reply({ embeds: [embed.warn('Channel Not Set', 'Please select a channel first.')] });
     const content = cfg.message ? resolve(cfg.message, interaction.member) : undefined;
     const testEmbed = buildWelcomeEmbed(interaction.member, cfg);
     const payload = { embeds: [] };
     if (content) payload.content = `**[Preview]** ${content}`;
     if (testEmbed) payload.embeds = [testEmbed];
-    await interaction.reply({ ...payload, flags: 64 });
+    await interaction.reply({ ...payload });
     return;
   }
 
