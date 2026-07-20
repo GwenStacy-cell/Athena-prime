@@ -221,8 +221,9 @@ function handleShutdown(signal) {
       db.saveTimeout = null;
       try {
         const fs = require('fs');
+        const path = require('path');
         const data = JSON.stringify(db.cache, null, 2);
-        fs.writeFileSync(db.dbPath, data, 'utf8');
+        fs.writeFileSync(path.resolve('data', 'db.json'), data, 'utf8');
         console.log(chalk.green('[System] Database saved successfully.'));
       } catch (e) {
         console.error('[System] Failed to save database during shutdown:', e);
