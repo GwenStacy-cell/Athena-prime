@@ -33,17 +33,17 @@ const FONT_BOLD   = '"NotoSans", "NotoSansCJK", "NotoSansMath", "Segoe UI Emoji"
 // STATBOT EXACT COLOR PALETTE
 // ============================================================
 const C = {
-  bg:        '#1E2124',   // Card background (near-black)
-  panel:     '#282B30',   // Panel / section background
-  innerBox:  '#1E2124',   // Inner stat row boxes (same as bg = inset feel)
-  badge:     '#2C2F33',   // Date badge background
+  bg:        '#2B2D31',   // Card background (modern Discord gray)
+  panel:     '#313338',   // Panel / section background
+  innerBox:  '#2B2D31',   // Inner stat row boxes (same as bg = inset feel)
+  badge:     '#1E1F22',   // Date badge background (darker)
   white:     '#FFFFFF',
-  gray:      '#99AAB5',   // Secondary text (Discord muted)
-  muted:     '#72767D',   // Footer text
-  green:     '#43B581',   // Message line / Powered by
-  pink:      '#F47FFF',   // Voice line (lighter pink — matches Statbot)
+  gray:      '#B5BAC1',   // Secondary text (Discord muted)
+  muted:     '#949BA4',   // Footer text
+  green:     '#23A559',   // Message line / Powered by (Discord green)
+  pink:      '#F47FFF',   // Voice line (lighter pink)
   pinkDim:   '#E83D84',   // Darker pink fallback
-  accent:    '#43B581',
+  accent:    '#23A559',
 };
 
 // ============================================================
@@ -269,10 +269,11 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   const guildIconUrl = guild?.iconURL({ extension: 'png', size: 64 });
   let serverTextX = AVATAR_CX + AVATAR_R + 14;
   if (guildIconUrl) {
-    await drawCircularImage(ctx, guildIconUrl, serverTextX + 10, AVATAR_CY + 13, 10);
-    serverTextX += 26;
+    // Increased radius from 10 to 14
+    await drawCircularImage(ctx, guildIconUrl, serverTextX + 14, AVATAR_CY + 13, 14);
+    serverTextX += 34; // Adjusted offset for larger icon
   }
-  ctx.fillText(truncateText(ctx, serverName, maxNameSpace - 26), serverTextX, AVATAR_CY + 18);
+  ctx.fillText(truncateText(ctx, serverName, maxNameSpace - 34), serverTextX, AVATAR_CY + 18);
 
   // Separator line
   ctx.fillStyle = '#33363C';
@@ -427,14 +428,6 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   const topVcCh = topVc ? (guild?.channels.cache.get(topVc.channel_id)) : null;
   const topVcName = topVcCh ? topVcCh.name : (topVc ? 'deleted-channel' : 'No Activity');
   drawChannelRow(BOT_Y + 76, '\uf028', topVcName, topVc ? formatHours(topVc.total) : '0 secs'); // Volume high
-
-  // 3rd row (empty / games placeholder like Statbot)
-  drawInnerBox(ctx, PAD + 12, BOT_Y + 114, TC_W - 24, 30);
-  ctx.font = '14px "FontAwesome"';
-  ctx.fillStyle = C.gray;
-  ctx.textAlign = 'center';
-  ctx.fillText('\uf11b', PAD + 12 + 14, BOT_Y + 114 + 20); // Gamepad
-  ctx.textAlign = 'left';
 
   // --- Charts panel ---
   drawPanel(ctx, CH_X, BOT_Y, CH_W, BOT_H);
