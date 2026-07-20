@@ -23,6 +23,7 @@ tryRegisterFont('NotoSansCJK-Regular.otf', { family: 'NotoSansCJK', weight: 'nor
 tryRegisterFont('NotoSansMath-Regular.ttf', { family: 'NotoSansMath', weight: 'normal' });
 tryRegisterFont('Roboto-Bold.ttf',      { family: 'Roboto', weight: 'bold' });
 tryRegisterFont('Roboto-Regular.ttf',   { family: 'Roboto', weight: 'normal' });
+tryRegisterFont('fa-solid-900.ttf',     { family: 'FontAwesome', weight: '900' });
 
 // Font stacks: NotoSans handles most Unicode, Math handles math alphanumeric, Roboto is the visual style font, Segoe UI Emoji handles UI icons natively on Windows
 const FONT_NORMAL = '"NotoSans", "NotoSansCJK", "NotoSansMath", "Segoe UI Emoji", "Roboto", sans-serif';
@@ -105,9 +106,14 @@ function formatHoursShort(seconds) {
 }
 
 /**
- * Draw a rounded rectangle (filled).
+ * Draw a rounded rectangle (filled) with optional shadow.
  */
-function roundRect(ctx, x, y, w, h, r = 8, color = C.panel) {
+function drawPanel(ctx, x, y, w, h, r = 10, color = C.panel, hasShadow = true) {
+  if (hasShadow) {
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 6;
+  }
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.lineTo(x + w - r, y);
@@ -121,20 +127,19 @@ function roundRect(ctx, x, y, w, h, r = 8, color = C.panel) {
   ctx.closePath();
   ctx.fillStyle = color;
   ctx.fill();
+  
+  if (hasShadow) {
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+  }
 }
 
 /**
- * Draw the outer card with rounded corners and shadow.
+ * Draw an inner rounded box (no shadow).
  */
-function drawCard(ctx, x, y, w, h) {
-  // Subtle outer shadow
-  ctx.shadowColor = 'rgba(0,0,0,0.7)';
-  ctx.shadowBlur = 16;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 4;
-  roundRect(ctx, x, y, w, h, 16, C.panel);
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
+function drawInnerBox(ctx, x, y, w, h, r = 6) {
+  drawPanel(ctx, x, y, w, h, r, C.innerBox, false);
 }
 
 /**
@@ -214,45 +219,60 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   const avatarUrl = user.displayAvatarURL({ extension: 'png', size: 256 });
   await drawCircularImage(ctx, avatarUrl, AVATAR_CX, AVATAR_CY, AVATAR_R);
 
-  // Username line: "DisplayName - username" then server name below
-  const displayName = safeText(member?.displayName || user.username);
-  const userName    = safeText(user.username);
-
-  ctx.font = `bold 30px ${FONT_BOLD}`;
-  ctx.fillStyle = C.white;
-  const nameText = displayName;
-  ctx.fillText(nameText, AVATAR_CX + AVATAR_R + 14, AVATAR_CY - 10);
-
-  // Username in gray italic after display name
-  if (displayName !== userName) {
-    const nameW = ctx.measureText(nameText).width;
-    ctx.font = `italic 18px ${FONT_NORMAL}`;
-    ctx.fillStyle = C.gray;
-    ctx.fillText(`- ${userName}`, AVATAR_CX + AVATAR_R + 14 + nameW + 8, AVATAR_CY - 8);
-  }
-
-  // Server name + icon below
-  const serverName = safeText(guild?.name || '');
-  ctx.font = `16px ${FONT_NORMAL}`;
-  ctx.fillStyle = C.gray;
-  ctx.fillText(serverName, AVATAR_CX + AVATAR_R + 14, AVATAR_CY + 18);
-
   // Created On / Joined On badges (top right)
-  const createdDate = new Date(user.createdTimestamp).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const joinedDate  = member ? new Date(member.joinedTimestamp).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Unknown';
+  const createdDate = new Date(user.createdTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const joinedDate  = member ? new Date(member.joinedTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown';
 
   const drawBadge = (label, value, bx) => {
-    roundRect(ctx, bx, PAD, 155, 54, 8, C.badge);
+    drawPanel(ctx, bx, PAD, 140, 54, 8, C.badge, true);
     ctx.font = `bold 11px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     ctx.fillText(label, bx + 12, PAD + 20);
     ctx.font = `14px ${FONT_NORMAL}`;
-    ctx.fillStyle = C.white;
+    ctx.fillStyle = C.gray;
     ctx.fillText(value, bx + 12, PAD + 40);
   };
 
-  drawBadge('Created On', createdDate, W - PAD - 155 - 10 - 155);
-  drawBadge('Joined On', joinedDate, W - PAD - 155);
+  const badge1X = W - PAD - 140 - 10 - 140;
+  const badge2X = W - PAD - 140;
+  drawBadge('Created On', createdDate, badge1X);
+  drawBadge('Joined On', joinedDate, badge2X);
+
+  // Username line: "DisplayName - username" then server name below
+  const displayName = safeText(member?.displayName || user.username);
+  const userName    = safeText(user.username);
+
+  ctx.font = `bold 28px ${FONT_BOLD}`;
+  ctx.fillStyle = C.white;
+  
+  // Truncate display name if it's extremely long
+  const maxNameSpace = badge1X - (AVATAR_CX + AVATAR_R + 14) - 20;
+  let nameText = truncateText(ctx, displayName, maxNameSpace * 0.6);
+  ctx.fillText(nameText, AVATAR_CX + AVATAR_R + 14, AVATAR_CY - 10);
+
+  // Username in gray after display name (truncate this too if needed)
+  if (displayName !== userName) {
+    const nameW = ctx.measureText(nameText).width;
+    ctx.font = `16px ${FONT_NORMAL}`;
+    ctx.fillStyle = C.gray;
+    const remainingSpace = maxNameSpace - nameW - 10;
+    const truncUserName = truncateText(ctx, `- ${userName}`, remainingSpace);
+    ctx.fillText(truncUserName, AVATAR_CX + AVATAR_R + 14 + nameW + 8, AVATAR_CY - 10);
+  }
+
+  // Server name + Server Icon below
+  const serverName = safeText(guild?.name || '');
+  ctx.font = `16px ${FONT_NORMAL}`;
+  ctx.fillStyle = C.gray;
+  
+  // Draw small server icon if available
+  const guildIconUrl = guild?.iconURL({ extension: 'png', size: 64 });
+  let serverTextX = AVATAR_CX + AVATAR_R + 14;
+  if (guildIconUrl) {
+    await drawCircularImage(ctx, guildIconUrl, serverTextX + 10, AVATAR_CY + 13, 10);
+    serverTextX += 26;
+  }
+  ctx.fillText(truncateText(ctx, serverName, maxNameSpace - 26), serverTextX, AVATAR_CY + 18);
 
   // Separator line
   ctx.fillStyle = '#33363C';
@@ -266,25 +286,23 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   const COL23_W = (W - PAD * 2 - COL1_W - COL_GAP * 2) / 2;
 
   // --- Server Ranks panel ---
-  roundRect(ctx, PAD, MID_Y, COL1_W, MID_H, 10, C.panel);
+  drawPanel(ctx, PAD, MID_Y, COL1_W, MID_H);
 
   ctx.font = `bold 17px ${FONT_BOLD}`;
   ctx.fillStyle = C.white;
   ctx.fillText('Server Ranks', PAD + 14, MID_Y + 26);
-  // Trophy icon text
-  ctx.font = `18px ${FONT_NORMAL}`;
+  // Trophy icon (FontAwesome)
+  ctx.font = '16px "FontAwesome"';
   ctx.fillStyle = C.gray;
   ctx.textAlign = 'right';
-  ctx.fillText('🏆', PAD + COL1_W - 12, MID_Y + 26);
+  ctx.fillText('\uf091', PAD + COL1_W - 14, MID_Y + 26); // Trophy
   ctx.textAlign = 'left';
 
   const drawRankRow = (y, label, value) => {
-    roundRect(ctx, PAD + 12, y, COL1_W - 24, 32, 6, C.innerBox);
+    drawInnerBox(ctx, PAD + 12, y, COL1_W - 24, 32);
     ctx.font = `bold 15px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     ctx.fillText(label, PAD + 22, y + 21);
-    ctx.font = `bold 15px ${FONT_BOLD}`;
-    ctx.fillStyle = C.white;
     ctx.textAlign = 'right';
     ctx.fillText(value, PAD + COL1_W - 16, y + 21);
     ctx.textAlign = 'left';
@@ -295,19 +313,19 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
 
   // --- Messages panel ---
   const MSG_X = PAD + COL1_W + COL_GAP;
-  roundRect(ctx, MSG_X, MID_Y, COL23_W, MID_H, 10, C.panel);
+  drawPanel(ctx, MSG_X, MID_Y, COL23_W, MID_H);
   ctx.font = `bold 17px ${FONT_BOLD}`;
   ctx.fillStyle = C.white;
   ctx.fillText('Messages', MSG_X + 14, MID_Y + 26);
-  ctx.font = `18px ${FONT_NORMAL}`;
+  ctx.font = '16px "FontAwesome"';
   ctx.fillStyle = C.gray;
   ctx.textAlign = 'right';
-  ctx.fillText('#', MSG_X + COL23_W - 12, MID_Y + 26);
+  ctx.fillText('#', MSG_X + COL23_W - 14, MID_Y + 26);
   ctx.textAlign = 'left';
 
   const drawStatRow = (x, y, colW, label, numStr, suffix) => {
     // Label box
-    roundRect(ctx, x + 12, y, 38, 30, 5, C.innerBox);
+    drawInnerBox(ctx, x + 12, y, 38, 30, 5);
     ctx.font = `bold 14px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     ctx.textAlign = 'center';
@@ -321,7 +339,7 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
     ctx.fillText(numStr, x + 58, y + 20);
 
     // Italic suffix
-    ctx.font = `italic 14px ${FONT_NORMAL}`;
+    ctx.font = `14px ${FONT_NORMAL}`;
     ctx.fillStyle = C.gray;
     ctx.fillText(suffix, x + 58 + numW + 5, y + 20);
   };
@@ -332,14 +350,14 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
 
   // --- Voice Activity panel ---
   const VC_X = MSG_X + COL23_W + COL_GAP;
-  roundRect(ctx, VC_X, MID_Y, COL23_W, MID_H, 10, C.panel);
+  drawPanel(ctx, VC_X, MID_Y, COL23_W, MID_H);
   ctx.font = `bold 17px ${FONT_BOLD}`;
   ctx.fillStyle = C.white;
   ctx.fillText('Voice Activity', VC_X + 14, MID_Y + 26);
-  ctx.font = `18px ${FONT_NORMAL}`;
+  ctx.font = '16px "FontAwesome"';
   ctx.fillStyle = C.gray;
   ctx.textAlign = 'right';
-  ctx.fillText('🔊', VC_X + COL23_W - 12, MID_Y + 26);
+  ctx.fillText('\uf028', VC_X + COL23_W - 14, MID_Y + 26); // Volume up
   ctx.textAlign = 'left';
 
   const drawVcRow = (x, y, colW, label, seconds) => {
@@ -362,24 +380,24 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   const CH_W = W - PAD - TC_W - COL_GAP - PAD;
 
   // --- Top Channels & Applications panel ---
-  roundRect(ctx, PAD, BOT_Y, TC_W, BOT_H, 10, C.panel);
+  drawPanel(ctx, PAD, BOT_Y, TC_W, BOT_H);
   ctx.font = `bold 17px ${FONT_BOLD}`;
   ctx.fillStyle = C.white;
   ctx.fillText('Top Channels & Applications', PAD + 14, BOT_Y + 26);
-  ctx.font = `18px ${FONT_NORMAL}`;
+  ctx.font = '16px "FontAwesome"';
   ctx.fillStyle = C.gray;
   ctx.textAlign = 'right';
-  ctx.fillText('↗', PAD + TC_W - 12, BOT_Y + 26);
+  ctx.fillText('\uf201', PAD + TC_W - 14, BOT_Y + 26); // Chart line up
   ctx.textAlign = 'left';
 
-  const drawChannelRow = (y, iconText, rawName, valueStr) => {
-    roundRect(ctx, PAD + 12, y, TC_W - 24, 30, 5, C.innerBox);
+  const drawChannelRow = (y, iconChar, rawName, valueStr) => {
+    drawInnerBox(ctx, PAD + 12, y, TC_W - 24, 30);
 
     // Icon
-    ctx.font = `bold 13px ${FONT_BOLD}`;
+    ctx.font = '12px "FontAwesome"';
     ctx.fillStyle = C.gray;
     ctx.textAlign = 'center';
-    ctx.fillText(iconText, PAD + 12 + 14, y + 20);
+    ctx.fillText(iconChar, PAD + 12 + 14, y + 20);
     ctx.textAlign = 'left';
 
     // Channel name (truncate to fit)
@@ -408,18 +426,18 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   const topVc = topChannels.voice[0];
   const topVcCh = topVc ? (guild?.channels.cache.get(topVc.channel_id)) : null;
   const topVcName = topVcCh ? topVcCh.name : (topVc ? 'deleted-channel' : 'No Activity');
-  drawChannelRow(BOT_Y + 76, '🔊', topVcName, topVc ? formatHours(topVc.total) : '0 secs');
+  drawChannelRow(BOT_Y + 76, '\uf028', topVcName, topVc ? formatHours(topVc.total) : '0 secs'); // Volume high
 
   // 3rd row (empty / games placeholder like Statbot)
-  roundRect(ctx, PAD + 12, BOT_Y + 114, TC_W - 24, 30, 5, C.innerBox);
-  ctx.font = `bold 13px ${FONT_BOLD}`;
+  drawInnerBox(ctx, PAD + 12, BOT_Y + 114, TC_W - 24, 30);
+  ctx.font = '14px "FontAwesome"';
   ctx.fillStyle = C.gray;
   ctx.textAlign = 'center';
-  ctx.fillText('🎮', PAD + 12 + 14, BOT_Y + 114 + 20);
+  ctx.fillText('\uf11b', PAD + 12 + 14, BOT_Y + 114 + 20); // Gamepad
   ctx.textAlign = 'left';
 
   // --- Charts panel ---
-  roundRect(ctx, CH_X, BOT_Y, CH_W, BOT_H, 10, C.panel);
+  drawPanel(ctx, CH_X, BOT_Y, CH_W, BOT_H);
   ctx.font = `bold 17px ${FONT_BOLD}`;
   ctx.fillStyle = C.white;
   ctx.fillText('Charts', CH_X + 14, BOT_Y + 26);
@@ -519,17 +537,17 @@ export async function generateServerOverviewImage(guild, stats) {
   const botJoinedDate = guild.joinedTimestamp ? new Date(guild.joinedTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown';
 
   const drawBadge2 = (label, value, bx) => {
-    roundRect(ctx, bx, PAD, 155, 54, 8, C.badge);
+    drawPanel(ctx, bx, PAD, 140, 54, 8, C.badge, true);
     ctx.font = `bold 11px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     ctx.fillText(label, bx + 12, PAD + 20);
     ctx.font = `14px ${FONT_NORMAL}`;
-    ctx.fillStyle = C.white;
+    ctx.fillStyle = C.gray;
     ctx.fillText(value, bx + 12, PAD + 40);
   };
 
-  drawBadge2('Created On', createdDate, W - PAD - 155 - 10 - 155);
-  drawBadge2('Invited Bot On', botJoinedDate, W - PAD - 155);
+  drawBadge2('Created On', createdDate, W - PAD - 140 - 10 - 140);
+  drawBadge2('Invited Bot On', botJoinedDate, W - PAD - 140);
 
   ctx.fillStyle = '#33363C';
   ctx.fillRect(PAD, ICON_CY + ICON_R + 14, W - PAD * 2, 1);
@@ -540,20 +558,20 @@ export async function generateServerOverviewImage(guild, stats) {
   const COL_GAP = 14;
   const COL_W = Math.floor((W - PAD * 2 - COL_GAP * 2) / 3);
 
-  const drawPanelTitle = (x, y, w, title, icon) => {
-    roundRect(ctx, x, y, w, ROW1_H, 10, C.panel);
+  const drawPanelTitle = (x, y, w, title, iconStr, isFa = false) => {
+    drawPanel(ctx, x, y, w, ROW1_H);
     ctx.font = `bold 17px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     ctx.fillText(title, x + 14, y + 28);
-    ctx.font = `18px ${FONT_NORMAL}`;
+    ctx.font = isFa ? '16px "FontAwesome"' : `18px ${FONT_NORMAL}`;
     ctx.fillStyle = C.gray;
     ctx.textAlign = 'right';
-    ctx.fillText(icon, x + w - 12, y + 28);
+    ctx.fillText(iconStr, x + w - 14, y + 28);
     ctx.textAlign = 'left';
   };
 
   const drawOverviewRow = (px, y, colW, label, numStr, suffix) => {
-    roundRect(ctx, px + 12, y, 40, 30, 5, C.innerBox);
+    drawInnerBox(ctx, px + 12, y, 40, 30, 5);
     ctx.font = `bold 14px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     ctx.textAlign = 'center';
@@ -577,14 +595,14 @@ export async function generateServerOverviewImage(guild, stats) {
 
   // Voice column
   const V_X = M_X + COL_W + COL_GAP;
-  drawPanelTitle(V_X, ROW1_Y, COL_W, 'Voice Activity', 'VC');
+  drawPanelTitle(V_X, ROW1_Y, COL_W, 'Voice Activity', '\uf028', true); // fa-volume-high
   drawOverviewRow(V_X, ROW1_Y + 42,  COL_W, '1d',  formatHoursShort(stats.overview.d1_vc),  'hours');
   drawOverviewRow(V_X, ROW1_Y + 78,  COL_W, '7d',  formatHoursShort(stats.overview.d7_vc),  'hours');
   drawOverviewRow(V_X, ROW1_Y + 114, COL_W, '14d', formatHoursShort(stats.overview.d14_vc), 'hours');
 
   // Contributors column
   const CO_X = V_X + COL_W + COL_GAP;
-  drawPanelTitle(CO_X, ROW1_Y, COL_W, 'Contributors', '');
+  drawPanelTitle(CO_X, ROW1_Y, COL_W, 'Contributors', '\uf0c0', true); // fa-users
   drawOverviewRow(CO_X, ROW1_Y + 42,  COL_W, '1d',  formatNumber(stats.overview.d1_contributors),  'members');
   drawOverviewRow(CO_X, ROW1_Y + 78,  COL_W, '7d',  formatNumber(stats.overview.d7_contributors),  'members');
   drawOverviewRow(CO_X, ROW1_Y + 114, COL_W, '14d', formatNumber(stats.overview.d14_contributors), 'members');
@@ -615,20 +633,20 @@ export async function generateServerOverviewImage(guild, stats) {
   const topVcUserName  = await resolveUser(stats.topMembers.voice?.user_id);
 
   // Top Members panel
-  roundRect(ctx, PAD, ROW2_Y, HALF_W, ROW2_H, 10, C.panel);
+  drawPanel(ctx, PAD, ROW2_Y, HALF_W, ROW2_H);
   ctx.font = `bold 17px ${FONT_BOLD}`;
   ctx.fillStyle = C.white;
   ctx.fillText('Top Members', PAD + 14, ROW2_Y + 28);
 
-  const drawRankingRow2 = (px, panelW, y, iconText, name, valueText) => {
-    ctx.font = `bold 14px ${FONT_BOLD}`;
+  const drawRankingRow2 = (px, panelW, y, iconChar, name, valueText, isFa = false) => {
+    ctx.font = isFa ? '14px "FontAwesome"' : `bold 14px ${FONT_BOLD}`;
     ctx.fillStyle = C.gray;
     ctx.textAlign = 'center';
-    ctx.fillText(iconText, px + 24, y + 20);
+    ctx.fillText(iconChar, px + 24, y + 20);
     ctx.textAlign = 'left';
 
     // Dark name box
-    roundRect(ctx, px + 42, y, panelW - 42 - 100 - 20, 30, 5, C.innerBox);
+    drawInnerBox(ctx, px + 42, y, panelW - 42 - 100 - 20, 30, 5);
     ctx.font = `bold 14px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     const maxNW = panelW - 42 - 100 - 30;
@@ -642,28 +660,28 @@ export async function generateServerOverviewImage(guild, stats) {
   };
 
   drawRankingRow2(PAD, HALF_W, ROW2_Y + 40, '#',   topMsgUserName, formatNumber(stats.topMembers.messages?.total || 0) + ' msgs');
-  drawRankingRow2(PAD, HALF_W, ROW2_Y + 76, 'VC',  topVcUserName,  formatHoursShort(stats.topMembers.voice?.total || 0) + ' hours');
+  drawRankingRow2(PAD, HALF_W, ROW2_Y + 76, '\uf028',  topVcUserName,  formatHoursShort(stats.topMembers.voice?.total || 0) + ' hours', true); // fa-volume-high
 
   // Top Channels panel
   const TC_X = PAD + HALF_W + COL_GAP;
-  roundRect(ctx, TC_X, ROW2_Y, HALF_W, ROW2_H, 10, C.panel);
+  drawPanel(ctx, TC_X, ROW2_Y, HALF_W, ROW2_H);
   ctx.font = `bold 17px ${FONT_BOLD}`;
   ctx.fillStyle = C.white;
   ctx.fillText('Top Channels', TC_X + 14, ROW2_Y + 28);
-  ctx.font = `18px ${FONT_NORMAL}`;
+  ctx.font = '16px "FontAwesome"';
   ctx.fillStyle = C.gray;
   ctx.textAlign = 'right';
-  ctx.fillText('V', TC_X + HALF_W - 12, ROW2_Y + 28);
+  ctx.fillText('\uf201', TC_X + HALF_W - 14, ROW2_Y + 28); // Chart line
   ctx.textAlign = 'left';
 
   drawRankingRow2(TC_X, HALF_W, ROW2_Y + 40, '#',   resolveChannel(stats.topChannels.messages?.channel_id), formatNumber(stats.topChannels.messages?.total || 0) + ' msgs');
-  drawRankingRow2(TC_X, HALF_W, ROW2_Y + 76, 'VC',  resolveChannel(stats.topChannels.voice?.channel_id),   formatHoursShort(stats.topChannels.voice?.total || 0) + ' hours');
+  drawRankingRow2(TC_X, HALF_W, ROW2_Y + 76, '\uf028',  resolveChannel(stats.topChannels.voice?.channel_id),   formatHoursShort(stats.topChannels.voice?.total || 0) + ' hours', true);
 
   // ---- ROW 3: Charts ----
   const ROW3_Y = ROW2_Y + ROW2_H + COL_GAP;
   const ROW3_H = H - ROW3_Y - PAD - 26;
 
-  roundRect(ctx, PAD, ROW3_Y, W - PAD * 2, ROW3_H, 10, C.panel);
+  drawPanel(ctx, PAD, ROW3_Y, W - PAD * 2, ROW3_H);
   ctx.font = `bold 17px ${FONT_BOLD}`;
   ctx.fillStyle = C.white;
   ctx.fillText('Charts', PAD + 14, ROW3_Y + 28);
@@ -751,7 +769,9 @@ export async function generateTopImage(guild, topMembers, type = 'messages') {
 
   ctx.font = `16px ${FONT_NORMAL}`;
   ctx.fillStyle = C.gray;
-  ctx.fillText('🏆 Top Statistics', ICON_CX + ICON_R + 14, ICON_CY + 18);
+  ctx.fillText('\uf091 Top Statistics', ICON_CX + ICON_R + 14, ICON_CY + 18);
+  ctx.font = '14px "FontAwesome"';
+  ctx.fillText('\uf091', ICON_CX + ICON_R + 14, ICON_CY + 18);
 
   ctx.fillStyle = '#33363C';
   ctx.fillRect(PAD, ICON_CY + ICON_R + 12, W - PAD * 2, 1);
@@ -779,7 +799,7 @@ export async function generateTopImage(guild, topMembers, type = 'messages') {
     const count  = formatNumber(member.total) + ` ${typeUnit}`;
 
     // Row background
-    roundRect(ctx, colX, rowY, COL_W, ROW_H - 6, 8, C.panel);
+    drawPanel(ctx, colX, rowY, COL_W, ROW_H - 6, 8, C.panel, true);
 
     // Rank number
     ctx.font = `bold 18px ${FONT_BOLD}`;
