@@ -255,6 +255,17 @@ export async function enqueue(guild, member, query) {
         console.error('Lavalink Player Error:', err);
         fs.writeFileSync('music_error_log.txt', String(err));
       });
+      queue.player.on('exception', (err) => {
+        console.error('Lavalink Track Exception:', err);
+        fs.writeFileSync('music_exception_log.txt', JSON.stringify(err, null, 2));
+      });
+      queue.player.on('stuck', (data) => {
+        console.error('Lavalink Track Stuck:', data);
+        fs.writeFileSync('music_stuck_log.txt', JSON.stringify(data, null, 2));
+      });
+      queue.player.on('start', () => {
+        console.log('Lavalink Track Started Playing successfully!');
+      });
 
       queue.player.on('closed', (data) => {
         // Voice channel closed or bot disconnected manually
@@ -477,7 +488,7 @@ async function playResource(guildId, song) {
          encoded: !!song.encoded
        });
        try {
-         await queue.player.playTrack({ track: song.encoded });
+         await queue.player.playTrack({ track: { encoded: song.encoded } });
          console.log("[DEBUG] playTrack() succeeded");
        } catch (err) {
          console.error("[DEBUG] playTrack failed:", err);
