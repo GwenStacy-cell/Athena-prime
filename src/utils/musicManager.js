@@ -266,26 +266,76 @@ export async function enqueue(guild, member, query) {
                console.log(`[Fallback] LavaSrc mirror failed for ${failedTrack.title}. Searching YouTube directly...`);
                const node = global.client.shoukaku.options.nodeResolver(global.client.shoukaku.nodes);
                if (node) {
-                  const fallbackQuery = `ytmsearch:${failedTrack.title} ${failedTrack.author || ''}`;
-                  const result = await node.rest.resolve(fallbackQuery);
+                  let result = await node.rest.resolve(`ytmsearch:${failedTrack.title} ${failedTrack.author || ''}`);
+                  if (!result || result.loadType !== 'search' || result.data.length === 0) {
+                      result = await node.rest.resolve(`ytsearch:${failedTrack.title} ${failedTrack.author || ''}`);
+                  }
                   
                   if (result && (result.loadType === 'search' || result.loadType === 'track') && result.data.length > 0) {
-                     const fallbackData = result.data[0];
+                     const timeToMs = (timeStr) => {
+                         if (!timeStr) return 0;
+                         const parts = timeStr.split(':').map(Number);
+                         if (parts.length === 3) return (parts[0]*3600 + parts[1]*60 + parts[2]) * 1000;
+                         if (parts.length === 2) return (parts[0]*60 + parts[1]) * 1000;
+                         return 0;
+                     };
+                     const targetMs = timeToMs(failedTrack.duration);
+                     
+                     let bestTrack = result.data[0];
+                     let bestScore = -1;
+                     
+                     const searchData = result.loadType === 'track' ? [result.data] : result.data.slice(0, 5);
+                     
+                     for (const t of searchData) {
+                         let score = 0;
+                         const tTitle = t.info.title.toLowerCase();
+                         const fTitle = failedTrack.title.toLowerCase();
+                         const tAuthor = t.info.author.toLowerCase();
+                         const fAuthor = (failedTrack.author || '').toLowerCase();
+                         
+                         if (tTitle.includes(fTitle) || fTitle.includes(tTitle)) score += 5;
+                         if (tAuthor && (tTitle.includes(fAuthor) || tAuthor.includes(fAuthor))) score += 3;
+                         
+                         if (targetMs > 0) {
+                             const diff = Math.abs(t.info.length - targetMs);
+                             if (diff < 5000) score += 5;
+                             else if (diff < 15000) score += 3;
+                             else if (diff > 60000) score -= 2;
+                         }
+                         if (tTitle.includes('live')) score -= 2;
+                         if (tTitle.includes('cover')) score -= 2;
+                         
+                         if (score > bestScore) {
+                             bestScore = score;
+                             bestTrack = t;
+                         }
+                     }
+                     
                      const newTrack = {
                        ...failedTrack,
-                       url: fallbackData.info.uri,
-                       encoded: fallbackData.encoded,
+                       title: bestTrack.info.title, // Use YT title so users know it's a fallback
+                       url: bestTrack.info.uri,
+                       encoded: bestTrack.encoded,
                        isFallback: true
                      };
                      
-                     // Re-inject the fallback track to the front of the queue
-                     // The 'end' event will immediately trigger and play this!
-                     queue.songs.unshift(newTrack);
+                     // Keep existing player alive and play directly
+                     queue.current = newTrack;
+                     queue.isPlaying = true;
                      
-                     if (queue.textChannel) {
-                        const tc = global.client.channels.cache.get(queue.textChannel);
-                        if (tc) tc.send(`⚠️ **LavaSrc Mirror Failed**. Falling back to YouTube Music for \`${failedTrack.title}\`...`).catch(()=>{});
+                     if (leaveTimeouts.has(guild.id)) {
+                         clearTimeout(leaveTimeouts.get(guild.id));
+                         leaveTimeouts.delete(guild.id);
                      }
+                     
+                     try {
+                        await queue.player.playTrack({ track: { encoded: bestTrack.encoded } });
+                        updatePlayerUI(guild.id);
+                        if (queue.textChannel) {
+                           const tc = global.client.channels.cache.get(queue.textChannel);
+                           if (tc) tc.send(`⚠️ **LavaSrc Mirror Failed**. Falling back to YouTube Music for \`${failedTrack.title}\`...`).catch(()=>{});
+                        }
+                     } catch(e) { console.error('Fallback playTrack failed', e); }
                   }
                }
            }
