@@ -152,14 +152,14 @@ export async function updateDashboardMessage(guild, client) {
     // Check if we need to post new messages or edit existing
     if (msgIds.length === 3) {
       try {
-        const m1 = await channel.messages.fetch(msgIds[0]);
-        await m1.edit({ embeds: [embedDb], files: [fileDb], attachments: [] });
-
-        const m2 = await channel.messages.fetch(msgIds[1]);
-        await m2.edit({ embeds: [embedTo], files: [fileTo], attachments: [] });
-
-        const m3 = await channel.messages.fetch(msgIds[2]);
-        await m3.edit({ embeds: [embedAm], files: [fileAm], attachments: [] });
+        let m1, m2, m3;
+        try { m1 = await channel.messages.fetch(msgIds[0]); } catch(e) { throw new Error(`Fetch m1 failed: ${e.code}`); }
+        try { m2 = await channel.messages.fetch(msgIds[1]); } catch(e) { throw new Error(`Fetch m2 failed: ${e.code}`); }
+        try { m3 = await channel.messages.fetch(msgIds[2]); } catch(e) { throw new Error(`Fetch m3 failed: ${e.code}`); }
+        
+        try { await m1.edit({ embeds: [embedDb], files: [fileDb], attachments: [] }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
+        try { await m2.edit({ embeds: [embedTo], files: [fileTo], attachments: [] }); } catch(e) { throw new Error(`Edit m2 failed: ${e.code}`); }
+        try { await m3.edit({ embeds: [embedAm], files: [fileAm], attachments: [] }); } catch(e) { throw new Error(`Edit m3 failed: ${e.code}`); }
         
         // Cleanup duplicates if any exist
         const fetched = await channel.messages.fetch({ limit: 50 }).catch(() => null);
@@ -172,13 +172,12 @@ export async function updateDashboardMessage(guild, client) {
 
         return; // Success
       } catch (err) {
-        if (err.code === 10008) {
-          console.log(`[Dashboard Sync] Old messages not found in ${guild.id}. (msgIds: ${msgIds.join(', ')}). Reposting dashboard...`);
+        if (err.message.includes('10008')) {
+          console.log(`[Dashboard Sync] Old messages not found in ${guild.id}. (msgIds: ${msgIds.join(', ')}). Error: ${err.message}. Reposting dashboard...`);
         } else {
           console.error(`[Dashboard Sync] Failed to edit messages in ${guild.id}:`, err.message);
           return; // Stop here, don't delete and repost!
         }
-        // Messages deleted or failed to edit (and it was 10008), we'll post new ones
       }
     }
 
