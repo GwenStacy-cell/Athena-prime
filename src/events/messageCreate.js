@@ -238,7 +238,7 @@ export default {
       setTimeout(() => {
         const stickyData = db.getStickyMessage(message.guild.id, message.channel.id);
         if (stickyData) {
-          const COOLDOWN = 3 * 60 * 1000; // 3 minutes
+          const COOLDOWN = 1000; // 1 second
           const now = Date.now();
           if (now - stickyData.lastSentAt > COOLDOWN) {
             // Delete old sticky message if it exists
