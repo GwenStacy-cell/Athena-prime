@@ -38,7 +38,8 @@ const DEFAULT_SCHEMA = {
   editRatings: {},   // messageId -> { authorId, authorName, mediaUrl, votes: {} }
   rateChannels: {},  // guildId -> channelId
   likedSongs: {},    // userId -> [ { title, url, duration, artworkUrl } ]
-  bannedServers: []  // global list of banned guild IDs
+  bannedServers: [], // global list of banned guild IDs
+  stickyMessages: {} // guildId -> { channelId -> { content, lastMessageId, lastSentAt } }
 };
 
 class Database {
@@ -1219,6 +1220,52 @@ class Database {
   isServerBanned(guildId) {
     if (!this.cache.bannedServers) return false;
     return this.cache.bannedServers.includes(guildId);
+  }
+
+  // --- STICKY MESSAGES ---
+  
+  getStickyMessage(guildId, channelId) {
+    if (!this.cache.stickyMessages) this.cache.stickyMessages = {};
+    if (!this.cache.stickyMessages[guildId]) return null;
+    return this.cache.stickyMessages[guildId][channelId] || null;
+  }
+
+  setStickyMessage(guildId, channelId, content) {
+    if (!this.cache.stickyMessages) this.cache.stickyMessages = {};
+    if (!this.cache.stickyMessages[guildId]) {
+      this.cache.stickyMessages[guildId] = {};
+    }
+    this.cache.stickyMessages[guildId][channelId] = {
+      content: content,
+      lastMessageId: null,
+      lastSentAt: 0
+    };
+    this.save();
+    return true;
+  }
+
+  removeStickyMessage(guildId, channelId) {
+    if (!this.cache.stickyMessages) return false;
+    if (!this.cache.stickyMessages[guildId]) return false;
+    if (this.cache.stickyMessages[guildId][channelId]) {
+      delete this.cache.stickyMessages[guildId][channelId];
+      if (Object.keys(this.cache.stickyMessages[guildId]).length === 0) {
+        delete this.cache.stickyMessages[guildId];
+      }
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  updateStickyMessageData(guildId, channelId, messageId, sentAt) {
+    if (!this.cache.stickyMessages) return;
+    if (!this.cache.stickyMessages[guildId]) return;
+    if (this.cache.stickyMessages[guildId][channelId]) {
+      this.cache.stickyMessages[guildId][channelId].lastMessageId = messageId;
+      this.cache.stickyMessages[guildId][channelId].lastSentAt = sentAt;
+      this.save();
+    }
   }
 }
 

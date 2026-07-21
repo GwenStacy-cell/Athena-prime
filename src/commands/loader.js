@@ -34,6 +34,7 @@ import { commands as rateCmds } from './rate.js';
 import { commands as recordCmds } from './record.js';
 import { commands as dateCmds } from './date.js';
 import { commands as topCmds } from './top.js';
+import { commands as stickyCmds } from './sticky.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -71,7 +72,8 @@ export const allCommands = [
   ...rateCmds,
   ...recordCmds,
   ...dateCmds,
-  ...topCmds
+  ...topCmds,
+  ...stickyCmds
 ];
 
 export const commandMap = new Map();
