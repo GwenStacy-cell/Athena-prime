@@ -235,31 +235,33 @@ export default {
     // STICKY MESSAGE LOGIC
     // ==========================================
     if (message.guild) {
-      const stickyData = db.getStickyMessage(message.guild.id, message.channel.id);
-      if (stickyData) {
-        const COOLDOWN = 3 * 60 * 1000; // 3 minutes
-        const now = Date.now();
-        if (now - stickyData.lastSentAt > COOLDOWN) {
-          // Delete old sticky message if it exists
-          if (stickyData.lastMessageId) {
-            message.channel.messages.delete(stickyData.lastMessageId).catch(() => null);
-          }
-          
-          const guildConfig = db.getGuildConfig(message.guild.id);
-          const accentColor = guildConfig?.accentColor || '#2b2d31';
-          
-          const stickyEmbed = embed.build({
-            description: stickyData.content,
-            color: accentColor,
-            footer: { text: '📌 Sticky Message' }
-          });
+      setTimeout(() => {
+        const stickyData = db.getStickyMessage(message.guild.id, message.channel.id);
+        if (stickyData) {
+          const COOLDOWN = 3 * 60 * 1000; // 3 minutes
+          const now = Date.now();
+          if (now - stickyData.lastSentAt > COOLDOWN) {
+            // Delete old sticky message if it exists
+            if (stickyData.lastMessageId) {
+              message.channel.messages.delete(stickyData.lastMessageId).catch(() => null);
+            }
+            
+            const guildConfig = db.getGuildConfig(message.guild.id);
+            const accentColor = guildConfig?.accentColor || '#2b2d31';
+            
+            const stickyEmbed = embed.build({
+              description: stickyData.content,
+              color: accentColor,
+              footerText: '📌 Sticky Message'
+            });
 
-          // Send new sticky and update DB
-          message.channel.send({ embeds: [stickyEmbed] }).then(sentMessage => {
-            db.updateStickyMessageData(message.guild.id, message.channel.id, sentMessage.id, now);
-          }).catch(() => null);
+            // Send new sticky and update DB
+            message.channel.send({ embeds: [stickyEmbed] }).then(sentMessage => {
+              db.updateStickyMessageData(message.guild.id, message.channel.id, sentMessage.id, now);
+            }).catch(() => null);
+          }
         }
-      }
+      }, 1500); // 1.5s delay ensures it falls below command responses
     }
     
     // ==========================================

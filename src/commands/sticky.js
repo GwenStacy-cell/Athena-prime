@@ -19,8 +19,12 @@ export const commands = [
       const action = args[0].toLowerCase();
 
       if (action === 'remove') {
+        const stickyData = db.getStickyMessage(message.guild.id, message.channel.id);
         const removed = db.removeStickyMessage(message.guild.id, message.channel.id);
         if (removed) {
+          if (stickyData && stickyData.lastMessageId) {
+            message.channel.messages.delete(stickyData.lastMessageId).catch(() => null);
+          }
           return message.reply({ embeds: [embed.success('Sticky Removed', 'The sticky message for this channel has been removed.')] });
         } else {
           return message.reply({ embeds: [embed.info('Not Found', 'There is no active sticky message in this channel.')] });
