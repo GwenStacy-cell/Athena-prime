@@ -944,12 +944,12 @@ export default {
         const warns = db.addWarning(guildId, userId, message.client.user.id, `Automated AutoMod: Matched blacklisted phrase: "${matchedWord}"`);
 
         const escapedMatch = matchedWord.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-        const highlightedMessage = message.content.replace(new RegExp(`(${escapedMatch})`, 'gi'), '**$1**');
+        const highlightedMessage = message.content.replace(new RegExp(`(${escapedMatch})`, 'gi'), '**__$1__**');
         const safeMessage = highlightedMessage.length > 1000 ? highlightedMessage.substring(0, 1000) + '...' : highlightedMessage;
 
         logToSecurityChannel(message.guild, embed.log(
           'Blacklisted Word Detected',
-          `Purged content containing filtered phrase.\\n\\n**Original Message:**\\n> ${safeMessage.replace(/\\n/g, '\\n> ')}`,
+          `Purged content containing filtered phrase.\n\n**Original Message:**\n> ${safeMessage.replace(/\n/g, '\n> ')}`,
           [
             { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
             { name: 'Channel', value: `${message.channel}`, inline: true },
