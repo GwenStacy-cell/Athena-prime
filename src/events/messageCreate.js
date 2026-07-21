@@ -932,19 +932,23 @@ export default {
     // ==========================================
     if (!hasAntiSpamImmunity && dbConfig.blacklistWords && dbConfig.blacklistWords.length > 0 && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const msgLower = message.content.toLowerCase();
-      const matchedWord = dbConfig.blacklistWords.find(word => {
+      const matchedWords = dbConfig.blacklistWords.filter(word => {
         const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         return new RegExp(`(?:^|\\W)${escapedWord}(?:$|\\W)`, 'i').test(msgLower);
       });
       
-      if (matchedWord) {
+      if (matchedWords.length > 0) {
         await message.delete().catch(() => null);
 
+        const matchedStr = matchedWords.join(', ');
         const maxWarnings = dbConfig.maxWarnings || 3;
-        const warns = db.addWarning(guildId, userId, message.client.user.id, `Automated AutoMod: Matched blacklisted phrase: "${matchedWord}"`);
+        const warns = db.addWarning(guildId, userId, message.client.user.id, `Automated AutoMod: Matched blacklisted phrase(s): "${matchedStr}"`);
 
-        const escapedMatch = matchedWord.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-        const highlightedMessage = message.content.replace(new RegExp(`(${escapedMatch})`, 'gi'), '**__$1__**');
+        let highlightedMessage = message.content;
+        for (const mw of matchedWords) {
+          const escapedMatch = mw.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+          highlightedMessage = highlightedMessage.replace(new RegExp(`(^|\\W)(${escapedMatch})(?=$|\\W)`, 'gi'), '$1**__$2__**');
+        }
         const safeMessage = highlightedMessage.length > 1000 ? highlightedMessage.substring(0, 1000) + '...' : highlightedMessage;
 
         logToSecurityChannel(message.guild, embed.log(
@@ -953,7 +957,7 @@ export default {
           [
             { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
             { name: 'Channel', value: `${message.channel}`, inline: true },
-            { name: 'Matched Word', value: `\`${matchedWord}\``, inline: true },
+            { name: 'Matched Word(s)', value: `\`${matchedStr}\``, inline: true },
             { name: 'Warnings Count', value: `\`${warns.length}\` / ${maxWarnings}` }
           ],
           'warning'
