@@ -7,27 +7,6 @@ export const commands = [
     name: 'sticky',
     description: 'Manage sticky messages in the current channel.',
     aliases: ['stick'],
-    type: 1,
-    options: [
-      {
-        name: 'set',
-        description: 'Set a sticky message for this channel',
-        type: 1, // SUB_COMMAND
-        options: [
-          {
-            name: 'message',
-            description: 'The text to stick to the bottom of the channel',
-            type: 3, // STRING
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'remove',
-        description: 'Remove the sticky message from this channel',
-        type: 1 // SUB_COMMAND
-      }
-    ],
     async executePrefix(message, args) {
       if (!message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
         return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} You must have **Manage Messages** permissions to use sticky commands.`)] });
@@ -60,28 +39,6 @@ export const commands = [
       }
 
       return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Invalid action. Usage: \`!sticky set <message>\` or \`!sticky remove\``)] });
-    },
-    async executeSlash(interaction) {
-      if (!interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} You must have **Manage Messages** permissions to use sticky commands.`)] });
-      }
-
-      const subcommand = interaction.options.getSubcommand();
-      
-      if (subcommand === 'remove') {
-        const removed = db.removeStickyMessage(interaction.guild.id, interaction.channel.id);
-        if (removed) {
-          return interaction.reply({ embeds: [embed.success('Sticky Removed', 'The sticky message for this channel has been removed.')] });
-        } else {
-          return interaction.reply({ embeds: [embed.info('Not Found', 'There is no active sticky message in this channel.')] });
-        }
-      }
-
-      if (subcommand === 'set') {
-        const content = interaction.options.getString('message');
-        db.setStickyMessage(interaction.guild.id, interaction.channel.id, content);
-        return interaction.reply({ embeds: [embed.success('Sticky Set', `Sticky message has been configured for this channel.\n\n**Preview:**\n> ${content}`)] });
-      }
     }
   }
 ];
