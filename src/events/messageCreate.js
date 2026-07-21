@@ -932,7 +932,10 @@ export default {
     // ==========================================
     if (!hasAntiSpamImmunity && dbConfig.blacklistWords && dbConfig.blacklistWords.length > 0 && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const msgLower = message.content.toLowerCase();
-      const matchedWord = dbConfig.blacklistWords.find(word => msgLower.includes(word));
+      const matchedWord = dbConfig.blacklistWords.find(word => {
+        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return new RegExp(`(?:^|\\W)${escapedWord}(?:$|\\W)`, 'i').test(msgLower);
+      });
       
       if (matchedWord) {
         await message.delete().catch(() => null);
