@@ -1239,7 +1239,7 @@ class Database {
     this.cache.stickyMessages[guildId][channelId] = {
       content: content,
       footerText: existing.footerText || null,
-      lastMessageId: null,
+      lastMessageId: existing.lastMessageId || null,
       lastSentAt: 0
     };
     this.save();
@@ -1251,6 +1251,7 @@ class Database {
     if (!this.cache.stickyMessages[guildId]) return false;
     if (this.cache.stickyMessages[guildId][channelId]) {
       this.cache.stickyMessages[guildId][channelId].footerText = footerText;
+      this.cache.stickyMessages[guildId][channelId].lastSentAt = 0;
       this.save();
       return true;
     }
