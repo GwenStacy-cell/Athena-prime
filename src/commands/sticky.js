@@ -41,8 +41,22 @@ export const commands = [
         
         return message.reply({ embeds: [embed.success('Sticky Set', `Sticky message has been configured for this channel.\n\n**Preview:**\n> ${content}`)] });
       }
+      
+      if (action === 'footer') {
+        const footerText = args.slice(1).join(' ');
+        if (!footerText) {
+          return message.reply({ embeds: [embed.warn('Command Error', `${message.author} You must provide text for the footer. Example: \`!sticky footer Custom Footer Text\``)] });
+        }
+        
+        const success = db.setStickyFooter(message.guild.id, message.channel.id, footerText);
+        if (success) {
+          return message.reply({ embeds: [embed.success('Footer Updated', `The sticky message footer for this channel has been updated to:\n\`${footerText}\``)] });
+        } else {
+          return message.reply({ embeds: [embed.info('Not Found', 'There is no active sticky message in this channel. Use `!sticky set` first.')] });
+        }
+      }
 
-      return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Invalid action. Usage: \`!sticky set <message>\` or \`!sticky remove\``)] });
+      return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Invalid action. Usage: \`!sticky set <message>\`, \`!sticky footer <text>\`, or \`!sticky remove\``)] });
     }
   }
 ];

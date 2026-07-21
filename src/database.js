@@ -1235,13 +1235,26 @@ class Database {
     if (!this.cache.stickyMessages[guildId]) {
       this.cache.stickyMessages[guildId] = {};
     }
+    const existing = this.cache.stickyMessages[guildId][channelId] || {};
     this.cache.stickyMessages[guildId][channelId] = {
       content: content,
+      footerText: existing.footerText || null,
       lastMessageId: null,
       lastSentAt: 0
     };
     this.save();
     return true;
+  }
+
+  setStickyFooter(guildId, channelId, footerText) {
+    if (!this.cache.stickyMessages) return false;
+    if (!this.cache.stickyMessages[guildId]) return false;
+    if (this.cache.stickyMessages[guildId][channelId]) {
+      this.cache.stickyMessages[guildId][channelId].footerText = footerText;
+      this.save();
+      return true;
+    }
+    return false;
   }
 
   removeStickyMessage(guildId, channelId) {

@@ -252,7 +252,7 @@ export default {
             const stickyEmbed = embed.build({
               description: stickyData.content,
               color: accentColor,
-              footerText: '📌 Sticky Message'
+              footerText: stickyData.footerText || 'Sticky Message'
             });
 
             // Send new sticky and update DB
