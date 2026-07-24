@@ -87,13 +87,7 @@ export function scheduleAutoUnquarantine(client, guildId, userId, durationMs) {
       if (!member) return;
       const botMember = guild.members.me;
       
-      const result = await executeUnquarantine(guild, member, botMember);
-      if (result.success) {
-        logToSecurityChannel(guild, embed.info(
-          'Auto-Unquarantine',
-          ` <@${userId}>'s quarantine duration expired — automatically released.`
-        ));
-      }
+      await executeUnquarantine(guild, member, botMember, 'auto');
     } catch (err) {
       console.error('[AutoUnquarantine]', err);
     }
@@ -1689,15 +1683,22 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     await targetMember.send({ embeds: [dmEmbed] }).catch(() => null);
 
     // Log the event
-    logToSecurityChannel(guild, embed.log(
-      'Quarantine Lifted',
-      `Member has been restored.`,
-      [
-        { name: 'Target', value: `${targetMember.user.tag} (${targetMember.id})`, inline: true },
-        { name: 'Moderator', value: `${moderator.user?.tag || 'System'}`, inline: true }
-      ],
-      'success'
-    ));
+    if (context === 'auto') {
+      logToSecurityChannel(guild, embed.info(
+        'Auto-Unquarantine',
+        `<@${targetMember.id}>'s quarantine duration expired — automatically released.`
+      ));
+    } else {
+      logToSecurityChannel(guild, embed.log(
+        'Quarantine Lifted',
+        `Member has been restored.`,
+        [
+          { name: 'Target', value: `${targetMember.user.tag} (${targetMember.id})`, inline: true },
+          { name: 'Moderator', value: `${moderator.user?.tag || 'System'}`, inline: true }
+        ],
+        'success'
+      ));
+    }
 
     const responseEmbed = embed.success(
       'Quarantine Lifted',
