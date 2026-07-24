@@ -913,9 +913,10 @@ export default {
             }
           ];
 
-          if (ticketConfig.staffRoleId) {
+          const staffRoleIds = ticketConfig.staffRoleIds || (ticketConfig.staffRoleId ? [ticketConfig.staffRoleId] : []);
+          for (const roleId of staffRoleIds) {
             permissionOverwrites.push({
-              id: ticketConfig.staffRoleId, // Staff
+              id: roleId, // Staff
               allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak],
             });
           }
@@ -952,8 +953,9 @@ export default {
               .setStyle(ButtonStyle.Danger)
           );
 
+          const roleMentions = staffRoleIds.map(id => `<@&${id}>`).join(' ');
           await textChannel.send({
-            content: ticketConfig.staffRoleId ? `<@&${ticketConfig.staffRoleId}>` : undefined,
+            content: roleMentions.length > 0 ? roleMentions : undefined,
             embeds: [ticketEmbed],
             components: [closeRow]
           });

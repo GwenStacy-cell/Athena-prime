@@ -23,9 +23,27 @@ export const commands = [
           },
           {
             name: 'staff_role',
-            description: 'The role that handles support tickets',
+            description: 'The primary role that handles support tickets',
             type: 8, // ROLE
             required: true
+          },
+          {
+            name: 'staff_role_2',
+            description: 'Additional staff role',
+            type: 8,
+            required: false
+          },
+          {
+            name: 'staff_role_3',
+            description: 'Additional staff role',
+            type: 8,
+            required: false
+          },
+          {
+            name: 'staff_role_4',
+            description: 'Additional staff role',
+            type: 8,
+            required: false
           }
         ]
       }
@@ -38,7 +56,12 @@ export const commands = [
         await interaction.deferReply();
         
         const category = interaction.options.getChannel('category');
-        const role = interaction.options.getRole('staff_role');
+        const role1 = interaction.options.getRole('staff_role');
+        const role2 = interaction.options.getRole('staff_role_2');
+        const role3 = interaction.options.getRole('staff_role_3');
+        const role4 = interaction.options.getRole('staff_role_4');
+        
+        const staffRoles = [role1, role2, role3, role4].filter(r => r !== null).map(r => r.id);
 
         const config = db.getGuildConfig(guildId);
         const accentColor = config.accentColor || '#3b82f6';
@@ -62,10 +85,11 @@ export const commands = [
 
         db.updateTicketConfig(guildId, {
           categoryId: category.id,
-          staffRoleId: role.id
+          staffRoleIds: staffRoles
         });
 
-        await interaction.editReply({ embeds: [embed.success('Ticket System Deployed', `The ticket panel has been deployed successfully. Tickets will be created under ${category} and ${role} will be pinged.`)] });
+        const roleMentions = staffRoles.map(id => `<@&${id}>`).join(', ');
+        await interaction.editReply({ embeds: [embed.success('Ticket System Deployed', `The ticket panel has been deployed successfully. Tickets will be created under ${category} and ${roleMentions} will be pinged.`)] });
       }
     }
   }

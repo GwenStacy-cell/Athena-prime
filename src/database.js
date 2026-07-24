@@ -29,7 +29,7 @@ const DEFAULT_SCHEMA = {
   giveaways: {},     // messageId -> { guildId, channelId, hostId, prize, winnersCount, endsAt, participants: [] }
   newsFeeds: {},     // guildId -> { channelId, roleId, feeds: [{name, url}], lastGuids: [] }
   verification: {},  // guildId -> { roleId, messageId, channelId }
-  tickets: {},       // guildId -> { categoryId, staffRoleId, ticketCount: 0, activeTickets: {} } // ticketId -> { textId, voiceId, ownerId }
+  tickets: {},       // guildId -> { categoryId, staffRoleIds: [], ticketCount: 0, activeTickets: {} } // ticketId -> { textId, voiceId, ownerId }
   xpSystems: {},     // guildId -> { enabled: false, announceChannelId: null, cmdChannelId: null, roleRewards: { level -> roleId }, multipliers: { roleId -> multiplier } }
   usersXp: {},       // guildId -> { userId -> { xp: 0, level: 0, lastMessageAt: 0, voiceJoinAt: 0 } }
   moveProtection: {},// guildId -> [userIds]
