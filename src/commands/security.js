@@ -1224,7 +1224,11 @@ export const commands = [
     async executePrefix(message, args) {
       const action = args[0]?.toLowerCase();
       if (!action) return message.reply({ embeds: [embed.warn('Usage', 'Usage: `!qrmanager setup|setrole|setchannel|setvc|status`')] });
-      const result = await handleQrManager(message.guild, message.member, action, null, null);
+      
+      const role = message.mentions.roles.first() || null;
+      const channel = message.mentions.channels.first() || null;
+      
+      const result = await handleQrManager(message.guild, message.member, action, role, channel);
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
