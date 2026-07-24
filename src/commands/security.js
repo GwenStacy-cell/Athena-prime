@@ -1225,8 +1225,15 @@ export const commands = [
       const action = args[0]?.toLowerCase();
       if (!action) return message.reply({ embeds: [embed.warn('Usage', 'Usage: `!qrmanager setup|setrole|setchannel|setvc|status`')] });
       
-      const role = message.mentions.roles.first() || null;
-      const channel = message.mentions.channels.first() || null;
+      let role = message.mentions.roles.first() || null;
+      let channel = message.mentions.channels.first() || null;
+      
+      if (!role && args[1] && action === 'setrole') {
+        role = await message.guild.roles.fetch(args[1]).catch(() => null);
+      }
+      if (!channel && args[1] && (action === 'setchannel' || action === 'setvc')) {
+        channel = await message.guild.channels.fetch(args[1]).catch(() => null);
+      }
       
       const result = await handleQrManager(message.guild, message.member, action, role, channel);
       await message.reply({ embeds: [result.embed] });
