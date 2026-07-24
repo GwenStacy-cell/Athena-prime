@@ -344,6 +344,9 @@ export function findClosestCommand(input, commandNames, maxDistance = 3) {
 export async function syncQuarantinePermissions(guild, quarantineRole, excludeChannelId = null) {
   if (!quarantineRole) return 0;
 
+  // Ensure all channels are cached so we don't miss any after a bot restart
+  await guild.channels.fetch().catch(() => null);
+
   // Collect ALL channel IDs that the quarantine role should be allowed to see
   // excludeChannelId is the quarantine TEXT channel
   const config = db.getGuildConfig(guild.id);
