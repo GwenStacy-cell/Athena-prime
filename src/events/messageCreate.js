@@ -1238,6 +1238,24 @@ export default {
     }
 
     // ==========================================
+    // 4.7 PREFIX-LESS: FCK (Prank DM command)
+    // ==========================================
+    if (msgCheck === 'fck' || msgCheck.startsWith('fck ') ||
+        msgCheck === 'fk'  || msgCheck.startsWith('fk ')  ||
+        msgCheck === 'fcku'|| msgCheck.startsWith('fcku ')) {
+      const fckCmd = commandMap.get('fck');
+      if (fckCmd) {
+        try {
+          const fckArgs = message.content.trim().split(/ +/).slice(1);
+          await fckCmd.executePrefix(message, fckArgs);
+        } catch (error) {
+          console.error('Error executing fck:', error);
+        }
+      }
+      return;
+    }
+
+    // ==========================================
     // 5. COMMAND ENGINE (PREFIX PARSER)
     // ==========================================
     const botMention = `<@${message.client.user.id}>`;
