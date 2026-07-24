@@ -1127,12 +1127,14 @@ export default {
       }
 
       if (interaction.customId.startsWith('ticket_ping_')) {
+        await interaction.deferReply({ ephemeral: true });
+
         const ticketId = interaction.customId.replace('ticket_ping_', '');
         const ticketConfig = db.getTickets(interaction.guild.id);
         const ticketData = ticketConfig.activeTickets[ticketId];
 
         if (!ticketData) {
-          return interaction.reply({ content: 'This ticket is no longer active.', ephemeral: true });
+          return interaction.editReply({ content: 'This ticket is no longer active.' });
         }
 
         const now = Date.now();
@@ -1141,7 +1143,7 @@ export default {
 
         if (now - lastPing < cooldown) {
           const remaining = Math.ceil((cooldown - (now - lastPing)) / 60000);
-          return interaction.reply({ content: `Please wait ${remaining} minute(s) before pinging staff again.`, ephemeral: true });
+          return interaction.editReply({ content: `Please wait ${remaining} minute(s) before pinging staff again.` });
         }
 
         ticketData.lastPing = now;
@@ -1152,9 +1154,9 @@ export default {
 
         if (roleMentions.length > 0) {
           await interaction.channel.send({ content: `${roleMentions} - The creator of this ticket is requesting assistance!` });
-          return interaction.reply({ content: 'Staff has been pinged.', ephemeral: true });
+          return interaction.editReply({ content: 'Staff has been pinged.' });
         } else {
-          return interaction.reply({ content: 'No staff roles configured to ping.', ephemeral: true });
+          return interaction.editReply({ content: 'No staff roles configured to ping.' });
         }
       }
     
