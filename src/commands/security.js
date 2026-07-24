@@ -86,11 +86,14 @@ export function scheduleAutoUnquarantine(client, guildId, userId, durationMs) {
       const member = await guild.members.fetch(userId).catch(() => null);
       if (!member) return;
       const botMember = guild.members.me;
-      await executeUnquarantine(guild, member, botMember);
-      logToSecurityChannel(guild, embed.info(
-        'Auto-Unquarantine',
-        ` <@${userId}>'s quarantine duration expired — automatically released.`
-      ));
+      
+      const result = await executeUnquarantine(guild, member, botMember);
+      if (result.success) {
+        logToSecurityChannel(guild, embed.info(
+          'Auto-Unquarantine',
+          ` <@${userId}>'s quarantine duration expired — automatically released.`
+        ));
+      }
     } catch (err) {
       console.error('[AutoUnquarantine]', err);
     }
