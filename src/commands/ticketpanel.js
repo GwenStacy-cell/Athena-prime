@@ -26,17 +26,14 @@ export async function updateManagerMessage(message) {
     new ButtonBuilder()
       .setCustomId('tp_edit_text')
       .setLabel('Edit Title & Desc')
-      .setEmoji('<:edit:1523770799603847179>') 
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('tp_edit_media')
       .setLabel('Edit Media & Placeholder')
-      .setEmoji('<:images:1523770698416259172>') 
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('tp_add_option')
       .setLabel('Add Option')
-      .setEmoji('<:emoji_16:1521464002046328944>') 
       .setStyle(ButtonStyle.Primary)
   );
 
@@ -44,12 +41,10 @@ export async function updateManagerMessage(message) {
     new ButtonBuilder()
       .setCustomId('tp_clear_options')
       .setLabel('Clear Options')
-      .setEmoji('<:trash:1523729377961967788>') 
       .setStyle(ButtonStyle.Danger),
     new ButtonBuilder()
       .setCustomId('tp_deploy')
       .setLabel('Deploy Panel')
-      .setEmoji('<:send:1523770607706308658>') 
       .setStyle(ButtonStyle.Success)
   );
 
