@@ -91,6 +91,68 @@ export const commands = [
         const roleMentions = staffRoles.map(id => `<@&${id}>`).join(', ');
         await interaction.editReply({ embeds: [embed.success('Ticket System Deployed', `The ticket panel has been deployed successfully. Tickets will be created under ${category} and ${roleMentions} will be pinged.`)] });
       }
+    },
+    async executePrefix(message, args) {
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+        return message.reply({ embeds: [embed.error('Missing Permission', 'You need Administrator permissions to use this command.')] });
+      }
+
+      if (args[0]?.toLowerCase() === 'setup') {
+        const categoryId = message.mentions.channels.first()?.id || args[1]?.replace(/[<#>]/g, '');
+        const staffRoles = message.mentions.roles.map(r => r.id);
+
+        if (!categoryId || staffRoles.length === 0) {
+          return message.reply({ embeds: [embed.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...]`')] });
+        }
+
+        const category = message.guild.channels.cache.get(categoryId);
+        if (!category || category.type !== ChannelType.GuildCategory) {
+          return message.reply({ embeds: [embed.error('Invalid Category', 'Please provide a valid category.')] });
+        }
+
+        const config = db.getTickets(message.guild.id);
+        const guildConfig = db.getGuildConfig(message.guild.id);
+        const accentColor = guildConfig.accentColor || '#3b82f6';
+
+        if (config.panelChannelId && config.panelMessageId) {
+          try {
+            const oldChannel = await message.guild.channels.fetch(config.panelChannelId);
+            if (oldChannel) {
+              const oldMessage = await oldChannel.messages.fetch(config.panelMessageId);
+              if (oldMessage) await oldMessage.delete();
+            }
+          } catch (err) {}
+        }
+
+        const ticketEmbed = new EmbedBuilder()
+          .setColor(accentColor)
+          .setTitle(' Support Tickets')
+          .setDescription('Need help? Click the button below to open a private ticket. A text and voice channel will be created for you.')
+          .setFooter({ text: 'Athena Prime Support System', iconURL: message.client.user.displayAvatarURL() });
+
+        const row = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('ticket_open_general')
+              .setLabel('Open Ticket')
+              .setEmoji('<:139707ticket:1517458763773251745>') 
+              .setStyle(ButtonStyle.Primary)
+          );
+
+        const panelMsg = await message.channel.send({ embeds: [ticketEmbed], components: [row] });
+
+        db.updateTicketConfig(message.guild.id, {
+          categoryId: category.id,
+          staffRoleIds: staffRoles,
+          panelChannelId: message.channel.id,
+          panelMessageId: panelMsg.id
+        });
+
+        const roleMentions = staffRoles.map(id => `<@&${id}>`).join(', ');
+        await message.reply({ embeds: [embed.success('Ticket System Deployed', `Tickets will be created under <#${category.id}> and ${roleMentions} will be pinged.`)] });
+      } else {
+        return message.reply({ embeds: [embed.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...]`\n\nFor advanced customization (dropdowns, images, etc.), use the `!ticketpanel` command!')] });
+      }
     }
   }
 ];

@@ -95,6 +95,43 @@ export default {
     // 2. MODAL SUBMISSIONS
     // ==========================================
     if (interaction.isModalSubmit()) {
+      if (interaction.customId === 'tp_modal_text') {
+        const title = interaction.fields.getTextInputValue('title');
+        const desc = interaction.fields.getTextInputValue('description');
+        db.updateTicketConfig(interaction.guild.id, { panelTitle: title, panelDescription: desc });
+        const { updateManagerMessage } = await import('../commands/ticketpanel.js');
+        await updateManagerMessage(interaction.message);
+        return interaction.deferUpdate();
+      }
+      if (interaction.customId === 'tp_modal_media') {
+        let img = interaction.fields.getTextInputValue('image');
+        let thumb = interaction.fields.getTextInputValue('thumbnail');
+        const ph = interaction.fields.getTextInputValue('placeholder');
+        if (img && !img.startsWith('http')) img = null;
+        if (thumb && !thumb.startsWith('http')) thumb = null;
+        db.updateTicketConfig(interaction.guild.id, { panelImage: img, panelThumbnail: thumb, panelPlaceholder: ph });
+        const { updateManagerMessage } = await import('../commands/ticketpanel.js');
+        await updateManagerMessage(interaction.message);
+        return interaction.deferUpdate();
+      }
+      if (interaction.customId === 'tp_modal_option') {
+        const value = interaction.fields.getTextInputValue('value').replace(/\s+/g, '_');
+        const label = interaction.fields.getTextInputValue('label');
+        let desc = '';
+        let emoji = '';
+        try { desc = interaction.fields.getTextInputValue('desc'); } catch(e) {}
+        try { emoji = interaction.fields.getTextInputValue('emoji'); } catch(e) {}
+        
+        const config = db.getTickets(interaction.guild.id);
+        const options = (config.panelOptions || []).filter(o => o.value !== value);
+        if (options.length < 25) {
+          options.push({ value, label, description: desc || null, emoji: emoji || null });
+          db.updateTicketConfig(interaction.guild.id, { panelOptions: options });
+        }
+        const { updateManagerMessage } = await import('../commands/ticketpanel.js');
+        await updateManagerMessage(interaction.message);
+        return interaction.deferUpdate();
+      }
       if (interaction.customId.startsWith('music_lyrics_modal')) {
         const songName = interaction.fields.getTextInputValue('song_name');
         if (!songName) return interaction.reply({ content: 'You must provide a song name.' });
@@ -870,7 +907,100 @@ export default {
           console.error('Verify error:', err);
           return interaction.reply({ content: 'I do not have permission to assign the verification role. Please contact an admin.' }).catch(() => null);
         }
-      }      // Ticket System Handlers
+      }      // Ticket Panel Manager Interactive Buttons
+      if (interaction.customId === 'tp_edit_text') {
+        const ticketConfig = db.getTickets(interaction.guild.id);
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('tp_modal_text').setTitle('Edit Panel Text');
+        modal.addComponents(
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('title').setLabel('Title').setStyle(TextInputStyle.Short).setValue(ticketConfig.panelTitle || 'Support Tickets').setRequired(true)),
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('description').setLabel('Description').setStyle(TextInputStyle.Paragraph).setValue(ticketConfig.panelDescription || 'Need help? Open a ticket below.').setRequired(true))
+        );
+        return interaction.showModal(modal);
+      }
+      if (interaction.customId === 'tp_edit_media') {
+        const ticketConfig = db.getTickets(interaction.guild.id);
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('tp_modal_media').setTitle('Edit Media & Placeholder');
+        modal.addComponents(
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('image').setLabel('Image URL (optional)').setStyle(TextInputStyle.Short).setValue(ticketConfig.panelImage || '').setRequired(false)),
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('thumbnail').setLabel('Thumbnail URL (optional)').setStyle(TextInputStyle.Short).setValue(ticketConfig.panelThumbnail || '').setRequired(false)),
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('placeholder').setLabel('Dropdown Placeholder').setStyle(TextInputStyle.Short).setValue(ticketConfig.panelPlaceholder || 'Select a reason...').setRequired(true))
+        );
+        return interaction.showModal(modal);
+      }
+      if (interaction.customId === 'tp_add_option') {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('tp_modal_option').setTitle('Add Dropdown Option');
+        modal.addComponents(
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('value').setLabel('Internal Value (no spaces)').setStyle(TextInputStyle.Short).setRequired(true)),
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('label').setLabel('Display Label').setStyle(TextInputStyle.Short).setRequired(true)),
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('desc').setLabel('Description (optional)').setStyle(TextInputStyle.Short).setRequired(false)),
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('emoji').setLabel('Emoji (optional)').setStyle(TextInputStyle.Short).setRequired(false))
+        );
+        return interaction.showModal(modal);
+      }
+      if (interaction.customId === 'tp_clear_options') {
+        db.updateTicketConfig(interaction.guild.id, { panelOptions: [] });
+        const { updateManagerMessage } = await import('../commands/ticketpanel.js');
+        await updateManagerMessage(interaction.message);
+        return interaction.deferUpdate();
+      }
+      if (interaction.customId === 'tp_deploy') {
+        const config = db.getTickets(interaction.guild.id);
+        if (!config.categoryId) return interaction.reply({ content: 'Please configure a category first using `!ticket setup`.', ephemeral: true });
+        
+        if (config.panelChannelId && config.panelMessageId) {
+          try {
+            const oldChannel = await interaction.guild.channels.fetch(config.panelChannelId);
+            if (oldChannel) {
+              const oldMessage = await oldChannel.messages.fetch(config.panelMessageId);
+              if (oldMessage) await oldMessage.delete();
+            }
+          } catch(err) {}
+        }
+        
+        const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = await import('discord.js');
+        const guildConfig = db.getGuildConfig(interaction.guild.id);
+        const accentColor = guildConfig.accentColor || '#3b82f6';
+        
+        const panelEmbed = new EmbedBuilder()
+          .setColor(accentColor)
+          .setTitle(config.panelTitle || 'Support Tickets')
+          .setDescription(config.panelDescription || 'Need help? Open a ticket below.')
+          .setFooter({ text: 'Athena Prime Support System', iconURL: interaction.client.user.displayAvatarURL() });
+
+        if (config.panelImage) panelEmbed.setImage(config.panelImage);
+        if (config.panelThumbnail) panelEmbed.setThumbnail(config.panelThumbnail);
+
+        const components = [];
+        if (config.panelOptions && config.panelOptions.length > 0) {
+          const selectMenu = new StringSelectMenuBuilder()
+            .setCustomId('ticket_panel_dropdown')
+            .setPlaceholder(config.panelPlaceholder || 'Select a reason...')
+            .addOptions(config.panelOptions.map(opt => {
+              const optionData = { label: opt.label.substring(0, 100), value: opt.value.substring(0, 100) };
+              if (opt.description) optionData.description = opt.description.substring(0, 100);
+              if (opt.emoji) {
+                const match = opt.emoji.match(/<a?:.+?:(\d+)>/);
+                optionData.emoji = match ? match[1] : opt.emoji;
+              }
+              return optionData;
+            }));
+          components.push(new ActionRowBuilder().addComponents(selectMenu));
+        } else {
+          components.push(new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('ticket_open_general').setLabel('Open Ticket').setEmoji('<:139707ticket:1517458763773251745>').setStyle(ButtonStyle.Primary)
+          ));
+        }
+        
+        const panelMsg = await interaction.channel.send({ embeds: [panelEmbed], components });
+        db.updateTicketConfig(interaction.guild.id, { panelChannelId: interaction.channel.id, panelMessageId: panelMsg.id });
+        await interaction.message.delete().catch(()=>null);
+        return;
+      }
+
+      // Ticket System Handlers
       if (interaction.customId === 'ticket_panel_dropdown') {
         const value = interaction.values[0];
         const ticketConfig = db.getTickets(interaction.guild.id);
