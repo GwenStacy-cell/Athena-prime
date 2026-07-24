@@ -897,6 +897,64 @@ class Database {
   }
 
   // ==========================================
+  // TICKET SYSTEM
+  // ==========================================
+  getTickets(guildId) {
+    if (!this.cache.tickets[guildId]) {
+      this.cache.tickets[guildId] = {
+        categoryId: null,
+        staffRoleIds: [],
+        ticketCount: 0,
+        activeTickets: {},
+        panelMessageId: null,
+        panelChannelId: null,
+        panelTitle: 'Support Tickets',
+        panelDescription: 'Need help? Select an option from the dropdown below to open a private ticket.',
+        panelImage: null,
+        panelThumbnail: null,
+        panelPlaceholder: 'Select a reason...',
+        panelOptions: [] // { label, description, emoji, value }
+      };
+      this.save();
+    }
+    return this.cache.tickets[guildId];
+  }
+
+  updateTicketConfig(guildId, updates) {
+    const config = this.getTickets(guildId);
+    Object.assign(config, updates);
+    this.save();
+    return config;
+  }
+
+  createTicket(guildId, textId, voiceId, ownerId) {
+    const config = this.getTickets(guildId);
+    config.ticketCount = (config.ticketCount || 0) + 1;
+    const ticketId = config.ticketCount.toString().padStart(4, '0');
+    
+    config.activeTickets[ticketId] = {
+      textId,
+      voiceId,
+      ownerId,
+      createdAt: Date.now()
+    };
+    
+    this.save();
+    return ticketId;
+  }
+
+  closeTicket(guildId, ticketId) {
+    const config = this.getTickets(guildId);
+    if (config.activeTickets && config.activeTickets[ticketId]) {
+      const ticketData = config.activeTickets[ticketId];
+      delete config.activeTickets[ticketId];
+      this.save();
+      return ticketData;
+    }
+    return null;
+  }
+
+  // ==========================================
   // GIVEAWAY SYSTEM
   // ==========================================
   getGiveaway(messageId) {

@@ -870,108 +870,160 @@ export default {
           console.error('Verify error:', err);
           return interaction.reply({ content: 'I do not have permission to assign the verification role. Please contact an admin.' }).catch(() => null);
         }
+      }      // Ticket System Handlers
+      if (interaction.customId === 'ticket_panel_dropdown') {
+        const value = interaction.values[0];
+        const ticketConfig = db.getTickets(interaction.guild.id);
+        const option = (ticketConfig.panelOptions || []).find(o => o.value === value);
+        const label = option ? option.label : value;
+
+        const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`ticket_open_${value}`)
+            .setLabel('Create Ticket')
+            .setEmoji('<:139707ticket:1517458763773251745>')
+            .setStyle(ButtonStyle.Success)
+        );
+
+        return interaction.reply({ 
+          content: `You selected **${label}**. Click the button below to open your ticket.`, 
+          components: [row],
+          ephemeral: true 
+        });
       }
 
-      // Ticket Open Button
-      if (interaction.customId === 'ticket_open') {
+      if (interaction.customId.startsWith('ticket_open')) {
+        let reasonValue = 'General Support';
+        if (interaction.customId !== 'ticket_open' && interaction.customId !== 'ticket_open_general') {
+          reasonValue = interaction.customId.replace('ticket_open_', '');
+        }
+
         try {
           const ticketConfig = db.getTickets(interaction.guild.id);
           if (!ticketConfig || !ticketConfig.categoryId) {
-            return interaction.reply({ content: 'The ticket system is not fully configured.' });
+            return interaction.reply({ content: 'The ticket system is not fully configured.', ephemeral: true });
           }
 
           const category = interaction.guild.channels.cache.get(ticketConfig.categoryId);
           if (!category) {
-            return interaction.reply({ content: 'The ticket category could not be found.' });
+            return interaction.reply({ content: 'The ticket category could not be found.', ephemeral: true });
           }
 
-          // Ensure activeTickets is an object
           const activeTickets = ticketConfig.activeTickets || {};
-
-          // Check if user already has an active ticket
           for (const [tId, ticket] of Object.entries(activeTickets)) {
             if (ticket.ownerId === interaction.user.id) {
-              return interaction.reply({ content: `You already have an open ticket in <#${ticket.textId}>!` });
+              return interaction.reply({ content: `You already have an open ticket in <#${ticket.textId}>!`, ephemeral: true });
             }
           }
 
-        await interaction.deferReply();
+          await interaction.deferReply({ ephemeral: true });
 
-        try {
-          const permissionOverwrites = [
-            {
-              id: interaction.guild.id, // @everyone
-              deny: [PermissionFlagsBits.ViewChannel],
-            },
-            {
-              id: interaction.user.id, // Ticket creator
-              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak],
-            },
-            {
-              id: interaction.client.user.id, // Bot
-              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels],
+          try {
+            const { PermissionFlagsBits } = await import('discord.js');
+            const permissionOverwrites = [
+              { id: interaction.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+              { id: interaction.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak] },
+              { id: interaction.client.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels] }
+            ];
+
+            const staffRoleIds = ticketConfig.staffRoleIds || (ticketConfig.staffRoleId ? [ticketConfig.staffRoleId] : []);
+            for (const roleId of staffRoleIds) {
+              permissionOverwrites.push({
+                id: roleId,
+                allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak],
+              });
             }
-          ];
 
-          const staffRoleIds = ticketConfig.staffRoleIds || (ticketConfig.staffRoleId ? [ticketConfig.staffRoleId] : []);
-          for (const roleId of staffRoleIds) {
-            permissionOverwrites.push({
-              id: roleId, // Staff
-              allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.Connect, PermissionFlagsBits.Speak],
+            const textChannel = await interaction.guild.channels.create({
+              name: `🎫-ticket-${interaction.user.username}`,
+              type: 0,
+              parent: category.id,
+              permissionOverwrites
             });
+
+            const voiceChannel = await interaction.guild.channels.create({
+              name: `🎫 Ticket Voice`,
+              type: 2,
+              parent: category.id,
+              permissionOverwrites
+            });
+
+            const ticketId = db.createTicket(interaction.guild.id, textChannel.id, voiceChannel.id, interaction.user.id);
+
+            const option = (ticketConfig.panelOptions || []).find(o => o.value === reasonValue);
+            const label = option ? option.label : reasonValue;
+
+            const ticketEmbed = embed.info(
+              `Ticket #${ticketId}`,
+              `Welcome ${interaction.user}!\n\n**Reason:** ${label}\n\nA staff member will be with you shortly. You have a dedicated text channel here, and a dedicated voice channel: <#${voiceChannel.id}>.`
+            );
+
+            const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
+            const closeRow = new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                .setCustomId(`ticket_ping_${ticketId}`)
+                .setLabel('Staff Ping')
+                .setEmoji('🔔') 
+                .setStyle(ButtonStyle.Secondary),
+              new ButtonBuilder()
+                .setCustomId(`ticket_close_${ticketId}`)
+                .setLabel('Close Ticket')
+                .setEmoji('<a:emoji_106:1517212811678453942>')
+                .setStyle(ButtonStyle.Danger)
+            );
+
+            const roleMentions = staffRoleIds.map(id => `<@&${id}>`).join(' ');
+            await textChannel.send({
+              content: roleMentions.length > 0 ? roleMentions : undefined,
+              embeds: [ticketEmbed],
+              components: [closeRow]
+            });
+
+            return interaction.editReply({ content: `Your ticket has been created: <#${textChannel.id}>` });
+          } catch (err) {
+            console.error('Error creating ticket:', err);
+            return interaction.editReply({ content: 'An error occurred while trying to create your ticket channels.' });
           }
-
-          // Create Text Channel
-          const textChannel = await interaction.guild.channels.create({
-            name: `�-ticket-${interaction.user.username}`,
-            type: 0, // GUILD_TEXT
-            parent: category.id,
-            permissionOverwrites
-          });
-
-          // Create Voice Channel
-          const voiceChannel = await interaction.guild.channels.create({
-            name: `� Ticket Voice`,
-            type: 2, // GUILD_VOICE
-            parent: category.id,
-            permissionOverwrites
-          });
-
-          const ticketId = db.createTicket(interaction.guild.id, textChannel.id, voiceChannel.id, interaction.user.id);
-
-          const ticketEmbed = embed.info(
-            `Ticket #${ticketId}`,
-            `Welcome ${interaction.user}!\n\nA staff member will be with you shortly. You have a dedicated text channel here, and a dedicated voice channel: <#${voiceChannel.id}>.\n\nClick the button below to close this ticket.`
-          );
-
-          const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
-          const closeRow = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId(`ticket_close_${ticketId}`)
-              .setLabel('Close Ticket')
-              .setEmoji('<a:emoji_106:1517212811678453942>')
-              .setStyle(ButtonStyle.Danger)
-          );
-
-          const roleMentions = staffRoleIds.map(id => `<@&${id}>`).join(' ');
-          await textChannel.send({
-            content: roleMentions.length > 0 ? roleMentions : undefined,
-            embeds: [ticketEmbed],
-            components: [closeRow]
-          });
-
-          return interaction.editReply({ content: `Your ticket has been created: <#${textChannel.id}>` });
         } catch (err) {
-          console.error('Error creating ticket:', err);
-          return interaction.editReply({ content: 'An error occurred while trying to create your ticket channels.' });
-        }
-      } catch (err) {
-        console.error('Ticket open error:', err);
-        if (!interaction.replied && !interaction.deferred) {
-          return interaction.reply({ content: 'An unexpected error occurred while processing your ticket.' }).catch(() => null);
+          console.error('Ticket open error:', err);
+          if (!interaction.replied && !interaction.deferred) {
+            return interaction.reply({ content: 'An unexpected error occurred while processing your ticket.', ephemeral: true }).catch(() => null);
+          }
         }
       }
-    }
+
+      if (interaction.customId.startsWith('ticket_ping_')) {
+        const ticketId = interaction.customId.replace('ticket_ping_', '');
+        const ticketConfig = db.getTickets(interaction.guild.id);
+        const ticketData = ticketConfig.activeTickets[ticketId];
+
+        if (!ticketData) {
+          return interaction.reply({ content: 'This ticket is no longer active.', ephemeral: true });
+        }
+
+        const now = Date.now();
+        const lastPing = ticketData.lastPing || 0;
+        const cooldown = 5 * 60 * 1000; // 5 minutes
+
+        if (now - lastPing < cooldown) {
+          const remaining = Math.ceil((cooldown - (now - lastPing)) / 60000);
+          return interaction.reply({ content: `Please wait ${remaining} minute(s) before pinging staff again.`, ephemeral: true });
+        }
+
+        ticketData.lastPing = now;
+        db.save();
+
+        const staffRoleIds = ticketConfig.staffRoleIds || [];
+        const roleMentions = staffRoleIds.map(id => `<@&${id}>`).join(' ');
+
+        if (roleMentions.length > 0) {
+          await interaction.channel.send({ content: `${roleMentions} - The creator of this ticket is requesting assistance!` });
+          return interaction.reply({ content: 'Staff has been pinged.', ephemeral: true });
+        } else {
+          return interaction.reply({ content: 'No staff roles configured to ping.', ephemeral: true });
+        }
+      }
     
     // ==========================================
     // 7. MUSIC BUTTONS
@@ -1005,7 +1057,7 @@ export default {
           if (textChannel) await textChannel.delete();
           if (voiceChannel) await voiceChannel.delete();
 
-          db.removeTicket(interaction.guild.id, ticketId);
+          db.closeTicket(interaction.guild.id, ticketId);
         } catch (err) {
           console.error('Error deleting ticket channels:', err);
         }

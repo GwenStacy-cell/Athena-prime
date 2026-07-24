@@ -19,6 +19,7 @@ import { commands as newsCmds } from './news.js';
 import { commands as announceCmds } from './announce.js';
 import { commands as verifyCmds } from './verify.js';
 import { commands as ticketCmds } from './ticket.js';
+import { commands as ticketPanelCmds } from './ticketpanel.js';
 import { commands as levelingCmds } from './leveling.js';
 import { commands as moveprotectCmds } from './moveprotect.js';
 import { commands as vcprotectCmds } from './vcprotect.js';
@@ -58,6 +59,7 @@ export const allCommands = [
   ...announceCmds,
   ...verifyCmds,
   ...ticketCmds,
+  ...ticketPanelCmds,
   ...levelingCmds,
   ...moveprotectCmds,
   ...vcprotectCmds,
