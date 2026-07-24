@@ -45,7 +45,11 @@ export async function updateManagerMessage(message) {
     new ButtonBuilder()
       .setCustomId('tp_deploy')
       .setLabel('Deploy Panel')
-      .setStyle(ButtonStyle.Success)
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId('tp_cancel')
+      .setLabel('Close')
+      .setStyle(ButtonStyle.Secondary)
   );
 
   if (message.author.id === message.client.user.id) {

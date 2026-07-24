@@ -946,6 +946,9 @@ export default {
         await updateManagerMessage(interaction.message);
         return interaction.deferUpdate();
       }
+      if (interaction.customId === 'tp_cancel') {
+        return interaction.message.delete().catch(() => null);
+      }
       if (interaction.customId === 'tp_deploy') {
         const config = db.getTickets(interaction.guild.id);
         if (!config.categoryId) return interaction.reply({ content: 'Please configure a category first using `!ticket setup`.', ephemeral: true });
