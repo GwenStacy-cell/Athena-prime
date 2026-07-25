@@ -949,11 +949,24 @@ export default {
       if (interaction.customId === 'tp_cancel') {
         return interaction.message.delete().catch(() => null);
       }
-      if (interaction.customId === 'tp_deploy') {
+      
+      if (interaction.customId === 'tp_target_channel') {
+        const channelId = interaction.values[0];
+        db.updateTicketConfig(interaction.guild.id, { targetChannelId: channelId });
+        const { updateManagerMessage } = await import('../commands/ticketpanel.js');
+        await updateManagerMessage(interaction.message);
+        return interaction.deferUpdate();
+      }
+
+      if (interaction.customId === 'tp_test' || interaction.customId === 'tp_deploy') {
         const config = db.getTickets(interaction.guild.id);
-        if (!config.categoryId) return interaction.reply({ content: 'Please configure a category first using `!ticket setup`.', ephemeral: true });
+        const isTest = interaction.customId === 'tp_test';
         
-        if (config.panelChannelId && config.panelMessageId) {
+        if (!isTest && !config.categoryId) {
+          return interaction.reply({ content: 'Please configure a category first using `!ticket setup`.', ephemeral: true });
+        }
+        
+        if (!isTest && config.panelChannelId && config.panelMessageId) {
           try {
             const oldChannel = await interaction.guild.channels.fetch(config.panelChannelId);
             if (oldChannel) {
@@ -997,11 +1010,23 @@ export default {
           ));
         }
         
-        const panelMsg = await interaction.channel.send({ embeds: [panelEmbed], components });
-        db.updateTicketConfig(interaction.guild.id, { panelChannelId: interaction.channel.id, panelMessageId: panelMsg.id });
+        if (isTest) {
+          return interaction.reply({ content: '🧪 **TEST PREVIEW ONLY** - Buttons will not work correctly in this preview.', embeds: [panelEmbed], components, ephemeral: true });
+        }
+        
+        const targetChannelId = config.targetChannelId || interaction.channel.id;
+        const targetChannel = interaction.guild.channels.cache.get(targetChannelId);
+        
+        if (!targetChannel) {
+          return interaction.reply({ content: 'Target channel not found! Please select a valid channel from the dropdown.', ephemeral: true });
+        }
+
+        const panelMsg = await targetChannel.send({ embeds: [panelEmbed], components });
+        db.updateTicketConfig(interaction.guild.id, { panelChannelId: targetChannel.id, panelMessageId: panelMsg.id });
         await interaction.message.delete().catch(()=>null);
         return;
       }
+
 
       // Ticket System Handlers
       if (interaction.customId === 'ticket_panel_dropdown') {

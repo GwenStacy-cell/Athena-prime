@@ -22,6 +22,9 @@ export async function updateManagerMessage(message) {
     )
     .setFooter({ text: 'Athena Prime Ticket System' });
 
+  const targetChannelText = config.targetChannelId ? `<#${config.targetChannelId}>` : 'Current Channel';
+  panelStatusEmbed.addFields({ name: 'Target Channel', value: targetChannelText, inline: true });
+
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('tp_edit_text')
@@ -43,6 +46,10 @@ export async function updateManagerMessage(message) {
       .setLabel('Clear Options')
       .setStyle(ButtonStyle.Danger),
     new ButtonBuilder()
+      .setCustomId('tp_test')
+      .setLabel('Test Panel')
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
       .setCustomId('tp_deploy')
       .setLabel('Deploy Panel')
       .setStyle(ButtonStyle.Success),
@@ -52,10 +59,18 @@ export async function updateManagerMessage(message) {
       .setStyle(ButtonStyle.Secondary)
   );
 
+  const { ChannelSelectMenuBuilder, ChannelType } = await import('discord.js');
+  const row3 = new ActionRowBuilder().addComponents(
+    new ChannelSelectMenuBuilder()
+      .setCustomId('tp_target_channel')
+      .setPlaceholder('Select target channel for deployment...')
+      .setChannelTypes(ChannelType.GuildText)
+  );
+
   if (message.author.id === message.client.user.id) {
-    await message.edit({ embeds: [panelStatusEmbed], components: [row1, row2] }).catch(() => null);
+    await message.edit({ embeds: [panelStatusEmbed], components: [row3, row1, row2] }).catch(() => null);
   } else {
-    await message.reply({ embeds: [panelStatusEmbed], components: [row1, row2] });
+    await message.reply({ embeds: [panelStatusEmbed], components: [row3, row1, row2] });
   }
 }
 
