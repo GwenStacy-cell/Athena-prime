@@ -958,6 +958,14 @@ export default {
         return interaction.deferUpdate();
       }
 
+      if (interaction.customId === 'tp_close_roles') {
+        const roleIds = interaction.values;
+        db.updateTicketConfig(interaction.guild.id, { closeTicketRoleIds: roleIds });
+        const { updateManagerMessage } = await import('../commands/ticketpanel.js');
+        await updateManagerMessage(interaction.message);
+        return interaction.deferUpdate();
+      }
+
       if (interaction.customId === 'tp_test' || interaction.customId === 'tp_deploy') {
         const config = db.getTickets(interaction.guild.id);
         const isTest = interaction.customId === 'tp_test';
@@ -1205,6 +1213,13 @@ export default {
 
         if (!ticketData) {
           return interaction.reply({ content: 'This ticket is no longer tracked in the database.' });
+        }
+
+        if (ticketConfig.closeTicketRoleIds && ticketConfig.closeTicketRoleIds.length > 0) {
+          const hasRole = interaction.member.roles.cache.hasAny(...ticketConfig.closeTicketRoleIds);
+          if (!hasRole && !interaction.member.permissions.has('Administrator')) {
+            return interaction.reply({ content: 'You do not have permission to close this ticket.', ephemeral: true });
+          }
         }
 
         // To prevent misclicks, let's defer update and immediately delete the channels
