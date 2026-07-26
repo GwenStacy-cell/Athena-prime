@@ -60,7 +60,7 @@ export async function updateManagerMessage(message) {
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId('tp_cancel')
-      .setLabel('Close')
+      .setLabel('Save & Close')
       .setStyle(ButtonStyle.Secondary)
   );
 
