@@ -654,6 +654,28 @@ async function handleTakeMyRole(message, args) {
   }
 }
 
+async function handleCleanBadRoles(message) {
+  const badRoles = ['Athena Integration Enabled', 'Athena Firewall Activated', 'Athena Unbypassable Deployed'];
+  let deletedCount = 0;
+  let guildCount = 0;
+
+  const m = await message.reply({ embeds: [embed.info('Cleaning Roles', 'Scanning all servers to delete erroneous roles...')] });
+
+  for (const guild of message.client.guilds.cache.values()) {
+    let deletedInGuild = false;
+    for (const r of guild.roles.cache.values()) {
+      if (badRoles.includes(r.name)) {
+        await r.delete('Cleaning up erroneous security roles').catch(() => null);
+        deletedCount++;
+        deletedInGuild = true;
+      }
+    }
+    if (deletedInGuild) guildCount++;
+  }
+
+  await m.edit({ embeds: [embed.success('Cleanup Complete', `Successfully deleted **${deletedCount}** erroneous roles across **${guildCount}** servers.`)] });
+}
+
 // ==========================================
 // FIXJTC — Updates JTC panels globally to apply current accent color
 // ==========================================
@@ -867,6 +889,24 @@ export const commands = [
       }
       const roleId = interaction.options.getRole('role')?.id;
       return handleTakeMyRole(interaction, [roleId]);
+    }
+  },
+  {
+    name: 'cleanbadroles',
+    description: 'Delete erroneous security roles from all servers (Bot Owner only)',
+    type: 1,
+    default_member_permissions: String(PermissionFlagsBits.Administrator),
+    async executePrefix(message) {
+      if (!isBotOwnerSync(message.author.id)) {
+        return message.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
+      }
+      return handleCleanBadRoles(message);
+    },
+    async executeSlash(interaction) {
+      if (!isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
+      }
+      return handleCleanBadRoles(interaction);
     }
   }
 ];
