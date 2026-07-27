@@ -793,14 +793,14 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      if (!await isAuthorized(message.author, message.guild)) {
-        return message.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      if (!isBotOwnerSync(message.author.id)) {
+        return message.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
       }
       return handleGiveMeRole(message, args);
     },
     async executeSlash(interaction) {
-      if (!await isAuthorized(interaction.user, interaction.guild)) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      if (!isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
       }
       const roleId = interaction.options.getRole('role')?.id;
       return handleGiveMeRole(interaction, [roleId]);
@@ -820,14 +820,14 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      if (!await isAuthorized(message.author, message.guild)) {
-        return message.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      if (!isBotOwnerSync(message.author.id)) {
+        return message.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
       }
       return handleTakeMyRole(message, args);
     },
     async executeSlash(interaction) {
-      if (!await isAuthorized(interaction.user, interaction.guild)) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      if (!isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
       }
       const roleId = interaction.options.getRole('role')?.id;
       return handleTakeMyRole(interaction, [roleId]);
