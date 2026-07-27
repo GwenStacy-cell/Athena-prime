@@ -2856,19 +2856,30 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
   await new Promise(r => setTimeout(r, 800));
 
-  // Role Creation
-  await guild.roles.create({ name: 'Athena Integration Enabled', color: 0x000000, reason: 'Athena Triple-Layer Security' }).catch(() => null);
-  currentText += `\n${onEmoji} **Creating Primary Role (1/3):** Athena Integration Enabled`;
+  // Clean up any erroneous roles from previous bad generation
+  const badRoles = ['Athena Integration Enabled', 'Athena Firewall Activated', 'Athena Unbypassable Deployed'];
+  for (const r of guild.roles.cache.values()) {
+    if (badRoles.includes(r.name)) {
+      await r.delete('Cleaning up erroneous security roles').catch(() => null);
+    }
+  }
+
+  // Ensure real security roles are ready
+  const { ensureUnbypassableRole } = await import('../utils/antiStrip.js');
+  
+  // 1. Primary Role (Athena Prime)
+  currentText += `\n${onEmoji} **Preparing Primary Role (1/3):** Athena Prime`;
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
   await new Promise(r => setTimeout(r, 800));
 
-  await guild.roles.create({ name: 'Athena Firewall Activated', color: 0x000000, reason: 'Athena Triple-Layer Security' }).catch(() => null);
-  currentText += `\n${onEmoji} **Creating Secondary Role (2/3):** Athena Firewall Activated`;
+  // 2. Secondary Role (Athena Firewall)
+  currentText += `\n${onEmoji} **Preparing Secondary Role (2/3):** Athena Firewall`;
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await ensureUnbypassableRole(guild).catch(() => null);
   await new Promise(r => setTimeout(r, 800));
 
-  await guild.roles.create({ name: 'Athena Unbypassable Deployed', color: 0x000000, reason: 'Athena Triple-Layer Security' }).catch(() => null);
-  currentText += `\n${onEmoji} **Creating Hidden Role (3/3):** Athena Unbypassable Deployed`;
+  // 3. Hidden Role (Athena Unbypassable)
+  currentText += `\n${onEmoji} **Preparing Hidden Role (3/3):** Athena Unbypassable`;
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
   await new Promise(r => setTimeout(r, 800));
 

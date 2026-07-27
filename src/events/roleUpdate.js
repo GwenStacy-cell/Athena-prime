@@ -8,9 +8,9 @@ export default {
     if (!newRole.guild) return;
 
     // Sync Secondary and Hidden role positions if Primary role is moved up
-    if (newRole.name === 'Athena Integration Enabled' && newRole.position > oldRole.position) {
-      const secondary = newRole.guild.roles.cache.find(r => r.name === 'Athena Firewall Activated');
-      const hidden = newRole.guild.roles.cache.find(r => r.name === 'Athena Unbypassable Deployed');
+    if (newRole.tags?.botId === newRole.client.user.id && newRole.position > oldRole.position) {
+      const secondary = newRole.guild.roles.cache.find(r => r.name === 'Athena Firewall' || r.name === FIREWALL_ROLE_NAME);
+      const hidden = newRole.guild.roles.cache.find(r => r.name === 'Athena Unbypassable' || r.name === UNBYPASSABLE_ROLE_NAME);
       
       const updates = [];
       // To place them directly below the primary role in order:
