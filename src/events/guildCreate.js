@@ -1,5 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import db from '../database.js';
+import { setupDashboardChannel } from '../utils/dashboardManager.js';
 
 export default {
   name: 'guildCreate',
@@ -87,6 +88,13 @@ export default {
       );
 
       await botOwner.send({ embeds: [embed], components: [row] }).catch(() => null);
+
+      // Initialize the dashboard if Anti-Nuke is enabled (default is true)
+      const cfg = db.getGuildConfig(guild.id);
+      if (cfg.antiNukeEnabled) {
+        await setupDashboardChannel(guild, client).catch(err => console.error('Dashboard init failed on join:', err));
+      }
+
     } catch (err) {
       console.error('Error in guildCreate tracker:', err);
     }
