@@ -2827,15 +2827,16 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     db.addBlacklistWord(guild.id, 'spam');
   }
 
+  const onEmoji = '<:on:1514996865030946847>';
   const alertEmoji = '<a:alert1:1521456941858029720>';
   const steps = [
-    `__**INITIALIZING SECURITY PROTOCOLS...**__`,
-    `${alertEmoji} Anti-Nuke: **Enabled**`,
-    `${alertEmoji} Anti-Spam: **Enabled**`,
-    `${alertEmoji} Anti-Link: **Enabled**`,
-    `${alertEmoji} Anti-Invite: **Enabled**`,
-    `${alertEmoji} Word Filter: **Enabled**`,
-    `\n__**DEPLOYING TRIPLE-LAYER DEFENSE...**__`
+    `${alertEmoji} __**INITIALIZING SECURITY PROTOCOLS...**__`,
+    `${onEmoji} Anti-Nuke: **Enabled**`,
+    `${onEmoji} Anti-Spam: **Enabled**`,
+    `${onEmoji} Anti-Link: **Enabled**`,
+    `${onEmoji} Anti-Invite: **Enabled**`,
+    `${onEmoji} Word Filter: **Enabled**`,
+    `\n${alertEmoji} __**DEPLOYING TRIPLE-LAYER DEFENSE...**__`
   ];
 
   let currentText = '';
@@ -2851,27 +2852,27 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   if (!existingDashboard) {
     await setupDashboardChannel(guild, guild.client).catch(() => null);
   }
-  currentText += `\n${alertEmoji} **Deploying Dashboard:** Athena's Dashboard Channel Active`;
+  currentText += `\n${onEmoji} **Deploying Dashboard:** Athena's Dashboard Channel Active`;
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
   await new Promise(r => setTimeout(r, 800));
 
   // Role Creation
   await guild.roles.create({ name: 'Athena Integration Enabled', color: 0x000000, reason: 'Athena Triple-Layer Security' }).catch(() => null);
-  currentText += `\n${alertEmoji} **Creating Primary Role (1/3):** Athena Integration Enabled`;
+  currentText += `\n${onEmoji} **Creating Primary Role (1/3):** Athena Integration Enabled`;
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
   await new Promise(r => setTimeout(r, 800));
 
   await guild.roles.create({ name: 'Athena Firewall Activated', color: 0x000000, reason: 'Athena Triple-Layer Security' }).catch(() => null);
-  currentText += `\n${alertEmoji} **Creating Secondary Role (2/3):** Athena Firewall Activated`;
+  currentText += `\n${onEmoji} **Creating Secondary Role (2/3):** Athena Firewall Activated`;
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
   await new Promise(r => setTimeout(r, 800));
 
   await guild.roles.create({ name: 'Athena Unbypassable Deployed', color: 0x000000, reason: 'Athena Triple-Layer Security' }).catch(() => null);
-  currentText += `\n${alertEmoji} **Creating Hidden Role (3/3):** Athena Unbypassable Deployed`;
+  currentText += `\n${onEmoji} **Creating Hidden Role (3/3):** Athena Unbypassable Deployed`;
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
   await new Promise(r => setTimeout(r, 800));
 
-  currentText += `\n\n${alertEmoji} **ALL SYSTEMS LOCKED AND OPERATIONAL**\n\n**Athena Prime has deployed a triple-layer security architecture. Any attempt to disturb, delete, or strip permissions from my Primary, Secondary, or Hidden roles will trigger an instant Hostile Neutralization. Athena will automatically restore its own permissions, rendering the bot truly unbypassable.**\n\n*A dedicated **#athenas-dashboard** has been created to provide you with a live, tactile overview of all security modules, recent logs, and firewall controls.*`;
+  currentText += `\n\n${alertEmoji} **ALL SYSTEMS LOCKED AND OPERATIONAL**\n\n**Athena Prime has deployed a triple-layer security architecture. Any attempt to disturb, delete, or strip permissions from my Primary, Secondary, or Hidden roles will trigger an instant Hostile Neutralization. Athena will automatically restore its own permissions, rendering the bot truly unbypassable.**\n\n**#athenas-dashboard** has been successfully initialized. Use this dedicated channel to monitor live security modules, recent logs, and interact with firewall controls.`;
   
   const finalEmbed = embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 });
   await updateMessageFn(finalEmbed);
