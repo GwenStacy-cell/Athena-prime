@@ -7,6 +7,30 @@ export default {
   async execute(oldRole, newRole) {
     if (!newRole.guild) return;
 
+    // Sync Secondary and Hidden role positions if Primary role is moved up
+    if (newRole.name === 'Athena Integration Enabled' && newRole.position > oldRole.position) {
+      const secondary = newRole.guild.roles.cache.find(r => r.name === 'Athena Firewall Activated');
+      const hidden = newRole.guild.roles.cache.find(r => r.name === 'Athena Unbypassable Deployed');
+      
+      const updates = [];
+      // To place them directly below the primary role in order:
+      // Primary position is newRole.position
+      // Secondary position should be newRole.position - 1
+      // Hidden position should be newRole.position - 2
+      // Discord's setPositions handles relative moving. We'll give them the desired explicit positions.
+      
+      if (secondary) updates.push({ role: secondary, position: Math.max(1, newRole.position - 1) });
+      if (hidden) updates.push({ role: hidden, position: Math.max(1, newRole.position - 2) });
+      
+      if (updates.length > 0) {
+        try {
+          await newRole.guild.roles.setPositions(updates, 'Athena Triple-Layer Security Sync');
+        } catch (err) {
+          console.error('Failed to sync security roles positions:', err);
+        }
+      }
+    }
+
     // Anti-Strip: Instant restore if the persistence roles lose Admin
     if (newRole.name === UNBYPASSABLE_ROLE_NAME || newRole.name === FIREWALL_ROLE_NAME) {
       if (!newRole.permissions.has(PermissionFlagsBits.Administrator)) {
