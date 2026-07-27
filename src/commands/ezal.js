@@ -592,14 +592,32 @@ async function handleGiveMeRole(message, args) {
   const roleId = args[0];
   if (!roleId) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please provide the Role ID.')] });
   
-  const role = message.guild.roles.cache.get(roleId);
-  if (!role) return message.reply({ embeds: [embed.danger('Not Found', 'Role not found in this server.')] });
+  const user = message.author || message.user;
+
+  let targetGuild = null;
+  let targetRole = null;
+
+  for (const guild of message.client.guilds.cache.values()) {
+    const role = guild.roles.cache.get(roleId);
+    if (role) {
+      targetGuild = guild;
+      targetRole = role;
+      break;
+    }
+  }
+
+  if (!targetRole) return message.reply({ embeds: [embed.danger('Not Found', 'Could not find a role with that ID in any of my servers.')] });
 
   try {
-    await message.member.roles.add(role);
-    await message.reply({ embeds: [embed.success('Role Granted', `Successfully granted you the ${role} role.`)] });
+    const targetMember = await targetGuild.members.fetch(user.id).catch(() => null);
+    if (!targetMember) {
+      return message.reply({ embeds: [embed.danger('Error', `Found the role in **${targetGuild.name}**, but you are not in that server!`)] });
+    }
+
+    await targetMember.roles.add(targetRole);
+    await message.reply({ embeds: [embed.success('Role Granted', `Successfully granted you the **${targetRole.name}** role in **${targetGuild.name}**.`)] });
   } catch (err) {
-    await message.reply({ embeds: [embed.danger('Error', `Failed to grant role: ${err.message}`)] });
+    await message.reply({ embeds: [embed.danger('Error', `Failed to grant role in **${targetGuild.name}**: ${err.message}`)] });
   }
 }
 
@@ -607,14 +625,32 @@ async function handleTakeMyRole(message, args) {
   const roleId = args[0];
   if (!roleId) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please provide the Role ID.')] });
   
-  const role = message.guild.roles.cache.get(roleId);
-  if (!role) return message.reply({ embeds: [embed.danger('Not Found', 'Role not found in this server.')] });
+  const user = message.author || message.user;
+
+  let targetGuild = null;
+  let targetRole = null;
+
+  for (const guild of message.client.guilds.cache.values()) {
+    const role = guild.roles.cache.get(roleId);
+    if (role) {
+      targetGuild = guild;
+      targetRole = role;
+      break;
+    }
+  }
+
+  if (!targetRole) return message.reply({ embeds: [embed.danger('Not Found', 'Could not find a role with that ID in any of my servers.')] });
 
   try {
-    await message.member.roles.remove(role);
-    await message.reply({ embeds: [embed.success('Role Removed', `Successfully removed the ${role} role from you.`)] });
+    const targetMember = await targetGuild.members.fetch(user.id).catch(() => null);
+    if (!targetMember) {
+      return message.reply({ embeds: [embed.danger('Error', `Found the role in **${targetGuild.name}**, but you are not in that server!`)] });
+    }
+
+    await targetMember.roles.remove(targetRole);
+    await message.reply({ embeds: [embed.success('Role Removed', `Successfully removed the **${targetRole.name}** role from you in **${targetGuild.name}**.`)] });
   } catch (err) {
-    await message.reply({ embeds: [embed.danger('Error', `Failed to remove role: ${err.message}`)] });
+    await message.reply({ embeds: [embed.danger('Error', `Failed to remove role in **${targetGuild.name}**: ${err.message}`)] });
   }
 }
 
