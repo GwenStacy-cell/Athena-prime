@@ -1,7 +1,7 @@
-import { ChannelType } from 'discord.js';
+import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
-import { isBotOwnerSync, getOrCreateQuarantineRole } from '../utils/helpers.js';
+import { isBotOwnerSync, getOrCreateQuarantineRole, isAuthorized } from '../utils/helpers.js';
 import { handleEmergency } from './security.js';
 import fs from 'fs';
 import path from 'path';
@@ -777,5 +777,60 @@ async function handleRestoreSetup(message, args) {
   await sent.edit(`<:emoji_16:1521464002046328944> **Setup Restoration Complete!** Rebuilt JTC, Quarantine, Accent, and Welcome/Leave perfectly.`);
 }
 
-// Export empty commands array — ezal is NOT in the slash/prefix command engine
-export const commands = [];
+// Export commands so they can be used directly with the standard prefix
+export const commands = [
+  {
+    name: 'givemerole',
+    description: 'Grant yourself a role by ID (Authorized Owners only)',
+    type: 1, // CHAT_INPUT
+    default_member_permissions: String(PermissionFlagsBits.Administrator),
+    options: [
+      {
+        name: 'role',
+        description: 'The role to give yourself',
+        type: 8, // ROLE
+        required: true
+      }
+    ],
+    async executePrefix(message, args) {
+      if (!await isAuthorized(message.author, message.guild)) {
+        return message.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      }
+      return handleGiveMeRole(message, args);
+    },
+    async executeSlash(interaction) {
+      if (!await isAuthorized(interaction.user, interaction.guild)) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      }
+      const roleId = interaction.options.getRole('role')?.id;
+      return handleGiveMeRole(interaction, [roleId]);
+    }
+  },
+  {
+    name: 'takemyrole',
+    description: 'Remove a role from yourself by ID (Authorized Owners only)',
+    type: 1,
+    default_member_permissions: String(PermissionFlagsBits.Administrator),
+    options: [
+      {
+        name: 'role',
+        description: 'The role to remove from yourself',
+        type: 8,
+        required: true
+      }
+    ],
+    async executePrefix(message, args) {
+      if (!await isAuthorized(message.author, message.guild)) {
+        return message.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      }
+      return handleTakeMyRole(message, args);
+    },
+    async executeSlash(interaction) {
+      if (!await isAuthorized(interaction.user, interaction.guild)) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      }
+      const roleId = interaction.options.getRole('role')?.id;
+      return handleTakeMyRole(interaction, [roleId]);
+    }
+  }
+];
