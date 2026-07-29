@@ -1,5 +1,6 @@
 import { PermissionFlagsBits } from 'discord.js';
 import { joinVoiceChannel, getVoiceConnection } from '@discordjs/voice';
+import db from '../database.js';
 
 const reconnectTimeouts = new Map();
 
@@ -75,6 +76,14 @@ let emojiIndex = 0;
  */
 export async function updateBotVcStatus(channel) {
   if (!channel || !channel.isVoiceBased()) return;
+  
+  const config = db.getGuildConfig(channel.guild.id);
+  if (config.vcStatusEnabled === false) {
+    try {
+      await channel.client.rest.put(`/channels/${channel.id}/voice-status`, { body: { status: '' } });
+    } catch (e) {}
+    return;
+  }
   
   const emojis = [
     '<a:a_fheartSpinWhite:1516523707181433109>',
