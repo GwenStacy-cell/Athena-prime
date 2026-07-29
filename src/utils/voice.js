@@ -80,7 +80,7 @@ export async function updateBotVcStatus(channel) {
   const config = db.getGuildConfig(channel.guild.id);
   if (config.vcStatusEnabled === false) {
     try {
-      await channel.client.rest.put(`/channels/${channel.id}/voice-status`, { body: { status: '' } });
+      await channel.client.rest.put(`/channels/${channel.id}/voice-status`, { body: { status: null } });
     } catch (e) {}
     return;
   }

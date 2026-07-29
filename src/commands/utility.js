@@ -777,9 +777,11 @@ commands.push({
     const enabled = state === 'on';
     db.updateGuildConfig(message.guild.id, { vcStatusEnabled: enabled });
     
-    if (!enabled && message.member.voice?.channel) {
-      // Opportunistically clear it from their current VC if they're in one
-      await message.client.rest.put(`/channels/${message.member.voice.channel.id}/voice-status`, { body: { status: '' } }).catch(() => null);
+    const botVcId = message.guild.members.me?.voice?.channelId;
+    if (botVcId) {
+      const { updateBotVcStatus } = await import('../utils/voice.js');
+      const channel = message.guild.channels.cache.get(botVcId);
+      if (channel) await updateBotVcStatus(channel);
     }
     
     return message.reply({ embeds: [embed.success('Config Updated', `Voice Channel status updates have been turned **${state.toUpperCase()}**.`)] });
@@ -794,8 +796,11 @@ commands.push({
     const enabled = state === 'on';
     db.updateGuildConfig(interaction.guild.id, { vcStatusEnabled: enabled });
     
-    if (!enabled && interaction.member.voice?.channel) {
-      await interaction.client.rest.put(`/channels/${interaction.member.voice.channel.id}/voice-status`, { body: { status: '' } }).catch(() => null);
+    const botVcId = interaction.guild.members.me?.voice?.channelId;
+    if (botVcId) {
+      const { updateBotVcStatus } = await import('../utils/voice.js');
+      const channel = interaction.guild.channels.cache.get(botVcId);
+      if (channel) await updateBotVcStatus(channel);
     }
     
     return interaction.reply({ embeds: [embed.success('Config Updated', `Voice Channel status updates have been turned **${state.toUpperCase()}**.`)] });
