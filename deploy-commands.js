@@ -19,7 +19,7 @@ if (!clientId || clientId === 'your_bot_client_id') {
 }
 
 // Commands that are purely setup/admin/owner and don't need to consume our 100 global slash command limit
-const prefixOnlyCommands = ['enuke', 'testbirthday', 'userblacklist', 'botwhitelist', 'trigger', 'jtcsetup', 'secondaryjtc', 'jtcdisable', 'invitesetup', 'invitedisable', 'xpsetup', 'say', 'time', 'bump', 'rate'];
+const prefixOnlyCommands = ['enuke', 'testbirthday', 'userblacklist', 'botwhitelist', 'trigger', 'jtcsetup', 'secondaryjtc', 'jtcdisable', 'invitesetup', 'invitedisable', 'xpsetup', 'say', 'time', 'bump', 'rate', 'massdc', 'massmove', 'vcdrag', 'vcdragstop', 'vcdraglist', 'spampermit', 'spamrevoke', 'spamlist', 'cleanbadroles', 'massquarantine', 'massunquarantine', 'scanserver', 'lockapps', 'unlockapps'];
 
 // Map the commands to the JSON structure required by Discord APIs
 const slashData = allCommands
