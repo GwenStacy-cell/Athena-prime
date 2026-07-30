@@ -2301,11 +2301,26 @@ async function handleBotWhitelist(guild, action, botId) {
   if (action === 'add') {
     if (!cleanId || !/^\d{17,20}$/.test(cleanId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid bot User ID or a Role mention/ID.') };
     db.addBotToWhitelist(guild.id, cleanId);
-    return { embed: embed.success('Whitelisted', `ID \`${cleanId}\` has been added to the **Bot Whitelist**.\n\nBots matching this ID (or having this role) will bypass Anti-Nuke protections.`) };
+    
+    const isRole = guild.roles.cache.has(cleanId);
+    let desc = '';
+    if (isRole) {
+      desc = `Role <@&${cleanId}> has been added to the **Bot Whitelist**.\n\n` +
+             `• Any bot that has this role is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
+             `• They can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
+             `• To revoke a specific bot's immunity, simply remove the <@&${cleanId}> role from them, or use \`!botwhitelist remove <@&${cleanId}>\` to unwhitelist the role entirely.`;
+    } else {
+      desc = `Bot ID <@${cleanId}> (\`${cleanId}\`) has been added to the **Bot Whitelist**.\n\n` +
+             `• This bot is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
+             `• It can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
+             `• To revoke this immunity, use \`!botwhitelist remove ${cleanId}\`.`;
+    }
+    
+    return { embed: embed.success('Whitelisted', desc) };
   } else if (action === 'remove') {
     if (!cleanId) return { embed: embed.warn('Missing ID', 'Please provide the Bot/Role ID to remove.') };
     db.removeBotFromWhitelist(guild.id, cleanId);
-    return { embed: embed.success('Removed', `ID \`${cleanId}\` has been removed from the Bot Whitelist.`) };
+    return { embed: embed.success('Removed', `ID \`${cleanId}\` has been removed from the Bot Whitelist. It no longer has Anti-Nuke immunity.`) };
   } else {
     const list = db.getBotWhitelist(guild.id);
     if (list.length === 0) return { embed: embed.info('No Whitelisted Bots/Roles', 'No bots or roles are currently whitelisted.\n\nUse `!botwhitelist add <botId/roleId>` to whitelist a trusted bot or role.') };
