@@ -4,6 +4,7 @@ import { executeQuarantine } from '../commands/security.js';
 import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel } from '../utils/helpers.js';
 import { sendWelcomeMessage } from '../commands/welcome.js';
 import { checkBotAdd } from '../utils/antinuke.js';
+import { logServerEvent } from '../utils/serverLogger.js';
 
 export default {
   name: 'guildMemberAdd',
@@ -115,6 +116,18 @@ export default {
     // 5. WELCOME MESSAGE
     // ==========================================
     await sendWelcomeMessage(member);
+
+    // ==========================================
+    // 5.5 SERVER LOGS
+    // ==========================================
+    const accountAge = Date.now() - member.user.createdAt.getTime();
+    const ageDays = Math.floor(accountAge / (1000 * 60 * 60 * 24));
+    const joinEmbed = embed.success(
+      'Member Joined',
+      `**User:** ${member.user.tag} (<@${member.user.id}>)\n**Account Age:** ${ageDays} days old\n**Total Members:** ${guild.memberCount}`
+    ).setThumbnail(member.user.displayAvatarURL({ dynamic: true }));
+    await logServerEvent(guild, 'joins', joinEmbed);
+
     // ==========================================
     // 6. INVITE TRACKING
     // ==========================================

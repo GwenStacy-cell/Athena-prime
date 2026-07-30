@@ -153,6 +153,21 @@ class Database {
         allowedLinks: [],
         accentColor: null,
         rrDmsEnabled: true,
+        serverLogs: {
+          enabled: false,
+          defaultChannelId: null,
+          categoryId: null,
+          modules: {
+            bans: { enabled: true, channelId: null },
+            kicks: { enabled: true, channelId: null },
+            leaves: { enabled: true, channelId: null },
+            joins: { enabled: true, channelId: null },
+            msgDeletes: { enabled: true, channelId: null },
+            msgEdits: { enabled: true, channelId: null },
+            channels: { enabled: true, channelId: null },
+            roles: { enabled: true, channelId: null }
+          }
+        },
         autonick: {
           enabled: false,
           prefix: '',
@@ -193,6 +208,24 @@ class Database {
       if (cfg.allowedLinks === undefined) { cfg.allowedLinks = []; updated = true; }
       if (cfg.accentColor === undefined) { cfg.accentColor = null; updated = true; }
       if (cfg.rrDmsEnabled === undefined) { cfg.rrDmsEnabled = true; updated = true; }
+      if (cfg.serverLogs === undefined) { 
+        cfg.serverLogs = {
+          enabled: false,
+          defaultChannelId: null,
+          categoryId: null,
+          modules: {
+            bans: { enabled: true, channelId: null },
+            kicks: { enabled: true, channelId: null },
+            leaves: { enabled: true, channelId: null },
+            joins: { enabled: true, channelId: null },
+            msgDeletes: { enabled: true, channelId: null },
+            msgEdits: { enabled: true, channelId: null },
+            channels: { enabled: true, channelId: null },
+            roles: { enabled: true, channelId: null }
+          }
+        }; 
+        updated = true; 
+      }
       if (cfg.musicChannelId === undefined) { cfg.musicChannelId = null; updated = true; }
       if (cfg.musicMessageId === undefined) { cfg.musicMessageId = null; updated = true; }
       if (cfg.musicCoverImage === undefined) { cfg.musicCoverImage = null; updated = true; }

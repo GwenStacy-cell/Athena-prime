@@ -1,6 +1,8 @@
 import { AuditLogEvent } from 'discord.js';
 import { cacheDeletedItem } from '../utils/antinuke.js';
 import db from '../database.js';
+import embed from '../embed.js';
+import { logServerEvent } from '../utils/serverLogger.js';
 import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, ensureUnbypassableRole, handleAntiStab } from '../utils/antiStrip.js';
 
 export default {
@@ -20,5 +22,20 @@ export default {
 
     // Cache the role so the audit log event can perfectly restore it
     cacheDeletedItem(role.id, role);
+
+    // Fetch audit log to find who deleted it
+    await new Promise(r => setTimeout(r, 500));
+    const logs = await role.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.RoleDelete }).catch(() => null);
+    const entry = logs?.entries?.first();
+    let executor = 'Unknown';
+    if (entry && entry.target?.id === role.id) {
+      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
+    }
+
+    const delEmbed = embed.danger(
+      'Role Deleted',
+      `**Role Name:** ${role.name}\n**Executor:** ${executor}`
+    );
+    await logServerEvent(role.guild, 'roles', delEmbed);
   }
 };

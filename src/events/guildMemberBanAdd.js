@@ -1,10 +1,31 @@
 import { AuditLogEvent } from 'discord.js';
 import { checkMassBan } from '../utils/antinuke.js';
+import { logServerEvent } from '../utils/serverLogger.js';
+import embed from '../embed.js';
 
 export default {
   name: 'guildMemberBanAdd',
   async execute(ban) {
     if (!ban.guild) return;
     await checkMassBan(ban.guild, ban.user);
+
+    // Fetch audit logs to find executor
+    await new Promise(r => setTimeout(r, 500)); // Delay for audit log generation
+    const logs = await ban.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberBanAdd }).catch(() => null);
+    const entry = logs?.entries?.first();
+
+    let executor = 'Unknown (Native/Other Bot)';
+    let reason = ban.reason || 'No reason provided';
+    if (entry && entry.target?.id === ban.user.id) {
+      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
+      reason = entry.reason || reason;
+    }
+
+    const logEmbed = embed.danger(
+      'Member Banned',
+      `**User:** ${ban.user.tag} (<@${ban.user.id}>)\n**Executor:** ${executor}\n**Reason:** ${reason}`
+    ).setThumbnail(ban.user.displayAvatarURL({ dynamic: true }));
+
+    await logServerEvent(ban.guild, 'bans', logEmbed);
   }
 };

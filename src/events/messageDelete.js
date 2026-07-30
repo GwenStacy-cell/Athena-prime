@@ -1,5 +1,6 @@
 import db from '../database.js';
-
+import embed from '../embed.js';
+import { logServerEvent } from '../utils/serverLogger.js';
 export default {
   name: 'messageDelete',
   execute(message) {
@@ -11,5 +12,16 @@ export default {
       db.deleteReactionRoleMenu(message.id);
       console.log(`[Reaction Roles] Automatically cleaned up deleted menu: ${message.id}`);
     }
+
+    if (message.author?.bot) return; // Don't log bot message deletions to prevent spam
+
+    const content = message.content ? (message.content.length > 1024 ? message.content.substring(0, 1021) + '...' : message.content) : 'No text content';
+    
+    const delEmbed = embed.danger(
+      'Message Deleted',
+      `**Author:** ${message.author?.tag || 'Unknown'} (<@${message.author?.id || 'Unknown'}>)\n**Channel:** ${message.channel}\n\n**Content:**\n${content}`
+    );
+
+    logServerEvent(message.guild, 'msgDeletes', delEmbed);
   }
 };

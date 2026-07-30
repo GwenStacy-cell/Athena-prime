@@ -1,5 +1,7 @@
 import { cacheDeletedItem } from '../utils/antinuke.js';
 import db from '../database.js';
+import embed from '../embed.js';
+import { logServerEvent } from '../utils/serverLogger.js';
 
 export default {
   name: 'channelDelete',
@@ -9,5 +11,20 @@ export default {
 
     // Cache the channel so the audit log event can perfectly restore it
     cacheDeletedItem(channel.id, channel);
+
+    // Fetch audit log to find who deleted it
+    await new Promise(r => setTimeout(r, 500));
+    const logs = await channel.guild.fetchAuditLogs({ limit: 1, type: 12 /* ChannelDelete */ }).catch(() => null);
+    const entry = logs?.entries?.first();
+    let executor = 'Unknown';
+    if (entry && entry.target?.id === channel.id) {
+      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
+    }
+
+    const delEmbed = embed.danger(
+      'Channel Deleted',
+      `**Channel Name:** ${channel.name}\n**Type:** ${channel.type}\n**Executor:** ${executor}`
+    );
+    await logServerEvent(channel.guild, 'channels', delEmbed);
   }
 };

@@ -1,12 +1,31 @@
 import { EmbedBuilder } from 'discord.js';
 import { scanImageForScam, flaggedMessages } from '../utils/antiScam.js';
 import { logToSecurityChannel } from '../utils/helpers.js';
-
+import { logServerEvent } from '../utils/serverLogger.js';
 export default {
   name: 'messageUpdate',
   async execute(oldMessage, newMessage) {
     if (newMessage.author?.bot || newMessage.webhookId) return;
     if (!newMessage.guild) return;
+
+    // ==========================================
+    // SERVER LOGS: Message Edit
+    // ==========================================
+    if (oldMessage.content !== newMessage.content) {
+      const oldContent = oldMessage.content ? (oldMessage.content.length > 1000 ? oldMessage.content.substring(0, 997) + '...' : oldMessage.content) : 'No old content';
+      const newContent = newMessage.content ? (newMessage.content.length > 1000 ? newMessage.content.substring(0, 997) + '...' : newMessage.content) : 'No new content';
+
+      const editEmbed = new EmbedBuilder()
+        .setColor('#e67e22') // Orange for edits
+        .setTitle('Message Edited')
+        .setDescription(`**Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n**Channel:** ${newMessage.channel}\n[Jump to Message](${newMessage.url})`)
+        .addFields([
+          { name: 'Before', value: oldContent },
+          { name: 'After', value: newContent }
+        ]);
+
+      logServerEvent(newMessage.guild, 'msgEdits', editEmbed);
+    }
 
     // We only care about late unfurled embeds or late added attachments
     // If the old message didn't have embeds but the new one does:

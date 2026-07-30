@@ -110,14 +110,19 @@ export async function fetchDashboardStats(guild) {
   };
 }
 
+export const _dashboardLocks = new Set();
+
 export async function updateDashboardMessage(guild, client) {
   const cfg = db.getGuildConfig(guild.id);
   if (!cfg.dashboardChannelId) return;
 
-  const channel = guild.channels.cache.get(cfg.dashboardChannelId);
-  if (!channel) return;
+  if (_dashboardLocks.has(guild.id)) return; // Prevent concurrent syncs
+  _dashboardLocks.add(guild.id);
 
   try {
+    const channel = guild.channels.cache.get(cfg.dashboardChannelId);
+    if (!channel) return;
+
     const stats = await fetchDashboardStats(guild);
     const accentColor = cfg.accentColor || '#00FFFF'; // Fallback to cyan
     const accentInt = parseInt(accentColor.replace('#', ''), 16);
@@ -181,11 +186,27 @@ export async function updateDashboardMessage(guild, client) {
       }
     }
 
-    // Post new messages if missing
-    // First clear old messages in channel
+    // Post new messages if missing, OR adopt existing ones
+    // First check if there are already valid bot messages in the channel
     const fetched = await channel.messages.fetch({ limit: 50 }).catch(() => null);
     if (fetched) {
-      const botMessages = fetched.filter(m => m.author.id === client.user.id);
+      const botMessages = fetched.filter(m => m.author.id === client.user.id).sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+      
+      // If we found exactly 3 bot messages, maybe they are the dashboard! Let's adopt them instead of deleting.
+      if (botMessages.size === 3) {
+        const msgs = [...botMessages.values()];
+        try {
+          await msgs[0].edit({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] });
+          await msgs[1].edit({ embeds: [embedTo], files: [fileTo], attachments: [] });
+          await msgs[2].edit({ embeds: [embedAm], files: [fileAm], attachments: [] });
+          db.setDashboardInfo(guild.id, channel.id, [msgs[0].id, msgs[1].id, msgs[2].id]);
+          return; // Adopted successfully
+        } catch (e) {
+          // If edit fails, we fall through to delete and repost
+        }
+      }
+
+      // Otherwise, clear old messages in channel
       for (const m of botMessages.values()) {
         await m.delete().catch(() => {});
       }
@@ -199,6 +220,8 @@ export async function updateDashboardMessage(guild, client) {
 
   } catch (err) {
     console.error(`Failed to update dashboard for ${guild.id}:`, err);
+  } finally {
+    _dashboardLocks.delete(guild.id);
   }
 }
 

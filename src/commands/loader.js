@@ -13,6 +13,7 @@ import { commands as accentCmds } from './accent.js';
 import { commands as invitesCmds } from './invites.js';
 import { commands as rrCmds } from './rr.js';
 import { commands as serverstatsCmds } from './serverstats.js';
+import { commands as serverlogsCmds } from './serverlogs.js';
 import { commands as birthdayCmds } from './birthday.js';
 import { commands as giveawayCmds } from './giveaway.js';
 import { commands as statsCmds } from './stats.js';
@@ -55,6 +56,7 @@ export const allCommands = [
   ...invitesCmds,
   ...rrCmds,
   ...serverstatsCmds,
+  ...serverlogsCmds,
   ...birthdayCmds,
   ...giveawayCmds,
   ...statsCmds,
