@@ -13,15 +13,14 @@ export async function logServerEvent(guild, moduleName, embedData) {
     const config = db.getGuildConfig(guild.id);
     const serverLogs = config.serverLogs;
 
-    // Fast fail if completely disabled
-    if (!serverLogs || !serverLogs.enabled) return;
+    if (!serverLogs) return;
 
     const moduleConfig = serverLogs.modules[moduleName];
     // Fast fail if module doesn't exist or is disabled
     if (!moduleConfig || !moduleConfig.enabled) return;
 
-    // Resolve channel (Module specific -> Default fallback)
-    const targetChannelId = moduleConfig.channelId || serverLogs.defaultChannelId;
+    // Resolve channel: Use explicitly bound channel, or fallback ONLY IF master switch is enabled
+    const targetChannelId = moduleConfig.channelId || (serverLogs.enabled ? serverLogs.defaultChannelId : null);
     if (!targetChannelId) return;
 
     // Ensure we can access the channel
