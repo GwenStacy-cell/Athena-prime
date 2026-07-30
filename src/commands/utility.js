@@ -438,21 +438,25 @@ const helpModules = [
   { id: 'music', shortLabel: 'Music', label: 'Music Player', emoji: '<:music_player:1523770740476739809>', commands: ['`/setupmusic` `[image_url]` — Create the Compact Music Player channel `[extra owners]`', '`/play` `query` — Play a song in your voice channel via URL or search `[public]`', 'Use the dedicated Music Console channel to control playback (Play, Pause, Skip, Queue, Stop).'] },
   { id: 'messaging', shortLabel: 'Messaging', label: 'Announcements & Messaging', emoji: '<:announcement_and_message:1523721769205235842>', commands: ['`!say` `#channel` `message` — Send an anonymous bot message `[extra owners]`', '`!announce` `#channel` `title | message` — Post a styled announcement embed `[extra owners]`', '`!modmode` **on** / **off** — Restrict all channels to moderators instantly `[extra owners]`', '`!sticky` **set / footer / remove** — Manage channel sticky messages `[extra owners]`'] },
   { id: 'voice', shortLabel: 'Voice', label: 'Voice & Join-to-Create', emoji: '<:voice_join_to_create:1523770607706308658>', commands: [
-    '`!theatermode` **on/off** — Activates Movie Mode (Server mutes/deafens the entire VC) `[extra owners]`', '',
-    '`!vclock` / `!vcunlock` — Deny or restore Connect permissions for @everyone in your VC `[extra owners]`', '',
-    '`!mute` / `!unmute` / `!deafen` / `!undeafen` — VC member state control `[extra owners]`', '',
-    '`!muteall` / `!unmuteall` / `!deafenall` / `!undeafenall` — Mass VC state control `[extra owners]`', '',
-    '`!massmove` `dest` / `!massdc` — Move or disconnect everyone in a VC `[extra owners]`', '',
-    '`!vcdrag` `@user` `[interval]` — Drag a user endlessly through VCs (default: 2s) `[extra owners]`', '',
-    '`!vcdragstop` `@user` — Stop the drag session for a specific user `[extra owners]`', '',
-    '`!vcdraglist` — View all currently active drag sessions `[extra owners]`', '',
-    '`!vcstatus` **on/off** — Toggle the dynamic VC live status text `[extra owners]`', '',
-    '`!moveprotect` **add/remove/list** `@user` — Prevent admins from moving protected users `[server owner]`', '',
-    '`!vcprotect` **add/remove/list** `@user` — Prevent admins from muting/deafening protected users `[server owner]`', '',
-    '`!jtcsetup` `#voicechannel` — Designate the JTC creator channel `[extra owners]`', '',
-    '`!jtcdisable` — Remove the JTC system from this server `[extra owners]`', '',
-    '`!vc` — Manage your personal JTC channel (rename, limit, privacy...) `[public]`', '',
-    '`!sethomevc` `[channel]` — Set bot\'s Home VC (auto-rejoin if moved) `[extra owners]`', '',
+    '`!theatermode` **on/off** — Activates Movie Mode (Server mutes/deafens the entire VC) `[extra owners]`', 
+    '`!vclock` / `!vcunlock` — Deny or restore Connect permissions for @everyone in your VC `[extra owners]`', 
+    '`!mute` / `!unmute` / `!deafen` / `!undeafen` — VC member state control `[extra owners]`', 
+    '`!muteall` / `!unmuteall` / `!deafenall` / `!undeafenall` — Mass VC state control `[extra owners]`', 
+    '`!vcstatus` **on/off** — Toggle the dynamic VC live status text `[extra owners]`', 
+    '',
+    '`!moveprotect` **add/remove/list** `@user` — Prevent admins from moving protected users `[server owner]`', 
+    '`!vcprotect` **add/remove/list** `@user` — Prevent admins from muting/deafening protected users `[server owner]`', 
+    '',
+    '`!massmove` `dest` / `!massdc` — Move or disconnect everyone in a VC `[extra owners]`', 
+    '`!vcdrag` `@user` `[interval]` — Drag a user endlessly through VCs (default: 2s) `[extra owners]`', 
+    '`!vcdragstop` `@user` — Stop the drag session for a specific user `[extra owners]`', 
+    '`!vcdraglist` — View all currently active drag sessions `[extra owners]`', 
+    '',
+    '`!jtcsetup` `#voicechannel` — Designate the JTC creator channel `[extra owners]`', 
+    '`!jtcdisable` — Remove the JTC system from this server `[extra owners]`', 
+    '`!vc` — Manage your personal JTC channel (rename, limit, privacy...) `[public]`', 
+    '',
+    '`!sethomevc` `[channel]` — Set bot\'s Home VC (auto-rejoin if moved) `[extra owners]`', 
     '`!unsethomevc` — Clear Home VC and disconnect the bot `[extra owners]`'
   ] },
   { id: 'welcome', shortLabel: 'Welcome', label: 'Welcome & Leave', emoji: '<:welcome_and_leave:1523727386967933071>', commands: ['`!welcome` — Open the Welcome message manager `[extra owners]`', '`!leave` — Open the Leave message manager `[extra owners]`', '`/autorole-config` **add/remove/clear** — Manage roles auto-assigned to new members `[extra owners]`', 'Supports `{user}` `{server}` `{count}` placeholders in custom embeds'] },
@@ -506,22 +510,33 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
   } else {
     const mod = helpModules.find(m => m.id === moduleId);
     if (mod) {
-      let lines = mod.commands.map(cmd => {
-        if (cmd === '') return '---';
-        let formatted = cmd.replace(/!/g, prefix);
-        if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('• ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
-          return formatted;
-        }
-        return `> **${formatted}**`;
-      });
-
       let currentChunk = `# ${mod.emoji} ${mod.label.toUpperCase()}`;
-      for (const line of lines) {
+      
+      for (const cmd of mod.commands) {
+        if (cmd === '') {
+          if (currentChunk.trim().length > 0) {
+            rawComponents.push({ type: 10, content: currentChunk.trim() });
+          }
+          rawComponents.push({ type: 14, divider: true });
+          currentChunk = '';
+          continue;
+        }
+        
+        let formatted = cmd.replace(/!/g, prefix);
+        let line = '';
+        if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('• ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
+          line = formatted;
+        } else {
+          line = `> **${formatted}**`;
+        }
+
         if (currentChunk.length + line.length + 4 > 1900) {
-          rawComponents.push({ type: 10, content: currentChunk.trim() });
+          if (currentChunk.trim().length > 0) {
+            rawComponents.push({ type: 10, content: currentChunk.trim() });
+          }
           currentChunk = line;
         } else {
-          currentChunk += '\n\n' + line;
+          currentChunk += (currentChunk ? '\n\n' : '') + line;
         }
       }
 
