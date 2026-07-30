@@ -94,9 +94,7 @@ export function buildControlPanel(vcChannel, ownerMember) {
       { label: 'Permit', description: 'Permit a user/role to access the channel', value: 'jtc_permit', emoji: getEmoji('permit') },
       { label: 'Reject', description: 'Reject/kick a user from the channel', value: 'jtc_reject', emoji: getEmoji('reject') },
       { label: 'Invite', description: 'Send a user a DM invite to join', value: 'jtc_invite', emoji: getEmoji('invite') },
-      { label: 'Transfer', description: 'Transfer ownership to another user', value: 'jtc_transfer', emoji: getEmoji('transfer') },
-      { label: 'Anti-Move', description: 'Prevent server admins from moving you', value: 'jtc_moveprotect', emoji: '<:vc_drag:1523723288663298291>' },
-      { label: 'Anti-Mute', description: 'Prevent admins from muting/deafening you', value: 'jtc_vcprotect', emoji: '<:voice_join_to_create:1523770607706308658>' }
+      { label: 'Transfer', description: 'Transfer ownership to another user', value: 'jtc_transfer', emoji: getEmoji('transfer') }
     ]);
 
   const container = new ContainerBuilder()
@@ -181,9 +179,7 @@ export function buildSharedPanel(guild) {
       { label: 'Permit', description: 'Permit a user/role to access the channel', value: 'jtc_permit', emoji: getEmoji('permit') },
       { label: 'Reject', description: 'Reject/kick a user from the channel', value: 'jtc_reject', emoji: getEmoji('reject') },
       { label: 'Invite', description: 'Send a user a DM invite to join', value: 'jtc_invite', emoji: getEmoji('invite') },
-      { label: 'Transfer', description: 'Transfer ownership to another user', value: 'jtc_transfer', emoji: getEmoji('transfer') },
-      { label: 'Anti-Move', description: 'Prevent server admins from moving you', value: 'jtc_moveprotect', emoji: '<:vc_drag:1523723288663298291>' },
-      { label: 'Anti-Mute', description: 'Prevent admins from muting/deafening you', value: 'jtc_vcprotect', emoji: '<:voice_join_to_create:1523770607706308658>' }
+      { label: 'Transfer', description: 'Transfer ownership to another user', value: 'jtc_transfer', emoji: getEmoji('transfer') }
     ]);
 
   const container = new ContainerBuilder()
@@ -293,29 +289,6 @@ export async function handleJtcSelectMenu(interaction) {
     const current = vcChannel.nsfw;
     await vcChannel.setNSFW(!current).catch(() => null);
     return interaction.reply({ embeds: [current ? embed.success('NSFW Disabled', 'Your channel is no longer marked NSFW.') : embed.warn('NSFW Enabled ', 'Your channel has been marked as NSFW.')] });
-  }
-
-  // ── PROTECTIONS (Toggles for the owner) ──
-  if (value === 'jtc_moveprotect') {
-    const isProtected = db.isMoveProtected(guild.id, member.id);
-    if (isProtected) {
-      db.removeMoveProtectedUser(guild.id, member.id);
-      return interaction.reply({ embeds: [embed.success('Move Protection Disabled', 'Server admins can now move you again.')] });
-    } else {
-      db.addMoveProtectedUser(guild.id, member.id);
-      return interaction.reply({ embeds: [embed.success('Move Protection Enabled', 'Server admins can no longer move you from this channel.')] });
-    }
-  }
-
-  if (value === 'jtc_vcprotect') {
-    const isProtected = db.isVcProtected(guild.id, member.id);
-    if (isProtected) {
-      db.removeVcProtectedUser(guild.id, member.id);
-      return interaction.reply({ embeds: [embed.success('VC Protection Disabled', 'Server admins can now mute/deafen you again.')] });
-    } else {
-      db.addVcProtectedUser(guild.id, member.id);
-      return interaction.reply({ embeds: [embed.success('VC Protection Enabled', 'Server admins can no longer server mute/deafen you.')] });
-    }
   }
 
   // ── GAME — set channel name to game owner is playing ──
