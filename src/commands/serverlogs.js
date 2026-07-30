@@ -20,14 +20,16 @@ async function handleServerLogs(guild, subcommand, args) {
   if (subcommand === 'status' || !subcommand) {
     const fields = MODULES.map(mod => {
       const modCfg = sl.modules[mod.id];
-      const statusStr = modCfg.enabled ? '<:on:1514996865030946847> **Enabled**' : '<:off:1514996881946447892> **Disabled**';
+      const hasRoute = modCfg.channelId || sl.defaultChannelId;
+      const actuallyEnabled = modCfg.enabled && hasRoute;
+      const statusStr = actuallyEnabled ? '<:on:1517213880483446978> **Enabled**' : '<:off:1517213879367761981> **Disabled**';
       const channelStr = modCfg.channelId ? `<#${modCfg.channelId}>` : (sl.defaultChannelId ? `<#${sl.defaultChannelId}> (Fallback)` : '`None`');
       return { name: mod.name, value: `${statusStr}\nRoute: ${channelStr}`, inline: true };
     });
 
     fields.unshift({
       name: 'Global Settings',
-      value: `Master Switch: ${sl.enabled ? '<:on:1514996865030946847>' : '<:off:1514996881946447892>'}\nDefault Fallback Channel: ${sl.defaultChannelId ? `<#${sl.defaultChannelId}>` : '`None`'}`
+      value: `Master Switch: ${sl.enabled ? '<:on:1517213880483446978>' : '<:off:1517213879367761981>'}\nDefault Fallback Channel: ${sl.defaultChannelId ? `<#${sl.defaultChannelId}>` : '`None`'}`
     });
 
     return { embeds: [embed.info('Server Logs Dashboard', 'Configure advanced server logging. Use `/serverlogs bind` to route events to specific channels.', fields)] };
