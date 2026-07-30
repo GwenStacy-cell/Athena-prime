@@ -2309,8 +2309,18 @@ async function handleBotWhitelist(guild, action, botId) {
   } else {
     const list = db.getBotWhitelist(guild.id);
     if (list.length === 0) return { embed: embed.info('No Whitelisted Bots/Roles', 'No bots or roles are currently whitelisted.\n\nUse `!botwhitelist add <botId/roleId>` to whitelist a trusted bot or role.') };
-    const formatted = list.map(id => `• \`${id}\``).join('\n');
-    return { embed: embed.info('Whitelisted Bots & Roles', `Bots matching these IDs (or possessing these Role IDs) bypass Anti-Nuke:\n\n${formatted}`) };
+    
+    const formatted = await Promise.all(list.map(async id => {
+      const role = guild.roles.cache.get(id);
+      if (role) return `• **Role:** ${role} (\`${id}\`)`;
+      
+      const user = await guild.client.users.fetch(id).catch(() => null);
+      if (user) return `• **Bot:** ${user} (\`${id}\`)`;
+      
+      return `• **Unknown:** \`${id}\``;
+    }));
+    
+    return { embed: embed.info('Whitelisted Bots & Roles', `The following entities have full Anti-Nuke immunity:\n\n${formatted.join('\n')}`) };
   }
 }
 
