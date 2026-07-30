@@ -267,14 +267,14 @@ export const commands = [
     },
     async executeSlash(interaction) {
       const action = interaction.options.getString('action');
-      let statusMsg = null;
+      await interaction.deferReply({ ephemeral: false }).catch(() => null);
+      
       const updateProgress = async (embedData) => {
-        if (!statusMsg) statusMsg = await interaction.reply({ embeds: [embedData], withResponse: true }).catch(() => null);
-        else await interaction.editReply({ embeds: [embedData] }).catch(() => null);
+        await interaction.editReply({ embeds: [embedData] }).catch(() => null);
       };
+      
       const result = await handleEmergency(interaction.guild, interaction.member, action, updateProgress);
-      if (statusMsg) await interaction.editReply({ embeds: [result.embed] }).catch(()=>null);
-      else await interaction.reply({ embeds: [result.embed] });
+      await interaction.editReply({ embeds: [result.embed] }).catch(() => null);
     }
   },
   {
@@ -293,14 +293,14 @@ export const commands = [
       else await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      let statusMsg = null;
+      await interaction.deferReply({ ephemeral: false }).catch(() => null);
+      
       const updateProgress = async (embedData) => {
-        if (!statusMsg) statusMsg = await interaction.reply({ embeds: [embedData], withResponse: true }).catch(() => null);
-        else await interaction.editReply({ embeds: [embedData] }).catch(() => null);
+        await interaction.editReply({ embeds: [embedData] }).catch(() => null);
       };
+      
       const result = await handleEmergency(interaction.guild, interaction.member, 'end', updateProgress);
-      if (statusMsg) await interaction.editReply({ embeds: [result.embed] }).catch(()=>null);
-      else await interaction.reply({ embeds: [result.embed] });
+      await interaction.editReply({ embeds: [result.embed] }).catch(() => null);
     }
   },
 
