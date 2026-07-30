@@ -1,4 +1,4 @@
-import { AuditLogEvent, PermissionFlagsBits } from 'discord.js';
+import { AuditLogEvent, PermissionFlagsBits, PermissionsBitField } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
 import { logToSecurityChannel, isBotOwnerSync } from './helpers.js';
@@ -664,8 +664,18 @@ export async function checkAntiNukeMemberUpdate(oldMember, newMember) {
     let rollbackResult = 'No rollback';
     try {
       await newMember.roles.remove(dangerousRolesAdded, 'Athena Anti-Nuke: Unauthorized dangerous role grant reversed');
-      rollbackResult = ` Removed roles: **${dangerousRolesAdded.map(r => r.name).join(', ')}** from ${newMember.user.tag}`;
-    } catch (e) { rollbackResult = ` Role removal failed: ${e.message}`; }
+      rollbackResult = `Removed roles: **${dangerousRolesAdded.map(r => r.name).join(', ')}** from ${newMember.user.tag}`;
+    } catch (e) { rollbackResult = `Role removal failed: ${e.message}`; }
+
+    const grantedMentions = dangerousRolesAdded.map(r => `<@&${r.id}>`).join(', ');
+    const allAddedPerms = new PermissionsBitField();
+    dangerousRolesAdded.forEach(r => allAddedPerms.add(r.permissions));
+    const dangerousNames = allAddedPerms.toArray().filter(p => [
+      'Administrator', 'ManageGuild', 'ManageChannels', 'ManageRoles',
+      'BanMembers', 'KickMembers', 'ManageWebhooks', 'ManageMessages', 'MentionEveryone'
+    ].includes(p));
+    
+    rollbackResult = `**Roles Granted:** ${grantedMentions}\n**Risk:** ${dangerousNames.join(', ')}\n**Rollback:** ${rollbackResult}`;
 
     // Strip executor's roles too
     const executorMember = await guild.members.fetch(executor.id).catch(() => null);
