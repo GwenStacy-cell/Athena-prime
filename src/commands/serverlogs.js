@@ -30,45 +30,45 @@ async function handleServerLogs(guild, subcommand, args) {
       value: `Master Switch: ${sl.enabled ? '<:on:1514996865030946847>' : '<:off:1514996881946447892>'}\nDefault Fallback Channel: ${sl.defaultChannelId ? `<#${sl.defaultChannelId}>` : '`None`'}`
     });
 
-    return { embed: embed.info('Server Logs Dashboard', 'Configure advanced server logging. Use `/serverlogs bind` to route events to specific channels.', fields) };
+    return { embeds: [embed.info('Server Logs Dashboard', 'Configure advanced server logging. Use `/serverlogs bind` to route events to specific channels.', fields)] };
   }
 
   if (subcommand === 'master') {
     sl.enabled = !sl.enabled;
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return { embed: embed.success('Updated', `Master Server Logs switch is now ${sl.enabled ? '**Enabled**' : '**Disabled**'}.`) };
+    return { embeds: [embed.success('Updated', `Master Server Logs switch is now ${sl.enabled ? '**Enabled**' : '**Disabled**'}.`)] };
   }
 
   if (subcommand === 'toggle') {
     const moduleId = args.moduleId;
     const mod = sl.modules[moduleId];
-    if (!mod) return { embed: embed.warn('Error', 'Invalid module ID.') };
+    if (!mod) return { embeds: [embed.warn('Error', 'Invalid module ID.')] };
     
     mod.enabled = !mod.enabled;
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return { embed: embed.success('Updated', `Module **${moduleId}** is now ${mod.enabled ? '**Enabled**' : '**Disabled**'}.`) };
+    return { embeds: [embed.success('Updated', `Module **${moduleId}** is now ${mod.enabled ? '**Enabled**' : '**Disabled**'}.`)] };
   }
 
   if (subcommand === 'bind') {
     const moduleId = args.moduleId;
     const channelId = args.channelId;
     const mod = sl.modules[moduleId];
-    if (!mod) return { embed: embed.warn('Error', 'Invalid module ID.') };
+    if (!mod) return { embeds: [embed.warn('Error', 'Invalid module ID.')] };
 
     mod.channelId = channelId;
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return { embed: embed.success('Bound', `Module **${moduleId}** logs will now be routed to <#${channelId}>.`) };
+    return { embeds: [embed.success('Bound', `Module **${moduleId}** logs will now be routed to <#${channelId}>.`)] };
   }
 
   if (subcommand === 'setdefault') {
     sl.defaultChannelId = args.channelId;
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return { embed: embed.success('Updated', `Default fallback log channel set to <#${sl.defaultChannelId}>.`) };
+    return { embeds: [embed.success('Updated', `Default fallback log channel set to <#${sl.defaultChannelId}>.`)] };
   }
 
   if (subcommand === 'autosetup') {
     if (sl.defaultChannelId && guild.channels.cache.has(sl.defaultChannelId)) {
-      return { embed: embed.info('Already Setup', 'A default channel is already configured.') };
+      return { embeds: [embed.info('Already Setup', 'A default channel is already configured.')] };
     }
 
     try {
@@ -95,13 +95,13 @@ async function handleServerLogs(guild, subcommand, args) {
       sl.enabled = true;
       db.updateGuildConfig(guild.id, { serverLogs: sl });
 
-      return { embed: embed.success('Auto-Setup Complete', `Created category **Athena Logs** and default fallback channel <#${logChannel.id}>. Master switch has been enabled.`) };
+      return { embeds: [embed.success('Auto-Setup Complete', `Created category **Athena Logs** and default fallback channel <#${logChannel.id}>. Master switch has been enabled.`)] };
     } catch (e) {
-      return { embed: embed.warn('Setup Failed', `Could not create channels: ${e.message}`) };
+      return { embeds: [embed.warn('Setup Failed', `Could not create channels: ${e.message}`)] };
     }
   }
 
-  return { embed: embed.warn('Invalid Usage', 'Unknown subcommand.') };
+  return { embeds: [embed.warn('Invalid Usage', 'Unknown subcommand.')] };
 }
 
 export const commands = [
