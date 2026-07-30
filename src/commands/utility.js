@@ -506,31 +506,29 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
   } else {
     const mod = helpModules.find(m => m.id === moduleId);
     if (mod) {
-      let description = `# ${mod.emoji} ${mod.label.toUpperCase()}\n\n`;
-      let buffer = [];
-      
-      for (const cmd of mod.commands) {
-        if (cmd === '') {
-          if (buffer.length > 0 || description.length > 0) {
-            rawComponents.push({ type: 10, content: (description + buffer.join('\n\n')).trim() });
-            buffer = [];
-            description = '';
-          }
-          rawComponents.push({ type: 14, divider: true });
+      let lines = mod.commands.map(cmd => {
+        if (cmd === '') return '---';
+        let formatted = cmd.replace(/!/g, prefix);
+        if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('• ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
+          return formatted;
+        }
+        return `> **${formatted}**`;
+      });
+
+      let currentChunk = `# ${mod.emoji} ${mod.label.toUpperCase()}`;
+      for (const line of lines) {
+        if (currentChunk.length + line.length + 4 > 1900) {
+          rawComponents.push({ type: 10, content: currentChunk.trim() });
+          currentChunk = line;
         } else {
-          let formatted = cmd.replace(/!/g, prefix);
-          if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('• ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
-            buffer.push(formatted);
-          } else {
-            buffer.push(`> **${formatted}**`);
-          }
+          currentChunk += '\n\n' + line;
         }
       }
-      
-      if (buffer.length > 0 || description.length > 0) {
-        rawComponents.push({ type: 10, content: (description + buffer.join('\n\n')).trim() });
+
+      if (currentChunk.trim().length > 0) {
+        rawComponents.push({ type: 10, content: currentChunk.trim() });
       }
-      
+
       rawComponents.push({ type: 14, divider: true });
     }
   }
