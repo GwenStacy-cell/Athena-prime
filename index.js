@@ -89,7 +89,7 @@ import messageCreateEvent from './src/events/messageCreate.js';
 import guildMemberAddEvent from './src/events/guildMemberAdd.js';
 import channelDeleteEvent from './src/events/channelDelete.js';
 import roleDeleteEvent from './src/events/roleDelete.js';
-import guildMemberBanAddEvent from './src/events/guildMemberBanAdd.js';
+import guildBanAddEvent from './src/events/guildBanAdd.js';
 import guildMemberRemoveEvent from './src/events/guildMemberRemove.js';
 import channelCreateEvent from './src/events/channelCreate.js';
 import roleCreateEvent from './src/events/roleCreate.js';
@@ -119,7 +119,7 @@ const events = [
   guildMemberAddEvent,
   channelDeleteEvent,
   roleDeleteEvent,
-  guildMemberBanAddEvent,
+  guildBanAddEvent,
   guildMemberRemoveEvent,
   channelCreateEvent,
   roleCreateEvent,
