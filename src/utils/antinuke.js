@@ -209,6 +209,12 @@ function isAuthorized(guild, executor, eventType = 'antinuke') {
   
   if (eventType === 'antibot') return false; // ONLY Server/Bot Owner can add bots.
   
+  // If the executor is a bot and is in the botWhitelist, grant full Anti-Nuke immunity
+  if (executor.bot) {
+    const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
+    if (botWhitelist.includes(executor.id)) return true;
+  }
+  
   if (db.isExtraOwner(guild.id, executor.id)) return true;  // extra owner
   if (db.isWhitelisted(guild, executor.id, eventType)) return true; // granular whitelist
   return false;
