@@ -213,6 +213,9 @@ function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (executor.bot) {
     const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
     if (botWhitelist.includes(executor.id)) return true;
+    
+    const member = guild.members.cache.get(executor.id);
+    if (member && botWhitelist.some(id => member.roles.cache.has(id))) return true;
   }
   
   if (db.isExtraOwner(guild.id, executor.id)) return true;  // extra owner
@@ -699,6 +702,7 @@ export async function checkBotAdd(member) {
   // Check bot whitelist in DB
   const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
   if (botWhitelist.includes(member.id)) return;
+  if (botWhitelist.some(id => member.roles.cache.has(id))) return;
 
     try {
     await new Promise(r => setTimeout(r, 500));

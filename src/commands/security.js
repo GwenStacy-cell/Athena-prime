@@ -2296,19 +2296,21 @@ async function handleExtraOwner(guild, moderator, action, targetUser) {
 }
 
 async function handleBotWhitelist(guild, action, botId) {
+  const cleanId = botId ? botId.replace(/[<@&!>]/g, '') : null;
+  
   if (action === 'add') {
-    if (!botId || !/^\d{17,20}$/.test(botId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid bot User ID (17-20 digit number).') };
-    db.addBotToWhitelist(guild.id, botId);
-    return { embed: embed.success('Bot Whitelisted', `Bot ID \`${botId}\` has been added to the **Bot Whitelist**.\n\nThis bot will no longer be kicked or flagged when added to the server.`) };
+    if (!cleanId || !/^\d{17,20}$/.test(cleanId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid bot User ID or a Role mention/ID.') };
+    db.addBotToWhitelist(guild.id, cleanId);
+    return { embed: embed.success('Whitelisted', `ID \`${cleanId}\` has been added to the **Bot Whitelist**.\n\nBots matching this ID (or having this role) will bypass Anti-Nuke protections.`) };
   } else if (action === 'remove') {
-    if (!botId) return { embed: embed.warn('Missing ID', 'Please provide the Bot ID to remove.') };
-    db.removeBotFromWhitelist(guild.id, botId);
-    return { embed: embed.success('Bot Removed', `Bot ID \`${botId}\` has been removed from the Bot Whitelist. It will now be blocked if added again.`) };
+    if (!cleanId) return { embed: embed.warn('Missing ID', 'Please provide the Bot/Role ID to remove.') };
+    db.removeBotFromWhitelist(guild.id, cleanId);
+    return { embed: embed.success('Removed', `ID \`${cleanId}\` has been removed from the Bot Whitelist.`) };
   } else {
     const list = db.getBotWhitelist(guild.id);
-    if (list.length === 0) return { embed: embed.info('No Whitelisted Bots', 'No bots are currently whitelisted.\n\nUse `!botwhitelist add <botId>` to whitelist a trusted bot.') };
+    if (list.length === 0) return { embed: embed.info('No Whitelisted Bots/Roles', 'No bots or roles are currently whitelisted.\n\nUse `!botwhitelist add <botId/roleId>` to whitelist a trusted bot or role.') };
     const formatted = list.map(id => `• \`${id}\``).join('\n');
-    return { embed: embed.info('Whitelisted Bots', `These bots are permitted to be in the server:\n\n${formatted}`) };
+    return { embed: embed.info('Whitelisted Bots & Roles', `Bots matching these IDs (or possessing these Role IDs) bypass Anti-Nuke:\n\n${formatted}`) };
   }
 }
 
