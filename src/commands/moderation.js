@@ -916,16 +916,11 @@ export async function handleWarn(guild, moderator, target, reason, force = false
   await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
   // Response channel embed
-  const resEmbed = embed.warn(
-    'User Warned', 
-    `Successfully warned **${target.user.tag}**.`,
-    [
-      { name: 'User', value: `${target}`, inline: true },
-      { name: 'Moderator', value: `${moderator}`, inline: true },
-      { name: 'Warn Count', value: `\`${warns.length}\``, inline: true },
-      { name: 'Reason', value: reason }
-    ]
-  );
+  const resEmbed = embed.build({
+    description: `__**User Warned |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${target} , **${reason}**\n> \n>  has been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
+    color: '#2b2d31',
+    thumbnail: target.user.displayAvatarURL({ dynamic: true })
+  });
 
   // Log to logs channel
   logToSecurityChannel(guild, embed.log(

@@ -17,7 +17,7 @@ export default {
       const newContent = newMessage.content ? (newMessage.content.length > 1000 ? newMessage.content.substring(0, 997) + '...' : newMessage.content) : 'No new content';
 
       const editEmbed = embed.build({
-        description: `__**Message Edited |**__ <:emoji_16:1521464002046328944>\n**Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n**Channel:** ${newMessage.channel}\n[Jump to Message](${newMessage.url})\n\n**Before:**\n${oldContent}\n\n**After:**\n${newContent}`,
+        description: `__**Message Edited |**__ <:emoji_16:1521464002046328944>\n> **Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n> \n>  **Channel:** ${newMessage.channel}\n>  [Jump to Message](${newMessage.url})\n>  **Before:**\n>  ${oldContent}\n>  **After:**\n>  ${newContent}`,
         color: '#2b2d31'
       });
 

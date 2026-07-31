@@ -22,7 +22,7 @@ export default {
     }
 
     const delEmbed = embed.build({
-      description: `__**Channel Deleted |**__ <:emoji_16:1521464002046328944>\n**Channel Name:** ${channel.name}\n**Type:** ${channel.type}\n**Executor:** ${executor}`,
+      description: `__**Channel Deleted |**__ <:emoji_16:1521464002046328944>\n> **Channel Name:** ${channel.name}\n> \n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
       color: '#2b2d31'
     });
     await logServerEvent(channel.guild, 'channels', delEmbed);

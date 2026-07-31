@@ -941,10 +941,11 @@ export default {
           );
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
-          const warnEmbed = embed.warn(
-            '<:gun:1517636066964799679> Invite Deleted',
-            `${message.author}, invite links are strictly prohibited in this guild to prevent promotion spam.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
-          );
+          const warnEmbed = embed.build({
+            description: `__**Warned Sending Invites |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> \n>  has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
+            color: '#2b2d31',
+            thumbnail: message.author.displayAvatarURL({ dynamic: true })
+          });
           await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
         }
         

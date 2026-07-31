@@ -123,7 +123,7 @@ export default {
     const accountAge = Date.now() - member.user.createdAt.getTime();
     const ageDays = Math.floor(accountAge / (1000 * 60 * 60 * 24));
     const joinEmbed = embed.build({
-      description: `__**Member Joined |**__ <:emoji_16:1521464002046328944>\n**User:** ${member.user.tag} (<@${member.user.id}>)\n**Account Age:** ${ageDays} days old\n**Total Members:** ${guild.memberCount}`,
+      description: `__**Member Joined |**__ <:emoji_16:1521464002046328944>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n> \n>  **Account Age:** ${ageDays} days old\n>  **Total Members:** ${guild.memberCount}`,
       color: '#2b2d31',
       thumbnail: member.user.displayAvatarURL({ dynamic: true })
     });
