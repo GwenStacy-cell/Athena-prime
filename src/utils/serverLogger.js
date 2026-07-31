@@ -29,8 +29,8 @@ export async function logServerEvent(guild, moduleName, embedData) {
       console.log(`[ServerLogger] Channel ${targetChannelId} for module ${moduleName} not found.`);
       return;
     }
-    if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.GuildAnnouncement) {
-      console.log(`[ServerLogger] Channel ${targetChannelId} is not a valid text/announcement channel.`);
+    if (!channel.isTextBased()) {
+      console.log(`[ServerLogger] Channel ${targetChannelId} is not a valid text-based channel.`);
       return;
     }
 

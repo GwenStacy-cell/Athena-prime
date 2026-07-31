@@ -4,7 +4,7 @@ import { logServerEvent } from '../utils/serverLogger.js';
 import embed from '../embed.js';
 
 export default {
-  name: 'guildMemberBanAdd',
+  name: 'guildBanAdd',
   async execute(ban) {
     if (!ban.guild) return;
     await checkMassBan(ban.guild, ban.user);
