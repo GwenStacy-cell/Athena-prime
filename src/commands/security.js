@@ -1739,46 +1739,12 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     const stateToSave = { roles: [], channels: [] };
 
-    // 1. Process Roles
-    const rolesToModify = [];
-    guild.roles.cache.forEach(role => {
-      // Protect Athena's own roles and roles higher/equal to it. Also protect managed roles.
-      // We explicitly INCLUDE @everyone (role.id === guild.id) so it loses its base permissions too!
-      if (role.position >= botHighestRolePosition || role.managed) return;
-      
-      // Protect any roles that the bot is actively using
-      if (botMember.roles.cache.has(role.id)) return;
-      
-      // Save current permissions
-      stateToSave.roles.push({
-        id: role.id,
-        perms: role.permissions.bitfield.toString()
-      });
-      rolesToModify.push(role);
-    });
-
-    // Strip ALL permissions to 0n (sequentially to avoid rate limit drops)
-    let rCount = 0;
-    let rErrors = 0;
-    for (const role of rolesToModify) {
-      try {
-        await role.setPermissions(0n, `Emergency Mode triggered by ${moderator.user.tag}`);
-        rCount++;
-        if (rCount % 10 === 0 && updateProgress) await updateProgress(embed.warn('Emergency Protocol Initiated', `Stripping permissions: **${rCount} / ${rolesToModify.length}** processed...`)).catch(()=>null);
-      } catch (e) {
-        rErrors++;
-        console.error(`Failed to modify role ${role.id} during emergency`, e);
-      }
-    }
-
-    // 2. Process Channels
+    // 1. Process Channels FIRST (Immediate visual lockdown)
     const channelsToModify = [];
     await guild.channels.fetch().catch(() => null); // Ensure cache is full
     guild.channels.cache.forEach(channel => {
-      // Threads and some channel types do not have permissionOverwrites
       if (!channel.permissionOverwrites) return;
-
-      // Just save the entire permissionOverwrites cache
+      
       const overwrites = channel.permissionOverwrites.cache.map(ow => ({
         id: ow.id,
         type: ow.type,
@@ -1786,40 +1752,67 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
         deny: ow.deny.bitfield.toString()
       }));
 
-      stateToSave.channels.push({
-        id: channel.id,
-        overwrites
-      });
+      stateToSave.channels.push({ id: channel.id, overwrites });
       channelsToModify.push(channel);
     });
 
-    // For every channel, deny ViewChannel for @everyone, and clear other role overwrites to inherit the denied view.
     let cCount = 0;
     let cErrors = 0;
-    for (const channel of channelsToModify) {
+    const channelPromises = channelsToModify.map(channel => async () => {
       try {
         const isProtectedCommunityChannel = (channel.id === guild.rulesChannelId || channel.id === guild.publicUpdatesChannelId);
-        
         await channel.permissionOverwrites.set([
           {
             id: guild.id,
-            // For rules/updates channels, Discord prevents hiding them from @everyone. So we just deny sending.
             deny: isProtectedCommunityChannel ? [PermissionFlagsBits.SendMessages] : [PermissionFlagsBits.ViewChannel],
-            type: 0 // Role overwrite
+            type: 0
           },
           {
             id: botMember.id,
             allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages],
-            type: 1 // Member overwrite
+            type: 1
           }
         ], `Emergency Mode triggered by ${moderator.user.tag}`);
         
         cCount++;
-        if (cCount % 10 === 0 && updateProgress) await updateProgress(embed.warn('Emergency Protocol Initiated', `Hiding channels: **${cCount} / ${channelsToModify.length}** processed...`)).catch(()=>null);
+        if (cCount % 15 === 0 && updateProgress) updateProgress(embed.warn('Emergency Protocol Initiated', `Hiding channels: **${cCount} / ${channelsToModify.length}** processed...`)).catch(()=>null);
       } catch (e) {
         cErrors++;
-        console.error(`Failed to modify channel ${channel.id} during emergency`, e);
+        console.error(`Failed to modify channel ${channel.id} during emergency`, e.message);
       }
+    });
+
+    // Run channel modifications in batches of 5 for speed
+    for (let i = 0; i < channelPromises.length; i += 5) {
+      await Promise.allSettled(channelPromises.slice(i, i + 5).map(fn => fn()));
+    }
+
+    // 2. Process Roles SECOND
+    const rolesToModify = [];
+    guild.roles.cache.forEach(role => {
+      if (role.position >= botHighestRolePosition || role.managed) return;
+      if (botMember.roles.cache.has(role.id)) return;
+      
+      stateToSave.roles.push({ id: role.id, perms: role.permissions.bitfield.toString() });
+      rolesToModify.push(role);
+    });
+
+    let rCount = 0;
+    let rErrors = 0;
+    const rolePromises = rolesToModify.map(role => async () => {
+      try {
+        await role.setPermissions(0n, `Emergency Mode triggered by ${moderator.user.tag}`);
+        rCount++;
+        if (rCount % 10 === 0 && updateProgress) updateProgress(embed.warn('Emergency Protocol Initiated', `Stripping permissions: **${rCount} / ${rolesToModify.length}** processed...`)).catch(()=>null);
+      } catch (e) {
+        rErrors++;
+        console.error(`Failed to modify role ${role.id} during emergency`, e.message);
+      }
+    });
+
+    // Run role modifications in batches of 5 for speed
+    for (let i = 0; i < rolePromises.length; i += 5) {
+      await Promise.allSettled(rolePromises.slice(i, i + 5).map(fn => fn()));
     }
 
     db.saveEmergencyState(guild.id, stateToSave);
