@@ -58,8 +58,9 @@ async function handleServerLogs(guild, subcommand, args) {
     if (!mod) return { embeds: [embed.warn('Error', 'Invalid module ID.')] };
 
     mod.channelId = channelId;
+    mod.enabled = true; // Auto-enable the module when bound
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return { embeds: [embed.success('Bound', `Module **${moduleId}** logs will now be routed to <#${channelId}>.`)] };
+    return { embeds: [embed.success('Bound', `Module **${moduleId}** logs will now be routed to <#${channelId}> and has been enabled.`)] };
   }
 
   if (subcommand === 'setdefault') {

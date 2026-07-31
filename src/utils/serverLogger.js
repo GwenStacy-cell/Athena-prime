@@ -25,10 +25,19 @@ export async function logServerEvent(guild, moduleName, embedData) {
 
     // Ensure we can access the channel
     const channel = await guild.channels.fetch(targetChannelId).catch(() => null);
-    if (!channel || channel.type !== ChannelType.GuildText) return;
+    if (!channel) {
+      console.log(`[ServerLogger] Channel ${targetChannelId} for module ${moduleName} not found.`);
+      return;
+    }
+    if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.GuildAnnouncement) {
+      console.log(`[ServerLogger] Channel ${targetChannelId} is not a valid text/announcement channel.`);
+      return;
+    }
 
     // Send the log
-    await channel.send({ embeds: [embedData] }).catch(() => null);
+    await channel.send({ embeds: [embedData] }).catch(err => {
+      console.log(`[ServerLogger] Failed to send embed to ${targetChannelId}:`, err.message);
+    });
   } catch (error) {
     console.error(`[ServerLogger] Failed to log ${moduleName} event in guild ${guild.id}:`, error);
   }
