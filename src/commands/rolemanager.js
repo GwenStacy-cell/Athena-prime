@@ -55,7 +55,6 @@ export const commands = [
       if (failedRoles.length > 0) replyDesc += `**Failed:** ${failedRoles.join(', ')}\n`;
       
       await message.reply({ embeds: [embed.success('Role Assignment', replyDesc)] });
-      await message.reply({ embeds: [embed.success('Role Assignment', replyDesc)] });
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
