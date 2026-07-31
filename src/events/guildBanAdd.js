@@ -21,10 +21,11 @@ export default {
       reason = entry.reason || reason;
     }
 
-    const logEmbed = embed.danger(
-      'Member Banned',
-      `**User:** ${ban.user.tag} (<@${ban.user.id}>)\n**Executor:** ${executor}\n**Reason:** ${reason}`
-    ).setThumbnail(ban.user.displayAvatarURL({ dynamic: true }));
+    const logEmbed = embed.build({
+      description: `__**Member Banned |**__ <:emoji_16:1521464002046328944>\n**User:** ${ban.user.tag} (<@${ban.user.id}>)\n**Executor:** ${executor}\n**Reason:** ${reason}`,
+      color: '#2b2d31',
+      thumbnail: ban.user.displayAvatarURL({ dynamic: true })
+    });
 
     await logServerEvent(ban.guild, 'bans', logEmbed);
   }

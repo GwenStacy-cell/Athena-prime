@@ -59,6 +59,7 @@ class Database {
         
         // Ensure standard structure is always present
         this.cache.guilds        = this.cache.guilds        || {};
+        this.cache.afk           = this.cache.afk           || {};
         this.cache.warnings      = this.cache.warnings      || {};
         this.cache.quarantines   = this.cache.quarantines   || {};
         this.cache.extraOwners   = this.cache.extraOwners   || {};
@@ -1371,6 +1372,27 @@ class Database {
       this.cache.stickyMessages[guildId][channelId].lastSentAt = sentAt;
       this.save();
     }
+  }
+  // --------------------------------------------------------------------------
+  // AFK SYSTEM
+  // --------------------------------------------------------------------------
+  
+  setAfk(userId, reason, timestamp) {
+    this.cache.afk[userId] = { reason, timestamp };
+    this.save();
+  }
+
+  getAfk(userId) {
+    return this.cache.afk[userId] || null;
+  }
+
+  removeAfk(userId) {
+    if (this.cache.afk[userId]) {
+      delete this.cache.afk[userId];
+      this.save();
+      return true;
+    }
+    return false;
   }
 }
 

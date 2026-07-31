@@ -15,10 +15,10 @@ export default {
       executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
     }
 
-    const createEmbed = embed.success(
-      'Channel Created',
-      `**Channel:** ${channel.name} (<#${channel.id}>)\n**Type:** ${channel.type}\n**Executor:** ${executor}`
-    );
+    const createEmbed = embed.build({
+      description: `__**Channel Created |**__ <:emoji_16:1521464002046328944>\n**Channel:** ${channel.name} (<#${channel.id}>)\n**Type:** ${channel.type}\n**Executor:** ${executor}`,
+      color: '#2b2d31'
+    });
     await logServerEvent(channel.guild, 'channels', createEmbed);
     
     // Auto-hide new channels from quarantined users

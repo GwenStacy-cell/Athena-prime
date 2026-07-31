@@ -17,10 +17,10 @@ export default {
 
     const content = message.content ? (message.content.length > 1024 ? message.content.substring(0, 1021) + '...' : message.content) : 'No text content';
     
-    const delEmbed = embed.danger(
-      'Message Deleted',
-      `**Author:** ${message.author?.tag || 'Unknown'} (<@${message.author?.id || 'Unknown'}>)\n**Channel:** ${message.channel}\n\n**Content:**\n${content}`
-    );
+    const delEmbed = embed.build({
+      description: `__**Message Deleted |**__ <:emoji_16:1521464002046328944>\n**Author:** ${message.author?.tag || 'Unknown'} (<@${message.author?.id || 'Unknown'}>)\n**Channel:** ${message.channel}\n\n**Content:**\n${content}`,
+      color: '#2b2d31'
+    });
 
     logServerEvent(message.guild, 'msgDeletes', delEmbed);
   }

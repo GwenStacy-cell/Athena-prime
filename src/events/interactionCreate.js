@@ -1369,7 +1369,7 @@ export default {
     }
 
     // ==========================================
-    // 4. STRING SELECT MENU (JTC Dropdowns)
+    // 4. STRING SELECT MENU (JTC & Emoji Stealer)
     // ==========================================
     if (interaction.isStringSelectMenu()) {
       if (interaction.customId === 'jtc_settings_menu' || interaction.customId === 'jtc_perms_menu') {
@@ -1381,6 +1381,46 @@ export default {
             await interaction.reply({ content: ' An error occurred.' }).catch(() => null);
           }
         }
+      }
+
+      if (interaction.customId === 'emojistealer_select') {
+        const targetGuildId = interaction.values[0];
+        const targetGuild = interaction.client.guilds.cache.get(targetGuildId);
+        
+        if (!targetGuild) {
+          return interaction.reply({ embeds: [embed.danger('Error', 'Target server not found.')], ephemeral: true });
+        }
+
+        const isBotOwner = isBotOwnerSync(interaction.user.id);
+        const isServerOwner = targetGuild.ownerId === interaction.user.id;
+
+        if (!isBotOwner && !isServerOwner) {
+          return interaction.reply({ embeds: [embed.danger('Access Denied', 'You must be the Bot Owner or the Owner of the target server to steal emojis.')], ephemeral: true });
+        }
+
+        await interaction.update({ embeds: [embed.build({ title: 'Emoji Stealer', description: `Stealing emojis and adding them to **${targetGuild.name}**... Please wait.`, color: '#2b2d31' })], components: [] });
+
+        const emojis = interaction.guild.emojis.cache;
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const emoji of emojis.values()) {
+          try {
+            await targetGuild.emojis.create({ attachment: emoji.url, name: emoji.name });
+            successCount++;
+          } catch (e) {
+            failCount++;
+          }
+        }
+
+        const resultEmbed = embed.build({
+          title: 'Emoji Stealer Complete',
+          description: `Successfully copied **${successCount}** emojis to **${targetGuild.name}**.\nFailed to copy: **${failCount}** emojis (possibly due to limit reached).`,
+          color: '#2b2d31',
+          thumbnail: targetGuild.iconURL({ dynamic: true })
+        });
+
+        return interaction.editReply({ embeds: [resultEmbed] }).catch(() => null);
       }
     }
 

@@ -33,16 +33,18 @@ export default {
     }
 
     if (isKick) {
-      const kickEmbed = embed.danger(
-        'Member Kicked',
-        `**User:** ${member.user.tag} (<@${member.user.id}>)\n**Executor:** ${executor}\n**Reason:** ${reason}`
-      ).setThumbnail(member.user.displayAvatarURL({ dynamic: true }));
+      const kickEmbed = embed.build({
+        description: `__**Member Kicked |**__ <:emoji_16:1521464002046328944>\n**User:** ${member.user.tag} (<@${member.user.id}>)\n**Executor:** ${executor}\n**Reason:** ${reason}`,
+        color: '#2b2d31',
+        thumbnail: member.user.displayAvatarURL({ dynamic: true })
+      });
       await logServerEvent(guild, 'kicks', kickEmbed);
     } else {
-      const leaveEmbed = embed.warn(
-        'Member Left',
-        `**User:** ${member.user.tag} (<@${member.user.id}>)`
-      ).setThumbnail(member.user.displayAvatarURL({ dynamic: true }));
+      const leaveEmbed = embed.build({
+        description: `__**Member Left |**__ <:emoji_16:1521464002046328944>\n**User:** ${member.user.tag} (<@${member.user.id}>)`,
+        color: '#2b2d31',
+        thumbnail: member.user.displayAvatarURL({ dynamic: true })
+      });
       await logServerEvent(guild, 'leaves', leaveEmbed);
     }
   }

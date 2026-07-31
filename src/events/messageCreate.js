@@ -232,6 +232,40 @@ export default {
     if (db.isUserBotBlacklisted(message.author.id)) return;
 
     // ==========================================
+    // AFK SYSTEM INTERCEPTION
+    // ==========================================
+    if (message.guild) {
+      // 1. Check if author is AFK and remove status
+      const afkStatus = db.getAfk(message.author.id);
+      if (afkStatus) {
+        db.removeAfk(message.author.id);
+        const mins = Math.floor((Date.now() - afkStatus.timestamp) / 60000);
+        const wbEmbed = embed.build({
+          title: 'Welcome Back',
+          description: `<:emoji_16:1521464002046328944> **Status Cleared**\n${message.author} is now back online!\nYou were away for **${mins} mins**.`,
+          color: '#2b2d31',
+          thumbnail: message.author.displayAvatarURL({ dynamic: true })
+        });
+        message.reply({ embeds: [wbEmbed] }).catch(() => null);
+      }
+
+      // 2. Check if mentioned users are AFK
+      if (message.mentions.users.size > 0) {
+        message.mentions.users.forEach(user => {
+          const mentionedAfk = db.getAfk(user.id);
+          if (mentionedAfk && user.id !== message.author.id) {
+            const timeAgoStr = `<t:${Math.floor(mentionedAfk.timestamp / 1000)}:R>`;
+            const mentionEmbed = embed.build({
+              description: `💤 **${user.tag}** is AFK: ${mentionedAfk.reason} (${timeAgoStr})`,
+              color: '#2b2d31'
+            });
+            message.reply({ embeds: [mentionEmbed] }).catch(() => null);
+          }
+        });
+      }
+    }
+
+    // ==========================================
     // STICKY MESSAGE LOGIC
     // ==========================================
     if (message.guild) {

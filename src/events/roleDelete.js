@@ -32,10 +32,10 @@ export default {
       executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
     }
 
-    const delEmbed = embed.danger(
-      'Role Deleted',
-      `**Role Name:** ${role.name}\n**Executor:** ${executor}`
-    );
+    const delEmbed = embed.build({
+      description: `__**Role Deleted |**__ <:emoji_16:1521464002046328944>\n**Role Name:** ${role.name}\n**Executor:** ${executor}`,
+      color: '#2b2d31'
+    });
     await logServerEvent(role.guild, 'roles', delEmbed);
   }
 };

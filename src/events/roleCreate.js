@@ -15,10 +15,10 @@ export default {
       executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
     }
 
-    const createEmbed = embed.success(
-      'Role Created',
-      `**Role:** ${role.name} (<@&${role.id}>)\n**Executor:** ${executor}`
-    );
+    const createEmbed = embed.build({
+      description: `__**Role Created |**__ <:emoji_16:1521464002046328944>\n**Role:** ${role.name} (<@&${role.id}>)\n**Executor:** ${executor}`,
+      color: '#2b2d31'
+    });
     await logServerEvent(role.guild, 'roles', createEmbed);
   }
 };

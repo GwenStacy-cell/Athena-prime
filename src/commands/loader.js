@@ -39,6 +39,8 @@ import { commands as dateCmds } from './date.js';
 import { commands as topCmds } from './top.js';
 import { commands as stickyCmds } from './sticky.js';
 import { commands as fckCmds } from './fck.js';
+import { commands as afkCmds } from './afk.js';
+import { commands as emojiStealerCmds } from './emojistealer.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -81,7 +83,9 @@ export const allCommands = [
   ...dateCmds,
   ...topCmds,
   ...stickyCmds,
-  ...fckCmds
+  ...fckCmds,
+  ...afkCmds,
+  ...emojiStealerCmds
 ];
 
 export const commandMap = new Map();

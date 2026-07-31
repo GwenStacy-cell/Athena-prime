@@ -2,6 +2,7 @@ import { EmbedBuilder } from 'discord.js';
 import { scanImageForScam, flaggedMessages } from '../utils/antiScam.js';
 import { logToSecurityChannel } from '../utils/helpers.js';
 import { logServerEvent } from '../utils/serverLogger.js';
+import embed from '../embed.js';
 export default {
   name: 'messageUpdate',
   async execute(oldMessage, newMessage) {
@@ -15,14 +16,10 @@ export default {
       const oldContent = oldMessage.content ? (oldMessage.content.length > 1000 ? oldMessage.content.substring(0, 997) + '...' : oldMessage.content) : 'No old content';
       const newContent = newMessage.content ? (newMessage.content.length > 1000 ? newMessage.content.substring(0, 997) + '...' : newMessage.content) : 'No new content';
 
-      const editEmbed = new EmbedBuilder()
-        .setColor('#e67e22') // Orange for edits
-        .setTitle('Message Edited')
-        .setDescription(`**Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n**Channel:** ${newMessage.channel}\n[Jump to Message](${newMessage.url})`)
-        .addFields([
-          { name: 'Before', value: oldContent },
-          { name: 'After', value: newContent }
-        ]);
+      const editEmbed = embed.build({
+        description: `__**Message Edited |**__ <:emoji_16:1521464002046328944>\n**Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n**Channel:** ${newMessage.channel}\n[Jump to Message](${newMessage.url})\n\n**Before:**\n${oldContent}\n\n**After:**\n${newContent}`,
+        color: '#2b2d31'
+      });
 
       logServerEvent(newMessage.guild, 'msgEdits', editEmbed);
     }
