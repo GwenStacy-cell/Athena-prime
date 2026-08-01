@@ -2,6 +2,79 @@ import { PermissionFlagsBits } from 'discord.js';
 import embed from '../embed.js';
 import { isAuthorized, isBotOwnerSync } from '../utils/helpers.js';
 
+async function handleMassRole(context, role, action) {
+  const guild = context.guild;
+  const executor = context.author || context.user;
+  
+  const highestBotRole = guild.members.me.roles.highest.position;
+  const highestUserRole = context.member?.roles.highest.position;
+
+  if (role.position >= highestBotRole) {
+    const reply = { embeds: [embed.danger('Hierarchy Error', 'My highest role must be above the role you are trying to manage.')] };
+    return context.reply ? await context.reply(reply) : await context.editReply(reply);
+  }
+  
+  if (!isBotOwnerSync(executor.id) && guild.ownerId !== executor.id && role.position >= highestUserRole) {
+    const reply = { embeds: [embed.danger('Hierarchy Error', 'Your highest role must be above the role you are trying to manage.')] };
+    return context.reply ? await context.reply(reply) : await context.editReply(reply);
+  }
+
+  const isSlash = !!context.commandName;
+  if (isSlash) await context.deferReply();
+  
+  const initialReply = { embeds: [embed.success(`Mass ${action === 'add' ? 'Add' : 'Remove'} Started`, `Fetching members and processing \`${role.name}\`... Please wait.`)] };
+  let statusMessage;
+  if (isSlash) {
+    statusMessage = await context.editReply(initialReply);
+  } else {
+    statusMessage = await context.reply(initialReply);
+  }
+
+  try {
+    const members = await guild.members.fetch();
+    let successCount = 0;
+    let failCount = 0;
+    
+    // Filter members based on action
+    const targets = members.filter(m => action === 'add' ? !m.roles.cache.has(role.id) : m.roles.cache.has(role.id));
+    
+    if (targets.size === 0) {
+      const finishEmbed = embed.success(`Mass ${action === 'add' ? 'Add' : 'Remove'} Completed`, `Nobody needed the role changed!`);
+      return statusMessage.edit({ embeds: [finishEmbed] }).catch(() => null);
+    }
+    
+    let processed = 0;
+    
+    for (const [id, member] of targets) {
+      processed++;
+      try {
+        if (action === 'add') await member.roles.add(role);
+        else await member.roles.remove(role);
+        successCount++;
+      } catch (e) {
+        failCount++;
+      }
+      
+      // Update status every 30 members
+      if (processed % 30 === 0) {
+        const updateEmbed = embed.success(`Mass ${action === 'add' ? 'Add' : 'Remove'} In Progress`, `Processed **${processed}/${targets.size}** members...`);
+        await statusMessage.edit({ embeds: [updateEmbed] }).catch(() => null);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    
+    const finishEmbed = embed.success(
+      `Mass ${action === 'add' ? 'Add' : 'Remove'} Completed`, 
+      `Successfully processed ${action === 'add' ? 'addition' : 'removal'} for **${successCount}** members.\nFailed: **${failCount}**`
+    );
+    await statusMessage.edit({ embeds: [finishEmbed] }).catch(() => null);
+  } catch (err) {
+    console.error(err);
+    const errEmbed = embed.danger('Execution Error', 'Something went wrong during mass role assignment.');
+    await statusMessage.edit({ embeds: [errEmbed] }).catch(() => null);
+  }
+}
+
 export const commands = [
   {
     name: 'addrole',
@@ -281,6 +354,54 @@ export const commands = [
       }
       
       await interaction.editReply({ embeds: [embed.success('Roles Stripped', `Successfully stripped **${count}** roles from ${target}. Failed to remove **${failedCount}** roles.`)] });
+    }
+  },
+  {
+    name: 'massaddrole',
+    description: 'Adds a role to all members in the server.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      { name: 'role', description: 'The role to add to everyone', type: 8, required: true }
+    ],
+    async executePrefix(message) {
+      if (!(await isAuthorized(message.author, message.guild))) return;
+      
+      const role = message.mentions.roles.first();
+      if (!role) return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massaddrole <@role>`')] });
+      
+      await handleMassRole(message, role, 'add');
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+      }
+      const role = interaction.options.getRole('role');
+      await handleMassRole(interaction, role, 'add');
+    }
+  },
+  {
+    name: 'massremoverole',
+    description: 'Removes a role from all members in the server.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      { name: 'role', description: 'The role to remove from everyone', type: 8, required: true }
+    ],
+    async executePrefix(message) {
+      if (!(await isAuthorized(message.author, message.guild))) return;
+      
+      const role = message.mentions.roles.first();
+      if (!role) return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massremoverole <@role>`')] });
+      
+      await handleMassRole(message, role, 'remove');
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+      }
+      const role = interaction.options.getRole('role');
+      await handleMassRole(interaction, role, 'remove');
     }
   }
 ];
