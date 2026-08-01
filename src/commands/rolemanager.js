@@ -1,5 +1,6 @@
 import { PermissionFlagsBits } from 'discord.js';
 import embed from '../embed.js';
+import db from '../database.js';
 import { isAuthorized, isBotOwnerSync } from '../utils/helpers.js';
 
 async function handleMassRole(context, role, action) {
@@ -22,7 +23,9 @@ async function handleMassRole(context, role, action) {
   const isSlash = !!context.commandName;
   if (isSlash) await context.deferReply();
   
-  const initialReply = { embeds: [embed.success(`Mass ${action === 'add' ? 'Add' : 'Remove'} Started`, `Fetching members and processing \`${role.name}\`... Please wait.`)] };
+  const actionName = action === 'add' ? 'Add' : action === 'remove' ? 'Remove' : action === 'strip' ? 'Strip' : 'Restore';
+  
+  const initialReply = { embeds: [embed.success(`Mass ${actionName} Started`, `Processing \`${role.name}\`...`)] };
   let statusMessage;
   if (isSlash) {
     statusMessage = await context.editReply(initialReply);
@@ -35,37 +38,46 @@ async function handleMassRole(context, role, action) {
     let successCount = 0;
     let failCount = 0;
     
-    // Filter members based on action
-    const targets = members.filter(m => action === 'add' ? !m.roles.cache.has(role.id) : m.roles.cache.has(role.id));
+    let targets;
+    if (action === 'add') {
+      targets = members.filter(m => !m.roles.cache.has(role.id));
+    } else if (action === 'remove') {
+      targets = members.filter(m => m.roles.cache.has(role.id));
+    } else if (action === 'strip') {
+      targets = members.filter(m => m.roles.cache.has(role.id));
+      const targetIds = Array.from(targets.keys());
+      db.saveMassRole(guild.id, role.id, targetIds);
+    } else if (action === 'restore') {
+      const savedIds = db.getMassRole(guild.id, role.id) || [];
+      if (savedIds.length === 0) {
+        return statusMessage.edit({ embeds: [embed.warn('No Backup', `No backup found for \`${role.name}\`. Nothing to restore.`)] }).catch(() => null);
+      }
+      targets = members.filter(m => savedIds.includes(m.id) && !m.roles.cache.has(role.id));
+    }
     
     if (targets.size === 0) {
-      const finishEmbed = embed.success(`Mass ${action === 'add' ? 'Add' : 'Remove'} Completed`, `Nobody needed the role changed!`);
+      const finishEmbed = embed.success(`Mass ${actionName} Completed`, `Nobody needed the role changed!`);
       return statusMessage.edit({ embeds: [finishEmbed] }).catch(() => null);
     }
     
-    let processed = 0;
+    const targetArray = Array.from(targets.values());
     
-    for (const [id, member] of targets) {
-      processed++;
-      try {
-        if (action === 'add') await member.roles.add(role);
-        else await member.roles.remove(role);
-        successCount++;
-      } catch (e) {
-        failCount++;
-      }
-      
-      // Update status every 30 members
-      if (processed % 30 === 0) {
-        const updateEmbed = embed.success(`Mass ${action === 'add' ? 'Add' : 'Remove'} In Progress`, `Processed **${processed}/${targets.size}** members...`);
-        await statusMessage.edit({ embeds: [updateEmbed] }).catch(() => null);
-        await new Promise(r => setTimeout(r, 1000));
-      }
+    for (let i = 0; i < targetArray.length; i += 50) {
+      const chunk = targetArray.slice(i, i + 50);
+      await Promise.allSettled(chunk.map(async m => {
+        try {
+          if (action === 'add' || action === 'restore') await m.roles.add(role);
+          else await m.roles.remove(role);
+          successCount++;
+        } catch (e) {
+          failCount++;
+        }
+      }));
     }
     
     const finishEmbed = embed.success(
-      `Mass ${action === 'add' ? 'Add' : 'Remove'} Completed`, 
-      `Successfully processed ${action === 'add' ? 'addition' : 'removal'} for **${successCount}** members.\nFailed: **${failCount}**`
+      `Mass ${actionName} Completed`, 
+      `Successfully processed ${action === 'add' || action === 'restore' ? 'addition' : 'removal'} for **${successCount}** members.\nFailed: **${failCount}**`
     );
     await statusMessage.edit({ embeds: [finishEmbed] }).catch(() => null);
   } catch (err) {
@@ -402,6 +414,50 @@ export const commands = [
       }
       const role = interaction.options.getRole('role');
       await handleMassRole(interaction, role, 'remove');
+    }
+  },
+  {
+    name: 'massstrip',
+    description: 'Removes a role from all members and saves the list to restore later.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      { name: 'role', description: 'The role to strip', type: 8, required: true }
+    ],
+    async executePrefix(message) {
+      if (!(await isAuthorized(message.author, message.guild))) return;
+      const role = message.mentions.roles.first();
+      if (!role) return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massstrip <@role>`')] });
+      await handleMassRole(message, role, 'strip');
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+      }
+      const role = interaction.options.getRole('role');
+      await handleMassRole(interaction, role, 'strip');
+    }
+  },
+  {
+    name: 'massrestore',
+    description: 'Restores a role to members who had it stripped via massstrip.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      { name: 'role', description: 'The role to restore', type: 8, required: true }
+    ],
+    async executePrefix(message) {
+      if (!(await isAuthorized(message.author, message.guild))) return;
+      const role = message.mentions.roles.first();
+      if (!role) return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massrestore <@role>`')] });
+      await handleMassRole(message, role, 'restore');
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+      }
+      const role = interaction.options.getRole('role');
+      await handleMassRole(interaction, role, 'restore');
     }
   }
 ];

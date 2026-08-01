@@ -39,7 +39,8 @@ const DEFAULT_SCHEMA = {
   rateChannels: {},  // guildId -> channelId
   likedSongs: {},    // userId -> [ { title, url, duration, artworkUrl } ]
   bannedServers: [], // global list of banned guild IDs
-  stickyMessages: {} // guildId -> { channelId -> { content, lastMessageId, lastSentAt } }
+  stickyMessages: {}, // guildId -> { channelId -> { content, lastMessageId, lastSentAt } }
+  massRoles: {}      // guildId -> { roleId -> [userIds] }
 };
 
 class Database {
@@ -85,6 +86,7 @@ class Database {
         this.cache.moveProtection = this.cache.moveProtection || {};
         this.cache.editRatings    = this.cache.editRatings    || {};
         this.cache.rateChannels   = this.cache.rateChannels   || {};
+        this.cache.massRoles      = this.cache.massRoles      || {};
       } else {
         this.save();
       }
