@@ -17,6 +17,6 @@ export const commands = [{
       thumbnail: message.author.displayAvatarURL({ dynamic: true })
     });
 
-    return { embeds: [afkEmbed] };
+    await message.reply({ embeds: [afkEmbed] });
   }
 }];

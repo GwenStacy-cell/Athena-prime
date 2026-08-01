@@ -10,12 +10,14 @@ export const commands = [{
     const isServerOwner = message.author.id === message.guild.ownerId;
 
     if (!isBotOwner && !isServerOwner) {
-      return { embeds: [embed.danger('Access Denied', 'Only the Bot Owner or the Server Owner can use the Emoji Stealer.')] };
+      await message.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner or the Server Owner can use the Emoji Stealer.')] });
+      return;
     }
 
     const emojis = message.guild.emojis.cache;
     if (emojis.size === 0) {
-      return { embeds: [embed.warn('No Emojis', 'There are no emojis in this server to steal.')] };
+      await message.reply({ embeds: [embed.warn('No Emojis', 'There are no emojis in this server to steal.')] });
+      return;
     }
 
     // Find valid target servers
@@ -31,7 +33,8 @@ export const commands = [{
     }
 
     if (targetServers.length === 0) {
-      return { embeds: [embed.warn('No Target Servers', 'I am not in any other servers where you are the owner.')] };
+      await message.reply({ embeds: [embed.warn('No Target Servers', 'I am not in any other servers where you are the owner.')] });
+      return;
     }
 
     // Discord limits SelectMenu to 25 options
@@ -56,6 +59,6 @@ export const commands = [{
       thumbnail: message.guild.iconURL({ dynamic: true })
     });
 
-    return { embeds: [uiEmbed], components: [row] };
+    await message.reply({ embeds: [uiEmbed], components: [row] });
   }
 }];
