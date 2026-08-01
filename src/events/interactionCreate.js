@@ -1301,23 +1301,21 @@ export default {
         return;
       }
 
-      if (!validButtons.includes(interaction.customId)) {
-        // JTC control panel buttons
-        if (interaction.customId.startsWith('jtc_setlimit_')) {
-          try { await handleJtcLimitSelect(interaction); } catch (e) { console.error('[JTC limit]', e); }
-          return;
-        }
-        if (interaction.customId.startsWith('jtc_setbitrate_')) {
-          try { await handleJtcBitrateSelect(interaction); } catch (e) { console.error('[JTC bitrate]', e); }
-          return;
-        }
-        if (interaction.customId.startsWith('jtc_')) {
-          try { await handleJtcButton(interaction); } catch (e) { console.error('[JTC button]', e); }
-          return;
-        }
+      // JTC control panel buttons
+      if (interaction.customId.startsWith('jtc_setlimit_')) {
+        try { await handleJtcLimitSelect(interaction); } catch (e) { console.error('[JTC limit]', e); }
+        return;
+      }
+      if (interaction.customId.startsWith('jtc_setbitrate_')) {
+        try { await handleJtcBitrateSelect(interaction); } catch (e) { console.error('[JTC bitrate]', e); }
+        return;
+      }
+      if (interaction.customId.startsWith('jtc_')) {
+        try { await handleJtcButton(interaction); } catch (e) { console.error('[JTC button]', e); }
         return;
       }
 
+      if (validButtons.includes(interaction.customId)) {
       // Verify Administrator permissions for config buttons — bot owner + extra owners bypass
       const isBtnBypass = isBotOwnerSync(interaction.user.id) ||
         interaction.user.id === interaction.guild.ownerId ||
@@ -1363,9 +1361,11 @@ export default {
         return interaction.update({ embeds: [panel.embed], components: panel.components });
       }
 
-      // Re-compile layout and update message
-      const panel = await getAntinukeConfigPanel(interaction.guild);
-      await interaction.update({ embeds: [panel.embed], components: panel.components });
+        // Re-compile layout and update message
+        const panel = await getAntinukeConfigPanel(interaction.guild);
+        await interaction.update({ embeds: [panel.embed], components: panel.components });
+        return;
+      }
     }
 
     // ==========================================
