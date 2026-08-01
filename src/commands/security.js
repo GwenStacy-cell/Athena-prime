@@ -137,7 +137,7 @@ export const commands = [
       const reason = remaining.join(' ').trim() || 'No reason provided';
       const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
       if (result.success) await message.reply({ embeds: [result.embed] });
-      else await message.reply({ embeds: [embed.danger('Quarantine Failed', result.message)] });
+      else await message.reply({ embeds: [result.embed || embed.danger('Quarantine Failed', result.message)] });
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -150,7 +150,7 @@ export const commands = [
 
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
       if (result.success) await interaction.reply({ embeds: [result.embed] });
-      else await interaction.reply({ embeds: [embed.danger('Quarantine Failed', result.message)] });
+      else await interaction.reply({ embeds: [result.embed || embed.danger('Quarantine Failed', result.message)] });
     }
   },
 
@@ -177,7 +177,7 @@ export const commands = [
       const reason = remaining.join(' ').trim() || 'No reason provided';
       const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
       if (result.success) await message.reply({ embeds: [result.embed] });
-      else await message.reply({ embeds: [embed.danger('Quarantine Failed', result.message)] });
+      else await message.reply({ embeds: [result.embed || embed.danger('Quarantine Failed', result.message)] });
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -188,7 +188,7 @@ export const commands = [
       if (!target) return interaction.reply({ embeds: [embed.warn('Error', 'Member not found.')] });
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
       if (result.success) await interaction.reply({ embeds: [result.embed] });
-      else await interaction.reply({ embeds: [embed.danger('Quarantine Failed', result.message)] });
+      else await interaction.reply({ embeds: [result.embed || embed.danger('Quarantine Failed', result.message)] });
     }
   },
 
@@ -1505,9 +1505,19 @@ async function getImageBuffer(url) {
 // ==========================================
 
 export async function executeQuarantine(guild, targetMember, moderator, reason, durationMs = null, client = null) {
-  // Owner immunity check
-  if (isBotOwnerSync(targetMember.id) || isExtraOwner(guild.id, targetMember.id)) {
-    return { success: false, message: ' This user is protected by **Athena Prime** and cannot be quarantined.' };
+  // 1. Untouchable Check
+  if (isBotOwnerSync(targetMember.id) || guild.ownerId === targetMember.id) {
+    return { 
+      success: false, 
+      embed: embed.danger('Untouchable', `Command overridden. **${targetMember.user.tag}** is untouchable and immune to all moderation protocols.`)
+    };
+  }
+
+  // 2. Extraowner Immunity (Bypass if moderator is Bot Owner/Server Owner)
+  if (isExtraOwner(guild.id, targetMember.id)) {
+    if (!isBotOwnerSync(moderator.id) && guild.ownerId !== moderator.id) {
+       return { success: false, message: ' This user is an Extra Owner and cannot be quarantined by regular moderators.' };
+    }
   }
 
   // 1. Check permission checks (if triggered by a moderator and not an auto-event)
