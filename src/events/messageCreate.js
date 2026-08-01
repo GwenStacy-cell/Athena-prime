@@ -241,8 +241,7 @@ export default {
         db.removeAfk(message.author.id);
         const mins = Math.floor((Date.now() - afkStatus.timestamp) / 60000);
         const wbEmbed = embed.build({
-          title: 'Welcome Back',
-          description: `<:emoji_16:1521464002046328944> **Status Cleared**\n${message.author} is now back online!\nYou were away for **${mins} mins**.`,
+          description: `__**Welcome Back |**__ <:emoji_16:1521464002046328944>\n> **Status Cleared**\n> ${message.author} is now back online!\n> ㅤYou were away for **${mins} mins**.`,
           color: '#2b2d31',
           thumbnail: message.author.displayAvatarURL({ dynamic: true })
         });
@@ -256,7 +255,7 @@ export default {
           if (mentionedAfk && user.id !== message.author.id) {
             const timeAgoStr = `<t:${Math.floor(mentionedAfk.timestamp / 1000)}:R>`;
             const mentionEmbed = embed.build({
-              description: `💤 **${user.tag}** is AFK: ${mentionedAfk.reason} (${timeAgoStr})`,
+              description: `__**AFK Status |**__ <:emoji_16:1521464002046328944>\n> **User:** ${user}\n> **Reason:** ${mentionedAfk.reason}\n> ㅤAway since: ${timeAgoStr}`,
               color: '#2b2d31'
             });
             message.reply({ embeds: [mentionEmbed] }).catch(() => null);
