@@ -66,7 +66,7 @@ export async function fetchDashboardStats(guild) {
         AuditLogEvent.MemberBanAdd, AuditLogEvent.MemberKick
       ].includes(entry.action)) {
         if (logs.length < 6) {
-          const actionStr = AuditLogEvent[entry.action].toUpperCase().replace(/_/g, ' ');
+          const actionStr = AuditLogEvent[entry.action].replace(/([A-Z])/g, ' $1').trim().toUpperCase();
           const target = entry.target ? (entry.target.username || entry.target.name || 'Unknown') : 'Unknown';
           logs.push(`${timeStr} ${actionStr} > ${user} > ${target}`);
         }
