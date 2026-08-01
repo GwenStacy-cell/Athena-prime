@@ -942,7 +942,7 @@ export default {
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
           const warnEmbed = embed.build({
-            description: `__**Warned Sending Invites |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> \n>  has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
+            description: `__**Warned Sending Invites |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> ㅤhas been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
             color: '#2b2d31',
             thumbnail: message.author.displayAvatarURL({ dynamic: true })
           });
@@ -1043,10 +1043,11 @@ export default {
           );
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
-          const filterWarnEmbed = embed.warn(
-            '<:gun:1517636066964799679> Word Filter Triggered',
-            `${message.author}, your message contained a blacklisted word and was deleted.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
-          );
+          const filterWarnEmbed = embed.build({
+            description: `__**Word Filter Triggered |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${message.author} , **Posted Blacklisted Word**\n> ㅤhas been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
+            color: '#2b2d31',
+            thumbnail: message.author.displayAvatarURL({ dynamic: true })
+          });
           await message.channel.send({ embeds: [filterWarnEmbed] }).catch(() => null);
         }
         return; // Halt

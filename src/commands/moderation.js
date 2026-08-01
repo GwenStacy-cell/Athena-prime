@@ -917,7 +917,7 @@ export async function handleWarn(guild, moderator, target, reason, force = false
 
   // Response channel embed
   const resEmbed = embed.build({
-    description: `__**User Warned |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${target} , **${reason}**\n> \n>  has been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
+    description: `__**User Warned |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${target} , **${reason}**\n> ㅤhas been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
     color: '#2b2d31',
     thumbnail: target.user.displayAvatarURL({ dynamic: true })
   });

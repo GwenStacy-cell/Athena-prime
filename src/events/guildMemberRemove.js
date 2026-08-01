@@ -34,7 +34,7 @@ export default {
 
     if (isKick) {
       const kickEmbed = embed.build({
-        description: `__**Member Kicked |**__ <:emoji_16:1521464002046328944>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n> \n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
+        description: `__**Member Kicked |**__ <:emoji_16:1521464002046328944>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
         color: '#2b2d31',
         thumbnail: member.user.displayAvatarURL({ dynamic: true })
       });

@@ -16,7 +16,7 @@ export default {
     }
 
     const createEmbed = embed.build({
-      description: `__**Channel Created |**__ <:emoji_16:1521464002046328944>\n> **Channel:** ${channel.name} (<#${channel.id}>)\n> \n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
+      description: `__**Channel Created |**__ <:emoji_16:1521464002046328944>\n> **Channel:** ${channel.name} (<#${channel.id}>)\n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
       color: '#2b2d31'
     });
     await logServerEvent(channel.guild, 'channels', createEmbed);
