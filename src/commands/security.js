@@ -1593,7 +1593,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
 
     // 7. Ping target in quarantine channel and post welcome alert
     const welcomeEmbed = embed.danger(
-      'Isolation Protocol Initiated',
+      'You Have Been Quarantined',
       `Hello ${targetMember}. You have been isolated in this channel due to security policies or staff intervention.`,
       [
         { name: 'Target User', value: `${targetMember.user.tag}`, inline: true },
