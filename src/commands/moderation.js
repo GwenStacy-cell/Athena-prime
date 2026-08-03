@@ -893,9 +893,16 @@ async function handleUnmuteAll(guild, moderator) {
 }
 
 export async function handleWarn(guild, moderator, target, reason, force = false) {
-  // Owner immunity check
-  if (!force && (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id))) {
-    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.') };
+  // 1. Untouchable Check
+  if (!force && (isBotOwnerSync(target.id) || guild.ownerId === target.id)) {
+    return { embed: embed.danger('Untouchable', `You cannot take action against **${target.user.tag}**.\n\nThey are protected by **Athena Prime's** highest security clearance.`) };
+  }
+
+  // 2. Extraowner Immunity (Bypass if moderator is Bot Owner/Server Owner)
+  if (!force && isExtraOwner(guild.id, target.id)) {
+    if (!isBotOwnerSync(moderator.id) && guild.ownerId !== moderator.id) {
+       return { embed: embed.danger('Immunity', ' This user is an Extra Owner and cannot be moderated by regular staff.') };
+    }
   }
 
   if (!force && !canModerate(moderator, target)) {

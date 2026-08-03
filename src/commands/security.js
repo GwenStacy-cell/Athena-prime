@@ -643,16 +643,16 @@ export const commands = [
         channel = await message.guild.channels.fetch(channelId).catch(() => null);
       }
       if (!channel) {
-        channel = message.mentions.channels.filter(c => c.type === ChannelType.GuildVoice).first();
+        channel = message.mentions.channels.filter(c => c.isVoiceBased()).first();
       }
       if (!channel && args[0]) {
-        channel = message.guild.channels.cache.find(c => c.name.toLowerCase() === args.join(' ').toLowerCase() && c.type === ChannelType.GuildVoice);
+        channel = message.guild.channels.cache.find(c => c.name.toLowerCase() === args.join(' ').toLowerCase() && c.isVoiceBased());
       }
       if (!channel) {
         channel = message.member?.voice?.channel;
       }
 
-      if (!channel || channel.type !== ChannelType.GuildVoice) {
+      if (!channel || !channel.isVoiceBased()) {
         return message.reply({ embeds: [embed.warn('Setup Error', `${message.author} Please mention a Voice Channel, specify its ID, or join a Voice Channel first.`)] });
       }
 
@@ -670,7 +670,7 @@ export const commands = [
       const voiceChannel = interaction.options.getChannel('channel');
       let channel = voiceChannel || interaction.member?.voice?.channel;
 
-      if (!channel || channel.type !== ChannelType.GuildVoice) {
+      if (!channel || !channel.isVoiceBased()) {
         return interaction.reply({ embeds: [embed.warn('Setup Error', `${interaction.user} Please specify a Voice Channel or join one first.`)] });
       }
 
