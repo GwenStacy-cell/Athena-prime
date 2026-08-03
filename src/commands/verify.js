@@ -49,7 +49,7 @@ export const commands = [
           .setColor(accentColor)
           .setTitle('️ Server Verification')
           .setDescription('Welcome to the server! To gain access to the rest of the channels, please verify that you are human by clicking the button below.')
-          .setFooter({ text: 'Athena Prime Security System', iconURL: interaction.client.user.displayAvatarURL() });
+          .setFooter({ text: 'Athena Prime Killer System', iconURL: interaction.client.user.displayAvatarURL() });
 
         const row = new ActionRowBuilder()
           .addComponents(

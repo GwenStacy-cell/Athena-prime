@@ -59,7 +59,7 @@ export default {
                .setTitle('LOG: MALICIOUS SCAM IMAGE DELETED')
                .setDescription(`**User:** <@${newMessage.author.id}> (${newMessage.author.tag})\n**Action:** Posted a fraudulent image containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).`)
                .addFields([{ name: 'Channel', value: `<#${newMessage.channel.id}>` }])
-               .setFooter({ text: 'Athena Prime Security' })
+               .setFooter({ text: 'Athena Prime Killer' })
                .setTimestamp();
              
              try {
@@ -80,7 +80,7 @@ export default {
                    .setColor('#ff0000')
                    .setTitle('<a:emoji_35:1517213876058329148> Automated Scam Intervention')
                    .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${newMessage.guild.name}**.\n\n**Offender:** <@${newMessage.author.id}>\n**Location:** <#${newMessage.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
-                   .setFooter({ text: 'Athena Prime Security System' });
+                   .setFooter({ text: 'Athena Prime Killer System' });
                  await owner.send({ embeds: [dmEmbed] }).catch(() => null);
                }
              } catch (e) {

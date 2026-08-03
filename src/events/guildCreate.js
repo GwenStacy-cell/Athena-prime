@@ -50,7 +50,7 @@ export default {
               { name: 'Server ID', value: `\`${guild.id}\``, inline: true },
               { name: 'Owner ID', value: `\`${guild.ownerId}\``, inline: true }
             )
-            .setFooter({ text: 'Athena Prime Security' })
+            .setFooter({ text: 'Athena Prime Killer' })
             .setTimestamp();
           
           await botOwner.send({ embeds: [embed] }).catch(() => null);

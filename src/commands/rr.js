@@ -149,7 +149,7 @@ async function runInteractiveBuilder(message) {
 
   // Step 5: Footer
   await channel.send({
-    embeds: [embed.info('Reaction Role Manager [Extra]', 'What should be the footer text? (Optional)\n\nType `default` to keep the standard Athena Prime Security footer.\nType `none` or `remove` to have no footer.\nOr just type your custom footer text.')]
+    embeds: [embed.info('Reaction Role Manager [Extra]', 'What should be the footer text? (Optional)\n\nType `default` to keep the standard Athena Prime Killer footer.\nType `none` or `remove` to have no footer.\nOr just type your custom footer text.')]
   });
 
   const footerMsg = await awaitReply();
