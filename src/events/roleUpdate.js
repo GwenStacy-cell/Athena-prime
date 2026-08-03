@@ -19,8 +19,8 @@ export default {
       // Hidden position should be newRole.position - 2
       // Discord's setPositions handles relative moving. We'll give them the desired explicit positions.
       
-      if (secondary) updates.push({ role: secondary, position: Math.max(1, newRole.position - 1) });
-      if (hidden) updates.push({ role: hidden, position: Math.max(1, newRole.position - 2) });
+      if (secondary && secondary.editable) updates.push({ role: secondary, position: Math.max(1, newRole.position - 1) });
+      if (hidden && hidden.editable) updates.push({ role: hidden, position: Math.max(1, newRole.position - 2) });
       
       if (updates.length > 0) {
         try {
