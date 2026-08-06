@@ -811,9 +811,9 @@ export async function updatePlayerUI(guildId) {
     );
 
     const row4 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('music_voldown').setLabel('Vol-').setStyle(ButtonStyle.Secondary).setEmoji('<:volumedown:1528156479075516526>'),
+      new ButtonBuilder().setCustomId('music_voldown').setLabel('Vol-').setStyle(ButtonStyle.Secondary).setEmoji('🔉'),
       new ButtonBuilder().setCustomId('music_volreset').setLabel(`${queue.volume}%`).setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId('music_volup').setLabel('Vol+').setStyle(ButtonStyle.Secondary).setEmoji('<:volume:1524687855354380359>')
+      new ButtonBuilder().setCustomId('music_volup').setLabel('Vol+').setStyle(ButtonStyle.Secondary).setEmoji('🔊')
     );
     
     await message.edit({ embeds: [embed], components: [row1, row2, row3, row4], files: [] });
@@ -897,7 +897,7 @@ export async function handleInteraction(interaction) {
     if (queue.player) queue.player.setGlobalVolume(queue.volume);
     updatePlayerUI(interaction.guildId);
     await interaction.reply({ content: `Volume increased to ${queue.volume}%` });
-    announceToVC(`<:volume:1524687855354380359> **${interaction.user.displayName}** increased the volume to **${queue.volume}%**.`);
+    announceToVC(`🔊 **${interaction.user.displayName}** increased the volume to **${queue.volume}%**.`);
   } else if (action === 'volreset') {
     queue.volume = 100;
     if (queue.player) queue.player.setGlobalVolume(queue.volume);
