@@ -41,6 +41,7 @@ import { commands as stickyCmds } from './sticky.js';
 import { commands as fckCmds } from './fck.js';
 import { commands as afkCmds } from './afk.js';
 import { commands as emojiStealerCmds } from './emojistealer.js';
+import { commands as setDeleteLogCmds } from './setdeletelog.js';
 
 export const allCommands = [
   ...moderationCmds,
@@ -85,7 +86,8 @@ export const allCommands = [
   ...stickyCmds,
   ...fckCmds,
   ...afkCmds,
-  ...emojiStealerCmds
+  ...emojiStealerCmds,
+  ...setDeleteLogCmds
 ];
 
 export const commandMap = new Map();
