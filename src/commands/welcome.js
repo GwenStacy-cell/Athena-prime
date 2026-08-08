@@ -148,7 +148,8 @@ function getManagerPanel(guildId, type) {
     new ButtonBuilder().setCustomId(`${prefix}color`).setLabel('Color').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}image`).setLabel('Image').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}footer`).setLabel('Footer').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`${prefix}toggles`).setLabel('Toggles').setStyle(ButtonStyle.Secondary)
+    new ButtonBuilder().setCustomId(`${prefix}toggle_avatar`).setLabel('Toggle Avatar').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`${prefix}toggle_time`).setLabel('Toggle Time').setStyle(ButtonStyle.Success)
   );
 
   const row3 = new ActionRowBuilder().addComponents(
@@ -216,8 +217,13 @@ export async function handleWelcomeManagerButton(interaction) {
     return interaction.update(getManagerPanel(guildId, typeStr));
   }
   
-  if (action === 'toggles') {
-    setConfig(guildId, { ...cfg, thumbnail: !(cfg.thumbnail !== false), timestamp: !(cfg.timestamp !== false) });
+  if (action === 'toggle_avatar') {
+    setConfig(guildId, { ...cfg, thumbnail: !(cfg.thumbnail !== false) });
+    return interaction.update(getManagerPanel(guildId, typeStr));
+  }
+
+  if (action === 'toggle_time') {
+    setConfig(guildId, { ...cfg, timestamp: !(cfg.timestamp !== false) });
     return interaction.update(getManagerPanel(guildId, typeStr));
   }
 
