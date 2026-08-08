@@ -44,9 +44,9 @@ function getEmoji(key) {
   if (emojiMap[key]?.id) return { id: emojiMap[key].id, name: emojiMap[key].name };
   // Fallback text emoji
   const fallbacks = {
-    name: '', limit: '�', status: '�', game: '�', lfm: '�',
-    bitrate: '�', region: '�', text: '#⃣', nsfw: '', claim: '',
-    lock: '�', unlock: '�', ghost: '�', unghost: '�',
+    name: '', limit: '<:emoji_16:1533860111704002665>', status: '<:emoji_16:1533860111704002665>', game: '<:emoji_16:1533860111704002665>', lfm: '<:emoji_16:1533860111704002665>',
+    bitrate: '<:emoji_16:1533860111704002665>', region: '<:emoji_16:1533860111704002665>', text: '#⃣', nsfw: '', claim: '',
+    lock: '<:emoji_16:1533860111704002665>', unlock: '<:emoji_16:1533860111704002665>', ghost: '<:emoji_16:1533860111704002665>', unghost: '<:emoji_16:1533860111704002665>',
     permit: '', reject: '', invite: '', transfer: ''
   };
   return fallbacks[key] || '';
@@ -246,13 +246,13 @@ export async function handleJtcSelectMenu(interaction) {
     const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
     return interaction.reply({
       embeds: [embed.info('Channel Info ℹ', null, [
-        { name: '� Name', value: vcChannel.name, inline: true },
+        { name: '<:emoji_16:1533860111704002665> Name', value: vcChannel.name, inline: true },
         { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
-        { name: '� Limit', value: vcChannel.userLimit === 0 ? 'No Limit' : `${vcChannel.userLimit}`, inline: true },
-        { name: '� Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
-        { name: '� Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
+        { name: '<:emoji_16:1533860111704002665> Limit', value: vcChannel.userLimit === 0 ? 'No Limit' : `${vcChannel.userLimit}`, inline: true },
+        { name: '<:emoji_16:1533860111704002665> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
+        { name: '<:emoji_16:1533860111704002665> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
         { name: ' NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true },
-        { name: '� Members In Channel', value: members }
+        { name: '<:emoji_16:1533860111704002665> Members In Channel', value: members }
       ])]
     });
   }
@@ -267,22 +267,22 @@ export async function handleJtcSelectMenu(interaction) {
 
   if (value === 'jtc_lock') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: false });
-    return interaction.reply({ embeds: [embed.danger('Channel Locked �', 'No one new can join your channel.')] });
+    return interaction.reply({ embeds: [embed.danger('Channel Locked <:emoji_16:1533860111704002665>', 'No one new can join your channel.')] });
   }
 
   if (value === 'jtc_unlock') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: null });
-    return interaction.reply({ embeds: [embed.success('Channel Unlocked �', 'Your channel is now open for anyone to join.')] });
+    return interaction.reply({ embeds: [embed.success('Channel Unlocked <:emoji_16:1533860111704002665>', 'Your channel is now open for anyone to join.')] });
   }
 
   if (value === 'jtc_ghost') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
-    return interaction.reply({ embeds: [embed.info('Channel Hidden �', 'Your channel is now invisible to others.\nUsers you permit can still see and join.')] });
+    return interaction.reply({ embeds: [embed.info('Channel Hidden <:emoji_16:1533860111704002665>', 'Your channel is now invisible to others.\nUsers you permit can still see and join.')] });
   }
 
   if (value === 'jtc_unghost') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: null });
-    return interaction.reply({ embeds: [embed.success('Channel Visible �', 'Your channel is now visible to everyone again.')] });
+    return interaction.reply({ embeds: [embed.success('Channel Visible <:emoji_16:1533860111704002665>', 'Your channel is now visible to everyone again.')] });
   }
 
   if (value === 'jtc_nsfw') {
@@ -299,19 +299,19 @@ export async function handleJtcSelectMenu(interaction) {
       return interaction.reply({ embeds: [embed.warn('No Game Detected', 'You must be playing a game with rich presence enabled for this to work.')] });
     }
     await vcChannel.setName(activity.name).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Game Set �', `Channel renamed to **${activity.name}**.`)] });
+    return interaction.reply({ embeds: [embed.success('Game Set <:emoji_16:1533860111704002665>', `Channel renamed to **${activity.name}**.`)] });
   }
 
   // ── LFM — post Looking For Members message ──
   if (value === 'jtc_lfm') {
     const lfmEmbed = new EmbedBuilder()
       .setColor(getAccent(guild))
-      .setTitle('� Looking for Members!')
+      .setTitle('<:emoji_16:1533860111704002665> Looking for Members!')
       .setDescription(`**${member.displayName}** is looking for members to join their voice channel!\n\n**Channel:** ${vcChannel}\n**Slots Available:** ${vcChannel.userLimit === 0 ? 'Unlimited' : vcChannel.userLimit - vcChannel.members.size}`)
       .setFooter({ text: 'Join their channel to play together!' })
       .setTimestamp();
     await interaction.channel.send({ embeds: [lfmEmbed] }).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('LFM Posted �', 'Your Looking for Members message has been posted in this channel.')] });
+    return interaction.reply({ embeds: [embed.success('LFM Posted <:emoji_16:1533860111704002665>', 'Your Looking for Members message has been posted in this channel.')] });
   }
 
   // ── TEXT — create a temp text channel linked to VC ──
@@ -368,7 +368,7 @@ It is only visible to members in your voice channel.`)] });
     const modal = new ModalBuilder().setCustomId('jtc_status_modal').setTitle('Set Channel Status');
     modal.addComponents(new ActionRowBuilder().addComponents(
       new TextInputBuilder().setCustomId('jtc_status_val').setLabel('Channel Status')
-        .setStyle(TextInputStyle.Short).setPlaceholder('e.g. Playing Valorant �').setRequired(true).setMaxLength(500)
+        .setStyle(TextInputStyle.Short).setPlaceholder('e.g. Playing Valorant <:emoji_16:1533860111704002665>').setRequired(true).setMaxLength(500)
     ));
     return interaction.showModal(modal);
   }
@@ -456,25 +456,25 @@ export async function handleJtcModal(interaction) {
     const val = parseInt(interaction.fields.getTextInputValue('jtc_limit_val')) || 0;
     const limit = Math.min(Math.max(val, 0), 99);
     await vcChannel.setUserLimit(limit).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Limit Updated �', `User limit set to **${limit === 0 ? 'Unlimited' : limit}**.`)] });
+    return interaction.reply({ embeds: [embed.success('Limit Updated <:emoji_16:1533860111704002665>', `User limit set to **${limit === 0 ? 'Unlimited' : limit}**.`)] });
   }
 
   if (customId === 'jtc_status_modal') {
     const status = interaction.fields.getTextInputValue('jtc_status_val').trim();
     await interaction.client.rest.put(`/channels/${vcChannel.id}/voice-status`, { body: { status } }).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Status Set �', `Channel status set to: **${status}**`)] });
+    return interaction.reply({ embeds: [embed.success('Status Set <:emoji_16:1533860111704002665>', `Channel status set to: **${status}**`)] });
   }
 
   if (customId === 'jtc_bitrate_modal') {
     const kbps = Math.min(Math.max(parseInt(interaction.fields.getTextInputValue('jtc_bitrate_val')) || 64, 8), 384);
     await vcChannel.setBitrate(kbps * 1000).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Bitrate Updated �', `Bitrate set to **${kbps}kbps**.`)] });
+    return interaction.reply({ embeds: [embed.success('Bitrate Updated <:emoji_16:1533860111704002665>', `Bitrate set to **${kbps}kbps**.`)] });
   }
 
   if (customId === 'jtc_region_modal') {
     const region = interaction.fields.getTextInputValue('jtc_region_val').trim().toLowerCase() || null;
     await vcChannel.setRTCRegion(region).catch(() => null);
-    return interaction.reply({ embeds: [embed.success('Region Updated �', `Voice region set to **${region || 'Auto'}**.`)] });
+    return interaction.reply({ embeds: [embed.success('Region Updated <:emoji_16:1533860111704002665>', `Voice region set to **${region || 'Auto'}**.`)] });
   }
 
   if (customId === 'jtc_permit_modal') {
@@ -775,7 +775,7 @@ export const commands = [
   // ─── VC SLASH COMMANDS ───
   {
     name: 'vc',
-    description: '� Voice channel quick actions. Use the panel buttons for all settings.',
+    description: '<:emoji_16:1533860111704002665> Voice channel quick actions. Use the panel buttons for all settings.',
     category: 'utility',
     permissions: [],
     options: [
@@ -805,11 +805,11 @@ export const commands = [
       if (sub === 'info') {
         const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
         return interaction.reply({ embeds: [embed.info('Channel Info', null, [
-          { name: '� Name', value: vcChannel.name, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Name', value: vcChannel.name, inline: true },
           { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
-          { name: '� Limit', value: vcChannel.userLimit === 0 ? 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
-          { name: '� Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
-          { name: '� Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
+          { name: '<:emoji_16:1533860111704002665> Limit', value: vcChannel.userLimit === 0 ? 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
           { name: ' NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true }
         ])] });
       }

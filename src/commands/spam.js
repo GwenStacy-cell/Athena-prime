@@ -303,21 +303,21 @@ export const commands = [
     async executePrefix(message) {
       if (!(await isBotOwner(message.author))) return;
       const list = db.getSpamPermitted();
-      if (list.length === 0) return message.reply({ embeds: [embed.info('Spam Permitted List', '� No users have spam access yet.')] });
+      if (list.length === 0) return message.reply({ embeds: [embed.info('Spam Permitted List', '<:emoji_16:1533860111704002665> No users have spam access yet.')] });
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await message.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return message.reply({ embeds: [embed.security('Spam Access List', `� **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`)] });
+      return message.reply({ embeds: [embed.security('Spam Access List', `<:emoji_16:1533860111704002665> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`)] });
     },
 
     async executeSlash(interaction) {
       if (!(await isBotOwner(interaction.user))) return interaction.reply({ embeds: [embed.danger('Access Denied', 'Bot Owner only.')] });
       const list = db.getSpamPermitted();
-      if (list.length === 0) return interaction.reply({ embeds: [embed.info('Spam Permitted List', '� No users have spam access yet.')] });
+      if (list.length === 0) return interaction.reply({ embeds: [embed.info('Spam Permitted List', '<:emoji_16:1533860111704002665> No users have spam access yet.')] });
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await interaction.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return interaction.reply({ embeds: [embed.security('Spam Access List', `� **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`)] });
+      return interaction.reply({ embeds: [embed.security('Spam Access List', `<:emoji_16:1533860111704002665> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`)] });
     }
   }
 ];

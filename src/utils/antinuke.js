@@ -684,7 +684,7 @@ export async function checkAntiNukeMemberUpdate(oldMember, newMember) {
       try {
         const managed = executorMember.roles.cache.filter(r => r.managed).map(r => r.id);
         await executorMember.roles.set(managed, 'Athena Anti-Nuke: Stripped unauthorized role grantor');
-        punishResult = '� All roles stripped from executor';
+        punishResult = '<:emoji_16:1533860111704002665> All roles stripped from executor';
       } catch {}
       punishResult = await punish(guild, executor, 'Unauthorized Dangerous Role Grant', config);
     }

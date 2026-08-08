@@ -185,7 +185,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       if (!lastError) lastError = `Role '${roleData.name}': ${err.message} (code ${err.code})`;
       // Only abort if we have MANY consecutive failures (don't break on just a few timeouts)
       if (consecutiveFailures >= 10) {
-        rlog(`  � 10 consecutive failures — aborting role loop`);
+        rlog(`  <:emoji_16:1533860111704002665> 10 consecutive failures — aborting role loop`);
         break;
       }
     }
@@ -244,7 +244,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       rlog(`   Category FAILED: '${catData.name}' → ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Category '${catData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  � 5 consecutive failures — aborting category loop`);
+        rlog(`  <:emoji_16:1533860111704002665> 5 consecutive failures — aborting category loop`);
         break;
       }
     }
@@ -289,7 +289,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       rlog(`   Channel FAILED: '${chData.name}' → ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Channel '${chData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  � 5 consecutive failures — aborting channel loop`);
+        rlog(`  <:emoji_16:1533860111704002665> 5 consecutive failures — aborting channel loop`);
         break;
       }
     }
@@ -397,7 +397,7 @@ async function handleServers(message) {
   const lines = guilds.map((g, i) => {
     const backup = db.getBackupByGuild(g.id);
     const bId    = backup ? `\`${db.cache.guildBackupMap[g.id]}\`` : '`No Backup`';
-    return `\`${i + 1}.\` **${g.name}** \`(${g.id})\`\n└ � ${g.memberCount} members |  ${g.roles.cache.size} roles | � ${g.channels.cache.size} channels | Backup: ${bId}`;
+    return `\`${i + 1}.\` **${g.name}** \`(${g.id})\`\n└ <:emoji_16:1533860111704002665> ${g.memberCount} members |  ${g.roles.cache.size} roles | <:emoji_16:1533860111704002665> ${g.channels.cache.size} channels | Backup: ${bId}`;
   }).join('\n\n');
 
   // Split into chunks if too long

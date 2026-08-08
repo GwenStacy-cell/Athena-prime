@@ -1920,7 +1920,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const lockEmbed = embed.danger(
         'Lockdown Activated', 
-        `� This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
+        `<:emoji_16:1533860111704002665> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
       );
       logToSecurityChannel(guild, embed.log('Channel Locked', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
       return { embed: lockEmbed };
@@ -1930,7 +1930,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const unlockEmbed = embed.success(
         'Lockdown Deactivated', 
-        `� Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
+        `<:emoji_16:1533860111704002665> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
       );
       logToSecurityChannel(guild, embed.log('Channel Unlocked', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
       return { embed: unlockEmbed };
@@ -2239,9 +2239,9 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
         [
           { name: ' Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
           { name: ' Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '� Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '� Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '� Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
           { name: 'Enforced by', value: `${moderator}`, inline: true }
         ]
       )
@@ -2411,21 +2411,21 @@ async function getServerInfoEmbed(guild) {
   const antiSpamStatus   = config.antiSpamEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiInviteStatus = (config.antiInviteEnabled !== false) ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
-  const raidModeStatus   = config.raidMode                      ? '� ENGAGED' : `${TOGGLE_ON} STANDBY`;
+  const raidModeStatus   = config.raidMode                      ? '<:emoji_16:1533860111704002665> ENGAGED' : `${TOGGLE_ON} STANDBY`;
 
   const fields = [
     { name: ' Owner', value: `${ownerTag}`, inline: true },
-    { name: '� Members', value: `**${totalMembers}**`, inline: true },
-    { name: '� Roles', value: `**${roleCount}**`, inline: true },
-    { name: '� Channels', value: `**${channelCount}**`, inline: true },
-    { name: '� Boost Level', value: `**Tier ${boostLevel}** (${boostCount} boosts)`, inline: true },
-    { name: '� Created', value: createdAt, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Members', value: `**${totalMembers}**`, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Roles', value: `**${roleCount}**`, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Channels', value: `**${channelCount}**`, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Boost Level', value: `**Tier ${boostLevel}** (${boostCount} boosts)`, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Created', value: createdAt, inline: true },
     { name: '\u200b', value: '**── Security Status ──**' },
     { name: ' Anti-Nuke', value: antiNukeStatus, inline: true },
     { name: ' Anti-Spam', value: antiSpamStatus, inline: true },
-    { name: '� Anti-Invite', value: antiInviteStatus, inline: true },
-    { name: '� Anti-Link', value: antiLinkStatus, inline: true },
-    { name: '� Raid Mode', value: raidModeStatus, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Anti-Invite', value: antiInviteStatus, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Anti-Link', value: antiLinkStatus, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Raid Mode', value: raidModeStatus, inline: true },
     { name: ' Max Warns', value: `\`${config.maxWarnings}\``, inline: true }
   ];
 
@@ -2467,13 +2467,13 @@ async function getUserInfoEmbed(guild, member) {
   if (privileges.length === 0) privileges.push('Standard Member');
 
   const fields = [
-    { name: '� Username', value: `${member.user.tag}`, inline: true },
-    { name: '� User ID', value: `\`${member.id}\``, inline: true },
-    { name: '� Account Created', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
-    { name: '� Joined Server', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Username', value: `${member.user.tag}`, inline: true },
+    { name: '<:emoji_16:1533860111704002665> User ID', value: `\`${member.id}\``, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Account Created', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Joined Server', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: true },
     { name: ' Active Warnings', value: `\`${warnings.length}\``, inline: true },
     { name: ' Privileges', value: privileges.join(' | '), inline: true },
-    { name: `� Roles [${member.roles.cache.size - 1}]`, value: roles }
+    { name: `<:emoji_16:1533860111704002665> Roles [${member.roles.cache.size - 1}]`, value: roles }
   ];
 
   const userEmbed = embed.info(
@@ -2513,14 +2513,14 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
 
   const resEmbed = enable
     ? embed.success(
-        'All Security Shields ENGAGED �',
+        'All Security Shields ENGAGED <:emoji_16:1533860111704002665>',
         `All Athena Prime protective layers are now **ACTIVE**.\nAnti-Nuke, Anti-Spam, Anti-Invite, Anti-Link, and Word Filter are fully armed!\n\n*(Use individual commands like \`antinuke config\` or \`linksallow\` to fine-tune)*`,
         [
           { name: ' Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
           { name: ' Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '� Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '� Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '� Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
           { name: 'Enabled by',    value: `${moderator}`,    inline: true }
         ]
       )
@@ -2557,13 +2557,13 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const synced = await syncQuarantinePermissions(guild, qRole, qChannel?.id || null);
 
     const fields = [
-      { name: '� Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
-      { name: '� Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
-      { name: '� Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
+      { name: '<:emoji_16:1533860111704002665> Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
+      { name: '<:emoji_16:1533860111704002665> Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
+      { name: '<:emoji_16:1533860111704002665> Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
     ];
 
     const vc = config.quarantineVcId ? await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
-    if (vc) fields.push({ name: '� Quarantine VC', value: `<#${vc.id}>`, inline: true });
+    if (vc) fields.push({ name: '<:emoji_16:1533860111704002665> Quarantine VC', value: `<#${vc.id}>`, inline: true });
 
     return {
       embed: embed.success(
@@ -2623,7 +2623,7 @@ async function handleLinksAllow(guild, action, domain) {
     db.updateGuildConfig(guild.id, { allowAllLinks: true });
     return {
       embed: embed.success(
-        '� All Links Allowed',
+        '<:emoji_16:1533860111704002665> All Links Allowed',
         'The anti-link filter has been **completely disabled** for this server.\n\nAll users can now post any link freely.\n\nUse `/linksallow disallowall` to re-enable the filter.',
         [{ name: ' Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
       )
@@ -2634,7 +2634,7 @@ async function handleLinksAllow(guild, action, domain) {
     db.updateGuildConfig(guild.id, { allowAllLinks: false });
     return {
       embed: embed.warn(
-        '� Anti-Link Filter Restored',
+        '<:emoji_16:1533860111704002665> Anti-Link Filter Restored',
         'The anti-link filter is **active** again.\n\nOnly whitelisted domains are allowed. Use `/linksallow add <domain>` to whitelist specific domains.'
       )
     };
@@ -2681,7 +2681,7 @@ async function handleLinksAllow(guild, action, domain) {
   if (allOpen) {
     return {
       embed: embed.info(
-        '� All Links Allowed',
+        '<:emoji_16:1533860111704002665> All Links Allowed',
         'The anti-link filter is currently **fully disabled** — all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
       )
     };
@@ -2758,26 +2758,26 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
     'Mass Quarantine Executed',
     `**${moderator.user.tag}** mass-quarantined all members with role <@&${targetRole.id}>.`,
     [
-      { name: '� Role',       value: `<@&${targetRole.id}>`, inline: true },
+      { name: '<:emoji_16:1533860111704002665> Role',       value: `<@&${targetRole.id}>`, inline: true },
       { name: ' Quarantined', value: `\`${success}\``,       inline: true },
       { name: ' Failed',      value: `\`${failed}\``,        inline: true },
       { name: ' Skipped',    value: `\`${skipped}\``,       inline: true },
-      { name: '� Reason',     value: reason }
+      { name: '<:emoji_16:1533860111704002665> Reason',     value: reason }
     ],
     'danger'
   ));
 
   return {
     embed: embed.danger(
-      '� Mass Quarantine Complete',
+      '<:emoji_16:1533860111704002665> Mass Quarantine Complete',
       `All targeted members with <@&${targetRole.id}> have been processed.`,
       [
-        { name: '� Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
+        { name: '<:emoji_16:1533860111704002665> Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
         { name: ' Quarantined',  value: `\`${success}\``,  inline: true },
         { name: ' Failed',       value: `\`${failed}\``,   inline: true },
         { name: ' Skipped',     value: `\`${skipped}\``,  inline: true },
-        { name: '� Reason',       value: reason,             inline: false },
-        { name: '� Executed By',  value: `${moderator}`,    inline: true }
+        { name: '<:emoji_16:1533860111704002665> Reason',       value: reason,             inline: false },
+        { name: '<:emoji_16:1533860111704002665> Executed By',  value: `${moderator}`,    inline: true }
       ]
     )
   };
@@ -2831,12 +2831,12 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
 
   return {
     embed: embed.success(
-      '� Mass Unquarantine Complete',
+      '<:emoji_16:1533860111704002665> Mass Unquarantine Complete',
       `All quarantined members have been processed.`,
       [
         { name: ' Released',     value: `\`${success}\``, inline: true },
         { name: ' Failed',        value: `\`${failed}\``,  inline: true },
-        { name: '� Executed By', value: `${moderator}`,    inline: true }
+        { name: '<:emoji_16:1533860111704002665> Executed By', value: `${moderator}`,    inline: true }
       ]
     )
   };
