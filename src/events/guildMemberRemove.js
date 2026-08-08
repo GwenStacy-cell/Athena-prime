@@ -16,6 +16,19 @@ export default {
     // Send leave message
     await sendLeaveMessage(member);
 
+    // Send Leave DM
+    try {
+      // NOTE: DMs to a user who just left the server often fail if they don't share another server with the bot,
+      // but we will try anyway as requested.
+      const leaveDm = embed.build({
+        title: `Goodbye from ${guild.name}!`,
+        description: `We're sorry to see you go from **${guild.name}**. We will miss you! <:emoji_16:1533860111704002665>`,
+        color: '#2b2d31',
+        thumbnail: guild.iconURL({ dynamic: true })
+      });
+      await member.send({ embeds: [leaveDm] }).catch(() => null);
+    } catch (err) {}
+
     // Determine if kicked or left voluntarily
     await new Promise(r => setTimeout(r, 500));
     const logs = await guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberKick }).catch(() => null);

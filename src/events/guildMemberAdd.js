@@ -118,6 +118,26 @@ export default {
     await sendWelcomeMessage(member);
 
     // ==========================================
+    // 5.1 WELCOME DM
+    // ==========================================
+    try {
+      const getOrdinal = (n) => {
+        let s = ["th", "st", "nd", "rd"], v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+      };
+      
+      const welcomeDm = embed.build({
+        title: `Welcome to ${guild.name}!`,
+        description: `Thank you for joining **${guild.name}**! <:emoji_16:1533860111704002665>\n\nYou are our **${getOrdinal(guild.memberCount)}** member! We hope you have a great time here. Stay safe!`,
+        color: config.accentColor ? parseInt(config.accentColor.replace('#', ''), 16) : 0x2b2d31,
+        thumbnail: guild.iconURL({ dynamic: true })
+      });
+      await member.send({ embeds: [welcomeDm] }).catch(() => null);
+    } catch (err) {
+      console.error('Failed to send welcome DM:', err);
+    }
+
+    // ==========================================
     // 5.5 SERVER LOGS
     // ==========================================
     const accountAge = Date.now() - member.user.createdAt.getTime();
