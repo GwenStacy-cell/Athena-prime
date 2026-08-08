@@ -2,6 +2,7 @@ import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, But
 import db from '../database.js';
 import embed from '../embed.js';
 import { convertMp4ToGif, uploadGifToDiscord } from '../utils/mediaConverter.js';
+import { isBotOwnerSync } from '../utils/helpers.js';
 
 // ============================================================
 // PLACEHOLDER RESOLVER
@@ -166,7 +167,7 @@ function getManagerPanel(guildId, type) {
 // ============================================================
 export async function handleWelcomeManagerMenu(interaction) {
   const isServerOwner = interaction.guild.ownerId === interaction.user.id;
-  const isBotOwner = global.client.config?.owners?.includes(interaction.user.id);
+  const isBotOwner = isBotOwnerSync(interaction.user.id);
   const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
 
   if (!isServerOwner && !isBotOwner && !isExtraOwner) {
@@ -193,7 +194,7 @@ export async function handleWelcomeManagerButton(interaction) {
   const action = isWelcome ? customId.replace('welcmgr_', '') : customId.replace('leavmgr_', '');
 
   const isServerOwner = interaction.guild.ownerId === interaction.user.id;
-  const isBotOwner = global.client.config?.owners?.includes(interaction.user.id);
+  const isBotOwner = isBotOwnerSync(interaction.user.id);
   const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
 
   if (action !== 'test' && !isServerOwner && !isBotOwner && !isExtraOwner) {
@@ -235,7 +236,7 @@ export async function handleWelcomeManagerButton(interaction) {
   if (action === 'test') {
     if (!cfg.channelId) return interaction.reply({ embeds: [embed.warn('Channel Not Set', 'Please select a channel first.')], ephemeral: true });
     
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply();
     
     const content = cfg.message ? resolve(cfg.message, interaction.member) : undefined;
     const testEmbed = buildWelcomeEmbed(interaction.member, cfg);
@@ -312,7 +313,7 @@ export async function handleWelcomeManagerButton(interaction) {
 
 export async function handleWelcomeManagerModal(interaction) {
   const isServerOwner = interaction.guild.ownerId === interaction.user.id;
-  const isBotOwner = global.client.config?.owners?.includes(interaction.user.id);
+  const isBotOwner = isBotOwnerSync(interaction.user.id);
   const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
 
   if (!isServerOwner && !isBotOwner && !isExtraOwner) {
