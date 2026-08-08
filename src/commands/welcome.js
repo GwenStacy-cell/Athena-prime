@@ -153,7 +153,11 @@ function getManagerPanel(guildId, type) {
 // INTERACTION HANDLERS
 // ============================================================
 export async function handleWelcomeManagerMenu(interaction) {
-  if (!interaction.member.permissions.has('ManageGuild')) {
+  const isServerOwner = interaction.guild.ownerId === interaction.user.id;
+  const isBotOwner = global.client.config?.owners?.includes(interaction.user.id);
+  const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
+
+  if (!isServerOwner && !isBotOwner && !isExtraOwner) {
     return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
   }
   const guildId = interaction.guild.id;
@@ -171,13 +175,19 @@ export async function handleWelcomeManagerMenu(interaction) {
 }
 
 export async function handleWelcomeManagerButton(interaction) {
-  if (!interaction.member.permissions.has('ManageGuild')) {
-    return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
-  }
   const guildId = interaction.guild.id;
   const customId = interaction.customId;
   const isWelcome = customId.startsWith('welcmgr_');
   const action = isWelcome ? customId.replace('welcmgr_', '') : customId.replace('leavmgr_', '');
+
+  const isServerOwner = interaction.guild.ownerId === interaction.user.id;
+  const isBotOwner = global.client.config?.owners?.includes(interaction.user.id);
+  const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
+
+  if (action !== 'test' && !isServerOwner && !isBotOwner && !isExtraOwner) {
+    return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
+  }
+
   const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
   const setConfig = isWelcome ? db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
   const typeStr = isWelcome ? 'welcome' : 'leave';
@@ -280,9 +290,14 @@ export async function handleWelcomeManagerButton(interaction) {
 }
 
 export async function handleWelcomeManagerModal(interaction) {
-  if (!interaction.member.permissions.has('ManageGuild')) {
+  const isServerOwner = interaction.guild.ownerId === interaction.user.id;
+  const isBotOwner = global.client.config?.owners?.includes(interaction.user.id);
+  const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
+
+  if (!isServerOwner && !isBotOwner && !isExtraOwner) {
     return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
   }
+
   const guildId = interaction.guild.id;
   const customId = interaction.customId;
   const isWelcome = customId.startsWith('welc_');
