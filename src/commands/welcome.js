@@ -33,10 +33,12 @@ export function buildWelcomeEmbed(member, cfg) {
   }
 
   if (cfg.from) {
-    e.setAuthor({
-      name: resolve(cfg.from, member),
-      iconURL: cfg.fromIcon || member.guild.iconURL({ dynamic: true }) || undefined
-    });
+    try {
+      e.setAuthor({
+        name: resolve(cfg.from, member),
+        iconURL: cfg.fromIcon ? resolve(cfg.fromIcon, member) : member.guild.iconURL({ dynamic: true }) || undefined
+      });
+    } catch (err) {}
   }
 
   if (cfg.title) e.setTitle(resolve(cfg.title, member));
@@ -45,16 +47,25 @@ export function buildWelcomeEmbed(member, cfg) {
   else if (!cfg.title && !cfg.from) e.setDescription(`**Welcome to ${member.guild.name}!**`);
 
   if (cfg.thumbnail !== false) {
-    e.setThumbnail(cfg.thumbnailUrl || member.user.displayAvatarURL({ dynamic: true, size: 256 }));
+    try {
+      const thumbUrl = cfg.thumbnailUrl ? resolve(cfg.thumbnailUrl, member) : member.user.displayAvatarURL({ dynamic: true, size: 256 });
+      e.setThumbnail(thumbUrl);
+    } catch (err) {}
   }
 
-  if (cfg.image) e.setImage(cfg.image);
+  if (cfg.image) {
+    try {
+      e.setImage(resolve(cfg.image, member));
+    } catch (err) {}
+  }
 
   if (cfg.footer) {
-    e.setFooter({
-      text: resolve(cfg.footer, member),
-      iconURL: cfg.footerIcon || undefined
-    });
+    try {
+      e.setFooter({
+        text: resolve(cfg.footer, member),
+        iconURL: cfg.footerIcon ? resolve(cfg.footerIcon, member) : undefined
+      });
+    } catch (err) {}
   }
 
   if (cfg.timestamp !== false) e.setTimestamp();
