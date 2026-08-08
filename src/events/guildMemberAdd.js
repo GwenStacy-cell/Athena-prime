@@ -129,7 +129,7 @@ export default {
       const welcomeDm = embed.build({
         title: `Welcome to ${guild.name}!`,
         description: `Thank you for joining **${guild.name}**! <:emoji_16:1533860111704002665>\n\nYou are our **${getOrdinal(guild.memberCount)}** member! We hope you have a great time here. Stay safe!`,
-        color: config.accentColor ? parseInt(config.accentColor.replace('#', ''), 16) : 0x2b2d31,
+        color: config.accentColor || '#2b2d31',
         thumbnail: guild.iconURL({ dynamic: true })
       });
       await member.send({ embeds: [welcomeDm] }).catch(() => null);

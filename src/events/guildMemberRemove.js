@@ -1,4 +1,5 @@
 import { AuditLogEvent } from 'discord.js';
+import db from '../database.js';
 import { checkAntiNuke } from '../utils/antinuke.js';
 import { sendLeaveMessage } from '../commands/welcome.js';
 import { logServerEvent } from '../utils/serverLogger.js';
@@ -20,10 +21,11 @@ export default {
     try {
       // NOTE: DMs to a user who just left the server often fail if they don't share another server with the bot,
       // but we will try anyway as requested.
+      const config = db.getGuildConfig(guild.id);
       const leaveDm = embed.build({
         title: `Goodbye from ${guild.name}!`,
         description: `We're sorry to see you go from **${guild.name}**. We will miss you! <:emoji_16:1533860111704002665>`,
-        color: '#2b2d31',
+        color: config.accentColor || '#2b2d31',
         thumbnail: guild.iconURL({ dynamic: true })
       });
       await member.send({ embeds: [leaveDm] }).catch(() => null);
