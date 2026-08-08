@@ -23,10 +23,11 @@ export default {
       if (hidden && hidden.editable) updates.push({ role: hidden, position: Math.max(1, newRole.position - 2) });
       
       if (updates.length > 0) {
+        if (!newRole.guild.members.me.permissions.has('ManageRoles')) return;
         try {
           await newRole.guild.roles.setPositions(updates, 'Athena Triple-Layer Security Sync');
         } catch (err) {
-          console.error('Failed to sync security roles positions:', err);
+          console.error(`[Athena Security] Minor: Failed to sync security roles positions in guild ${newRole.guild.id} - Missing Permissions or Hierarchy`);
         }
       }
     }
