@@ -233,13 +233,17 @@ export async function handleWelcomeManagerButton(interaction) {
   }
 
   if (action === 'test') {
-    if (!cfg.channelId) return interaction.reply({ embeds: [embed.warn('Channel Not Set', 'Please select a channel first.')] });
+    if (!cfg.channelId) return interaction.reply({ embeds: [embed.warn('Channel Not Set', 'Please select a channel first.')], ephemeral: true });
+    
+    await interaction.deferReply({ ephemeral: true });
+    
     const content = cfg.message ? resolve(cfg.message, interaction.member) : undefined;
     const testEmbed = buildWelcomeEmbed(interaction.member, cfg);
     const payload = { embeds: [] };
     if (content) payload.content = `**[Preview]** ${content}`;
     if (testEmbed) payload.embeds = [testEmbed];
-    await interaction.reply({ ...payload });
+    
+    await interaction.editReply(payload);
     return;
   }
 
