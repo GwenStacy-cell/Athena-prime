@@ -17,7 +17,8 @@ function resolve(text, member) {
     .replace(/{displayname}/gi, member.displayName)
     .replace(/{server}/gi, guild.name)
     .replace(/{count}/gi, String(guild.memberCount))
-    .replace(/{avatar}/gi, member.user.displayAvatarURL({ dynamic: true }));
+    .replace(/{avatar}/gi, member.user.displayAvatarURL({ dynamic: true }))
+    .replace(/{user\.avatar}/gi, member.user.displayAvatarURL({ dynamic: true }));
 }
 
 // ============================================================
