@@ -118,7 +118,7 @@ export const commands = [
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`| <:emoji_16:1521464002046328944> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
+        .setDescription(`| <:emoji_16:1533860111704002665> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
         .setImage('attachment://ping_graph.png');
 
       await sent.edit({ content: '', embeds: [e], files: [attachment] });
@@ -147,7 +147,7 @@ export const commands = [
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`| <:emoji_16:1521464002046328944> ${interaction.user} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
+        .setDescription(`| <:emoji_16:1533860111704002665> ${interaction.user} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
         .setImage('attachment://ping_graph.png');
 
       await interaction.editReply({ content: '', embeds: [e], files: [attachment] });

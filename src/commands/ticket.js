@@ -77,7 +77,7 @@ export const commands = [
             new ButtonBuilder()
               .setCustomId('ticket_open')
               .setLabel('Open Ticket')
-              .setEmoji('<:139707ticket:1517458763773251745>') // Custom user emoji
+              .setEmoji('<:139707ticket:1533859896620089485>') // Custom user emoji
               .setStyle(ButtonStyle.Primary)
           );
 
@@ -135,7 +135,7 @@ export const commands = [
             new ButtonBuilder()
               .setCustomId('ticket_open_general')
               .setLabel('Open Ticket')
-              .setEmoji('<:139707ticket:1517458763773251745>') 
+              .setEmoji('<:139707ticket:1533859896620089485>') 
               .setStyle(ButtonStyle.Primary)
           );
 

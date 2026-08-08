@@ -56,7 +56,7 @@ export const commands = [
             new ButtonBuilder()
               .setCustomId('verify_button')
               .setLabel('Verify')
-              .setEmoji('<a:emoji_18:1517214419996643509>') // Custom user emoji
+              .setEmoji('<a:emoji_18:1533024067169550527>') // Custom user emoji
               .setStyle(ButtonStyle.Secondary)
           );
 

@@ -165,7 +165,7 @@ export const commands = [
               await i.deferReply();
               try {
                 await updateServerStatsChannels(message.guild, updated);
-                await i.editReply({ content: `<:emoji_16:1521464002046328944> Font updated to **${selected}**!` });
+                await i.editReply({ content: `<:emoji_16:1533860111704002665> Font updated to **${selected}**!` });
               } catch (err) {
                 await i.editReply({ content: `⚠️ Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour font choice **${selected}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
               }
@@ -194,7 +194,7 @@ export const commands = [
                 
                 try {
                   await updateServerStatsChannels(message.guild, updated);
-                  await modalSubmit.editReply({ content: `<:emoji_16:1521464002046328944> Emoji updated to ${emojiVal}!` });
+                  await modalSubmit.editReply({ content: `<:emoji_16:1533860111704002665> Emoji updated to ${emojiVal}!` });
                 } catch (err) {
                   await modalSubmit.editReply({ content: `⚠️ Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour emoji choice **${emojiVal}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
                 }

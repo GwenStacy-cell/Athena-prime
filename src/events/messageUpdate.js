@@ -17,7 +17,7 @@ export default {
       const newContent = newMessage.content ? (newMessage.content.length > 1000 ? newMessage.content.substring(0, 997) + '...' : newMessage.content) : 'No new content';
 
       const editEmbed = embed.build({
-        description: `__**Message Edited |**__ <:emoji_16:1521464002046328944>\n> **Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n>  **Channel:** ${newMessage.channel}\n>  [Jump to Message](${newMessage.url})\n>  **Before:**\n>  ${oldContent}\n>  **After:**\n>  ${newContent}`,
+        description: `__**Message Edited |**__ <:emoji_16:1533860111704002665>\n> **Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n>  **Channel:** ${newMessage.channel}\n>  [Jump to Message](${newMessage.url})\n>  **Before:**\n>  ${oldContent}\n>  **After:**\n>  ${newContent}`,
         color: '#2b2d31'
       });
 
@@ -50,7 +50,7 @@ export default {
              // 1. Channel Warning
              const scamEmbed = new EmbedBuilder()
                .setColor('#ff0000') // Pure red
-               .setDescription(`<a:emoji_35:1517213876058329148> <@${newMessage.author.id}>, your image was flagged as a scam and removed.`);
+               .setDescription(`<a:emoji_35:1533024049926639699> <@${newMessage.author.id}>, your image was flagged as a scam and removed.`);
              await newMessage.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
              
              // 2. Security Channel Log
@@ -78,7 +78,7 @@ export default {
                if (owner) {
                  const dmEmbed = new EmbedBuilder()
                    .setColor('#ff0000')
-                   .setTitle('<a:emoji_35:1517213876058329148> Automated Scam Intervention')
+                   .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                    .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${newMessage.guild.name}**.\n\n**Offender:** <@${newMessage.author.id}>\n**Location:** <#${newMessage.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
                    .setFooter({ text: 'Athena Prime Killer System' });
                  await owner.send({ embeds: [dmEmbed] }).catch(() => null);

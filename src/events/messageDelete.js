@@ -47,7 +47,7 @@ export default {
     }
 
     const delEmbed = embed.build({
-      description: `__**Message Deleted |**__ <:emoji_16:1521464002046328944>\n> **Author:** ${message.author?.tag || 'Unknown'} (<@${message.author?.id || 'Unknown'}>)\n> **Deleted By:** ${deletedBy}\n>  **Channel:** ${message.channel}\n>  **Content:**\n>  ${content}`,
+      description: `__**Message Deleted |**__ <:emoji_16:1533860111704002665>\n> **Author:** ${message.author?.tag || 'Unknown'} (<@${message.author?.id || 'Unknown'}>)\n> **Deleted By:** ${deletedBy}\n>  **Channel:** ${message.channel}\n>  **Content:**\n>  ${content}`,
       color: '#2b2d31'
     });
 

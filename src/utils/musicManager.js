@@ -918,7 +918,7 @@ export function buildAddedToQueueMsg(track, accentColor = '#ff0000') {
   desc += `By ${track.author || 'Unknown'}\n\n`;
   
   const platformIcon = track.url.includes('spotify') ? '<:spotify:1528161641601044690>' : '<:ytlogo:1528154904944709722>';
-  desc += `${platformIcon} • ${track.duration} • <:author:1524687847662161971> <@${track.requester.id}>`;
+  desc += `${platformIcon} • ${track.duration} • <:author:1533860133770105002> <@${track.requester.id}>`;
   
   embed.setDescription(desc);
   if (track.artworkUrl) {

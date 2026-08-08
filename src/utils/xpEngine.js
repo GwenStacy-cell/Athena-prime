@@ -68,9 +68,9 @@ export async function processLevelUp(client, guild, member, newLevel) {
       
       const attachment = await generateRankCard(member, userXp.xp, newLevel, rank, requiredXp);
 
-      const HEART = '<a:redheart:1517824307445764227>';
-      const FLAME = '<a:RED:1517824304392175783>';
-      const BOOK = '<a:emoji_29:1517214418717380749>';
+      const HEART = '<a:redheart:1533024105606156470>';
+      const FLAME = '<a:RED:1533859934146396312>';
+      const BOOK = '<a:emoji_29:1533844915988201624>';
 
       let description = `Congratulations <@${member.id}>! You have leveled up to **Level ${newLevel}**! ${FLAME}\n\n`;
       if (rewardGiven) {

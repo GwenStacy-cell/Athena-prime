@@ -1680,13 +1680,13 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     if (context === 'raidmode') {
       dmEmbed = embed.success(
         'Raid Mode Ended',
-        `<:emoji_16:1521464002046328944> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
+        `<:emoji_16:1533860111704002665> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
         []
       );
     } else {
       dmEmbed = embed.success(
         'Isolation Terminated',
-        `<a:alert1:1521456941858029720> Your quarantine status has been lifted in **${guild.name}**! Your original access privileges have been fully restored.`,
+        `<a:alert1:1533860044154732704> Your quarantine status has been lifted in **${guild.name}**! Your original access privileges have been fully restored.`,
         []
       );
     }
@@ -1838,7 +1838,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     let errorWarning = '';
     if (rErrors > 0 || cErrors > 0) {
-      errorWarning = `\n\n<a:alert1:1521456941858029720> **WARNING:** Failed to modify ${rErrors} roles and ${cErrors} channels. (Note: Discord prevents bots from hiding Community Default/Onboarding channels). Ensure the bot's role is placed at the top and has Administrator privileges.`;
+      errorWarning = `\n\n<a:alert1:1533860044154732704> **WARNING:** Failed to modify ${rErrors} roles and ${cErrors} channels. (Note: Discord prevents bots from hiding Community Default/Onboarding channels). Ensure the bot's role is placed at the top and has Administrator privileges.`;
     }
 
     return { embed: embed.danger('EMERGENCY MODE ACTIVATED', `All channels have been hidden and all permissions have been stripped from roles. Use \`!end emergency\` or \`/endemergency\` to restore the server.${errorWarning}`) };
@@ -1903,7 +1903,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     let errorWarning = '';
     if (rErrors > 0 || cErrors > 0) {
-      errorWarning = `\n\n<a:alert1:1521456941858029720> **WARNING:** Failed to restore ${rErrors} roles and ${cErrors} channels. You may need to fix them manually.`;
+      errorWarning = `\n\n<a:alert1:1533860044154732704> **WARNING:** Failed to restore ${rErrors} roles and ${cErrors} channels. You may need to fix them manually.`;
     }
 
     return { embed: embed.success('Emergency Mode Ended', `All permissions and channel visibilities have been restored.${errorWarning}`) };
@@ -1948,7 +1948,7 @@ async function handleRaidMode(guild, moderator, mode) {
   if (enabled) {
     const resEmbed = embed.raid(
       'Raid Mode Engaged',
-      `<a:alert1:1521456941858029720> **Server Raid Protection is now ACTIVE.**\nAll joining accounts will be automatically quarantined immediately to protect the server until deactivated.`,
+      `<a:alert1:1533860044154732704> **Server Raid Protection is now ACTIVE.**\nAll joining accounts will be automatically quarantined immediately to protect the server until deactivated.`,
       [{ name: 'Enforced by', value: `${moderator}` }]
     );
     logToSecurityChannel(guild, embed.log('Raid Mode Active', `Administrator **${moderator.user.tag}** turned ON Guild Raid Mode.`, [], 'raid'));
@@ -2858,7 +2858,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   }
 
   const onEmoji = '<:on:1514996865030946847>';
-  const alertEmoji = '<a:alert1:1521456941858029720>';
+  const alertEmoji = '<a:alert1:1533860044154732704>';
   const steps = [
     `${alertEmoji} __**INITIALIZING SECURITY PROTOCOLS...**__`,
     `${onEmoji} Anti-Nuke: **Enabled**`,
@@ -3003,7 +3003,7 @@ export async function handleScanServer(guild, page = 0) {
 
   const humansToShow = trustedHumans.slice(startIdx, endIdx);
   if (humansToShow.length > 0) {
-    desc += `### <:emoji_16:1521464002046328944> TRUSTED PERSONNEL\n`;
+    desc += `### <:emoji_16:1533860111704002665> TRUSTED PERSONNEL\n`;
     humansToShow.forEach(h => {
       desc += `${DOT} **@${h.user.username}** [\`${h.id}\`]\n`;
     });
@@ -3013,7 +3013,7 @@ export async function handleScanServer(guild, page = 0) {
 
   const whitelistedBotsToShow = whitelistedBots.slice(startIdx, endIdx);
   if (whitelistedBotsToShow.length > 0) {
-    desc += `### <:emoji_16:1521464002046328944> WHITELISTED BOTS\n`;
+    desc += `### <:emoji_16:1533860111704002665> WHITELISTED BOTS\n`;
     whitelistedBotsToShow.forEach(b => {
       desc += `${DOT} **@${b.user.username}** [\`${b.id}\`]\n`;
     });

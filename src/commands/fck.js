@@ -164,7 +164,7 @@ export const commands = [
           {
             name: 'Delivery',
             value: dmSent
-              ? '<:emoji_16:1521464002046328944> Warning DM delivered to target.'
+              ? '<:emoji_16:1533860111704002665> Warning DM delivered to target.'
               : 'Target DMs are closed. Warning filed internally.',
             inline: false
           },

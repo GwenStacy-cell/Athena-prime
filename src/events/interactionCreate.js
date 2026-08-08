@@ -234,7 +234,7 @@ export default {
             await vc.send({ embeds: [lyricsEmbed] });
           }
 
-          return interaction.editReply({ content: `<:emoji_16:1521464002046328944> Lyrics sent to <#${vc.id}>!` });
+          return interaction.editReply({ content: `<:emoji_16:1533860111704002665> Lyrics sent to <#${vc.id}>!` });
 
         } catch (error) {
           console.error('Lyrics error:', error);
@@ -902,7 +902,7 @@ export default {
           }
           
           await member.roles.add(role);
-          return interaction.reply({ content: `<a:emoji_18:1517214419996643509> You have been successfully verified! Access granted.` });
+          return interaction.reply({ content: `<a:emoji_18:1533024067169550527> You have been successfully verified! Access granted.` });
         } catch (err) {
           console.error('Verify error:', err);
           return interaction.reply({ content: 'I do not have permission to assign the verification role. Please contact an admin.' }).catch(() => null);
@@ -1014,7 +1014,7 @@ export default {
           components.push(new ActionRowBuilder().addComponents(selectMenu));
         } else {
           components.push(new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId('ticket_open_general').setLabel('Open Ticket').setEmoji('<:139707ticket:1517458763773251745>').setStyle(ButtonStyle.Primary)
+            new ButtonBuilder().setCustomId('ticket_open_general').setLabel('Open Ticket').setEmoji('<:139707ticket:1533859896620089485>').setStyle(ButtonStyle.Primary)
           ));
         }
         
@@ -1048,7 +1048,7 @@ export default {
           new ButtonBuilder()
             .setCustomId(`ticket_open_${value}`)
             .setLabel('Create Ticket')
-            .setEmoji('<:139707ticket:1517458763773251745>')
+            .setEmoji('<:139707ticket:1533859896620089485>')
             .setStyle(ButtonStyle.Success)
         );
 
@@ -1135,7 +1135,7 @@ export default {
               new ButtonBuilder()
                 .setCustomId(`ticket_close_${ticketId}`)
                 .setLabel('Close Ticket')
-                .setEmoji('<a:emoji_106:1517212811678453942>')
+                .setEmoji('<a:emoji_106:1533844832395595838>')
                 .setStyle(ButtonStyle.Danger)
             );
 
@@ -1256,7 +1256,7 @@ export default {
         await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
 
         if (joined) {
-          return interaction.reply({ content: `<a:emoji_56:1517212375022047284> You have successfully entered the giveaway!` });
+          return interaction.reply({ content: `<a:emoji_56:1533024028451672257> You have successfully entered the giveaway!` });
         } else {
           return interaction.reply({ content: `You have successfully left the giveaway.` });
         }

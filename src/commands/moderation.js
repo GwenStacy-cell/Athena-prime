@@ -924,7 +924,7 @@ export async function handleWarn(guild, moderator, target, reason, force = false
 
   // Response channel embed
   const resEmbed = embed.build({
-    description: `__**User Warned |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${target} , **${reason}**\n> ㅤhas been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
+    description: `__**User Warned |**__ <:emoji_16:1533860111704002665>\n> Reason: . ${target} , **${reason}**\n> ㅤhas been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
     color: '#2b2d31',
     thumbnail: target.user.displayAvatarURL({ dynamic: true })
   });
@@ -1422,7 +1422,7 @@ async function handleVcAction(guild, moderator, targets, action) {
 
   const actionName = action.charAt(0).toUpperCase() + action.slice(1);
   const embedRes = embed.success(`${actionName} Complete`, `Processed **${targets.size}** member(s).`, [
-    { name: '<:emoji_16:1521464002046328944> Success', value: `\`${successCount}\``, inline: true },
+    { name: '<:emoji_16:1533860111704002665> Success', value: `\`${successCount}\``, inline: true },
     { name: '❌ Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
   ]);
 

@@ -22,7 +22,7 @@ export default {
     }
 
     const logEmbed = embed.build({
-      description: `__**Member Banned |**__ <:emoji_16:1521464002046328944>\n> **User:** ${ban.user.tag} (<@${ban.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
+      description: `__**Member Banned |**__ <:emoji_16:1533860111704002665>\n> **User:** ${ban.user.tag} (<@${ban.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
       color: '#2b2d31',
       thumbnail: ban.user.displayAvatarURL({ dynamic: true })
     });

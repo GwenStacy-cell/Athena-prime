@@ -733,7 +733,7 @@ async function handleFixJtc(message) {
       }
     }
     
-    await sent.edit(`<:emoji_16:1521464002046328944> **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
+    await sent.edit(`<:emoji_16:1533860111704002665> **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
   } catch (e) {
     await sent.edit(`Error during sync: \`${e.message}\``);
   }
@@ -752,7 +752,7 @@ async function handleBanServer(message, args) {
   if (targetGuild) {
     try { await targetGuild.leave(); } catch(e) {}
   }
-  return message.reply(`<:emoji_16:1521464002046328944> **Server Banned:** \`${guildId}\`. The bot has left and cannot be added back.`);
+  return message.reply(`<:emoji_16:1533860111704002665> **Server Banned:** \`${guildId}\`. The bot has left and cannot be added back.`);
 }
 
 async function handleUnbanServer(message, args) {
@@ -761,7 +761,7 @@ async function handleUnbanServer(message, args) {
   if (!db.isServerBanned(guildId)) return message.reply('Server is not banned.');
   
   db.removeBannedServer(guildId);
-  return message.reply(`<:emoji_16:1521464002046328944> **Server Unbanned:** \`${guildId}\`. The bot can now be invited again.`);
+  return message.reply(`<:emoji_16:1533860111704002665> **Server Unbanned:** \`${guildId}\`. The bot can now be invited again.`);
 }
 
 async function handleRestoreSetup(message, args) {
@@ -832,7 +832,7 @@ async function handleRestoreSetup(message, args) {
     }
   } catch(e) {}
 
-  await sent.edit(`<:emoji_16:1521464002046328944> **Setup Restoration Complete!** Rebuilt JTC, Quarantine, Accent, and Welcome/Leave perfectly.`);
+  await sent.edit(`<:emoji_16:1533860111704002665> **Setup Restoration Complete!** Rebuilt JTC, Quarantine, Accent, and Welcome/Leave perfectly.`);
 }
 
 // Export commands so they can be used directly with the standard prefix

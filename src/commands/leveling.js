@@ -4,15 +4,15 @@ import embed from '../embed.js';
 import { calculateXpForLevel } from '../utils/xpEngine.js';
 import { generateRankCard, generateLeaderboard } from '../utils/canvasCards.js';
 
-const TROPHY = '<a:trophy:1517636666825773058>';
-const COIN = '<a:Boost2:1517637137388929147>';
+const TROPHY = '<a:trophy:1533859922599481577>';
+const COIN = '<a:Boost2:1533859928949784776>';
 
 export async function buildXpDashboard(guildId) {
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle, RoleSelectMenuBuilder } = await import('discord.js');
   const system = db.getXpSystem(guildId);
 
-  const ON_EMOJI = '<:on:1517213880483446978>';
-  const OFF_EMOJI = '<:off:1517213879367761981>';
+  const ON_EMOJI = '<a:on:1533844867191406672>';
+  const OFF_EMOJI = '<:off:1533844858983157851>';
   const statusIcon = system.enabled ? ON_EMOJI : OFF_EMOJI;
 
   let rewardsText = 'None';

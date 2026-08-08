@@ -4,9 +4,9 @@ import embed from '../embed.js';
 import ms from 'ms';
 import chalk from 'chalk';
 
-const EMOJI_HEADER = '<a:emoji_11:1517212810223026247>';
-const EMOJI_JOIN = '<a:emoji_56:1517212375022047284>';
-const EMOJI_WINNER = '<a:giveaway:1517214415684898988>';
+const EMOJI_HEADER = '<a:emoji_11:1533024044075454464>';
+const EMOJI_JOIN = '<a:emoji_56:1533024028451672257>';
+const EMOJI_WINNER = '<a:giveaway:1533844904604864603>';
 
 export async function endGiveaway(client, messageId, gwData) {
   try {

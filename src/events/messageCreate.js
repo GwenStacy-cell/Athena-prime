@@ -241,7 +241,7 @@ export default {
         db.removeAfk(message.author.id);
         const mins = Math.floor((Date.now() - afkStatus.timestamp) / 60000);
         const wbEmbed = embed.build({
-          description: `__**Welcome Back |**__ <:emoji_16:1521464002046328944>\n> **Status Cleared**\n> ${message.author} is now back online!\n> ㅤYou were away for **${mins} mins**.`,
+          description: `__**Welcome Back |**__ <:emoji_16:1533860111704002665>\n> **Status Cleared**\n> ${message.author} is now back online!\n> ㅤYou were away for **${mins} mins**.`,
           color: '#2b2d31',
           thumbnail: message.author.displayAvatarURL({ dynamic: true })
         });
@@ -255,7 +255,7 @@ export default {
           if (mentionedAfk && user.id !== message.author.id) {
             const timeAgoStr = `<t:${Math.floor(mentionedAfk.timestamp / 1000)}:R>`;
             const mentionEmbed = embed.build({
-              description: `__**AFK Status |**__ <:emoji_16:1521464002046328944>\n> **User:** ${user}\n> **Reason:** ${mentionedAfk.reason}\n> ㅤAway since: ${timeAgoStr}`,
+              description: `__**AFK Status |**__ <:emoji_16:1533860111704002665>\n> **User:** ${user}\n> **Reason:** ${mentionedAfk.reason}\n> ㅤAway since: ${timeAgoStr}`,
               color: '#2b2d31'
             });
             message.reply({ embeds: [mentionEmbed] }).catch(() => null);
@@ -344,7 +344,7 @@ export default {
           // Channel Warning
           const scamEmbed = new EmbedBuilder()
             .setColor('#ff0000') // Pure red
-            .setDescription(`<a:emoji_35:1517213876058329148> <@${message.author.id}>, your message was flagged as a scam and removed.`);
+            .setDescription(`<a:emoji_35:1533024049926639699> <@${message.author.id}>, your message was flagged as a scam and removed.`);
           await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
           
           // Security Channel Log
@@ -370,7 +370,7 @@ export default {
             if (owner) {
               const dmEmbed = new EmbedBuilder()
                 .setColor('#ff0000') // Pure red for owner warning
-                .setTitle('<a:emoji_35:1517213876058329148> Automated Scam Intervention')
+                .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                 .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam message in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
                 .setFooter({ text: 'Athena Prime Killer System' });
               await owner.send({ embeds: [dmEmbed] }).catch(() => null);
@@ -428,7 +428,7 @@ export default {
                // 1. Channel Warning
                const scamEmbed = new EmbedBuilder()
                  .setColor('#ff0000') // Pure red
-                 .setDescription(`<a:emoji_35:1517213876058329148> <@${message.author.id}>, your image was flagged as a scam and removed.`);
+                 .setDescription(`<a:emoji_35:1533024049926639699> <@${message.author.id}>, your image was flagged as a scam and removed.`);
                await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
                
                // 2. Security Channel Log
@@ -457,7 +457,7 @@ export default {
                  if (owner) {
                    const dmEmbed = new EmbedBuilder()
                      .setColor('#ff0000') // Pure red for owner warning
-                     .setTitle('<a:emoji_35:1517213876058329148> Automated Scam Intervention')
+                     .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                      .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
                      .setFooter({ text: 'Athena Prime Killer System' });
                    await owner.send({ embeds: [dmEmbed] }).catch(() => null);
@@ -941,7 +941,7 @@ export default {
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
           const warnEmbed = embed.build({
-            description: `__**Warned Sending Invites |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> ㅤhas been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
+            description: `__**Warned Sending Invites |**__ <:emoji_16:1533860111704002665>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> ㅤhas been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
             color: '#2b2d31',
             thumbnail: message.author.displayAvatarURL({ dynamic: true })
           });
@@ -972,7 +972,7 @@ export default {
             await message.delete().catch(() => null);
 
             const warnEmbed = embed.warn(
-              '<:gun:1517636066964799679> Link Deleted',
+              '<a:gun:1533859911631376496> Link Deleted',
               `${message.author}, posting links is not allowed in this server.`
             );
             await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
@@ -1043,7 +1043,7 @@ export default {
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
           const filterWarnEmbed = embed.build({
-            description: `__**Word Filter Triggered |**__ <:emoji_16:1521464002046328944>\n> Reason: . ${message.author} , **Posted Blacklisted Word**\n> ㅤhas been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
+            description: `__**Word Filter Triggered |**__ <:emoji_16:1533860111704002665>\n> Reason: . ${message.author} , **Posted Blacklisted Word**\n> ㅤhas been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
             color: '#2b2d31',
             thumbnail: message.author.displayAvatarURL({ dynamic: true })
           });
@@ -1110,7 +1110,7 @@ export default {
             await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
           } else {
             const spamWarnEmbed = embed.warn(
-              '<:gun:1517636066964799679> Anti-Spam Warning',
+              '<a:gun:1533859911631376496> Anti-Spam Warning',
               `${message.author}, please slow down. Sending messages too fast is against server security rules.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
             );
             await message.channel.send({ embeds: [spamWarnEmbed] }).catch(() => null);
@@ -1186,7 +1186,7 @@ export default {
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`| <:emoji_16:1521464002046328944> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
+        .setDescription(`| <:emoji_16:1533860111704002665> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
         .setImage('attachment://ping_graph.png');
 
       await sent.delete().catch(() => null);
