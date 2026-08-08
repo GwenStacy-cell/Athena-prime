@@ -153,6 +153,9 @@ function getManagerPanel(guildId, type) {
 // INTERACTION HANDLERS
 // ============================================================
 export async function handleWelcomeManagerMenu(interaction) {
+  if (!interaction.member.permissions.has('ManageGuild')) {
+    return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
+  }
   const guildId = interaction.guild.id;
   const isWelcome = interaction.customId.startsWith('welcmgr_');
   const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
@@ -168,6 +171,9 @@ export async function handleWelcomeManagerMenu(interaction) {
 }
 
 export async function handleWelcomeManagerButton(interaction) {
+  if (!interaction.member.permissions.has('ManageGuild')) {
+    return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
+  }
   const guildId = interaction.guild.id;
   const customId = interaction.customId;
   const isWelcome = customId.startsWith('welcmgr_');
@@ -274,6 +280,9 @@ export async function handleWelcomeManagerButton(interaction) {
 }
 
 export async function handleWelcomeManagerModal(interaction) {
+  if (!interaction.member.permissions.has('ManageGuild')) {
+    return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
+  }
   const guildId = interaction.guild.id;
   const customId = interaction.customId;
   const isWelcome = customId.startsWith('welc_');

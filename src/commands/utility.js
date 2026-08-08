@@ -121,8 +121,7 @@ export const commands = [
         .setDescription(`| <:emoji_16:1521464002046328944> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
         .setImage('attachment://ping_graph.png');
 
-      await sent.delete().catch(() => null);
-      await message.reply({ embeds: [e], files: [attachment] });
+      await sent.edit({ content: '', embeds: [e], files: [attachment] });
     },
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
@@ -131,7 +130,7 @@ export const commands = [
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      const sent = await interaction.reply({ content: 'Calculating ping...', withResponse: true });
+      const sent = await interaction.reply({ content: 'Calculating ping...', fetchReply: true });
       const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
       const wsMs  = Math.round(interaction.client.ws.ping);
 
@@ -151,8 +150,7 @@ export const commands = [
         .setDescription(`| <:emoji_16:1521464002046328944> ${interaction.user} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
         .setImage('attachment://ping_graph.png');
 
-      await sent.delete().catch(() => null);
-      await interaction.channel.send({ embeds: [e], files: [attachment] });
+      await interaction.editReply({ content: '', embeds: [e], files: [attachment] });
     }
   },
 
