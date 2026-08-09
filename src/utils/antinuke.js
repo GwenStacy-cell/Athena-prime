@@ -303,6 +303,25 @@ function isAuthorized(guild, executor, eventType = 'antinuke') {
 const recentBans = new Map();
 
 // ==========================================
+// CONDEMNED NUKERS — Instant skip system
+// Once a nuker is detected on event 1, they are condemned immediately.
+// Events 2, 3, 4... from the same user skip ALL processing and go
+// straight to restoration — zero wasted cycles on duplicate handling.
+// ==========================================
+const condemnedNukers = new Map(); // Map<guildId, Set<userId>>
+
+function isCondemned(guildId, userId) {
+  return condemnedNukers.get(guildId)?.has(userId) ?? false;
+}
+
+function condemn(guildId, userId) {
+  if (!condemnedNukers.has(guildId)) condemnedNukers.set(guildId, new Set());
+  condemnedNukers.get(guildId).add(userId);
+  // Auto-clear after 2 minutes (ban will have long taken effect by then)
+  setTimeout(() => condemnedNukers.get(guildId)?.delete(userId), 120_000);
+}
+
+// ==========================================
 // ⚡⚡ MAXIMUM POWER — ZERO-LATENCY ANTINUKE HANDLER
 // WebSocket-native: fires the instant the audit log entry hits Discord's gateway
 // ==========================================
@@ -314,6 +333,62 @@ export async function handleAuditLogEntry(guild, entry) {
   if (!executor || !executorId) return;
   if (executorId === guild.members.me?.id) return;
   if (Date.now() - createdAt.getTime() > 20_000) return; // Ignore stale events
+
+  // ⚡ CONDEMNED FAST PATH ───────────────────────────────────────────────
+  // If this executor was already condemned on a previous event (ban in flight),
+  // skip ALL switch/threshold/punish processing. Just queue restoration directly.
+  if (isCondemned(guild.id, executorId)) {
+    if (action === AuditLogEvent.ChannelDelete) {
+      const ch = deletedCache.get(targetId);
+      if (ch && !queuedRestorations.has(targetId)) {
+        queuedRestorations.add(targetId);
+        const isCategory = ch.type === 4;
+        restorationQueue.push({
+          isCategory,
+          execute: async () => {
+            try {
+              const parentId = restoredCategories.get(ch.parentId) || ch.parentId;
+              const overwrites = ch.permissionOverwrites.cache.map(o => ({
+                id: o.id, type: o.type, allow: o.allow.bitfield, deny: o.deny.bitfield
+              }));
+              const newCh = await guild.channels.create({
+                name: ch.name, type: ch.type, topic: ch.topic || null,
+                parent: parentId || null, position: ch.position || 0,
+                permissionOverwrites: overwrites,
+                reason: 'Athena Anti-Nuke: Restored (condemned fast path)'
+              });
+              if (isCategory) mapRestoredCategory(ch.id, newCh.id);
+            } catch (e) {
+              try {
+                await guild.channels.create({ name: ch.name, type: ch.type, reason: 'Athena Anti-Nuke: Restored without parent' });
+              } catch {}
+            }
+          }
+        });
+        processRestorationQueue();
+      }
+    } else if (action === AuditLogEvent.RoleDelete) {
+      const r = deletedCache.get(targetId);
+      if (r && !queuedRestorations.has(targetId)) {
+        queuedRestorations.add(targetId);
+        restorationQueue.push({
+          isCategory: false,
+          execute: async () => {
+            try {
+              await guild.roles.create({
+                name: r.name, colors: { primaryColor: r.color }, hoist: r.hoist,
+                permissions: r.permissions.bitfield, mentionable: r.mentionable,
+                reason: 'Athena Anti-Nuke: Restored deleted role (condemned fast path)'
+              });
+            } catch {}
+          }
+        });
+        processRestorationQueue();
+      }
+    }
+    return; // Skip all other processing — ban already in flight
+  }
+  // ──────────────────────────────────────────────────────────────────────
 
   // ⚡⚡ HYPER-SPEED BOT PRE-EMPTIVE BAN ──────────────────────────────
   // If a non-whitelisted BOT fires ANY dangerous structural action,
@@ -336,6 +411,11 @@ export async function handleAuditLogEntry(guild, entry) {
       || db.isExtraOwner(guild.id, executorId)
       || db.isWhitelisted(guild, executorId, 'antinuke');
     if (!isWl) {
+      // ⚡ CONDEMN IMMEDIATELY (synchronous — before any await)
+      // This ensures event 2 from this user is skipped even if it arrives
+      // before the ban API call completes.
+      condemn(guild.id, executorId);
+
       // ⚡ STEP 1: Strip ALL roles FIRST (fire-and-forget)
       // Role permission removal propagates faster than a ban on Discord's side.
       // This immediately revokes ManageChannels/ManageRoles/BanMembers etc.
@@ -479,6 +559,9 @@ export async function handleAuditLogEntry(guild, entry) {
   }
 
   // ── PARALLEL: Punishment + Rollback fire simultaneously ───────────
+  // Condemn this executor so any further events from them skip straight to restoration
+  condemn(guild.id, executor.id);
+
   const punishPromise = punish(guild, executor, eventType, config, forceBan);
 
   const rollbackPromise = (async () => {
