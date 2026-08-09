@@ -103,7 +103,7 @@ async function sendRateLeaderboard(context, page) {
   
   const payload = { embeds: [lbEmbed], components: [row] };
   
-  if (context.isButton) {
+  if (typeof context.isButton === 'function' && context.isButton()) {
     await context.update(payload).catch(() => null);
   } else {
     await context.reply(payload).catch(() => null);
