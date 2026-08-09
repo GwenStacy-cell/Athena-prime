@@ -153,21 +153,52 @@ async function punish(guild, executor, eventType, config, forceBan = false) {
 
   try {
     if (punishment === 'ban') {
-      // Direct-ID ban — zero latency, no fetch
-      const banPromise = guild.members.ban(executor.id, { reason }).catch(e => {
-        if (e.code === 50013) throw new Error('Missing Permissions');
-        throw e;
-      });
+      // Try to strip roles from cache first to break hierarchy (fire-and-forget)
+      const cachedMember = guild.members.cache.get(executor.id);
+      if (cachedMember) {
+        cachedMember.roles.set([], `[ATHENA] Role strip before ban: ${eventType}`).catch(() => null);
+      }
 
-      // DM in background — does NOT delay the ban
+      // Direct-ID ban — zero latency
+      try {
+        await guild.members.ban(executor.id, { reason });
+        result = 'Permanently Banned';
+      } catch (banErr) {
+        // Ban failed — likely hierarchy (their highest role is above Athena's)
+        console.error(`[AntiNuke] Ban failed for ${executor.id}: ${banErr.message}`);
+
+        // Fallback 1: Fetch member and try to strip roles first, then re-ban
+        try {
+          const m = await guild.members.fetch(executor.id).catch(() => null);
+          if (m) {
+            await m.roles.set([], `[ATHENA] Force-stripping roles to break hierarchy`).catch(() => null);
+            await guild.members.ban(executor.id, { reason: reason + ' [Role-stripped retry]' });
+            result = 'Permanently Banned (after role strip)';
+          } else {
+            throw new Error('Member not fetchable');
+          }
+        } catch (retryErr) {
+          // Fallback 2: Kick if ban still impossible
+          try {
+            const m = guild.members.cache.get(executor.id) ?? await guild.members.fetch(executor.id).catch(() => null);
+            if (m?.kickable) {
+              await m.kick(reason + ' [Ban failed — kicked instead]');
+              result = 'Kicked (ban blocked by hierarchy)';
+            } else {
+              result = `Cannot ban or kick — hierarchy blocked (${retryErr.message})`;
+            }
+          } catch (kickErr) {
+            result = `All punishment attempts failed: ${kickErr.message}`;
+          }
+        }
+      }
+
+      // DM in background — does NOT delay anything
       guild.members.fetch(executor.id).then(m => {
         m?.send({ embeds: [embed.danger('Banned — Athena Prime Protection',
           `You have been permanently banned from **${guild.name}** for triggering Anti-Nuke protection.\n\n**Violation:** ${eventType}`
         )] }).catch(() => null);
       }).catch(() => null);
-
-      await banPromise;
-      result = 'Permanently Banned';
 
     } else if (punishment === 'kick') {
       const executorMember = await guild.members.fetch(executor.id).catch(() => null);
@@ -305,12 +336,20 @@ export async function handleAuditLogEntry(guild, entry) {
       || db.isExtraOwner(guild.id, executorId)
       || db.isWhitelisted(guild, executorId, 'antinuke');
     if (!isWl) {
-      // 🔥 FIRE THE BAN — right now, no delay, no fetch, no processing
-      guild.members.ban(executorId, { reason: '[ATHENA] Nuke bot detected — instant ban' }).catch(() => null);
-      // Track it so unban guard and punish() dedup correctly
-      lockPunishment(guild.id, executorId);
-      recentBans.set(`${guild.id}:${executorId}`, Date.now());
-      setTimeout(() => recentBans.delete(`${guild.id}:${executorId}`), 30_000);
+      // 🔥 FIRE THE BAN immediately — no delay, no fetch, no processing
+      guild.members.ban(executorId, { reason: '[ATHENA] Nuke bot detected — instant ban' })
+        .then(() => {
+          // Only lock AFTER confirming the ban succeeded
+          // If the ban failed, punish() will retry and log the real error
+          lockPunishment(guild.id, executorId);
+          recentBans.set(`${guild.id}:${executorId}`, Date.now());
+          setTimeout(() => recentBans.delete(`${guild.id}:${executorId}`), 30_000);
+        })
+        .catch(err => {
+          // Ban failed (likely hierarchy — bot's role is above Athena)
+          // Do NOT lock — let punish() handle it and log the actual failure
+          console.error(`[AntiNuke] ⚠️ Pre-emptive ban FAILED for ${executorId} in ${guild.id}: ${err.message}`);
+        });
     }
   }
   // ─────────────────────────────────────────────────────────────────────
