@@ -1218,6 +1218,11 @@ class Database {
     return this.cache.editRatings[messageId];
   }
 
+  getAllEditRatings() {
+    if (!this.cache.editRatings) this.cache.editRatings = {};
+    return this.cache.editRatings;
+  }
+
   createEditRating(messageId, data) {
     if (!this.cache.editRatings) this.cache.editRatings = {};
     this.cache.editRatings[messageId] = {

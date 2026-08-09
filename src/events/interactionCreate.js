@@ -507,6 +507,19 @@ export default {
         }
       }
 
+      // Rate Leaderboard Pagination
+      if (interaction.customId.startsWith('ratelb_')) {
+        const parts = interaction.customId.split('_');
+        const direction = parts[1]; // 'prev' or 'next'
+        let page = parseInt(parts[2], 10);
+        
+        if (direction === 'prev') page--;
+        else if (direction === 'next') page++;
+        
+        const { sendRateLeaderboard } = await import('../commands/rateleaderboard.js');
+        return sendRateLeaderboard(interaction, page);
+      }
+
       // Edit Rating Buttons
       if (interaction.customId.startsWith('rate_edit_')) {
         const messageId = interaction.message.id;
