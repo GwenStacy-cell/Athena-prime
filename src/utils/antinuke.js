@@ -120,12 +120,7 @@ async function punish(guild, executor, eventType, config, forceBan = false) {
 
   try {
     if (punishment === 'ban') {
-      // Pre-emptive role strip (fire-and-forget — keeps ban fire at zero latency)
-      guild.members.cache.get(executor.id)?.roles
-        .set([], `[ATHENA] Pre-emptive strip before ban: ${eventType}`)
-        .catch(() => null);
-
-      // Direct-ID ban — zero latency, no fetch needed
+      // Direct-ID ban — zero latency, no fetch
       const banPromise = guild.members.ban(executor.id, { reason }).catch(e => {
         if (e.code === 50013) throw new Error('Missing Permissions');
         throw e;
@@ -255,6 +250,33 @@ export async function handleAuditLogEntry(guild, entry) {
   if (!executor || !executorId) return;
   if (executorId === guild.members.me?.id) return;
   if (Date.now() - createdAt.getTime() > 20_000) return; // Ignore stale events
+
+  // ⚡⚡ HYPER-SPEED BOT PRE-EMPTIVE BAN ──────────────────────────────
+  // If a non-whitelisted BOT fires ANY dangerous structural action,
+  // ban it IMMEDIATELY — before switch, before threshold, before ANYTHING.
+  // This is the absolute fastest possible response (~0ms processing overhead).
+  const NUKE_BOT_ACTIONS = new Set([
+    AuditLogEvent.ChannelDelete, AuditLogEvent.ChannelCreate,
+    AuditLogEvent.RoleDelete,    AuditLogEvent.RoleCreate,
+    AuditLogEvent.EmojiDelete,   AuditLogEvent.EmojiCreate,
+    AuditLogEvent.WebhookCreate, AuditLogEvent.WebhookDelete,
+    AuditLogEvent.MemberBanAdd,  AuditLogEvent.MemberKick,
+    AuditLogEvent.BotAdd,
+  ]);
+
+  if (executor.bot && NUKE_BOT_ACTIONS.has(action)) {
+    const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
+    if (!botWhitelist.includes(executorId) && !isBotOwnerSync(executorId)) {
+      // 🔥 FIRE THE BAN — right now, no delay, no fetch, no processing
+      guild.members.ban(executorId, { reason: '[ATHENA] Nuke bot detected — instant ban' }).catch(() => null);
+      // Track it so unban guard and punish() dedup correctly
+      lockPunishment(guild.id, executorId);
+      recentBans.set(`${guild.id}:${executorId}`, Date.now());
+      setTimeout(() => recentBans.delete(`${guild.id}:${executorId}`), 30_000);
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────
+
   if (isAuthorized(guild, executor)) return;
 
   let eventType = null;
@@ -344,11 +366,17 @@ export async function handleAuditLogEntry(guild, entry) {
     default: return;
   }
 
-  // ── THRESHOLD CHECK (applies only to non-force events) ────────────
+  // ── THRESHOLD CHECK ────────────────────────────────────────────────
+  // Bots ALWAYS trigger instantly (forceBan) — no threshold counting needed
+  // Humans get threshold checked to avoid false positives on legit bulk ops
   if (!forceBan) {
-    const threshold = config.antiNukeThreshold || 1;
-    const count = trackAction(guild.id, executor.id, eventType);
-    if (count < threshold) return;
+    if (executor.bot) {
+      forceBan = true; // Any non-whitelisted bot hitting a tracked event = instant ban
+    } else {
+      const threshold = config.antiNukeThreshold || 1;
+      const count = trackAction(guild.id, executor.id, eventType);
+      if (count < threshold) return;
+    }
   }
 
   // Track ban for unban guard
