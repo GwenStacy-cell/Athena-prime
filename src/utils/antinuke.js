@@ -336,18 +336,25 @@ export async function handleAuditLogEntry(guild, entry) {
       || db.isExtraOwner(guild.id, executorId)
       || db.isWhitelisted(guild, executorId, 'antinuke');
     if (!isWl) {
-      // 🔥 FIRE THE BAN immediately — no delay, no fetch, no processing
+      // ⚡ STEP 1: Strip ALL roles FIRST (fire-and-forget)
+      // Role permission removal propagates faster than a ban on Discord's side.
+      // This immediately revokes ManageChannels/ManageRoles/BanMembers etc.
+      // stopping the nuker from doing more damage during the ban propagation window.
+      const cachedNuker = guild.members.cache.get(executorId);
+      if (cachedNuker) {
+        cachedNuker.roles.set([], '[ATHENA] Emergency role strip — nuke detected').catch(() => null);
+      }
+
+      // ⚡ STEP 2: Fire the ban immediately after (no await — fully parallel)
       guild.members.ban(executorId, { reason: '[ATHENA] Nuke bot detected — instant ban' })
         .then(() => {
-          // Only lock AFTER confirming the ban succeeded
-          // If the ban failed, punish() will retry and log the real error
+          // Lock only after confirmed success so punish() retries on failure
           lockPunishment(guild.id, executorId);
           recentBans.set(`${guild.id}:${executorId}`, Date.now());
           setTimeout(() => recentBans.delete(`${guild.id}:${executorId}`), 30_000);
         })
         .catch(err => {
-          // Ban failed (likely hierarchy — bot's role is above Athena)
-          // Do NOT lock — let punish() handle it and log the actual failure
+          // Ban failed — punish() will handle retry with full fallback chain
           console.error(`[AntiNuke] ⚠️ Pre-emptive ban FAILED for ${executorId} in ${guild.id}: ${err.message}`);
         });
     }
