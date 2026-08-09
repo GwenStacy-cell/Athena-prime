@@ -4,6 +4,7 @@ import { allCommands } from '../commands/loader.js';
 import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { ensureUnbypassableRole } from '../utils/antiStrip.js';
+import { isBotOwnerSync } from '../utils/helpers.js';
 import { updatePlayerUI } from '../utils/musicManager.js';
 import { CronJob } from 'cron';
 import { generateBirthdayMessage } from '../commands/birthday.js';
@@ -138,6 +139,36 @@ export default {
         if (config.musicChannelId && config.musicMessageId) {
           updatePlayerUI(guild.id).catch(() => null);
         }
+      }
+
+      // ⚡ STARTUP UNAUTHORIZED BOT SCAN
+      // Strip roles from every non-whitelisted bot already in the server.
+      // This catches bots that joined BEFORE the latest boot (e.g. Wildfire already present).
+      // Runs 5s after boot to give member cache time to populate.
+      if (config?.antiNukeEnabled) {
+        setTimeout(async () => {
+          try {
+            const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
+            const members = await guild.members.fetch().catch(() => null);
+            if (!members) return;
+            for (const [, member] of members) {
+              if (!member.user.bot) continue;
+              if (member.id === client.user.id) continue; // skip Athena herself
+              const isAuth = botWhitelist.includes(member.id)
+                || isBotOwnerSync(member.id)
+                || member.id === guild.ownerId
+                || db.isExtraOwner(guild.id, member.id)
+                || db.isWhitelisted(guild, member.id, 'antinuke');
+              if (!isAuth && member.roles.cache.size > 1) {
+                // Strip roles — this bot has no business having permissions
+                member.roles.set([], '[ATHENA] Startup scan: unauthorized bot stripped').catch(() => null);
+                console.warn(`[AntiNuke] Startup strip: ${member.user.tag} (${member.id}) in ${guild.name}`);
+              }
+            }
+          } catch (e) {
+            console.error('[AntiNuke] Startup scan failed for', guild.name, e.message);
+          }
+        }, 5000);
       }
     });
 
