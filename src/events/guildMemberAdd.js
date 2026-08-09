@@ -1,7 +1,7 @@
 import db from '../database.js';
 import embed from '../embed.js';
 import { executeQuarantine } from '../commands/security.js';
-import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel } from '../utils/helpers.js';
+import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel, isBotOwnerSync } from '../utils/helpers.js';
 import { sendWelcomeMessage } from '../commands/welcome.js';
 
 import { logServerEvent } from '../utils/serverLogger.js';
@@ -14,11 +14,26 @@ export default {
     const config = db.getGuildConfig(guild.id);
 
     // ==========================================
-    // 0. BOT ADD GUARD — unauthorized bot detection
+    // 0. BOT JOIN GUARD — proactive restriction
     // ==========================================
     if (member.user.bot) {
-      // BotAdd is now handled with zero-latency via the websocket hook (handleAuditLogEntry)
-      return; // do not run welcome/quarantine logic on bots
+      if (config.antiNukeEnabled) {
+        const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
+        const isAuthorized = botWhitelist.includes(userId)
+          || isBotOwnerSync(userId)
+          || userId === guild.ownerId
+          || db.isExtraOwner(guild.id, userId)
+          || db.isWhitelisted(guild, userId, 'antinuke');
+
+        if (!isAuthorized) {
+          // ⚡ PROACTIVE: Strip ALL roles immediately so this bot has ZERO permissions
+          // before it can do anything. This is the fastest possible protection layer —
+          // it fires on join, before any destructive action can even be attempted.
+          member.roles.set([], '[ATHENA] Unknown bot joined — roles stripped pending verification').catch(() => null);
+          console.warn(`[AntiNuke] Unknown bot joined: ${member.user.tag} (${userId}) in ${guild.name} — roles stripped`);
+        }
+      }
+      return; // Never run welcome/quarantine logic on bots
     }
 
     // ==========================================

@@ -9,11 +9,11 @@ export default {
     if (!channel.guild) return;
     if (db.isModModeActive(channel.guild.id)) return;
 
-    // Cache the channel so the audit log event can perfectly restore it
+    // Cache the channel IMMEDIATELY for restoration — no delay
     cacheDeletedItem(channel.id, channel);
 
-    // Fetch audit log to find who deleted it
-    await new Promise(r => setTimeout(r, 500));
+    // Fetch audit log with NO delay — guildAuditLogEntryCreate handles the antinuke,
+    // this is purely for server logging purposes
     const logs = await channel.guild.fetchAuditLogs({ limit: 1, type: 12 /* ChannelDelete */ }).catch(() => null);
     const entry = logs?.entries?.first();
     let executor = 'Unknown';
