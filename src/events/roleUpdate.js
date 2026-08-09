@@ -1,5 +1,5 @@
 import { AuditLogEvent, PermissionFlagsBits } from 'discord.js';
-import { checkRoleUpdate } from '../utils/antinuke.js';
+
 import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
 
 export default {
@@ -61,6 +61,6 @@ export default {
       }
     }
 
-    await checkRoleUpdate(oldRole, newRole);
+
   }
 };

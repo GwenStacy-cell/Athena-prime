@@ -3,7 +3,7 @@ import embed from '../embed.js';
 import { executeQuarantine } from '../commands/security.js';
 import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel } from '../utils/helpers.js';
 import { sendWelcomeMessage } from '../commands/welcome.js';
-import { checkBotAdd } from '../utils/antinuke.js';
+
 import { logServerEvent } from '../utils/serverLogger.js';
 
 export default {
@@ -17,7 +17,7 @@ export default {
     // 0. BOT ADD GUARD — unauthorized bot detection
     // ==========================================
     if (member.user.bot) {
-      await checkBotAdd(member);
+      // BotAdd is now handled with zero-latency via the websocket hook (handleAuditLogEntry)
       return; // do not run welcome/quarantine logic on bots
     }
 

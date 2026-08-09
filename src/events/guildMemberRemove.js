@@ -1,6 +1,5 @@
 import { AuditLogEvent } from 'discord.js';
 import db from '../database.js';
-import { checkAntiNuke } from '../utils/antinuke.js';
 import { sendLeaveMessage } from '../commands/welcome.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 import embed from '../embed.js';
@@ -11,8 +10,6 @@ export default {
     const guild = member.guild;
     if (!guild) return;
 
-    // Run Audit Log check for kicks (Anti-Nuke)
-    await checkAntiNuke(guild, 'Member Kick', AuditLogEvent.MemberKick, member.id);
 
     // Send leave message
     await sendLeaveMessage(member);

@@ -101,22 +101,21 @@ import { AuditLogEvent } from 'discord.js';
 
 export async function handleAntiStab(guild, actionText, auditLogType) {
   try {
-    // 1. Give Discord API a brief moment to register the audit log
-    await new Promise(r => setTimeout(r, 1000));
-    
-    // 2. Fetch Audit Logs to find the stabber (IGNORE OUR OWN BOT)
+    // No delay — rely on audit log already being fetched from the WebSocket event that triggered this
     const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: auditLogType }).catch(() => null);
-    const logEntry = auditLogs?.entries?.find(e => Date.now() - e.createdTimestamp < 10000 && e.executor?.id !== guild.client.user.id);
+    const logEntry = auditLogs?.entries?.find(e => Date.now() - e.createdTimestamp < 15000 && e.executor?.id !== guild.client.user.id);
     const executor = logEntry?.executor;
 
-    // 3. Attempt to strip roles and ban the stabber if they aren't the server owner
     let punishedText = '';
     if (executor && executor.id !== guild.ownerId && executor.id !== guild.client.user.id) {
       try {
-        const member = await guild.members.fetch(executor.id).catch(() => null);
+        const member = guild.members.cache.get(executor.id) ?? await guild.members.fetch(executor.id).catch(() => null);
         if (member && member.bannable) {
-          await member.roles.set([], 'Anti-Stab: Hostile Neutralization - Stripping roles').catch(() => null);
-          await member.ban({ reason: `Anti-Stab: Hostile Neutralization - Attempted to ${actionText}` }).catch(() => null);
+          // Strip roles and ban in parallel for maximum speed
+          await Promise.all([
+            member.roles.set([], 'Anti-Stab: Hostile Neutralization — Stripping roles').catch(() => null),
+            member.ban({ reason: `Anti-Stab: Hostile Neutralization — Attempted to ${actionText}` }).catch(() => null)
+          ]);
           punishedText = `\n\n**Hostile Neutralization:** I have successfully stripped their roles and **BANNED** them from the server to neutralize the threat.`;
         } else {
           punishedText = `\n\nI attempted to execute a **Hostile Neutralization**, but their top role is higher than mine or they are the server owner.`;

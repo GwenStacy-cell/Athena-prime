@@ -1,5 +1,4 @@
 import { AuditLogEvent } from 'discord.js';
-import { checkMassBan } from '../utils/antinuke.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 import embed from '../embed.js';
 
@@ -7,7 +6,6 @@ export default {
   name: 'guildBanAdd',
   async execute(ban) {
     if (!ban.guild) return;
-    await checkMassBan(ban.guild, ban.user);
 
     // Fetch audit logs to find executor
     await new Promise(r => setTimeout(r, 500)); // Delay for audit log generation

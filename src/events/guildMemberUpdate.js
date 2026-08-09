@@ -1,4 +1,3 @@
-import { checkAntiNukeMemberUpdate } from '../utils/antinuke.js';
 import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
 import { AuditLogEvent } from 'discord.js';
 import db from '../database.js';
@@ -88,6 +87,6 @@ export default {
         }, 1500); // Give Audit Logs time to populate
       }
     }
-    await checkAntiNukeMemberUpdate(oldMember, newMember);
+
   }
 };
