@@ -70,9 +70,9 @@ function clearTracker(guildId, userId) {
 // Catches nukers who spread actions across multiple event types
 // to try to stay below per-event thresholds
 // ==========================================
-const velocityTracker = new Map(); // Map<guildId:userId, [timestamps]>
-const VELOCITY_WINDOW_MS = 30_000; // 30-second window
-const VELOCITY_THRESHOLD = 3;      // 3 destructive actions of ANY type in 30s = nuke
+const velocityTracker = new Map();
+const VELOCITY_WINDOW_MS = 30_000;
+const VELOCITY_THRESHOLD = 1; // ZERO TOLERANCE — 1 action of ANY type = nuke
 
 // Destructive actions that count toward global velocity
 const DESTRUCTIVE_ACTIONS = new Set([
@@ -316,8 +316,7 @@ export async function handleAuditLogEntry(guild, entry) {
     // Only server owner and bot owner are truly exempt.
     if (executor.id === guild.ownerId || isBotOwnerSync(executor.id)) return;
     const velocity = trackVelocity(guild.id, executor.id, action);
-    if (velocity < VELOCITY_THRESHOLD + 2) return; // Whitelisted users get +2 tolerance
-    // Fall through — treat them as a nuker even if whitelisted
+    if (velocity < VELOCITY_THRESHOLD + 1) return; // Whitelisted users get +1 tolerance (2 actions)
     console.warn(`[AntiNuke] ⚠️ Whitelist abuse detected: ${executor.tag} (${executor.id}) in ${guild.name} — velocity: ${velocity}`);
   }
 
@@ -348,16 +347,16 @@ export async function handleAuditLogEntry(guild, entry) {
       break;
     }
 
-    // ── MASS KICKS ────────────────────────────────────────────────────
+    // ── MASS KICKS — ZERO TOLERANCE ──────────────────────────────────
     case AuditLogEvent.MemberKick:
       eventType = 'Member Kick';
-      forceBan = false; // Will be upgraded to forceBan by velocity check below
+      forceBan = true; // Zero tolerance — 1 kick from non-whitelisted = instant ban
       break;
 
-    // ── MASS BANS ────────────────────────────────────────────────────
+    // ── MASS BANS — ZERO TOLERANCE ───────────────────────────────────
     case AuditLogEvent.MemberBanAdd:
       eventType = 'Member Ban';
-      forceBan = false; // Will be upgraded to forceBan by velocity check below
+      forceBan = true; // Zero tolerance — 1 ban from non-whitelisted = instant ban
       break;
 
     // ── UNBAN GUARD — Instantly re-ban if nuker's ban is removed ─────
@@ -408,27 +407,22 @@ export async function handleAuditLogEntry(guild, entry) {
     default: return;
   }
 
-  // ── GLOBAL VELOCITY CHECK (catches cross-event pattern nuking) ────
-  // Track this action toward the user's global velocity score.
-  // If they hit VELOCITY_THRESHOLD across ANY combination of destructive
-  // actions in 30 seconds, force ban them regardless of per-event threshold.
+  // ── ZERO TOLERANCE FINAL CHECK ────────────────────────────────────
+  // If we reach here and forceBan is still false (e.g. RoleUpdate, MemberRoleUpdate,
+  // GuildUpdate), still check velocity — 1 action in 30s = force ban for everyone.
   const velocity = trackVelocity(guild.id, executor.id, action);
   if (!forceBan && velocity >= VELOCITY_THRESHOLD) {
     forceBan = true;
-    eventType = (eventType || 'Nuke Pattern') + ` [Velocity: ${velocity} actions/30s]`;
+    eventType = (eventType || 'Unauthorized Action') + ` [Velocity: ${velocity}]`;
   }
 
-  // ── THRESHOLD CHECK ────────────────────────────────────────────────
-  // Bots ALWAYS trigger instantly (forceBan) — no threshold counting needed
-  // Humans get threshold checked to avoid false positives on legit bulk ops
+  // For non-structural events still not forceBan (e.g. RoleUpdate first occurrence)
+  // apply the configured threshold as absolute last fallback
   if (!forceBan) {
-    if (executor.bot) {
-      forceBan = true; // Any non-whitelisted bot hitting a tracked event = instant ban
-    } else {
-      const threshold = config.antiNukeThreshold || 1;
-      const count = trackAction(guild.id, executor.id, eventType);
-      if (count < threshold) return;
-    }
+    const threshold = config.antiNukeThreshold || 1;
+    const count = trackAction(guild.id, executor.id, eventType);
+    if (count < threshold) return;
+    forceBan = true;
   }
 
   // Track ban for unban guard
