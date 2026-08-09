@@ -1,7 +1,7 @@
 import db from '../database.js';
 import embed from '../embed.js';
 import { executeQuarantine } from '../commands/security.js';
-import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel, isBotOwnerSync } from '../utils/helpers.js';
+import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel } from '../utils/helpers.js';
 import { sendWelcomeMessage } from '../commands/welcome.js';
 
 import { logServerEvent } from '../utils/serverLogger.js';
@@ -14,26 +14,13 @@ export default {
     const config = db.getGuildConfig(guild.id);
 
     // ==========================================
-    // 0. BOT JOIN GUARD — proactive restriction
+    // 0. BOT ADD GUARD
     // ==========================================
     if (member.user.bot) {
-      if (config.antiNukeEnabled) {
-        const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
-        const isAuthorized = botWhitelist.includes(userId)
-          || isBotOwnerSync(userId)
-          || userId === guild.ownerId
-          || db.isExtraOwner(guild.id, userId)
-          || db.isWhitelisted(guild, userId, 'antinuke');
-
-        if (!isAuthorized) {
-          // ⚡ PROACTIVE: Strip ALL roles immediately so this bot has ZERO permissions
-          // before it can do anything. This is the fastest possible protection layer —
-          // it fires on join, before any destructive action can even be attempted.
-          member.roles.set([], '[ATHENA] Unknown bot joined — roles stripped pending verification').catch(() => null);
-          console.warn(`[AntiNuke] Unknown bot joined: ${member.user.tag} (${userId}) in ${guild.name} — roles stripped`);
-        }
-      }
-      return; // Never run welcome/quarantine logic on bots
+      // BotAdd is handled with zero-latency via the websocket hook (handleAuditLogEntry)
+      // We do NOT proactively strip roles — legitimate bots that haven't been
+      // whitelisted yet (MEE6, Dyno, Carl-bot etc.) would break immediately.
+      return;
     }
 
     // ==========================================
