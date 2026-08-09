@@ -1,10 +1,8 @@
-import { checkBanRemove } from '../utils/antinuke.js';
-
+// MemberUnban (ban removal guard) is now handled with zero-latency
+// via the websocket hook in guildAuditLogEntryCreate.js (AuditLogEvent.MemberUnban)
 export default {
   name: 'guildBanRemove',
   async execute(ban) {
-    const { guild, user } = ban;
-    if (!guild) return;
-    await checkBanRemove(guild, user);
+    // No-op: handleAuditLogEntry re-bans instantly if the ban was Athena's
   }
 };
