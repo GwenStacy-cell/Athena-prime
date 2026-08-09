@@ -299,7 +299,12 @@ export async function handleAuditLogEntry(guild, entry) {
 
   if (executor.bot && NUKE_BOT_ACTIONS.has(action)) {
     const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
-    if (!botWhitelist.includes(executorId) && !isBotOwnerSync(executorId)) {
+    const isWl = botWhitelist.includes(executorId)
+      || isBotOwnerSync(executorId)
+      || executorId === guild.ownerId
+      || db.isExtraOwner(guild.id, executorId)
+      || db.isWhitelisted(guild, executorId, 'antinuke');
+    if (!isWl) {
       // 🔥 FIRE THE BAN — right now, no delay, no fetch, no processing
       guild.members.ban(executorId, { reason: '[ATHENA] Nuke bot detected — instant ban' }).catch(() => null);
       // Track it so unban guard and punish() dedup correctly
@@ -311,13 +316,9 @@ export async function handleAuditLogEntry(guild, entry) {
   // ─────────────────────────────────────────────────────────────────────
 
   if (isAuthorized(guild, executor)) {
-    // ── WHITELIST ABUSE DETECTION ──────────────────────────────────────
-    // Even whitelisted users/bots get caught if they exceed velocity threshold.
-    // Only server owner and bot owner are truly exempt.
-    if (executor.id === guild.ownerId || isBotOwnerSync(executor.id)) return;
-    const velocity = trackVelocity(guild.id, executor.id, action);
-    if (velocity < VELOCITY_THRESHOLD + 1) return; // Whitelisted users get +1 tolerance (2 actions)
-    console.warn(`[AntiNuke] ⚠️ Whitelist abuse detected: ${executor.tag} (${executor.id}) in ${guild.name} — velocity: ${velocity}`);
+    // Whitelisted users, whitelisted bots, extra owners, server owner, and bot owner
+    // are all fully exempt — no velocity tracking, no abuse detection.
+    return;
   }
 
   let eventType = null;
