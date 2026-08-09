@@ -48,7 +48,7 @@ async function processRestorationQueue() {
 // RATE TRACKER — Per guild/user/event window
 // ==========================================
 const actionTracker = new Map();
-const TRACKER_WINDOW_MS = 10_000;
+const TRACKER_WINDOW_MS = 10_000;  // 10-second window per event type
 
 function trackAction(guildId, userId, eventType) {
   const key = `${guildId}:${userId}:${eventType}`;
@@ -65,12 +65,45 @@ function clearTracker(guildId, userId) {
   }
 }
 
+// ==========================================
+// GLOBAL VELOCITY TRACKER — Cross-event pattern detection
+// Catches nukers who spread actions across multiple event types
+// to try to stay below per-event thresholds
+// ==========================================
+const velocityTracker = new Map(); // Map<guildId:userId, [timestamps]>
+const VELOCITY_WINDOW_MS = 30_000; // 30-second window
+const VELOCITY_THRESHOLD = 3;      // 3 destructive actions of ANY type in 30s = nuke
+
+// Destructive actions that count toward global velocity
+const DESTRUCTIVE_ACTIONS = new Set([
+  AuditLogEvent.ChannelDelete, AuditLogEvent.RoleDelete,
+  AuditLogEvent.EmojiDelete,   AuditLogEvent.WebhookCreate,
+  AuditLogEvent.WebhookDelete, AuditLogEvent.MemberKick,
+  AuditLogEvent.MemberBanAdd,  AuditLogEvent.ChannelCreate,
+  AuditLogEvent.RoleCreate,    AuditLogEvent.EmojiCreate,
+]);
+
+function trackVelocity(guildId, userId, action) {
+  if (!DESTRUCTIVE_ACTIONS.has(action)) return 0;
+  const key = `${guildId}:${userId}`;
+  const now = Date.now();
+  const times = (velocityTracker.get(key) || []).filter(t => now - t < VELOCITY_WINDOW_MS);
+  times.push(now);
+  velocityTracker.set(key, times);
+  return times.length;
+}
+
 setInterval(() => {
   const now = Date.now();
   for (const [key, times] of actionTracker.entries()) {
     const fresh = times.filter(t => now - t < TRACKER_WINDOW_MS);
     if (fresh.length === 0) actionTracker.delete(key);
     else actionTracker.set(key, fresh);
+  }
+  for (const [key, times] of velocityTracker.entries()) {
+    const fresh = times.filter(t => now - t < VELOCITY_WINDOW_MS);
+    if (fresh.length === 0) velocityTracker.delete(key);
+    else velocityTracker.set(key, fresh);
   }
 }, 60_000);
 
@@ -277,7 +310,16 @@ export async function handleAuditLogEntry(guild, entry) {
   }
   // ─────────────────────────────────────────────────────────────────────
 
-  if (isAuthorized(guild, executor)) return;
+  if (isAuthorized(guild, executor)) {
+    // ── WHITELIST ABUSE DETECTION ──────────────────────────────────────
+    // Even whitelisted users/bots get caught if they exceed velocity threshold.
+    // Only server owner and bot owner are truly exempt.
+    if (executor.id === guild.ownerId || isBotOwnerSync(executor.id)) return;
+    const velocity = trackVelocity(guild.id, executor.id, action);
+    if (velocity < VELOCITY_THRESHOLD + 2) return; // Whitelisted users get +2 tolerance
+    // Fall through — treat them as a nuker even if whitelisted
+    console.warn(`[AntiNuke] ⚠️ Whitelist abuse detected: ${executor.tag} (${executor.id}) in ${guild.name} — velocity: ${velocity}`);
+  }
 
   let eventType = null;
   let forceBan = false;
@@ -309,13 +351,13 @@ export async function handleAuditLogEntry(guild, entry) {
     // ── MASS KICKS ────────────────────────────────────────────────────
     case AuditLogEvent.MemberKick:
       eventType = 'Member Kick';
-      forceBan = false;
+      forceBan = false; // Will be upgraded to forceBan by velocity check below
       break;
 
     // ── MASS BANS ────────────────────────────────────────────────────
     case AuditLogEvent.MemberBanAdd:
       eventType = 'Member Ban';
-      forceBan = false;
+      forceBan = false; // Will be upgraded to forceBan by velocity check below
       break;
 
     // ── UNBAN GUARD — Instantly re-ban if nuker's ban is removed ─────
@@ -364,6 +406,16 @@ export async function handleAuditLogEntry(guild, entry) {
       break;
 
     default: return;
+  }
+
+  // ── GLOBAL VELOCITY CHECK (catches cross-event pattern nuking) ────
+  // Track this action toward the user's global velocity score.
+  // If they hit VELOCITY_THRESHOLD across ANY combination of destructive
+  // actions in 30 seconds, force ban them regardless of per-event threshold.
+  const velocity = trackVelocity(guild.id, executor.id, action);
+  if (!forceBan && velocity >= VELOCITY_THRESHOLD) {
+    forceBan = true;
+    eventType = (eventType || 'Nuke Pattern') + ` [Velocity: ${velocity} actions/30s]`;
   }
 
   // ── THRESHOLD CHECK ────────────────────────────────────────────────
