@@ -277,6 +277,25 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
 }
 
 // ==========================================
+// IS BOT AUTHORIZED — dedicated check for bots using the bot whitelist
+function isBotAuthorized(guild, botId) {
+  if (botId === guild.members.me?.id) return true;   // Athena herself
+  if (isBotOwnerSync(botId)) return true;            // bot owner
+  if (botId === guild.ownerId) return true;          // server owner
+  if (db.isExtraOwner(guild.id, botId)) return true; // extra owner
+  // Primary: !botwhitelist add <id> — stored in db.cache.botWhitelist
+  if (db.isBotWhitelisted && db.isBotWhitelisted(guild.id, botId)) return true;
+  // Fallback: getBotWhitelist (role-based whitelist entries)
+  const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
+  if (botWhitelist.includes(botId)) return true;
+  // Check role-based whitelist entries
+  const member = guild.members.cache.get(botId);
+  if (member && botWhitelist.some(id => member.roles.cache.has(id))) return true;
+  // Also check granular whitelist (covers !whitelist add <botId> antinuke)
+  if (db.isWhitelisted(guild, botId, 'antinuke')) return true;
+  return false;
+}
+
 // IS AUTHORIZED — Single source of truth
 // ==========================================
 function isAuthorized(guild, executor, eventType = 'antinuke') {
@@ -285,13 +304,7 @@ function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (isBotOwnerSync(executor.id)) return true;             // hardcoded bot owner
   if (executor.id === guild.ownerId) return true;           // server owner
   if (eventType === 'antibot') return false;                // Only owner can add bots
-  if (executor.bot) {
-    const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
-    if (botWhitelist.includes(executor.id)) return true;
-    const member = guild.members.cache.get(executor.id);
-    if (member && botWhitelist.some(id => member.roles.cache.has(id))) return true;
-    return false; // Unknown uncached bots are NOT authorized
-  }
+  if (executor.bot) return isBotAuthorized(guild, executor.id);
   if (db.isExtraOwner(guild.id, executor.id)) return true;
   if (db.isWhitelisted(guild, executor.id, eventType)) return true;
   return false;
@@ -404,13 +417,7 @@ export async function handleAuditLogEntry(guild, entry) {
   ]);
 
   if (executor.bot && NUKE_BOT_ACTIONS.has(action)) {
-    const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
-    const isWl = botWhitelist.includes(executorId)
-      || isBotOwnerSync(executorId)
-      || executorId === guild.ownerId
-      || db.isExtraOwner(guild.id, executorId)
-      || db.isWhitelisted(guild, executorId, 'antinuke');
-    if (!isWl) {
+    if (!isBotAuthorized(guild, executorId)) {
       // ⚡ CONDEMN IMMEDIATELY (synchronous — before any await)
       // This ensures event 2 from this user is skipped even if it arrives
       // before the ban API call completes.
