@@ -4,7 +4,7 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 
 export const commands = [{
   name: 'stealemoji',
-  description: 'Steal emojis from this server and copy them to another (Strictly for owners)',
+    description: 'Steal emojis from this server and copy them to another (Strictly for owners)',
   async executePrefix(message) {
     const isBotOwner = isBotOwnerSync(message.author.id);
     const isServerOwner = message.author.id === message.guild.ownerId;

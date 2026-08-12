@@ -839,6 +839,7 @@ async function handleRestoreSetup(message, args) {
 export const commands = [
   {
     name: 'givemerole',
+    slashHidden: true,
     description: 'Grant yourself a role by ID (Authorized Owners only)',
     type: 1, // CHAT_INPUT
     default_member_permissions: String(PermissionFlagsBits.Administrator),
@@ -866,6 +867,7 @@ export const commands = [
   },
   {
     name: 'takemyrole',
+    slashHidden: true,
     description: 'Remove a role from yourself by ID (Authorized Owners only)',
     type: 1,
     default_member_permissions: String(PermissionFlagsBits.Administrator),
@@ -893,6 +895,7 @@ export const commands = [
   },
   {
     name: 'cleanbadroles',
+    slashHidden: true,
     description: 'Delete erroneous security roles from all servers (Bot Owner only)',
     type: 1,
     default_member_permissions: String(PermissionFlagsBits.Administrator),

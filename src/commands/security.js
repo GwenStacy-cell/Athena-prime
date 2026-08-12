@@ -239,6 +239,7 @@ export const commands = [
   // --- EMERGENCY COMMANDS ---
   {
     name: 'emergency',
+    slashHidden: true,
     description: 'Toggle Emergency Mode to strip permissions and hide channels.',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
@@ -279,6 +280,7 @@ export const commands = [
   },
   {
     name: 'endemergency',
+    slashHidden: true,
     description: 'End an active Emergency Mode.',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
@@ -307,6 +309,7 @@ export const commands = [
   // --- LOCKDOWN COMMAND ---
   {
     name: 'lockdown',
+    slashHidden: true,
     description: 'Toggles text channel lockdown (on/off) preventing anyone from sending messages.',
     category: 'security',
     permissions: [PermissionFlagsBits.ManageChannels],
@@ -337,6 +340,7 @@ export const commands = [
   // --- RAIDMODE COMMAND ---
   {
     name: 'raidmode',
+    slashHidden: true,
     description: 'Toggles raid protection (locks joining members by auto-quarantining them instantly).',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
@@ -1359,6 +1363,7 @@ export const commands = [
   // --- SCAN SERVER COMMAND ---
   {
     name: 'scanserver',
+    slashHidden: true,
     description: 'Scan the server for unauthorized bots and manage them.',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
@@ -1373,6 +1378,7 @@ export const commands = [
   // --- LOCK APPS COMMAND ---
   {
     name: 'lockapps',
+    slashHidden: true,
     description: 'Lock or unlock application commands for @everyone server-wide.',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
@@ -1409,6 +1415,7 @@ export const commands = [
   // --- UNLOCK APPS COMMAND ---
   {
     name: 'unlockapps',
+    slashHidden: true,
     description: 'Unlock application commands for @everyone server-wide.',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],

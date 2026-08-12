@@ -3,7 +3,7 @@ import db from '../database.js';
 
 export const commands = [{
   name: 'afk',
-  description: 'Set your AFK status',
+    description: 'Set your AFK status',
   async executePrefix(message, args) {
     const reason = args.length > 0 ? args.join(' ') : 'AFK';
     const timestamp = Date.now();

@@ -370,6 +370,7 @@ export const commands = [
   },
   {
     name: 'massaddrole',
+    slashHidden: true,
     description: 'Adds a role to all members in the server.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.Administrator],
@@ -394,6 +395,7 @@ export const commands = [
   },
   {
     name: 'massremoverole',
+    slashHidden: true,
     description: 'Removes a role from all members in the server.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.Administrator],
@@ -418,6 +420,7 @@ export const commands = [
   },
   {
     name: 'massstrip',
+    slashHidden: true,
     description: 'Removes a role from all members and saves the list to restore later.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.Administrator],
@@ -440,6 +443,7 @@ export const commands = [
   },
   {
     name: 'massrestore',
+    slashHidden: true,
     description: 'Restores a role to members who had it stripped via massstrip.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.Administrator],

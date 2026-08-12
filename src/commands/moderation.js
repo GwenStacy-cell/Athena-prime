@@ -556,6 +556,7 @@ export const commands = [
   // --- CREATE ROLE COMMAND ---
   {
     name: 'createrole',
+    slashHidden: true,
     description: 'Creates a new server role with a specified name and hex color.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageRoles],
@@ -593,6 +594,7 @@ export const commands = [
   // --- DELETE ROLE COMMAND ---
   {
     name: 'deleterole',
+    slashHidden: true,
     description: 'Deletes a server role safely.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageRoles],

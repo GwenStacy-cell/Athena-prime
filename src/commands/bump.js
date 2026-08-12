@@ -5,7 +5,7 @@ import embed from '../embed.js';
 export const commands = [
 {
   name: 'bump',
-  description: 'Configure bump reminder roles.',
+    description: 'Configure bump reminder roles.',
   permissions: [PermissionFlagsBits.ManageGuild],
 
   // Slash Command Definition

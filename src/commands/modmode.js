@@ -44,6 +44,7 @@ export function cancelModModeTimer(guildId) {
 export const commands = [
   {
     name: 'modmode',
+    slashHidden: true,
     description: 'Pause auto-restore for server modifications. Max 30 minutes. (Owner only)',
     category: 'security',
     permissions: [],
