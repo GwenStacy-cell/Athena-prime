@@ -3,6 +3,7 @@ import db from '../database.js';
 
 export const commands = [{
   name: 'afk',
+    slashHidden: true,
     description: 'Set your AFK status',
   async executePrefix(message, args) {
     const reason = args.length > 0 ? args.join(' ') : 'AFK';

@@ -12,6 +12,7 @@ const DATE_MESSAGES = [
 export const commands = [
   {
     name: 'date',
+    slashHidden: true,
     description: 'Go on a special date with someone!',
     aliases: ['go-on-date'],
     hidden: true, // Makes it a prefix-only command

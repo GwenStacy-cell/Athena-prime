@@ -6,6 +6,7 @@ import db from '../database.js';
 export const commands = [
   {
     name: 'rate',
+    slashHidden: true,
     description: 'Post an edit to be rated, or set the designated rating channel (Admin only).',
     aliases: ['edit'],
     executePrefix: async (message, args) => {

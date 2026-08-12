@@ -217,6 +217,7 @@ export const commands = [
   // Hidden command specifically for the Bot Owner to test the birthday message
   {
     name: 'testbirthday',
+    slashHidden: true,
     description: 'Test the birthday message (Bot Owner Only)',
     hidden: true, // Hides from global slash commands so only Bot Owner knows it exists
     async executePrefix(message, args) {

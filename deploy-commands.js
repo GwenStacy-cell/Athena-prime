@@ -52,7 +52,9 @@ const rest = new REST({ version: '10' }).setToken(token);
     );
 
     console.log(`✅ Successfully deployed all ${slashData.length} slash commands.`);
+    process.exit(0);
   } catch (error) {
     console.error('❌ Error deploying slash commands:', error);
+    process.exit(1);
   }
 })();

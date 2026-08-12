@@ -77,6 +77,7 @@ const PUBLIC_LOG_LINES = [
 export const commands = [
   {
     name: 'fck',
+    slashHidden: true,
     description: 'Server Owner only: Send a direct Athena Prime warning DM to a user.',
     aliases: ['fk', 'fcku'],
     hidden: true,

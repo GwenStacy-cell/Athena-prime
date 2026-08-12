@@ -5,6 +5,7 @@ import db from '../database.js';
 export const commands = [
   {
     name: 'sticky',
+    slashHidden: true,
     description: 'Manage sticky messages in the current channel.',
     aliases: ['stick'],
     async executePrefix(message, args) {

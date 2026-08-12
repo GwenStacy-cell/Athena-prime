@@ -5,6 +5,7 @@ import embed from '../embed.js';
 export const commands = [
 {
   name: 'bump',
+    slashHidden: true,
     description: 'Configure bump reminder roles.',
   permissions: [PermissionFlagsBits.ManageGuild],
 

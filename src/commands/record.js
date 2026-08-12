@@ -5,6 +5,7 @@ import embed from '../embed.js';
 export const commands = [
   {
     name: 'record',
+    slashHidden: true,
     description: 'Setup the voice logging channel',
     aliases: ['voicelog', 'vclogs', 'setuplogs'],
   async executePrefix(message, args) {

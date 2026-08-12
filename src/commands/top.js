@@ -6,6 +6,7 @@ import embed from '../embed.js';
 export const commands = [
   {
     name: 'top',
+    slashHidden: true,
     description: 'View the top message and voice members in this server',
     aliases: ['leaderboard', 'lb', 'topmsg', 'toplb', 'toplist'],
     category: 'utility',

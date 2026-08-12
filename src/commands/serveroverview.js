@@ -6,6 +6,7 @@ import embed from '../embed.js';
 export const commands = [
   {
     name: 'serveroverview',
+    slashHidden: true,
     description: 'View a highly detailed graphical overview of server statistics',
     // Statbot-style aliases: s?server
     aliases: ['server', 'serverstat', 'serverview'],

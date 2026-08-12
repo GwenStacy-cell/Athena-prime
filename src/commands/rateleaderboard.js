@@ -5,6 +5,7 @@ import db from '../database.js';
 export const commands = [
   {
     name: 'rateleaderboard',
+    slashHidden: true,
     description: 'View the leaderboard of the top rated edits in the server.',
     aliases: ['ratelb', 'editlb', 'editleaderboard'],
     category: 'utilities',

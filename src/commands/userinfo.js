@@ -4,6 +4,7 @@ import embed from '../embed.js';
 export const commands = [
   {
     name: 'avatar',
+    slashHidden: true,
     description: 'Displays the global and server avatar of a user.',
     category: 'utility',
     options: [
@@ -27,6 +28,7 @@ export const commands = [
   },
   {
     name: 'banner',
+    slashHidden: true,
     description: 'Displays the banner of a user.',
     category: 'utility',
     options: [
