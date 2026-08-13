@@ -89,13 +89,19 @@ export const commands = [
       });
 
       // 4. Collector setup
-      const collector = panelMsg.createMessageComponentCollector({ filter: i => i.user.id === message.author.id, time: 900000 }); // 15 mins
+      const botOwnerId = process.env.OWNER_ID;
+      const collector = panelMsg.createMessageComponentCollector({ time: 900000 }); // 15 mins
 
       collector.on('collect', async (i) => {
+        // Permission check
+        if (i.user.id !== i.guild.ownerId && i.user.id !== botOwnerId) {
+          return i.reply({ content: 'Only the Server Owner and Bot Owner can use this panel.', ephemeral: true });
+        }
+
         // Refresh VC
         const vc = i.member.voice.channel;
         if (!vc) {
-          return i.reply({ content: 'You are no longer in a voice channel!', ephemeral: true });
+          return i.reply({ content: 'You must be in a voice channel to use these controls!', ephemeral: true });
         }
 
         const everyoneRole = i.guild.roles.everyone;
@@ -131,10 +137,9 @@ export const commands = [
             await i.reply({ content: 'Banned all other members from this VC.', ephemeral: true });
           }
           else if (i.customId === 'vcp_unban_all') {
-            // Remove user-specific overwrites that deny Connect
             const overwrites = vc.permissionOverwrites.cache;
             overwrites.forEach(overwrite => {
-              if (overwrite.type === 1) { // member type
+              if (overwrite.type === 1) {
                 vc.permissionOverwrites.delete(overwrite.id).catch(()=>{});
               }
             });
@@ -157,7 +162,6 @@ export const commands = [
             await i.reply({ content: 'Voice channel Unhidden.', ephemeral: true });
           }
           else if (['vcp_mute_1', 'vcp_unmute_1', 'vcp_deafen_1', 'vcp_undeafen_1', 'vcp_kick_1', 'vcp_ban_1', 'vcp_unban_1'].includes(i.customId)) {
-            // Single target actions require a Select Menu
             const actionMap = {
               'vcp_mute_1': 'Mute',
               'vcp_unmute_1': 'Unmute',
@@ -169,11 +173,9 @@ export const commands = [
             };
             const actionName = actionMap[i.customId];
             
-            // Build options based on current members, excluding the owner themselves (usually)
             let options = [];
             
             if (i.customId === 'vcp_unban_1') {
-              // Unban lists users who are denied
               const overwrites = vc.permissionOverwrites.cache.filter(o => o.type === 1 && o.deny.has('Connect'));
               if (overwrites.size === 0) return i.reply({ content: 'No users are banned from this VC.', ephemeral: true });
               
@@ -181,7 +183,6 @@ export const commands = [
                 options.push({ label: `User ID: ${id}`, value: `${i.customId}_${id}` });
               }
             } else {
-              // Other actions list connected members
               vc.members.forEach(m => {
                 if (m.id !== i.user.id) {
                   options.push({ label: m.user.tag, value: `${i.customId}_${m.id}` });
@@ -190,7 +191,6 @@ export const commands = [
               if (options.length === 0) return i.reply({ content: 'No other members in VC to target.', ephemeral: true });
             }
 
-            // Select menus max 25 options
             options = options.slice(0, 25);
 
             const selectMenu = new ActionRowBuilder().addComponents(
@@ -208,18 +208,22 @@ export const commands = [
         }
       });
 
-      // Handle the Dropdown Select Menu interactions
       const selectCollector = panelMsg.channel.createMessageComponentCollector({
-        filter: i => i.user.id === message.author.id && i.customId === 'vcp_select',
+        filter: i => i.customId === 'vcp_select',
         time: 900000
       });
 
       selectCollector.on('collect', async (i) => {
-        const vc = i.member.voice.channel;
-        if (!vc) return i.reply({ content: 'You are no longer in a voice channel!', ephemeral: true });
+        // Permission check for dropdown
+        if (i.user.id !== i.guild.ownerId && i.user.id !== botOwnerId) {
+          return i.reply({ content: 'Only the Server Owner and Bot Owner can use this panel.', ephemeral: true });
+        }
 
-        const [action, targetId] = i.values[0].split('_', 2);
-        const actionFull = i.values[0].substring(0, i.values[0].lastIndexOf('_')); // gets vcp_mute_1 etc
+        const vc = i.member.voice.channel;
+        if (!vc) return i.reply({ content: 'You must be in a voice channel!', ephemeral: true });
+
+        const actionFull = i.values[0].substring(0, i.values[0].lastIndexOf('_'));
+        const targetId = i.values[0].substring(i.values[0].lastIndexOf('_') + 1);
 
         try {
           if (actionFull === 'vcp_unban_1') {
