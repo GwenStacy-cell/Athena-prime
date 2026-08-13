@@ -35,8 +35,8 @@ export const commands = [
       
       const textContent = 
           `# Server Owner Voice | Control Panel\n\n` +
-          `**Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** <#${voiceChannel.id}>\n` +
-          `**Connected Members (${connectedMembers.size}):** ${connectedTags}\n\n` +
+          `-# **Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** <#${voiceChannel.id}>\n` +
+          `-# **Connected Members (${connectedMembers.size}):** ${connectedTags}\n\n` +
           `**Button Controls:**\n` +
           `\`Mute All\` \`Unmute All\` \`VMute 1\` \`VUnmute 1\`\n` +
           `\`VC Kick\` \`VC Ban\` \`VC Kick All\` \`VC Ban All\`\n` +
