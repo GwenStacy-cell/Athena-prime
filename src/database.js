@@ -1402,6 +1402,40 @@ class Database {
     }
     return false;
   }
+
+  // --- YouTube Notifier Config ---
+  getYouTubeNotifiers(guildId) {
+    return this.getGuildConfig(guildId).youtubeNotifiers || [];
+  }
+
+  addYouTubeNotifier(guildId, data) {
+    const config = this.getGuildConfig(guildId);
+    if (!config.youtubeNotifiers) config.youtubeNotifiers = [];
+    config.youtubeNotifiers.push(data);
+    this.save();
+  }
+
+  removeYouTubeNotifier(guildId, youtubeId) {
+    const config = this.getGuildConfig(guildId);
+    if (!config.youtubeNotifiers) return false;
+    const initialLen = config.youtubeNotifiers.length;
+    config.youtubeNotifiers = config.youtubeNotifiers.filter(n => n.youtubeId !== youtubeId);
+    if (config.youtubeNotifiers.length !== initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  updateYouTubeNotifier(guildId, youtubeId, lastVideoId) {
+    const config = this.getGuildConfig(guildId);
+    if (!config.youtubeNotifiers) return;
+    const notifier = config.youtubeNotifiers.find(n => n.youtubeId === youtubeId);
+    if (notifier) {
+      notifier.lastVideoId = lastVideoId;
+      this.save();
+    }
+  }
 }
 
 const db = new Database();
