@@ -28,68 +28,88 @@ export const commands = [
         return message.reply("You must be connected to a voice channel to use the Control Panel.");
       }
 
-      // 3. Build UI
-      const connectedMembers = voiceChannel.members;
-      const connectedTags = connectedMembers.map(m => `<@${m.id}>`).join(', ');
-      
-      
-      const textContent = 
-          `# Server Owner Voice | Control Panel\n\n` +
-          `-# **Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** <#${voiceChannel.id}>\n` +
-          `-# **Connected Members (${connectedMembers.size}):** ${connectedTags}\n\n` +
-          `**Button Controls:**\n` +
-          `\`Mute All\` \`Unmute All\` \`VMute 1\` \`VUnmute 1\`\n` +
-          `\`VC Kick\` \`VC Ban\` \`VC Kick All\` \`VC Ban All\`\n` +
-          `\`VC Unban\` \`VC Unban All\`\n` +
-          `\`Deafen 1\` \`Undeafen 1\` \`Deafen All\` \`Undeafen All\`\n` +
-          `\`Lock VC\` \`Unlock VC\` \`Hide VC\` \`Unhide VC\``;
+      // 3. Build UI Function
+      const generatePayload = () => {
+        const currentMembers = voiceChannel.members;
+        const connectedTags = currentMembers.size > 0 ? currentMembers.map(m => `<@${m.id}>`).join(', ') : 'None';
+        
+        const textContent = 
+            `# Server Owner Voice | Control Panel\n\n` +
+            `-# **Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** <#${voiceChannel.id}>\n` +
+            `-# **Connected Members (${currentMembers.size}):** ${connectedTags}\n\n` +
+            `**Button Controls:**\n` +
+            `\`Mute All\` \`Unmute All\` \`VMute 1\` \`VUnmute 1\`\n` +
+            `\`VC Kick\` \`VC Ban\` \`VC Kick All\` \`VC Ban All\`\n` +
+            `\`VC Unban\` \`VC Unban All\`\n` +
+            `\`Deafen 1\` \`Undeafen 1\` \`Deafen All\` \`Undeafen All\`\n` +
+            `\`Lock VC\` \`Unlock VC\` \`Hide VC\` \`Unhide VC\``;
 
-      const mainDisplay = new TextDisplayBuilder().setContent(textContent);
+        const mainDisplay = new TextDisplayBuilder().setContent(textContent);
 
-      const row1 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('vcp_mute_all').setLabel('Mute All').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_unmute_all').setLabel('Unmute All').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_mute_1').setLabel('VMute 1').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_unmute_1').setLabel('VUnmute 1').setStyle(ButtonStyle.Secondary)
-      );
+        const row1 = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('vcp_mute_all').setLabel('Mute All').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_unmute_all').setLabel('Unmute All').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_mute_1').setLabel('VMute 1').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_unmute_1').setLabel('VUnmute 1').setStyle(ButtonStyle.Secondary)
+        );
 
-      const row2 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('vcp_kick_1').setLabel('VC Kick').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_ban_1').setLabel('VC Ban').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_kick_all').setLabel('VC Kick All').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_ban_all').setLabel('VC Ban All').setStyle(ButtonStyle.Secondary)
-      );
+        const row2 = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('vcp_kick_1').setLabel('VC Kick').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_ban_1').setLabel('VC Ban').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_kick_all').setLabel('VC Kick All').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_ban_all').setLabel('VC Ban All').setStyle(ButtonStyle.Secondary)
+        );
 
-      const row3 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('vcp_unban_1').setLabel('VC Unban').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_unban_all').setLabel('VC Unban All').setStyle(ButtonStyle.Secondary)
-      );
+        const row3 = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('vcp_unban_1').setLabel('VC Unban').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_unban_all').setLabel('VC Unban All').setStyle(ButtonStyle.Secondary)
+        );
 
-      const row4 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('vcp_deafen_1').setLabel('Deafen 1').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_undeafen_1').setLabel('Undeafen 1').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_deafen_all').setLabel('Deafen All').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_undeafen_all').setLabel('Undeafen All').setStyle(ButtonStyle.Secondary)
-      );
+        const row4 = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('vcp_deafen_1').setLabel('Deafen 1').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_undeafen_1').setLabel('Undeafen 1').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_deafen_all').setLabel('Deafen All').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_undeafen_all').setLabel('Undeafen All').setStyle(ButtonStyle.Secondary)
+        );
 
-      const row5 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('vcp_lock').setLabel('Lock VC').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_unlock').setLabel('Unlock VC').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_hide').setLabel('Hide VC').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('vcp_unhide').setLabel('Unhide VC').setStyle(ButtonStyle.Secondary)
-      );
+        const row5 = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('vcp_lock').setLabel('Lock VC').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_unlock').setLabel('Unlock VC').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_hide').setLabel('Hide VC').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('vcp_unhide').setLabel('Unhide VC').setStyle(ButtonStyle.Secondary)
+        );
 
-      const panelContainer = new ContainerBuilder()
-        .addTextDisplayComponents(mainDisplay)
-        .addActionRowComponents(row1, row2, row3, row4, row5);
+        const panelContainer = new ContainerBuilder()
+          .addTextDisplayComponents(mainDisplay)
+          .addActionRowComponents(row1, row2, row3, row4, row5);
 
-      const panelMsg = await message.channel.send({
-        components: [panelContainer],
-        flags: MessageFlags.IsComponentsV2
-      });
+        return {
+          components: [panelContainer],
+          flags: MessageFlags.IsComponentsV2
+        };
+      };
+
+      const panelMsg = await message.channel.send(generatePayload());
+
+      // Live Updater for Connected Members
+      const voiceUpdateListener = async (oldState, newState) => {
+        if (oldState.channelId === voiceChannel.id || newState.channelId === voiceChannel.id) {
+          try {
+            await panelMsg.edit(generatePayload());
+          } catch (err) {
+            // Message might be deleted
+          }
+        }
+      };
+
+      message.client.on('voiceStateUpdate', voiceUpdateListener);
 
       // 4. Collector setup
       const collector = panelMsg.createMessageComponentCollector({ time: 900000 }); // 15 mins
+
+      collector.on('end', () => {
+        message.client.removeListener('voiceStateUpdate', voiceUpdateListener);
+      });
 
       collector.on('collect', async (i) => {
         // Permission check
