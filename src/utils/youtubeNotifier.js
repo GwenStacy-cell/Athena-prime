@@ -50,7 +50,8 @@ export async function resolveYouTubeChannelId(url) {
  */
 export async function getLatestVideo(channelId) {
   try {
-    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+    // Add cache buster to bypass YouTube's CDN caching (which can take 15 mins)
+    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}&_=${Date.now()}`;
     const feed = await parser.parseURL(feedUrl);
     
     if (feed.items && feed.items.length > 0) {
@@ -73,12 +74,12 @@ export async function getLatestVideo(channelId) {
 }
 
 /**
- * Starts the 20-second background loop to check for new videos.
+ * Starts the 10-second background loop to check for new videos.
  */
 export function startYouTubeNotifier(client) {
-  console.log('[YouTube Notifier] Starting 20-second polling loop...');
+  console.log('[YouTube Notifier] Starting 10-second polling loop...');
   
-  // Run every 20 seconds (20000 ms)
+  // Run every 10 seconds (10000 ms)
   setInterval(async () => {
     try {
       const guilds = Object.keys(db.cache.guilds);
@@ -151,5 +152,5 @@ export function startYouTubeNotifier(client) {
     } catch (err) {
       console.error('[YouTube Notifier] Loop Error:', err);
     }
-  }, 20000);
+  }, 10000);
 }
