@@ -29,6 +29,8 @@ export const commands = [
       const connectedMembers = voiceChannel.members;
       const connectedTags = connectedMembers.map(m => `<@${m.id}>`).join(', ');
       
+      const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
+      
       const textContent = 
           `# Server Owner Voice | Control Panel\n\n` +
           `**Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** <#${voiceChannel.id}>\n` +
@@ -39,6 +41,8 @@ export const commands = [
           `\`VC Unban\` \`VC Unban All\`\n` +
           `\`Deafen 1\` \`Undeafen 1\` \`Deafen All\` \`Undeafen All\`\n` +
           `\`Lock VC\` \`Unlock VC\` \`Hide VC\` \`Unhide VC\``;
+
+      const mainDisplay = new TextDisplayBuilder().setContent(textContent);
 
       const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('vcp_mute_all').setLabel('Mute All').setStyle(ButtonStyle.Secondary),
@@ -73,9 +77,13 @@ export const commands = [
         new ButtonBuilder().setCustomId('vcp_unhide').setLabel('Unhide VC').setStyle(ButtonStyle.Secondary)
       );
 
+      const panelContainer = new ContainerBuilder()
+        .addTextDisplayComponents(mainDisplay)
+        .addActionRowComponents(row1, row2, row3, row4, row5);
+
       const panelMsg = await message.channel.send({
-        content: textContent,
-        components: [row1, row2, row3, row4, row5]
+        components: [panelContainer],
+        flags: MessageFlags.IsComponentsV2
       });
 
       // 4. Collector setup
