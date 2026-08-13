@@ -1432,7 +1432,15 @@ class Database {
     if (!config.youtubeNotifiers) return;
     const notifier = config.youtubeNotifiers.find(n => n.youtubeId === youtubeId && n.discordChannelId === discordChannelId);
     if (notifier) {
+      if (!notifier.recentVideoIds) {
+        notifier.recentVideoIds = notifier.lastVideoId ? [notifier.lastVideoId] : [];
+      }
       notifier.lastVideoId = lastVideoId;
+      notifier.recentVideoIds.unshift(lastVideoId);
+      // Keep only last 10
+      if (notifier.recentVideoIds.length > 10) {
+        notifier.recentVideoIds.pop();
+      }
       this.save();
     }
   }

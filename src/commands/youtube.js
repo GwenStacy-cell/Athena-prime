@@ -131,6 +131,7 @@ export const commands = [
           discordChannelId: channelMention.id,
           customMessage: customMessage,
           lastVideoId: lastVideoId,
+          recentVideoIds: lastVideoId ? [lastVideoId] : [],
           channelName: channelName
         });
 

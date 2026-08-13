@@ -94,7 +94,12 @@ export function startYouTubeNotifier(client) {
           try {
             const latestVideo = await getLatestVideo(notifier.youtubeId);
             
-            if (latestVideo && latestVideo.id !== notifier.lastVideoId) {
+            if (!notifier.recentVideoIds) {
+              // Migrate existing string to array
+              notifier.recentVideoIds = notifier.lastVideoId ? [notifier.lastVideoId] : [];
+            }
+
+            if (latestVideo && !notifier.recentVideoIds.includes(latestVideo.id)) {
               // We found a new video!
               const channel = guild.channels.cache.get(notifier.discordChannelId);
               
