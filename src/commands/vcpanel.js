@@ -33,9 +33,9 @@ export const commands = [
         .setColor('#2b2d31')
         .setDescription(
           `# Server Owner Voice | Control Panel\n\n` +
-          `**Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** <#${voiceChannel.id}>\n` +
-          `**Connected Members (${connectedMembers.size}):** ${connectedTags}\n\n` +
-          `**Button Controls:**\n` +
+          `### Server Owner: <@${message.guild.ownerId}> | Voice Channel: <#${voiceChannel.id}>\n` +
+          `### Connected Members (${connectedMembers.size}): ${connectedTags}\n\n` +
+          `### Button Controls:\n` +
           `\`Mute All\` \`Unmute All\` \`VMute 1\` \`VUnmute 1\`\n` +
           `\`VC Kick\` \`VC Ban\` \`VC Kick All\` \`VC Ban All\`\n` +
           `\`VC Unban\` \`VC Unban All\`\n` +
