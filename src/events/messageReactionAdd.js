@@ -31,7 +31,12 @@ export default {
       const member = await guild.members.fetch(user.id).catch(() => null);
       if (!member) return;
 
-      const role = guild.roles.cache.get(roleId);
+      let role = guild.roles.cache.get(roleId);
+      if (!role) {
+        // Attempt to fetch if not in cache
+        const fetchedRoles = await guild.roles.fetch();
+        role = fetchedRoles.get(roleId);
+      }
       if (!role) return;
 
       await member.roles.add(role, `Reaction Role: ${menu.title}`);
@@ -44,6 +49,10 @@ export default {
       }
     } catch (err) {
       console.error('Failed to grant reaction role:', err);
+      // Attempt to DM the user about the error
+      await user.send({
+        embeds: [embed.error('Reaction Role Error', `I was unable to give you the role in **${reaction.message.guild?.name || 'the server'}**. This usually happens because my bot role is lower than the role you are trying to get, or I am missing the "Manage Roles" permission.`)]
+      }).catch(() => null);
     }
   }
 };
