@@ -1,5 +1,5 @@
 import { PermissionFlagsBits } from 'discord.js';
-import { db } from '../database.js';
+import db from '../database.js';
 import embed from '../embed.js';
 import { isAuthorized } from '../utils/helpers.js';
 import { resolveYouTubeChannelId, getLatestVideo } from '../utils/youtubeNotifier.js';

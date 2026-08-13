@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import Parser from 'rss-parser';
-import { db } from '../database.js';
+import db from '../database.js';
 import embed from '../embed.js';
 
 const parser = new Parser();
