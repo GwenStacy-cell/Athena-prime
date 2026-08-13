@@ -4,7 +4,10 @@ import {
   ButtonStyle, 
   EmbedBuilder, 
   ComponentType,
-  StringSelectMenuBuilder 
+  StringSelectMenuBuilder,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  MessageFlags
 } from 'discord.js';
 
 export const commands = [
@@ -29,7 +32,6 @@ export const commands = [
       const connectedMembers = voiceChannel.members;
       const connectedTags = connectedMembers.map(m => `<@${m.id}>`).join(', ');
       
-      const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
       
       const textContent = 
           `# Server Owner Voice | Control Panel\n\n` +
