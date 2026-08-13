@@ -31,9 +31,9 @@ export const commands = [
 
       const embed = new EmbedBuilder()
         .setColor('#2b2d31')
-        .setTitle('Server Owner Voice | Control Panel')
         .setDescription(
-          `**Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** 🔊 ${voiceChannel.name}\n` +
+          `# Server Owner Voice | Control Panel\n\n` +
+          `**Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** <#${voiceChannel.id}>\n` +
           `**Connected Members (${connectedMembers.size}):** ${connectedTags}\n\n` +
           `**Button Controls:**\n` +
           `\`Mute All\` \`Unmute All\` \`VMute 1\` \`VUnmute 1\`\n` +
