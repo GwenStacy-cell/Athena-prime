@@ -73,12 +73,12 @@ export async function getLatestVideo(channelId) {
 }
 
 /**
- * Starts the 1-minute background loop to check for new videos.
+ * Starts the 20-second background loop to check for new videos.
  */
 export function startYouTubeNotifier(client) {
-  console.log('[YouTube Notifier] Starting 1-minute polling loop...');
+  console.log('[YouTube Notifier] Starting 20-second polling loop...');
   
-  // Run every 1 minute (60000 ms)
+  // Run every 20 seconds (20000 ms)
   setInterval(async () => {
     try {
       const guilds = Object.keys(db.cache.guilds);
@@ -128,25 +128,23 @@ export function startYouTubeNotifier(client) {
                 if (content === '') {
                    content = `<:912969youtubelogo:1533383764250460241> **__${latestVideo.author}__ just uploaded a new video!** 🎥🔥\n> 📺 **Watch now:** ${latestVideo.link}`;
                 } else {
-                   // Ensure link is there if they didn't put it in the custom message
-                   if (!content.includes('http')) {
-                      content += `\n> 📺 **Watch now:** ${latestVideo.link}`;
-                   }
+                   // Ensure it has basic formatting if custom
+                   content = `<:912969youtubelogo:1533383764250460241> ${content}`;
                 }
 
                 await channel.send({ content: content, embeds: [ytEmbed] });
               }
 
-              // Update the DB with the new video ID to prevent duplicate pings
-              db.updateYouTubeNotifier(guildId, notifier.youtubeId, latestVideo.id);
+              // Update the database so we don't send it again
+              db.updateYouTubeNotifier(guildId, notifier.youtubeId, notifier.discordChannelId, latestVideo.id);
             }
-          } catch (innerErr) {
-            console.error(`[YouTube Notifier] Failed to process ${notifier.youtubeId} in guild ${guildId}:`, innerErr);
+          } catch (err) {
+            console.error(`[YouTube Notifier] Error checking channel ${notifier.youtubeId}:`, err);
           }
         }
       }
     } catch (err) {
-      console.error('[YouTube Notifier] Interval loop error:', err);
+      console.error('[YouTube Notifier] Loop Error:', err);
     }
-  }, 60 * 1000); // 1 minute
+  }, 20000);
 }

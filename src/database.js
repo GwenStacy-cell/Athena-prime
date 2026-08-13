@@ -1427,10 +1427,10 @@ class Database {
     return false;
   }
 
-  updateYouTubeNotifier(guildId, youtubeId, lastVideoId) {
+  updateYouTubeNotifier(guildId, youtubeId, discordChannelId, lastVideoId) {
     const config = this.getGuildConfig(guildId);
     if (!config.youtubeNotifiers) return;
-    const notifier = config.youtubeNotifiers.find(n => n.youtubeId === youtubeId);
+    const notifier = config.youtubeNotifiers.find(n => n.youtubeId === youtubeId && n.discordChannelId === discordChannelId);
     if (notifier) {
       notifier.lastVideoId = lastVideoId;
       this.save();
