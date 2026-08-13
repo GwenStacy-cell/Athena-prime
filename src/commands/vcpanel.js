@@ -89,7 +89,6 @@ export const commands = [
       });
 
       // 4. Collector setup
-      const botOwnerId = process.env.OWNER_ID;
       const collector = panelMsg.createMessageComponentCollector({ time: 900000 }); // 15 mins
 
       collector.on('collect', async (i) => {
