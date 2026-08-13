@@ -28,19 +28,17 @@ export const commands = [
       // 3. Build UI
       const connectedMembers = voiceChannel.members;
       const connectedTags = connectedMembers.map(m => `<@${m.id}>`).join(', ');
-
-      const embed = new EmbedBuilder()
-        .setDescription(
+      
+      const textContent = 
           `# Server Owner Voice | Control Panel\n\n` +
-          `**𝗦𝗲𝗿𝘃𝗲𝗿 𝗢𝘄𝗻𝗲𝗿:** <@${message.guild.ownerId}> | **𝗩𝗼𝗶𝗰𝗲 𝗖𝗵𝗮𝗻𝗻𝗲𝗹:** <#${voiceChannel.id}>\n` +
-          `**𝗖𝗼𝗻𝗻𝗲𝗰𝘁𝗲𝗱 𝗠𝗲𝗺𝗯𝗲𝗿𝘀 (${connectedMembers.size}):** ${connectedTags}\n\n` +
-          `**𝗕𝘂𝘁𝘁𝗼𝗻 𝗖𝗼𝗻𝘁𝗿𝗼𝗹𝘀:**\n` +
+          `**Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** <#${voiceChannel.id}>\n` +
+          `**Connected Members (${connectedMembers.size}):** ${connectedTags}\n\n` +
+          `**Button Controls:**\n` +
           `\`Mute All\` \`Unmute All\` \`VMute 1\` \`VUnmute 1\`\n` +
           `\`VC Kick\` \`VC Ban\` \`VC Kick All\` \`VC Ban All\`\n` +
           `\`VC Unban\` \`VC Unban All\`\n` +
           `\`Deafen 1\` \`Undeafen 1\` \`Deafen All\` \`Undeafen All\`\n` +
-          `\`Lock VC\` \`Unlock VC\` \`Hide VC\` \`Unhide VC\``
-        );
+          `\`Lock VC\` \`Unlock VC\` \`Hide VC\` \`Unhide VC\``;
 
       const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('vcp_mute_all').setLabel('Mute All').setStyle(ButtonStyle.Secondary),
@@ -76,7 +74,7 @@ export const commands = [
       );
 
       const panelMsg = await message.channel.send({
-        embeds: [embed],
+        content: textContent,
         components: [row1, row2, row3, row4, row5]
       });
 
