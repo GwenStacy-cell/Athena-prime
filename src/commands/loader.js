@@ -47,8 +47,12 @@ import { commands as channelAdminCmds } from './channeladmin.js';
 import { commands as youtubeCmds } from './youtube.js';
 import { commands as snipeCmds } from './snipe.js';
 import { commands as vcpanelCmds } from './vcpanel.js';
+import { commands as npCmds } from './np.js';
+import { commands as renameCmds } from './rename.js';
 
 export const allCommands = [
+  ...npCmds,
+  ...renameCmds,
   ...youtubeCmds,
   ...snipeCmds,
   ...vcpanelCmds,
