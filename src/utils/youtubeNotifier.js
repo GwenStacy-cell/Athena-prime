@@ -25,8 +25,19 @@ export async function resolveYouTubeChannelId(url) {
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    // YouTube puts the channel ID in this meta tag
-    const channelId = $('meta[itemprop="channelId"]').attr('content');
+    // YouTube puts the channel ID in this meta tag, but sometimes it relies on og:url
+    let channelId = $('meta[itemprop="channelId"]').attr('content');
+    
+    if (!channelId) {
+      const ogUrl = $('meta[property="og:url"]').attr('content');
+      if (ogUrl) {
+        const ogMatch = ogUrl.match(/\/channel\/(UC[\w-]{22})/);
+        if (ogMatch) {
+          channelId = ogMatch[1];
+        }
+      }
+    }
+    
     return channelId || null;
   } catch (error) {
     console.error('Failed to resolve YouTube channel ID:', error);
