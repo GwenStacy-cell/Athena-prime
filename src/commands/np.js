@@ -202,7 +202,7 @@ export const commands = [
 
       const e = new EmbedBuilder()
         .setColor('#2b2d31')
-        .setAuthor({ name: 'NP Managers List', iconURL: 'https://cdn.discordapp.com/emojis/1149959665803735161.webp' })
+        .setAuthor({ name: 'NP Managers List' })
         .setTitle('Active & Configured NP Managers')
         .setDescription(lines.join('\n') || 'No NP Managers configured.')
         .setFooter({ text: 'Athena Prime Unbypassable Security' });
@@ -213,17 +213,50 @@ export const commands = [
     async sendGuide(message) {
       const e1 = new EmbedBuilder()
         .setColor('#2b2d31')
-        .setAuthor({ name: 'NP Manager Guide (Page 1/2)', iconURL: 'https://cdn.discordapp.com/emojis/1149959665803735161.webp' })
-        .setDescription('Official Control & Analytics Guide for NP Managers\n\n**NP Access Management**\n> `np add user <@user | id> [duration]` — Grant No-Prefix to user\n> `np add server <guild_id> [duration]` — Grant No-Prefix to server\n> `np reset user <id>` — Remove No-Prefix from user\n> `np reset server <id>` — Remove No-Prefix from server\n\n**Command Ban Controls**\n> `np cmds ban <command>` — Ban a command from NP\n> `np cmds unban <command>` — Unban a command from NP\n> `np cmds pause` / `unpause` — Pause or unpause NP system\n\n**Bot Server Assets**\n> `!setguildavatar <url | attachment>` — Set server bot avatar\n> `!setguildbanner <url | attachment>` — Set server bot banner');
+        .setAuthor({ name: 'NP Manager Guide (Page 1/2)' })
+        .setDescription('Official Control & Analytics Guide for NP Managers\n\n### **NP Access Management**\n> `np add user <@user | id> [duration]` — Grant No-Prefix to user\n> `np add server <guild_id> [duration]` — Grant No-Prefix to server\n> `np reset user <id>` — Remove No-Prefix from user\n> `np reset server <id>` — Remove No-Prefix from server\n\n### **Command Ban Controls**\n> `np cmds ban <command>` — Ban a command from NP\n> `np cmds unban <command>` — Unban a command from NP\n> `np cmds pause` / `unpause` — Pause or unpause NP system\n\n### **Bot Server Assets**\n> `!setguildavatar <url | attachment>` — Set server bot avatar\n> `!setguildbanner <url | attachment>` — Set server bot banner\n\n---\n-# **Athena Bulletproof Security**');
 
       const e2 = new EmbedBuilder()
         .setColor('#2b2d31')
-        .setAuthor({ name: 'NP Manager Guide (Page 2/2)', iconURL: 'https://cdn.discordapp.com/emojis/1149959665803735161.webp' })
-        .setDescription('Official Control & Analytics Guide for NP Managers\n\n**Bot Growth & Analytics Commands**\n> `bjoins` / `bjoin` / `botjoins` — View recent bot join statistics\n> `bleaves` / `bleave` / `botleaves` — View recent bot leave statistics\n> `bsummary` / `bjoinssummary` / `bgrowth` — View bot join & growth summary\n> `bcmds` / `bcmd` / `botcmds` — View command usage analytics & execution logs\n> `btopcmds` / `btop` / `bcmdusers` — View top executed commands & active users\n> `bservers` / `bmem` / `bping` — View active bot servers, memory & latency\n\n**View & Inspection Controls**\n> `ss` / `security status` — View security status (View Only)\n> `np actions [@user]` — View audit log of manager actions\n> `np manager list` / `np manager` — View active NP Managers\n> `np show` / `np check <@user>` — View active NP users & servers\n\n🔒 **Restrictions:** Cannot restart the bot, modify NP Managers, or edit security settings.')
-        .setFooter({ text: 'NP Manager System • Page 2 of 2' });
+        .setAuthor({ name: 'NP Manager Guide (Page 2/2)' })
+        .setDescription('Official Control & Analytics Guide for NP Managers\n\n### **Bot Growth & Analytics Commands**\n> `bjoins` / `bjoin` / `botjoins` — View recent bot join statistics\n> `bleaves` / `bleave` / `botleaves` — View recent bot leave statistics\n> `bsummary` / `bjoinssummary` / `bgrowth` — View bot join & growth summary\n> `bcmds` / `bcmd` / `botcmds` — View command usage analytics & execution logs\n> `btopcmds` / `btop` / `bcmdusers` — View top executed commands & active users\n> `bservers` / `bmem` / `bping` — View active bot servers, memory & latency\n\n### **View & Inspection Controls**\n> `ss` / `security status` — View security status (View Only)\n> `np actions [@user]` — View audit log of manager actions\n> `np manager list` / `np manager` — View active NP Managers\n> `np show` / `np check <@user>` — View active NP users & servers\n\n🔒 **Restrictions:** Cannot restart the bot, modify NP Managers, or edit security settings.\n\n---\n-# **Athena Bulletproof Security**');
 
-      // We will just send page 1 with buttons (stubbed for now, full pagination can be added)
-      await message.reply({ embeds: [e1, e2] });
+      // We will create buttons for pagination
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('np_guide_prev').setLabel('<').setStyle(ButtonStyle.Secondary).setDisabled(true),
+        new ButtonBuilder().setCustomId('np_guide_next').setLabel('>').setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('np_guide_del').setEmoji('🗑️').setStyle(ButtonStyle.Secondary)
+      );
+
+      const reply = await message.reply({ embeds: [e1], components: [row] });
+
+      const collector = reply.createMessageComponentCollector({ time: 300000 });
+      let page = 1;
+
+      collector.on('collect', async (i) => {
+        if (i.user.id !== message.author.id) {
+          return i.reply({ content: '❌ You cannot use these buttons.', flags: MessageFlags.Ephemeral }).catch(() => null);
+        }
+        
+        if (i.customId === 'np_guide_del') {
+          return reply.delete().catch(() => null);
+        }
+
+        if (i.customId === 'np_guide_next') page = 2;
+        if (i.customId === 'np_guide_prev') page = 1;
+
+        const newRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('np_guide_prev').setLabel('<').setStyle(ButtonStyle.Secondary).setDisabled(page === 1),
+          new ButtonBuilder().setCustomId('np_guide_next').setLabel('>').setStyle(ButtonStyle.Secondary).setDisabled(page === 2),
+          new ButtonBuilder().setCustomId('np_guide_del').setEmoji('🗑️').setStyle(ButtonStyle.Secondary)
+        );
+
+        await i.update({ embeds: [page === 1 ? e1 : e2], components: [newRow] }).catch(() => null);
+      });
+
+      collector.on('end', () => {
+        reply.edit({ components: [] }).catch(() => null);
+      });
     }
   },
   
