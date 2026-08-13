@@ -86,4 +86,4 @@ export const deleteChannelCmd = {
   }
 };
 
-export default [createChannelCmd, deleteChannelCmd];
+export const commands = [createChannelCmd, deleteChannelCmd];
