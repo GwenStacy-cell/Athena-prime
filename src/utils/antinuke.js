@@ -579,6 +579,11 @@ export async function handleAuditLogEntry(guild, entry) {
     if (action === AuditLogEvent.ChannelDelete) {
       const cachedChannel = deletedCache.get(targetId);
       if (cachedChannel) {
+        // Let dashboardManager handle its own restoration to prevent duplicate channels
+        if (cachedChannel.name === 'athenas-dashboard' || cachedChannel.name === '🚨-ıl-aтнenaѕ-dashboard') {
+          return 'Dashboard channel deleted (auto-restoration handled by dashboardManager)';
+        }
+
         const isCategory = cachedChannel.type === 4;
         const queueRestore = (ch, iscat) => {
           if (queuedRestorations.has(ch.id)) return;
