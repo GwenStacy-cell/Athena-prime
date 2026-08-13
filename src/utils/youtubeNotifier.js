@@ -115,11 +115,11 @@ export function startYouTubeNotifier(client) {
                 content = content.replace(/{channel}/g, latestVideo.channelName);
                 
                 if (content === '') {
-                   content = `<:912969youtubelogo:1533383764250460241> **${latestVideo.author}** just uploaded a new video!\n${latestVideo.link}`;
+                   content = `<:912969youtubelogo:1533383764250460241> **__${latestVideo.author}__ just uploaded a new video!** 🎥🔥\n> 📺 **Watch now:** ${latestVideo.link}`;
                 } else {
                    // Ensure link is there if they didn't put it in the custom message
                    if (!content.includes('http')) {
-                      content += `\n${latestVideo.link}`;
+                      content += `\n> 📺 **Watch now:** ${latestVideo.link}`;
                    }
                 }
 

@@ -69,24 +69,42 @@ export const commands = [
       // --- ADD COMMAND ---
       if (subcommand === 'add') {
         const url = args[1];
-        const channelMention = message.mentions.channels.first();
+        let channelMention = message.mentions.channels.first();
+        
+        // If no mention, try resolving by ID or Name
+        if (!channelMention && args[2]) {
+          // Check if args[2] is just a channel ID, or reconstruct the remaining string to find a name
+          const potentialId = args[2].replace(/[<#>]/g, '');
+          channelMention = message.guild.channels.cache.get(potentialId);
+          
+          if (!channelMention) {
+             const nameQuery = args.slice(2).join(' ').toLowerCase();
+             channelMention = message.guild.channels.cache.find(c => c.name.toLowerCase() === nameQuery || c.name.toLowerCase().includes(nameQuery));
+          }
+        }
         
         if (!url || !channelMention) {
           return message.reply({ embeds: [embed.error('Syntax Error', `Usage: \`${prefix}youtube add <url> <#channel> [message]\`\n\nExample:\n\`${prefix}youtube add https://youtube.com/@MrBeast #videos @everyone New Video!\``)] });
         }
 
-        // The custom message is everything after the channel mention
-        const messageIndex = message.content.indexOf(args[2]);
+        // The custom message is everything after the channel name/mention
+        // We will just do a simple replace or slice
         let customMessage = '';
-        
-        // We have to extract the custom message carefully
-        // args[2] could be the channel mention like <#1234>
-        // But what if it's multiple spaces? Let's just slice the raw string
-        const channelMatch = message.content.match(/<#(\d+)>/);
-        if (channelMatch) {
-            const rawContent = message.content;
-            const channelStrIndex = rawContent.indexOf(channelMatch[0]);
-            customMessage = rawContent.slice(channelStrIndex + channelMatch[0].length).trim();
+        const channelMentionStr = `<#${channelMention.id}>`;
+        if (message.content.includes(channelMentionStr)) {
+            const channelStrIndex = message.content.indexOf(channelMentionStr);
+            customMessage = message.content.slice(channelStrIndex + channelMentionStr.length).trim();
+        } else {
+            // They typed the name, we'll just leave custom message blank unless they put it in quotes, but let's just grab the end
+            // This is a bit tricky, if they typed the name, we don't know where the name ends and the message begins.
+            // For safety, if they didn't mention it, we won't extract a custom message easily, but we can try removing the channel name
+            const msgAfterUrl = message.content.substring(message.content.indexOf(url) + url.length).trim();
+            const lowerMsg = msgAfterUrl.toLowerCase();
+            const lowerName = channelMention.name.toLowerCase();
+            if (lowerMsg.includes(lowerName)) {
+               const idx = lowerMsg.indexOf(lowerName);
+               customMessage = msgAfterUrl.slice(idx + lowerName.length).trim();
+            }
         }
 
         const waitMsg = await message.reply({ embeds: [embed.info('Processing...', '<a:z_loading:1523671239564988528> Resolving channel ID and fetching data...')] });
@@ -116,12 +134,40 @@ export const commands = [
           channelName: channelName
         });
 
-        let successDesc = `Successfully bound **${channelName}** to ${channelMention}!\n\nI will check for new uploads every 1 minute.`;
-        if (customMessage) {
-            successDesc += `\n\n**Custom Message:**\n\`${customMessage}\``;
+        // Determine Accent Color
+        const cfg = db.getGuildConfig(message.guild.id);
+        const accentHex = cfg?.accentColor || '#ff0000';
+        const accentInt = parseInt(accentHex.replace('#', ''), 16);
+        const { EmbedBuilder } = await import('discord.js');
+
+        // Delete the processing message
+        await waitMsg.delete().catch(() => {});
+        await message.reply({ embeds: [embed.success('System Linked', `YouTube tracker for **${channelName}** successfully bound to ${channelMention}.`)] });
+
+        // Build premium success embed for target channel
+        const successEmbed = new EmbedBuilder()
+          .setColor(accentInt)
+          .setAuthor({ 
+            name: `YouTube Integration Active`, 
+            iconURL: 'https://cdn.discordapp.com/emojis/1533383764250460241.webp?size=96&quality=lossless'
+          })
+          .setTitle(`Successfully Linked: ${channelName}`)
+          .setURL(url)
+          .setDescription(`> <a:z_arrow_pink1:1523082728004653138> **This channel will now automatically receive notifications whenever __${channelName}__ uploads a new video!**`)
+          .setFooter({ text: 'Athena Prime YouTube Notifier' })
+          .setTimestamp();
+          
+        if (latestVideo && latestVideo.thumbnail) {
+          successEmbed.setImage(latestVideo.thumbnail);
         }
 
-        return waitMsg.edit({ embeds: [embed.success('YouTube Notifier Active', successDesc)] });
+        let channelMsg = '';
+        if (customMessage) {
+            channelMsg = `**Ping Message:**\n${customMessage}`;
+        }
+
+        // Send to target channel
+        await channelMention.send({ content: channelMsg, embeds: [successEmbed] }).catch(() => {});
       }
     }
   }
