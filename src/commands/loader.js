@@ -44,8 +44,10 @@ import { commands as afkCmds } from './afk.js';
 import { commands as emojiStealerCmds } from './emojistealer.js';
 import { commands as setDeleteLogCmds } from './setdeletelog.js';
 import { commands as channelAdminCmds } from './channeladmin.js';
+import { commands as youtubeCmds } from './youtube.js';
 
 export const allCommands = [
+  ...youtubeCmds,
   ...channelAdminCmds,
   ...moderationCmds,
   ...securityCmds,

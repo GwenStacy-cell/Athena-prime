@@ -13,6 +13,7 @@ import { setupDashboardChannel, updateDashboardMessage } from '../utils/dashboar
 import { startNewsJob } from '../jobs/newsJob.js';
 import { startMusicCleanupJob } from '../jobs/musicCleanupJob.js';
 import { formatServerStatChannelName } from '../commands/serverstats.js';
+import { startYouTubeNotifier } from '../utils/youtubeNotifier.js';
 
 export default {
   name: 'clientReady',
@@ -364,6 +365,9 @@ export default {
         }
       }
     }, 3 * 60 * 1000);
+
+    // Start YouTube Notifier Polling Loop
+    startYouTubeNotifier(client);
 
       console.log(chalk.blue(' Updating permissions for existing stats channels...'));
       try {

@@ -232,6 +232,7 @@ class Database {
       if (cfg.musicChannelId === undefined) { cfg.musicChannelId = null; updated = true; }
       if (cfg.musicMessageId === undefined) { cfg.musicMessageId = null; updated = true; }
       if (cfg.musicCoverImage === undefined) { cfg.musicCoverImage = null; updated = true; }
+      if (cfg.youtubeNotifiers === undefined) { cfg.youtubeNotifiers = []; updated = true; }
       if (cfg.autoroleIds === undefined) { 
         cfg.autoroleIds = []; 
         if (cfg.autoroleId) {
