@@ -25,7 +25,7 @@ export const commands = [
         
         db.updateGuildConfig(guild.id, { serverLogs: sl });
         
-        const res = { embeds: [embed.success('Delete Log Set', `Deleted messages will now be logged in <#${channel.id}>.`)] };
+        const res = { embeds: [embed.success('Ghost Ping & Sniper Logs Set', `<:Dark4luvontop:1533860091818803242> **Ghost Pings** and **Deleted Messages** will now be routed to <#${channel.id}>.`)] };
         await message.reply(res).catch(() => null);
       } catch (error) {
         console.error('Error in setdeletelog:', error);

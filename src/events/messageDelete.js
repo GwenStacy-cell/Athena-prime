@@ -17,8 +17,20 @@ export default {
 
     if (message.author?.bot) return; // Don't log bot message deletions to prevent spam
 
-    const content = message.content ? (message.content.length > 1024 ? message.content.substring(0, 1021) + '...' : message.content) : 'No text content';
+    const content = message.content ? (message.content.length > 1024 ? message.content.substring(0, 1021) + '...' : message.content) : 'No text content.';
+    const imageUrl = message.attachments.first()?.proxyURL || message.attachments.first()?.url || null;
     
+    // Save to Sniper Cache for !snipe command
+    if (!message.client.snipeCache) {
+      message.client.snipeCache = new Map();
+    }
+    message.client.snipeCache.set(message.channel.id, {
+      content: content,
+      author: message.author,
+      image: imageUrl,
+      timestamp: Date.now()
+    });
+
     let deletedBy = 'Unknown';
 
     try {
@@ -32,24 +44,47 @@ export default {
           const { executor, target, createdTimestamp, extra } = deleteLog;
           // Check if the log is recent (within last 5 seconds) and matches the target (author) and channel
           if (target && target.id === message.author.id && extra.channel.id === message.channel.id && createdTimestamp > (Date.now() - 5000)) {
-            deletedBy = `${executor.tag} (<@${executor.id}>)`;
+            deletedBy = `<@${executor.id}> (Moderator)`;
           } else {
-            deletedBy = `${message.author.tag} (<@${message.author.id}>) (Self-Delete / Unknown)`;
+            deletedBy = `<@${message.author.id}> (Self-Deleted)`;
           }
         } else {
-          deletedBy = `${message.author.tag} (<@${message.author.id}>) (Self-Delete / Unknown)`;
+          deletedBy = `<@${message.author.id}> (Self-Deleted)`;
         }
       } else {
-        deletedBy = `${message.author.tag} (<@${message.author.id}>) (Self-Delete / Missing Perms)`;
+        deletedBy = `<@${message.author.id}> (Self-Deleted / Missing Audit Perms)`;
       }
     } catch (e) {
-      deletedBy = `${message.author.tag} (<@${message.author.id}>) (Error)`;
+      deletedBy = `<@${message.author.id}> (Self-Deleted / Unknown)`;
     }
 
+    // Detect Ghost Pings
+    const hasUserMentions = message.mentions.users.filter(u => u.id !== message.author.id && !u.bot).size > 0;
+    const hasRoleMentions = message.mentions.roles.size > 0;
+    const hasEveryone = message.mentions.everyone;
+    const isGhostPing = hasUserMentions || hasRoleMentions || hasEveryone;
+
+    const title = isGhostPing ? '👻 __**GHOST PING DETECTED**__ 🚨' : '🗑️ __**Message Sniped**__';
+    const color = isGhostPing ? '#ff0000' : '#2b2d31'; // Red for Ghost Ping, Dark for normal
+
     const delEmbed = embed.build({
-      description: `__**Message Deleted |**__ <:emoji_16:1533860111704002665>\n> **Author:** ${message.author?.tag || 'Unknown'} (<@${message.author?.id || 'Unknown'}>)\n> **Deleted By:** ${deletedBy}\n>  **Channel:** ${message.channel}\n>  **Content:**\n>  ${content}`,
-      color: '#2b2d31'
+      description: `${title}\n\n> **Author:** <@${message.author.id}>\n> **Deleted By:** ${deletedBy}\n> **Channel:** ${message.channel}\n> \n> **Message Content:**\n> ${content}`,
+      color: color
     });
+
+    if (imageUrl) {
+      delEmbed.setImage(imageUrl);
+    }
+
+    // Identify who was ghost pinged if applicable
+    if (isGhostPing) {
+      let pinged = [];
+      if (hasUserMentions) pinged.push(...message.mentions.users.filter(u => u.id !== message.author.id && !u.bot).map(u => `<@${u.id}>`));
+      if (hasRoleMentions) pinged.push(...message.mentions.roles.map(r => `<@&${r.id}>`));
+      if (hasEveryone) pinged.push('@everyone / @here');
+      
+      delEmbed.addFields({ name: '⚠️ Ghost Pinged:', value: pinged.join(', ').substring(0, 1024) });
+    }
 
     logServerEvent(message.guild, 'msgDeletes', delEmbed);
   }
