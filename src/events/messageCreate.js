@@ -242,8 +242,8 @@ export default {
         const timeAgoStr = `<t:${Math.floor(afkStatus.timestamp / 1000)}:R>`;
         const textContent = 
           `# Welcome Back\n` +
-          `${message.author} removed their Afk\n` +
-          `**Was AFK for:** ${timeAgoStr}`;
+          `-# **[${message.author.username}](https://discord.com/users/${message.author.id}) removed their Afk**\n` +
+          `-# **Was AFK for: ${timeAgoStr}**`;
           
         const wbDisplay = new TextDisplayBuilder().setContent(textContent);
         const wbContainer = new ContainerBuilder().addTextDisplayComponents(wbDisplay);
@@ -258,9 +258,9 @@ export default {
             const timeAgoStr = `<t:${Math.floor(mentionedAfk.timestamp / 1000)}:R>`;
             const textContent = 
               `# User is AFK\n` +
-              `${user} is Afk\n` +
-              `**Reason:** ${mentionedAfk.reason}\n` +
-              `**Went AFK:** ${timeAgoStr}`;
+              `-# **[${user.username}](https://discord.com/users/${user.id}) is Afk**\n` +
+              `-# **Reason: ${mentionedAfk.reason}**\n` +
+              `-# **Went AFK: ${timeAgoStr}**`;
               
             const mentionDisplay = new TextDisplayBuilder().setContent(textContent);
             const mentionContainer = new ContainerBuilder().addTextDisplayComponents(mentionDisplay);

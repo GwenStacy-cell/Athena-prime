@@ -13,8 +13,8 @@ export const commands = [{
 
     const textContent = 
       `# AFK Set\n` +
-      `${message.author} is now Afk\n` +
-      `**Reason:** ${reason}`;
+      `-# **[${message.author.username}](https://discord.com/users/${message.author.id}) is now Afk**\n` +
+      `-# **Reason: ${reason}**`;
       
     const display = new TextDisplayBuilder().setContent(textContent);
     const container = new ContainerBuilder().addTextDisplayComponents(display);
