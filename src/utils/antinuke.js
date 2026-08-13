@@ -300,7 +300,7 @@ function isBotAuthorized(guild, botId) {
 // ==========================================
 function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (!executor) return false;
-  if (executor.id === guild.members.me?.id) return true;    // bot itself
+  if (executor.id === guild.client.user.id) return true;    // bot itself
   if (isBotOwnerSync(executor.id)) return true;             // hardcoded bot owner
   if (executor.id === guild.ownerId) return true;           // server owner
   if (eventType === 'antibot') return false;                // Only owner can add bots
@@ -471,8 +471,10 @@ export async function handleAuditLogEntry(guild, entry) {
     // ── BOT ADD — Double ban: the bot AND the person who added it ─────
     case AuditLogEvent.BotAdd: {
       if (!isAuthorized(guild, executor, 'antibot')) {
-        // Ban the unauthorized bot immediately (fire-and-forget)
-        guild.members.ban(targetId, { reason: 'Athena Anti-Nuke: Unauthorized bot addition' }).catch(() => null);
+        // Prevent Athena from banning herself, but still ban the unauthorized admin
+        if (targetId !== guild.client.user.id) {
+          guild.members.ban(targetId, { reason: 'Athena Anti-Nuke: Unauthorized bot addition' }).catch(() => null);
+        }
         eventType = 'Unauthorized Bot Addition';
         forceBan = true; // Also ban the executor who added it
       } else {
@@ -725,6 +727,11 @@ export async function handleAuditLogEntry(guild, entry) {
       }});
       processRestorationQueue();
       return 'Unauthorized webhook removal queued';
+    }
+
+    if (action === AuditLogEvent.MemberBanAdd) {
+      await guild.members.unban(targetId, 'Athena Anti-Nuke: Unauthorized Ban Reverted').catch(() => null);
+      rollbackResult = ` Restored user ban for <@${targetId}>`;
     }
 
     if (action === AuditLogEvent.MemberRoleUpdate) {
