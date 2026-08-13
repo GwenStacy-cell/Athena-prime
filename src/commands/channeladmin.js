@@ -24,18 +24,6 @@ export const createChannelCmd = {
     if (!channel) return message.reply({ embeds: [embed.error('Error', 'Failed to create channel.')] });
     
     await message.reply({ embeds: [embed.success('Channel Created', `Successfully created <#${channel.id}>.`)] });
-    
-    // Log to security channel as Firewall
-    const logEmbed = embed.log(
-      'LOG: FIREWALL TRIGGERED',
-      `Manual channel creation via bot command.`,
-      [
-        { name: 'Channel', value: `<#${channel.id}> (${channel.name})` },
-        { name: 'Admin', value: `${message.author.tag} (<@${message.author.id}>)` }
-      ],
-      'security'
-    );
-    await logToSecurityChannel(message.guild, logEmbed);
   }
 };
 
@@ -71,18 +59,6 @@ export const deleteChannelCmd = {
     }
 
     await message.reply({ embeds: [embed.success('Channel Deleted', `Successfully deleted **#${name}**.`)] });
-    
-    // Log to security channel as Firewall
-    const logEmbed = embed.log(
-      'LOG: FIREWALL TRIGGERED',
-      `Manual channel deletion via bot command.`,
-      [
-        { name: 'Channel', value: `**#${name}**` },
-        { name: 'Admin', value: `${message.author.tag} (<@${message.author.id}>)` }
-      ],
-      'security'
-    );
-    await logToSecurityChannel(message.guild, logEmbed);
   }
 };
 
