@@ -45,9 +45,11 @@ import { commands as emojiStealerCmds } from './emojistealer.js';
 import { commands as setDeleteLogCmds } from './setdeletelog.js';
 import { commands as channelAdminCmds } from './channeladmin.js';
 import { commands as youtubeCmds } from './youtube.js';
+import { commands as snipeCmds } from './snipe.js';
 
 export const allCommands = [
   ...youtubeCmds,
+  ...snipeCmds,
   ...channelAdminCmds,
   ...moderationCmds,
   ...securityCmds,
