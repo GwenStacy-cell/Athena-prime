@@ -15,7 +15,7 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!args.length) {
-        return message.reply({ embeds: [embed.warn('Usage', `**Usage:** \`!ur @user new_name\``)] });
+        return message.reply({ embeds: [embed.warn('Usage', `**Usage:** \`ur @user new_name\``)] });
       }
 
       const target = message.mentions.members.first() || await message.guild.members.fetch(args[0]).catch(() => null);

@@ -1313,6 +1313,23 @@ export default {
     }
 
     // ==========================================
+    // 4.9 PREFIX-LESS: UR (User Rename)
+    // ==========================================
+    if (msgCheck === 'ur' || msgCheck.startsWith('ur ') ||
+        msgCheck === 'rename' || msgCheck.startsWith('rename ')) {
+      const renameCmd = commandMap.get('ur');
+      if (renameCmd) {
+        try {
+          const urArgs = message.content.trim().split(/ +/).slice(1);
+          await renameCmd.executePrefix(message, urArgs);
+        } catch (error) {
+          console.error('Error executing ur:', error);
+        }
+      }
+      return;
+    }
+
+    // ==========================================
     // 5. COMMAND ENGINE (PREFIX PARSER & NO-PREFIX BYPASS)
     // ==========================================
     const botMention = `<@${message.client.user.id}>`;
