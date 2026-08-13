@@ -3,6 +3,7 @@ import db from '../database.js';
 import embed from '../embed.js';
 import { isAuthorized } from '../utils/helpers.js';
 import { resolveYouTubeChannelId, getLatestVideo } from '../utils/youtubeNotifier.js';
+import { manageWebSubSubscription } from '../utils/websub.js';
 
 export const commands = [
   {
@@ -60,6 +61,8 @@ export const commands = [
 
         const success = db.removeYouTubeNotifier(message.guild.id, channelId);
         if (success) {
+          // Send unsubscribe request to YouTube WebSub Hub
+          manageWebSubSubscription(channelId, 'unsubscribe');
           return waitMsg.edit({ embeds: [embed.success('Removed', `Successfully removed YouTube tracker for channel ID \`${channelId}\`.`)] });
         } else {
           return waitMsg.edit({ embeds: [embed.error('Not Found', 'That channel is not currently being tracked.')] });
@@ -135,7 +138,9 @@ export const commands = [
           channelName: channelName
         });
 
-        // Determine Accent Color
+        // Send subscribe request to YouTube WebSub Hub
+        manageWebSubSubscription(channelId, 'subscribe');
+
         const cfg = db.getGuildConfig(message.guild.id);
         const accentHex = cfg?.accentColor || '#ff0000';
         const accentInt = parseInt(accentHex.replace('#', ''), 16);
