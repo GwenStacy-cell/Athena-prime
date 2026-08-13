@@ -1,22 +1,24 @@
-import embed from '../embed.js';
 import db from '../database.js';
+import { ContainerBuilder, TextDisplayBuilder, MessageFlags } from 'discord.js';
 
 export const commands = [{
   name: 'afk',
-    slashHidden: true,
-    description: 'Set your AFK status',
+  slashHidden: true,
+  description: 'Set your AFK status',
   async executePrefix(message, args) {
     const reason = args.length > 0 ? args.join(' ') : 'AFK';
     const timestamp = Date.now();
     
     db.setAfk(message.author.id, reason, timestamp);
 
-    const afkEmbed = embed.build({
-      description: `__**AFK Status Activated |**__ <:emoji_16:1533860111704002665>\n> **User:** ${message.author}\n>  **Reason:** ${reason}\n>  ㅤyour afk status will be removed upon next message`,
-      color: '#2b2d31', // Aesthetic dark grey
-      thumbnail: message.author.displayAvatarURL({ dynamic: true })
-    });
-
-    await message.reply({ embeds: [afkEmbed] });
+    const textContent = 
+      `# AFK Set\n` +
+      `${message.author} is now Afk\n` +
+      `**Reason:** ${reason}`;
+      
+    const display = new TextDisplayBuilder().setContent(textContent);
+    const container = new ContainerBuilder().addTextDisplayComponents(display);
+    
+    await message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
   }
 }];

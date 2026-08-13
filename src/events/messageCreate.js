@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, EmbedBuilder } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ContainerBuilder, TextDisplayBuilder, MessageFlags } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
 import db from '../database.js';
@@ -239,13 +239,15 @@ export default {
       const afkStatus = db.getAfk(message.author.id);
       if (afkStatus) {
         db.removeAfk(message.author.id);
-        const mins = Math.floor((Date.now() - afkStatus.timestamp) / 60000);
-        const wbEmbed = embed.build({
-          description: `__**Welcome Back |**__ <:emoji_16:1533860111704002665>\n> **Status Cleared**\n> ${message.author} is now back online!\n> ㅤYou were away for **${mins} mins**.`,
-          color: '#2b2d31',
-          thumbnail: message.author.displayAvatarURL({ dynamic: true })
-        });
-        message.reply({ embeds: [wbEmbed] }).catch(() => null);
+        const timeAgoStr = `<t:${Math.floor(afkStatus.timestamp / 1000)}:R>`;
+        const textContent = 
+          `# Welcome Back\n` +
+          `${message.author} removed their Afk\n` +
+          `**Was AFK for:** ${timeAgoStr}`;
+          
+        const wbDisplay = new TextDisplayBuilder().setContent(textContent);
+        const wbContainer = new ContainerBuilder().addTextDisplayComponents(wbDisplay);
+        message.reply({ components: [wbContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       }
 
       // 2. Check if mentioned users are AFK
@@ -254,11 +256,15 @@ export default {
           const mentionedAfk = db.getAfk(user.id);
           if (mentionedAfk && user.id !== message.author.id) {
             const timeAgoStr = `<t:${Math.floor(mentionedAfk.timestamp / 1000)}:R>`;
-            const mentionEmbed = embed.build({
-              description: `__**AFK Status |**__ <:emoji_16:1533860111704002665>\n> **User:** ${user}\n> **Reason:** ${mentionedAfk.reason}\n> ㅤAway since: ${timeAgoStr}`,
-              color: '#2b2d31'
-            });
-            message.reply({ embeds: [mentionEmbed] }).catch(() => null);
+            const textContent = 
+              `# User is AFK\n` +
+              `${user} is Afk\n` +
+              `**Reason:** ${mentionedAfk.reason}\n` +
+              `**Went AFK:** ${timeAgoStr}`;
+              
+            const mentionDisplay = new TextDisplayBuilder().setContent(textContent);
+            const mentionContainer = new ContainerBuilder().addTextDisplayComponents(mentionDisplay);
+            message.reply({ components: [mentionContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
           }
         });
       }
