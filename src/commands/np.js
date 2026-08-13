@@ -1,0 +1,273 @@
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import db from '../database.js';
+import embed from '../embed.js';
+import { isBotOwnerSync, parseDuration } from '../utils/helpers.js';
+
+export const commands = [
+  {
+    name: 'np',
+    description: 'Global No-Prefix Management System',
+    category: 'security',
+    permissions: [],
+    async executePrefix(message, args) {
+      const isOwner = isBotOwnerSync(message.author.id);
+      const isManager = db.isNpManager(message.author.id);
+      
+      if (!isOwner && !isManager) {
+        return message.reply({ content: '❌ You are not an authorized NP Manager.' }).catch(() => null);
+      }
+
+      const sub = args[0]?.toLowerCase();
+
+      if (!sub || sub === 'guide' || sub === 'help') {
+        return this.sendGuide(message);
+      }
+
+      if (sub === 'add') {
+        const type = args[1]?.toLowerCase();
+        if (type !== 'user' && type !== 'server') return message.reply({ content: '❌ Usage: `np add user <@user|id> [duration]` or `np add server <id> [duration]`' });
+        
+        let targetId = args[2];
+        if (!targetId) return message.reply({ content: '❌ Provide an ID or mention.' });
+        targetId = targetId.replace(/[<@!>]/g, '');
+
+        let durationRaw = args.slice(3).join(' ') || 'lifetime';
+        let expiresAt = null;
+        if (durationRaw.toLowerCase() !== 'lifetime') {
+          const ms = parseDuration(durationRaw);
+          if (!ms) return message.reply({ content: '❌ Invalid duration. Use formats like `1w`, `1m`, `lifetime`.' });
+          expiresAt = Date.now() + ms;
+        }
+
+        if (type === 'user') {
+          db.addNpUser(targetId, expiresAt, message.author.id);
+          return message.reply({ content: `✅ Successfully granted No-Prefix to User \`${targetId}\` for \`${durationRaw}\`.` });
+        } else {
+          db.addNpServer(targetId, expiresAt, message.author.id);
+          return message.reply({ content: `✅ Successfully granted No-Prefix to Server \`${targetId}\` for \`${durationRaw}\`.` });
+        }
+      }
+
+      if (sub === 'reset') {
+        const type = args[1]?.toLowerCase();
+        if (type !== 'user' && type !== 'server') return message.reply({ content: '❌ Usage: `np reset user <id>` or `np reset server <id>`' });
+        
+        let targetId = args[2];
+        if (!targetId) return message.reply({ content: '❌ Provide an ID or mention.' });
+        targetId = targetId.replace(/[<@!>]/g, '');
+
+        if (type === 'user') {
+          if (db.removeNpUser(targetId)) return message.reply({ content: `✅ Revoked No-Prefix from User \`${targetId}\`.` });
+          else return message.reply({ content: `❌ User \`${targetId}\` does not have No-Prefix.` });
+        } else {
+          if (db.removeNpServer(targetId)) return message.reply({ content: `✅ Revoked No-Prefix from Server \`${targetId}\`.` });
+          else return message.reply({ content: `❌ Server \`${targetId}\` does not have No-Prefix.` });
+        }
+      }
+
+      if (sub === 'list') {
+        return this.sendListPanel(message);
+      }
+
+      if (sub === 'manager' || sub === 'managers') {
+        const action = args[1]?.toLowerCase();
+        if (!action || action === 'list') return this.sendManagerList(message);
+
+        if (!isOwner) return message.reply({ content: '❌ Only the Bot Owner can modify NP Managers.' });
+        
+        let targetId = args[2];
+        if (!targetId) return message.reply({ content: '❌ Provide a user ID.' });
+        targetId = targetId.replace(/[<@!>]/g, '');
+
+        if (action === 'add') {
+          db.addNpManager(targetId);
+          return message.reply({ content: `✅ User \`${targetId}\` is now an NP Manager.` });
+        }
+        if (action === 'remove') {
+          db.removeNpManager(targetId);
+          return message.reply({ content: `✅ User \`${targetId}\` is no longer an NP Manager.` });
+        }
+      }
+
+      if (sub === 'cmds') {
+        const action = args[1]?.toLowerCase();
+        const cmdName = args[2]?.toLowerCase();
+        
+        if (action === 'pause') {
+          db.setNpPaused(true);
+          return message.reply({ content: `✅ NP System is now PAUSED globally.` });
+        }
+        if (action === 'unpause') {
+          db.setNpPaused(false);
+          return message.reply({ content: `✅ NP System is now ACTIVE globally.` });
+        }
+        
+        if (!cmdName) return message.reply({ content: '❌ Usage: `np cmds ban/unban <command>`' });
+
+        if (action === 'ban') {
+          if (db.banNpCommand(cmdName)) return message.reply({ content: `✅ Banned command \`${cmdName}\` from NP bypass.` });
+          else return message.reply({ content: `❌ Command \`${cmdName}\` is already banned.` });
+        }
+        if (action === 'unban') {
+          if (db.unbanNpCommand(cmdName)) return message.reply({ content: `✅ Unbanned command \`${cmdName}\` from NP bypass.` });
+          else return message.reply({ content: `❌ Command \`${cmdName}\` is not banned.` });
+        }
+      }
+
+      if (sub === 'show' || sub === 'check') {
+        let targetId = args[1];
+        if (!targetId) targetId = message.author.id;
+        targetId = targetId.replace(/[<@!>]/g, '');
+
+        const npUser = db.getNpUser(targetId);
+        if (!npUser) return message.reply({ content: `ℹ️ User \`${targetId}\` does not have NP status.` });
+        
+        let expStr = 'Lifetime (Expires: Never)';
+        if (npUser.expiresAt) {
+          expStr = `<t:${Math.floor(npUser.expiresAt/1000)}:R>`;
+        }
+        return message.reply({ content: `✅ User \`${targetId}\` has NP status.\nExpires: ${expStr}\nAppointed by: <@${npUser.appointedBy}>` });
+      }
+
+      // Fallback
+      return this.sendGuide(message);
+    },
+
+    async sendListPanel(message) {
+      const users = db.getAllNpUsers();
+      const servers = db.getAllNpServers();
+      const banned = db.getNpBannedCommands(); // Using this as placeholder for banned users if needed
+
+      let userLines = [];
+      let i = 1;
+      for (const [id, data] of Object.entries(users)) {
+        if (data.expiresAt && Date.now() > data.expiresAt) {
+          db.removeNpUser(id);
+          continue;
+        }
+        
+        let durStr = 'Lifetime';
+        let expStr = '(Expires: Never)';
+        if (data.expiresAt) {
+          const hoursLeft = Math.max(1, Math.floor((data.expiresAt - Date.now()) / (1000 * 60 * 60)));
+          if (hoursLeft > 24) durStr = `${Math.floor(hoursLeft/24)} Days`;
+          else durStr = `${hoursLeft} Hours`;
+          expStr = `(Expires: in ${durStr})`;
+        }
+
+        userLines.push(`**${i}.** <@${id}> ( \`${id}\` ) — **${durStr}**\n${expStr}`);
+        i++;
+      }
+
+      let serverLines = [];
+      i = 1;
+      for (const [id, data] of Object.entries(servers)) {
+        if (data.expiresAt && Date.now() > data.expiresAt) {
+          db.removeNpServer(id);
+          continue;
+        }
+        
+        let durStr = 'Lifetime';
+        let expStr = '(Expires: Never)';
+        if (data.expiresAt) {
+          const hoursLeft = Math.max(1, Math.floor((data.expiresAt - Date.now()) / (1000 * 60 * 60)));
+          if (hoursLeft > 24) durStr = `${Math.floor(hoursLeft/24)} Days`;
+          else durStr = `${hoursLeft} Hours`;
+          expStr = `(Expires: in ${durStr})`;
+        }
+        serverLines.push(`**${i}.** Server \`${id}\` — **${durStr}**\n${expStr}`);
+        i++;
+      }
+
+      const e = new EmbedBuilder()
+        .setColor('#2b2d31')
+        .setTitle('GLOBAL NO-PREFIX STATUS PANEL')
+        .addFields(
+          { name: `Granted Users (${userLines.length})`, value: userLines.join('\n\n') || '*None*' },
+          { name: `Granted Servers (${serverLines.length})`, value: serverLines.join('\n\n') || '*None*' },
+          { name: `Banned Users (0)`, value: '*None*' }
+        );
+
+      await message.reply({ embeds: [e] });
+    },
+
+    async sendManagerList(message) {
+      const managers = db.getNpManagers();
+      let lines = [];
+      
+      for (let i = 0; i < managers.length; i++) {
+        const id = managers[i];
+        lines.push(`**${i+1}.** <@${id}>\n( \`${id}\` ) — 🟢 Active •`);
+      }
+
+      const e = new EmbedBuilder()
+        .setColor('#2b2d31')
+        .setAuthor({ name: 'NP Managers List', iconURL: 'https://cdn.discordapp.com/emojis/1149959665803735161.webp' })
+        .setTitle('Active & Configured NP Managers')
+        .setDescription(lines.join('\n') || 'No NP Managers configured.')
+        .setFooter({ text: 'Athena Prime Unbypassable Security' });
+
+      await message.reply({ embeds: [e] });
+    },
+
+    async sendGuide(message) {
+      const e1 = new EmbedBuilder()
+        .setColor('#2b2d31')
+        .setAuthor({ name: 'NP Manager Guide (Page 1/2)', iconURL: 'https://cdn.discordapp.com/emojis/1149959665803735161.webp' })
+        .setDescription('Official Control & Analytics Guide for NP Managers\n\n**NP Access Management**\n> `np add user <@user | id> [duration]` — Grant No-Prefix to user\n> `np add server <guild_id> [duration]` — Grant No-Prefix to server\n> `np reset user <id>` — Remove No-Prefix from user\n> `np reset server <id>` — Remove No-Prefix from server\n\n**Command Ban Controls**\n> `np cmds ban <command>` — Ban a command from NP\n> `np cmds unban <command>` — Unban a command from NP\n> `np cmds pause` / `unpause` — Pause or unpause NP system\n\n**Bot Server Assets**\n> `!setguildavatar <url | attachment>` — Set server bot avatar\n> `!setguildbanner <url | attachment>` — Set server bot banner');
+
+      const e2 = new EmbedBuilder()
+        .setColor('#2b2d31')
+        .setAuthor({ name: 'NP Manager Guide (Page 2/2)', iconURL: 'https://cdn.discordapp.com/emojis/1149959665803735161.webp' })
+        .setDescription('Official Control & Analytics Guide for NP Managers\n\n**Bot Growth & Analytics Commands**\n> `bjoins` / `bjoin` / `botjoins` — View recent bot join statistics\n> `bleaves` / `bleave` / `botleaves` — View recent bot leave statistics\n> `bsummary` / `bjoinssummary` / `bgrowth` — View bot join & growth summary\n> `bcmds` / `bcmd` / `botcmds` — View command usage analytics & execution logs\n> `btopcmds` / `btop` / `bcmdusers` — View top executed commands & active users\n> `bservers` / `bmem` / `bping` — View active bot servers, memory & latency\n\n**View & Inspection Controls**\n> `ss` / `security status` — View security status (View Only)\n> `np actions [@user]` — View audit log of manager actions\n> `np manager list` / `np manager` — View active NP Managers\n> `np show` / `np check <@user>` — View active NP users & servers\n\n🔒 **Restrictions:** Cannot restart the bot, modify NP Managers, or edit security settings.')
+        .setFooter({ text: 'NP Manager System • Page 2 of 2' });
+
+      // We will just send page 1 with buttons (stubbed for now, full pagination can be added)
+      await message.reply({ embeds: [e1, e2] });
+    }
+  },
+  
+  // =====================================
+  // ANALYTICS STUBS (PREFIX-LESS SUPPORT)
+  // =====================================
+  {
+    name: 'bcmds',
+    aliases: ['bcmd', 'botcmds'],
+    description: 'View command usage analytics',
+    category: 'security',
+    permissions: [],
+    async executePrefix(message) {
+      if (!db.isNpManager(message.author.id) && !isBotOwnerSync(message.author.id)) return;
+      const stats = db.cache.botAnalytics?.cmds || {};
+      const sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]).slice(0, 10);
+      const lines = sorted.map((s, i) => `**${i+1}.** \`${s[0]}\` — ${s[1]} uses`);
+      
+      const e = new EmbedBuilder()
+        .setColor('#2b2d31')
+        .setTitle('Top 10 Global Command Usage')
+        .setDescription(lines.join('\n') || 'No commands tracked yet.');
+      message.reply({ embeds: [e] });
+    }
+  },
+  {
+    name: 'bservers',
+    aliases: ['bmem', 'bping'],
+    description: 'View active bot servers and memory',
+    category: 'security',
+    permissions: [],
+    async executePrefix(message) {
+      if (!db.isNpManager(message.author.id) && !isBotOwnerSync(message.author.id)) return;
+      
+      const memory = process.memoryUsage();
+      const memStr = `${(memory.heapUsed / 1024 / 1024).toFixed(2)} MB`;
+      const servers = message.client.guilds.cache.size;
+      const ping = message.client.ws.ping;
+      
+      const e = new EmbedBuilder()
+        .setColor('#2b2d31')
+        .setTitle('Bot System Metrics')
+        .setDescription(`> **Servers:** ${servers}\n> **Memory:** ${memStr}\n> **Latency:** ${ping}ms`);
+      message.reply({ embeds: [e] });
+    }
+  }
+];

@@ -40,7 +40,14 @@ const DEFAULT_SCHEMA = {
   likedSongs: {},    // userId -> [ { title, url, duration, artworkUrl } ]
   bannedServers: [], // global list of banned guild IDs
   stickyMessages: {}, // guildId -> { channelId -> { content, lastMessageId, lastSentAt } }
-  massRoles: {}      // guildId -> { roleId -> [userIds] }
+  massRoles: {},      // guildId -> { roleId -> [userIds] }
+  npManagers: [],     // global list of NP Manager user IDs
+  npUsers: {},        // userId -> { expiresAt, appointedBy, addedAt }
+  npServers: {},      // guildId -> { expiresAt, appointedBy, addedAt }
+  npBannedUsers: [],  // global list of user IDs banned from NP
+  npBannedCommands: [],// global list of command names banned from NP
+  npPaused: false,    // boolean to pause entire NP system
+  botAnalytics: { joins: 0, leaves: 0, cmds: {} } // global stats tracking
 };
 
 class Database {
@@ -87,6 +94,13 @@ class Database {
         this.cache.editRatings    = this.cache.editRatings    || {};
         this.cache.rateChannels   = this.cache.rateChannels   || {};
         this.cache.massRoles      = this.cache.massRoles      || {};
+        this.cache.npManagers     = this.cache.npManagers     || [];
+        this.cache.npUsers        = this.cache.npUsers        || {};
+        this.cache.npServers      = this.cache.npServers      || {};
+        this.cache.npBannedUsers  = this.cache.npBannedUsers  || [];
+        this.cache.npBannedCommands = this.cache.npBannedCommands || [];
+        this.cache.npPaused       = this.cache.npPaused       || false;
+        this.cache.botAnalytics   = this.cache.botAnalytics   || { joins: 0, leaves: 0, cmds: {} };
       } else {
         this.save();
       }
@@ -1444,8 +1458,131 @@ class Database {
       this.save();
     }
   }
+  // --- NP SYSTEM METHODS ---
+  
+  getNpManagers() {
+    return this.cache.npManagers || [];
+  }
+
+  isNpManager(userId) {
+    return (this.cache.npManagers || []).includes(userId);
+  }
+
+  addNpManager(userId) {
+    if (!this.cache.npManagers) this.cache.npManagers = [];
+    if (!this.cache.npManagers.includes(userId)) {
+      this.cache.npManagers.push(userId);
+      this.save();
+    }
+  }
+
+  removeNpManager(userId) {
+    if (this.cache.npManagers) {
+      this.cache.npManagers = this.cache.npManagers.filter(id => id !== userId);
+      this.save();
+    }
+  }
+
+  getNpUser(userId) {
+    const user = (this.cache.npUsers || {})[userId];
+    if (user && user.expiresAt && Date.now() > user.expiresAt) {
+      this.removeNpUser(userId);
+      return null;
+    }
+    return user || null;
+  }
+
+  getAllNpUsers() {
+    return this.cache.npUsers || {};
+  }
+
+  addNpUser(userId, expiresAt, appointedBy) {
+    if (!this.cache.npUsers) this.cache.npUsers = {};
+    this.cache.npUsers[userId] = {
+      expiresAt: expiresAt,
+      appointedBy: appointedBy,
+      addedAt: Date.now()
+    };
+    this.save();
+  }
+
+  removeNpUser(userId) {
+    if (this.cache.npUsers && this.cache.npUsers[userId]) {
+      delete this.cache.npUsers[userId];
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  getNpServer(guildId) {
+    const server = (this.cache.npServers || {})[guildId];
+    if (server && server.expiresAt && Date.now() > server.expiresAt) {
+      this.removeNpServer(guildId);
+      return null;
+    }
+    return server || null;
+  }
+
+  getAllNpServers() {
+    return this.cache.npServers || {};
+  }
+
+  addNpServer(guildId, expiresAt, appointedBy) {
+    if (!this.cache.npServers) this.cache.npServers = {};
+    this.cache.npServers[guildId] = {
+      expiresAt: expiresAt,
+      appointedBy: appointedBy,
+      addedAt: Date.now()
+    };
+    this.save();
+  }
+
+  removeNpServer(guildId) {
+    if (this.cache.npServers && this.cache.npServers[guildId]) {
+      delete this.cache.npServers[guildId];
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  isNpPaused() {
+    return !!this.cache.npPaused;
+  }
+
+  setNpPaused(paused) {
+    this.cache.npPaused = paused;
+    this.save();
+  }
+
+  getNpBannedCommands() {
+    return this.cache.npBannedCommands || [];
+  }
+
+  banNpCommand(commandName) {
+    if (!this.cache.npBannedCommands) this.cache.npBannedCommands = [];
+    const name = commandName.toLowerCase();
+    if (!this.cache.npBannedCommands.includes(name)) {
+      this.cache.npBannedCommands.push(name);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  unbanNpCommand(commandName) {
+    if (!this.cache.npBannedCommands) return false;
+    const name = commandName.toLowerCase();
+    const initialLen = this.cache.npBannedCommands.length;
+    this.cache.npBannedCommands = this.cache.npBannedCommands.filter(c => c !== name);
+    if (this.cache.npBannedCommands.length !== initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
 }
 
-const db = new Database();
-export default db;
-
+const dbInstance = new Database();
+export default dbInstance;

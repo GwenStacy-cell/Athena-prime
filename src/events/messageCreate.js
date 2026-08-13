@@ -1297,7 +1297,23 @@ export default {
     }
 
     // ==========================================
-    // 5. COMMAND ENGINE (PREFIX PARSER)
+    // 4.8 PREFIX-LESS: NP MANAGER SUITE
+    // ==========================================
+    if (msgCheck === 'np' || msgCheck.startsWith('np ')) {
+      const npCmd = commandMap.get('np');
+      if (npCmd) {
+        try {
+          const npArgs = message.content.trim().split(/ +/).slice(1);
+          await npCmd.executePrefix(message, npArgs);
+        } catch (error) {
+          console.error('Error executing np:', error);
+        }
+      }
+      return;
+    }
+
+    // ==========================================
+    // 5. COMMAND ENGINE (PREFIX PARSER & NO-PREFIX BYPASS)
     // ==========================================
     const botMention = `<@${message.client.user.id}>`;
     const botMentionSpace = `<@${message.client.user.id}> `;
@@ -1305,13 +1321,32 @@ export default {
     const botMentionNickSpace = `<@!${message.client.user.id}> `;
 
     let usedPrefix = null;
+    let isNpBypass = false;
+
     if (message.content.startsWith(prefix)) usedPrefix = prefix;
     else if (message.content.startsWith(botMentionSpace)) usedPrefix = botMentionSpace;
     else if (message.content.startsWith(botMentionNickSpace)) usedPrefix = botMentionNickSpace;
     else if (message.content.startsWith(botMention)) usedPrefix = botMention;
     else if (message.content.startsWith(botMentionNick)) usedPrefix = botMentionNick;
 
-    if (!usedPrefix) return;
+    // --- GLOBAL NO-PREFIX (NP) BYPASS ---
+    if (!usedPrefix && !db.isNpPaused()) {
+      const npUser = db.getNpUser(message.author.id);
+      const npServer = db.getNpServer(message.guild.id);
+      if (npUser || npServer) {
+        // Attempt to match the first word as a command
+        const firstWord = message.content.trim().split(/ +/)[0].toLowerCase();
+        if (commandMap.has(firstWord)) {
+          const bannedCmds = db.getNpBannedCommands();
+          if (!bannedCmds.includes(firstWord)) {
+            usedPrefix = ''; // No prefix used, bypass successful
+            isNpBypass = true;
+          }
+        }
+      }
+    }
+
+    if (usedPrefix === null) return;
 
     const args = message.content.slice(usedPrefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
@@ -1359,6 +1394,12 @@ export default {
       } else if (cmd.executePrefix) {
         await cmd.executePrefix(message, args);
       }
+
+      // Track successful command execution for NP analytics
+      if (!db.cache.botAnalytics) db.cache.botAnalytics = { joins: 0, leaves: 0, cmds: {} };
+      db.cache.botAnalytics.cmds[commandName] = (db.cache.botAnalytics.cmds[commandName] || 0) + 1;
+      db.save();
+
     } catch (error) {
       console.error(error);
       const errEmbed = embed.danger('Execution Error', `An unexpected error occurred while executing this command.\n\n\`\`\`js\n${error.message}\n\`\`\``);
