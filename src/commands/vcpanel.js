@@ -29,7 +29,9 @@ export const commands = [
       const connectedMembers = voiceChannel.members;
       const connectedTags = connectedMembers.map(m => `<@${m.id}>`).join(', ');
       
-      const textContent = 
+      const embed = new EmbedBuilder()
+        .setColor('#2b2d31')
+        .setDescription(
           `# Server Owner Voice | Control Panel\n\n` +
           `**Server Owner:** <@${message.guild.ownerId}> | **Voice Channel:** <#${voiceChannel.id}>\n` +
           `**Connected Members (${connectedMembers.size}):** ${connectedTags}\n\n` +
@@ -38,7 +40,8 @@ export const commands = [
           `\`VC Kick\` \`VC Ban\` \`VC Kick All\` \`VC Ban All\`\n` +
           `\`VC Unban\` \`VC Unban All\`\n` +
           `\`Deafen 1\` \`Undeafen 1\` \`Deafen All\` \`Undeafen All\`\n` +
-          `\`Lock VC\` \`Unlock VC\` \`Hide VC\` \`Unhide VC\``;
+          `\`Lock VC\` \`Unlock VC\` \`Hide VC\` \`Unhide VC\``
+        );
 
       const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('vcp_mute_all').setLabel('Mute All').setStyle(ButtonStyle.Secondary),
@@ -74,7 +77,7 @@ export const commands = [
       );
 
       const panelMsg = await message.channel.send({
-        content: textContent,
+        embeds: [embed],
         components: [row1, row2, row3, row4, row5]
       });
 
