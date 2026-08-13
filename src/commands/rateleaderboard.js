@@ -50,11 +50,10 @@ async function sendRateLeaderboard(context, page) {
     .filter(user => user.totalVotes > 0)
     .map(user => {
       user.averageRating = user.totalStars / user.totalVotes;
-      // Score calculation: simple total stars rewards both quality and quantity
       user.score = user.totalStars;
       return user;
     })
-    .sort((a, b) => b.score - a.score || b.averageRating - a.averageRating);
+    .sort((a, b) => b.averageRating - a.averageRating || b.totalVotes - a.totalVotes);
     
   if (leaderboard.length === 0) {
     const reply = { embeds: [embed.info('Rate Leaderboard', 'There are no rated edits yet! Use `!rate` to post an edit.')] };
@@ -85,7 +84,7 @@ async function sendRateLeaderboard(context, page) {
     title: '🏆 Edit Rating Leaderboard',
     description: description,
     color: guildConfig?.accentColor || '#FFD700',
-    footer: { text: `Page ${page} of ${totalPages} • Score is total stars received` }
+    footer: { text: `Page ${page} of ${totalPages} • Ranked by Highest Avg Rating` }
   });
   
   const row = new ActionRowBuilder();
