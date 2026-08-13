@@ -37,10 +37,12 @@ export const commands = [
       try {
         await target.setNickname(newName);
         
+        const cfg = (await import('../database.js')).default.getGuildConfig(message.guild?.id || '0');
+        const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+
         const successEmbed = new EmbedBuilder()
-          .setColor('#c6ff00') // Bright lime/yellow-green
-          .setDescription(`<:emoji_16:1521464002046328944> ${message.author} **Has Renamed** ${target} **|\n${newName}**`)
-          .setFooter({ text: 'Athena Prime Unbypassable Security' });
+          .setColor(accentInt)
+          .setDescription(`<a:AnyaYay:1537513785718476850> ${message.author} **Has Renamed** ${target} **|\n${newName}**`);
 
         await message.reply({ embeds: [successEmbed] });
       } catch (err) {
