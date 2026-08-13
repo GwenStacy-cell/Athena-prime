@@ -179,16 +179,21 @@ export const commands = [
         i++;
       }
 
-      const e = new EmbedBuilder()
-        .setColor('#2b2d31')
-        .setTitle('GLOBAL NO-PREFIX STATUS PANEL')
-        .addFields(
-          { name: `Granted Users (${userLines.length})`, value: userLines.join('\n\n') || '*None*' },
-          { name: `Granted Servers (${serverLines.length})`, value: serverLines.join('\n\n') || '*None*' },
-          { name: `Banned Users (0)`, value: '*None*' }
-        );
+      const cfg = db.getGuildConfig(message.guild?.id || '0');
+      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+      
+      const comps = [];
+      comps.push({ type: 10, content: `# GLOBAL NO-PREFIX STATUS PANEL` });
+      comps.push({ type: 14, divider: true });
+      
+      comps.push({ type: 10, content: `## **Granted Users (${userLines.length})**\n` + (userLines.join('\n\n') || '*None*') });
+      comps.push({ type: 10, content: `## **Granted Servers (${serverLines.length})**\n` + (serverLines.join('\n\n') || '*None*') });
+      comps.push({ type: 10, content: `## **Banned Users (0)**\n*None*` });
+      
+      comps.push({ type: 14, divider: true });
+      comps.push({ type: 10, content: '-# **Athena Bulletproof Security**' });
 
-      await message.reply({ embeds: [e] });
+      await message.reply({ components: [{ type: 17, accent_color: accentInt, components: comps }], flags: MessageFlags.IsComponentsV2 });
     },
 
     async sendManagerList(message) {
@@ -200,35 +205,51 @@ export const commands = [
         lines.push(`**${i+1}.** <@${id}>\n( \`${id}\` ) — 🟢 Active •`);
       }
 
-      const e = new EmbedBuilder()
-        .setColor('#2b2d31')
-        .setAuthor({ name: 'NP Managers List' })
-        .setTitle('Active & Configured NP Managers')
-        .setDescription(lines.join('\n') || 'No NP Managers configured.')
-        .setFooter({ text: 'Athena Prime Unbypassable Security' });
+      const cfg = db.getGuildConfig(message.guild?.id || '0');
+      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
 
-      await message.reply({ embeds: [e] });
+      const comps = [];
+      comps.push({ type: 10, content: `# NP Managers List\n## **Active & Configured NP Managers**` });
+      comps.push({ type: 14, divider: true });
+      comps.push({ type: 10, content: lines.join('\n') || 'No NP Managers configured.' });
+      comps.push({ type: 14, divider: true });
+      comps.push({ type: 10, content: '-# **Athena Bulletproof Security**' });
+
+      await message.reply({ components: [{ type: 17, accent_color: accentInt, components: comps }], flags: MessageFlags.IsComponentsV2 });
     },
 
     async sendGuide(message) {
-      const e1 = new EmbedBuilder()
-        .setColor('#2b2d31')
-        .setAuthor({ name: 'NP Manager Guide (Page 1/2)' })
-        .setDescription('Official Control & Analytics Guide for NP Managers\n\n### **NP Access Management**\n> `np add user <@user | id> [duration]` — Grant No-Prefix to user\n> `np add server <guild_id> [duration]` — Grant No-Prefix to server\n> `np reset user <id>` — Remove No-Prefix from user\n> `np reset server <id>` — Remove No-Prefix from server\n\n### **Command Ban Controls**\n> `np cmds ban <command>` — Ban a command from NP\n> `np cmds unban <command>` — Unban a command from NP\n> `np cmds pause` / `unpause` — Pause or unpause NP system\n\n### **Bot Server Assets**\n> `!setguildavatar <url | attachment>` — Set server bot avatar\n> `!setguildbanner <url | attachment>` — Set server bot banner\n\n---\n-# **Athena Bulletproof Security**');
+      const cfg = db.getGuildConfig(message.guild?.id || '0');
+      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
 
-      const e2 = new EmbedBuilder()
-        .setColor('#2b2d31')
-        .setAuthor({ name: 'NP Manager Guide (Page 2/2)' })
-        .setDescription('Official Control & Analytics Guide for NP Managers\n\n### **Bot Growth & Analytics Commands**\n> `bjoins` / `bjoin` / `botjoins` — View recent bot join statistics\n> `bleaves` / `bleave` / `botleaves` — View recent bot leave statistics\n> `bsummary` / `bjoinssummary` / `bgrowth` — View bot join & growth summary\n> `bcmds` / `bcmd` / `botcmds` — View command usage analytics & execution logs\n> `btopcmds` / `btop` / `bcmdusers` — View top executed commands & active users\n> `bservers` / `bmem` / `bping` — View active bot servers, memory & latency\n\n### **View & Inspection Controls**\n> `ss` / `security status` — View security status (View Only)\n> `np actions [@user]` — View audit log of manager actions\n> `np manager list` / `np manager` — View active NP Managers\n> `np show` / `np check <@user>` — View active NP users & servers\n\n🔒 **Restrictions:** Cannot restart the bot, modify NP Managers, or edit security settings.\n\n---\n-# **Athena Bulletproof Security**');
+      const buildGuideContainer = (page) => {
+        const comps = [];
+        
+        comps.push({ type: 10, content: `# NP Manager Guide (Page ${page}/2)\nOfficial Control & Analytics Guide for NP Managers` });
+        comps.push({ type: 14, divider: true });
+        
+        if (page === 1) {
+          comps.push({ type: 10, content: '## **NP Access Management**\n> `np add user <@user | id> [duration]` — Grant No-Prefix to user\n> `np add server <guild_id> [duration]` — Grant No-Prefix to server\n> `np reset user <id>` — Remove No-Prefix from user\n> `np reset server <id>` — Remove No-Prefix from server\n\n## **Command Ban Controls**\n> `np cmds ban <command>` — Ban a command from NP\n> `np cmds unban <command>` — Unban a command from NP\n> `np cmds pause` / `unpause` — Pause or unpause NP system\n\n## **Bot Server Assets**\n> `!setguildavatar <url | attachment>` — Set server bot avatar\n> `!setguildbanner <url | attachment>` — Set server bot banner' });
+        } else {
+          comps.push({ type: 10, content: '## **Bot Growth & Analytics Commands**\n> `bjoins` / `bjoin` / `botjoins` — View recent bot join statistics\n> `bleaves` / `bleave` / `botleaves` — View recent bot leave statistics\n> `bsummary` / `bjoinssummary` / `bgrowth` — View bot join & growth summary\n> `bcmds` / `bcmd` / `botcmds` — View command usage analytics & execution logs\n> `btopcmds` / `btop` / `bcmdusers` — View top executed commands & active users\n> `bservers` / `bmem` / `bping` — View active bot servers, memory & latency\n\n## **View & Inspection Controls**\n> `ss` / `security status` — View security status (View Only)\n> `np actions [@user]` — View audit log of manager actions\n> `np manager list` / `np manager` — View active NP Managers\n> `np show` / `np check <@user>` — View active NP users & servers\n\n🔒 **Restrictions:** Cannot restart the bot, modify NP Managers, or edit security settings.' });
+        }
 
-      // We will create buttons for pagination
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('np_guide_prev').setLabel('<').setStyle(ButtonStyle.Secondary).setDisabled(true),
-        new ButtonBuilder().setCustomId('np_guide_next').setLabel('>').setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('np_guide_del').setEmoji('🗑️').setStyle(ButtonStyle.Secondary)
-      );
+        comps.push({ type: 14, divider: true });
 
-      const reply = await message.reply({ embeds: [e1], components: [row] });
+        const btnPrev = new ButtonBuilder().setCustomId('np_guide_prev').setLabel('<').setStyle(ButtonStyle.Secondary).setDisabled(page === 1);
+        const btnNext = new ButtonBuilder().setCustomId('np_guide_next').setLabel('>').setStyle(ButtonStyle.Secondary).setDisabled(page === 2);
+        const btnDel = new ButtonBuilder().setCustomId('np_guide_del').setEmoji('🗑️').setStyle(ButtonStyle.Secondary);
+        
+        const row = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnDel);
+        comps.push(row.toJSON());
+        
+        comps.push({ type: 14, divider: true });
+        comps.push({ type: 10, content: '-# **Athena Bulletproof Security**' });
+
+        return { type: 17, accent_color: accentInt, components: comps };
+      };
+
+      const reply = await message.reply({ components: [buildGuideContainer(1)], flags: MessageFlags.IsComponentsV2 });
 
       const collector = reply.createMessageComponentCollector({ time: 300000 });
       let page = 1;
@@ -245,17 +266,14 @@ export const commands = [
         if (i.customId === 'np_guide_next') page = 2;
         if (i.customId === 'np_guide_prev') page = 1;
 
-        const newRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('np_guide_prev').setLabel('<').setStyle(ButtonStyle.Secondary).setDisabled(page === 1),
-          new ButtonBuilder().setCustomId('np_guide_next').setLabel('>').setStyle(ButtonStyle.Secondary).setDisabled(page === 2),
-          new ButtonBuilder().setCustomId('np_guide_del').setEmoji('🗑️').setStyle(ButtonStyle.Secondary)
-        );
-
-        await i.update({ embeds: [page === 1 ? e1 : e2], components: [newRow] }).catch(() => null);
+        await i.update({ components: [buildGuideContainer(page)], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
 
       collector.on('end', () => {
-        reply.edit({ components: [] }).catch(() => null);
+        // Just remove the interactive buttons, keep the rest
+        const staticContainer = buildGuideContainer(page);
+        staticContainer.components = staticContainer.components.filter(c => c.type !== 1); // strip rows
+        reply.edit({ components: [staticContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
     }
   },
