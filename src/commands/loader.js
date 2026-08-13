@@ -46,10 +46,12 @@ import { commands as setDeleteLogCmds } from './setdeletelog.js';
 import { commands as channelAdminCmds } from './channeladmin.js';
 import { commands as youtubeCmds } from './youtube.js';
 import { commands as snipeCmds } from './snipe.js';
+import { commands as vcpanelCmds } from './vcpanel.js';
 
 export const allCommands = [
   ...youtubeCmds,
   ...snipeCmds,
+  ...vcpanelCmds,
   ...channelAdminCmds,
   ...moderationCmds,
   ...securityCmds,
