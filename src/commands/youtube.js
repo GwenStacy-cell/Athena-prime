@@ -107,7 +107,7 @@ export const commands = [
             }
         }
 
-        const waitMsg = await message.reply({ embeds: [embed.info('Processing...', '<a:z_loading:1523671239564988528> Resolving channel ID and fetching data...')] });
+        const waitMsg = await message.reply({ embeds: [embed.info('Processing...', '<a:Loading:1537404628826587207> Resolving channel ID and fetching data...')] });
         
         const channelId = await resolveYouTubeChannelId(url);
         if (!channelId) {
