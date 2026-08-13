@@ -8,6 +8,10 @@ export default {
     if (!guild || !guild.client) return;
 
     try {
+      if (!db.cache.botAnalytics) db.cache.botAnalytics = { joins: 0, leaves: 0, cmds: {} };
+      db.cache.botAnalytics.joins++;
+      db.save();
+      
       const client = guild.client;
       let ownerId = process.env.OWNER_ID;
 

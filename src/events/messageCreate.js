@@ -1313,7 +1313,37 @@ export default {
     }
 
     // ==========================================
-    // 4.9 PREFIX-LESS: UR (User Rename)
+    // 4.9 PREFIX-LESS: BOT GROWTH & ANALYTICS
+    // ==========================================
+    const growthCmds = ['bjoins', 'bjoin', 'botjoins', 'bleaves', 'bleave', 'botleaves', 'bsummary', 'bgrowth', 'bjoinssummary', 'bcmds', 'bcmd', 'botcmds', 'btopcmds', 'btop', 'bcmdusers', 'bservers', 'bmem', 'bping'];
+    if (growthCmds.includes(msgCheck)) {
+      const gCmd = commandMap.get('bjoins'); // They all route to the same or mapped via command map
+      if (gCmd) {
+        try {
+          // Manually route to the correct executePrefix based on msgCheck alias mapping
+          const matchedCmd = commandMap.get(msgCheck);
+          if (matchedCmd) await matchedCmd.executePrefix(message, []);
+        } catch (error) {
+          console.error('Error executing growth command:', error);
+        }
+      }
+      return;
+    }
+
+    if (msgCheck === 'ss' || msgCheck === 'security status') {
+      const statusCmd = commandMap.get('status');
+      if (statusCmd) {
+        try {
+          await statusCmd.executePrefix(message, []);
+        } catch (err) {
+          console.error('Error executing prefix-less status:', err);
+        }
+      }
+      return;
+    }
+
+    // ==========================================
+    // 4.10 PREFIX-LESS: UR (User Rename)
     // ==========================================
     if (msgCheck === 'ur' || msgCheck.startsWith('ur ') ||
         msgCheck === 'rename' || msgCheck.startsWith('rename ')) {

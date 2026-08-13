@@ -49,10 +49,12 @@ import { commands as snipeCmds } from './snipe.js';
 import { commands as vcpanelCmds } from './vcpanel.js';
 import { commands as npCmds } from './np.js';
 import { commands as renameCmds } from './rename.js';
+import { commands as botgrowthCmds } from './botgrowth.js';
 
 export const allCommands = [
   ...npCmds,
   ...renameCmds,
+  ...botgrowthCmds,
   ...youtubeCmds,
   ...snipeCmds,
   ...vcpanelCmds,
