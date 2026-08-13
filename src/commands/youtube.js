@@ -41,7 +41,7 @@ export const commands = [
         let desc = '';
         notifiers.forEach((n, i) => {
           desc += `**${i + 1}. [${n.channelName || 'YouTube Channel'}](${n.youtubeUrl})**\n`;
-          desc += `<:emoji_51:1515256213192048690> Target Channel: <#${n.discordChannelId}>\n\n`;
+          desc += `<:Dark4luvontop:1533860091818803242> Target Channel: <#${n.discordChannelId}>\n\n`;
         });
 
         return message.reply({ embeds: [embed.info('YouTube Notifiers', desc)] });
