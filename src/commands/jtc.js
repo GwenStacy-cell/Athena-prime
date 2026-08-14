@@ -11,7 +11,10 @@ import {
   SeparatorBuilder,
   SectionBuilder,
   ThumbnailBuilder,
-  MessageFlags
+  MessageFlags,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle
 } from 'discord.js';
 import db from '../database.js';
 import embed from '../embed.js';
@@ -361,7 +364,6 @@ It is only visible to members in your voice channel.`)] });
   }
 
   // ── MODAL-BASED ACTIONS ──
-  const { ModalBuilder, TextInputBuilder, TextInputStyle } = await import('discord.js');
 
   if (value === 'jtc_name') {
     const modal = new ModalBuilder().setCustomId('jtc_rename_modal').setTitle('Rename Your Channel');
