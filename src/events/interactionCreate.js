@@ -1391,7 +1391,7 @@ export default {
         } catch (err) {
           console.error('[JTC SelectMenu]', err);
           if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: ' An error occurred.' }).catch(() => null);
+            await interaction.reply({ content: ' An error occurred.', ephemeral: true }).catch(() => null);
           }
         }
       }

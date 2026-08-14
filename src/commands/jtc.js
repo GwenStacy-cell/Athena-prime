@@ -226,8 +226,21 @@ export async function handleJtcSelectMenu(interaction) {
   let vcChannel = member.voice?.channel;
   
   if (!vcChannel) {
-    const jsonStr = JSON.stringify(interaction.message.components);
-    const match = jsonStr.match(/<#(\d+)>/);
+    // Safely extract channel ID from message text without JSON.stringify which causes circular errors
+    let text = interaction.message.content || '';
+    if (interaction.message.embeds && interaction.message.embeds.length > 0) {
+      text += ' ' + (interaction.message.embeds[0].description || '');
+    }
+    
+    // Components text (if any)
+    for (const row of interaction.message.components) {
+      for (const comp of row.components) {
+        if (comp.content) text += ' ' + comp.content;
+        if (comp.label) text += ' ' + comp.label;
+      }
+    }
+    
+    const match = text.match(/<#(\d+)>/);
     if (match) {
       vcChannel = guild.channels.cache.get(match[1]);
     }
