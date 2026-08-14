@@ -1323,7 +1323,7 @@ export default {
         try { await handleJtcBitrateSelect(interaction); } catch (e) { console.error('[JTC bitrate]', e); }
         return;
       }
-      if (interaction.customId.startsWith('jtc_')) {
+      if (interaction.isButton() && interaction.customId.startsWith('jtc_')) {
         try { await handleJtcButton(interaction); } catch (e) { console.error('[JTC button]', e); }
         return;
       }
