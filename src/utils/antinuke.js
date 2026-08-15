@@ -306,7 +306,10 @@ function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (eventType === 'antibot') return false;                // Only owner can add bots
   if (executor.bot) return isBotAuthorized(guild, executor.id);
   if (db.isExtraOwner(guild.id, executor.id)) return true;
-  if (db.isWhitelisted(guild, executor.id, eventType)) return true;
+  
+  const member = guild.members.cache.get(executor.id) || executor.id;
+  if (db.isWhitelisted(guild, member, eventType)) return true;
+  
   return false;
 }
 
@@ -340,7 +343,8 @@ function condemn(guildId, userId) {
 // ==========================================
 export async function handleAuditLogEntry(guild, entry) {
   const config = db.getGuildConfig(guild.id);
-  if (!config.antiNukeEnabled) return;
+  if (!config.securityEnabled) return;
+  const mods = config.antinukeModules || {};
 
   const { executor, action, executorId, targetId, createdAt } = entry;
   if (!executor || !executorId) return;
@@ -459,17 +463,32 @@ export async function handleAuditLogEntry(guild, entry) {
 
   switch (action) {
     // ── STRUCTURAL NUKES (Instant ban, no threshold required) ─────────
-    case AuditLogEvent.ChannelDelete:  eventType = 'Channel Deletion'; forceBan = true; break;
-    case AuditLogEvent.ChannelCreate:  eventType = 'Channel Creation'; forceBan = true; break;
-    case AuditLogEvent.RoleDelete:     eventType = 'Role Deletion';    forceBan = true; break;
-    case AuditLogEvent.RoleCreate:     eventType = 'Role Creation';    forceBan = true; break;
-    case AuditLogEvent.EmojiDelete:    eventType = 'Emoji Deletion';   forceBan = true; break;
-    case AuditLogEvent.EmojiCreate:    eventType = 'Emoji Creation';   forceBan = true; break;
-    case AuditLogEvent.WebhookDelete:  eventType = 'Webhook Deletion'; forceBan = true; break;
-    case AuditLogEvent.WebhookCreate:  eventType = 'Webhook Creation'; forceBan = true; break;
+    case AuditLogEvent.ChannelDelete:
+      if (!mods.antiChannelDelete) return;
+      eventType = 'Channel Deletion'; forceBan = true; break;
+    case AuditLogEvent.ChannelCreate:
+      if (!mods.antiChannelCreate) return;
+      eventType = 'Channel Creation'; forceBan = true; break;
+    case AuditLogEvent.RoleDelete:
+      if (!mods.antiRoleDelete) return;
+      eventType = 'Role Deletion';    forceBan = true; break;
+    case AuditLogEvent.RoleCreate:
+      if (!mods.antiRoleCreate) return;
+      eventType = 'Role Creation';    forceBan = true; break;
+    case AuditLogEvent.EmojiDelete:
+      if (!mods.antiEmojiDelete) return;
+      eventType = 'Emoji Deletion';   forceBan = true; break;
+    case AuditLogEvent.EmojiCreate:
+      if (!mods.antiEmojiCreate) return;
+      eventType = 'Emoji Creation';   forceBan = true; break;
+    case AuditLogEvent.WebhookDelete:
+    case AuditLogEvent.WebhookCreate:
+      if (!mods.antiWebhooks) return;
+      eventType = 'Webhook Modification'; forceBan = true; break;
 
     // ── BOT ADD — Double ban: the bot AND the person who added it ─────
     case AuditLogEvent.BotAdd: {
+      if (!mods.antiBotAdd) return;
       if (!isAuthorized(guild, executor, 'antibot')) {
         // Prevent Athena from banning herself, but still ban the unauthorized admin
         if (targetId !== guild.client.user.id) {
@@ -485,18 +504,21 @@ export async function handleAuditLogEntry(guild, entry) {
 
     // ── MASS KICKS — ZERO TOLERANCE ──────────────────────────────────
     case AuditLogEvent.MemberKick:
+      if (!mods.antiKick) return;
       eventType = 'Member Kick';
       forceBan = true; // Zero tolerance — 1 kick from non-whitelisted = instant ban
       break;
 
     // ── MASS BANS — ZERO TOLERANCE ───────────────────────────────────
     case AuditLogEvent.MemberBanAdd:
+      if (!mods.antiBan) return;
       eventType = 'Member Ban';
       forceBan = true; // Zero tolerance — 1 ban from non-whitelisted = instant ban
       break;
 
     // ── UNBAN GUARD — Instantly re-ban if nuker's ban is removed ─────
     case AuditLogEvent.MemberUnban: {
+      if (!mods.antiUnban) return;
       const recentBan = recentBans.get(`${guild.id}:${targetId}`);
       if (recentBan) {
         guild.members.ban(targetId, { reason: 'Athena Anti-Nuke: Re-applying removed ban' }).catch(() => null);
@@ -510,6 +532,7 @@ export async function handleAuditLogEntry(guild, entry) {
 
     // ── ROLE PERMISSION ESCALATION ────────────────────────────────────
     case AuditLogEvent.RoleUpdate: {
+      if (!mods.antiRolePermUpdate && !mods.antiRoleUpdate) return;
       const permsChange = entry.changes?.find(c => c.key === 'permissions');
       if (!permsChange) return;
       const oldPerms = new PermissionsBitField(BigInt(permsChange.old || 0));
@@ -522,6 +545,7 @@ export async function handleAuditLogEntry(guild, entry) {
 
     // ── UNAUTHORIZED DANGEROUS ROLE GRANT ─────────────────────────────
     case AuditLogEvent.MemberRoleUpdate: {
+      if (!mods.antiMemberRoleUpdate) return;
       const rolesChange = entry.changes?.find(c => c.key === '$add');
       if (!rolesChange?.new?.length) return;
       const dangerous = rolesChange.new.some(rObj => {
@@ -536,6 +560,7 @@ export async function handleAuditLogEntry(guild, entry) {
 
     // ── SERVER SETTINGS TAMPERING ─────────────────────────────────────
     case AuditLogEvent.GuildUpdate:
+      if (!mods.antiServerUpdate) return;
       eventType = 'Server Settings Tampering';
       forceBan = false;
       break;

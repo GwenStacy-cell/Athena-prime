@@ -162,11 +162,41 @@ class Database {
         antiInviteEnabled: true,
         raidMode: false,
         antiNukeEnabled: true,
+        securityEnabled: false,
+        antinukeModules: {
+          antiRoleCreate: true,
+          antiRoleDelete: true,
+          antiRoleUpdate: true,
+          antiRolePermUpdate: true,
+          antiMemberRoleUpdate: true,
+          antiRoleReorder: true,
+          antiChannelCreate: true,
+          antiChannelDelete: true,
+          antiChannelUpdate: true,
+          antiChannelPermUpdate: true,
+          antiChannelReorder: true,
+          antiChannelNameMod: true,
+          antiEmojiCreate: true,
+          antiEmojiDelete: true,
+          antiEmojiUpdate: true,
+          antiWebhooks: true,
+          antiBotAdd: true,
+          antiServerUpdate: true,
+          antiBan: true,
+          antiKick: true,
+          antiUnban: true, // Replaced Invite with Unban in standard
+          antiInvite: true,
+          antiScheduledEvents: true,
+          antiMemberPurge: true,
+          antiMassBan: true,
+          antiAutomodUpdate: true,
+          antiAppCommands: true
+        },
         antiNukePunishment: 'ban',
         antiNukeThreshold: 1,
         maxWarnings: 3,
         blacklistWords: [],
-        whitelist: [],
+        whitelist: { users: {}, roles: {} },
         allowedLinks: [],
         accentColor: null,
         rrDmsEnabled: true,
@@ -198,19 +228,34 @@ class Database {
       let updated = false;
 
       if (cfg.antiNukeEnabled === undefined) { cfg.antiNukeEnabled = true; updated = true; }
+      if (cfg.securityEnabled === undefined) { cfg.securityEnabled = false; updated = true; }
+      if (cfg.antinukeModules === undefined) {
+        cfg.antinukeModules = {
+          antiRoleCreate: true, antiRoleDelete: true, antiRoleUpdate: true, antiRolePermUpdate: true, antiMemberRoleUpdate: true, antiRoleReorder: true,
+          antiChannelCreate: true, antiChannelDelete: true, antiChannelUpdate: true, antiChannelPermUpdate: true, antiChannelReorder: true, antiChannelNameMod: true,
+          antiEmojiCreate: true, antiEmojiDelete: true, antiEmojiUpdate: true, antiWebhooks: true, antiBotAdd: true, antiServerUpdate: true,
+          antiBan: true, antiKick: true, antiUnban: true, antiInvite: true, antiScheduledEvents: true, antiMemberPurge: true,
+          antiMassBan: true, antiAutomodUpdate: true, antiAppCommands: true
+        };
+        updated = true;
+      }
       if (cfg.maxWarnings === undefined) { cfg.maxWarnings = 3; updated = true; }
       if (cfg.blacklistWords === undefined) { cfg.blacklistWords = []; updated = true; }
-      if (cfg.whitelist === undefined) { 
-        cfg.whitelist = {}; 
+      if (cfg.whitelist === undefined || Array.isArray(cfg.whitelist) || !cfg.whitelist.users) { 
+        // Migrate old array format or old object format to granular object format
+        const oldData = cfg.whitelist;
+        cfg.whitelist = { users: {}, roles: {} }; 
+        if (Array.isArray(oldData)) {
+          oldData.forEach(id => {
+            cfg.whitelist.users[id] = { modules: ['all'], triggerLimit: 0, currentUsage: 0 };
+          });
+        } else if (typeof oldData === 'object' && oldData !== null) {
+          Object.keys(oldData).forEach(id => {
+            // Keep old format if it was the string array type from the last update
+            cfg.whitelist.users[id] = { modules: ['all'], triggerLimit: 0, currentUsage: 0 };
+          });
+        }
         updated = true; 
-      } else if (Array.isArray(cfg.whitelist)) {
-        // Migrate old array format to granular object format
-        const oldArray = cfg.whitelist;
-        cfg.whitelist = {};
-        oldArray.forEach(id => {
-          cfg.whitelist[id] = ['all'];
-        });
-        updated = true;
       }
       if (cfg.autonick === undefined) { cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' }; updated = true; }
       else if (cfg.autonick.layout === undefined) { cfg.autonick.layout = '{name}'; updated = true; }
@@ -351,8 +396,9 @@ class Database {
   }
 
   // Whitelist Manager
-  isWhitelisted(guild, userId, eventType = 'all') {
-    if (!guild) return false;
+  isWhitelisted(guild, memberOrId, eventType = 'all') {
+    if (!guild || !memberOrId) return false;
+    const userId = typeof memberOrId === 'string' ? memberOrId : memberOrId.id;
     if (userId === guild.ownerId) return true; // Owner is always immune/whitelisted
     
     // Bot owner is ALWAYS whitelisted/immune
@@ -363,66 +409,84 @@ class Database {
     if (this.isExtraOwner(guild.id, userId)) return true;
 
     const config = this.getGuildConfig(guild.id);
-    const userEvents = config.whitelist[userId];
-    if (!userEvents) return false;
+    if (!config.whitelist) return false;
+    if (!config.securityEnabled) return true; // If security is globally disabled, everyone is effectively whitelisted/allowed
 
-    // 'all' grants immunity to everything
-    return userEvents.includes('all') || userEvents.includes(eventType);
-  }
+    let wData = null;
+    let isUserWhitelist = false;
+    let targetId = null;
+    let typeStr = null;
 
-  addWhitelist(guildId, userId, events = ['all']) {
-    const config = this.getGuildConfig(guildId);
-    if (!config.whitelist) config.whitelist = {};
-    if (!config.whitelist[userId]) config.whitelist[userId] = [];
-
-    const userEvents = config.whitelist[userId];
-    let changed = false;
-
-    for (const event of events) {
-      if (!userEvents.includes(event)) {
-        userEvents.push(event);
-        changed = true;
+    if (config.whitelist.users && config.whitelist.users[userId]) {
+      const uData = config.whitelist.users[userId];
+      if (uData.modules.includes('all') || uData.modules.includes(eventType)) {
+        wData = uData;
+        isUserWhitelist = true;
+        targetId = userId;
+        typeStr = 'users';
       }
     }
 
-    if (changed) {
-      this.updateGuildConfig(guildId, { whitelist: config.whitelist });
-      return true;
-    }
-    return false;
-  }
-
-  removeWhitelist(guildId, userId, events = ['all']) {
-    const config = this.getGuildConfig(guildId);
-    if (!config.whitelist || !config.whitelist[userId]) return false;
-
-    if (events.includes('all')) {
-      delete config.whitelist[userId];
-      this.updateGuildConfig(guildId, { whitelist: config.whitelist });
-      return true;
-    }
-
-    const userEvents = config.whitelist[userId];
-    let changed = false;
-
-    for (const event of events) {
-      const index = userEvents.indexOf(event);
-      if (index !== -1) {
-        userEvents.splice(index, 1);
-        changed = true;
+    if (!wData && typeof memberOrId === 'object' && memberOrId.roles && config.whitelist.roles) {
+      for (const [roleId, rData] of Object.entries(config.whitelist.roles)) {
+        if (memberOrId.roles.cache.has(roleId)) {
+          if (rData.modules.includes('all') || rData.modules.includes(eventType)) {
+            wData = rData;
+            targetId = roleId;
+            typeStr = 'roles';
+            break;
+          }
+        }
       }
     }
 
-    if (userEvents.length === 0) {
-      delete config.whitelist[userId];
-      changed = true;
-    }
+    if (!wData) return false;
 
-    if (changed) {
-      this.updateGuildConfig(guildId, { whitelist: config.whitelist });
-      return true;
+    // Trigger limit check (0 means infinite)
+    if (wData.triggerLimit > 0) {
+      if (wData.currentUsage >= wData.triggerLimit) {
+        // Limit exceeded, delete entry
+        delete config.whitelist[typeStr][targetId];
+        this.updateGuildConfig(guild.id, { whitelist: config.whitelist });
+        return false;
+      }
+      
+      // Valid action, increment usage
+      wData.currentUsage++;
+      this.updateGuildConfig(guild.id, { whitelist: config.whitelist });
     }
-    return false;
+    return true;
+  }
+
+  getWhitelist(guildId, targetId, type = 'users') {
+    const config = this.getGuildConfig(guildId);
+    if (!config.whitelist || !config.whitelist[type]) return null;
+    return config.whitelist[type][targetId] || null;
+  }
+
+  getAllWhitelists(guildId) {
+    const config = this.getGuildConfig(guildId);
+    if (!config.whitelist) return { users: {}, roles: {} };
+    return {
+      users: config.whitelist.users || {},
+      roles: config.whitelist.roles || {}
+    };
+  }
+
+  updateWhitelist(guildId, targetId, type, data) {
+    // type is 'users' or 'roles'
+    const config = this.getGuildConfig(guildId);
+    if (!config.whitelist) config.whitelist = { users: {}, roles: {} };
+    if (!config.whitelist[type]) config.whitelist[type] = {};
+    
+    if (data === null) {
+      delete config.whitelist[type][targetId];
+    } else {
+      config.whitelist[type][targetId] = data;
+    }
+    
+    this.updateGuildConfig(guildId, { whitelist: config.whitelist });
+    return true;
   }
 
   // Blacklist Words Manager

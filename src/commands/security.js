@@ -371,74 +371,69 @@ export const commands = [
   // --- WHITELIST COMMAND ---
   {
     name: 'whitelist',
-    description: 'Manages whitelisted members who are immune to specific bot filters.',
+    aliases: ['wl'],
+    description: 'Manage Antinuke Whitelist for a User or Role.',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
     options: [
       {
-        name: 'action',
-        description: 'Choose whitelist action',
-        type: 3,
-        required: true,
-        choices: [
-          { name: 'Add Member', value: 'add' },
-          { name: 'Remove Member', value: 'remove' },
-          { name: 'List Members', value: 'list' }
-        ]
-      },
-      {
-        name: 'user',
-        description: 'Target member for add/remove actions',
-        type: 6,
-        required: false
-      },
-      {
-        name: 'events',
-        description: 'System to whitelist them for',
-        type: 3,
-        required: false,
-        choices: [
-          { name: 'All Systems', value: 'all' },
-          { name: 'Anti-Nuke (Bans, Kicks, Channels, Roles)', value: 'antinuke' },
-          { name: 'Anti-Bot (Unauthorized Bots)', value: 'antibot' },
-          { name: 'Anti-Spam (Mass Messages, Bad Words)', value: 'antispam' },
-          { name: 'Anti-Link (Malicious/External Links)', value: 'antilink' },
-          { name: 'Anti-Invite (Discord Promos)', value: 'antiinvite' },
-          { name: 'Quarantine Immunity', value: 'quarantine' }
-        ]
+        name: 'target',
+        description: 'Target User or Role to manage whitelist',
+        type: 9, // Mentionable
+        required: true
       }
     ],
     async executePrefix(message, args) {
-      const action = args[0]?.toLowerCase();
-      const target = message.mentions.members.first();
-      
-      if (!action || (action !== 'list' && !target)) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!whitelist add <@user> [events...]\`, \`!whitelist remove <@user> [events...]\`, or \`!whitelist list\``)] });
+      if (!args[0]) {
+        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!whitelist <@user|@role>\``)] });
       }
 
-      // Extract events from arguments (skip action and ping)
-      let events = args.slice(2).map(e => e.toLowerCase().trim()).filter(e => e);
-      if (events.length === 0) events = ['all'];
+      const targetUser = message.mentions.users.first();
+      const targetRole = message.mentions.roles.first();
 
-      const result = await handleWhitelist(message.guild, message.member, action, target?.user, events);
-      await message.reply({ embeds: [result.embed] });
+      let targetId, type;
+      if (targetUser) {
+        targetId = targetUser.id;
+        type = 'users';
+      } else if (targetRole) {
+        targetId = targetRole.id;
+        type = 'roles';
+      } else {
+        // Fallback to checking if they provided an ID directly
+        const rawId = args[0].replace(/[^0-9]/g, '');
+        if (message.guild.roles.cache.has(rawId)) {
+          targetId = rawId;
+          type = 'roles';
+        } else {
+          // Assume user ID
+          targetId = rawId;
+          type = 'users';
+        }
+        
+        if (!rawId) {
+          return message.reply({ embeds: [embed.warn('Invalid Target', 'Please mention a valid User or Role.')] });
+        }
+      }
+
+      const panel = await getWhitelistPanel(message.guild, targetId, type);
+      await message.reply(panel);
     },
     async executeSlash(interaction) {
-      const action = interaction.options.getString('action');
-      const targetUser = interaction.options.getUser('user');
-      const eventsStr = interaction.options.getString('events');
-
-      if (action !== 'list' && !targetUser) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user parameter for this action.`)] });
+      const target = interaction.options.getMentionable('target');
+      
+      let targetId, type;
+      if (target.user || !target.name) {
+        // It's a user
+        targetId = target.id;
+        type = 'users';
+      } else {
+        // It's a role
+        targetId = target.id;
+        type = 'roles';
       }
 
-      let events = ['all'];
-      if (eventsStr) {
-        events = eventsStr.split(' ').map(e => e.toLowerCase().trim()).filter(e => e);
-      }
-
-      const result = await handleWhitelist(interaction.guild, interaction.member, action, targetUser, events);
-      await interaction.reply({ embeds: [result.embed] });
+      const panel = await getWhitelistPanel(interaction.guild, targetId, type);
+      await interaction.reply(panel);
     }
   },
 
@@ -1132,6 +1127,7 @@ export const commands = [
   // --- SECURITY COMMAND --- Enable/Disable ALL shields at once
   {
     name: 'security',
+    aliases: ['ss'],
     description: 'Enables or disables ALL Athena Prime security features at once. (Bot Owner / Server Owner only)',
     category: 'security',
     permissions: [],
@@ -1143,7 +1139,8 @@ export const commands = [
         required: true,
         choices: [
           { name: 'Enable All Security', value: 'enable_all' },
-          { name: 'Disable All Security', value: 'disable_all' }
+          { name: 'Disable All Security', value: 'disable_all' },
+          { name: 'Security Status', value: 'status' }
         ]
       }
     ],
@@ -1152,19 +1149,46 @@ export const commands = [
       if (!allowed) {
         return message.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.')] });
       }
-      const sub = args.join(' ').toLowerCase().trim();
+
+      // Check if they used the `!ss` alias directly
+      const cmdName = message.content.slice(process.env.DEFAULT_PREFIX?.length || 1).split(/ +/)[0].toLowerCase();
+      let sub = args.join(' ').toLowerCase().trim();
+      if (cmdName === 'ss') {
+        sub = 'status';
+      }
+
       const enable = (sub === 'enable all' || sub === 'enable_all');
       const disable = (sub === 'disable all' || sub === 'disable_all');
-      if (!enable && !disable) {
-        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!security enable all\` or \`!security disable all\``)] });
+      const status = (sub === 'status');
+      
+      if (!enable && !disable && !status) {
+        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!security enable all\`, \`!security disable all\`, or \`!security status\``)] });
+      }
+
+      if (status) {
+        const panel = await getSecurityStatusPanel(message.guild);
+        return message.reply(panel);
       }
 
       if (enable) {
+        const config = db.getGuildConfig(message.guild.id);
+        if (config.securityEnabled) {
+          return message.reply({ embeds: [embed.warn('Security Active', 'Security is already enabled on this server.')] });
+        }
+        if (message.guild.memberCount < 200 && !isBotOwnerSync(message.author.id)) {
+          return message.reply({ embeds: [embed.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*')] });
+        }
+
         const msg = await message.reply({ embeds: [embed.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**')] });
         await runSecurityEnableSequence(message.guild, async (e) => {
           await msg.edit({ embeds: [e] }).catch(() => null);
         });
-      } else {
+      } else if (disable) {
+        const config = db.getGuildConfig(message.guild.id);
+        if (!config.securityEnabled) {
+          return message.reply({ embeds: [embed.warn('Security Inactive', 'Security is already disabled on this server.')] });
+        }
+
         const result = await handleSecurityToggleAll(message.guild, message.member, false);
         await message.reply({ embeds: [result.embed] });
       }
@@ -1176,13 +1200,33 @@ export const commands = [
       }
       const action = interaction.options.getString('action');
       const enable = action === 'enable_all';
+      const disable = action === 'disable_all';
+      const status = action === 'status';
+
+      if (status) {
+        const panel = await getSecurityStatusPanel(interaction.guild);
+        return interaction.reply(panel);
+      }
 
       if (enable) {
+        const config = db.getGuildConfig(interaction.guild.id);
+        if (config.securityEnabled) {
+          return interaction.reply({ embeds: [embed.warn('Security Active', 'Security is already enabled on this server.')] });
+        }
+        if (interaction.guild.memberCount < 200 && !isBotOwnerSync(interaction.user.id)) {
+          return interaction.reply({ embeds: [embed.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*')] });
+        }
+
         await interaction.reply({ embeds: [embed.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**')] });
         await runSecurityEnableSequence(interaction.guild, async (e) => {
           await interaction.editReply({ embeds: [e] }).catch(() => null);
         });
-      } else {
+      } else if (disable) {
+        const config = db.getGuildConfig(interaction.guild.id);
+        if (!config.securityEnabled) {
+          return interaction.reply({ embeds: [embed.warn('Security Inactive', 'Security is already disabled on this server.')] });
+        }
+
         const result = await handleSecurityToggleAll(interaction.guild, interaction.member, false);
         await interaction.reply({ embeds: [result.embed] });
       }
@@ -1986,46 +2030,125 @@ async function handleRaidMode(guild, moderator, mode) {
   }
 }
 
-async function handleWhitelist(guild, moderator, action, targetUser, events = ['all']) {
-  const allowedEvents = ['all', 'antinuke', 'antibot', 'antispam', 'antilink', 'antiinvite', 'quarantine'];
-  const invalidEvents = events.filter(e => !allowedEvents.includes(e));
-
-  if (invalidEvents.length > 0 && action !== 'list') {
-    return { embed: embed.warn('Invalid Events', `The following events are not recognized: \`${invalidEvents.join(', ')}\`\n\n**Allowed Events:** \`${allowedEvents.join(', ')}\``) };
-  }
-
-  if (action === 'add') {
-    const success = db.addWhitelist(guild.id, targetUser.id, events);
-    if (success) {
-      logToSecurityChannel(guild, embed.log('Whitelist Added', `Administrator **${moderator.user.tag}** granted **${targetUser.tag}** immunity to: \`${events.join(', ')}\``, [], 'success'));
-      return { embed: embed.success('Whitelist Added', `Successfully whitelisted **${targetUser.tag}** for: \`${events.join(', ')}\`\nThey are now immune to those filters.`) };
-    } else {
-      return { embed: embed.info('Already Whitelisted', `**${targetUser.tag}** already has those exact whitelisted events.`) };
-    }
-  } else if (action === 'remove') {
-    const success = db.removeWhitelist(guild.id, targetUser.id, events);
-    if (success) {
-      logToSecurityChannel(guild, embed.log('Whitelist Removed', `Administrator **${moderator.user.tag}** removed whitelist from **${targetUser.tag}** for: \`${events.join(', ')}\``, [], 'warning'));
-      return { embed: embed.success('Whitelist Removed', `Successfully removed **${targetUser.tag}** from the whitelist for: \`${events.join(', ')}\``) };
-    } else {
-      return { embed: embed.warn('Not Whitelisted', `**${targetUser.tag}** is not whitelisted for those events.`) };
-    }
+export async function getWhitelistPanel(guild, targetId, type) {
+  const wData = db.getWhitelist(guild.id, targetId, type) || { modules: [], triggerLimit: 0, currentUsage: 0 };
+  
+  // Try to resolve name
+  let targetName = 'Unknown Target';
+  if (type === 'users') {
+    const member = await guild.members.fetch(targetId).catch(() => null);
+    if (member) targetName = member.user.tag;
+    else targetName = `<@${targetId}>`;
   } else {
-    const config = db.getGuildConfig(guild.id);
-    const wlMap = config.whitelist || {};
-    const userIds = Object.keys(wlMap);
-
-    if (userIds.length === 0) {
-      return { embed: embed.info('Whitelist Empty', `There are no custom whitelisted members in this guild. The owner <@${guild.ownerId}> is always immune.`) };
-    }
-    
-    let formattedList = userIds.map(id => {
-      const evs = wlMap[id].join(', ');
-      return `• <@${id}> (ID: \`${id}\`) — **Events:** \`${evs}\``;
-    }).join('\n');
-    
-    return { embed: embed.info(' Security Whitelist', `Whitelisted users immune to specific Auto-Mod and Firewall filters:\n\n**Server Owner (Always Immune):** <@${guild.ownerId}>\n\n**Custom Whitelist:**\n${formattedList}`) };
+    const role = guild.roles.cache.get(targetId);
+    if (role) targetName = role.name;
+    else targetName = `<@&${targetId}>`;
   }
+
+  const modLabels = {
+    antiRoleCreate: 'Anti Role Create',
+    antiRoleDelete: 'Anti Role Delete',
+    antiRoleUpdate: 'Anti Role Update',
+    antiRolePermUpdate: 'Anti Role Perm Update',
+    antiMemberRoleUpdate: 'Anti Member Role Update',
+    antiRoleReorder: 'Anti Role Reorder',
+    antiChannelCreate: 'Anti Channel Create',
+    antiChannelDelete: 'Anti Channel Delete',
+    antiChannelUpdate: 'Anti Channel Update',
+    antiChannelPermUpdate: 'Anti Channel Perm Update',
+    antiChannelReorder: 'Anti Channel Reorder',
+    antiChannelNameMod: 'Anti Channel Name Mod',
+    antiEmojiCreate: 'Anti Emoji Create',
+    antiEmojiDelete: 'Anti Emoji Delete',
+    antiEmojiUpdate: 'Anti Emoji Update',
+    antiWebhooks: 'Anti Webhooks',
+    antiBotAdd: 'Anti Bot Add',
+    antiServerUpdate: 'Anti Server Update',
+    antiBan: 'Anti Ban',
+    antiKick: 'Anti Kick',
+    antiUnban: 'Anti Unban',
+    antiInvite: 'Anti Invite'
+  };
+
+  const emojiOn = '<:emoji_16:1533860111704002665>'; // Green Check
+  const emojiOff = '<a:alert1:1533860044154732704>'; // Red alert / X
+  
+  const modulesKeys = Object.keys(modLabels);
+  
+  let col1 = '';
+  let col2 = '';
+  
+  for (let i = 0; i < modulesKeys.length; i++) {
+    const k = modulesKeys[i];
+    const label = modLabels[k];
+    const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
+    const displayStr = `${isEnabled ? emojiOn : emojiOff} **${label}**`;
+    
+    if (i % 2 === 0) col1 += displayStr + '\n';
+    else col2 += displayStr + '\n';
+  }
+
+  const limitText = wData.triggerLimit === 0 ? 'Infinite' : `${wData.triggerLimit - wData.currentUsage} actions remaining`;
+
+  const panelEmbed = {
+    color: 0x2B2D31,
+    author: {
+      name: 'WHITELIST ACCESS',
+      icon_url: guild.client.user.displayAvatarURL()
+    },
+    title: `Whitelist Config: ${targetName}`,
+    description: `Configure immune modules for this ${type.slice(0, -1)}.\n\n**Current Trigger Limit:** \`${limitText}\``,
+    fields: [
+      { name: 'MODULES', value: col1, inline: true },
+      { name: '\u200B', value: col2, inline: true }
+    ],
+    footer: { text: '-# **Athena Bulletproof Security**' }
+  };
+
+  // Build the String Select Menu for toggling modules
+  // Discord allows max 25 options per select menu. We have 22.
+  const options = modulesKeys.map(k => {
+    const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
+    return {
+      label: modLabels[k],
+      value: k,
+      emoji: isEnabled ? { id: '1533860111704002665' } : { id: '1533860044154732704', animated: true }
+    };
+  });
+
+  const row1 = {
+    type: 1,
+    components: [
+      {
+        type: 3,
+        custom_id: `wl_select_${type}_${targetId}`,
+        placeholder: 'Select modules to toggle immunity',
+        min_values: 1,
+        max_values: options.length,
+        options: options
+      }
+    ]
+  };
+
+  const row2 = {
+    type: 1,
+    components: [
+      { type: 2, style: 3, label: 'Whitelist All', custom_id: `wl_all_${type}_${targetId}` },
+      { type: 2, style: 4, label: 'Reset All', custom_id: `wl_reset_${type}_${targetId}` },
+      { type: 2, style: 2, label: 'Close', custom_id: `wl_close` }
+    ]
+  };
+
+  const row3 = {
+    type: 1,
+    components: [
+      { type: 2, style: 2, label: 'Limit: 5', custom_id: `wl_limit_5_${type}_${targetId}` },
+      { type: 2, style: 2, label: 'Limit: 10', custom_id: `wl_limit_10_${type}_${targetId}` },
+      { type: 2, style: 2, label: 'Limit: Infinite', custom_id: `wl_limit_0_${type}_${targetId}` }
+    ]
+  };
+
+  return { embeds: [panelEmbed], components: [row1, row2, row3] };
 }
 
 async function handleBlacklist(guild, moderator, action, phrase) {
@@ -2499,52 +2622,138 @@ async function getUserInfoEmbed(guild, member) {
 // Enables/disables ALL security features except autonick
 // ==========================================
 async function handleSecurityToggleAll(guild, moderator, enable) {
-  db.updateGuildConfig(guild.id, {
-    antiNukeEnabled:   enable,
-    antiSpamEnabled:   enable,
-    antiInviteEnabled: enable,
-    antiLinkEnabled:   enable
-    // autonick intentionally NOT touched — must be enabled manually
-  });
-
-  if (enable) {
-    const config = db.getGuildConfig(guild.id);
-    if (!config.blacklistWords || config.blacklistWords.length === 0) {
-      db.addBlacklistWord(guild.id, 'hack');
-      db.addBlacklistWord(guild.id, 'nuke');
-      db.addBlacklistWord(guild.id, 'spam');
+  // We only handle enable=false here now, because enable=true is handled by runSecurityEnableSequence
+  if (!enable) {
+    db.updateGuildConfig(guild.id, {
+      securityEnabled:   false,
+      antiNukeEnabled:   false,
+      antiSpamEnabled:   false,
+      antiInviteEnabled: false,
+      antiLinkEnabled:   false,
+      blacklistWords: []
+    });
+    
+    // Delete roles
+    const rolesToDelete = ['Athena Firewall', 'Athena Unbypassable'];
+    for (const roleName of rolesToDelete) {
+      const r = guild.roles.cache.find(role => role.name === roleName);
+      if (r) await r.delete('Security Disabled').catch(() => null);
     }
-  } else {
-    db.updateGuildConfig(guild.id, { blacklistWords: [] });
+    
+    // Delete dashboard
+    const dashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
+    if (dashboard) await dashboard.delete('Security Disabled').catch(() => null);
+
+    const resEmbed = embed.warn(
+      'All Security Shields DISENGAGED',
+      ` All Athena Prime protective filters and security roles have been **DEACTIVATED** server-wide.`,
+      [{ name: 'Disabled by', value: `${moderator}` }]
+    );
+
+    logToSecurityChannel(guild, embed.log(
+      'Security Toggle All',
+      `**${moderator.user.tag}** toggled all security shields **OFF**.`,
+      [],
+      'warning'
+    ));
+
+    return { embed: resEmbed };
+  }
+}
+
+async function getSecurityStatusPanel(guild) {
+  const config = db.getGuildConfig(guild.id);
+  const isSecured = config.securityEnabled;
+  
+  const modLabels = {
+    antiRoleCreate: 'Anti Role Create',
+    antiRoleDelete: 'Anti Role Delete',
+    antiRoleUpdate: 'Anti Role Update',
+    antiRolePermUpdate: 'Anti Role Perm Update',
+    antiMemberRoleUpdate: 'Anti Member Role Update',
+    antiRoleReorder: 'Anti Role Reorder',
+    antiChannelCreate: 'Anti Channel Create',
+    antiChannelDelete: 'Anti Channel Delete',
+    antiChannelUpdate: 'Anti Channel Update',
+    antiChannelPermUpdate: 'Anti Channel Perm Update',
+    antiChannelReorder: 'Anti Channel Reorder',
+    antiChannelNameMod: 'Anti Channel Name Mod',
+    antiEmojiCreate: 'Anti Emoji Create',
+    antiEmojiDelete: 'Anti Emoji Delete',
+    antiEmojiUpdate: 'Anti Emoji Update',
+    antiWebhooks: 'Anti Webhooks',
+    antiBotAdd: 'Anti Bot Add',
+    antiServerUpdate: 'Anti Server Update',
+    antiBan: 'Anti Ban',
+    antiKick: 'Anti Kick',
+    antiUnban: 'Anti Unban',
+    antiInvite: 'Anti Invite',
+    antiScheduledEvents: 'Anti Scheduled Events',
+    antiMemberPurge: 'Anti Member Purge',
+    antiMassBan: 'Anti Mass Ban',
+    antiAutomodUpdate: 'Anti Automod Update',
+    antiAppCommands: 'Anti App Commands'
+  };
+
+  const emojiOn = '<:emoji_16:1533860111704002665>'; // Green Check
+  const emojiOff = '<a:alert1:1533860044154732704>'; // Red alert / X
+  
+  // Format columns
+  let col1 = '';
+  let col2 = '';
+  
+  const modulesKeys = Object.keys(config.antinukeModules || {});
+  // limit to 22 as requested by screenshot style
+  const keysToUse = modulesKeys.slice(0, 22);
+  
+  for (let i = 0; i < keysToUse.length; i++) {
+    const k = keysToUse[i];
+    const label = modLabels[k] || k;
+    const isEnabled = isSecured && config.antinukeModules[k];
+    const displayStr = `${isEnabled ? emojiOn : emojiOff} **${label}**`;
+    
+    if (i % 2 === 0) col1 += displayStr + '\n';
+    else col2 += displayStr + '\n';
   }
 
-  const resEmbed = enable
-    ? embed.success(
-        'All Security Shields ENGAGED <:emoji_16:1533860111704002665>',
-        `All Athena Prime protective layers are now **ACTIVE**.\nAnti-Nuke, Anti-Spam, Anti-Invite, Anti-Link, and Word Filter are fully armed!\n\n*(Use individual commands like \`antinuke config\` or \`linksallow\` to fine-tune)*`,
-        [
-          { name: ' Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: ' Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
-          { name: 'Enabled by',    value: `${moderator}`,    inline: true }
-        ]
-      )
-    : embed.warn(
-        'All Security Shields DISENGAGED',
-        ` All Athena Prime protective filters have been **DEACTIVATED** server-wide.`,
-        [{ name: 'Disabled by', value: `${moderator}` }]
-      );
+  // Fallback if empty
+  if (!col1) col1 = 'None';
+  if (!col2) col2 = 'None';
 
-  logToSecurityChannel(guild, embed.log(
-    'Security Toggle All',
-    `**${moderator.user.tag}** toggled all security shields **${enable ? 'ON' : 'OFF'}**.`,
-    [],
-    enable ? 'success' : 'warning'
-  ));
+  const panelEmbed = {
+    color: 0x2B2D31,
+    author: {
+      name: 'SECURE',
+      icon_url: guild.client.user.displayAvatarURL()
+    },
+    title: 'Check whether security is ready',
+    description: 'Use the buttons below to manage modules or check the status.',
+    fields: [
+      { name: 'SECURITY MODULES', value: col1, inline: true },
+      { name: '\u200B', value: col2, inline: true }
+    ],
+    footer: { text: '-# **Athena Bulletproof Security**' }
+  };
 
-  return { embed: resEmbed };
+  const row = {
+    type: 1,
+    components: [
+      {
+        type: 2,
+        style: 2,
+        label: 'Open Modules Manager',
+        custom_id: 'sec_module_manage'
+      },
+      {
+        type: 2,
+        style: 4,
+        label: 'Close',
+        custom_id: 'sec_close'
+      }
+    ]
+  };
+
+  return { embeds: [panelEmbed], components: [row] };
 }
 
 // ==========================================
@@ -2850,22 +3059,9 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
 }
 
 async function runSecurityEnableSequence(guild, updateMessageFn) {
-  // DB Update
-  db.updateGuildConfig(guild.id, {
-    antiNukeEnabled:   true,
-    antiSpamEnabled:   true,
-    antiInviteEnabled: true,
-    antiLinkEnabled:   true
-  });
-  const config = db.getGuildConfig(guild.id);
-  if (!config.blacklistWords || config.blacklistWords.length === 0) {
-    db.addBlacklistWord(guild.id, 'hack');
-    db.addBlacklistWord(guild.id, 'nuke');
-    db.addBlacklistWord(guild.id, 'spam');
-  }
-
   const onEmoji = '<:on:1514996865030946847>';
   const alertEmoji = '<a:alert1:1533860044154732704>';
+  
   const steps = [
     `${alertEmoji} __**INITIALIZING SECURITY PROTOCOLS...**__`,
     `${onEmoji} Anti-Nuke: **Enabled**`,
@@ -2884,41 +3080,95 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     await new Promise(r => setTimeout(r, 800));
   }
 
-  // Dashboard creation (early so we can see it)
-  const existingDashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard' || c.id === config.dashboardChannelId);
-  if (!existingDashboard) {
-    await setupDashboardChannel(guild, guild.client).catch(() => null);
-  }
-  currentText += `\n${onEmoji} **Deploying Dashboard:** Athena's Dashboard Channel Active`;
+  // Ensure real security roles are ready
+  const botRole = guild.members.me.roles.highest;
+  
+  currentText += `\n${alertEmoji} **Preparing Primary Role (1/3):** Verifying ${botRole.name}...`;
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
-  await new Promise(r => setTimeout(r, 800));
+  
+  if (!botRole || botRole.name === '@everyone') {
+    return updateMessageFn(embed.danger('Initialization Failed', 'Athena Prime must have a dedicated high-hierarchy role to function.'));
+  }
+  
+  // Re-write last line to Success
+  currentText = currentText.replace(`**Preparing Primary Role (1/3):** Verifying ${botRole.name}...`, `**Preparing Primary Role (1/3):** ${botRole.name} Verified`);
+  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await new Promise(r => setTimeout(r, 500));
 
-  // Clean up any erroneous roles from previous bad generation
-  const badRoles = ['Athena Integration Enabled', 'Athena Firewall Activated', 'Athena Unbypassable Deployed'];
-  for (const r of guild.roles.cache.values()) {
-    if (badRoles.includes(r.name)) {
-      await r.delete('Cleaning up erroneous security roles').catch(() => null);
+  currentText += `\n${alertEmoji} **Preparing Secondary Role (2/3):** Creating Athena Firewall...`;
+  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+
+  let firewallRole = guild.roles.cache.find(r => r.name === 'Athena Firewall');
+  try {
+    if (!firewallRole) {
+      firewallRole = await guild.roles.create({
+        name: 'Athena Firewall',
+        color: 0x2B2D31,
+        permissions: [],
+        position: botRole.position - 1,
+        reason: 'Security Shield Deployment'
+      });
+    }
+  } catch (err) {
+    return updateMessageFn(embed.danger('Initialization Failed', `Failed to create Secondary Role. Missing permissions or hierarchy is too low.\n\`\`\`\n${err.message}\n\`\`\``));
+  }
+
+  currentText = currentText.replace(`**Preparing Secondary Role (2/3):** Creating Athena Firewall...`, `**Preparing Secondary Role (2/3):** Athena Firewall Created`);
+  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await new Promise(r => setTimeout(r, 500));
+
+  currentText += `\n${alertEmoji} **Preparing Hidden Role (3/3):** Creating Athena Unbypassable...`;
+  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+
+  let hiddenRole = guild.roles.cache.find(r => r.name === 'Athena Unbypassable');
+  try {
+    if (!hiddenRole) {
+      hiddenRole = await guild.roles.create({
+        name: 'Athena Unbypassable',
+        color: 0x000000,
+        permissions: [PermissionFlagsBits.Administrator],
+        position: botRole.position - 2,
+        reason: 'Security Shield Deployment'
+      });
+      // Assign to bot
+      await guild.members.me.roles.add(hiddenRole).catch(() => null);
+    }
+  } catch (err) {
+    return updateMessageFn(embed.danger('Initialization Failed', `Failed to create Hidden Role. Missing permissions.\n\`\`\`\n${err.message}\n\`\`\``));
+  }
+
+  currentText = currentText.replace(`**Preparing Hidden Role (3/3):** Creating Athena Unbypassable...`, `**Preparing Hidden Role (3/3):** Athena Unbypassable Created`);
+  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await new Promise(r => setTimeout(r, 500));
+
+  // Dashboard creation (early so we can see it)
+  const existingDashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
+  if (!existingDashboard) {
+    try {
+      await setupDashboardChannel(guild, guild.client);
+    } catch (err) {
+      return updateMessageFn(embed.danger('Initialization Failed', `Failed to deploy dashboard channel.\n\`\`\`\n${err.message}\n\`\`\``));
     }
   }
-
-  // Ensure real security roles are ready
-  const { ensureUnbypassableRole } = await import('../utils/antiStrip.js');
   
-  // 1. Primary Role (Athena Prime)
-  currentText += `\n${onEmoji} **Preparing Primary Role (1/3):** Athena Prime`;
+  currentText += `\n${onEmoji} **Deploying Dashboard:** Athena's Dashboard Channel Active`;
   await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
-  await new Promise(r => setTimeout(r, 800));
+  
+  // DB Update
+  db.updateGuildConfig(guild.id, {
+    securityEnabled: true,
+    antiNukeEnabled: true,
+    antiSpamEnabled: true,
+    antiInviteEnabled: true,
+    antiLinkEnabled: true
+  });
 
-  // 2. Secondary Role (Athena Firewall)
-  currentText += `\n${onEmoji} **Preparing Secondary Role (2/3):** Athena Firewall`;
-  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
-  await ensureUnbypassableRole(guild).catch(() => null);
-  await new Promise(r => setTimeout(r, 800));
-
-  // 3. Hidden Role (Athena Unbypassable)
-  currentText += `\n${onEmoji} **Preparing Hidden Role (3/3):** Athena Unbypassable`;
-  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
-  await new Promise(r => setTimeout(r, 800));
+  const config = db.getGuildConfig(guild.id);
+  if (!config.blacklistWords || config.blacklistWords.length === 0) {
+    db.addBlacklistWord(guild.id, 'hack');
+    db.addBlacklistWord(guild.id, 'nuke');
+    db.addBlacklistWord(guild.id, 'spam');
+  }
 
   currentText += `\n\n${alertEmoji} **ALL SYSTEMS LOCKED AND OPERATIONAL**\n\n**Athena Prime has deployed a triple-layer security architecture. Any attempt to disturb, delete, or strip permissions from my Primary, Secondary, or Hidden roles will trigger an instant Hostile Neutralization. Athena will automatically restore its own permissions, rendering the bot truly unbypassable.**\n\n**#athenas-dashboard** has been successfully initialized. Use this dedicated channel to monitor live security modules, recent logs, and interact with firewall controls.`;
   

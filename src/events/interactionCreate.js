@@ -1327,6 +1327,10 @@ export default {
         try { await handleJtcButton(interaction); } catch (e) { console.error('[JTC button]', e); }
         return;
       }
+      if (interaction.isButton() && (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('sec_'))) {
+        try { await handleSecurityPanelInteractions(interaction); } catch (e) { console.error('[SecPanel button]', e); }
+        return;
+      }
 
       if (validButtons.includes(interaction.customId)) {
       // Verify Administrator permissions for config buttons — bot owner + extra owners bypass
@@ -1394,6 +1398,11 @@ export default {
             await interaction.reply({ content: ' An error occurred.', ephemeral: true }).catch(() => null);
           }
         }
+      }
+
+      if (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('sec_')) {
+        try { await handleSecurityPanelInteractions(interaction); } catch (e) { console.error('[SecPanel select]', e); }
+        return;
       }
 
       if (interaction.customId === 'emojistealer_select') {
@@ -1492,3 +1501,94 @@ export default {
     }
   }
 };
+
+async function handleSecurityPanelInteractions(interaction) {
+  const { customId, guild } = interaction;
+  
+  // Only Admin or Bot Owner
+  const isAllowed = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(interaction.user.id) || interaction.user.id === guild.ownerId || db.isExtraOwner(guild.id, interaction.user.id);
+  
+  if (!isAllowed) {
+    return interaction.reply({ content: 'Access Denied: You must be an Administrator.', ephemeral: true });
+  }
+
+  // Security Status Menu
+  if (customId === 'sec_close') {
+    return interaction.message.delete().catch(() => null);
+  }
+  
+  if (customId === 'sec_module_manage') {
+    return interaction.reply({ content: 'Use the `!antinuke` command to access the module configuration panel.', ephemeral: true });
+  }
+
+  // Whitelist Logic
+  if (customId === 'wl_close') {
+    return interaction.message.delete().catch(() => null);
+  }
+
+  const parts = customId.split('_');
+  // Formats:
+  // wl_select_users_1234
+  // wl_all_users_1234
+  // wl_reset_roles_1234
+  // wl_limit_5_users_1234
+  
+  if (parts[0] !== 'wl') return;
+  
+  const action = parts[1];
+  let type, targetId, limitVal;
+
+  if (action === 'limit') {
+    limitVal = parseInt(parts[2], 10);
+    type = parts[3];
+    targetId = parts[4];
+  } else {
+    type = parts[2];
+    targetId = parts[3];
+  }
+
+  let wData = db.getWhitelist(guild.id, targetId, type) || { modules: [], triggerLimit: 0, currentUsage: 0 };
+
+  if (action === 'select') {
+    // Select Menu Interaction
+    const selected = interaction.values;
+    // Check if user unselected all, but we set min_values:1 so they can't natively.
+    wData.modules = selected;
+  } else if (action === 'all') {
+    wData.modules = ['all'];
+  } else if (action === 'reset') {
+    wData.modules = [];
+    wData.currentUsage = 0;
+    wData.triggerLimit = 0;
+  } else if (action === 'limit') {
+    wData.triggerLimit = limitVal;
+    wData.currentUsage = 0;
+  }
+
+  if (wData.modules.length === 0) {
+    db.updateWhitelist(guild.id, targetId, type, null); // Remove it completely
+  } else {
+    db.updateWhitelist(guild.id, targetId, type, wData);
+  }
+
+  // Reload UI
+  const { commands } = await import('../commands/security.js');
+  // We can just extract the UI function or do it inline, but since it's hard to import a non-exported func,
+  // we can use a small hack or just recreate the panel.
+  // Wait, I can just dynamically import and find it or just re-import it properly if it was exported.
+  // Let's just edit the message by calling getWhitelistPanel via a helper.
+  // Actually, I can just export getWhitelistPanel from security.js.
+  
+  try {
+    const sec = await import('../commands/security.js');
+    if (sec.getWhitelistPanel) {
+      const panel = await sec.getWhitelistPanel(guild, targetId, type);
+      await interaction.update(panel);
+    } else {
+      await interaction.update({ content: 'Saved.', components: [] });
+    }
+  } catch(e) {
+    console.error(e);
+    await interaction.update({ content: 'Saved.', components: [] });
+  }
+}
