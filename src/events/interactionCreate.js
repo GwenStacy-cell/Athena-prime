@@ -1521,7 +1521,16 @@ async function handleSecurityPanelInteractions(interaction) {
   }
   
   if (customId === 'sec_module_manage') {
-    return interaction.reply({ content: 'Use the `!antinuke` command to access the module configuration panel.', ephemeral: true });
+    try {
+      const sec = await import('../commands/security.js');
+      if (sec.getAntinukeConfigPanel) {
+        const panel = await sec.getAntinukeConfigPanel(guild);
+        return interaction.update(panel);
+      }
+    } catch (e) {
+      console.error(e);
+      return interaction.reply({ content: 'Failed to open Modules Manager.', ephemeral: true });
+    }
   }
 
   // Whitelist Logic
@@ -1539,7 +1548,6 @@ async function handleSecurityPanelInteractions(interaction) {
     if (parts[2] === 'custom') {
       type = parts[3];
       targetId = parts[4];
-      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
       const modal = new ModalBuilder()
         .setCustomId(`wlModal_limit_${type}_${targetId}`)
         .setTitle('Custom Trigger Limit');

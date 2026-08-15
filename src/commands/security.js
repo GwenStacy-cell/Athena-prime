@@ -374,7 +374,7 @@ export const commands = [
     aliases: ['wl'],
     description: 'Manage Antinuke Whitelist for a User or Role.',
     category: 'security',
-    permissions: [PermissionFlagsBits.Administrator],
+    permissions: [],
     options: [
       {
         name: 'target',
@@ -384,6 +384,11 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
+      const allowed = message.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || db.isExtraOwner(message.guild.id, message.author.id);
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.')] });
+      }
+
       if (!args[0]) {
         return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!whitelist <@user|@role>\``)] });
       }
@@ -419,6 +424,11 @@ export const commands = [
       await message.reply(panel);
     },
     async executeSlash(interaction) {
+      const allowed = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || db.isExtraOwner(interaction.guild.id, interaction.user.id);
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.')] });
+      }
+
       const target = interaction.options.getMentionable('target');
       
       let targetId, type;
@@ -584,7 +594,7 @@ export const commands = [
     name: 'antinuke',
     description: 'Configures the Anti-Nuke protections panel with buttons.',
     category: 'security',
-    permissions: [PermissionFlagsBits.Administrator],
+    permissions: [],
     options: [
       {
         name: 'subcommand',
@@ -597,21 +607,31 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
+      const allowed = message.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || db.isExtraOwner(message.guild.id, message.author.id);
+      if (!allowed) {
+        return message.reply({ embeds: [embed.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.')] });
+      }
+      
       const sub = args.join(' ').toLowerCase();
 
-      if (sub === 'config') {
+      if (sub === 'config' || sub === '') {
         const panel = await getAntinukeConfigPanel(message.guild);
-        await message.reply({ embeds: [panel.embed], components: panel.components });
+        await message.reply(panel);
       } else {
         await message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!antinuke config\``)] });
       }
     },
     async executeSlash(interaction) {
+      const allowed = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || db.isExtraOwner(interaction.guild.id, interaction.user.id);
+      if (!allowed) {
+        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.')] });
+      }
+
       const sub = interaction.options.getString('subcommand');
 
       if (sub === 'config') {
         const panel = await getAntinukeConfigPanel(interaction.guild);
-        await interaction.reply({ embeds: [panel.embed], components: panel.components });
+        await interaction.reply(panel);
       }
     }
   },
@@ -2274,36 +2294,37 @@ export async function getAntinukeConfigPanel(guild) {
   const inviteState = config.antiInviteEnabled !== false;
   const nukeState = config.antiNukeEnabled;
 
-  const fields = [
-    { name: 'Anti-Nuke Shield',      value: nukeState     ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
-    { name: 'Anti-Spam Filter',      value: spamState     ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
-    { name: 'Anti-Invite Blocker', value: inviteState   ? `${TOGGLE_ON} **ENABLED**`                          : `${TOGGLE_OFF} **DISABLED**`,                 inline: true },
-    { name: 'Word Filter (Swears)',  value: blacklistState ? `${TOGGLE_ON} **ENABLED** (${config.blacklistWords.length} Words)` : `${TOGGLE_OFF} **DISABLED**`, inline: true },
-    { name: 'Nuke Punishment',     value: `\`${config.antiNukePunishment.toUpperCase()}\``,                                                              inline: true },
-    { name: 'Warning Ceiling',      value: `\`${config.maxWarnings} Warnings\``,                                                                              inline: true }
-  ];
+  const emojiOn = '<:on:1514996865030946847>'; 
+  const emojiOff = '<:off:1514996861474177109>'; 
 
-  const panelEmbed = embed.info(
-    'Athena Prime Defense Panel',
-    'Administrators can click the button switches below to toggle active protections dynamically.',
-    fields
-  );
+  const description = 
+    `# MODULE CONFIGURATION\n` +
+    `-# **Athena Prime Defense Panel**\n\n` +
+    `> ${nukeState ? emojiOn : emojiOff} Anti-Nuke Shield\n` +
+    `> ${spamState ? emojiOn : emojiOff} Anti-Spam Filter\n` +
+    `> ${inviteState ? emojiOn : emojiOff} Anti-Invite Blocker\n` +
+    `> ${blacklistState ? emojiOn : emojiOff} Word Filter (${config.blacklistWords ? config.blacklistWords.length : 0} Words)\n` +
+    `> Punishment: \`${config.antiNukePunishment.toUpperCase()}\`\n` +
+    `> Warn Limit: \`${config.maxWarnings}\``;
+
+  const mainDisplay = new TextDisplayBuilder().setContent(description);
+  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
 
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('toggle_antinuke')
       .setLabel(`Anti-Nuke ${nukeState ? 'ON' : 'OFF'}`)
-      .setEmoji(nukeState ? { id: '1514996865030946847', name: 'on' } : { id: '1514996861474177109', name: 'off' })
+      .setEmoji(nukeState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_spam')
       .setLabel(`Anti-Spam ${spamState ? 'ON' : 'OFF'}`)
-      .setEmoji(spamState ? { id: '1514996865030946847', name: 'on' } : { id: '1514996861474177109', name: 'off' })
+      .setEmoji(spamState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_invite')
       .setLabel(`Anti-Invite ${inviteState ? 'ON' : 'OFF'}`)
-      .setEmoji(inviteState ? { id: '1514996865030946847', name: 'on' } : { id: '1514996861474177109', name: 'off' })
+      .setEmoji(inviteState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
       .setStyle(ButtonStyle.Secondary)
   );
 
@@ -2311,19 +2332,21 @@ export async function getAntinukeConfigPanel(guild) {
     new ButtonBuilder()
       .setCustomId('toggle_blacklist_filter')
       .setLabel(`Word Filter ${blacklistState ? 'ON' : 'OFF'}`)
-      .setEmoji(blacklistState ? { id: '1514996865030946847', name: 'on' } : { id: '1514996861474177109', name: 'off' })
+      .setEmoji(blacklistState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('cycle_punishment')
       .setLabel(`Punishment: ${config.antiNukePunishment.toUpperCase()}`)
-      .setStyle(ButtonStyle.Primary),
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('save_panel')
-      .setLabel('Save & Enforce')
-      .setStyle(ButtonStyle.Success)
+      .setLabel('Save & Close')
+      .setStyle(ButtonStyle.Secondary)
   );
 
-  return { embed: panelEmbed, components: [row1, row2] };
+  panelContainer.addActionRowComponents(row1, row2);
+
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function handleAntinukeToggleAll(guild, moderator, enable) {
