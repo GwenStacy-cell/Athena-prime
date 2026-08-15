@@ -33,33 +33,38 @@ export default {
 
     let deletedBy = 'Unknown';
 
-    try {
-      if (message.guild.members.me.permissions.has('ViewAuditLog')) {
-        const auditLogs = await message.guild.fetchAuditLogs({
-          limit: 1,
-          type: AuditLogEvent.MessageDelete,
-        });
-        const deleteLog = auditLogs.entries.first();
-        if (deleteLog) {
-          const { executor, target, createdTimestamp, extra } = deleteLog;
-          // Check if the log is recent (within last 5 seconds) and matches the target (author) and channel
-          if (target && target.id === message.author.id && extra.channel.id === message.channel.id && createdTimestamp > (Date.now() - 5000)) {
-            deletedBy = `<@${executor.id}> (Moderator)`;
+    if (!message.author) {
+      deletedBy = 'Unknown (System or Webhook)';
+    } else {
+      try {
+        if (message.guild.members.me.permissions.has('ViewAuditLog')) {
+          const auditLogs = await message.guild.fetchAuditLogs({
+            limit: 1,
+            type: AuditLogEvent.MessageDelete,
+          });
+          const deleteLog = auditLogs.entries.first();
+          if (deleteLog) {
+            const { executor, target, createdTimestamp, extra } = deleteLog;
+            // Check if the log is recent (within last 5 seconds) and matches the target (author) and channel
+            if (target && target.id === message.author.id && extra.channel.id === message.channel.id && createdTimestamp > (Date.now() - 5000)) {
+              deletedBy = `<@${executor.id}> (Moderator)`;
+            } else {
+              deletedBy = `<@${message.author.id}> (Self-Deleted)`;
+            }
           } else {
             deletedBy = `<@${message.author.id}> (Self-Deleted)`;
           }
         } else {
-          deletedBy = `<@${message.author.id}> (Self-Deleted)`;
+          deletedBy = `<@${message.author.id}> (Self-Deleted / Missing Audit Perms)`;
         }
-      } else {
-        deletedBy = `<@${message.author.id}> (Self-Deleted / Missing Audit Perms)`;
+      } catch (e) {
+        deletedBy = `<@${message.author.id}> (Self-Deleted / Unknown)`;
       }
-    } catch (e) {
-      deletedBy = `<@${message.author.id}> (Self-Deleted / Unknown)`;
     }
 
     // Detect Ghost Pings
-    const hasUserMentions = message.mentions.users.filter(u => u.id !== message.author.id && !u.bot).size > 0;
+    const authorId = message.author ? message.author.id : 'System';
+    const hasUserMentions = message.mentions.users.filter(u => u.id !== authorId && !u.bot).size > 0;
     const hasRoleMentions = message.mentions.roles.size > 0;
     const hasEveryone = message.mentions.everyone;
     const isGhostPing = hasUserMentions || hasRoleMentions || hasEveryone;
@@ -68,7 +73,7 @@ export default {
     const color = isGhostPing ? '#ff0000' : '#2b2d31'; // Red for Ghost Ping, Dark for normal
 
     const delEmbed = embed.build({
-      description: `${title}\n\n> **Author:** <@${message.author.id}>\n> **Deleted By:** ${deletedBy}\n> **Channel:** ${message.channel}\n> \n> **Message Content:**\n> ${content}`,
+      description: `${title}\n\n> **Author:** ${message.author ? `<@${authorId}>` : 'System/Webhook'}\n> **Deleted By:** ${deletedBy}\n> **Channel:** ${message.channel}\n> \n> **Message Content:**\n> ${content}`,
       color: color
     });
 
@@ -79,7 +84,7 @@ export default {
     // Identify who was ghost pinged if applicable
     if (isGhostPing) {
       let pinged = [];
-      if (hasUserMentions) pinged.push(...message.mentions.users.filter(u => u.id !== message.author.id && !u.bot).map(u => `<@${u.id}>`));
+      if (hasUserMentions) pinged.push(...message.mentions.users.filter(u => u.id !== authorId && !u.bot).map(u => `<@${u.id}>`));
       if (hasRoleMentions) pinged.push(...message.mentions.roles.map(r => `<@&${r.id}>`));
       if (hasEveryone) pinged.push('@everyone / @here');
       

@@ -306,10 +306,15 @@ export default {
 
     // Periodically update JTC panels every 5 minutes to keep stats fresh
     setInterval(async () => {
-      for (const [guildId, config] of Object.entries(db.cache.jtc)) {
-        if (!config.lobbyChannelId) continue;
-        const guild = client.guilds.cache.get(guildId);
-        if (guild) await buildSharedPanel(guild);
+      try {
+        const { syncPanel } = await import('../commands/jtc.js');
+        for (const [guildId, config] of Object.entries(db.cache.jtc)) {
+          if (!config.lobbyChannelId) continue;
+          const guild = client.guilds.cache.get(guildId);
+          if (guild) await syncPanel(guild).catch(() => null);
+        }
+      } catch (e) {
+        console.error('Failed to sync JTC panels:', e);
       }
     }, 5 * 60 * 1000);
 
