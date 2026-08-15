@@ -1375,17 +1375,32 @@ export default {
         db.updateGuildConfig(guildId, { antiNukePunishment: punishments[nextIdx] });
       } else if (interaction.customId === 'save_panel') {
         const panel = await getAntinukeConfigPanel(interaction.guild);
-        panel.components.forEach(row => row.components.forEach(btn => btn.setDisabled(true)));
-        panel.embed.data.description = '** Panel configuration has been saved and is now being actively enforced.**';
-        panel.embed.data.color = 0x2ECC71; // Success green color
-        return interaction.update({ embeds: [panel.embed], components: panel.components });
+        
+        // ComponentV2: Disable all buttons in action rows
+        // Note: panel.components[0] is the ContainerBuilder.
+        // Its components are ActionRowBuilders (at index 1 and 2, index 0 is TextDisplayBuilder)
+        const container = panel.components[0];
+        
+        // Disable all buttons in action rows
+        container.components.forEach(c => {
+          if (c.components) { // ActionRowBuilder has components
+            c.components.forEach(btn => btn.setDisabled(true));
+          }
+        });
+        
+        // Update text display content
+        const textDisplay = container.components.find(c => !c.components); // TextDisplayBuilder doesn't have components array
+        if (textDisplay) {
+          textDisplay.setContent(`# CONFIGURATION SAVED\n\n**Panel configuration has been saved and is now being actively enforced.**`);
+        }
+        
+        return interaction.update(panel);
       }
 
-        // Re-compile layout and update message
-        const panel = await getAntinukeConfigPanel(interaction.guild);
-        await interaction.update({ embeds: [panel.embed], components: panel.components });
-        return;
-      }
+      // Re-compile layout and update message
+      const panel = await getAntinukeConfigPanel(interaction.guild);
+      await interaction.update(panel);
+      return;
     }
 
     // ==========================================
