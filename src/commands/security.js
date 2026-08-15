@@ -18,7 +18,7 @@ import {
 } from '../utils/helpers.js';
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
-import { StringSelectMenuBuilder } from 'discord.js';
+import { StringSelectMenuBuilder, UserSelectMenuBuilder, RoleSelectMenuBuilder } from 'discord.js';
 
 // Toggle emoji constants — used throughout all security/config embeds
 const TOGGLE_ON  = '<:on:1514996865030946847>';
@@ -2225,10 +2225,8 @@ export async function getWhitelistSelectPanel(guild, type, action) {
   if (action === 'add') {
     placeholder = `Select a ${isUser ? 'user' : 'role'} to add to whitelist`;
     if (isUser) {
-      const { UserSelectMenuBuilder } = require('discord.js');
       menu = new UserSelectMenuBuilder().setCustomId(`wlo_selectadd_${type}`).setPlaceholder(placeholder);
     } else {
-      const { RoleSelectMenuBuilder } = require('discord.js');
       menu = new RoleSelectMenuBuilder().setCustomId(`wlo_selectadd_${type}`).setPlaceholder(placeholder);
     }
   } else {
@@ -2237,14 +2235,12 @@ export async function getWhitelistSelectPanel(guild, type, action) {
       : `Select a ${isUser ? 'user' : 'role'} to remove from whitelist`;
       
     if (ids.length === 0) {
-      const { StringSelectMenuBuilder } = require('discord.js');
       menu = new StringSelectMenuBuilder()
         .setCustomId('disabled_menu')
         .setPlaceholder(`No whitelisted ${type} found.`)
         .setDisabled(true)
         .addOptions([{ label: 'None', value: 'none' }]);
     } else {
-      const { StringSelectMenuBuilder } = require('discord.js');
       const options = [];
       for (const id of ids.slice(0, 25)) {
         if (isUser) {
