@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, TextDisplayBuilder, ContainerBuilder, MessageFlags } from 'discord.js';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs/promises';
 import path from 'path';
@@ -2090,23 +2090,16 @@ export async function getWhitelistPanel(guild, targetId, type) {
 
   const limitText = wData.triggerLimit === 0 ? 'Infinite' : `${wData.triggerLimit - wData.currentUsage} actions remaining`;
 
-  const panelEmbed = {
-    color: 0x2B2D31,
-    author: {
-      name: 'WHITELIST ACCESS',
-      icon_url: guild.client.user.displayAvatarURL()
-    },
-    title: `Whitelist Config: ${targetName}`,
-    description: `Configure immune modules for this ${type.slice(0, -1)}.\n\n**Current Trigger Limit:** \`${limitText}\``,
-    fields: [
-      { name: 'MODULES', value: col1, inline: true },
-      { name: '\u200B', value: col2, inline: true }
-    ],
-    footer: { text: '-# **Athena Bulletproof Security**' }
-  };
+  const textContent = `# Whitelist Config: ${targetName}\n\n` +
+    `Configure immune modules for this ${type.slice(0, -1)}.\n` +
+    `**Current Trigger Limit:** \`${limitText}\`\n\n` +
+    `**MODULES**\n${col1}\n` +
+    `**ADDITIONAL**\n${col2}\n\n` +
+    `-# **Athena Bulletproof Security**`;
+
+  const mainDisplay = new TextDisplayBuilder().setContent(textContent);
 
   // Build the String Select Menu for toggling modules
-  // Discord allows max 25 options per select menu. We have 22.
   const options = modulesKeys.map(k => {
     const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
     return {
@@ -2116,39 +2109,32 @@ export async function getWhitelistPanel(guild, targetId, type) {
     };
   });
 
-  const row1 = {
-    type: 1,
-    components: [
-      {
-        type: 3,
-        custom_id: `wl_select_${type}_${targetId}`,
-        placeholder: 'Select modules to toggle immunity',
-        min_values: 1,
-        max_values: options.length,
-        options: options
-      }
-    ]
-  };
+  const row1 = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`wl_select_${type}_${targetId}`)
+      .setPlaceholder('Select modules to toggle immunity')
+      .setMinValues(1)
+      .setMaxValues(options.length)
+      .addOptions(options)
+  );
 
-  const row2 = {
-    type: 1,
-    components: [
-      { type: 2, style: 3, label: 'Whitelist All', custom_id: `wl_all_${type}_${targetId}` },
-      { type: 2, style: 4, label: 'Reset All', custom_id: `wl_reset_${type}_${targetId}` },
-      { type: 2, style: 2, label: 'Close', custom_id: `wl_close` }
-    ]
-  };
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`wl_all_${type}_${targetId}`).setLabel('Whitelist All').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`wl_reset_${type}_${targetId}`).setLabel('Reset All').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId(`wl_close`).setLabel('Close').setStyle(ButtonStyle.Secondary)
+  );
 
-  const row3 = {
-    type: 1,
-    components: [
-      { type: 2, style: 2, label: 'Limit: 5', custom_id: `wl_limit_5_${type}_${targetId}` },
-      { type: 2, style: 2, label: 'Limit: 10', custom_id: `wl_limit_10_${type}_${targetId}` },
-      { type: 2, style: 2, label: 'Limit: Infinite', custom_id: `wl_limit_0_${type}_${targetId}` }
-    ]
-  };
+  const row3 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`wl_limit_5_${type}_${targetId}`).setLabel('Limit: 5').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`wl_limit_10_${type}_${targetId}`).setLabel('Limit: 10').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`wl_limit_0_${type}_${targetId}`).setLabel('Limit: Infinite').setStyle(ButtonStyle.Secondary)
+  );
 
-  return { embeds: [panelEmbed], components: [row1, row2, row3] };
+  const panelContainer = new ContainerBuilder()
+    .addTextDisplayComponents(mainDisplay)
+    .addActionRowComponents(row1, row2, row3);
+
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
 
 async function handleBlacklist(guild, moderator, action, phrase) {
@@ -2644,11 +2630,12 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
     const dashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
     if (dashboard) await dashboard.delete('Security Disabled').catch(() => null);
 
-    const resEmbed = embed.warn(
-      'All Security Shields DISENGAGED',
-      ` All Athena Prime protective filters and security roles have been **DEACTIVATED** server-wide.`,
-      [{ name: 'Disabled by', value: `${moderator}` }]
-    );
+    const textContent = `# All Security Shields DISENGAGED\n\n` +
+      `All Athena Prime protective filters and security roles have been **DEACTIVATED** server-wide.\n\n` +
+      `-# Disabled by ${moderator}`;
+
+    const mainDisplay = new TextDisplayBuilder().setContent(textContent);
+    const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
 
     logToSecurityChannel(guild, embed.log(
       'Security Toggle All',
@@ -2657,7 +2644,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
       'warning'
     ));
 
-    return { embed: resEmbed };
+    return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
   }
 }
 
@@ -2720,40 +2707,24 @@ async function getSecurityStatusPanel(guild) {
   if (!col1) col1 = 'None';
   if (!col2) col2 = 'None';
 
-  const panelEmbed = {
-    color: 0x2B2D31,
-    author: {
-      name: 'SECURE',
-      icon_url: guild.client.user.displayAvatarURL()
-    },
-    title: 'Check whether security is ready',
-    description: 'Use the buttons below to manage modules or check the status.',
-    fields: [
-      { name: 'SECURITY MODULES', value: col1, inline: true },
-      { name: '\u200B', value: col2, inline: true }
-    ],
-    footer: { text: '-# **Athena Bulletproof Security**' }
-  };
+  const textContent = `# Check whether security is ready\n\n` +
+    `Use the buttons below to manage modules or check the status.\n\n` +
+    `**SECURITY MODULES**\n${col1}\n` +
+    `**ADDITIONAL**\n${col2}\n\n` +
+    `-# **Athena Bulletproof Security**`;
 
-  const row = {
-    type: 1,
-    components: [
-      {
-        type: 2,
-        style: 2,
-        label: 'Open Modules Manager',
-        custom_id: 'sec_module_manage'
-      },
-      {
-        type: 2,
-        style: 4,
-        label: 'Close',
-        custom_id: 'sec_close'
-      }
-    ]
-  };
+  const mainDisplay = new TextDisplayBuilder().setContent(textContent);
 
-  return { embeds: [panelEmbed], components: [row] };
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('sec_module_manage').setLabel('Open Modules Manager').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('sec_close').setLabel('Close').setStyle(ButtonStyle.Danger)
+  );
+
+  const panelContainer = new ContainerBuilder()
+    .addTextDisplayComponents(mainDisplay)
+    .addActionRowComponents(row);
+
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
 
 // ==========================================
@@ -3072,11 +3043,17 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     `\n${alertEmoji} __**DEPLOYING TRIPLE-LAYER DEFENSE...**__`
   ];
 
+  const sendPayload = async (text, isError = false) => {
+    const title = isError ? '# Initialization Failed' : '# Security Shield Sequence';
+    const display = new TextDisplayBuilder().setContent(`${title}\n\n${text}`);
+    const container = new ContainerBuilder().addTextDisplayComponents(display);
+    await updateMessageFn({ components: [container], flags: MessageFlags.IsComponentsV2 });
+  };
+
   let currentText = '';
   for (let i = 0; i < steps.length; i++) {
     currentText += (i > 0 ? '\n' : '') + steps[i];
-    const e = embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 });
-    await updateMessageFn(e);
+    await sendPayload(currentText);
     await new Promise(r => setTimeout(r, 800));
   }
 
@@ -3084,19 +3061,19 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   const botRole = guild.members.me.roles.highest;
   
   currentText += `\n${alertEmoji} **Preparing Primary Role (1/3):** Verifying ${botRole.name}...`;
-  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await sendPayload(currentText);
   
   if (!botRole || botRole.name === '@everyone') {
-    return updateMessageFn(embed.danger('Initialization Failed', 'Athena Prime must have a dedicated high-hierarchy role to function.'));
+    return sendPayload('Athena Prime must have a dedicated high-hierarchy role to function.', true);
   }
   
   // Re-write last line to Success
   currentText = currentText.replace(`**Preparing Primary Role (1/3):** Verifying ${botRole.name}...`, `**Preparing Primary Role (1/3):** ${botRole.name} Verified`);
-  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await sendPayload(currentText);
   await new Promise(r => setTimeout(r, 500));
 
   currentText += `\n${alertEmoji} **Preparing Secondary Role (2/3):** Creating Athena Firewall...`;
-  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await sendPayload(currentText);
 
   let firewallRole = guild.roles.cache.find(r => r.name === 'Athena Firewall');
   try {
@@ -3110,15 +3087,15 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
       });
     }
   } catch (err) {
-    return updateMessageFn(embed.danger('Initialization Failed', `Failed to create Secondary Role. Missing permissions or hierarchy is too low.\n\`\`\`\n${err.message}\n\`\`\``));
+    return sendPayload(`Failed to create Secondary Role. Missing permissions or hierarchy is too low.\n\`\`\`\n${err.message}\n\`\`\``, true);
   }
 
   currentText = currentText.replace(`**Preparing Secondary Role (2/3):** Creating Athena Firewall...`, `**Preparing Secondary Role (2/3):** Athena Firewall Created`);
-  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await sendPayload(currentText);
   await new Promise(r => setTimeout(r, 500));
 
   currentText += `\n${alertEmoji} **Preparing Hidden Role (3/3):** Creating Athena Unbypassable...`;
-  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await sendPayload(currentText);
 
   let hiddenRole = guild.roles.cache.find(r => r.name === 'Athena Unbypassable');
   try {
@@ -3134,11 +3111,11 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
       await guild.members.me.roles.add(hiddenRole).catch(() => null);
     }
   } catch (err) {
-    return updateMessageFn(embed.danger('Initialization Failed', `Failed to create Hidden Role. Missing permissions.\n\`\`\`\n${err.message}\n\`\`\``));
+    return sendPayload(`Failed to create Hidden Role. Missing permissions.\n\`\`\`\n${err.message}\n\`\`\``, true);
   }
 
   currentText = currentText.replace(`**Preparing Hidden Role (3/3):** Creating Athena Unbypassable...`, `**Preparing Hidden Role (3/3):** Athena Unbypassable Created`);
-  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await sendPayload(currentText);
   await new Promise(r => setTimeout(r, 500));
 
   // Dashboard creation (early so we can see it)
@@ -3147,12 +3124,12 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     try {
       await setupDashboardChannel(guild, guild.client);
     } catch (err) {
-      return updateMessageFn(embed.danger('Initialization Failed', `Failed to deploy dashboard channel.\n\`\`\`\n${err.message}\n\`\`\``));
+      return sendPayload(`Failed to deploy dashboard channel.\n\`\`\`\n${err.message}\n\`\`\``, true);
     }
   }
   
   currentText += `\n${onEmoji} **Deploying Dashboard:** Athena's Dashboard Channel Active`;
-  await updateMessageFn(embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 }));
+  await sendPayload(currentText);
   
   // DB Update
   db.updateGuildConfig(guild.id, {
@@ -3172,8 +3149,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 
   currentText += `\n\n${alertEmoji} **ALL SYSTEMS LOCKED AND OPERATIONAL**\n\n**Athena Prime has deployed a triple-layer security architecture. Any attempt to disturb, delete, or strip permissions from my Primary, Secondary, or Hidden roles will trigger an instant Hostile Neutralization. Athena will automatically restore its own permissions, rendering the bot truly unbypassable.**\n\n**#athenas-dashboard** has been successfully initialized. Use this dedicated channel to monitor live security modules, recent logs, and interact with firewall controls.`;
   
-  const finalEmbed = embed.build({ title: 'Security Shield Sequence', description: currentText, color: 0xFF0000 });
-  await updateMessageFn(finalEmbed);
+  await sendPayload(currentText);
 }
 
 
