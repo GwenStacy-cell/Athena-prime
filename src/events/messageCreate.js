@@ -1398,6 +1398,7 @@ export default {
     const args = message.content.slice(usedPrefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
     
+    // Find command by name (loader.js populates aliases directly in commandMap)
     const cmd = commandMap.get(commandName);
 
     // Intelligent command error correction with fuzzy matching
