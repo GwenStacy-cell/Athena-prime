@@ -2448,6 +2448,10 @@ export async function getAntinukeConfigPanel(guild) {
       .setLabel(`Punishment: ${config.antiNukePunishment.toUpperCase()}`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
+      .setCustomId('sec_status_back')
+      .setLabel('Back')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
       .setCustomId('save_panel')
       .setLabel('Save & Close')
       .setStyle(ButtonStyle.Secondary)
@@ -2464,8 +2468,14 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
     antiNukeEnabled:   enable,
     antiSpamEnabled:   enable,
     antiInviteEnabled: enable,
-    antiLinkEnabled:   enable
+    antiLinkEnabled:   enable,
+    antinukeModules:   {}
   };
+
+  const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands'];
+  for (const key of allKeys) {
+    updates.antinukeModules[key] = enable;
+  }
 
   db.updateGuildConfig(guild.id, updates);
 
@@ -2787,7 +2797,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
   }
 }
 
-async function getSecurityStatusPanel(guild) {
+export async function getSecurityStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
   const isSecured = config.securityEnabled;
   

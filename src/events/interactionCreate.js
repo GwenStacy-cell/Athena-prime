@@ -1352,7 +1352,13 @@ export default {
 
       // Enforce dynamic adjustments on database disk cache
       if (interaction.customId === 'toggle_antinuke') {
-        db.updateGuildConfig(guildId, { antiNukeEnabled: !config.antiNukeEnabled });
+        const newState = !config.antiNukeEnabled;
+        const updates = { antiNukeEnabled: newState, antinukeModules: {} };
+        const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands'];
+        for (const key of allKeys) {
+          updates.antinukeModules[key] = newState;
+        }
+        db.updateGuildConfig(guildId, updates);
       } else if (interaction.customId === 'toggle_spam') {
         db.updateGuildConfig(guildId, { antiSpamEnabled: !config.antiSpamEnabled });
       } else if (interaction.customId === 'toggle_invite') {
@@ -1548,6 +1554,19 @@ async function handleSecurityPanelInteractions(interaction) {
     } catch (e) {
       console.error(e);
       return interaction.reply({ content: 'Failed to open Modules Manager.', ephemeral: true });
+    }
+  }
+
+  if (customId === 'sec_status_back') {
+    try {
+      const sec = await import('../commands/security.js');
+      if (sec.getSecurityStatusPanel) {
+        const panel = await sec.getSecurityStatusPanel(guild);
+        return interaction.update(panel);
+      }
+    } catch (e) {
+      console.error(e);
+      return interaction.reply({ content: 'Failed to return to Security Dashboard.', ephemeral: true });
     }
   }
 
