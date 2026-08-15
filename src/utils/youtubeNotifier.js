@@ -62,7 +62,7 @@ export async function getLatestVideo(channelId) {
         link: latest.link,
         author: latest.author,
         pubDate: latest.pubDate,
-        thumbnail: `https://i.ytimg.com/vi/${latest.id.replace('yt:video:', '')}/maxresdefault.jpg`,
+        thumbnail: `https://i.ytimg.com/vi/${latest.id.replace('yt:video:', '')}/hqdefault.jpg`,
         channelName: feed.title
       };
     }
