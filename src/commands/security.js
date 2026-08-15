@@ -2030,7 +2030,7 @@ async function handleRaidMode(guild, moderator, mode) {
   }
 }
 
-export async function getWhitelistPanel(guild, targetId, type) {
+export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
   const wData = db.getWhitelist(guild.id, targetId, type) || { modules: [], triggerLimit: 0, currentUsage: 0 };
   
   // Try to resolve name
@@ -2064,77 +2064,96 @@ export async function getWhitelistPanel(guild, targetId, type) {
     antiWebhooks: 'Anti Webhooks',
     antiBotAdd: 'Anti Bot Add',
     antiServerUpdate: 'Anti Server Update',
-    antiBan: 'Anti Ban',
-    antiKick: 'Anti Kick',
-    antiUnban: 'Anti Unban',
-    antiInvite: 'Anti Invite'
+    antiBan: 'Anti Ban / Kick',
+    antiKick: 'Anti Ban / Kick',
+    antiUnban: 'Anti Unban Members',
+    antiInvite: 'Anti Invite (Danger)'
   };
 
-  const emojiOn = '<:emoji_16:1533860111704002665>'; // Green Check
-  const emojiOff = '<a:alert1:1533860044154732704>'; // Red alert / X
+  const emojiOn = '<:on:1514996865030946847>'; 
+  const emojiOff = '<:off:1514996861474177109>'; 
   
   const modulesKeys = Object.keys(modLabels);
+  // Dedup keys since antiBan and antiKick share a label for display (just visual grouping if desired, but we can list them all)
   
-  let col1 = '';
-  let col2 = '';
+  let moduleListText = '';
   
-  for (let i = 0; i < modulesKeys.length; i++) {
-    const k = modulesKeys[i];
-    const label = modLabels[k];
-    const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
-    const displayStr = `${isEnabled ? emojiOn : emojiOff} **${label}**`;
-    
-    if (i % 2 === 0) col1 += displayStr + '\n';
-    else col2 += displayStr + '\n';
+  if (view === 'info') {
+    // Only show active allowed modules, or all if none/all? 
+    // Secure shows all modules with just a black bar on the left (discord blockquote)
+    for (const k of modulesKeys) {
+      moduleListText += `> ${modLabels[k]}\n`;
+    }
+  } else {
+    // Manage view: show red X or green Check
+    for (const k of modulesKeys) {
+      const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
+      moduleListText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
+    }
   }
 
-  const limitText = wData.triggerLimit === 0 ? 'Infinite' : `${wData.triggerLimit - wData.currentUsage} actions remaining`;
+  const limitText = wData.triggerLimit === 0 ? 'Infinite' : wData.triggerLimit;
+  
+  const header = view === 'info' ? 'WHITELIST INFO' : 'WHITELIST ACCESS';
+  
+  const description = 
+    `-# **${header}**\n` +
+    `-# **${targetName}** (${targetId})\n\n` +
+    `-# Global Limits: Infinite | Custom Limits: ${limitText}\n\n` +
+    moduleListText;
 
-  const textContent = `# Whitelist Config: ${targetName}\n\n` +
-    `Configure immune modules for this ${type.slice(0, -1)}.\n` +
-    `**Current Trigger Limit:** \`${limitText}\`\n\n` +
-    `**MODULES**\n${col1}\n` +
-    `**ADDITIONAL**\n${col2}\n\n` +
-    `-# **Athena Bulletproof Security**`;
+  const panelEmbed = new EmbedBuilder()
+    .setColor(0x2B2D31)
+    .setDescription(description.substring(0, 4096));
 
-  const mainDisplay = new TextDisplayBuilder().setContent(textContent);
+  const components = [];
 
-  // Build the String Select Menu for toggling modules
-  const options = modulesKeys.map(k => {
-    const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
-    return {
-      label: modLabels[k],
-      value: k,
-      emoji: isEnabled ? { id: '1533860111704002665' } : { id: '1533860044154732704', animated: true }
-    };
-  });
+  if (view === 'info') {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`wl_manage_${type}_${targetId}`).setLabel('Manage').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_close`).setLabel('Close').setStyle(ButtonStyle.Secondary)
+    );
+    components.push(row);
+  } else {
+    const options = modulesKeys.map(k => {
+      const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
+      return {
+        label: modLabels[k],
+        value: k,
+        emoji: isEnabled ? { id: '1514996865030946847' } : { id: '1514996861474177109' } // on / off emojis
+      };
+    }).slice(0, 25); // max 25
 
-  const row1 = new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(`wl_select_${type}_${targetId}`)
-      .setPlaceholder('Select modules to toggle immunity')
-      .setMinValues(1)
-      .setMaxValues(options.length)
-      .addOptions(options)
-  );
+    const row1 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`wl_all_${type}_${targetId}`).setLabel('Whitelist All').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_reset_${type}_${targetId}`).setLabel('Reset All').setStyle(ButtonStyle.Secondary)
+    );
 
-  const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`wl_all_${type}_${targetId}`).setLabel('Whitelist All').setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(`wl_reset_${type}_${targetId}`).setLabel('Reset All').setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId(`wl_close`).setLabel('Close').setStyle(ButtonStyle.Secondary)
-  );
+    const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`wl_limit_5_${type}_${targetId}`).setLabel('5 Actions').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_limit_10_${type}_${targetId}`).setLabel('10 Actions').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_limit_15_${type}_${targetId}`).setLabel('15 Actions').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_limit_custom_${type}_${targetId}`).setLabel('Custom').setStyle(ButtonStyle.Secondary)
+    );
 
-  const row3 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`wl_limit_5_${type}_${targetId}`).setLabel('Limit: 5').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`wl_limit_10_${type}_${targetId}`).setLabel('Limit: 10').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`wl_limit_0_${type}_${targetId}`).setLabel('Limit: Infinite').setStyle(ButtonStyle.Secondary)
-  );
+    const row3 = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`wl_select_${type}_${targetId}`)
+        .setPlaceholder('Select a permissions category...')
+        .setMinValues(1)
+        .setMaxValues(options.length)
+        .addOptions(options)
+    );
+    
+    const row4 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`wl_save_${type}_${targetId}`).setLabel('Save Changes').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_close`).setLabel('Close').setStyle(ButtonStyle.Secondary)
+    );
 
-  const panelContainer = new ContainerBuilder()
-    .addTextDisplayComponents(mainDisplay)
-    .addActionRowComponents(row1, row2, row3);
+    components.push(row1, row2, row3, row4);
+  }
 
-  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { embeds: [panelEmbed], components };
 }
 
 async function handleBlacklist(guild, moderator, action, phrase) {
@@ -2630,12 +2649,14 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
     const dashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
     if (dashboard) await dashboard.delete('Security Disabled').catch(() => null);
 
-    const textContent = `# All Security Shields DISENGAGED\n\n` +
+    const textContent = 
+      `-# **ALL SECURITY SHIELDS DISENGAGED**\n\n` +
       `All Athena Prime protective filters and security roles have been **DEACTIVATED** server-wide.\n\n` +
       `-# Disabled by ${moderator}`;
 
-    const mainDisplay = new TextDisplayBuilder().setContent(textContent);
-    const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+    const resEmbed = new EmbedBuilder()
+      .setColor(0x2B2D31)
+      .setDescription(textContent);
 
     logToSecurityChannel(guild, embed.log(
       'Security Toggle All',
@@ -2644,7 +2665,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
       'warning'
     ));
 
-    return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+    return { embeds: [resEmbed] };
   }
 }
 
@@ -2682,49 +2703,34 @@ async function getSecurityStatusPanel(guild) {
     antiAppCommands: 'Anti App Commands'
   };
 
-  const emojiOn = '<:emoji_16:1533860111704002665>'; // Green Check
-  const emojiOff = '<a:alert1:1533860044154732704>'; // Red alert / X
-  
-  // Format columns
-  let col1 = '';
-  let col2 = '';
+  const emojiOn = '<:on:1514996865030946847>'; 
+  const emojiOff = '<:off:1514996861474177109>'; 
   
   const modulesKeys = Object.keys(config.antinukeModules || {});
-  // limit to 22 as requested by screenshot style
   const keysToUse = modulesKeys.slice(0, 22);
   
-  for (let i = 0; i < keysToUse.length; i++) {
-    const k = keysToUse[i];
+  let listText = '';
+  for (const k of keysToUse) {
     const label = modLabels[k] || k;
     const isEnabled = isSecured && config.antinukeModules[k];
-    const displayStr = `${isEnabled ? emojiOn : emojiOff} **${label}**`;
-    
-    if (i % 2 === 0) col1 += displayStr + '\n';
-    else col2 += displayStr + '\n';
+    listText += `> ${isEnabled ? emojiOn : emojiOff} ${label}\n`;
   }
 
-  // Fallback if empty
-  if (!col1) col1 = 'None';
-  if (!col2) col2 = 'None';
+  const description = 
+    `-# **SECURITY SHIELD STATUS**\n` +
+    `-# **Global Status:** ${isSecured ? 'Active' : 'Offline'}\n\n` +
+    listText;
 
-  const textContent = `# Check whether security is ready\n\n` +
-    `Use the buttons below to manage modules or check the status.\n\n` +
-    `**SECURITY MODULES**\n${col1}\n` +
-    `**ADDITIONAL**\n${col2}\n\n` +
-    `-# **Athena Bulletproof Security**`;
-
-  const mainDisplay = new TextDisplayBuilder().setContent(textContent);
+  const panelEmbed = new EmbedBuilder()
+    .setColor(0x2B2D31)
+    .setDescription(description);
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('sec_module_manage').setLabel('Open Modules Manager').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('sec_close').setLabel('Close').setStyle(ButtonStyle.Danger)
+    new ButtonBuilder().setCustomId('sec_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
   );
 
-  const panelContainer = new ContainerBuilder()
-    .addTextDisplayComponents(mainDisplay)
-    .addActionRowComponents(row);
-
-  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { embeds: [panelEmbed], components: [row] };
 }
 
 // ==========================================

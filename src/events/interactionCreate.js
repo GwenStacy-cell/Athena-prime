@@ -95,6 +95,9 @@ export default {
     // 2. MODAL SUBMISSIONS
     // ==========================================
     if (interaction.isModalSubmit()) {
+      if (interaction.customId.startsWith('wlModal_limit_')) {
+        return handleWhitelistModal(interaction);
+      }
       if (interaction.customId === 'tp_modal_text') {
         const title = interaction.fields.getTextInputValue('title');
         const desc = interaction.fields.getTextInputValue('description');
@@ -1527,18 +1530,29 @@ async function handleSecurityPanelInteractions(interaction) {
   }
 
   const parts = customId.split('_');
-  // Formats:
-  // wl_select_users_1234
-  // wl_all_users_1234
-  // wl_reset_roles_1234
-  // wl_limit_5_users_1234
-  
   if (parts[0] !== 'wl') return;
   
   const action = parts[1];
   let type, targetId, limitVal;
 
   if (action === 'limit') {
+    if (parts[2] === 'custom') {
+      type = parts[3];
+      targetId = parts[4];
+      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+      const modal = new ModalBuilder()
+        .setCustomId(`wlModal_limit_${type}_${targetId}`)
+        .setTitle('Custom Trigger Limit');
+      
+      const input = new TextInputBuilder()
+        .setCustomId('limit_input')
+        .setLabel('Enter custom limit (Number)')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
+        
+      modal.addComponents(new ActionRowBuilder().addComponents(input));
+      return interaction.showModal(modal);
+    }
     limitVal = parseInt(parts[2], 10);
     type = parts[3];
     targetId = parts[4];
@@ -1547,13 +1561,19 @@ async function handleSecurityPanelInteractions(interaction) {
     targetId = parts[3];
   }
 
+  // Determine which view to render after update
+  // By default, if they click anything in manage mode, we stay in manage mode except if they click save
+  let viewToRender = 'manage';
+  if (action === 'save') {
+    viewToRender = 'info';
+  } else if (action === 'manage') {
+    viewToRender = 'manage';
+  }
+
   let wData = db.getWhitelist(guild.id, targetId, type) || { modules: [], triggerLimit: 0, currentUsage: 0 };
 
   if (action === 'select') {
-    // Select Menu Interaction
-    const selected = interaction.values;
-    // Check if user unselected all, but we set min_values:1 so they can't natively.
-    wData.modules = selected;
+    wData.modules = interaction.values;
   } else if (action === 'all') {
     wData.modules = ['all'];
   } else if (action === 'reset') {
@@ -1566,23 +1586,55 @@ async function handleSecurityPanelInteractions(interaction) {
   }
 
   if (wData.modules.length === 0) {
-    db.updateWhitelist(guild.id, targetId, type, null); // Remove it completely
+    db.updateWhitelist(guild.id, targetId, type, null); 
   } else {
     db.updateWhitelist(guild.id, targetId, type, wData);
   }
 
-  // Reload UI
-  const { commands } = await import('../commands/security.js');
-  // We can just extract the UI function or do it inline, but since it's hard to import a non-exported func,
-  // we can use a small hack or just recreate the panel.
-  // Wait, I can just dynamically import and find it or just re-import it properly if it was exported.
-  // Let's just edit the message by calling getWhitelistPanel via a helper.
-  // Actually, I can just export getWhitelistPanel from security.js.
+  try {
+    const sec = await import('../commands/security.js');
+    if (sec.getWhitelistPanel) {
+      const panel = await sec.getWhitelistPanel(guild, targetId, type, viewToRender);
+      await interaction.update(panel);
+    } else {
+      await interaction.update({ content: 'Saved.', components: [] });
+    }
+  } catch(e) {
+    console.error(e);
+    await interaction.update({ content: 'Saved.', components: [] });
+  }
+}
+
+// Handle Modal Submissions for Custom Limits
+export async function handleWhitelistModal(interaction) {
+  if (!interaction.isModalSubmit()) return;
+  if (!interaction.customId.startsWith('wlModal_limit_')) return;
+  
+  const parts = interaction.customId.split('_');
+  const type = parts[2];
+  const targetId = parts[3];
+  
+  const limitStr = interaction.fields.getTextInputValue('limit_input');
+  const limitVal = parseInt(limitStr, 10);
+  
+  if (isNaN(limitVal) || limitVal < 0) {
+    return interaction.reply({ content: 'Invalid limit. Please enter a valid positive number.', ephemeral: true });
+  }
+
+  let wData = db.getWhitelist(interaction.guild.id, targetId, type) || { modules: [], triggerLimit: 0, currentUsage: 0 };
+  wData.triggerLimit = limitVal;
+  wData.currentUsage = 0;
+  
+  if (wData.modules.length === 0) {
+    db.updateWhitelist(interaction.guild.id, targetId, type, null);
+  } else {
+    db.updateWhitelist(interaction.guild.id, targetId, type, wData);
+  }
   
   try {
     const sec = await import('../commands/security.js');
     if (sec.getWhitelistPanel) {
-      const panel = await sec.getWhitelistPanel(guild, targetId, type);
+      const panel = await sec.getWhitelistPanel(interaction.guild, targetId, type, 'manage');
       await interaction.update(panel);
     } else {
       await interaction.update({ content: 'Saved.', components: [] });
