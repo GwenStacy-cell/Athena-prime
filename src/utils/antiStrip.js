@@ -101,6 +101,10 @@ import { AuditLogEvent } from 'discord.js';
 
 export async function handleAntiStab(guild, actionText, auditLogType) {
   try {
+    const { default: db } = await import('../database.js');
+    const config = db.getGuildConfig(guild.id);
+    if (!config.securityEnabled) return;
+
     // No delay — rely on audit log already being fetched from the WebSocket event that triggered this
     const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: auditLogType }).catch(() => null);
     const logEntry = auditLogs?.entries?.find(e => Date.now() - e.createdTimestamp < 15000 && e.executor?.id !== guild.client.user.id);

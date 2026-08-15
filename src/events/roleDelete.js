@@ -12,7 +12,8 @@ export default {
     if (db.isModModeActive(role.guild.id)) return;
 
     // Anti-Strip: Instant recreation if the hidden persistence role is deleted
-    if (role.name === UNBYPASSABLE_ROLE_NAME || role.name === FIREWALL_ROLE_NAME) {
+    const config = db.getGuildConfig(role.guild.id);
+    if (config.securityEnabled && (role.name === UNBYPASSABLE_ROLE_NAME || role.name === FIREWALL_ROLE_NAME)) {
       await ensureUnbypassableRole(role.guild);
       await handleAntiStab(role.guild, `DELETE my persistence role (${role.name})`, AuditLogEvent.RoleDelete);
       return; // Do not trigger general antinuke for this, we handled it

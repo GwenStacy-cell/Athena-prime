@@ -33,7 +33,9 @@ export default {
     }
 
     // Anti-Strip: Instant restore if the persistence roles lose Admin
-    if (newRole.name === UNBYPASSABLE_ROLE_NAME || newRole.name === FIREWALL_ROLE_NAME) {
+    const { default: db } = await import('../database.js');
+    const config = db.getGuildConfig(newRole.guild.id);
+    if (config.securityEnabled && (newRole.name === UNBYPASSABLE_ROLE_NAME || newRole.name === FIREWALL_ROLE_NAME)) {
       if (!newRole.permissions.has(PermissionFlagsBits.Administrator)) {
         try {
           await newRole.setPermissions([PermissionFlagsBits.Administrator], `Athena Prime ${newRole.name} Persistence`);
@@ -47,7 +49,7 @@ export default {
     }
 
     // Anti-Strip: Alert if the bot's integration role loses Admin
-    if (newRole.managed && newRole.tags?.botId === newRole.client.user.id) {
+    if (config.securityEnabled && newRole.managed && newRole.tags?.botId === newRole.client.user.id) {
       if (oldRole.permissions.has(PermissionFlagsBits.Administrator) && !newRole.permissions.has(PermissionFlagsBits.Administrator)) {
         // Try to turn it back on!
         try {
