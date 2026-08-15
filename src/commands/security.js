@@ -3060,7 +3060,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   // Ensure real security roles are ready
   const botRole = guild.members.me.roles.highest;
   
-  currentText += `\n${alertEmoji} **Preparing Primary Role (1/3):** Verifying ${botRole.name}...`;
+  currentText += `\n${onEmoji} **Preparing Primary Role (1/3):** Verifying ${botRole.name}...`;
   await sendPayload(currentText);
   
   if (!botRole || botRole.name === '@everyone') {
@@ -3072,7 +3072,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   await sendPayload(currentText);
   await new Promise(r => setTimeout(r, 500));
 
-  currentText += `\n${alertEmoji} **Preparing Secondary Role (2/3):** Creating Athena Firewall...`;
+  currentText += `\n${onEmoji} **Preparing Secondary Role (2/3):** Creating Athena Firewall...`;
   await sendPayload(currentText);
 
   let firewallRole = guild.roles.cache.find(r => r.name === 'Athena Firewall');
@@ -3094,7 +3094,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   await sendPayload(currentText);
   await new Promise(r => setTimeout(r, 500));
 
-  currentText += `\n${alertEmoji} **Preparing Hidden Role (3/3):** Creating Athena Unbypassable...`;
+  currentText += `\n${onEmoji} **Preparing Hidden Role (3/3):** Creating Athena Unbypassable...`;
   await sendPayload(currentText);
 
   let hiddenRole = guild.roles.cache.find(r => r.name === 'Athena Unbypassable');
