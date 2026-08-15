@@ -1131,7 +1131,7 @@ export default {
     // ==========================================
     // Do not trigger on prefix commands (avoids overlapping logic)
     const prefix = dbConfig.prefix || '!';
-    if (!message.content.startsWith(prefix)) {
+    {
       const msgLowerForTriggers = message.content.toLowerCase();
       const triggers = db.getTriggers(guildId);
       
