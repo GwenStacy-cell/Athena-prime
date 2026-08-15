@@ -2110,11 +2110,11 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
 
   const limitText = wData.triggerLimit === 0 ? '0' : wData.triggerLimit;
   
-  const header = view === 'info' ? 'WHITELIST INFO' : 'WHITELIST ACCESS';
-  
   const description = 
-    `- Custom Action Limits: ${limitText}\n` +
-    `- Authorized for ${modulesKeys.length} security event categories.\n\n` +
+    `# WHITELIST ACCESS\n` +
+    `-# **${targetName}** (${targetId})\n\n` +
+    `-# **Custom Action Limits:** ${limitText}\n` +
+    `-# **Authorized for ${modulesKeys.length} security event categories.**\n\n` +
     moduleListText;
 
   const mainDisplay = new TextDisplayBuilder().setContent(description);
@@ -2137,7 +2137,7 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     }).slice(0, 25);
 
     const row1 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`wl_all_${type}_${targetId}`).setLabel('Whitelist All').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`wl_all_${type}_${targetId}`).setLabel('Whitelist All').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId(`wl_reset_${type}_${targetId}`).setLabel('Reset All').setStyle(ButtonStyle.Secondary)
     );
 
