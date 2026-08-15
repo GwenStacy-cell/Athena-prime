@@ -1098,7 +1098,7 @@ export const commands = [
     async executeSlash(interaction) {
       const mode = interaction.options.getString('status');
       const result = await handleAntiLink(interaction.guild, interaction.member, mode);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply({ embeds: [result.embed], ephemeral: false });
     }
   },
 
@@ -1368,7 +1368,7 @@ export const commands = [
         return interaction.reply({ embeds: [embed.warn('Missing Domain', 'Please provide a domain name.')] });
       }
       const result = await handleLinksAllow(interaction.guild, action, domain);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply({ embeds: [result.embed], ephemeral: false });
     }
   },
 
@@ -2641,9 +2641,7 @@ async function handleAntiLink(guild, moderator, mode) {
   const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
   const resEmbed = embed.success(
     'Anti-Link Configured',
-    `External URL auto-mod filter is now **${modeDesc}**.
-
-${enabled ? 'All external links from non-moderators will be deleted. Use `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
+    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <:emoji_16:1521464002046328944> Discord Invites\n> <:emoji_16:1521464002046328944> NSFW Links\n> <:emoji_16:1521464002046328944> Scam/Phishing Links\n> <:emoji_16:1521464002046328944> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
     [{ name: 'Changed by', value: `${moderator}` }]
   );
 
@@ -2953,11 +2951,11 @@ async function handleLinksAllow(guild, action, domain) {
   }
 
   if (action === 'disallowall') {
-    db.updateGuildConfig(guild.id, { allowAllLinks: false });
+    db.updateGuildConfig(guild.id, { allowAllLinks: false, allowedLinks: [] });
     return {
       embed: embed.warn(
-        '<:emoji_16:1533860111704002665> Anti-Link Filter Restored',
-        'The anti-link filter is **active** again.\n\nOnly whitelisted domains are allowed. Use `/linksallow add <domain>` to whitelist specific domains.'
+        '<a:AnyaYay:1537513785718476850> Anti-Link Filter Restored',
+        'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> <:emoji_16:1521464002046328944> Discord Invites\n> <:emoji_16:1521464002046328944> NSFW Links\n> <:emoji_16:1521464002046328944> Scam/Phishing Links\n> <:emoji_16:1521464002046328944> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
       )
     };
   }
