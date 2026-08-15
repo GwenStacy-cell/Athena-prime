@@ -223,16 +223,19 @@ export const commands = [
   // --- STATUS COMMAND ---
   {
     name: 'status',
+    aliases: ['ss'],
     description: 'Displays the Athena Prime security status overview and bot health.',
     category: 'utility',
     permissions: [],
     async executePrefix(message) {
-      const result = await getStatusEmbed(message.client, message.guild);
-      await message.reply({ embeds: [result.embed] });
+      const { getSecurityStatusPanel } = await import('./security.js');
+      const panel = await getSecurityStatusPanel(message.client, message.guild.id);
+      await message.reply(panel);
     },
     async executeSlash(interaction) {
-      const result = await getStatusEmbed(interaction.client, interaction.guild);
-      await interaction.reply({ embeds: [result.embed] });
+      const { getSecurityStatusPanel } = await import('./security.js');
+      const panel = await getSecurityStatusPanel(interaction.client, interaction.guild.id);
+      await interaction.reply(panel);
     }
   },
 
