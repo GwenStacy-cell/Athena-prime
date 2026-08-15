@@ -1330,7 +1330,7 @@ export default {
         try { await handleJtcButton(interaction); } catch (e) { console.error('[JTC button]', e); }
         return;
       }
-      if (interaction.isButton() && (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('sec_'))) {
+      if (interaction.isButton() && (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('wlo_') || interaction.customId.startsWith('sec_'))) {
         try { await handleSecurityPanelInteractions(interaction); } catch (e) { console.error('[SecPanel button]', e); }
         return;
       }
@@ -1419,7 +1419,7 @@ export default {
         }
       }
 
-      if (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('sec_')) {
+      if (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('wlo_') || interaction.customId.startsWith('sec_')) {
         try { await handleSecurityPanelInteractions(interaction); } catch (e) { console.error('[SecPanel select]', e); }
         return;
       }
