@@ -1407,6 +1407,13 @@ export default {
     // ==========================================
     // 4. STRING SELECT MENU (JTC & Emoji Stealer)
     // ==========================================
+    if (interaction.isAnySelectMenu()) {
+      if (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('wlo_') || interaction.customId.startsWith('sec_')) {
+        try { await handleSecurityPanelInteractions(interaction); } catch (e) { console.error('[SecPanel select]', e); }
+        return;
+      }
+    }
+
     if (interaction.isStringSelectMenu()) {
       if (interaction.customId === 'jtc_settings_menu' || interaction.customId === 'jtc_perms_menu') {
         try {
@@ -1417,11 +1424,6 @@ export default {
             await interaction.reply({ content: ' An error occurred.', ephemeral: true }).catch(() => null);
           }
         }
-      }
-
-      if (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('wlo_') || interaction.customId.startsWith('sec_')) {
-        try { await handleSecurityPanelInteractions(interaction); } catch (e) { console.error('[SecPanel select]', e); }
-        return;
       }
 
       if (interaction.customId === 'emojistealer_select') {
