@@ -1402,6 +1402,7 @@ export default {
       await interaction.update(panel);
       return;
     }
+  }
 
     // ==========================================
     // 4. STRING SELECT MENU (JTC & Emoji Stealer)
