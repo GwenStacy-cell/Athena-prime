@@ -3044,10 +3044,9 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   ];
 
   const sendPayload = async (text, isError = false) => {
-    const title = isError ? '# Initialization Failed' : '# Security Shield Sequence';
-    const display = new TextDisplayBuilder().setContent(`${title}\n\n${text}`);
-    const container = new ContainerBuilder().addTextDisplayComponents(display);
-    await updateMessageFn({ components: [container], flags: MessageFlags.IsComponentsV2 });
+    const title = isError ? 'Initialization Failed' : 'Security Shield Sequence';
+    const e = embed.build({ title, description: text, color: 0xFF0000 });
+    await updateMessageFn(e);
   };
 
   let currentText = '';
@@ -3118,20 +3117,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   await sendPayload(currentText);
   await new Promise(r => setTimeout(r, 500));
 
-  // Dashboard creation (early so we can see it)
-  const existingDashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
-  if (!existingDashboard) {
-    try {
-      await setupDashboardChannel(guild, guild.client);
-    } catch (err) {
-      return sendPayload(`Failed to deploy dashboard channel.\n\`\`\`\n${err.message}\n\`\`\``, true);
-    }
-  }
-  
-  currentText += `\n${onEmoji} **Deploying Dashboard:** Athena's Dashboard Channel Active`;
-  await sendPayload(currentText);
-  
-  // DB Update
+  // DB Update - MUST be before Dashboard creation so Dashboard sees Firewall as Active
   db.updateGuildConfig(guild.id, {
     securityEnabled: true,
     antiNukeEnabled: true,
@@ -3146,6 +3132,19 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     db.addBlacklistWord(guild.id, 'nuke');
     db.addBlacklistWord(guild.id, 'spam');
   }
+
+  // Dashboard creation
+  const existingDashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
+  if (!existingDashboard) {
+    try {
+      await setupDashboardChannel(guild, guild.client);
+    } catch (err) {
+      return sendPayload(`Failed to deploy dashboard channel.\n\`\`\`\n${err.message}\n\`\`\``, true);
+    }
+  }
+  
+  currentText += `\n${onEmoji} **Deploying Dashboard:** Athena's Dashboard Channel Active`;
+  await sendPayload(currentText);
 
   currentText += `\n\n${alertEmoji} **ALL SYSTEMS LOCKED AND OPERATIONAL**\n\n**Athena Prime has deployed a triple-layer security architecture. Any attempt to disturb, delete, or strip permissions from my Primary, Secondary, or Hidden roles will trigger an instant Hostile Neutralization. Athena will automatically restore its own permissions, rendering the bot truly unbypassable.**\n\n**#athenas-dashboard** has been successfully initialized. Use this dedicated channel to monitor live security modules, recent logs, and interact with firewall controls.`;
   
