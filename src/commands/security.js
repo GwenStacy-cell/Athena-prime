@@ -390,7 +390,8 @@ export const commands = [
       }
 
       if (!args[0]) {
-        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!whitelist <@user|@role>\``)] });
+        const panel = await getWhitelistOverviewPanel(message.guild);
+        return message.reply(panel);
       }
 
       const targetUser = message.mentions.users.first();
@@ -430,6 +431,11 @@ export const commands = [
       }
 
       const target = interaction.options.getMentionable('target');
+      
+      if (!target) {
+        const panel = await getWhitelistOverviewPanel(interaction.guild);
+        return interaction.reply(panel);
+      }
       
       let targetId, type;
       if (target.user || !target.name) {
@@ -2102,14 +2108,13 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     moduleListText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 
-  const limitText = wData.triggerLimit === 0 ? 'Infinite' : wData.triggerLimit;
+  const limitText = wData.triggerLimit === 0 ? '0' : wData.triggerLimit;
   
   const header = view === 'info' ? 'WHITELIST INFO' : 'WHITELIST ACCESS';
   
   const description = 
-    `# ${header}\n` +
-    `-# **${targetName}** (${targetId})\n\n` +
-    `-# Global Limits: Infinite | Custom Limits: ${limitText}\n\n` +
+    `- Custom Action Limits: ${limitText}\n` +
+    `- Authorized for ${modulesKeys.length} security event categories.\n\n` +
     moduleListText;
 
   const mainDisplay = new TextDisplayBuilder().setContent(description);
@@ -2132,7 +2137,7 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     }).slice(0, 25);
 
     const row1 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`wl_all_${type}_${targetId}`).setLabel('Whitelist All').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_all_${type}_${targetId}`).setLabel('Whitelist All').setStyle(ButtonStyle.Success),
       new ButtonBuilder().setCustomId(`wl_reset_${type}_${targetId}`).setLabel('Reset All').setStyle(ButtonStyle.Secondary)
     );
 
@@ -2154,12 +2159,120 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     
     const row4 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId(`wl_save_${type}_${targetId}`).setLabel('Save Changes').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`wl_close`).setLabel('Close').setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder().setCustomId(`wlo_back`).setLabel('Close').setStyle(ButtonStyle.Secondary)
     );
 
     panelContainer.addActionRowComponents(row1, row2, row3, row4);
   }
 
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function getWhitelistOverviewPanel(guild) {
+  const wlData = db.getAllWhitelists(guild.id);
+  
+  const userIds = Object.keys(wlData.users || {});
+  const roleIds = Object.keys(wlData.roles || {});
+  
+  let usersText = userIds.length > 0 
+    ? userIds.map(id => `| <@${id}>`).slice(0, 10).join('\n') + (userIds.length > 10 ? '\n| ...and more' : '')
+    : '| None';
+    
+  let rolesText = roleIds.length > 0
+    ? roleIds.map(id => `| <@&${id}>`).slice(0, 10).join('\n') + (roleIds.length > 10 ? '\n| ...and more' : '')
+    : '| None';
+
+  const description = 
+    `# WL OVERVIEW\n` +
+    `-# **${guild.name} !**\n\n` +
+    `**Users Whitelisted**\n\n` +
+    `${usersText}\n\n` +
+    `**Roles Whitelisted**\n\n` +
+    `${rolesText}`;
+
+  const mainDisplay = new TextDisplayBuilder().setContent(description);
+  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('wlo_manage_users').setLabel('Manage Users').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('wlo_remove_users').setLabel('Remove User').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('wlo_add_users').setLabel('Add User').setStyle(ButtonStyle.Secondary)
+  );
+  
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('wlo_manage_roles').setLabel('Manage Roles').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('wlo_remove_roles').setLabel('Remove Role').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('wlo_add_roles').setLabel('Add Role').setStyle(ButtonStyle.Secondary)
+  );
+  
+  const row3 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('wl_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
+  );
+
+  panelContainer.addActionRowComponents(row1, row2, row3);
+
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function getWhitelistSelectPanel(guild, type, action) {
+  const isUser = type === 'users';
+  let placeholder = '';
+  let menu = null;
+  
+  const wlData = db.getAllWhitelists(guild.id);
+  const ids = Object.keys(wlData[type] || {});
+
+  if (action === 'add') {
+    placeholder = `Select a ${isUser ? 'user' : 'role'} to add to whitelist`;
+    if (isUser) {
+      const { UserSelectMenuBuilder } = require('discord.js');
+      menu = new UserSelectMenuBuilder().setCustomId(`wlo_selectadd_${type}`).setPlaceholder(placeholder);
+    } else {
+      const { RoleSelectMenuBuilder } = require('discord.js');
+      menu = new RoleSelectMenuBuilder().setCustomId(`wlo_selectadd_${type}`).setPlaceholder(placeholder);
+    }
+  } else {
+    placeholder = action === 'manage' 
+      ? `Select a ${isUser ? 'user' : 'role'} to manage permissions`
+      : `Select a ${isUser ? 'user' : 'role'} to remove from whitelist`;
+      
+    if (ids.length === 0) {
+      const { StringSelectMenuBuilder } = require('discord.js');
+      menu = new StringSelectMenuBuilder()
+        .setCustomId('disabled_menu')
+        .setPlaceholder(`No whitelisted ${type} found.`)
+        .setDisabled(true)
+        .addOptions([{ label: 'None', value: 'none' }]);
+    } else {
+      const { StringSelectMenuBuilder } = require('discord.js');
+      const options = [];
+      for (const id of ids.slice(0, 25)) {
+        if (isUser) {
+          const u = await guild.client.users.fetch(id).catch(()=>null);
+          options.push({ label: u ? u.tag : id, value: id });
+        } else {
+          const r = guild.roles.cache.get(id);
+          options.push({ label: r ? r.name : id, value: id });
+        }
+      }
+      menu = new StringSelectMenuBuilder()
+        .setCustomId(`wlo_select${action}_${type}`)
+        .setPlaceholder(placeholder)
+        .addOptions(options);
+    }
+  }
+
+  const description = `| Select a ${isUser ? 'user' : 'role'} to ${action === 'manage' ? 'manage their whitelist permissions' : (action === 'add' ? 'add to whitelist' : 'remove from whitelist')}`;
+    
+  const mainDisplay = new TextDisplayBuilder().setContent(description);
+  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+  
+  const row1 = new ActionRowBuilder().addComponents(menu);
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('wlo_back').setLabel('Back').setStyle(ButtonStyle.Secondary)
+  );
+
+  panelContainer.addActionRowComponents(row1, row2);
   return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
 

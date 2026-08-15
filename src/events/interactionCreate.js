@@ -1553,6 +1553,58 @@ async function handleSecurityPanelInteractions(interaction) {
     return interaction.message.delete().catch(() => null);
   }
 
+  if (customId === 'wlo_back') {
+    try {
+      const sec = await import('../commands/security.js');
+      const panel = await sec.getWhitelistOverviewPanel(guild);
+      return interaction.update(panel);
+    } catch(e) { console.error(e); }
+  }
+
+  if (customId.startsWith('wlo_')) {
+    const actionParts = customId.split('_'); 
+    
+    if (interaction.isAnySelectMenu()) {
+      if (customId.startsWith('wlo_select')) {
+        let type, targetId, viewAction;
+        const subAction = actionParts[1].replace('select', ''); 
+        type = actionParts[2]; 
+        
+        if (interaction.isUserSelectMenu() || interaction.isRoleSelectMenu()) {
+          targetId = interaction.values[0];
+        } else if (interaction.isStringSelectMenu()) {
+          if (interaction.values[0] === 'none') return interaction.deferUpdate();
+          targetId = interaction.values[0];
+        }
+        
+        try {
+          const sec = await import('../commands/security.js');
+          if (subAction === 'remove') {
+            db.updateWhitelist(guild.id, targetId, type, null);
+            const panel = await sec.getWhitelistOverviewPanel(guild);
+            return interaction.update(panel);
+          } else {
+            const panel = await sec.getWhitelistPanel(guild, targetId, type, 'manage');
+            return interaction.update(panel);
+          }
+        } catch(e) { console.error(e); }
+        return;
+      }
+    }
+    
+    if (interaction.isButton()) {
+      const subAction = actionParts[1];
+      const type = actionParts[2];
+      
+      try {
+        const sec = await import('../commands/security.js');
+        const panel = await sec.getWhitelistSelectPanel(guild, type, subAction);
+        return interaction.update(panel);
+      } catch(e) { console.error(e); }
+      return;
+    }
+  }
+
   const parts = customId.split('_');
   if (parts[0] !== 'wl') return;
   
@@ -1585,10 +1637,9 @@ async function handleSecurityPanelInteractions(interaction) {
   }
 
   // Determine which view to render after update
-  // By default, if they click anything in manage mode, we stay in manage mode except if they click save
   let viewToRender = 'manage';
   if (action === 'save') {
-    viewToRender = 'info';
+    viewToRender = 'overview';
   } else if (action === 'manage') {
     viewToRender = 'manage';
   }
@@ -1616,11 +1667,16 @@ async function handleSecurityPanelInteractions(interaction) {
 
   try {
     const sec = await import('../commands/security.js');
-    if (sec.getWhitelistPanel) {
-      const panel = await sec.getWhitelistPanel(guild, targetId, type, viewToRender);
+    if (viewToRender === 'overview') {
+      const panel = await sec.getWhitelistOverviewPanel(guild);
       await interaction.update(panel);
     } else {
-      await interaction.update({ content: 'Saved.', components: [] });
+      if (sec.getWhitelistPanel) {
+        const panel = await sec.getWhitelistPanel(guild, targetId, type, viewToRender);
+        await interaction.update(panel);
+      } else {
+        await interaction.update({ content: 'Saved.', components: [] });
+      }
     }
   } catch(e) {
     console.error(e);
