@@ -1,27 +1,55 @@
 import { ContainerBuilder, TextDisplayBuilder, MessageFlags } from 'discord.js';
 
-function formatFields(fields) {
-  if (!fields || fields.length === 0) return '';
-  let text = '\n';
-  let buf = [];
-  for (const f of fields) {
-    if (f.inline) {
-      buf.push('**' + f.name + ':** ' + f.value);
-    } else {
-      if (buf.length > 0) { text += '\n' + buf.join('  **x**  ') + '\n'; buf = []; }
-      text += '\n**' + f.name + '**\n' + f.value + '\n';
-    }
-  }
-  if (buf.length > 0) text += '\n' + buf.join('  **x**  ') + '\n';
-  return text;
+// Returns true if a line already has discord markdown or emoji — skip auto-formatting
+function isPreformatted(line) {
+  if (!line.trim()) return true;
+  return /^(-#|#{1,3} |> |\*\*|__|`|\|)/.test(line) || /^[\u2022\-\*\+] /.test(line);
+}
+
+// Returns true if line starts with a custom or unicode emoji
+function hasEmojiStart(line) {
+  return /^<a?:[a-zA-Z0-9_]+:\d+>/.test(line) || /^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/u.test(line);
+}
+
+// Style a single line: grey bold, with optional bullet for plain text
+function styleLine(line, addBullet) {
+  if (!line.trim()) return line;
+  if (isPreformatted(line)) return line;
+  const bullet = (addBullet && !hasEmojiStart(line)) ? '\u2022 ' : '';
+  return '-# **' + bullet + line + '**';
 }
 
 function buildContainer(title, description, fields) {
   if (!fields) fields = [];
   let c = '';
-  if (title) c += '### ' + title + '\n';
-  if (description) c += description;
-  c += formatFields(fields);
+
+  // Big bold heading
+  if (title) c += '## **' + title + '**\n';
+
+  // Grey bold description — multi-line plain text gets bullet points
+  if (description) {
+    var lines = description.split('\n');
+    var plainCount = lines.filter(function(l) { return l.trim() && !isPreformatted(l) && !hasEmojiStart(l); }).length;
+    var multiLine = plainCount > 1;
+    c += lines.map(function(l) { return styleLine(l, multiLine); }).join('\n');
+  }
+
+  // Fields
+  var inlineBuf = [];
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    if (f.inline) {
+      inlineBuf.push('-# **' + f.name + ':** ' + f.value);
+    } else {
+      if (inlineBuf.length > 0) { c += '\n' + inlineBuf.join('  **\u00b7**  ') + '\n'; inlineBuf = []; }
+      c += '\n**' + f.name + '**\n';
+      var vLines = f.value.split('\n');
+      var vPlain = vLines.filter(function(l) { return l.trim() && !isPreformatted(l) && !hasEmojiStart(l); }).length;
+      c += vLines.map(function(l) { return styleLine(l, vPlain > 1); }).join('\n') + '\n';
+    }
+  }
+  if (inlineBuf.length > 0) c += '\n' + inlineBuf.join('  **\u00b7**  ') + '\n';
+
   const td = new TextDisplayBuilder().setContent(c.trim() || '\u200b');
   return new ContainerBuilder().addTextDisplayComponents(td);
 }
