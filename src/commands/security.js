@@ -2710,7 +2710,8 @@ async function getServerInfoEmbed(guild) {
       { type: 10, content: statsText },
       { type: 14, divider: true },
       { type: 10, content: securityText },
-      { type: 14, divider: true }
+      { type: 14, divider: true },
+      { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
     ]
   };
 
@@ -2813,7 +2814,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
       `**${moderator.user.tag}** toggled all security shields **OFF**.`
     ));
 
-    return { components: [{ type: 17, components: [{ type: 10, content: textContent }, { type: 14, divider: true }] }], flags: MessageFlags.IsComponentsV2 };
+    return { components: [{ type: 17, components: [{ type: 10, content: textContent }, { type: 14, divider: true }, { type: 10, content: "-# **Athena Bulletproof Security !!!**" }] }], flags: MessageFlags.IsComponentsV2 };
   }
 }
 
@@ -2886,7 +2887,9 @@ export async function getSecurityStatusPanel(guild) {
       { type: 1, components: [
         { type: 2, custom_id: 'sec_module_manage', label: 'Manage Modules', style: 2 },
         { type: 2, custom_id: 'sec_close', label: 'Close', style: 2 }
-      ]}
+      ]},
+      { type: 14, divider: true },
+      { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
     ]
   };
 

@@ -189,7 +189,7 @@ export const commands = [
       comps.push({ type: 10, content: `## **Banned Users (0)**\n*None*` });
       
       comps.push({ type: 14, divider: true });
-      comps.push({ type: 10, content: '-# **Athena Bulletproof Security**' });
+      comps.push({ type: 10, content: '-# **Athena Bulletproof Security !!!**' });
 
       await message.reply({ components: [{ type: 17, components: comps }], flags: MessageFlags.IsComponentsV2 });
     },
@@ -209,7 +209,7 @@ export const commands = [
       comps.push({ type: 14, divider: true });
       comps.push({ type: 10, content: lines.join('\n') || 'No NP Managers configured.' });
       comps.push({ type: 14, divider: true });
-      comps.push({ type: 10, content: '-# **Athena Bulletproof Security**' });
+      comps.push({ type: 10, content: '-# **Athena Bulletproof Security !!!**' });
 
       await message.reply({ components: [{ type: 17, components: comps }], flags: MessageFlags.IsComponentsV2 });
     },
@@ -238,7 +238,7 @@ export const commands = [
         comps.push(row.toJSON());
         
         comps.push({ type: 14, divider: true });
-        comps.push({ type: 10, content: '-# **Athena Bulletproof Security**' });
+        comps.push({ type: 10, content: '-# **Athena Bulletproof Security !!!**' });
 
         return { type: 17, components: comps };
       };

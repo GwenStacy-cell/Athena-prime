@@ -86,7 +86,9 @@ export const commands = [
               { type: 2, custom_id: 'vcp_unlock', label: 'Unlock VC', style: 2 },
               { type: 2, custom_id: 'vcp_hide', label: 'Hide VC', style: 2 },
               { type: 2, custom_id: 'vcp_unhide', label: 'Unhide VC', style: 2 }
-            ]}
+            ]},
+            { type: 14, divider: true },
+            { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
           ]
         };
 
