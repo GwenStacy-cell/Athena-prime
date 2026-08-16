@@ -93,7 +93,7 @@ export async function updateBotVcStatus(channel) {
     '<a:thunder:1516523058742169674>',
     '<a:bat1:1516523055642579016>',
     '<a:nt:1445649701809684552>',
-    '<a:emoji_110:1513755776928321586>'
+    '<a:MMMilkDance:1538515109146660956>'
   ];
   
   const startEmoji = emojis[emojiIndex % emojis.length];
