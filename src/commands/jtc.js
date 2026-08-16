@@ -101,7 +101,6 @@ export function buildControlPanel(vcChannel, ownerMember) {
     ]);
 
   const container = new ContainerBuilder()
-    .setAccentColor(getAccent(vcChannel.guild))
     .addSectionComponents(
       new SectionBuilder()
         .addTextDisplayComponents(
@@ -186,7 +185,6 @@ export function buildSharedPanel(guild) {
     ]);
 
   const container = new ContainerBuilder()
-    .setAccentColor(getAccent(guild))
     .addSectionComponents(
       new SectionBuilder()
         .addTextDisplayComponents(

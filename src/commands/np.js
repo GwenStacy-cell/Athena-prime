@@ -180,9 +180,7 @@ export const commands = [
       }
 
       const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
-      
-      const comps = [];
+            const comps = [];
       comps.push({ type: 10, content: `# GLOBAL NO-PREFIX STATUS PANEL` });
       comps.push({ type: 14, divider: true });
       
@@ -193,7 +191,7 @@ export const commands = [
       comps.push({ type: 14, divider: true });
       comps.push({ type: 10, content: '-# **Athena Bulletproof Security**' });
 
-      await message.reply({ components: [{ type: 17, accent_color: accentInt, components: comps }], flags: MessageFlags.IsComponentsV2 });
+      await message.reply({ components: [{ type: 17, components: comps }], flags: MessageFlags.IsComponentsV2 });
     },
 
     async sendManagerList(message) {
@@ -206,23 +204,19 @@ export const commands = [
       }
 
       const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
-
-      const comps = [];
+            const comps = [];
       comps.push({ type: 10, content: `# NP Managers List\n## **Active & Configured NP Managers**` });
       comps.push({ type: 14, divider: true });
       comps.push({ type: 10, content: lines.join('\n') || 'No NP Managers configured.' });
       comps.push({ type: 14, divider: true });
       comps.push({ type: 10, content: '-# **Athena Bulletproof Security**' });
 
-      await message.reply({ components: [{ type: 17, accent_color: accentInt, components: comps }], flags: MessageFlags.IsComponentsV2 });
+      await message.reply({ components: [{ type: 17, components: comps }], flags: MessageFlags.IsComponentsV2 });
     },
 
     async sendGuide(message) {
       const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
-
-      const buildGuideContainer = (page) => {
+            const buildGuideContainer = (page) => {
         const comps = [];
         
         comps.push({ type: 10, content: `# NP Manager Guide (Page ${page}/2)\nOfficial Control & Analytics Guide for NP Managers` });
@@ -246,7 +240,7 @@ export const commands = [
         comps.push({ type: 14, divider: true });
         comps.push({ type: 10, content: '-# **Athena Bulletproof Security**' });
 
-        return { type: 17, accent_color: accentInt, components: comps };
+        return { type: 17, components: comps };
       };
 
       const reply = await message.reply({ components: [buildGuideContainer(1)], flags: MessageFlags.IsComponentsV2 });

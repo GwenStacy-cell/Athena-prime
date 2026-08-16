@@ -475,8 +475,6 @@ const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/152
 
 function buildHelpContainer(client, guildId, moduleId = 'home') {
   const config = db.getGuildConfig(guildId || '0');
-  const accentColor = config?.accentColor || '#3b82f6';
-  const accentInt = parseInt(accentColor.replace('#', ''), 16);
   const prefix = config?.prefix || '!';
   const botId = client?.user?.id || '1347071663182676059';
 
@@ -589,10 +587,9 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
   rawComponents.push({ type: 14, divider: true });
   rawComponents.push({ type: 10, content: '-# **Athena Prime Unbypassable Security !!**' });
 
-  // Raw Container JSON
+  // Raw Container JSON — no accent_color so it renders borderless like VC panel
   const rawContainer = {
     type: 17,
-    accent_color: accentInt,
     components: rawComponents
   };
 
