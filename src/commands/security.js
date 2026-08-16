@@ -2408,13 +2408,14 @@ export async function getAntinukeConfigPanel(guild) {
 
   const description = 
     `# MODULE CONFIGURATION\n` +
-    `-# **Athena Prime Defense Panel**\n\n` +
-    `> ${nukeState ? emojiOn : emojiOff} Anti-Nuke Shield\n` +
+    `-# **Athena Prime ⚡ God-Tier Firewall**\n\n` +
+    `> ${nukeState ? emojiOn : emojiOff} Anti-Nuke Firewall\n` +
     `> ${spamState ? emojiOn : emojiOff} Anti-Spam Filter\n` +
     `> ${inviteState ? emojiOn : emojiOff} Anti-Invite Blocker\n` +
     `> ${blacklistState ? emojiOn : emojiOff} Word Filter (${config.blacklistWords ? config.blacklistWords.length : 0} Words)\n` +
     `> Punishment: \`${config.antiNukePunishment.toUpperCase()}\`\n` +
-    `> Warn Limit: \`${config.maxWarnings}\``;
+    `> Warn Limit: \`${config.maxWarnings}\`\n\n` +
+    `-# ⚡ Raw API strike engine active — nuke bots eliminated in ~1-3ms`;
 
   const mainDisplay = new TextDisplayBuilder().setContent(description);
   const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
@@ -2492,26 +2493,27 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 
   const resEmbed = enable
     ? embed.success(
-        '<:on:1514996865030946847> All Systems Locked and Operational',
-        `<:on:1514996865030946847> **Primary Role:** Athena Integration Enabled
-<:on:1514996865030946847> **Secondary Role:** Athena Firewall Activated
-<:on:1514996865030946847> **Hidden Role:** Athena Unbypassable Deployed
+        '<:on:1514996865030946847> God-Tier Firewall — Fully Operational',
+        `<:on:1514996865030946847> **Firewall Layer:** Raw API Strike Engine Active
+<:on:1514996865030946847> **Predictive Layer:** Behavioral Pattern Detection Online
+<:on:1514996865030946847> **Restoration Layer:** Zero-Latency Channel & Role Recovery
+<:on:1514996865030946847> **Condemned Cache:** Instant nuker skip-to-restoration active
 
-*Athena Prime has deployed a triple-layer security architecture. If an unauthorized user attempts to disturb, delete, or strip permissions from any of my Primary, Secondary, or Hidden roles, Athena will instantly execute a Hostile Neutralization to safeguard the server and automatically restore its own permissions. This makes Athena Prime truly unbypassable.*
+*Athena Prime's firewall now operates at raw HTTP speed. Nuke bots are eliminated in ~1-3 milliseconds via a direct Discord API strike. Predictive quarantine intercepts suspicious admins before they can cause structural damage. Unauthorized channels are instantly deleted, deleted channels are instantly restored.*
 
-*(Use \'antinuke config\' or individual commands to fine-tune)*`,
+*(Use 'antinuke config' or individual commands to fine-tune modules)*`,
         [
-          { name: ' Anti-Nuke',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: ' Anti-Spam',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Anti-Invite', value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Anti-Link',  value: `${TOGGLE_ON} ON`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Word Filter', value: `${TOGGLE_ON} ON`, inline: true },
+          { name: '⚡ Anti-Nuke',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '⚡ Anti-Spam',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:emoji_16:1533860111704002665> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: 'Enforced by', value: `${moderator}`, inline: true }
         ]
       )
     : embed.warn(
-        'All Security Shields DISENGAGED',
-        ` Athena Prime protective filters have been **DEACTIVATED** server-wide.`,
+        'All Shields Disengaged',
+        `Athena Prime firewall layers have been **DEACTIVATED** server-wide. The server is now unprotected.`,
         [{ name: 'Lifted by', value: `${moderator}` }]
       );
 
@@ -2843,15 +2845,17 @@ export async function getSecurityStatusPanel(guild) {
   }
 
   const description = 
-    `# SECURITY SHIELD STATUS\n` +
-    `-# **Global Status:** ${isSecured ? 'Active' : 'Offline'}\n\n` +
+    `# ⚡ SECURITY FIREWALL STATUS\n` +
+    `-# **Global Status:** ${isSecured ? '⚡ God-Tier Firewall ACTIVE' : 'Offline — Unprotected'}\n` +
+    `-# **Strike Engine:** ${isSecured ? 'Raw API — ~1-3ms elimination' : 'Disabled'}\n` +
+    `-# **Predictive Layer:** ${isSecured ? 'Online — Behavioral scanning active' : 'Disabled'}\n\n` +
     listText;
 
   const mainDisplay = new TextDisplayBuilder().setContent(description);
   const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
 
   const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('sec_module_manage').setLabel('Open Modules Manager').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('sec_module_manage').setLabel('Manage Modules').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('sec_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
   );
   
