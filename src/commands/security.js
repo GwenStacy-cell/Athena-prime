@@ -1211,7 +1211,7 @@ export const commands = [
         });
       } else if (disable) {
         const config = db.getGuildConfig(message.guild.id);
-        if (!config.securityEnabled) {
+        if (!config.securityEnabled && !config.antiNukeEnabled) {
           return message.reply(cv2.warn('Security Inactive', 'Security is already disabled on this server.'));
         }
 
@@ -2799,8 +2799,8 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
 
 export async function getSecurityStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
-  // antiNukeEnabled is the correct field set by handleAntinukeToggleAll
-  const isSecured = config.antiNukeEnabled;
+  // securityEnabled is the master switch set by security enable/disable all
+  const isSecured = !!(config.securityEnabled);
   
   const modLabels = {
     antiRoleCreate: 'Anti Role Create',
@@ -2835,16 +2835,14 @@ export async function getSecurityStatusPanel(guild) {
   const emojiOn = '<:on:1514996865030946847>'; 
   const emojiOff = '<:off:1514996861474177109>'; 
   
-  // Use the canonical list of module keys to ensure all are shown even if DB is missing some
   const allModuleKeys = Object.keys(modLabels);
   
   let listText = '';
   for (const k of allModuleKeys) {
     const label = modLabels[k] || k;
-    // A module is ON if: global antinuke is enabled AND the individual module flag is true
-    // If antinukeModules doesn't have the key, fall back to isSecured (toggle-all sets ALL keys)
+    // If individual module flags exist, respect them; otherwise follow master switch
     const moduleFlag = config.antinukeModules?.[k];
-    const isEnabled = isSecured && (moduleFlag === true || moduleFlag === undefined ? isSecured : false);
+    const isEnabled = isSecured && (moduleFlag === undefined ? true : !!moduleFlag);
     listText += `> ${isEnabled ? emojiOn : emojiOff} ${label}\n`;
   }
 
