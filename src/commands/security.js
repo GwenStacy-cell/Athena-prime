@@ -2680,15 +2680,12 @@ async function getServerInfoEmbed(guild) {
 
   const iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
 
-  // Header section: title + description on left, server icon thumbnail on right
-  const headerSection = {
-    type: 9,
-    components: [{
-      type: 10,
-      content: `## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**`
-    }],
-    ...(iconUrl ? { accessory: { type: 11, media: { url: iconUrl } } } : {})
-  };
+  const headerSection = new SectionBuilder().addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(`## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**`)
+  );
+  if (iconUrl) {
+    headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(iconUrl));
+  }
 
   const statsText =
     `-# **Owner:** ${ownerTag}\n` +
@@ -2744,15 +2741,12 @@ async function getUserInfoEmbed(guild, member) {
 
   const avatarUrl = member.user.displayAvatarURL({ dynamic: true, size: 256 });
 
-  // SectionBuilder: username+tag on left, avatar thumbnail on right → grey left line
-  const headerSection = {
-    type: 9,
-    components: [{
-      type: 10,
-      content: `## **User Info — ${member.user.tag}**\n-# **Detailed profile and privilege information.**`
-    }],
-    accessory: { type: 11, media: { url: avatarUrl } }
-  };
+  const headerSection = new SectionBuilder().addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(`## **User Info — ${member.user.tag}**\n-# **Detailed profile and privilege information.**`)
+  );
+  if (avatarUrl) {
+    headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(avatarUrl));
+  }
 
   const statsText =
     `-# **Username:** ${member.user.tag}   **ID:** \`${member.id}\`\n` +
@@ -2863,19 +2857,17 @@ export async function getSecurityStatusPanel(guild) {
     listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 
-  // SectionBuilder header: firewall status on left, bot avatar thumbnail on right
-  const headerSection = {
-    type: 9,
-    components: [{
-      type: 10,
-      content:
+  const headerSection = new SectionBuilder().addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
         `# SECURITY FIREWALL STATUS\n` +
         `-# **Global Status:** ${isSecured ? 'God-Tier Firewall ACTIVE' : 'Offline \u2014 Unprotected'}\n` +
         `-# **Strike Engine:** ${isSecured ? 'Raw API \u2014 ~1-3ms elimination' : 'Disabled'}\n` +
         `-# **Predictive Layer:** ${isSecured ? 'Online \u2014 Behavioral scanning active' : 'Disabled'}`
-    }],
-    ...(botAvatarUrl ? { accessory: { type: 11, media: { url: botAvatarUrl } } } : {})
-  };
+    )
+  );
+  if (botAvatarUrl) {
+    headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(botAvatarUrl));
+  }
 
   const container = {
     type: 17,
