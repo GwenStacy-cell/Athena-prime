@@ -1,7 +1,11 @@
-import { Client, GatewayIntentBits, Partials } from 'discord.js';
+import { Client, GatewayIntentBits, Partials, Collection } from 'discord.js';
 import dotenv from 'dotenv';
 import chalk from 'chalk';
+import path from 'path';
+import fs from 'fs';
+import db from './src/database.js';
 import http from 'http';
+import { Shoukaku, Connectors } from 'shoukaku';
 
 // Load Environment Variables
 dotenv.config();
@@ -46,7 +50,6 @@ const client = new Client({
 global.client = client; // Make client globally accessible
 
 // Initialize Shoukaku (Lavalink wrapper)
-import { Shoukaku, Connectors } from 'shoukaku';
 const Nodes = [
   {
     name: 'Athena AWS Premium',
@@ -110,7 +113,6 @@ import messageUpdateEvent from './src/events/messageUpdate.js';
 import guildCreateEvent from './src/events/guildCreate.js';
 import guildAuditLogEntryCreateEvent from './src/events/guildAuditLogEntryCreate.js';
 import { scheduleAutoUnquarantine } from './src/commands/security.js';
-import db from './src/database.js';
 
 const events = [
   readyEvent,
@@ -192,15 +194,6 @@ client.on('raw', async (packet) => {
 });
 console.log(chalk.gray(`   ├─ Bound event: `) + chalk.yellow.bold('raw (GUILD_AUDIT_LOG_ENTRY_CREATE) ⚡'));
 
-// Global Exception Containment (Avoids random crashes during network drops)
-process.on('unhandledRejection', error => {
-  console.error(chalk.red.bold('\n🔥 Unhandled Promise Rejection:'), error);
-});
-
-process.on('uncaughtException', error => {
-  console.error(chalk.red.bold('\n🔥 Uncaught Exception Critical:'), error);
-});
-
 // Optional lightweight web server for hosting health checks (e.g., Railway)
 const PORT = process.env.PORT || null;
 if (PORT) {
@@ -255,27 +248,20 @@ client.once('ready', async () => {
 // Graceful Shutdown to ensure DB flushes
 function handleShutdown(signal) {
   console.log(chalk.yellow(`\n[System] Received ${signal}, initiating graceful shutdown...`));
-  import('./src/database.js').then(({ default: db }) => {
-    // Force immediate save if pending
-    if (db.needsSave || db.saveTimeout) {
-      console.log(chalk.yellow('[System] Flushing database to disk...'));
-      clearTimeout(db.saveTimeout);
-      db.saveTimeout = null;
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const data = JSON.stringify(db.cache, null, 2);
-        fs.writeFileSync(path.resolve('data', 'db.json'), data, 'utf8');
-        console.log(chalk.green('[System] Database saved successfully.'));
-      } catch (e) {
-        console.error('[System] Failed to save database during shutdown:', e);
-      }
+  // Force immediate save if pending
+  if (db.needsSave || db.saveTimeout) {
+    console.log(chalk.yellow('[System] Flushing database to disk...'));
+    clearTimeout(db.saveTimeout);
+    db.saveTimeout = null;
+    try {
+      const data = JSON.stringify(db.cache, null, 2);
+      fs.writeFileSync(path.resolve('data', 'db.json'), data, 'utf8');
+      console.log(chalk.green('[System] Database saved successfully.'));
+    } catch (err) {
+      console.error(chalk.red('[System] Error flushing database on shutdown:'), err);
     }
-    process.exit(0);
-  }).catch(err => {
-    console.error('Error loading db during shutdown:', err);
-    process.exit(0);
-  });
+  }
+  process.exit(0);
 }
 
 process.on('SIGTERM', () => handleShutdown('SIGTERM'));
