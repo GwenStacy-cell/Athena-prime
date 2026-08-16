@@ -868,7 +868,7 @@ async function handleMuteAll(guild, moderator) {
 
   const resEmbed = cv2.danger('Voice Mute Completed', `Successfully server-muted **${mutedCount}** member(s) in **${vc.name}**.`);
   logToSecurityChannel(guild, cv2.log('MuteAll Voice Channel', `Moderator **${moderator.user.tag}** muted all **${mutedCount}** members in **${vc.name}**.`, [], 'warning'));
-  return { embed: resEmbed };
+  return resEmbed;
 }
 
 async function handleUnmuteAll(guild, moderator) {
@@ -885,7 +885,7 @@ async function handleUnmuteAll(guild, moderator) {
 
   const resEmbed = cv2.success('Voice Unmute Completed', `Successfully removed server-mute from **${unmutedCount}** member(s) in **${vc.name}**.`);
   logToSecurityChannel(guild, cv2.log('UnmuteAll Voice Channel', `Moderator **${moderator.user.tag}** unmuted all **${unmutedCount}** members in **${vc.name}**.`, [], 'success'));
-  return { embed: resEmbed };
+  return resEmbed;
 }
 
 export async function handleWarn(guild, moderator, target, reason, force = false) {
@@ -953,7 +953,7 @@ export async function handleWarn(guild, moderator, target, reason, force = false
       );
   }
 
-  return { embed: resEmbed };
+  return resEmbed;
 }
 
 async function handleWarnings(guild, target) {
@@ -973,7 +973,7 @@ async function handleWarnings(guild, target) {
     `This member currently has **${warns.length}** active warnings recorded on disk.`, 
     fields
   );
-  return { embed: resEmbed };
+  return resEmbed;
 }
 
 async function handleClearWarns(guild, moderator, target) {
@@ -992,7 +992,7 @@ async function handleClearWarns(guild, moderator, target) {
     [],
     'success'
   ));
-  return { embed: resEmbed };
+  return resEmbed;
 }
 
 async function handleTimeout(guild, moderator, target, durationStr, reason) {
@@ -1038,7 +1038,7 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
       'danger'
     ));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('Timeout Failed', 'An error occurred while executing the timeout. Ensure my role is higher than the target.');
@@ -1084,7 +1084,7 @@ async function handleKick(guild, moderator, target, reason) {
       'danger'
     ));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('Kick Failed', 'An error occurred while kicking the user.');
@@ -1130,7 +1130,7 @@ async function handleBan(guild, moderator, target, reason) {
       'danger'
     ));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('Ban Failed', 'An error occurred while banning the user.');
@@ -1167,7 +1167,7 @@ async function handleCreateRole(guild, moderator, name, color) {
       'success'
     ));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('Action Failed', 'Failed to create the role. Ensure my role is high enough and I have Manage Roles permission.');
@@ -1200,7 +1200,7 @@ async function handleDeleteRole(guild, moderator, role) {
       'danger'
     ));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('Action Failed', 'Failed to delete the role. Ensure my highest role is above the target role.');
@@ -1233,7 +1233,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
       'warning'
     ));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('Purge Failed', 'Failed to delete messages. Messages older than 14 days cannot be bulk deleted.');
@@ -1262,7 +1262,7 @@ async function handleSlowmode(guild, channel, moderator, seconds) {
       seconds === 0 ? 'success' : 'warning'
     ));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('Slowmode Failed', 'Failed to set slowmode. Ensure I have Manage Channel permissions.');
@@ -1300,7 +1300,7 @@ async function handleUnban(guild, moderator, userId, reason) {
       'success'
     ));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('Unban Failed', 'An error occurred while unbanning the user.');
@@ -1341,7 +1341,7 @@ async function handleBanById(guild, moderator, userId, reason, userObj = null) {
       { name: 'Reason', value: reason }
     ], 'danger'));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('Ban Failed', `Could not ban user \`${userId}\`: ${error.message}`);
@@ -1381,7 +1381,7 @@ async function handleUnbanAll(guild, moderator) {
       { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
     ], 'success'));
 
-    return { embed: resEmbed };
+    return resEmbed;
   } catch (error) {
     console.error(error);
     return cv2.danger('UnbanAll Failed', `An error occurred: ${error.message}`);
@@ -1420,5 +1420,5 @@ async function handleVcAction(guild, moderator, targets, action) {
     { name: '❌ Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
   ]);
 
-  return { embed: embedRes };
+  return embedRes;
 }

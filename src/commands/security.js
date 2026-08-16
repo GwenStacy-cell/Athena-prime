@@ -2004,7 +2004,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
         `<:emoji_16:1533860111704002665> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
       );
       logToSecurityChannel(guild, cv2.log('Channel Locked', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
-      return { embed: lockEmbed };
+      return lockEmbed;
     } else {
       await channel.permissionOverwrites.edit(guild.roles.everyone, {
         SendMessages: null
@@ -2014,7 +2014,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
         `<:emoji_16:1533860111704002665> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
       );
       logToSecurityChannel(guild, cv2.log('Channel Unlocked', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
-      return { embed: unlockEmbed };
+      return unlockEmbed;
     }
   } catch (error) {
     console.error(error);
@@ -2033,7 +2033,7 @@ async function handleRaidMode(guild, moderator, mode) {
       [{ name: 'Enforced by', value: `${moderator}` }]
     );
     logToSecurityChannel(guild, cv2.log('Raid Mode Active', `Administrator **${moderator.user.tag}** turned ON Guild Raid Mode.`, [], 'raid'));
-    return { embed: resEmbed };
+    return resEmbed;
   } else {
     // Automatically mass unquarantine everyone caught in the raid
     const unquarantineResult = await handleMassUnquarantine(guild, moderator, guild.client, 'raidmode');
@@ -2056,7 +2056,7 @@ async function handleRaidMode(guild, moderator, mode) {
       [], 
       'success'
     ));
-    return { embed: resEmbed };
+    return resEmbed;
   }
 }
 
@@ -2528,7 +2528,7 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
     enable ? 'success' : 'warning'
   ));
 
-  return { embed: resEmbed };
+  return resEmbed;
 }
 
 // ==========================================
@@ -2658,7 +2658,7 @@ async function handleAntiLink(guild, moderator, mode) {
     enabled ? 'success' : 'warning'
   ));
 
-  return { embed: resEmbed };
+  return resEmbed;
 }
 
 async function getServerInfoEmbed(guild) {
@@ -2697,17 +2697,19 @@ async function getServerInfoEmbed(guild) {
     { name: ' Max Warns', value: `\`${config.maxWarnings}\``, inline: true }
   ];
 
-  const serverEmbed = cv2.security(
+  const serverPayload = cv2.security(
     `${guild.name} — Server Info`,
     `Comprehensive server statistics and Athena Prime security overview.`,
     fields
   );
 
+  // Inject server icon thumbnail into the container if available
   if (guild.iconURL()) {
-    serverEmbed.setThumbnail(guild.iconURL({ dynamic: true, size: 256 }));
+    const iconUrl = guild.iconURL({ dynamic: true, size: 256 });
+    serverPayload.components[0].components.splice(1, 0, { type: 12, items: [{ media: { url: iconUrl } }] });
   }
 
-  return { embed: serverEmbed };
+  return serverPayload;
 }
 
 async function getUserInfoEmbed(guild, member) {
@@ -2744,15 +2746,13 @@ async function getUserInfoEmbed(guild, member) {
     { name: `<:emoji_16:1533860111704002665> Roles [${member.roles.cache.size - 1}]`, value: roles }
   ];
 
-  const userEmbed = cv2.info(
+  const userPayload = cv2.info(
     `User Info — ${member.user.tag}`,
     `Detailed profile and privilege information.`,
     fields
   );
 
-  userEmbed.setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }));
-
-  return { embed: userEmbed };
+  return userPayload;
 }
 
 // ==========================================

@@ -228,22 +228,18 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
 
   // Bot owner & extra owners are immune
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return {
-      embed: cv2.danger(
+    return cv2.danger(
         ' Untouchable',
         ` **${target.user.tag}** is protected by Athena Prime and cannot be dragged.`
-      )
-    };
+      );
   }
 
   // Move Protected users are immune
   if (db.isMoveProtected(guild.id, target.id)) {
-    return {
-      embed: cv2.danger(
+    return cv2.danger(
         ' Move Protected',
         `**${target.user.tag}** is currently enrolled in Move Protection. They cannot be targeted by VC drag sessions.`
-      )
-    };
+      );
   }
 
   // (We no longer fail if they aren't in a VC initially, the drag will just wait for them to join)
@@ -251,12 +247,10 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
   // Bot needs Move Members permission
   const botMember = guild.members.me;
   if (!botMember.permissions.has(PermissionFlagsBits.MoveMembers)) {
-    return {
-      embed: cv2.danger(
+    return cv2.danger(
         'Missing Permission',
         'I need the **Move Members** permission to drag users between voice channels.'
-      )
-    };
+      );
   }
 
   const sessionKey = `${guild.id}:${target.id}`;
@@ -280,12 +274,10 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
   let vcList = getVoiceChannels();
 
   if (vcList.length < 2) {
-    return {
-      embed: cv2.warn(
+    return cv2.warn(
         'Not Enough VCs',
         'There must be at least **2 voice channels** accessible to the bot to start dragging.'
-      )
-    };
+      );
   }
 
   let index = 0;
@@ -355,8 +347,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
     intervalSec
   });
 
-  return {
-    embed: cv2.danger(
+  return cv2.danger(
       ' VC Drag Activated',
       `${target} is now being dragged through every voice channel every **${intervalSec}s**.\n\nUse \`/vcdragstop\` or \`!vcdragstop @${target.user.username}\` to stop.`,
       [
@@ -364,8 +355,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
         { name: 'Interval', value: `${intervalSec} second(s)`, inline: true },
         { name: 'Voice Channels', value: `${vcList.length} channels in rotation`, inline: true }
       ]
-    )
-  };
+    );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -373,12 +363,10 @@ function handleVcDragStop(guild, moderator, target) {
   const sessionKey = `${guild.id}:${target.id}`;
 
   if (!activeDrags.has(sessionKey)) {
-    return {
-      embed: cv2.warn(
+    return cv2.warn(
         'No Active Session',
         `There is no active VC drag session for ${target}.`
-      )
-    };
+      );
   }
 
   const session = activeDrags.get(sessionKey);
@@ -387,8 +375,7 @@ function handleVcDragStop(guild, moderator, target) {
 
   const durationSec = Math.round((Date.now() - session.startedAt) / 1000);
 
-  return {
-    embed: cv2.success(
+  return cv2.success(
       'VC Drag Stopped',
       `The VC drag session for **${session.targetTag}** has been terminated.`,
       [
@@ -396,8 +383,7 @@ function handleVcDragStop(guild, moderator, target) {
         { name: 'Session Duration', value: `${durationSec}s`, inline: true },
         { name: 'Stopped By', value: moderator.user.tag, inline: true }
       ]
-    )
-  };
+    );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -416,18 +402,14 @@ function handleVcDragList(guild) {
   }
 
   if (sessions.length === 0) {
-    return {
-      embed: cv2.info('No Active Drags', 'There are no ongoing VC drag sessions in this server.')
-    };
+    return cv2.info('No Active Drags', 'There are no ongoing VC drag sessions in this server.');
   }
 
-  return {
-    embed: cv2.info(
+  return cv2.info(
       ` Active VC Drag Sessions (${sessions.length})`,
       `Use \`/vcdragstop <@user>\` to stop any session.`,
       sessions
-    )
-  };
+    );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -461,13 +443,13 @@ async function handleMassDisconnect(targetVc, moderator, interaction = null) {
   await Promise.all(promises);
   let msg = `Successfully disconnected **${count}** users from ${targetVc}.`;
   if (skipped > 0) msg += `\n\n>  **${skipped}** users were skipped due to active **Move Protection**.`;
-  return { embed: cv2.success('Mass Disconnect', msg) };
+  return cv2.success('Mass Disconnect', msg);
 }
 
 // ─────────────────────────────────────────────────────────────
 async function handleMassMove(sourceVc, destVc, moderator, interaction = null) {
   if (sourceVc.id === destVc.id) {
-    return { embed: cv2.warn('Invalid Destination', 'Source and destination channels cannot be the same.') };
+    return cv2.warn('Invalid Destination', 'Source and destination channels cannot be the same.');
   }
 
   let count = 0;
@@ -495,5 +477,5 @@ async function handleMassMove(sourceVc, destVc, moderator, interaction = null) {
   await Promise.all(promises);
   let msg = `Successfully moved **${count}** users from ${sourceVc} to ${destVc}.`;
   if (skipped > 0) msg += `\n\n>  **${skipped}** users were skipped due to active **Move Protection**.`;
-  return { embed: cv2.success('Mass Move', msg) };
+  return cv2.success('Mass Move', msg);
 }
