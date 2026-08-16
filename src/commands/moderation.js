@@ -919,7 +919,7 @@ export async function handleWarn(guild, moderator, target, reason, force = false
   await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
   // Response channel embed
-  const resEmbed = embed.build({
+  const resEmbed = cv2.buildContainer({
     description: `__**User Warned |**__ <:emoji_16:1533860111704002665>\n> Reason: . ${target} , **${reason}**\n> ㅤhas been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
     color: '#2b2d31',
     thumbnail: target.user.displayAvatarURL({ dynamic: true })

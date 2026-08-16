@@ -28,11 +28,11 @@ export const commands = [
     ],
 
     async executePrefix(message, args) {
-      if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
+      if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [cv2.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
       const target = message.mentions.members.first();
       if (!target) {
         return message.reply({
-          embeds: [embed.warn('Command Error',
+          embeds: [cv2.warn('Command Error',
             `${message.author} Please mention a valid member.\n\n**Usage:** \`!vcdrag <@user> [interval_seconds]\``)]
         });
       }
@@ -41,7 +41,7 @@ export const commands = [
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)] });
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [cv2.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)] });
       const target = interaction.options.getMember('target');
       const intervalSec = interaction.options.getInteger('interval') || 2;
       const result = await handleVcDrag(interaction.guild, interaction.member, target, intervalSec);
@@ -62,11 +62,11 @@ export const commands = [
     ],
 
     async executePrefix(message) {
-      if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
+      if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [cv2.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
       const target = message.mentions.members.first();
       if (!target) {
         return message.reply({
-          embeds: [embed.warn('Command Error',
+          embeds: [cv2.warn('Command Error',
             `${message.author} Please mention the member whose drag session you want to stop.\n\n**Usage:** \`!vcdragstop <@user>\``)]
         });
       }
@@ -74,7 +74,7 @@ export const commands = [
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)] });
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [cv2.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)] });
       const target = interaction.options.getMember('target');
       const result = handleVcDragStop(interaction.guild, interaction.member, target);
       await interaction.reply({ embeds: [result.embed] });
@@ -92,12 +92,12 @@ export const commands = [
     options: [],
 
     async executePrefix(message) {
-      if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
+      if (!(await isAuthorized(message.author, message.guild))) return message.reply({ embeds: [cv2.danger('Permission Denied', `${message.author} Only owners can use this command.`)] });
       const result = handleVcDragList(message.guild);
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
-      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)] });
+      if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ embeds: [cv2.danger('Permission Denied', `${interaction.user} Only owners can use this command.`)] });
       const result = handleVcDragList(interaction.guild);
       await interaction.reply({ embeds: [result.embed] });
     }
@@ -116,7 +116,7 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!(await isAuthorized(message.author, message.guild))) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
+        return message.reply({ embeds: [cv2.danger('Permission Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
       }
 
       let targetVc;
@@ -128,7 +128,7 @@ export const commands = [
       }
 
       if (!targetVc || (targetVc.type !== ChannelType.GuildVoice && targetVc.type !== ChannelType.GuildStageVoice)) {
-        return message.reply({ embeds: [embed.warn('Channel Not Found', 'Please specify a valid voice channel, or join one first.')] });
+        return message.reply({ embeds: [cv2.warn('Channel Not Found', 'Please specify a valid voice channel, or join one first.')] });
       }
 
       const result = await handleMassDisconnect(targetVc, message.member);
@@ -136,13 +136,13 @@ export const commands = [
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
+        return interaction.reply({ embeds: [cv2.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
       }
 
       let targetVc = interaction.options.getChannel('channel') || interaction.member.voice.channel;
 
       if (!targetVc || (targetVc.type !== ChannelType.GuildVoice && targetVc.type !== ChannelType.GuildStageVoice)) {
-        return interaction.reply({ embeds: [embed.warn('Channel Not Found', 'Please specify a valid voice channel, or join one first.')] });
+        return interaction.reply({ embeds: [cv2.warn('Channel Not Found', 'Please specify a valid voice channel, or join one first.')] });
       }
 
       const result = await handleMassDisconnect(targetVc, interaction.member);
@@ -164,11 +164,11 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!(await isAuthorized(message.author, message.guild))) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
+        return message.reply({ embeds: [cv2.danger('Permission Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
       }
 
       if (!args[0]) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massmove <destination>` or `!massmove <source> <destination>`')] });
+        return message.reply({ embeds: [cv2.warn('Command Error', 'Usage: `!massmove <destination>` or `!massmove <source> <destination>`')] });
       }
 
       let sourceVc = message.member.voice.channel;
@@ -194,24 +194,24 @@ export const commands = [
                  message.guild.channels.cache.find(c => (c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildStageVoice) && c.name.toLowerCase().includes(destQuery));
       }
 
-      if (!sourceVc) return message.reply({ embeds: [embed.warn('Source Not Found', 'You must be in a voice channel, or specify a source channel.')] });
-      if (!destVc) return message.reply({ embeds: [embed.warn('Destination Not Found', 'Could not find the destination voice channel.')] });
+      if (!sourceVc) return message.reply({ embeds: [cv2.warn('Source Not Found', 'You must be in a voice channel, or specify a source channel.')] });
+      if (!destVc) return message.reply({ embeds: [cv2.warn('Destination Not Found', 'Could not find the destination voice channel.')] });
 
       const result = await handleMassMove(sourceVc, destVc, message.member);
       await message.reply({ embeds: [result.embed] });
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
+        return interaction.reply({ embeds: [cv2.danger('Permission Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, and **Extra Owners** can use mass commands.`)] });
       }
 
       const destVc = interaction.options.getChannel('destination');
       const sourceVc = interaction.options.getChannel('source') || interaction.member.voice.channel;
 
-      if (!sourceVc) return interaction.reply({ embeds: [embed.warn('Source Not Found', 'You must be in a voice channel, or specify a source channel.')] });
-      if (!destVc) return interaction.reply({ embeds: [embed.warn('Destination Not Found', 'Could not find the destination voice channel.')] });
-      if (sourceVc.type !== ChannelType.GuildVoice && sourceVc.type !== ChannelType.GuildStageVoice) return interaction.reply({ embeds: [embed.warn('Invalid Source', 'Source must be a voice channel.')] });
-      if (destVc.type !== ChannelType.GuildVoice && destVc.type !== ChannelType.GuildStageVoice) return interaction.reply({ embeds: [embed.warn('Invalid Destination', 'Destination must be a voice channel.')] });
+      if (!sourceVc) return interaction.reply({ embeds: [cv2.warn('Source Not Found', 'You must be in a voice channel, or specify a source channel.')] });
+      if (!destVc) return interaction.reply({ embeds: [cv2.warn('Destination Not Found', 'Could not find the destination voice channel.')] });
+      if (sourceVc.type !== ChannelType.GuildVoice && sourceVc.type !== ChannelType.GuildStageVoice) return interaction.reply({ embeds: [cv2.warn('Invalid Source', 'Source must be a voice channel.')] });
+      if (destVc.type !== ChannelType.GuildVoice && destVc.type !== ChannelType.GuildStageVoice) return interaction.reply({ embeds: [cv2.warn('Invalid Destination', 'Destination must be a voice channel.')] });
 
       const result = await handleMassMove(sourceVc, destVc, interaction.member);
       await interaction.reply({ embeds: [result.embed] });
@@ -229,7 +229,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
   // Bot owner & extra owners are immune
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
     return {
-      embed: embed.danger(
+      embed: cv2.danger(
         ' Untouchable',
         ` **${target.user.tag}** is protected by Athena Prime and cannot be dragged.`
       )
@@ -239,7 +239,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
   // Move Protected users are immune
   if (db.isMoveProtected(guild.id, target.id)) {
     return {
-      embed: embed.danger(
+      embed: cv2.danger(
         ' Move Protected',
         `**${target.user.tag}** is currently enrolled in Move Protection. They cannot be targeted by VC drag sessions.`
       )
@@ -252,7 +252,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
   const botMember = guild.members.me;
   if (!botMember.permissions.has(PermissionFlagsBits.MoveMembers)) {
     return {
-      embed: embed.danger(
+      embed: cv2.danger(
         'Missing Permission',
         'I need the **Move Members** permission to drag users between voice channels.'
       )
@@ -281,7 +281,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
 
   if (vcList.length < 2) {
     return {
-      embed: embed.warn(
+      embed: cv2.warn(
         'Not Enough VCs',
         'There must be at least **2 voice channels** accessible to the bot to start dragging.'
       )
@@ -356,7 +356,7 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
   });
 
   return {
-    embed: embed.danger(
+    embed: cv2.danger(
       ' VC Drag Activated',
       `${target} is now being dragged through every voice channel every **${intervalSec}s**.\n\nUse \`/vcdragstop\` or \`!vcdragstop @${target.user.username}\` to stop.`,
       [
@@ -374,7 +374,7 @@ function handleVcDragStop(guild, moderator, target) {
 
   if (!activeDrags.has(sessionKey)) {
     return {
-      embed: embed.warn(
+      embed: cv2.warn(
         'No Active Session',
         `There is no active VC drag session for ${target}.`
       )
@@ -388,7 +388,7 @@ function handleVcDragStop(guild, moderator, target) {
   const durationSec = Math.round((Date.now() - session.startedAt) / 1000);
 
   return {
-    embed: embed.success(
+    embed: cv2.success(
       'VC Drag Stopped',
       `The VC drag session for **${session.targetTag}** has been terminated.`,
       [
@@ -417,12 +417,12 @@ function handleVcDragList(guild) {
 
   if (sessions.length === 0) {
     return {
-      embed: embed.info('No Active Drags', 'There are no ongoing VC drag sessions in this server.')
+      embed: cv2.info('No Active Drags', 'There are no ongoing VC drag sessions in this server.')
     };
   }
 
   return {
-    embed: embed.info(
+    embed: cv2.info(
       ` Active VC Drag Sessions (${sessions.length})`,
       `Use \`/vcdragstop <@user>\` to stop any session.`,
       sessions
@@ -451,7 +451,7 @@ async function handleMassDisconnect(targetVc, moderator, interaction = null) {
         .then(() => {
           count++;
           if (interaction && count % 15 === 0) {
-            interaction.editReply({ embeds: [embed.info('Mass Disconnect', `Disconnecting in progress...\n\n Disconnected: **${count}**\n Skipped (Protected): **${skipped}**`)] }).catch(() => null);
+            interaction.editReply({ embeds: [cv2.info('Mass Disconnect', `Disconnecting in progress...\n\n Disconnected: **${count}**\n Skipped (Protected): **${skipped}**`)] }).catch(() => null);
           }
         })
         .catch(() => null)
@@ -461,13 +461,13 @@ async function handleMassDisconnect(targetVc, moderator, interaction = null) {
   await Promise.all(promises);
   let msg = `Successfully disconnected **${count}** users from ${targetVc}.`;
   if (skipped > 0) msg += `\n\n>  **${skipped}** users were skipped due to active **Move Protection**.`;
-  return { embed: embed.success('Mass Disconnect', msg) };
+  return { embed: cv2.success('Mass Disconnect', msg) };
 }
 
 // ─────────────────────────────────────────────────────────────
 async function handleMassMove(sourceVc, destVc, moderator, interaction = null) {
   if (sourceVc.id === destVc.id) {
-    return { embed: embed.warn('Invalid Destination', 'Source and destination channels cannot be the same.') };
+    return { embed: cv2.warn('Invalid Destination', 'Source and destination channels cannot be the same.') };
   }
 
   let count = 0;
@@ -485,7 +485,7 @@ async function handleMassMove(sourceVc, destVc, moderator, interaction = null) {
         .then(() => {
           count++;
           if (interaction && count % 15 === 0) {
-            interaction.editReply({ embeds: [embed.info('Mass Move', `Moving in progress...\n\n Moved: **${count}**\n Skipped (Protected): **${skipped}**`)] }).catch(() => null);
+            interaction.editReply({ embeds: [cv2.info('Mass Move', `Moving in progress...\n\n Moved: **${count}**\n Skipped (Protected): **${skipped}**`)] }).catch(() => null);
           }
         })
         .catch(() => null)
@@ -495,5 +495,5 @@ async function handleMassMove(sourceVc, destVc, moderator, interaction = null) {
   await Promise.all(promises);
   let msg = `Successfully moved **${count}** users from ${sourceVc} to ${destVc}.`;
   if (skipped > 0) msg += `\n\n>  **${skipped}** users were skipped due to active **Move Protection**.`;
-  return { embed: embed.success('Mass Move', msg) };
+  return { embed: cv2.success('Mass Move', msg) };
 }

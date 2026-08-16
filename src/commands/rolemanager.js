@@ -11,12 +11,12 @@ async function handleMassRole(context, role, action) {
   const highestUserRole = context.member?.roles.highest.position;
 
   if (role.position >= highestBotRole) {
-    const reply = { embeds: [embed.danger('Hierarchy Error', 'My highest role must be above the role you are trying to manage.')] };
+    const reply = { embeds: [cv2.danger('Hierarchy Error', 'My highest role must be above the role you are trying to manage.')] };
     return context.reply ? await context.reply(reply) : await context.editReply(reply);
   }
   
   if (!isBotOwnerSync(executor.id) && guild.ownerId !== executor.id && role.position >= highestUserRole) {
-    const reply = { embeds: [embed.danger('Hierarchy Error', 'Your highest role must be above the role you are trying to manage.')] };
+    const reply = { embeds: [cv2.danger('Hierarchy Error', 'Your highest role must be above the role you are trying to manage.')] };
     return context.reply ? await context.reply(reply) : await context.editReply(reply);
   }
 
@@ -25,7 +25,7 @@ async function handleMassRole(context, role, action) {
   
   const actionName = action === 'add' ? 'Add' : action === 'remove' ? 'Remove' : action === 'strip' ? 'Strip' : 'Restore';
   
-  const initialReply = { embeds: [embed.success(`Mass ${actionName} Started`, `Processing \`${role.name}\`...`)] };
+  const initialReply = { embeds: [cv2.success(`Mass ${actionName} Started`, `Processing \`${role.name}\`...`)] };
   let statusMessage;
   if (isSlash) {
     statusMessage = await context.editReply(initialReply);
@@ -50,13 +50,13 @@ async function handleMassRole(context, role, action) {
     } else if (action === 'restore') {
       const savedIds = db.getMassRole(guild.id, role.id) || [];
       if (savedIds.length === 0) {
-        return statusMessage.edit({ embeds: [embed.warn('No Backup', `No backup found for \`${role.name}\`. Nothing to restore.`)] }).catch(() => null);
+        return statusMessage.edit({ embeds: [cv2.warn('No Backup', `No backup found for \`${role.name}\`. Nothing to restore.`)] }).catch(() => null);
       }
       targets = members.filter(m => savedIds.includes(m.id) && !m.roles.cache.has(role.id));
     }
     
     if (targets.size === 0) {
-      const finishEmbed = embed.success(`Mass ${actionName} Completed`, `Nobody needed the role changed!`);
+      const finishEmbed = cv2.success(`Mass ${actionName} Completed`, `Nobody needed the role changed!`);
       return statusMessage.edit({ embeds: [finishEmbed] }).catch(() => null);
     }
     
@@ -75,14 +75,14 @@ async function handleMassRole(context, role, action) {
       }));
     }
     
-    const finishEmbed = embed.success(
+    const finishEmbed = cv2.success(
       `Mass ${actionName} Completed`, 
       `Successfully processed ${action === 'add' || action === 'restore' ? 'addition' : 'removal'} for **${successCount}** members.\nFailed: **${failCount}**`
     );
     await statusMessage.edit({ embeds: [finishEmbed] }).catch(() => null);
   } catch (err) {
     console.error(err);
-    const errEmbed = embed.danger('Execution Error', 'Something went wrong during mass role assignment.');
+    const errEmbed = cv2.danger('Execution Error', 'Something went wrong during mass role assignment.');
     await statusMessage.edit({ embeds: [errEmbed] }).catch(() => null);
   }
 }
@@ -108,7 +108,7 @@ export const commands = [
       const roles = message.mentions.roles;
       
       if (!target || roles.size === 0) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!addrole <@user> <@role1> [@role2...]`')] });
+        return message.reply({ embeds: [cv2.warn('Command Error', 'Usage: `!addrole <@user> <@role1> [@role2...]`')] });
       }
       
       const addedRoles = [];
@@ -139,11 +139,11 @@ export const commands = [
       if (addedRoles.length > 0) replyDesc += `**Added:** ${addedRoles.join(', ')}\n`;
       if (failedRoles.length > 0) replyDesc += `**Failed:** ${failedRoles.join(', ')}\n`;
       
-      await message.reply({ embeds: [embed.success('Role Assignment', replyDesc)] });
+      await message.reply({ embeds: [cv2.success('Role Assignment', replyDesc)] });
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission to use this command.')] });
+        return interaction.reply({ embeds: [cv2.danger('Unauthorized', 'You do not have permission to use this command.')] });
       }
       
       await interaction.deferReply();
@@ -151,7 +151,7 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.editReply({ embeds: [embed.warn('Command Error', 'User not found.')] });
+        return interaction.editReply({ embeds: [cv2.warn('Command Error', 'User not found.')] });
       }
       
       const roles = [];
@@ -186,7 +186,7 @@ export const commands = [
       if (addedRoles.length > 0) replyDesc += `**Added:** ${addedRoles.join(', ')}\n`;
       if (failedRoles.length > 0) replyDesc += `**Failed:** ${failedRoles.join(', ')}\n`;
       
-      await interaction.editReply({ embeds: [embed.success('Role Assignment', replyDesc)] });
+      await interaction.editReply({ embeds: [cv2.success('Role Assignment', replyDesc)] });
     }
   },
   {
@@ -209,7 +209,7 @@ export const commands = [
       const roles = message.mentions.roles;
       
       if (!target || roles.size === 0) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!removerole <@user> <@role1> [@role2...]`')] });
+        return message.reply({ embeds: [cv2.warn('Command Error', 'Usage: `!removerole <@user> <@role1> [@role2...]`')] });
       }
       
       const removedRoles = [];
@@ -240,11 +240,11 @@ export const commands = [
       if (removedRoles.length > 0) replyDesc += `**Removed:** ${removedRoles.join(', ')}\n`;
       if (failedRoles.length > 0) replyDesc += `**Failed:** ${failedRoles.join(', ')}\n`;
       
-      await message.reply({ embeds: [embed.success('Role Removal', replyDesc)] });
+      await message.reply({ embeds: [cv2.success('Role Removal', replyDesc)] });
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+        return interaction.reply({ embeds: [cv2.danger('Unauthorized', 'You do not have permission.')] });
       }
       
       await interaction.deferReply();
@@ -252,7 +252,7 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.editReply({ embeds: [embed.warn('Command Error', 'User not found.')] });
+        return interaction.editReply({ embeds: [cv2.warn('Command Error', 'User not found.')] });
       }
       
       const roles = [];
@@ -287,7 +287,7 @@ export const commands = [
       if (removedRoles.length > 0) replyDesc += `**Removed:** ${removedRoles.join(', ')}\n`;
       if (failedRoles.length > 0) replyDesc += `**Failed:** ${failedRoles.join(', ')}\n`;
       
-      await interaction.editReply({ embeds: [embed.success('Role Removal', replyDesc)] });
+      await interaction.editReply({ embeds: [cv2.success('Role Removal', replyDesc)] });
     }
   },
   {
@@ -300,7 +300,7 @@ export const commands = [
       
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!striproles <@user>`')] });
+        return message.reply({ embeds: [cv2.warn('Command Error', 'Usage: `!striproles <@user>`')] });
       }
       
       const highestBotRole = message.guild.members.me.roles.highest.position;
@@ -326,12 +326,12 @@ export const commands = [
         }
       }
       
-      await message.reply({ embeds: [embed.success('Roles Stripped', `Successfully stripped **${count}** roles from ${target}. Failed to remove **${failedCount}** roles (hierarchy/permissions).`)] });
-      await message.reply({ embeds: [embed.success('Roles Stripped', `Successfully stripped **${count}** roles from ${target}. Failed to remove **${failedCount}** roles (hierarchy/permissions).`)] });
+      await message.reply({ embeds: [cv2.success('Roles Stripped', `Successfully stripped **${count}** roles from ${target}. Failed to remove **${failedCount}** roles (hierarchy/permissions).`)] });
+      await message.reply({ embeds: [cv2.success('Roles Stripped', `Successfully stripped **${count}** roles from ${target}. Failed to remove **${failedCount}** roles (hierarchy/permissions).`)] });
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+        return interaction.reply({ embeds: [cv2.danger('Unauthorized', 'You do not have permission.')] });
       }
       
       await interaction.deferReply();
@@ -339,7 +339,7 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.editReply({ embeds: [embed.warn('Command Error', 'User not found.')] });
+        return interaction.editReply({ embeds: [cv2.warn('Command Error', 'User not found.')] });
       }
       
       const highestBotRole = interaction.guild.members.me.roles.highest.position;
@@ -365,7 +365,7 @@ export const commands = [
         }
       }
       
-      await interaction.editReply({ embeds: [embed.success('Roles Stripped', `Successfully stripped **${count}** roles from ${target}. Failed to remove **${failedCount}** roles.`)] });
+      await interaction.editReply({ embeds: [cv2.success('Roles Stripped', `Successfully stripped **${count}** roles from ${target}. Failed to remove **${failedCount}** roles.`)] });
     }
   },
   {
@@ -381,13 +381,13 @@ export const commands = [
       if (!(await isAuthorized(message.author, message.guild))) return;
       
       const role = message.mentions.roles.first();
-      if (!role) return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massaddrole <@role>`')] });
+      if (!role) return message.reply({ embeds: [cv2.warn('Command Error', 'Usage: `!massaddrole <@role>`')] });
       
       await handleMassRole(message, role, 'add');
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+        return interaction.reply({ embeds: [cv2.danger('Unauthorized', 'You do not have permission.')] });
       }
       const role = interaction.options.getRole('role');
       await handleMassRole(interaction, role, 'add');
@@ -406,13 +406,13 @@ export const commands = [
       if (!(await isAuthorized(message.author, message.guild))) return;
       
       const role = message.mentions.roles.first();
-      if (!role) return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massremoverole <@role>`')] });
+      if (!role) return message.reply({ embeds: [cv2.warn('Command Error', 'Usage: `!massremoverole <@role>`')] });
       
       await handleMassRole(message, role, 'remove');
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+        return interaction.reply({ embeds: [cv2.danger('Unauthorized', 'You do not have permission.')] });
       }
       const role = interaction.options.getRole('role');
       await handleMassRole(interaction, role, 'remove');
@@ -430,12 +430,12 @@ export const commands = [
     async executePrefix(message) {
       if (!(await isAuthorized(message.author, message.guild))) return;
       const role = message.mentions.roles.first();
-      if (!role) return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massstrip <@role>`')] });
+      if (!role) return message.reply({ embeds: [cv2.warn('Command Error', 'Usage: `!massstrip <@role>`')] });
       await handleMassRole(message, role, 'strip');
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+        return interaction.reply({ embeds: [cv2.danger('Unauthorized', 'You do not have permission.')] });
       }
       const role = interaction.options.getRole('role');
       await handleMassRole(interaction, role, 'strip');
@@ -453,12 +453,12 @@ export const commands = [
     async executePrefix(message) {
       if (!(await isAuthorized(message.author, message.guild))) return;
       const role = message.mentions.roles.first();
-      if (!role) return message.reply({ embeds: [embed.warn('Command Error', 'Usage: `!massrestore <@role>`')] });
+      if (!role) return message.reply({ embeds: [cv2.warn('Command Error', 'Usage: `!massrestore <@role>`')] });
       await handleMassRole(message, role, 'restore');
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.danger('Unauthorized', 'You do not have permission.')] });
+        return interaction.reply({ embeds: [cv2.danger('Unauthorized', 'You do not have permission.')] });
       }
       const role = interaction.options.getRole('role');
       await handleMassRole(interaction, role, 'restore');

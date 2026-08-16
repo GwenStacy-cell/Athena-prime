@@ -56,7 +56,7 @@ async function sendRateLeaderboard(context, page) {
     .sort((a, b) => b.averageRating - a.averageRating || b.totalVotes - a.totalVotes);
     
   if (leaderboard.length === 0) {
-    const reply = cv2.info('Rate Leaderboard', 'There are no rated edits yet! Use `!rate` to post an edit.');
+    const reply = { embeds: [cv2.info('Rate Leaderboard', 'There are no rated edits yet! Use `!rate` to post an edit.')] };
     return context.reply ? await context.reply(reply) : await context.update(reply);
   }
   
@@ -80,7 +80,7 @@ async function sendRateLeaderboard(context, page) {
   }).join('\n\n');
   
   const guildConfig = context.guild ? db.getGuildConfig(context.guild.id) : null;
-  const lbEmbed = embed.build({
+  const lbEmbed = cv2.buildContainer({
     title: '🏆 Edit Rating Leaderboard',
     description: description,
     color: guildConfig?.accentColor || '#FFD700',

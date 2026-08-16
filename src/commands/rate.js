@@ -17,11 +17,11 @@ export const commands = [
         
         if (channelMatch || isId) {
           if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-            return message.reply(cv2.danger('Permission Denied', 'You must be a Server Administrator to set the rating channel.'));
+            return message.reply({ embeds: [cv2.danger('Permission Denied', 'You must be a Server Administrator to set the rating channel.')] });
           }
           const channelId = channelMatch ? channelMatch[1] : args[0];
           db.setRateChannel(message.guild.id, channelId);
-          return message.reply(cv2.success('Channel Configured', `The designated edit rating channel is now <#${channelId}>.`));
+          return message.reply({ embeds: [cv2.success('Channel Configured', `The designated edit rating channel is now <#${channelId}>.`)] });
         }
       }
 
@@ -50,7 +50,7 @@ export const commands = [
 export async function createRateMessage(message, mediaUrl) {
   // Setup Base Embed
   const guildConfig = message.guild ? db.getGuildConfig(message.guild.id) : null;
-  const rateEmbed = embed.build({
+  const rateEmbed = cv2.buildContainer({
     title: `Rate ${message.author.username}'s Edit`,
     description: `<a:1z:1517089474369032253> **Current Rating**\n0.0/5 (0 votes)\n\n**User Ratings**\n_No ratings yet_`,
     color: guildConfig?.accentColor || '#2b2d31'

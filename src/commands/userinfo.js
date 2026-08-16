@@ -77,7 +77,7 @@ async function sendBanner(context, user) {
   const bannerUrl = fetchedUser.bannerURL({ dynamic: true, size: 4096 });
 
   if (!bannerUrl) {
-    const err = embed.warn('No Banner', `${fetchedUser.username} does not have a custom profile banner.`);
+    const err = cv2.warn('No Banner', `${fetchedUser.username} does not have a custom profile banner.`);
     if (context.reply) return context.reply({ embeds: [err] });
   }
 

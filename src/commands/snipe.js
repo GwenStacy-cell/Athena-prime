@@ -23,23 +23,10 @@ export const commands = [
         return message.reply(cv2.warn('Expired', 'The last sniped message has expired.')).catch(() => null);
       }
 
-      const snipeEmbed = embed.build({
-        description: `> ${sniped.content}`,
-        color: '#2b2d31'
-      });
-
-      snipeEmbed.setAuthor({ 
-        name: sniped.author.tag, 
-        iconURL: sniped.author.displayAvatarURL({ dynamic: true }) 
-      });
-
-      snipeEmbed.setFooter({ text: `Sniped by ${message.author.tag} • ${new Date(sniped.timestamp).toLocaleTimeString()}` });
-
-      if (sniped.image) {
-        snipeEmbed.setImage(sniped.image);
-      }
-
-      await message.reply({ embeds: [snipeEmbed] }).catch(() => null);
+      const timeStr = new Date(sniped.timestamp).toLocaleTimeString();
+      const desc = `-# **${sniped.author.tag}** • ${timeStr}\n> ${sniped.content}`;
+      const reply = cv2.info('Sniped Message', desc);
+      await message.reply(reply).catch(() => null);
     }
   }
 ];

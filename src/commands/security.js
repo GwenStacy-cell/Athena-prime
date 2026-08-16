@@ -3164,7 +3164,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 
   const sendPayload = async (text, isError = false) => {
     const title = isError ? 'Initialization Failed' : 'Security Shield Sequence';
-    const e = embed.build({ title, description: text, color: 0xFF0000 });
+    const e = cv2.buildContainer({ title, description: text, color: 0xFF0000 });
     await updateMessageFn(e);
   };
 

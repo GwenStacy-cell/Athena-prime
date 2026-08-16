@@ -34,27 +34,33 @@ async function runInteractiveBuilder(message) {
   };
 
   // Step 1: Channel
-  await channel.send(cv2.info('Reaction Role Manager [1/3]', 'Please tag the channel where you want to post this menu (e.g. <#123456789> or ID).'));
+  await channel.send({
+    embeds: [cv2.info('Reaction Role Manager [1/3]', 'Please tag the channel where you want to post this menu (e.g. <#123456789> or ID).')]
+  });
   
   const targetChannelMsg = await awaitReply();
-  if (!targetChannelMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
+  if (!targetChannelMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
   
   const targetChannelId = targetChannelMsg.content.replace(/<#|>/g, '');
   const targetChannel = message.guild.channels.cache.get(targetChannelId);
-  if (!targetChannel) return channel.send(cv2.danger('Invalid Channel', 'Setup cancelled.'));
+  if (!targetChannel) return channel.send({ embeds: [cv2.danger('Invalid Channel', 'Setup cancelled.')] });
 
   // Step 2: Title
-  await channel.send(cv2.info('Reaction Role Manager [2/3]', 'What should be the title of this menu? (e.g. `React to Your Hobbies`)'));
+  await channel.send({
+    embeds: [cv2.info('Reaction Role Manager [2/3]', 'What should be the title of this menu? (e.g. `React to Your Hobbies`)')]
+  });
   
   const titleMsg = await awaitReply();
-  if (!titleMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
+  if (!titleMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
   const title = titleMsg.content;
 
   // Step 2.5: Description
-  await channel.send(cv2.info('Reaction Role Manager [3/5]', 'What should be the description of this menu? (Optional)\nType `skip` if you do not want a description.'));
+  await channel.send({
+    embeds: [cv2.info('Reaction Role Manager [3/5]', 'What should be the description of this menu? (Optional)\nType `skip` if you do not want a description.')]
+  });
   
   const menuDescMsg = await awaitReply();
-  if (!menuDescMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
+  if (!menuDescMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
   let menuDescription = '';
   if (menuDescMsg.content.trim().toLowerCase() !== 'skip') {
     menuDescription = menuDescMsg.content.trim();
@@ -62,11 +68,13 @@ async function runInteractiveBuilder(message) {
 
   // Step 3: Entries
   const mappings = [];
-  await channel.send(cv2.info('Reaction Role Manager [4/5]', 'Now, add your roles one by one.\n\nFormat: `[emoji] [@role OR Role ID] [description]`\nExample: ` 123456789 The Singer Role`\n\nType `done` when you are finished.'));
+  await channel.send({
+    embeds: [cv2.info('Reaction Role Manager [4/5]', 'Now, add your roles one by one.\n\nFormat: `[emoji] [@role OR Role ID] [description]`\nExample: ` 123456789 The Singer Role`\n\nType `done` when you are finished.')]
+  });
 
   while (true) {
     const entryMsg = await awaitReply();
-    if (!entryMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
+    if (!entryMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
     
     if (entryMsg.content.trim().toLowerCase() === 'done') break;
 
@@ -112,14 +120,16 @@ async function runInteractiveBuilder(message) {
   }
 
   if (mappings.length === 0) {
-    return channel.send(cv2.danger('Cancelled', 'No roles were added. Setup cancelled.'));
+    return channel.send({ embeds: [cv2.danger('Cancelled', 'No roles were added. Setup cancelled.')] });
   }
 
   // Step 4: Image
-  await channel.send(cv2.info('Reaction Role Manager [5/5]', 'Would you like to attach an image to this menu? (Optional)\n\nPaste a valid image URL (e.g., ending in `.png`, `.gif`, `.jpg`) to add it as a large banner.\nOr type `thumb <url>` to add it as a small top-right thumbnail.\n\nType `skip` if you do not want an image.'));
+  await channel.send({
+    embeds: [cv2.info('Reaction Role Manager [5/5]', 'Would you like to attach an image to this menu? (Optional)\n\nPaste a valid image URL (e.g., ending in `.png`, `.gif`, `.jpg`) to add it as a large banner.\nOr type `thumb <url>` to add it as a small top-right thumbnail.\n\nType `skip` if you do not want an image.')]
+  });
 
   const imageMsg = await awaitReply();
-  if (!imageMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
+  if (!imageMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
 
   const imgContent = imageMsg.content.trim();
   let imageUrl = null;
@@ -138,10 +148,12 @@ async function runInteractiveBuilder(message) {
   }
 
   // Step 5: Footer
-  await channel.send(cv2.info('Reaction Role Manager [Extra]', 'What should be the footer text? (Optional)\n\nType `default` to keep the standard Athena Prime Killer footer.\nType `none` or `remove` to have no footer.\nOr just type your custom footer text.'));
+  await channel.send({
+    embeds: [cv2.info('Reaction Role Manager [Extra]', 'What should be the footer text? (Optional)\n\nType `default` to keep the standard Athena Prime Killer footer.\nType `none` or `remove` to have no footer.\nOr just type your custom footer text.')]
+  });
 
   const footerMsg = await awaitReply();
-  if (!footerMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
+  if (!footerMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
   
   let footerText = undefined;
   const fContent = footerMsg.content.trim();
@@ -179,7 +191,7 @@ async function runInteractiveBuilder(message) {
     }
   }
 
-  const rrEmbed = embed.build(embedOptions);
+  const rrEmbed = cv2.buildContainer(embedOptions);
 
   // Send message
   try {
@@ -205,10 +217,12 @@ async function runInteractiveBuilder(message) {
       });
     }
 
-    await channel.send(cv2.success('Success!', `Reaction Role Menu successfully created in <#${targetChannel.id}>!`));
+    await channel.send({
+      embeds: [cv2.success('Success!', `Reaction Role Menu successfully created in <#${targetChannel.id}>!`)]
+    });
 
   } catch (err) {
     console.error(err);
-    await channel.send(cv2.danger('Error', 'Failed to post message or add reactions.'));
+    await channel.send({ embeds: [cv2.danger('Error', 'Failed to post message or add reactions.')] });
   }
 }
