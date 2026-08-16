@@ -116,7 +116,8 @@ export async function updateBotVcStatus(channel) {
     `${startEmoji} **Active Members : ${activeMembers} !!**`,
     `${startEmoji} **Users Connected : ${connected}** ${endEmoji}`,
     `${startEmoji} **Users Muted : ${muted}** ${endEmoji}`,
-    `${startEmoji} **Total Bots : ${totalBots}** ${endEmoji} **!!**`
+    `${startEmoji} **Total Bots : ${totalBots}** ${endEmoji} **!!**`,
+    `<a:PI_nezurun:1538517600013783060> **Members : ${totalMembers} . <a:AnyaYay:1537513785718476850> Voice Chat : ${connected}**`
   ];
   
   const finalStatus = templates[vcStatusIndex % templates.length];
