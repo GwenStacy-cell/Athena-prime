@@ -70,6 +70,7 @@ function buildContainer(title, description, fields) {
 
   // Bottom divider
   comps.push(SEP);
+  comps.push({ type: 10, content: '-# **Athena Bulletproof Security !!!**' });
 
   return { type: 17, components: comps };
 }
