@@ -1205,7 +1205,9 @@ export const commands = [
           return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        const msg = await message.reply(cv2.info('Security Initialization', '<:on:1514996865030946847> Initializing Security Protocols...'));
+        const initDisplay = new TextDisplayBuilder().setContent('# SECURITY SHIELD SEQUENCE\n\n<a:alert1:1533860044154732704> __**INITIALIZING SECURITY PROTOCOLS...**__');
+        const initContainer = new ContainerBuilder().addTextDisplayComponents(initDisplay);
+        const msg = await message.reply({ components: [initContainer], flags: MessageFlags.IsComponentsV2 });
         await runSecurityEnableSequence(message.guild, async (payload) => {
           await msg.edit(payload).catch(() => null);
         });
@@ -1243,7 +1245,9 @@ export const commands = [
           return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        await interaction.reply(cv2.info('Security Initialization', '<:on:1514996865030946847> Initializing Security Protocols...'));
+        const initDisplay2 = new TextDisplayBuilder().setContent('# SECURITY SHIELD SEQUENCE\n\n<a:alert1:1533860044154732704> __**INITIALIZING SECURITY PROTOCOLS...**__');
+        const initContainer2 = new ContainerBuilder().addTextDisplayComponents(initDisplay2);
+        await interaction.reply({ components: [initContainer2], flags: MessageFlags.IsComponentsV2 });
         await runSecurityEnableSequence(interaction.guild, async (payload) => {
           await interaction.editReply(payload).catch(() => null);
         });
@@ -3161,9 +3165,11 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   ];
 
   const sendPayload = async (text, isError = false) => {
-    const title = isError ? 'Initialization Failed' : 'Security Shield Sequence';
-    const payload = cv2.make(title, text);
-    await updateMessageFn(payload);
+    const heading = isError ? '# Initialization Failed' : '# SECURITY SHIELD SEQUENCE';
+    const fullText = heading + '\n\n' + text;
+    const display = new TextDisplayBuilder().setContent(fullText);
+    const container = new ContainerBuilder().addTextDisplayComponents(display);
+    await updateMessageFn({ components: [container], flags: MessageFlags.IsComponentsV2 });
   };
 
   let currentText = '';
