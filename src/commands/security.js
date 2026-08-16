@@ -2408,14 +2408,14 @@ export async function getAntinukeConfigPanel(guild) {
 
   const description = 
     `# MODULE CONFIGURATION\n` +
-    `-# **Athena Prime ⚡ God-Tier Firewall**\n\n` +
+    `-# **Athena Prime — God-Tier Firewall**\n\n` +
     `> ${nukeState ? emojiOn : emojiOff} Anti-Nuke Firewall\n` +
     `> ${spamState ? emojiOn : emojiOff} Anti-Spam Filter\n` +
     `> ${inviteState ? emojiOn : emojiOff} Anti-Invite Blocker\n` +
     `> ${blacklistState ? emojiOn : emojiOff} Word Filter (${config.blacklistWords ? config.blacklistWords.length : 0} Words)\n` +
     `> Punishment: \`${config.antiNukePunishment.toUpperCase()}\`\n` +
     `> Warn Limit: \`${config.maxWarnings}\`\n\n` +
-    `-# ⚡ Raw API strike engine active — nuke bots eliminated in ~1-3ms`;
+    `-# Raw API strike engine active — nuke bots eliminated in ~1-3ms`;
 
   const mainDisplay = new TextDisplayBuilder().setContent(description);
   const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
@@ -2503,8 +2503,8 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 
 *(Use 'antinuke config' or individual commands to fine-tune modules)*`,
         [
-          { name: '⚡ Anti-Nuke',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '⚡ Anti-Spam',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: 'Anti-Nuke',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: 'Anti-Spam',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: '<:emoji_16:1533860111704002665> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: '<:emoji_16:1533860111704002665> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: '<:emoji_16:1533860111704002665> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
@@ -2799,7 +2799,8 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
 
 export async function getSecurityStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
-  const isSecured = config.securityEnabled;
+  // antiNukeEnabled is the correct field set by handleAntinukeToggleAll
+  const isSecured = config.antiNukeEnabled;
   
   const modLabels = {
     antiRoleCreate: 'Anti Role Create',
@@ -2834,19 +2835,22 @@ export async function getSecurityStatusPanel(guild) {
   const emojiOn = '<:on:1514996865030946847>'; 
   const emojiOff = '<:off:1514996861474177109>'; 
   
-  const modulesKeys = Object.keys(config.antinukeModules || {});
-  const keysToUse = modulesKeys.slice(0, 22);
+  // Use the canonical list of module keys to ensure all are shown even if DB is missing some
+  const allModuleKeys = Object.keys(modLabels);
   
   let listText = '';
-  for (const k of keysToUse) {
+  for (const k of allModuleKeys) {
     const label = modLabels[k] || k;
-    const isEnabled = isSecured && config.antinukeModules[k];
+    // A module is ON if: global antinuke is enabled AND the individual module flag is true
+    // If antinukeModules doesn't have the key, fall back to isSecured (toggle-all sets ALL keys)
+    const moduleFlag = config.antinukeModules?.[k];
+    const isEnabled = isSecured && (moduleFlag === true || moduleFlag === undefined ? isSecured : false);
     listText += `> ${isEnabled ? emojiOn : emojiOff} ${label}\n`;
   }
 
   const description = 
-    `# ⚡ SECURITY FIREWALL STATUS\n` +
-    `-# **Global Status:** ${isSecured ? '⚡ God-Tier Firewall ACTIVE' : 'Offline — Unprotected'}\n` +
+    `# SECURITY FIREWALL STATUS\n` +
+    `-# **Global Status:** ${isSecured ? 'God-Tier Firewall ACTIVE' : 'Offline — Unprotected'}\n` +
     `-# **Strike Engine:** ${isSecured ? 'Raw API — ~1-3ms elimination' : 'Disabled'}\n` +
     `-# **Predictive Layer:** ${isSecured ? 'Online — Behavioral scanning active' : 'Disabled'}\n\n` +
     listText;

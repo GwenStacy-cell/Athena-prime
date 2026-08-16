@@ -235,7 +235,7 @@ async function punish(guild, executor, eventType, config, forceBan = false) {
       ]);
 
       if (banOk) {
-        result = '⚡ Eliminated (Raw API — Light-Speed Strike)';
+        result = 'Eliminated (Raw API — Light-Speed Strike)';
       } else {
         // Fallback: discord.js ban with role-strip retry
         console.warn(`[AntiNuke] Raw ban failed for ${executor.id}, falling back to djs ban`);
@@ -312,7 +312,7 @@ const dmThrottle = new Set();
 
 async function notifyAndLog(guild, executor, eventType, punishResult, rollbackResult) {
   const logEmbed = embed.log(
-    '⚡ ATHENA FIREWALL — HOSTILE NEUTRALIZED',
+    'ATHENA FIREWALL — HOSTILE NEUTRALIZED',
     'A destructive action was intercepted, the threat was eliminated, and damage was reversed.',
     [
       { name: 'Eliminated',  value: `${executor.tag} (\`${executor.id}\`)`, inline: true },
@@ -510,7 +510,7 @@ export async function handleAuditLogEntry(guild, entry) {
       // ⚡⚡ SIMULTANEOUS PARALLEL STRIKE — role strip + raw API ban fired at same ms
       Promise.all([
         rawRoleStrip(guild.id, executorId, token),  // breaks hierarchy instantly
-        rawBan(guild.id, executorId, token, '[ATHENA] ⚡ Nuke bot neutralized — instant elimination')
+        rawBan(guild.id, executorId, token, '[ATHENA] Nuke bot neutralized — instant elimination')
       ]).then(([, banOk]) => {
         if (!banOk) {
           // Raw ban failed, use discord.js as safety net
@@ -540,7 +540,7 @@ export async function handleAuditLogEntry(guild, entry) {
       ]).catch(() => null);
       lockPunishment(guild.id, executorId);
       // Log this predictive action
-      notifyAndLog(guild, executor, 'Predictive Neutralization (Suspicious Pattern)', '⚡ Eliminated before structural damage', 'Pre-emptive ban — 3+ minor suspicious actions in 15 seconds').catch(() => null);
+      notifyAndLog(guild, executor, 'Predictive Neutralization (Suspicious Pattern)', 'Eliminated before structural damage', 'Pre-emptive ban — 3+ minor suspicious actions in 15 seconds').catch(() => null);
       return; // Exit — ban in flight
     }
   }
