@@ -419,7 +419,7 @@ function condemn(guildId, userId) {
 // ==========================================
 export async function handleAuditLogEntry(guild, entry) {
   const config = db.getGuildConfig(guild.id);
-  if (!config.securityEnabled) return;
+  if (!config.securityEnabled && !config.antiNukeEnabled) return;
   const mods = config.antinukeModules || {};
 
   const { executor, action, executorId, targetId, createdAt } = entry;

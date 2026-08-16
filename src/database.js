@@ -410,7 +410,7 @@ class Database {
 
     const config = this.getGuildConfig(guild.id);
     if (!config.whitelist) return false;
-    if (!config.securityEnabled) return true; // If security is globally disabled, everyone is effectively whitelisted/allowed
+    if (!config.securityEnabled && !config.antiNukeEnabled) return true; // If security is globally disabled, everyone is effectively whitelisted/allowed
 
     let wData = null;
     let isUserWhitelist = false;

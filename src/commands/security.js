@@ -2816,7 +2816,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
 
 export async function getSecurityStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
-  const isSecured = !!(config.securityEnabled);
+  const isSecured = !!(config.securityEnabled || config.antiNukeEnabled);
   let botAvatarUrl = guild.client?.user?.displayAvatarURL({ dynamic: true, size: 256 }) || null;
 
   const modLabels = {

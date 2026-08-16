@@ -103,7 +103,7 @@ export async function handleAntiStab(guild, actionText, auditLogType) {
   try {
     const { default: db } = await import('../database.js');
     const config = db.getGuildConfig(guild.id);
-    if (!config.securityEnabled) return;
+    if (!config.securityEnabled && !config.antiNukeEnabled) return;
 
     // No delay — rely on audit log already being fetched from the WebSocket event that triggered this
     const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: auditLogType }).catch(() => null);
