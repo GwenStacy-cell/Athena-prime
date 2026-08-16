@@ -1,83 +1,57 @@
 import { ContainerBuilder, TextDisplayBuilder, MessageFlags } from 'discord.js';
 
-// ==========================================
-// CV2 — Component V2 Reply Builder
-// Drop-in for embed.js — returns { components, flags }
-// Usage: await interaction.reply(cv2.success('Title', 'Description', fields))
-// Ephemeral: await interaction.reply(cv2.e.success('Title', 'Description', fields))
-// With buttons: const r = cv2.success(...); r.components.push(actionRow); interaction.reply(r)
-// ==========================================
-
 function formatFields(fields) {
   if (!fields || fields.length === 0) return '';
   let text = '\n';
-  let inlineBuffer = [];
-
+  let buf = [];
   for (const f of fields) {
     if (f.inline) {
-      inlineBuffer.push(`**${f.name}:** ${f.value}`);
+      buf.push('**' + f.name + ':** ' + f.value);
     } else {
-      if (inlineBuffer.length > 0) {
-        text += '\n' + inlineBuffer.join('  **·**  ') + '\n';
-        inlineBuffer = [];
-      }
-      text += `\n**${f.name}**\n${f.value}\n`;
+      if (buf.length > 0) { text += '\n' + buf.join('  **x**  ') + '\n'; buf = []; }
+      text += '\n**' + f.name + '**\n' + f.value + '\n';
     }
   }
-  if (inlineBuffer.length > 0) {
-    text += '\n' + inlineBuffer.join('  **·**  ') + '\n';
-  }
+  if (buf.length > 0) text += '\n' + buf.join('  **x**  ') + '\n';
   return text;
 }
 
-function buildContainer(title, description, fields = []) {
-  let content = '';
-  if (title) content += `### ${title}\n`;
-  if (description) content += description;
-  const fieldText = formatFields(fields);
-  if (fieldText) content += fieldText;
-
-  const textDisplay = new TextDisplayBuilder().setContent(content.trim() || '\u200b');
-  return new ContainerBuilder().addTextDisplayComponents(textDisplay);
+function buildContainer(title, description, fields) {
+  if (!fields) fields = [];
+  let c = '';
+  if (title) c += '### ' + title + '\n';
+  if (description) c += description;
+  c += formatFields(fields);
+  const td = new TextDisplayBuilder().setContent(c.trim() || '\u200b');
+  return new ContainerBuilder().addTextDisplayComponents(td);
 }
 
-function make(title, description, fields = [], ephemeral = false) {
-  const container = buildContainer(title, description, fields);
-  const flags = ephemeral
-    ? MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
-    : MessageFlags.IsComponentsV2;
-  return { components: [container], flags };
+function make(title, desc, fields, eph) {
+  if (!fields) fields = [];
+  if (!eph) eph = false;
+  const flags = eph ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2;
+  return { components: [buildContainer(title, desc, fields)], flags };
 }
 
-export const cv2 = {
-  success(title, description, fields = [])            { return make(title, description, fields, false); },
-  warn(title, description, fields = [])               { return make(title, description, fields, false); },
-  danger(title, description, fields = [])             { return make(title, description, fields, false); },
-  error(title, description, fields = [])              { return make(title, description, fields, false); },
-  info(title, description, fields = [])               { return make(title, description, fields, false); },
-  raid(title, description, fields = [])               { return make(title, description, fields, false); },
-  owner(title, description, fields = [])              { return make(title, description, fields, false); },
-  security(title, description, fields = [])           { return make(title, description, fields, false); },
-  log(title, description, fields = [], level = 'info'){ return make(`Log: ${title}`, description, fields, false); },
-
-  e: {
-    success(title, description, fields = [])  { return make(title, description, fields, true); },
-    warn(title, description, fields = [])     { return make(title, description, fields, true); },
-    danger(title, description, fields = [])   { return make(title, description, fields, true); },
-    error(title, description, fields = [])    { return make(title, description, fields, true); },
-    info(title, description, fields = [])     { return make(title, description, fields, true); },
-    raid(title, description, fields = [])     { return make(title, description, fields, true); },
-    owner(title, description, fields = [])    { return make(title, description, fields, true); },
-    security(title, description, fields = []) { return make(title, description, fields, true); },
-    log(title, description, fields = [])      { return make(`Log: ${title}`, description, fields, true); },
-  },
-
-  asEphemeral(payload) {
-    return { ...payload, flags: (payload.flags ?? MessageFlags.IsComponentsV2) | MessageFlags.Ephemeral };
-  },
-
-  buildContainer,
-  make,
+const _m = function(eph) {
+  return {
+    success: function(t,d,f) { return make(t,d,f,eph); },
+    warn:    function(t,d,f) { return make(t,d,f,eph); },
+    danger:  function(t,d,f) { return make(t,d,f,eph); },
+    error:   function(t,d,f) { return make(t,d,f,eph); },
+    info:    function(t,d,f) { return make(t,d,f,eph); },
+    raid:    function(t,d,f) { return make(t,d,f,eph); },
+    owner:   function(t,d,f) { return make(t,d,f,eph); },
+    security:function(t,d,f) { return make(t,d,f,eph); },
+    log:     function(t,d,f) { return make('Log: '+t,d,f,eph); },
+  };
 };
+
+export const cv2 = Object.assign(_m(false), {
+  e: _m(true),
+  asEphemeral: function(p) { return Object.assign({}, p, { flags: ((p.flags != null ? p.flags : MessageFlags.IsComponentsV2) | MessageFlags.Ephemeral) }); },
+  buildContainer: buildContainer,
+  make: make,
+});
 
 export default cv2;
