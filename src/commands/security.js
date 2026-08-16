@@ -2680,11 +2680,12 @@ async function getServerInfoEmbed(guild) {
 
   let iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
 
-  const headerSection = new SectionBuilder().addTextDisplayComponents(
-    new TextDisplayBuilder().setContent(`## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**`)
-  );
+  const headerSection = {
+    type: 9,
+    components: [{ type: 10, content: `## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**` }]
+  };
   if (iconUrl) {
-    headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(iconUrl));
+    headerSection.accessory = { type: 11, media: { url: iconUrl } };
   }
 
   const statsText =
@@ -2702,7 +2703,7 @@ async function getServerInfoEmbed(guild) {
   const container = {
     type: 17,
     components: [
-      headerSection.toJSON(),
+      headerSection,
       { type: 14, divider: true },
       { type: 10, content: statsText },
       { type: 14, divider: true },
@@ -2741,11 +2742,12 @@ async function getUserInfoEmbed(guild, member) {
 
   let avatarUrl = member.user.displayAvatarURL({ dynamic: true, size: 256 });
 
-  const headerSection = new SectionBuilder().addTextDisplayComponents(
-    new TextDisplayBuilder().setContent(`## **User Info — ${member.user.tag}**\n-# **Detailed profile and privilege information.**`)
-  );
+  const headerSection = {
+    type: 9,
+    components: [{ type: 10, content: `## **User Info — ${member.user.tag}**\n-# **Detailed profile and privilege information.**` }]
+  };
   if (avatarUrl) {
-    headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(avatarUrl));
+    headerSection.accessory = { type: 11, media: { url: avatarUrl } };
   }
 
   const statsText =
@@ -2759,7 +2761,7 @@ async function getUserInfoEmbed(guild, member) {
   const container = {
     type: 17,
     components: [
-      headerSection.toJSON(),
+      headerSection,
       { type: 14, divider: true },
       { type: 10, content: statsText },
       { type: 14, divider: true },
@@ -2857,22 +2859,17 @@ export async function getSecurityStatusPanel(guild) {
     listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 
-  const headerSection = new SectionBuilder().addTextDisplayComponents(
-    new TextDisplayBuilder().setContent(
-        `# SECURITY FIREWALL STATUS\n` +
-        `-# **Global Status:** ${isSecured ? 'God-Tier Firewall ACTIVE' : 'Offline \u2014 Unprotected'}\n` +
-        `-# **Strike Engine:** ${isSecured ? 'Raw API \u2014 ~1-3ms elimination' : 'Disabled'}\n` +
-        `-# **Predictive Layer:** ${isSecured ? 'Online \u2014 Behavioral scanning active' : 'Disabled'}`
-    )
-  );
-  if (botAvatarUrl) {
-    headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(botAvatarUrl));
-  }
+  const headerSection = { type: 10, content: `# SECURITY FIREWALL STATUS\n` +
+          `-# **Global Status:** ${isSecured ? 'God-Tier Firewall ACTIVE' : 'Offline \u2014 Unprotected'}\n` +
+          `-# **Strike Engine:** ${isSecured ? 'Raw API \u2014 ~1-3ms elimination' : 'Disabled'}\n` +
+          `-# **Predictive Layer:** ${isSecured ? 'Online \u2014 Behavioral scanning active' : 'Disabled'}`
+     };
+  
 
   const container = {
     type: 17,
     components: [
-      headerSection.toJSON(),
+      headerSection,
       { type: 14, divider: true },
       { type: 10, content: listText.trimEnd() },
       { type: 14, divider: true },
