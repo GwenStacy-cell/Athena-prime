@@ -2678,11 +2678,12 @@ async function getServerInfoEmbed(guild) {
   const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const raidModeStatus   = config.raidMode                      ? '<:emoji_16:1533860111704002665> ENGAGED' : `${TOGGLE_ON} STANDBY`;
 
-  const iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
+  let iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
 
   const headerSection = new SectionBuilder().addTextDisplayComponents(
     new TextDisplayBuilder().setContent(`## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**`)
   );
+  iconUrl = iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png';
   if (iconUrl) {
     headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(iconUrl));
   }
@@ -2702,7 +2703,7 @@ async function getServerInfoEmbed(guild) {
   const container = {
     type: 17,
     components: [
-      ...comps,
+      headerSection.toJSON(),
       { type: 14, divider: true },
       { type: 10, content: statsText },
       { type: 14, divider: true },
@@ -2739,11 +2740,12 @@ async function getUserInfoEmbed(guild, member) {
   if (isWhitelisted) privileges.push(` **Whitelisted** (${wlEvents})`);
   if (privileges.length === 0) privileges.push('Standard Member');
 
-  const avatarUrl = member.user.displayAvatarURL({ dynamic: true, size: 256 });
+  let avatarUrl = member.user.displayAvatarURL({ dynamic: true, size: 256 });
 
   const headerSection = new SectionBuilder().addTextDisplayComponents(
     new TextDisplayBuilder().setContent(`## **User Info — ${member.user.tag}**\n-# **Detailed profile and privilege information.**`)
   );
+  avatarUrl = avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png';
   if (avatarUrl) {
     headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(avatarUrl));
   }
@@ -2759,7 +2761,7 @@ async function getUserInfoEmbed(guild, member) {
   const container = {
     type: 17,
     components: [
-      ...comps,
+      headerSection.toJSON(),
       { type: 14, divider: true },
       { type: 10, content: statsText },
       { type: 14, divider: true },
@@ -2815,7 +2817,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
 export async function getSecurityStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
   const isSecured = !!(config.securityEnabled);
-  const botAvatarUrl = guild.client?.user?.displayAvatarURL({ dynamic: true, size: 256 }) || null;
+  let botAvatarUrl = guild.client?.user?.displayAvatarURL({ dynamic: true, size: 256 }) || null;
 
   const modLabels = {
     antiRoleCreate: 'Anti Role Create',
@@ -2865,6 +2867,7 @@ export async function getSecurityStatusPanel(guild) {
         `-# **Predictive Layer:** ${isSecured ? 'Online \u2014 Behavioral scanning active' : 'Disabled'}`
     )
   );
+  botAvatarUrl = botAvatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png';
   if (botAvatarUrl) {
     headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(botAvatarUrl));
   }
@@ -2872,7 +2875,7 @@ export async function getSecurityStatusPanel(guild) {
   const container = {
     type: 17,
     components: [
-      ...comps,
+      headerSection.toJSON(),
       { type: 14, divider: true },
       { type: 10, content: listText.trimEnd() },
       { type: 14, divider: true },
