@@ -112,11 +112,11 @@ export async function updateBotVcStatus(channel) {
   const activeMembers = guild.members.cache.filter(m => m.voice.channelId).size;
 
   const templates = [
-    `${startEmoji} Total Members : ${totalMembers} ${endEmoji}`,
-    `${startEmoji} Active Members : ${activeMembers} !!`,
-    `${startEmoji} Users Connected : ${connected} ${endEmoji}`,
-    `${startEmoji} Users Muted : ${muted} ${endEmoji}`,
-    `${startEmoji} Total Bots : ${totalBots} ${endEmoji} !!`
+    `${startEmoji} **Total Members : ${totalMembers}** ${endEmoji}`,
+    `${startEmoji} **Active Members : ${activeMembers} !!**`,
+    `${startEmoji} **Users Connected : ${connected}** ${endEmoji}`,
+    `${startEmoji} **Users Muted : ${muted}** ${endEmoji}`,
+    `${startEmoji} **Total Bots : ${totalBots}** ${endEmoji} **!!**`
   ];
   
   const finalStatus = templates[vcStatusIndex % templates.length];
