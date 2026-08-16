@@ -2683,7 +2683,6 @@ async function getServerInfoEmbed(guild) {
   const headerSection = new SectionBuilder().addTextDisplayComponents(
     new TextDisplayBuilder().setContent(`## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**`)
   );
-  iconUrl = iconUrl || 'https://cdn.discordapp.com/embed/avatars/0.png';
   if (iconUrl) {
     headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(iconUrl));
   }
@@ -2745,7 +2744,6 @@ async function getUserInfoEmbed(guild, member) {
   const headerSection = new SectionBuilder().addTextDisplayComponents(
     new TextDisplayBuilder().setContent(`## **User Info — ${member.user.tag}**\n-# **Detailed profile and privilege information.**`)
   );
-  avatarUrl = avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png';
   if (avatarUrl) {
     headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(avatarUrl));
   }
@@ -2867,7 +2865,6 @@ export async function getSecurityStatusPanel(guild) {
         `-# **Predictive Layer:** ${isSecured ? 'Online \u2014 Behavioral scanning active' : 'Disabled'}`
     )
   );
-  botAvatarUrl = botAvatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png';
   if (botAvatarUrl) {
     headerSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(botAvatarUrl));
   }
