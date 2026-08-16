@@ -2663,11 +2663,8 @@ async function handleAntiLink(guild, moderator, mode) {
 
 async function getServerInfoEmbed(guild) {
   const config = db.getGuildConfig(guild.id);
-  
-  // Fetch owner
   const owner = await guild.members.fetch(guild.ownerId).catch(() => null);
   const ownerTag = owner ? owner.user.tag : 'Unknown';
-
   const totalMembers = guild.memberCount;
   const roleCount = guild.roles.cache.size;
   const channelCount = guild.channels.cache.size;
@@ -2681,35 +2678,43 @@ async function getServerInfoEmbed(guild) {
   const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const raidModeStatus   = config.raidMode                      ? '<:emoji_16:1533860111704002665> ENGAGED' : `${TOGGLE_ON} STANDBY`;
 
-  const fields = [
-    { name: ' Owner', value: `${ownerTag}`, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Members', value: `**${totalMembers}**`, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Roles', value: `**${roleCount}**`, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Channels', value: `**${channelCount}**`, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Boost Level', value: `**Tier ${boostLevel}** (${boostCount} boosts)`, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Created', value: createdAt, inline: true },
-    { name: '\u200b', value: '**── Security Status ──**' },
-    { name: ' Anti-Nuke', value: antiNukeStatus, inline: true },
-    { name: ' Anti-Spam', value: antiSpamStatus, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Anti-Invite', value: antiInviteStatus, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Anti-Link', value: antiLinkStatus, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Raid Mode', value: raidModeStatus, inline: true },
-    { name: ' Max Warns', value: `\`${config.maxWarnings}\``, inline: true }
-  ];
+  const iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
 
-  const serverPayload = cv2.security(
-    `${guild.name} — Server Info`,
-    `Comprehensive server statistics and Athena Prime security overview.`,
-    fields
-  );
+  // Header section: title + description on left, server icon thumbnail on right
+  const headerSection = {
+    type: 9,
+    components: [{
+      type: 10,
+      content: `## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**`
+    }],
+    ...(iconUrl ? { accessory: { type: 11, media: { url: iconUrl } } } : {})
+  };
 
-  // Inject server icon thumbnail into the container if available
-  if (guild.iconURL()) {
-    const iconUrl = guild.iconURL({ dynamic: true, size: 256 });
-    serverPayload.components[0].components.splice(1, 0, { type: 12, items: [{ media: { url: iconUrl } }] });
-  }
+  const statsText =
+    `-# **Owner:** ${ownerTag}\n` +
+    `-# **Members:** **${totalMembers}**   **Roles:** **${roleCount}**   **Channels:** **${channelCount}**\n` +
+    `-# **Boost Level:** Tier ${boostLevel} (${boostCount} boosts)\n` +
+    `-# **Created:** ${createdAt}`;
 
-  return serverPayload;
+  const securityText =
+    `-# **── Security Status ──**\n` +
+    `-# **Anti-Nuke:** ${antiNukeStatus}   **Anti-Spam:** ${antiSpamStatus}\n` +
+    `-# **Anti-Invite:** ${antiInviteStatus}   **Anti-Link:** ${antiLinkStatus}\n` +
+    `-# **Raid Mode:** ${raidModeStatus}   **Max Warns:** \`${config.maxWarnings}\``;
+
+  const container = {
+    type: 17,
+    components: [
+      headerSection,
+      { type: 14, divider: true },
+      { type: 10, content: statsText },
+      { type: 14, divider: true },
+      { type: 10, content: securityText },
+      { type: 14, divider: true }
+    ]
+  };
+
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
 async function getUserInfoEmbed(guild, member) {
@@ -2736,23 +2741,39 @@ async function getUserInfoEmbed(guild, member) {
   if (isWhitelisted) privileges.push(` **Whitelisted** (${wlEvents})`);
   if (privileges.length === 0) privileges.push('Standard Member');
 
-  const fields = [
-    { name: '<:emoji_16:1533860111704002665> Username', value: `${member.user.tag}`, inline: true },
-    { name: '<:emoji_16:1533860111704002665> User ID', value: `\`${member.id}\``, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Account Created', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
-    { name: '<:emoji_16:1533860111704002665> Joined Server', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: true },
-    { name: ' Active Warnings', value: `\`${warnings.length}\``, inline: true },
-    { name: ' Privileges', value: privileges.join(' | '), inline: true },
-    { name: `<:emoji_16:1533860111704002665> Roles [${member.roles.cache.size - 1}]`, value: roles }
-  ];
+  const avatarUrl = member.user.displayAvatarURL({ dynamic: true, size: 256 });
 
-  const userPayload = cv2.info(
-    `User Info — ${member.user.tag}`,
-    `Detailed profile and privilege information.`,
-    fields
-  );
+  // SectionBuilder: username+tag on left, avatar thumbnail on right → grey left line
+  const headerSection = {
+    type: 9,
+    components: [{
+      type: 10,
+      content: `## **User Info — ${member.user.tag}**\n-# **Detailed profile and privilege information.**`
+    }],
+    accessory: { type: 11, media: { url: avatarUrl } }
+  };
 
-  return userPayload;
+  const statsText =
+    `-# **Username:** ${member.user.tag}   **ID:** \`${member.id}\`\n` +
+    `-# **Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n` +
+    `-# **Joined Server:** <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n` +
+    `-# **Active Warnings:** \`${warnings.length}\`   **Privileges:** ${privileges.join(' | ')}`;
+
+  const rolesText = `-# **Roles [${member.roles.cache.size - 1}]:** ${roles}`;
+
+  const container = {
+    type: 17,
+    components: [
+      headerSection,
+      { type: 14, divider: true },
+      { type: 10, content: statsText },
+      { type: 14, divider: true },
+      { type: 10, content: rolesText },
+      { type: 14, divider: true }
+    ]
+  };
+
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
 // ==========================================
@@ -2782,30 +2803,25 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
     const dashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
     if (dashboard) await dashboard.delete('Security Disabled').catch(() => null);
 
-    const textContent = 
+    const textContent =
       `# ALL SECURITY SHIELDS DISENGAGED\n\n` +
       `All Athena Prime protective filters and security roles have been **DEACTIVATED** server-wide.\n\n` +
       `-# Disabled by ${moderator}`;
 
-    const mainDisplay = new TextDisplayBuilder().setContent(textContent);
-    const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
-
     logToSecurityChannel(guild, cv2.log(
       'Security Toggle All',
-      `**${moderator.user.tag}** toggled all security shields **OFF**.`,
-      [],
-      'warning'
+      `**${moderator.user.tag}** toggled all security shields **OFF**.`
     ));
 
-    return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+    return { components: [{ type: 17, components: [{ type: 10, content: textContent }, { type: 14, divider: true }] }], flags: MessageFlags.IsComponentsV2 };
   }
 }
 
 export async function getSecurityStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
-  // securityEnabled is the master switch set by security enable/disable all
   const isSecured = !!(config.securityEnabled);
-  
+  const botAvatarUrl = guild.client?.user?.displayAvatarURL({ dynamic: true, size: 256 }) || null;
+
   const modLabels = {
     antiRoleCreate: 'Anti Role Create',
     antiRoleDelete: 'Anti Role Delete',
@@ -2836,38 +2852,45 @@ export async function getSecurityStatusPanel(guild) {
     antiAppCommands: 'Anti App Commands'
   };
 
-  const emojiOn = '<:on:1514996865030946847>'; 
-  const emojiOff = '<:off:1514996861474177109>'; 
-  
-  const allModuleKeys = Object.keys(modLabels);
-  
+  const emojiOn  = '<:on:1514996865030946847>';
+  const emojiOff = '<:off:1514996861474177109>';
+
   let listText = '';
-  for (const k of allModuleKeys) {
-    const label = modLabels[k] || k;
-    // If individual module flags exist, respect them; otherwise follow master switch
+  for (const k of Object.keys(modLabels)) {
     const moduleFlag = config.antinukeModules?.[k];
     const isEnabled = isSecured && (moduleFlag === undefined ? true : !!moduleFlag);
-    listText += `> ${isEnabled ? emojiOn : emojiOff} ${label}\n`;
+    listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 
-  const description = 
-    `# SECURITY FIREWALL STATUS\n` +
-    `-# **Global Status:** ${isSecured ? 'God-Tier Firewall ACTIVE' : 'Offline — Unprotected'}\n` +
-    `-# **Strike Engine:** ${isSecured ? 'Raw API — ~1-3ms elimination' : 'Disabled'}\n` +
-    `-# **Predictive Layer:** ${isSecured ? 'Online — Behavioral scanning active' : 'Disabled'}\n\n` +
-    listText;
+  // SectionBuilder header: firewall status on left, bot avatar thumbnail on right
+  const headerSection = {
+    type: 9,
+    components: [{
+      type: 10,
+      content:
+        `# SECURITY FIREWALL STATUS\n` +
+        `-# **Global Status:** ${isSecured ? 'God-Tier Firewall ACTIVE' : 'Offline \u2014 Unprotected'}\n` +
+        `-# **Strike Engine:** ${isSecured ? 'Raw API \u2014 ~1-3ms elimination' : 'Disabled'}\n` +
+        `-# **Predictive Layer:** ${isSecured ? 'Online \u2014 Behavioral scanning active' : 'Disabled'}`
+    }],
+    ...(botAvatarUrl ? { accessory: { type: 11, media: { url: botAvatarUrl } } } : {})
+  };
 
-  const mainDisplay = new TextDisplayBuilder().setContent(description);
-  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+  const container = {
+    type: 17,
+    components: [
+      headerSection,
+      { type: 14, divider: true },
+      { type: 10, content: listText.trimEnd() },
+      { type: 14, divider: true },
+      { type: 1, components: [
+        { type: 2, custom_id: 'sec_module_manage', label: 'Manage Modules', style: 2 },
+        { type: 2, custom_id: 'sec_close', label: 'Close', style: 2 }
+      ]}
+    ]
+  };
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('sec_module_manage').setLabel('Manage Modules').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('sec_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
-  );
-  
-  panelContainer.addActionRowComponents(row);
-
-  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
 // ==========================================
