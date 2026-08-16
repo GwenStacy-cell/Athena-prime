@@ -1205,9 +1205,9 @@ export const commands = [
           return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        const msg = await message.reply(cv2.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**'));
-        await runSecurityEnableSequence(message.guild, async (e) => {
-          await msg.edit({ embeds: [e] }).catch(() => null);
+        const msg = await message.reply(cv2.info('Security Initialization', '<:on:1514996865030946847> Initializing Security Protocols...'));
+        await runSecurityEnableSequence(message.guild, async (payload) => {
+          await msg.edit(payload).catch(() => null);
         });
       } else if (disable) {
         const config = db.getGuildConfig(message.guild.id);
@@ -1243,9 +1243,9 @@ export const commands = [
           return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        await interaction.reply(cv2.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**'));
-        await runSecurityEnableSequence(interaction.guild, async (e) => {
-          await interaction.editReply({ embeds: [e] }).catch(() => null);
+        await interaction.reply(cv2.info('Security Initialization', '<:on:1514996865030946847> Initializing Security Protocols...'));
+        await runSecurityEnableSequence(interaction.guild, async (payload) => {
+          await interaction.editReply(payload).catch(() => null);
         });
       } else if (disable) {
         const config = db.getGuildConfig(interaction.guild.id);
@@ -3162,8 +3162,8 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 
   const sendPayload = async (text, isError = false) => {
     const title = isError ? 'Initialization Failed' : 'Security Shield Sequence';
-    const e = cv2.buildContainer({ title, description: text, color: 0xFF0000 });
-    await updateMessageFn(e);
+    const payload = cv2.make(title, text);
+    await updateMessageFn(payload);
   };
 
   let currentText = '';

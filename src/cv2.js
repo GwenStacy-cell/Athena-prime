@@ -15,7 +15,12 @@ function hasEmojiStart(line) {
 function styleLine(line, addBullet) {
   if (!line.trim()) return line;
   if (isPreformatted(line)) return line;
-  const bullet = (addBullet && !hasEmojiStart(line)) ? '\u2022 ' : '';
+  const startsEmoji = hasEmojiStart(line);
+  const hasBold = line.includes('**');
+  // If already has bold or starts with emoji — just make grey, don't add extra **
+  if (startsEmoji || hasBold) return '-# ' + line;
+  // Plain text — make grey bold with optional bullet
+  const bullet = addBullet ? '\u2022 ' : '';
   return '-# **' + bullet + line + '**';
 }
 
