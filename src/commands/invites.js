@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export const commands = [
   {
@@ -37,11 +37,11 @@ export const commands = [
     aliases: ['disableinvites', 'inviteoff'],
     executePrefix: async (message) => {
       db.updateGuildConfig(message.guild.id, { inviteChannelId: null });
-      return message.reply({ embeds: [embed.success('Invite Tracker Disabled', 'Invite tracking has been turned off.')] });
+      return message.reply(cv2.success('Invite Tracker Disabled', 'Invite tracking has been turned off.'));
     },
     executeSlash: async (interaction) => {
       db.updateGuildConfig(interaction.guild.id, { inviteChannelId: null });
-      return interaction.reply({ embeds: [embed.success('Invite Tracker Disabled', 'Invite tracking has been turned off.')] });
+      return interaction.reply(cv2.success('Invite Tracker Disabled', 'Invite tracking has been turned off.'));
     }
   }
 ];
@@ -79,18 +79,16 @@ async function setupInviteTracker(guild, replyChannel, member, interaction = nul
 
     db.updateGuildConfig(guild.id, { inviteChannelId: inviteChannel.id });
 
-    await reply({
-      embeds: [
-        embed.success(
-          'Invite Tracker Setup Complete',
-          `Invite tracking has been enabled!\n\n<a:61589pinkglock:1451707353450676265> **Logs Channel:** ${inviteChannel}\n<a:61589pinkglock:1451707353450676265> **Status:** Active & Listening\n\nThe bot will now carefully monitor every join and detect exactly who invited them, posting an aesthetic log in the designated channel.`
-        )
-      ]
-    });
+    await reply(
+      cv2.success(
+        'Invite Tracker Setup Complete',
+        `Invite tracking has been enabled!\n\n<a:61589pinkglock:1451707353450676265> **Logs Channel:** ${inviteChannel}\n<a:61589pinkglock:1451707353450676265> **Status:** Active & Listening\n\nThe bot will now carefully monitor every join and detect exactly who invited them, posting an aesthetic log in the designated channel.`
+      )
+    );
   } catch (err) {
     console.error('Error setting up invite tracker:', err);
-    await reply({
-      embeds: [embed.danger('Setup Failed', 'I lack permissions to create the channel or modify server settings.')]
-    });
+    await reply(
+      cv2.danger('Setup Failed', 'I lack permissions to create the channel or modify server settings.')
+    );
   }
 }

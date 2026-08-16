@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';
 import { executeQuarantine } from './security.js'; // We will implement security.js next
 
@@ -14,11 +14,11 @@ export const commands = [
     options: [],
     async executePrefix(message) {
       const result = await handleMuteAll(message.guild, message.member);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const result = await handleMuteAll(interaction.guild, interaction.member);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -31,11 +31,11 @@ export const commands = [
     options: [],
     async executePrefix(message) {
       const result = await handleUnmuteAll(message.guild, message.member);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const result = await handleUnmuteAll(interaction.guild, interaction.member);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -52,9 +52,9 @@ export const commands = [
     ],
     async executePrefix(message) {
       const targets = message.mentions.members;
-      if (!targets.size) return message.reply({ embeds: [embed.warn('Usage', `${message.author} Mention members to mute: \`!mute @user1\``)] });
+      if (!targets.size) return message.reply(cv2.warn('Usage', `${message.author} Mention members to mute: \`!mute @user1\``));
       const result = await handleVcAction(message.guild, message.member, targets, 'mute');
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targets = new Map();
@@ -66,7 +66,7 @@ export const commands = [
         }
       }
       const result = await handleVcAction(interaction.guild, interaction.member, targets, 'mute');
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -83,9 +83,9 @@ export const commands = [
     ],
     async executePrefix(message) {
       const targets = message.mentions.members;
-      if (!targets.size) return message.reply({ embeds: [embed.warn('Usage', `${message.author} Mention members to unmute: \`!unmute @user1\``)] });
+      if (!targets.size) return message.reply(cv2.warn('Usage', `${message.author} Mention members to unmute: \`!unmute @user1\``));
       const result = await handleVcAction(message.guild, message.member, targets, 'unmute');
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targets = new Map();
@@ -97,7 +97,7 @@ export const commands = [
         }
       }
       const result = await handleVcAction(interaction.guild, interaction.member, targets, 'unmute');
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -114,9 +114,9 @@ export const commands = [
     ],
     async executePrefix(message) {
       const targets = message.mentions.members;
-      if (!targets.size) return message.reply({ embeds: [embed.warn('Usage', `${message.author} Mention members to deafen: \`!deafen @user1\``)] });
+      if (!targets.size) return message.reply(cv2.warn('Usage', `${message.author} Mention members to deafen: \`!deafen @user1\``));
       const result = await handleVcAction(message.guild, message.member, targets, 'deafen');
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targets = new Map();
@@ -128,7 +128,7 @@ export const commands = [
         }
       }
       const result = await handleVcAction(interaction.guild, interaction.member, targets, 'deafen');
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -145,9 +145,9 @@ export const commands = [
     ],
     async executePrefix(message) {
       const targets = message.mentions.members;
-      if (!targets.size) return message.reply({ embeds: [embed.warn('Usage', `${message.author} Mention members to undeafen: \`!undeafen @user1\``)] });
+      if (!targets.size) return message.reply(cv2.warn('Usage', `${message.author} Mention members to undeafen: \`!undeafen @user1\``));
       const result = await handleVcAction(message.guild, message.member, targets, 'undeafen');
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targets = new Map();
@@ -159,7 +159,7 @@ export const commands = [
         }
       }
       const result = await handleVcAction(interaction.guild, interaction.member, targets, 'undeafen');
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -186,12 +186,12 @@ export const commands = [
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member to warn.\n\n**Usage:** \`!warn <@user> <reason>\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please mention a valid member to warn.\n\n**Usage:** \`!warn <@user> <reason>\``));
       }
       
       const reason = args.slice(1).join(' ') || 'No reason provided';
       const result = await handleWarn(message.guild, message.member, target, reason);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -199,11 +199,11 @@ export const commands = [
       
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found in this server.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found in this server.`));
       }
 
       const result = await handleWarn(interaction.guild, interaction.member, target, reason);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -224,18 +224,18 @@ export const commands = [
     async executePrefix(message) {
       const target = message.mentions.members.first() || message.member;
       const result = await handleWarnings(message.guild, target);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user') || interaction.user;
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found.`));
       }
 
       const result = await handleWarnings(interaction.guild, target);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -256,21 +256,21 @@ export const commands = [
     async executePrefix(message) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member to clear warnings.\n\n**Usage:** \`!clearwarns <@user>\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please mention a valid member to clear warnings.\n\n**Usage:** \`!clearwarns <@user>\``));
       }
       const result = await handleClearWarns(message.guild, message.member, target);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found.`));
       }
 
       const result = await handleClearWarns(interaction.guild, interaction.member, target);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -303,17 +303,17 @@ export const commands = [
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member.\n\n**Usage:** \`!timeout <@user> <duration> [reason]\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please mention a valid member.\n\n**Usage:** \`!timeout <@user> <duration> [reason]\``));
       }
       
       const durationStr = args[1];
       if (!durationStr) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a duration.\n\n**Usage:** \`!timeout <@user> <10m|2h|1d> [reason]\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please specify a duration.\n\n**Usage:** \`!timeout <@user> <10m|2h|1d> [reason]\``));
       }
       const reason = args.slice(2).join(' ') || 'No reason provided';
 
       const result = await handleTimeout(message.guild, message.member, target, durationStr, reason);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -322,11 +322,11 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found.`));
       }
 
       const result = await handleTimeout(interaction.guild, interaction.member, target, durationStr, reason);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -353,11 +353,11 @@ export const commands = [
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member.\n\n**Usage:** \`!kick <@user> [reason]\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please mention a valid member.\n\n**Usage:** \`!kick <@user> [reason]\``));
       }
       const reason = args.slice(1).join(' ') || 'No reason provided';
       const result = await handleKick(message.guild, message.member, target, reason);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -365,11 +365,11 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found.`));
       }
 
       const result = await handleKick(interaction.guild, interaction.member, target, reason);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -403,22 +403,22 @@ export const commands = [
         if (/^\d{17,20}$/.test(targetId)) {
           target = await message.guild.members.fetch(targetId).catch(() => null);
         } else {
-          return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a member or provide a valid User ID.\n\n**Usage:** \`!ban <@user or userId> [reason]\``)] });
+          return message.reply(cv2.warn('Command Error', `${message.author} Please mention a member or provide a valid User ID.\n\n**Usage:** \`!ban <@user or userId> [reason]\``));
         }
       }
 
       if (!target && !targetId) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a member or provide a User ID.\n\n**Usage:** \`!ban <@user or userId> [reason]\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please mention a member or provide a User ID.\n\n**Usage:** \`!ban <@user or userId> [reason]\``));
       }
 
       const reason = args.slice(1).join(' ') || 'No reason provided';
 
       if (target) {
         const result = await handleBan(message.guild, message.member, target, reason);
-        await message.reply({ embeds: [result.embed] });
+        await message.reply(result);
       } else {
         const result = await handleBanById(message.guild, message.member, targetId, reason);
-        await message.reply({ embeds: [result.embed] });
+        await message.reply(result);
       }
     },
     async executeSlash(interaction) {
@@ -429,11 +429,11 @@ export const commands = [
       if (!target) {
         // Not in server — ban by user ID directly
         const result = await handleBanById(interaction.guild, interaction.member, targetUser.id, reason, targetUser);
-        return interaction.reply({ embeds: [result.embed] });
+        return interaction.reply(result);
       }
 
       const result = await handleBan(interaction.guild, interaction.member, target, reason);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -465,7 +465,7 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (args.length === 0) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please enter a message to send.\n\n**Usage:** \`!say [#channel or id] <message>\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please enter a message to send.\n\n**Usage:** \`!say [#channel or id] <message>\``));
       }
 
       let channel = null;
@@ -489,25 +489,25 @@ export const commands = [
       }
 
       if (!text.trim()) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please enter a message to send.`)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please enter a message to send.`));
       }
 
       // Check bot has permission to send in the target channel
       const targetGuild = channel.guild;
       if (!targetGuild) {
-         return message.reply({ embeds: [embed.danger('Error', 'Target must be a server channel.')] });
+         return message.reply(cv2.danger('Error', 'Target must be a server channel.'));
       }
       
       const botMember = targetGuild.members.me;
       if (!channel.permissionsFor(botMember).has(PermissionFlagsBits.SendMessages)) {
-        return message.reply({ embeds: [embed.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}. Grant me access to that channel first.`)] });
+        return message.reply(cv2.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}. Grant me access to that channel first.`));
       }
 
       try {
         await channel.send(text);
         await message.delete().catch(() => null);
       } catch (err) {
-        await message.reply({ embeds: [embed.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)] }).catch(() => null);
+        await message.reply(cv2.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)).catch(() => null);
       }
     },
     async executeSlash(interaction) {
@@ -518,7 +518,7 @@ export const commands = [
       if (channelId) {
         const remoteChannel = interaction.client.channels.cache.get(channelId);
         if (!remoteChannel) {
-          return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Could not find a channel with that ID. Make sure the bot is in that server.`)] });
+          return interaction.reply(cv2.warn('Command Error', `${interaction.user} Could not find a channel with that ID. Make sure the bot is in that server.`));
         }
         channel = remoteChannel;
       }
@@ -527,25 +527,25 @@ export const commands = [
       const sendableTypes = [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread, ChannelType.PrivateThread, ChannelType.GuildVoice];
 
       if (!sendableTypes.includes(channel.type)) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Target must be a text channel, announcement channel, thread, or voice channel.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Target must be a text channel, announcement channel, thread, or voice channel.`));
       }
 
       // Check bot has permission to send in the target channel
       const targetGuild = channel.guild;
       if (!targetGuild) {
-         return interaction.reply({ embeds: [embed.danger('Error', 'Target must be a server channel.')] });
+         return interaction.reply(cv2.danger('Error', 'Target must be a server channel.'));
       }
 
       const botMember = targetGuild.members.me;
       if (!channel.permissionsFor(botMember).has(PermissionFlagsBits.SendMessages)) {
-        return interaction.reply({ embeds: [embed.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}.\n\nGrant me access to that channel first.`)] });
+        return interaction.reply(cv2.danger('Permission Error', `I don't have **Send Messages** permission in ${channel}.\n\nGrant me access to that channel first.`));
       }
 
       try {
         await channel.send(text);
-        await interaction.reply({ embeds: [embed.success('Message Dispatched', `Message successfully sent to ${channel}.`)] });
+        await interaction.reply(cv2.success('Message Dispatched', `Message successfully sent to ${channel}.`));
       } catch (err) {
-        await interaction.reply({ embeds: [embed.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)] }).catch(() => null);
+        await interaction.reply(cv2.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)).catch(() => null);
       }
     }
   },
@@ -577,17 +577,17 @@ export const commands = [
     async executePrefix(message, args) {
       const name = args[0];
       if (!name) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a name for the role.\n\n**Usage:** \`!createrole <name> [#color]\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please specify a name for the role.\n\n**Usage:** \`!createrole <name> [#color]\``));
       }
       const color = args[1];
       const result = await handleCreateRole(message.guild, message.member, name, color);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const name = interaction.options.getString('name');
       const color = interaction.options.getString('color');
       const result = await handleCreateRole(interaction.guild, interaction.member, name, color);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -609,15 +609,15 @@ export const commands = [
     async executePrefix(message) {
       const role = message.mentions.roles.first();
       if (!role) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention the role you want to delete.\n\n**Usage:** \`!deleterole <@role>\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please mention the role you want to delete.\n\n**Usage:** \`!deleterole <@role>\``));
       }
       const result = await handleDeleteRole(message.guild, message.member, role);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const role = interaction.options.getRole('role');
       const result = await handleDeleteRole(interaction.guild, interaction.member, role);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -640,18 +640,18 @@ export const commands = [
     async executePrefix(message, args) {
       const amount = parseInt(args[0]);
       if (!amount || isNaN(amount) || amount < 1 || amount > 100) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a number between 1-100.\n\n**Usage:** \`!purge <1-100>\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please specify a number between 1-100.\n\n**Usage:** \`!purge <1-100>\``));
       }
       const result = await handlePurge(message.guild, message.channel, message.member, amount, message);
       if (result.embed) {
-        const reply = await message.channel.send({ embeds: [result.embed] });
+        const reply = await message.channel.send(result);
         setTimeout(() => reply.delete().catch(() => null), 5000);
       }
     },
     async executeSlash(interaction) {
       const amount = interaction.options.getInteger('amount');
       const result = await handlePurge(interaction.guild, interaction.channel, interaction.member, amount);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -674,15 +674,15 @@ export const commands = [
     async executePrefix(message, args) {
       const seconds = parseInt(args[0]);
       if (isNaN(seconds) || seconds < 0 || seconds > 21600) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify seconds between 0-21600.\n\n**Usage:** \`!slowmode <seconds>\` (0 = off)`)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please specify seconds between 0-21600.\n\n**Usage:** \`!slowmode <seconds>\` (0 = off)`));
       }
       const result = await handleSlowmode(message.guild, message.channel, message.member, seconds);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const seconds = interaction.options.getInteger('seconds');
       const result = await handleSlowmode(interaction.guild, interaction.channel, interaction.member, seconds);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -709,20 +709,20 @@ export const commands = [
     async executePrefix(message, args) {
       const rawArg = args[0];
       if (!rawArg) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please specify a User ID or @mention.\n\n**Usage:** \`!unban <userId or @mention> [reason]\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please specify a User ID or @mention.\n\n**Usage:** \`!unban <userId or @mention> [reason]\``));
       }
       // Strip mention characters to get a raw ID
       const userId = rawArg.replace(/[<@!>]/g, '').trim();
       const reason = args.slice(1).join(' ') || 'No reason provided';
       const result = await handleUnban(message.guild, message.member, userId, reason);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       // Strip mention chars from the typed value just in case
       const userId = interaction.options.getString('userid').replace(/[<@!>]/g, '').trim();
       const reason = interaction.options.getString('reason') || 'No reason provided';
       const result = await handleUnban(interaction.guild, interaction.member, userId, reason);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -738,22 +738,22 @@ export const commands = [
                       message.author.id === message.guild.ownerId ||
                       isExtraOwner(message.guild.id, message.author.id);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Access Denied', `${message.author} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)] });
+        return message.reply(cv2.danger('Access Denied', `${message.author} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
       }
-      const sentMsg = await message.reply({ embeds: [embed.info('Processing…', 'Fetching ban list and removing bans, please wait.')] });
+      const sentMsg = await message.reply(cv2.info('Processing…', 'Fetching ban list and removing bans, please wait.'));
       const result = await handleUnbanAll(message.guild, message.member);
-      await sentMsg.edit({ embeds: [result.embed] });
+      await sentMsg.edit(result);
     },
     async executeSlash(interaction) {
       const allowed = isBotOwnerSync(interaction.user.id) ||
                       interaction.user.id === interaction.guild.ownerId ||
                       isExtraOwner(interaction.guild.id, interaction.user.id);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', `${interaction.user} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`)] });
+        return interaction.reply(cv2.danger('Access Denied', `${interaction.user} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
       }
       await interaction.deferReply();
       const result = await handleUnbanAll(interaction.guild, interaction.member);
-      await interaction.editReply({ embeds: [result.embed] });
+      await interaction.editReply(result);
     }
   },
 
@@ -770,12 +770,12 @@ export const commands = [
       }
       try {
         if (channel.permissionsLocked) {
-          return message.reply({ embeds: [embed.info('Already Synced', `${channel} is already synced with its category.`)] });
+          return message.reply(cv2.info('Already Synced', `${channel} is already synced with its category.`));
         }
         await channel.lockPermissions();
-        await message.reply({ embeds: [embed.success('Synced', `Successfully synced ${channel} with category **${channel.parent.name}**.`)] });
+        await message.reply(cv2.success('Synced', `Successfully synced ${channel} with category **${channel.parent.name}**.`));
       } catch (err) {
-        await message.reply({ embeds: [embed.danger('Error', 'Failed to sync permissions. Check my roles and hierarchy.')] });
+        await message.reply(cv2.danger('Error', 'Failed to sync permissions. Check my roles and hierarchy.'));
       }
     },
     async executeSlash(interaction) {
@@ -785,12 +785,12 @@ export const commands = [
       }
       try {
         if (channel.permissionsLocked) {
-          return interaction.reply({ embeds: [embed.info('Already Synced', `${channel} is already synced with its category.`)] });
+          return interaction.reply(cv2.info('Already Synced', `${channel} is already synced with its category.`));
         }
         await channel.lockPermissions();
-        await interaction.reply({ embeds: [embed.success('Synced', `Successfully synced ${channel} with category **${channel.parent.name}**.`)] });
+        await interaction.reply(cv2.success('Synced', `Successfully synced ${channel} with category **${channel.parent.name}**.`));
       } catch (err) {
-        await interaction.reply({ embeds: [embed.danger('Error', 'Failed to sync permissions. Check my roles and hierarchy.')] });
+        await interaction.reply(cv2.danger('Error', 'Failed to sync permissions. Check my roles and hierarchy.'));
       }
     }
   },
@@ -809,7 +809,7 @@ export const commands = [
       const channelsToSync = message.guild.channels.cache.filter(c => c.parent && !c.permissionsLocked);
       
       if (channelsToSync.size === 0) {
-        return m.edit({ content: '', embeds: [embed.success('Already Synced', 'All channels are already fully synced with their categories!')] });
+        return m.edit(cv2.success('Already Synced', 'All channels are already fully synced with their categories!'));
       }
 
       for (const [id, channel] of channelsToSync) {
@@ -821,10 +821,7 @@ export const commands = [
         }
       }
 
-      await m.edit({
-        content: '',
-        embeds: [embed.success('Sync Complete', `**${success}** channels synced.\n**${failed}** channels failed (missing permissions).`)]
-      });
+      await m.edit(cv2.success('Sync Complete', `**${success}** channels synced.\n**${failed}** channels failed (missing permissions).`));
     },
     async executeSlash(interaction) {
       await interaction.reply(' Syncing all channels to their categories. This might take a while to respect Discord rate limits...');
@@ -834,7 +831,7 @@ export const commands = [
       const channelsToSync = interaction.guild.channels.cache.filter(c => c.parent && !c.permissionsLocked);
       
       if (channelsToSync.size === 0) {
-        return interaction.editReply({ content: '', embeds: [embed.success('Already Synced', 'All channels are already fully synced with their categories!')] });
+        return interaction.editReply(cv2.success('Already Synced', 'All channels are already fully synced with their categories!'));
       }
 
       for (const [id, channel] of channelsToSync) {
@@ -846,10 +843,7 @@ export const commands = [
         }
       }
 
-      await interaction.editReply({
-        content: '',
-        embeds: [embed.success('Sync Complete', `**${success}** channels synced.\n**${failed}** channels failed (missing permissions).`)]
-      });
+      await interaction.editReply(cv2.success('Sync Complete', `**${success}** channels synced.\n**${failed}** channels failed (missing permissions).`));
     }
   }
 ];
@@ -861,7 +855,7 @@ export const commands = [
 async function handleMuteAll(guild, moderator) {
   const vc = moderator.voice.channel;
   if (!vc) {
-    return { embed: embed.warn('MuteAll Failed', 'You must be in a **voice channel** to use this command.') };
+    return cv2.warn('MuteAll Failed', 'You must be in a **voice channel** to use this command.');
   }
 
   let mutedCount = 0;
@@ -872,15 +866,15 @@ async function handleMuteAll(guild, moderator) {
     }
   }
 
-  const resEmbed = embed.danger('Voice Mute Completed', `Successfully server-muted **${mutedCount}** member(s) in **${vc.name}**.`);
-  logToSecurityChannel(guild, embed.log('MuteAll Voice Channel', `Moderator **${moderator.user.tag}** muted all **${mutedCount}** members in **${vc.name}**.`, [], 'warning'));
+  const resEmbed = cv2.danger('Voice Mute Completed', `Successfully server-muted **${mutedCount}** member(s) in **${vc.name}**.`);
+  logToSecurityChannel(guild, cv2.log('MuteAll Voice Channel', `Moderator **${moderator.user.tag}** muted all **${mutedCount}** members in **${vc.name}**.`, [], 'warning'));
   return { embed: resEmbed };
 }
 
 async function handleUnmuteAll(guild, moderator) {
   const vc = moderator.voice.channel;
   if (!vc) {
-    return { embed: embed.warn('UnmuteAll Failed', 'You must be in a **voice channel** to use this command.') };
+    return cv2.warn('UnmuteAll Failed', 'You must be in a **voice channel** to use this command.');
   }
 
   let unmutedCount = 0;
@@ -889,32 +883,32 @@ async function handleUnmuteAll(guild, moderator) {
     unmutedCount++;
   }
 
-  const resEmbed = embed.success('Voice Unmute Completed', `Successfully removed server-mute from **${unmutedCount}** member(s) in **${vc.name}**.`);
-  logToSecurityChannel(guild, embed.log('UnmuteAll Voice Channel', `Moderator **${moderator.user.tag}** unmuted all **${unmutedCount}** members in **${vc.name}**.`, [], 'success'));
+  const resEmbed = cv2.success('Voice Unmute Completed', `Successfully removed server-mute from **${unmutedCount}** member(s) in **${vc.name}**.`);
+  logToSecurityChannel(guild, cv2.log('UnmuteAll Voice Channel', `Moderator **${moderator.user.tag}** unmuted all **${unmutedCount}** members in **${vc.name}**.`, [], 'success'));
   return { embed: resEmbed };
 }
 
 export async function handleWarn(guild, moderator, target, reason, force = false) {
   // 1. Untouchable Check
   if (!force && (isBotOwnerSync(target.id) || guild.ownerId === target.id)) {
-    return { embed: embed.danger('Untouchable', `You cannot take action against **${target.user.tag}**.\n\nThey are protected by **Athena Prime's** highest security clearance.`) };
+    return cv2.danger('Untouchable', `You cannot take action against **${target.user.tag}**.\n\nThey are protected by **Athena Prime's** highest security clearance.`);
   }
 
   // 2. Extraowner Immunity (Bypass if moderator is Bot Owner/Server Owner)
   if (!force && isExtraOwner(guild.id, target.id)) {
     if (!isBotOwnerSync(moderator.id) && guild.ownerId !== moderator.id) {
-       return { embed: embed.danger('Immunity', ' This user is an Extra Owner and cannot be moderated by regular staff.') };
+       return cv2.danger('Immunity', ' This user is an Extra Owner and cannot be moderated by regular staff.');
     }
   }
 
   if (!force && !canModerate(moderator, target)) {
-    return { embed: embed.danger('Permission Denied', `You do not have enough power to warn **${target.user.tag}**.`) };
+    return cv2.danger('Permission Denied', `You do not have enough power to warn **${target.user.tag}**.`);
   }
 
   const warns = db.addWarning(guild.id, target.id, moderator.id, reason);
 
   // Advanced DM Embed
-  const dmEmbed = embed.warn(
+  const dmEmbed = cv2.warn(
     'Warning Received', 
     `You have been issued a warning in **${guild.name}** by one of the server moderators.`,
     [
@@ -932,7 +926,7 @@ export async function handleWarn(guild, moderator, target, reason, force = false
   });
 
   // Log to logs channel
-  logToSecurityChannel(guild, embed.log(
+  logToSecurityChannel(guild, cv2.log(
     'Warning Issued', 
     `Moderator warned user.`,
     [
@@ -953,12 +947,10 @@ export async function handleWarn(guild, moderator, target, reason, force = false
     // Clear warning counts so they don't get double punished next message
     db.clearWarnings(guild.id, target.id);
 
-    return { 
-      embed: embed.danger(
+    return cv2.danger(
         'Severe Warning Threshold Reached', 
         `**${target.user.tag}** accumulated ${warns.length} warnings. Executing **automatic quarantine punishment**.\n\n${quarantineRes.message}`
-      )
-    };
+      );
   }
 
   return { embed: resEmbed };
@@ -968,7 +960,7 @@ async function handleWarnings(guild, target) {
   const warns = db.getWarnings(guild.id, target.id);
 
   if (warns.length === 0) {
-    return { embed: embed.success('Warnings Clear', `**${target.user.tag}** has clean record. No active warnings!`) };
+    return cv2.success('Warnings Clear', `**${target.user.tag}** has clean record. No active warnings!`);
   }
 
   const fields = warns.map((w, index) => ({
@@ -976,7 +968,7 @@ async function handleWarnings(guild, target) {
     value: `**Reason:** ${w.reason}\n**Warner:** <@${w.warnerId}>`
   }));
 
-  const resEmbed = embed.info(
+  const resEmbed = cv2.info(
     `Warning History: ${target.user.tag}`, 
     `This member currently has **${warns.length}** active warnings recorded on disk.`, 
     fields
@@ -988,13 +980,13 @@ async function handleClearWarns(guild, moderator, target) {
   const activeCount = db.getWarnings(guild.id, target.id).length;
   
   if (activeCount === 0) {
-    return { embed: embed.info('No warnings', `User **${target.user.tag}** has no warnings to clear.`) };
+    return cv2.info('No warnings', `User **${target.user.tag}** has no warnings to clear.`);
   }
 
   db.clearWarnings(guild.id, target.id);
 
-  const resEmbed = embed.success('Warnings Cleared', `Successfully cleared all active warnings for **${target.user.tag}**.`);
-  logToSecurityChannel(guild, embed.log(
+  const resEmbed = cv2.success('Warnings Cleared', `Successfully cleared all active warnings for **${target.user.tag}**.`);
+  logToSecurityChannel(guild, cv2.log(
     'Warnings Wiped',
     `Moderator **${moderator.user.tag}** cleared **${activeCount}** active warnings for **${target.user.tag}** (${target.id}).`,
     [],
@@ -1006,35 +998,35 @@ async function handleClearWarns(guild, moderator, target) {
 async function handleTimeout(guild, moderator, target, durationStr, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.') };
+    return cv2.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.');
   }
 
   if (!canModerate(moderator, target)) {
-    return { embed: embed.danger('Permission Denied', `You do not have enough power to timeout **${target.user.tag}**.`) };
+    return cv2.danger('Permission Denied', `You do not have enough power to timeout **${target.user.tag}**.`);
   }
 
   const ms = parseDuration(durationStr);
   if (!ms || ms < 10000 || ms > 2419200000) { // Discord timeout limit is between 10s and 28 days
-    return { embed: embed.warn('Invalid Duration', 'Duration must be a format like `10m`, `2h`, `1d` (between 10 seconds and 28 days).') };
+    return cv2.warn('Invalid Duration', 'Duration must be a format like `10m`, `2h`, `1d` (between 10 seconds and 28 days).');
   }
 
   try {
     await target.timeout(ms, `${reason} - by ${moderator.user.tag}`);
 
     // Send DM
-    const dmEmbed = embed.danger('Timeout Restrict', `You have been timed out in **${guild.name}**.`, [
+    const dmEmbed = cv2.danger('Timeout Restrict', `You have been timed out in **${guild.name}**.`, [
       { name: 'Duration', value: durationStr, inline: true },
       { name: 'Reason', value: reason, inline: true }
     ]);
     await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
-    const resEmbed = embed.danger('Timeout Executed', `Successfully placed **${target.user.tag}** on timeout.`, [
+    const resEmbed = cv2.danger('Timeout Executed', `Successfully placed **${target.user.tag}** on timeout.`, [
       { name: 'Member', value: `${target}`, inline: true },
       { name: 'Duration', value: durationStr, inline: true },
       { name: 'Reason', value: reason }
     ]);
 
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Member Timeout',
       `Moderator timed out member.`,
       [
@@ -1049,39 +1041,39 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Timeout Failed', 'An error occurred while executing the timeout. Ensure my role is higher than the target.') };
+    return cv2.danger('Timeout Failed', 'An error occurred while executing the timeout. Ensure my role is higher than the target.');
   }
 }
 
 async function handleKick(guild, moderator, target, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.') };
+    return cv2.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.');
   }
 
   if (!canModerate(moderator, target)) {
-    return { embed: embed.danger('Permission Denied', `You do not have enough power to kick **${target.user.tag}**.`) };
+    return cv2.danger('Permission Denied', `You do not have enough power to kick **${target.user.tag}**.`);
   }
 
   if (!target.kickable) {
-    return { embed: embed.danger('Action Failed', `I do not have enough role permissions to kick **${target.user.tag}**.`) };
+    return cv2.danger('Action Failed', `I do not have enough role permissions to kick **${target.user.tag}**.`);
   }
 
   try {
     // DM target
-    const dmEmbed = embed.danger('Kicked from Server', `You have been kicked from **${guild.name}**.`, [
+    const dmEmbed = cv2.danger('Kicked from Server', `You have been kicked from **${guild.name}**.`, [
       { name: 'Reason', value: reason }
     ]);
     await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
     await target.kick(`${reason} - by ${moderator.user.tag}`);
 
-    const resEmbed = embed.danger('Member Kicked', `Successfully kicked **${target.user.tag}**.`, [
+    const resEmbed = cv2.danger('Member Kicked', `Successfully kicked **${target.user.tag}**.`, [
       { name: 'Member', value: `${target.user.username}`, inline: true },
       { name: 'Reason', value: reason, inline: true }
     ]);
 
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Member Kicked',
       `Moderator kicked member.`,
       [
@@ -1095,39 +1087,39 @@ async function handleKick(guild, moderator, target, reason) {
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Kick Failed', 'An error occurred while kicking the user.') };
+    return cv2.danger('Kick Failed', 'An error occurred while kicking the user.');
   }
 }
 
 async function handleBan(guild, moderator, target, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.') };
+    return cv2.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.');
   }
 
   if (!canModerate(moderator, target)) {
-    return { embed: embed.danger('Permission Denied', `You do not have enough power to ban **${target.user.tag}**.`) };
+    return cv2.danger('Permission Denied', `You do not have enough power to ban **${target.user.tag}**.`);
   }
 
   if (!target.bannable) {
-    return { embed: embed.danger('Action Failed', `I do not have enough role permissions to ban **${target.user.tag}**.`) };
+    return cv2.danger('Action Failed', `I do not have enough role permissions to ban **${target.user.tag}**.`);
   }
 
   try {
     // DM target
-    const dmEmbed = embed.danger('Banned from Server', `You have been permanently banned from **${guild.name}**.`, [
+    const dmEmbed = cv2.danger('Banned from Server', `You have been permanently banned from **${guild.name}**.`, [
       { name: 'Reason', value: reason }
     ]);
     await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
     await target.ban({ reason: `${reason} - by ${moderator.user.tag}` });
 
-    const resEmbed = embed.danger('Member Banned', `Successfully banned **${target.user.tag}** permanently.`, [
+    const resEmbed = cv2.danger('Member Banned', `Successfully banned **${target.user.tag}** permanently.`, [
       { name: 'Member', value: `${target.user.username}`, inline: true },
       { name: 'Reason', value: reason, inline: true }
     ]);
 
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Member Banned',
       `Moderator banned member.`,
       [
@@ -1141,7 +1133,7 @@ async function handleBan(guild, moderator, target, reason) {
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Ban Failed', 'An error occurred while banning the user.') };
+    return cv2.danger('Ban Failed', 'An error occurred while banning the user.');
   }
 }
 
@@ -1151,7 +1143,7 @@ async function handleCreateRole(guild, moderator, name, color) {
     if (/^#[0-9A-F]{6}$/i.test(color)) {
       roleColor = color;
     } else {
-      return { embed: embed.warn('Invalid Color', 'Please provide a valid hex color code (e.g. `#00ffaa`).') };
+      return cv2.warn('Invalid Color', 'Please provide a valid hex color code (e.g. `#00ffaa`).');
     }
   }
 
@@ -1160,12 +1152,12 @@ async function handleCreateRole(guild, moderator, name, color) {
       colors: { primaryColor: roleColor || undefined },
       reason: `Created by ${moderator.user.tag}` });
 
-    const resEmbed = embed.success('Role Created', `Successfully created server role **${role.name}**.`, [
+    const resEmbed = cv2.success('Role Created', `Successfully created server role **${role.name}**.`, [
       { name: 'Role ID', value: `\`${role.id}\``, inline: true },
       { name: 'Hex Color', value: `\`${role.hexColor}\``, inline: true }
     ]);
 
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Role Created',
       `Moderator created a new role.`,
       [
@@ -1178,17 +1170,17 @@ async function handleCreateRole(guild, moderator, name, color) {
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Action Failed', 'Failed to create the role. Ensure my role is high enough and I have Manage Roles permission.') };
+    return cv2.danger('Action Failed', 'Failed to create the role. Ensure my role is high enough and I have Manage Roles permission.');
   }
 }
 
 async function handleDeleteRole(guild, moderator, role) {
   if (role.managed) {
-    return { embed: embed.danger('Delete Failed', 'You cannot delete managed roles (roles tied to bots or integrations).') };
+    return cv2.danger('Delete Failed', 'You cannot delete managed roles (roles tied to bots or integrations).');
   }
 
   if (role.position >= moderator.roles.highest.position && moderator.id !== guild.ownerId) {
-    return { embed: embed.danger('Permission Denied', 'You cannot delete a role that is equal to or higher than your highest role.') };
+    return cv2.danger('Permission Denied', 'You cannot delete a role that is equal to or higher than your highest role.');
   }
 
   try {
@@ -1196,9 +1188,9 @@ async function handleDeleteRole(guild, moderator, role) {
     const roleId = role.id;
     await role.delete(`Deleted by ${moderator.user.tag}`);
 
-    const resEmbed = embed.success('Role Deleted', `Successfully deleted role **${roleName}** (ID: ${roleId}).`);
+    const resEmbed = cv2.success('Role Deleted', `Successfully deleted role **${roleName}** (ID: ${roleId}).`);
 
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Role Deleted',
       `Moderator deleted a role.`,
       [
@@ -1211,7 +1203,7 @@ async function handleDeleteRole(guild, moderator, role) {
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Action Failed', 'Failed to delete the role. Ensure my highest role is above the target role.') };
+    return cv2.danger('Action Failed', 'Failed to delete the role. Ensure my highest role is above the target role.');
   }
 }
 
@@ -1224,13 +1216,13 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
 
     const deleted = await channel.bulkDelete(amount, true);
 
-    const resEmbed = embed.success('Messages Purged', `Successfully deleted **${deleted.size}** messages from this channel.`, [
+    const resEmbed = cv2.success('Messages Purged', `Successfully deleted **${deleted.size}** messages from this channel.`, [
       { name: 'Requested', value: `\`${amount}\``, inline: true },
       { name: 'Deleted', value: `\`${deleted.size}\``, inline: true },
       { name: 'Moderator', value: `${moderator}`, inline: true }
     ]);
 
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Messages Purged',
       `Moderator bulk-deleted messages.`,
       [
@@ -1244,7 +1236,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Purge Failed', 'Failed to delete messages. Messages older than 14 days cannot be bulk deleted.') };
+    return cv2.danger('Purge Failed', 'Failed to delete messages. Messages older than 14 days cannot be bulk deleted.');
   }
 }
 
@@ -1253,13 +1245,13 @@ async function handleSlowmode(guild, channel, moderator, seconds) {
     await channel.setRateLimitPerUser(seconds, `Slowmode set by ${moderator.user.tag}`);
 
     const resEmbed = seconds === 0
-      ? embed.success('Slowmode Disabled', `Slowmode has been disabled in **#${channel.name}**.`)
-      : embed.success('Slowmode Configured', `Slowmode set to **${seconds} seconds** in **#${channel.name}**.`, [
+      ? cv2.success('Slowmode Disabled', `Slowmode has been disabled in **#${channel.name}**.`)
+      : cv2.success('Slowmode Configured', `Slowmode set to **${seconds} seconds** in **#${channel.name}**.`, [
           { name: 'Channel', value: `${channel}`, inline: true },
           { name: 'Rate Limit', value: `\`${seconds}s\``, inline: true }
         ]);
 
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Slowmode Updated',
       `Moderator adjusted channel slowmode.`,
       [
@@ -1273,7 +1265,7 @@ async function handleSlowmode(guild, channel, moderator, seconds) {
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Slowmode Failed', 'Failed to set slowmode. Ensure I have Manage Channel permissions.') };
+    return cv2.danger('Slowmode Failed', 'Failed to set slowmode. Ensure I have Manage Channel permissions.');
   }
 }
 
@@ -1281,23 +1273,23 @@ async function handleUnban(guild, moderator, userId, reason) {
   try {
     // Validate userId format
     if (!/^\d{17,20}$/.test(userId)) {
-      return { embed: embed.warn('Invalid User ID', `\`${userId}\` is not a valid Discord User ID. IDs are 17-20 digit numbers.`) };
+      return cv2.warn('Invalid User ID', `\`${userId}\` is not a valid Discord User ID. IDs are 17-20 digit numbers.`);
     }
 
     const ban = await guild.bans.fetch(userId).catch(() => null);
     if (!ban) {
-      return { embed: embed.warn('Not Banned', `User ID \`${userId}\` is not currently banned from this server.`) };
+      return cv2.warn('Not Banned', `User ID \`${userId}\` is not currently banned from this server.`);
     }
 
     await guild.bans.remove(userId, `${reason} - by ${moderator.user.tag}`);
 
-    const resEmbed = embed.success('User Unbanned', `Successfully unbanned **${ban.user.tag}** (ID: \`${userId}\`).`, [
+    const resEmbed = cv2.success('User Unbanned', `Successfully unbanned **${ban.user.tag}** (ID: \`${userId}\`).`, [
       { name: 'User', value: `${ban.user.tag}`, inline: true },
       { name: 'Moderator', value: `${moderator}`, inline: true },
       { name: 'Reason', value: reason }
     ]);
 
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'User Unbanned',
       `Moderator unbanned a user.`,
       [
@@ -1311,7 +1303,7 @@ async function handleUnban(guild, moderator, userId, reason) {
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Unban Failed', 'An error occurred while unbanning the user.') };
+    return cv2.danger('Unban Failed', 'An error occurred while unbanning the user.');
   }
 }
 
@@ -1321,29 +1313,29 @@ async function handleUnban(guild, moderator, userId, reason) {
 async function handleBanById(guild, moderator, userId, reason, userObj = null) {
   // Protection check
   if (isBotOwnerSync(userId) || isExtraOwner(guild.id, userId)) {
-    return { embed: embed.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be banned.') };
+    return cv2.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be banned.');
   }
 
   if (!isBotOwnerSync(moderator.id) && !moderator.permissions.has(PermissionFlagsBits.BanMembers)) {
-    return { embed: embed.danger('Permission Denied', 'You need the **Ban Members** permission to use this command.') };
+    return cv2.danger('Permission Denied', 'You need the **Ban Members** permission to use this command.');
   }
 
   try {
     const existingBan = await guild.bans.fetch(userId).catch(() => null);
     if (existingBan) {
-      return { embed: embed.warn('Already Banned', `User \`${userId}\` is already banned from this server.`) };
+      return cv2.warn('Already Banned', `User \`${userId}\` is already banned from this server.`);
     }
 
     await guild.bans.create(userId, { reason: `${reason} — by ${moderator.user.tag}` });
 
     const displayName = userObj ? `**${userObj.tag}**` : `\`${userId}\``;
-    const resEmbed = embed.danger('User Banned', `Successfully banned ${displayName}.`, [
+    const resEmbed = cv2.danger('User Banned', `Successfully banned ${displayName}.`, [
       { name: 'User ID', value: `\`${userId}\``, inline: true },
       { name: 'Reason', value: reason, inline: true },
       { name: 'Banned by', value: `${moderator}`, inline: true }
     ]);
 
-    logToSecurityChannel(guild, embed.log('Member Banned by ID', `Moderator banned a user not currently in the server.`, [
+    logToSecurityChannel(guild, cv2.log('Member Banned by ID', `Moderator banned a user not currently in the server.`, [
       { name: 'Target', value: `${userObj ? userObj.tag : 'Unknown'} (\`${userId}\`)`, inline: true },
       { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
       { name: 'Reason', value: reason }
@@ -1352,7 +1344,7 @@ async function handleBanById(guild, moderator, userId, reason, userObj = null) {
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Ban Failed', `Could not ban user \`${userId}\`: ${error.message}`) };
+    return cv2.danger('Ban Failed', `Could not ban user \`${userId}\`: ${error.message}`);
   }
 }
 
@@ -1363,7 +1355,7 @@ async function handleUnbanAll(guild, moderator) {
   try {
     const bans = await guild.bans.fetch();
     if (bans.size === 0) {
-      return { embed: embed.info('No Bans', 'There are no banned users in this server to remove.') };
+      return cv2.info('No Bans', 'There are no banned users in this server to remove.');
     }
 
     let unbanned = 0;
@@ -1377,13 +1369,13 @@ async function handleUnbanAll(guild, moderator) {
       } catch { failed++; }
     }
 
-    const resEmbed = embed.success('All Bans Cleared', `Processed **${bans.size}** ban(s).`, [
+    const resEmbed = cv2.success('All Bans Cleared', `Processed **${bans.size}** ban(s).`, [
       { name: '\u2705 Unbanned', value: `\`${unbanned}\``, inline: true },
       { name: '\u274c Failed', value: `\`${failed}\``, inline: true },
       { name: 'Executed by', value: `${moderator}`, inline: true }
     ]);
 
-    logToSecurityChannel(guild, embed.log('UnbanAll Executed', 'A mass unban operation was performed.', [
+    logToSecurityChannel(guild, cv2.log('UnbanAll Executed', 'A mass unban operation was performed.', [
       { name: 'Total Processed', value: `${bans.size}`, inline: true },
       { name: 'Unbanned', value: `${unbanned}`, inline: true },
       { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
@@ -1392,7 +1384,7 @@ async function handleUnbanAll(guild, moderator) {
     return { embed: resEmbed };
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('UnbanAll Failed', `An error occurred: ${error.message}`) };
+    return cv2.danger('UnbanAll Failed', `An error occurred: ${error.message}`);
   }
 }
 
@@ -1423,7 +1415,7 @@ async function handleVcAction(guild, moderator, targets, action) {
   }
 
   const actionName = action.charAt(0).toUpperCase() + action.slice(1);
-  const embedRes = embed.success(`${actionName} Complete`, `Processed **${targets.size}** member(s).`, [
+  const embedRes = cv2.success(`${actionName} Complete`, `Processed **${targets.size}** member(s).`, [
     { name: '<:emoji_16:1533860111704002665> Success', value: `\`${successCount}\``, inline: true },
     { name: '❌ Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
   ]);

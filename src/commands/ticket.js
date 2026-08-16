@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export const commands = [
   {
@@ -89,12 +89,12 @@ export const commands = [
         });
 
         const roleMentions = staffRoles.map(id => `<@&${id}>`).join(', ');
-        await interaction.editReply({ embeds: [embed.success('Ticket System Deployed', `The ticket panel has been deployed successfully. Tickets will be created under ${category} and ${roleMentions} will be pinged.`)] });
+        await interaction.editReply(cv2.success('Ticket System Deployed', `The ticket panel has been deployed successfully. Tickets will be created under ${category} and ${roleMentions} will be pinged.`));
       }
     },
     async executePrefix(message, args) {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return message.reply({ embeds: [embed.error('Missing Permission', 'You need Administrator permissions to use this command.')] });
+        return message.reply(cv2.error('Missing Permission', 'You need Administrator permissions to use this command.'));
       }
 
       if (args[0]?.toLowerCase() === 'setup') {
@@ -102,12 +102,12 @@ export const commands = [
         const staffRoles = message.mentions.roles.map(r => r.id);
 
         if (!categoryId || staffRoles.length === 0) {
-          return message.reply({ embeds: [embed.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...]`')] });
+          return message.reply(cv2.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...]`'));
         }
 
         const category = message.guild.channels.cache.get(categoryId);
         if (!category || category.type !== ChannelType.GuildCategory) {
-          return message.reply({ embeds: [embed.error('Invalid Category', 'Please provide a valid category.')] });
+          return message.reply(cv2.error('Invalid Category', 'Please provide a valid category.'));
         }
 
         const config = db.getTickets(message.guild.id);
@@ -149,9 +149,9 @@ export const commands = [
         });
 
         const roleMentions = staffRoles.map(id => `<@&${id}>`).join(', ');
-        await message.reply({ embeds: [embed.success('Ticket System Deployed', `Tickets will be created under <#${category.id}> and ${roleMentions} will be pinged.`)] });
+        await message.reply(cv2.success('Ticket System Deployed', `Tickets will be created under <#${category.id}> and ${roleMentions} will be pinged.`));
       } else {
-        return message.reply({ embeds: [embed.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...]`\n\nFor advanced customization (dropdowns, images, etc.), use the `!ticketpanel` command!')] });
+        return message.reply(cv2.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...]`\n\nFor advanced customization (dropdowns, images, etc.), use the `!ticketpanel` command!'));
       }
     }
   }

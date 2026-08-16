@@ -2,7 +2,7 @@ import { PermissionFlagsBits, AttachmentBuilder } from 'discord.js';
 import db from '../database.js';
 import statsDB from '../statsDB.js';
 import { generateStatCard } from '../utils/statCanvas.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export const commands = [
   {
@@ -34,7 +34,7 @@ export const commands = [
     async executeSlash(interaction) {
       const cfg = db.getGuildConfig(interaction.guild.id);
       if (cfg.statsChannelId && interaction.channel.id !== cfg.statsChannelId) {
-        return interaction.reply({ embeds: [embed.warn('Wrong Channel', `Please use this command in <#${cfg.statsChannelId}>.`)] });
+        return interaction.reply(cv2.warn('Wrong Channel', `Please use this command in <#${cfg.statsChannelId}>.`));
       }
 
       await interaction.deferReply();
@@ -59,7 +59,7 @@ export const commands = [
 
       // Verify they have some data
       if (userStats.msg_14d === 0 && userStats.vc_14d === 0) {
-        return interaction.editReply({ embeds: [embed.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 14 days.`)] });
+        return interaction.editReply(cv2.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 14 days.`));
       }
 
       try {
@@ -69,13 +69,13 @@ export const commands = [
         await interaction.editReply({ files: [attachment] });
       } catch (err) {
         console.error('Failed to generate stat card:', err);
-        await interaction.editReply({ embeds: [embed.danger('Error', 'Failed to generate statistics card. Please try again later.')] });
+        await interaction.editReply(cv2.danger('Error', 'Failed to generate statistics card. Please try again later.'));
       }
     },
     executePrefix: async (message, args) => {
       const cfg = db.getGuildConfig(message.guild.id);
       if (cfg.statsChannelId && message.channel.id !== cfg.statsChannelId) {
-        return message.reply({ embeds: [embed.warn('Wrong Channel', `Please use this command in <#${cfg.statsChannelId}>.`)] }).catch(() => null);
+        return message.reply(cv2.warn('Wrong Channel', `Please use this command in <#${cfg.statsChannelId}>.`)).catch(() => null);
       }
 
       let targetUser = message.author;
@@ -110,7 +110,7 @@ export const commands = [
 
       // Verify they have some data
       if (userStats.msg_14d === 0 && userStats.vc_14d === 0) {
-        return message.reply({ embeds: [embed.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 14 days.`)] });
+        return message.reply(cv2.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 14 days.`));
       }
 
       const m = await message.reply(' Generating your stats... Please wait.');
@@ -122,7 +122,7 @@ export const commands = [
         await m.edit({ content: '', files: [attachment] });
       } catch (err) {
         console.error('Failed to generate stat card via prefix:', err);
-        await m.edit({ content: '', embeds: [embed.danger('Error', 'Failed to generate statistics card. Please try again later.')] });
+        await m.edit({ content: '', ...cv2.danger('Error', 'Failed to generate statistics card. Please try again later.') });
       }
     }
   }

@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export async function updateManagerMessage(message) {
   const guildId = message.guild.id;
@@ -95,7 +95,7 @@ export const commands = [
     default_member_permissions: String(PermissionFlagsBits.Administrator),
     async executePrefix(message, args) {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return message.reply({ embeds: [embed.error('Missing Permission', 'You need Administrator permissions to use this command.')] });
+        return message.reply(cv2.error('Missing Permission', 'You need Administrator permissions to use this command.'));
       }
 
       await updateManagerMessage(message);

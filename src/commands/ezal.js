@@ -1,6 +1,6 @@
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isBotOwnerSync, getOrCreateQuarantineRole, isAuthorized } from '../utils/helpers.js';
 import { handleEmergency } from './security.js';
 import fs from 'fs';
@@ -313,19 +313,19 @@ async function handleBackup(message, args) {
   let targetGuild = message.guild;
   if (args[0] && /^\d{17,20}$/.test(args[0])) {
     const resolved = message.client.guilds.cache.get(args[0]);
-    if (!resolved) return message.reply({ embeds: [embed.danger('Not Found', `No server with ID \`${args[0]}\` found in bot's guild list.`)] });
+    if (!resolved) return message.reply(cv2.danger('Not Found', `No server with ID \`${args[0]}\` found in bot's guild list.`));
     targetGuild = resolved;
   }
-  if (!targetGuild) return message.reply({ embeds: [embed.warn('No Guild', 'Run this inside a server or provide a server ID.')] });
+  if (!targetGuild) return message.reply(cv2.warn('No Guild', 'Run this inside a server or provide a server ID.'));
 
-  const statusMsg = await message.reply({ embeds: [embed.info('Backup Started', `Serializing **${targetGuild.name}**... please wait.`)] });
+  const statusMsg = await message.reply(cv2.info('Backup Started', `Serializing **${targetGuild.name}**... please wait.`));
 
   try {
     const data      = await serializeGuild(targetGuild);
     const backupId  = generateBackupId();
     db.saveBackup(backupId, data);
 
-    await statusMsg.edit({ embeds: [embed.success(
+    await statusMsg.edit(cv2.success(
       'Backup Complete',
       `Server **${targetGuild.name}** has been backed up successfully.`,
       [
@@ -337,21 +337,21 @@ async function handleBackup(message, args) {
         { name: 'Categories',  value: `\`${data.categories.length}\``, inline: true },
         { name: 'Saved At',    value: new Date().toUTCString() }
       ]
-    )] });
+    ));
   } catch (err) {
     console.error('[Backup]', err);
-    await statusMsg.edit({ embeds: [embed.danger('Backup Failed', `An error occurred: \`${err.message}\``)] });
+    await statusMsg.edit(cv2.danger('Backup Failed', `An error occurred: \`${err.message}\``));
   }
 }
 
 async function handleBackupAll(message) {
   const guilds = Array.from(message.client.guilds.cache.values());
-  if (!guilds.length) return message.reply({ embeds: [embed.warn('No Servers', 'The bot is not in any servers.')] });
+  if (!guilds.length) return message.reply(cv2.warn('No Servers', 'The bot is not in any servers.'));
 
   let successCount = 0;
   let failCount = 0;
 
-  const statusMsg = await message.reply({ embeds: [embed.info('Mass Backup Initiated', `Backing up **${guilds.length}** servers. This will be as quick as possible.\n\n**Progress:** 0 / ${guilds.length} Servers`)] }).catch(() => null);
+  const statusMsg = await message.reply(cv2.info('Mass Backup Initiated', `Backing up **${guilds.length}** servers. This will be as quick as possible.\n\n**Progress:** 0 / ${guilds.length} Servers`)).catch(() => null);
 
   for (let i = 0; i < guilds.length; i++) {
     const targetGuild = guilds[i];
@@ -367,32 +367,32 @@ async function handleBackupAll(message) {
 
     // Update status every 5 servers to prevent rate limiting on edits
     if (statusMsg && (i + 1) % 5 === 0) {
-      await statusMsg.edit({ embeds: [embed.info('Mass Backup In Progress', `Backing up **${guilds.length}** servers...\n\n**Progress:** ${i + 1} / ${guilds.length} Servers\n**Success:** ${successCount} | **Failed:** ${failCount}`)] }).catch(() => null);
+      await statusMsg.edit(cv2.info('Mass Backup In Progress', `Backing up **${guilds.length}** servers...\n\n**Progress:** ${i + 1} / ${guilds.length} Servers\n**Success:** ${successCount} | **Failed:** ${failCount}`)).catch(() => null);
     }
   }
 
   if (statusMsg) {
-    await statusMsg.edit({ embeds: [embed.success('Mass Backup Complete', `Successfully backed up all servers.\n\n**Total Servers:** ${guilds.length}\n**Success:** ${successCount}\n**Failed:** ${failCount}`)] }).catch(() => null);
+    await statusMsg.edit(cv2.success('Mass Backup Complete', `Successfully backed up all servers.\n\n**Total Servers:** ${guilds.length}\n**Success:** ${successCount}\n**Failed:** ${failCount}`)).catch(() => null);
   }
 }
 
 async function handleBcklist(message) {
   const backups = db.getAllBackups();
-  if (!backups.length) return message.reply({ embeds: [embed.warn('No Backups', 'No server backups have been saved yet.')] });
+  if (!backups.length) return message.reply(cv2.warn('No Backups', 'No server backups have been saved yet.'));
 
   const list = backups.map((b, i) =>
     `\`${i + 1}.\` **${b.guildName}** | ID: \`${b.id}\` |  ${b.memberCount} |  ${b.roleCount} |  ${b.channelCount} | <t:${Math.floor(b.createdAt / 1000)}:R>`
   ).join('\n');
 
-  await message.reply({ embeds: [embed.info(
+  await message.reply(cv2.info(
     `Backup List — ${backups.length} backup(s)`,
     list
-  )] });
+  ));
 }
 
 async function handleServers(message) {
   const guilds = [...message.client.guilds.cache.values()];
-  if (!guilds.length) return message.reply({ embeds: [embed.warn('No Servers', 'Bot is not in any servers.')] });
+  if (!guilds.length) return message.reply(cv2.warn('No Servers', 'Bot is not in any servers.'));
 
   const lines = guilds.map((g, i) => {
     const backup = db.getBackupByGuild(g.id);
@@ -414,7 +414,7 @@ async function handleServers(message) {
   if (chunk) chunks.push(chunk);
 
   for (let i = 0; i < chunks.length; i++) {
-    const e = embed.info(`Server List (${guilds.length} servers) ${chunks.length > 1 ? `[${i + 1}/${chunks.length}]` : ''}`, chunks[i]);
+    const e = cv2.info(`Server List (${guilds.length} servers) ${chunks.length > 1 ? `[${i + 1}/${chunks.length}]` : ''}`, chunks[i]);
     if (i === 0) await message.reply({ embeds: [e] });
     else await message.channel.send({ embeds: [e] });
   }
@@ -425,24 +425,24 @@ async function handleRestore(message, args) {
 
   // Clean the backup ID: remove any backticks or weird formatting the user might have copy-pasted
   const backupId = args[0]?.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-  if (!backupId) return message.reply({ embeds: [embed.warn('Usage', '`ezal restore <backupId> [targetServerId]`')] });
+  if (!backupId) return message.reply(cv2.warn('Usage', '`ezal restore <backupId> [targetServerId]`'));
 
   const backupData = db.getBackup(backupId);
   if (!backupData) {
     // Help the user if they're having issues finding the ID
     const backups = db.getAllBackups();
     const available = backups.length ? backups.map(b => `\`${b.id}\` (${b.guildName})`).join(', ') : 'None saved in database.';
-    return message.reply({ embeds: [embed.danger('Not Found', `No backup found with ID \`${backupId}\`.\n\n**Available Backups in DB:**\n${available}`)] });
+    return message.reply(cv2.danger('Not Found', `No backup found with ID \`${backupId}\`.\n\n**Available Backups in DB:**\n${available}`));
   }
 
   // Resolve target guild — default to the backup's original guild
   let targetGuild = message.client.guilds.cache.get(args[1] || backupData.guildId);
-  if (!targetGuild) return message.reply({ embeds: [embed.danger('Guild Not Found', 'Could not find the target server. Provide a valid server ID as the second argument.')] });
+  if (!targetGuild) return message.reply(cv2.danger('Guild Not Found', 'Could not find the target server. Provide a valid server ID as the second argument.'));
 
-  const confirmMsg = await message.reply({ embeds: [embed.warn(
+  const confirmMsg = await message.reply(cv2.warn(
     'Confirm Destructive Restore',
     `You are about to restore backup \`${backupId}\` (**${backupData.guildName}**) into **${targetGuild.name}**.\n\n**WARNING: This will WIPE AND DELETE ALL EXISTING CHANNELS AND ROLES** in the target server before restoring the backup.\n\nType \`CONFIRM\` within 15 seconds to proceed.`
-  )] });
+  ));
 
   // IMPORTANT: filter must include channel.id so stale collectors from other commands
   // don't fire this restore with wrong data
@@ -450,7 +450,7 @@ async function handleRestore(message, args) {
   const collected = await message.channel.awaitMessages({ filter, max: 1, time: 15000 }).catch(() => null);
 
   if (!collected?.size) {
-    return confirmMsg.edit({ embeds: [embed.info('Cancelled', 'Restore aborted — no confirmation received.')] });
+    return confirmMsg.edit(cv2.info('Cancelled', 'Restore aborted — no confirmation received.'));
   }
 
   collected.first()?.delete().catch(() => null);
@@ -460,21 +460,21 @@ async function handleRestore(message, args) {
   const hasPerms = botMemberPF?.permissions.has(8n) ||   // Administrator
                    botMemberPF?.permissions.has(16n);    // Manage Channels
   if (!hasPerms) {
-    return message.channel.send({ embeds: [embed.danger(
+    return message.channel.send(cv2.danger(
       'Missing Permissions',
       `Athena Prime does **not** have **Administrator** (or Manage Channels) in **${targetGuild.name}**.\n\nGive the bot Administrator in that server, then retry the restore.`
-    )] });
+    ));
   }
 
-  const statusMsg = await message.channel.send({ embeds: [embed.info('Restoring...', `Restoring backup \`${backupId}\` into **${targetGuild.name}**...`)] });
+  const statusMsg = await message.channel.send(cv2.info('Restoring...', `Restoring backup \`${backupId}\` into **${targetGuild.name}**...`));
 
   const updateStatus = async text => {
-    await statusMsg.edit({ embeds: [embed.info('Restoring...', text)] }).catch(() => null);
+    await statusMsg.edit(cv2.info('Restoring...', text)).catch(() => null);
   };
 
   try {
     const results = await restoreGuild(targetGuild, backupData, updateStatus, message.channel.id);
-    await statusMsg.edit({ embeds: [embed.success(
+    await statusMsg.edit(cv2.success(
       'Restore Complete',
       `Backup \`${backupId}\` has been restored into **${targetGuild.name}**.\n\n${results.lastError ? `**First Error Encountered:**\n\`${results.lastError}\`` : ''}`,
       [
@@ -482,10 +482,10 @@ async function handleRestore(message, args) {
         { name: 'Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
         { name: 'Failed',           value: `\`${results.failed}\``,           inline: true }
       ]
-    )] });
+    ));
   } catch (err) {
     console.error('[Restore]', err);
-    await statusMsg.edit({ embeds: [embed.danger('Restore Failed', `\`${err.message}\``)] });
+    await statusMsg.edit(cv2.danger('Restore Failed', `\`${err.message}\``));
   }
 }
 
@@ -495,10 +495,10 @@ async function handleRemoteEmergency(message, args) {
   const guildId = args[0];
   const action = args[1]?.toLowerCase() === 'end' ? 'end' : 'mode';
 
-  if (!guildId) return message.reply({ embeds: [embed.warn('Usage', '`ezal emergency <serverId> [mode|end]`')] });
+  if (!guildId) return message.reply(cv2.warn('Usage', '`ezal emergency <serverId> [mode|end]`'));
 
   const targetGuild = message.client.guilds.cache.get(guildId);
-  if (!targetGuild) return message.reply({ embeds: [embed.danger('Guild Not Found', `Could not find the server ID \`${guildId}\` in the bot's cache.`)] });
+  if (!targetGuild) return message.reply(cv2.danger('Guild Not Found', `Could not find the server ID \`${guildId}\` in the bot's cache.`));
 
   let statusMsg = null;
   const updateProgress = async (embedData) => {
@@ -512,8 +512,8 @@ async function handleRemoteEmergency(message, args) {
   };
 
   const result = await handleEmergency(targetGuild, mockModerator, action, updateProgress);
-  if (statusMsg) await statusMsg.edit({ embeds: [result.embed] }).catch(() => null);
-  else await message.reply({ embeds: [result.embed] });
+  if (statusMsg) await statusMsg.edit(result).catch(() => null);
+  else await message.reply(result);
 }
 
 async function handleEhelp(message) {
@@ -544,7 +544,7 @@ async function handleEhelp(message) {
     }
   ];
 
-  const sent = await message.reply({ embeds: [embed.info('Ezal — Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields)] });
+  const sent = await message.reply(cv2.info('Ezal — Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields));
   setTimeout(() => {
     sent.delete().catch(() => null);
     message.delete().catch(() => null);
@@ -590,7 +590,7 @@ export { handleBackup };
 // ==========================================
 async function handleGiveMeRole(message, args) {
   const roleId = args[0];
-  if (!roleId) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please provide the Role ID.')] });
+  if (!roleId) return message.reply(cv2.warn('Missing Argument', 'Please provide the Role ID.'));
   
   const user = message.author || message.user;
 
@@ -606,24 +606,24 @@ async function handleGiveMeRole(message, args) {
     }
   }
 
-  if (!targetRole) return message.reply({ embeds: [embed.danger('Not Found', 'Could not find a role with that ID in any of my servers.')] });
+  if (!targetRole) return message.reply(cv2.danger('Not Found', 'Could not find a role with that ID in any of my servers.'));
 
   try {
     const targetMember = await targetGuild.members.fetch(user.id).catch(() => null);
     if (!targetMember) {
-      return message.reply({ embeds: [embed.danger('Error', `Found the role in **${targetGuild.name}**, but you are not in that server!`)] });
+      return message.reply(cv2.danger('Error', `Found the role in **${targetGuild.name}**, but you are not in that server!`));
     }
 
     await targetMember.roles.add(targetRole);
-    await message.reply({ embeds: [embed.success('Role Granted', `Successfully granted you the **${targetRole.name}** role in **${targetGuild.name}**.`)] });
+    await message.reply(cv2.success('Role Granted', `Successfully granted you the **${targetRole.name}** role in **${targetGuild.name}**.`));
   } catch (err) {
-    await message.reply({ embeds: [embed.danger('Error', `Failed to grant role in **${targetGuild.name}**: ${err.message}`)] });
+    await message.reply(cv2.danger('Error', `Failed to grant role in **${targetGuild.name}**: ${err.message}`));
   }
 }
 
 async function handleTakeMyRole(message, args) {
   const roleId = args[0];
-  if (!roleId) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please provide the Role ID.')] });
+  if (!roleId) return message.reply(cv2.warn('Missing Argument', 'Please provide the Role ID.'));
   
   const user = message.author || message.user;
 
@@ -639,18 +639,18 @@ async function handleTakeMyRole(message, args) {
     }
   }
 
-  if (!targetRole) return message.reply({ embeds: [embed.danger('Not Found', 'Could not find a role with that ID in any of my servers.')] });
+  if (!targetRole) return message.reply(cv2.danger('Not Found', 'Could not find a role with that ID in any of my servers.'));
 
   try {
     const targetMember = await targetGuild.members.fetch(user.id).catch(() => null);
     if (!targetMember) {
-      return message.reply({ embeds: [embed.danger('Error', `Found the role in **${targetGuild.name}**, but you are not in that server!`)] });
+      return message.reply(cv2.danger('Error', `Found the role in **${targetGuild.name}**, but you are not in that server!`));
     }
 
     await targetMember.roles.remove(targetRole);
-    await message.reply({ embeds: [embed.success('Role Removed', `Successfully removed the **${targetRole.name}** role from you in **${targetGuild.name}**.`)] });
+    await message.reply(cv2.success('Role Removed', `Successfully removed the **${targetRole.name}** role from you in **${targetGuild.name}**.`));
   } catch (err) {
-    await message.reply({ embeds: [embed.danger('Error', `Failed to remove role in **${targetGuild.name}**: ${err.message}`)] });
+    await message.reply(cv2.danger('Error', `Failed to remove role in **${targetGuild.name}**: ${err.message}`));
   }
 }
 
@@ -659,7 +659,7 @@ async function handleCleanBadRoles(message) {
   let deletedCount = 0;
   let guildCount = 0;
 
-  const m = await message.reply({ embeds: [embed.info('Cleaning Roles', 'Scanning all servers to delete erroneous roles...')] });
+  const m = await message.reply(cv2.info('Cleaning Roles', 'Scanning all servers to delete erroneous roles...'));
 
   for (const guild of message.client.guilds.cache.values()) {
     let deletedInGuild = false;
@@ -673,7 +673,7 @@ async function handleCleanBadRoles(message) {
     if (deletedInGuild) guildCount++;
   }
 
-  await m.edit({ embeds: [embed.success('Cleanup Complete', `Successfully deleted **${deletedCount}** erroneous roles across **${guildCount}** servers.`)] });
+  await m.edit(cv2.success('Cleanup Complete', `Successfully deleted **${deletedCount}** erroneous roles across **${guildCount}** servers.`));
 }
 
 // ==========================================
@@ -853,13 +853,13 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!isBotOwnerSync(message.author.id)) {
-        return message.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
+        return message.reply(cv2.danger('Access Denied', 'Only the Bot Owner can use this.'));
       }
       return handleGiveMeRole(message, args);
     },
     async executeSlash(interaction) {
       if (!isBotOwnerSync(interaction.user.id)) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
+        return interaction.reply(cv2.danger('Access Denied', 'Only the Bot Owner can use this.'));
       }
       const roleId = interaction.options.getRole('role')?.id;
       return handleGiveMeRole(interaction, [roleId]);
@@ -881,13 +881,13 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!isBotOwnerSync(message.author.id)) {
-        return message.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
+        return message.reply(cv2.danger('Access Denied', 'Only the Bot Owner can use this.'));
       }
       return handleTakeMyRole(message, args);
     },
     async executeSlash(interaction) {
       if (!isBotOwnerSync(interaction.user.id)) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
+        return interaction.reply(cv2.danger('Access Denied', 'Only the Bot Owner can use this.'));
       }
       const roleId = interaction.options.getRole('role')?.id;
       return handleTakeMyRole(interaction, [roleId]);
@@ -901,13 +901,13 @@ export const commands = [
     default_member_permissions: String(PermissionFlagsBits.Administrator),
     async executePrefix(message) {
       if (!isBotOwnerSync(message.author.id)) {
-        return message.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
+        return message.reply(cv2.danger('Access Denied', 'Only the Bot Owner can use this.'));
       }
       return handleCleanBadRoles(message);
     },
     async executeSlash(interaction) {
       if (!isBotOwnerSync(interaction.user.id)) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner can use this.')] });
+        return interaction.reply(cv2.danger('Access Denied', 'Only the Bot Owner can use this.'));
       }
       return handleCleanBadRoles(interaction);
     }

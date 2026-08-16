@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import ms from 'ms';
 import chalk from 'chalk';
 
@@ -117,7 +117,7 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      return message.reply({ embeds: [embed.info('Slash Command Only', 'Please use the `/giveaway` slash command.')] });
+      return message.reply(cv2.info('Slash Command Only', 'Please use the `/giveaway` slash command.'));
     },
     async executeSlash(interaction) {
       const subcommand = interaction.options.getSubcommand();
@@ -130,7 +130,7 @@ export const commands = [
 
         const durationMs = ms(durationStr);
         if (!durationMs || durationMs < 10000) {
-          return interaction.reply({ embeds: [embed.warn('Invalid Duration', 'Please provide a valid duration (minimum 10 seconds). Examples: `10m`, `1h`, `2d`.')] });
+          return interaction.reply(cv2.warn('Invalid Duration', 'Please provide a valid duration (minimum 10 seconds). Examples: `10m`, `1h`, `2d`.'));
         }
 
         const endsAt = Date.now() + durationMs;
@@ -175,7 +175,7 @@ export const commands = [
         const gwData = db.getGiveaway(messageId);
         
         if (!gwData) {
-          return interaction.reply({ embeds: [embed.warn('Not Found', 'No active giveaway found with that Message ID in the database.')] });
+          return interaction.reply(cv2.warn('Not Found', 'No active giveaway found with that Message ID in the database.'));
         }
 
         await interaction.reply({ content: 'Ending giveaway...' });
@@ -189,12 +189,12 @@ export const commands = [
         const gwData = db.getGiveaway(messageId);
         
         if (!gwData || !gwData.ended) {
-          return interaction.reply({ embeds: [embed.warn('Not Found', 'No ended giveaway found with that Message ID in the database. Active giveaways must be ended first.')] });
+          return interaction.reply(cv2.warn('Not Found', 'No ended giveaway found with that Message ID in the database. Active giveaways must be ended first.'));
         }
 
         const participants = gwData.participants || [];
         if (participants.length === 0) {
-          return interaction.reply({ embeds: [embed.warn('Cannot Reroll', 'Nobody entered this giveaway!')] });
+          return interaction.reply(cv2.warn('Cannot Reroll', 'Nobody entered this giveaway!'));
         }
 
         const newWinnerId = participants[Math.floor(Math.random() * participants.length)];

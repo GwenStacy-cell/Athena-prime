@@ -1,5 +1,5 @@
 import { PermissionFlagsBits } from 'discord.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isAuthorized } from '../utils/helpers.js';
 
 export const commands = [
@@ -18,7 +18,7 @@ export const commands = [
     ],
     async executePrefix(message) {
       if (!(await isAuthorized(message.author, message.guild))) {
-        return message.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
+        return message.reply(cv2.error('Unauthorized', 'You do not have permission to use this command.'));
       }
       
       const args = message.content.trim().split(/ +/).slice(1);
@@ -30,11 +30,11 @@ export const commands = [
         if (targetChannel && targetChannel.isVoiceBased()) {
           vc = targetChannel;
         } else {
-          return message.reply({ embeds: [embed.error('Error', 'Invalid voice channel provided.')] });
+          return message.reply(cv2.error('Error', 'Invalid voice channel provided.'));
         }
       }
       
-      if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel or provide a valid voice channel ID.')] });
+      if (!vc) return message.reply(cv2.error('Error', 'You must be in a voice channel or provide a valid voice channel ID.'));
       
       try {
         await vc.permissionOverwrites.edit(message.guild.roles.everyone, {
@@ -42,20 +42,20 @@ export const commands = [
           SendMessages: false,
           ReadMessageHistory: false
         });
-        await message.reply({ embeds: [embed.success('VC Locked', `**${vc.name}** has been locked.`)] });
+        await message.reply(cv2.success('VC Locked', `**${vc.name}** has been locked.`));
       } catch (err) {
-        await message.reply({ embeds: [embed.error('Error', 'Failed to lock the voice channel. Check my permissions.')] });
+        await message.reply(cv2.error('Error', 'Failed to lock the voice channel. Check my permissions.'));
       }
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')] }).catch(() => null);
+        return interaction.reply(cv2.error('Unauthorized', 'You do not have permission.')).catch(() => null);
       }
       
       const targetChannel = interaction.options.getChannel('channel');
       const vc = targetChannel && targetChannel.isVoiceBased() ? targetChannel : interaction.member?.voice?.channel;
       
-      if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel or select one.')] });
+      if (!vc) return interaction.reply(cv2.error('Error', 'You must be in a voice channel or select one.'));
       
       try {
         await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, {
@@ -63,9 +63,9 @@ export const commands = [
           SendMessages: false,
           ReadMessageHistory: false
         });
-        await interaction.reply({ embeds: [embed.success('VC Locked', `**${vc.name}** has been locked.`)] });
+        await interaction.reply(cv2.success('VC Locked', `**${vc.name}** has been locked.`));
       } catch (err) {
-        await interaction.reply({ embeds: [embed.error('Error', 'Failed to lock.')] });
+        await interaction.reply(cv2.error('Error', 'Failed to lock.'));
       }
     }
   },
@@ -94,11 +94,11 @@ export const commands = [
         if (targetChannel && targetChannel.isVoiceBased()) {
           vc = targetChannel;
         } else {
-          return message.reply({ embeds: [embed.error('Error', 'Invalid voice channel provided.')] });
+          return message.reply(cv2.error('Error', 'Invalid voice channel provided.'));
         }
       }
       
-      if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel or provide a valid voice channel ID.')] });
+      if (!vc) return message.reply(cv2.error('Error', 'You must be in a voice channel or provide a valid voice channel ID.'));
       
       try {
         await vc.permissionOverwrites.edit(message.guild.roles.everyone, {
@@ -106,20 +106,20 @@ export const commands = [
           SendMessages: null,
           ReadMessageHistory: null
         });
-        await message.reply({ embeds: [embed.success('VC Unlocked', `**${vc.name}** has been unlocked.`)] });
+        await message.reply(cv2.success('VC Unlocked', `**${vc.name}** has been unlocked.`));
       } catch (err) {
-        await message.reply({ embeds: [embed.error('Error', 'Failed to unlock.')] });
+        await message.reply(cv2.error('Error', 'Failed to unlock.'));
       }
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')] }).catch(() => null);
+        return interaction.reply(cv2.error('Unauthorized', 'You do not have permission.')).catch(() => null);
       }
       
       const targetChannel = interaction.options.getChannel('channel');
       const vc = targetChannel && targetChannel.isVoiceBased() ? targetChannel : interaction.member?.voice?.channel;
       
-      if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel or select one.')] });
+      if (!vc) return interaction.reply(cv2.error('Error', 'You must be in a voice channel or select one.'));
       
       try {
         await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, {
@@ -127,9 +127,9 @@ export const commands = [
           SendMessages: null,
           ReadMessageHistory: null
         });
-        await interaction.reply({ embeds: [embed.success('VC Unlocked', `**${vc.name}** has been unlocked.`)] });
+        await interaction.reply(cv2.success('VC Unlocked', `**${vc.name}** has been unlocked.`));
       } catch (err) {
-        await interaction.reply({ embeds: [embed.error('Error', 'Failed to unlock.')] });
+        await interaction.reply(cv2.error('Error', 'Failed to unlock.'));
       }
     }
   },
@@ -141,7 +141,7 @@ export const commands = [
     async executePrefix(message) {
       if (!(await isAuthorized(message.author, message.guild))) return;
       const vc = message.member.voice.channel;
-      if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')] });
+      if (!vc) return message.reply(cv2.error('Error', 'You must be in a voice channel.'));
       
       let count = 0;
       for (const [id, member] of vc.members) {
@@ -152,17 +152,17 @@ export const commands = [
           } catch(e) {}
         }
       }
-      await message.reply({ embeds: [embed.success('Success', `Deafened **${count}** members in **${vc.name}**.`)] });
+      await message.reply(cv2.success('Success', `Deafened **${count}** members in **${vc.name}**.`));
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')] }).catch(() => null);
+        return interaction.reply(cv2.error('Unauthorized', 'You do not have permission.')).catch(() => null);
       }
       const vc = interaction.member?.voice?.channel;
-      if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')] });
+      if (!vc) return interaction.reply(cv2.error('Error', 'You must be in a voice channel.'));
       
       await interaction.deferReply({ ephemeral: false });
-      await interaction.editReply({ embeds: [embed.info('Deafen All', 'Initiating mass deafen...')] }).catch(() => null);
+      await interaction.editReply(cv2.info('Deafen All', 'Initiating mass deafen...')).catch(() => null);
 
       let count = 0;
       const promises = [];
@@ -173,7 +173,7 @@ export const commands = [
               .then(() => {
                 count++;
                 if (count % 15 === 0) {
-                  interaction.editReply({ embeds: [embed.info('Deafen All', `Deafening in progress...\n\n Deafened: **${count}**`)] }).catch(() => null);
+                  interaction.editReply(cv2.info('Deafen All', `Deafening in progress...\n\n Deafened: **${count}**`)).catch(() => null);
                 }
               })
               .catch(() => null)
@@ -182,7 +182,7 @@ export const commands = [
       });
       
       await Promise.all(promises);
-      await interaction.editReply({ embeds: [embed.success('Success', `Deafened **${count}** members in **${vc.name}**.`)] }).catch(() => null);
+      await interaction.editReply(cv2.success('Success', `Deafened **${count}** members in **${vc.name}**.`)).catch(() => null);
     }
   },
   {
@@ -193,7 +193,7 @@ export const commands = [
     async executePrefix(message) {
       if (!(await isAuthorized(message.author, message.guild))) return;
       const vc = message.member.voice.channel;
-      if (!vc) return message.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')] });
+      if (!vc) return message.reply(cv2.error('Error', 'You must be in a voice channel.'));
       
       let count = 0;
       for (const [id, member] of vc.members) {
@@ -204,17 +204,17 @@ export const commands = [
           } catch(e) {}
         }
       }
-      await message.reply({ embeds: [embed.success('Success', `Undeafened **${count}** members in **${vc.name}**.`)] });
+      await message.reply(cv2.success('Success', `Undeafened **${count}** members in **${vc.name}**.`));
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission.')] }).catch(() => null);
+        return interaction.reply(cv2.error('Unauthorized', 'You do not have permission.')).catch(() => null);
       }
       const vc = interaction.member?.voice?.channel;
-      if (!vc) return interaction.reply({ embeds: [embed.error('Error', 'You must be in a voice channel.')] });
+      if (!vc) return interaction.reply(cv2.error('Error', 'You must be in a voice channel.'));
       
       await interaction.deferReply({ ephemeral: false });
-      await interaction.editReply({ embeds: [embed.info('Undeafen All', 'Initiating mass undeafen...')] }).catch(() => null);
+      await interaction.editReply(cv2.info('Undeafen All', 'Initiating mass undeafen...')).catch(() => null);
 
       let count = 0;
       const promises = [];
@@ -225,7 +225,7 @@ export const commands = [
               .then(() => {
                 count++;
                 if (count % 15 === 0) {
-                  interaction.editReply({ embeds: [embed.info('Undeafen All', `Undeafening in progress...\n\n Undeafened: **${count}**`)] }).catch(() => null);
+                  interaction.editReply(cv2.info('Undeafen All', `Undeafening in progress...\n\n Undeafened: **${count}**`)).catch(() => null);
                 }
               })
               .catch(() => null)
@@ -234,7 +234,7 @@ export const commands = [
       });
       
       await Promise.all(promises);
-      await interaction.editReply({ embeds: [embed.success('Success', `Undeafened **${count}** members in **${vc.name}**.`)] }).catch(() => null);
+      await interaction.editReply(cv2.success('Success', `Undeafened **${count}** members in **${vc.name}**.`)).catch(() => null);
     }
   }
 ];

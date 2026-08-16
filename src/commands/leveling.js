@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, AttachmentBuilder } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { calculateXpForLevel } from '../utils/xpEngine.js';
 import { generateRankCard, generateLeaderboard } from '../utils/canvasCards.js';
 
@@ -30,14 +30,13 @@ export async function buildXpDashboard(guildId) {
       .join('\n');
   }
 
-  const panelEmbed = embed.info(
+  const payload = cv2.info(
     'XP Manager',
-    `Welcome to the Interactive XP Control Panel.\n\n**Status**: ${statusIcon}\n**Announce Channel**: ${system.announceChannelId ? `<#${system.announceChannelId}>` : 'Not Set'}\n**Command Channel**: ${system.cmdChannelId ? `<#${system.cmdChannelId}>` : 'Not Set'}`
-  );
-  
-  panelEmbed.addFields(
-    { name: 'Role Rewards (Auto-Milestones)', value: rewardsText, inline: true },
-    { name: 'XP Multipliers (1.5x Auto-Boost)', value: multipliersText, inline: true }
+    `Welcome to the Interactive XP Control Panel.\n\n**Status**: ${statusIcon}\n**Announce Channel**: ${system.announceChannelId ? `<#${system.announceChannelId}>` : 'Not Set'}\n**Command Channel**: ${system.cmdChannelId ? `<#${system.cmdChannelId}>` : 'Not Set'}`,
+    [
+      { name: 'Role Rewards (Auto-Milestones)', value: rewardsText, inline: true },
+      { name: 'XP Multipliers (1.5x Auto-Boost)', value: multipliersText, inline: true }
+    ]
   );
 
   const row1 = new ActionRowBuilder().addComponents(
@@ -64,7 +63,8 @@ export async function buildXpDashboard(guildId) {
       .setMaxValues(10)
   );
 
-  return { embeds: [panelEmbed], components: [row1, row2, row3] };
+  payload.components.push(row1, row2, row3);
+  return payload;
 }
 
 export const commands = [

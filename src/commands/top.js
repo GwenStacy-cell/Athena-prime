@@ -1,7 +1,7 @@
 import { AttachmentBuilder, ApplicationCommandOptionType } from 'discord.js';
 import statsDB from '../statsDB.js';
 import { generateTopImage } from '../utils/statCanvas.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export const commands = [
   {
@@ -13,14 +13,14 @@ export const commands = [
     options: [], // removed type option
 
     async executePrefix(message, args) {
-      const waitMsg = await message.reply({ embeds: [embed.info('Loading...', 'Building top members leaderboard...')] });
+      const waitMsg = await message.reply(cv2.info('Loading...', 'Building top members leaderboard...'));
 
       try {
         const rawMsgTop = statsDB.getTopMembers(message.guild.id, 5) || [];
         const rawVoiceTop = statsDB.getTopVoiceMembers(message.guild.id, 5) || [];
 
         if (rawMsgTop.length === 0 && rawVoiceTop.length === 0) {
-          return waitMsg.edit({ embeds: [embed.info('No Data', 'No activity data found for this server yet.')] });
+          return waitMsg.edit(cv2.info('No Data', 'No activity data found for this server yet.'));
         }
 
         const resolveMembers = async (rawTop) => {
@@ -48,7 +48,7 @@ export const commands = [
         await message.channel.send({ files: [attachment] });
       } catch (e) {
         console.error('Top leaderboard error:', e);
-        await waitMsg.edit({ embeds: [embed.danger('Error', 'Failed to generate leaderboard image.')] });
+        await waitMsg.edit(cv2.danger('Error', 'Failed to generate leaderboard image.'));
       }
     },
 
@@ -60,7 +60,7 @@ export const commands = [
         const rawVoiceTop = statsDB.getTopVoiceMembers(interaction.guild.id, 5) || [];
 
         if (rawMsgTop.length === 0 && rawVoiceTop.length === 0) {
-          return interaction.editReply({ embeds: [embed.info('No Data', 'No activity data found for this server yet.')] });
+          return interaction.editReply(cv2.info('No Data', 'No activity data found for this server yet.'));
         }
 
         const resolveMembers = async (rawTop) => {
@@ -87,7 +87,7 @@ export const commands = [
         await interaction.editReply({ files: [attachment] });
       } catch (e) {
         console.error('Top leaderboard slash error:', e);
-        await interaction.editReply({ embeds: [embed.danger('Error', 'Failed to generate leaderboard image.')] });
+        await interaction.editReply(cv2.danger('Error', 'Failed to generate leaderboard image.'));
       }
     }
   }

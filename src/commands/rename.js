@@ -1,5 +1,5 @@
 import { PermissionFlagsBits, EmbedBuilder } from 'discord.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { canModerate, isExtraOwner, isBotOwnerSync } from '../utils/helpers.js';
 
 export const commands = [
@@ -15,22 +15,22 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!args.length) {
-        return message.reply({ embeds: [embed.warn('Usage', `**Usage:** \`ur @user new_name\``)] });
+        return message.reply(cv2.warn('Usage', `**Usage:** \`ur @user new_name\``));
       }
 
       const target = message.mentions.members.first() || await message.guild.members.fetch(args[0]).catch(() => null);
-      if (!target) return message.reply({ embeds: [embed.warn('Error', 'Please mention a valid member to rename.')] });
+      if (!target) return message.reply(cv2.warn('Error', 'Please mention a valid member to rename.'));
 
       const newName = args.slice(1).join(' ');
-      if (!newName) return message.reply({ embeds: [embed.warn('Error', 'Please provide a new nickname.')] });
+      if (!newName) return message.reply(cv2.warn('Error', 'Please provide a new nickname.'));
 
       // Permission hierarchy check
       if (!isExtraOwner(message.author.id) && !isBotOwnerSync(message.author.id)) {
         if (!message.member.permissions.has(PermissionFlagsBits.ManageNicknames)) {
-          return message.reply({ embeds: [embed.error('Missing Permissions', 'You need the `Manage Nicknames` permission.')] });
+          return message.reply(cv2.error('Missing Permissions', 'You need the `Manage Nicknames` permission.'));
         }
         if (!canModerate(message.member, target)) {
-          return message.reply({ embeds: [embed.error('Hierarchy Error', 'You cannot rename someone with a higher or equal role.')] });
+          return message.reply(cv2.error('Hierarchy Error', 'You cannot rename someone with a higher or equal role.'));
         }
       }
 
@@ -46,7 +46,7 @@ export const commands = [
 
         await message.reply({ embeds: [successEmbed] });
       } catch (err) {
-        message.reply({ embeds: [embed.error('Error', `Failed to rename ${target}: \`${err.message}\``)] });
+        message.reply(cv2.error('Error', `Failed to rename ${target}: \`${err.message}\``));
       }
     },
     async executeSlash(interaction) {
@@ -55,7 +55,7 @@ export const commands = [
 
       if (!isExtraOwner(interaction.user.id) && !isBotOwnerSync(interaction.user.id)) {
         if (!canModerate(interaction.member, target)) {
-          return interaction.reply({ embeds: [embed.error('Hierarchy Error', 'You cannot rename someone with a higher or equal role.')] });
+          return interaction.reply(cv2.error('Hierarchy Error', 'You cannot rename someone with a higher or equal role.'));
         }
       }
 
@@ -69,7 +69,7 @@ export const commands = [
 
         await interaction.reply({ embeds: [successEmbed] });
       } catch (err) {
-        interaction.reply({ embeds: [embed.error('Error', `Failed to rename ${target}: \`${err.message}\``)] });
+        interaction.reply(cv2.error('Error', `Failed to rename ${target}: \`${err.message}\``));
       }
     }
   }

@@ -1,5 +1,5 @@
 import { PermissionFlagsBits } from 'discord.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import db from '../database.js';
 import { isAuthorized } from '../utils/helpers.js';
 
@@ -25,19 +25,19 @@ export const commands = [
       if (!(await isAuthorized(message.author, message.guild))) return;
       const status = args[0]?.toLowerCase();
       if (status !== 'on' && status !== 'off') {
-        return message.reply({ embeds: [embed.warn('Command Error', `Usage: \`!theatermode <on|off>\``)] });
+        return message.reply(cv2.warn('Command Error', `Usage: \`!theatermode <on|off>\``));
       }
       const result = await handleTheaterMode(message.guild, message.member, status, message.client);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
+        return interaction.reply(cv2.error('Unauthorized', 'You do not have permission to use this command.'));
       }
       await interaction.deferReply();
       const status = interaction.options.getString('status');
       const result = await handleTheaterMode(interaction.guild, interaction.member, status, interaction.client);
-      await interaction.editReply({ embeds: [result.embed] });
+      await interaction.editReply(result);
     }
   }
 ];
@@ -47,7 +47,7 @@ async function handleTheaterMode(guild, moderator, status, client) {
   const fullModerator = await guild.members.fetch(userId).catch(() => moderator);
   const vc = fullModerator?.voice?.channel;
   if (!vc && status === 'on') {
-    return { embed: embed.error('Error', 'You must be in a Voice Channel to activate Theater Mode.') };
+    return cv2.error('Error', 'You must be in a Voice Channel to activate Theater Mode.');
   }
 
   const enabled = status === 'on';
@@ -68,7 +68,7 @@ async function handleTheaterMode(guild, moderator, status, client) {
       }
     }
 
-    return { embed: embed.success('Theater Mode Activated', `**${vc.name}** is now in Theater Mode.\n\nAll current and new members will be server-muted and server-deafened. Anyone caught attempting to evade this restriction will be stripped of privileges and quarantined. Muted **${affectedCount}** existing members.`) };
+    return cv2.success('Theater Mode Activated', `**${vc.name}** is now in Theater Mode.\n\nAll current and new members will be server-muted and server-deafened. Anyone caught attempting to evade this restriction will be stripped of privileges and quarantined. Muted **${affectedCount}** existing members.`);
   } else {
     const currentVcId = cfg.theaterModeVcId;
     db.updateGuildConfig(guild.id, { theaterModeVcId: null });
@@ -95,10 +95,10 @@ async function handleTheaterMode(guild, moderator, status, client) {
              console.error(`Failed to unmute/undeafen ${member.user.tag}:`, e);
            }
         }
-        return { embed: embed.success('Theater Mode Deactivated', `Theater Mode disabled. Restored voice privileges for **${count}** members in **${channel.name}**.`) };
+        return cv2.success('Theater Mode Deactivated', `Theater Mode disabled. Restored voice privileges for **${count}** members in **${channel.name}**.`);
       }
     }
     
-    return { embed: embed.success('Theater Mode Deactivated', 'Theater Mode disabled.') };
+    return cv2.success('Theater Mode Deactivated', 'Theater Mode disabled.');
   }
 }

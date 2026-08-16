@@ -1,5 +1,5 @@
 import { EmbedBuilder, PermissionFlagsBits } from 'discord.js';
-import embed from '../embed.js';
+
 import db from '../database.js';
 
 export const commands = [

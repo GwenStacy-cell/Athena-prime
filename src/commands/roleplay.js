@@ -1,4 +1,4 @@
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 const roleplayActions = [
   { name: 'hug', verb: 'hugs', selfVerb: 'needs a hug' },
@@ -55,14 +55,14 @@ export const commands = roleplayActions.map(action => ({
 
     const gifUrl = await fetchWaifuGif(action.name);
     if (!gifUrl) {
-      return message.reply({ embeds: [embed.error('Error', 'Failed to fetch image from API.', [], message.guild.id)] });
+      return message.reply(cv2.error('Error', 'Failed to fetch image from API.', [], message.guild.id));
     }
 
     const description = target 
       ? `**${message.author.username}** ${action.verb} **${target.username}**!` 
       : `**${message.author.username}** ${action.selfVerb}!`;
 
-    const replyEmbed = embed.info(null, description, [], message.guild.id).setImage(gifUrl);
+    const replyEmbed = cv2.info(null, description, [], message.guild.id).setImage(gifUrl);
     await message.reply({ embeds: [replyEmbed] });
   },
   async executeSlash(interaction) {
@@ -70,14 +70,14 @@ export const commands = roleplayActions.map(action => ({
 
     const gifUrl = await fetchWaifuGif(action.name);
     if (!gifUrl) {
-      return interaction.reply({ embeds: [embed.error('Error', 'Failed to fetch image from API.', [], interaction.guild.id)] });
+      return interaction.reply(cv2.error('Error', 'Failed to fetch image from API.', [], interaction.guild.id));
     }
 
     const description = target 
       ? `**${interaction.user.username}** ${action.verb} **${target.username}**!` 
       : `**${interaction.user.username}** ${action.selfVerb}!`;
 
-    const replyEmbed = embed.info(null, description, [], interaction.guild.id).setImage(gifUrl);
+    const replyEmbed = cv2.info(null, description, [], interaction.guild.id).setImage(gifUrl);
     await interaction.reply({ embeds: [replyEmbed] });
   }
 }));

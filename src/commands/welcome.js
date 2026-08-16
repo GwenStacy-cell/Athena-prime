@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ChannelSelectMenuBuilder, ChannelType } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { convertMp4ToGif, uploadGifToDiscord } from '../utils/mediaConverter.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 
@@ -115,7 +115,7 @@ function getManagerPanel(guildId, type) {
   const label = isWelcome ? 'Welcome' : 'Leave';
   const prefix = isWelcome ? 'welcmgr_' : 'leavmgr_';
 
-  const e = embed.info(
+  const replyData = cv2.info(
     `<:emoji_16:1533860111704002665> ${label} Manager`,
     `Manage the settings for your server's ${label.toLowerCase()} messages.\n\n` +
     `**Current Configuration:**\n` +
@@ -160,7 +160,8 @@ function getManagerPanel(guildId, type) {
     new ButtonBuilder().setCustomId(`${prefix}reset`).setLabel('Reset All').setStyle(ButtonStyle.Danger)
   );
 
-  return { embeds: [e], components: [channelSelectRow, row1, row2, row3] };
+  replyData.components.push(channelSelectRow, row1, row2, row3);
+  return replyData;
 }
 
 // ============================================================
@@ -235,7 +236,7 @@ export async function handleWelcomeManagerButton(interaction) {
   }
 
   if (action === 'test') {
-    if (!cfg.channelId) return interaction.reply({ embeds: [embed.warn('Channel Not Set', 'Please select a channel first.')], ephemeral: true });
+    if (!cfg.channelId) return interaction.reply(cv2.e.warn('Channel Not Set', 'Please select a channel first.'));
     
     await interaction.deferReply();
     

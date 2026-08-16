@@ -1,5 +1,5 @@
 import { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 
 export const commands = [{
@@ -11,13 +11,13 @@ export const commands = [{
     const isServerOwner = message.author.id === message.guild.ownerId;
 
     if (!isBotOwner && !isServerOwner) {
-      await message.reply({ embeds: [embed.danger('Access Denied', 'Only the Bot Owner or the Server Owner can use the Emoji Stealer.')] });
+      await message.reply(cv2.danger('Access Denied', 'Only the Bot Owner or the Server Owner can use the Emoji Stealer.'));
       return;
     }
 
     const emojis = message.guild.emojis.cache;
     if (emojis.size === 0) {
-      await message.reply({ embeds: [embed.warn('No Emojis', 'There are no emojis in this server to steal.')] });
+      await message.reply(cv2.warn('No Emojis', 'There are no emojis in this server to steal.'));
       return;
     }
 
@@ -34,7 +34,7 @@ export const commands = [{
     }
 
     if (targetServers.length === 0) {
-      await message.reply({ embeds: [embed.warn('No Target Servers', 'I am not in any other servers where you are the owner.')] });
+      await message.reply(cv2.warn('No Target Servers', 'I am not in any other servers where you are the owner.'));
       return;
     }
 
@@ -53,13 +53,12 @@ export const commands = [{
 
     const row = new ActionRowBuilder().addComponents(selectMenu);
 
-    const uiEmbed = embed.build({
-      title: 'Emoji Stealer (All Emojis)',
-      description: `Found **${emojis.size}** emojis in this server.\n\nSelect a target server below to copy all of them:`,
-      color: '#2b2d31', // Aesthetic dark grey
-      thumbnail: message.guild.iconURL({ dynamic: true })
-    });
+    const uiReply = cv2.info(
+      'Emoji Stealer (All Emojis)',
+      `Found **${emojis.size}** emojis in this server.\n\nSelect a target server below to copy all of them:`
+    );
+    uiReply.components.push(row);
 
-    await message.reply({ embeds: [uiEmbed], components: [row] });
+    await message.reply(uiReply);
   }
 }];

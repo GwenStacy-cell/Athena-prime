@@ -1,6 +1,6 @@
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export const commands = [
   {
@@ -10,7 +10,7 @@ export const commands = [
     aliases: ['voicelog', 'vclogs', 'setuplogs'],
   async executePrefix(message, args) {
     if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-      return message.channel.send({ embeds: [embed.error('Permission Denied', 'You need Administrator permissions to setup voice records.', [], message.guild.id)] });
+      return message.channel.send(cv2.error('Permission Denied', 'You need Administrator permissions to setup voice records.'));
     }
 
     try {
@@ -32,11 +32,11 @@ export const commands = [
 
       db.updateGuildConfig(message.guild.id, { voiceLogChannel: channel.id });
       
-      message.channel.send({ embeds: [embed.success('Voice Records Setup', `Successfully setup voice logging in <#${channel.id}>.\nAll VC joins and leaves will be recorded there.`, [], message.guild.id)] });
+      message.channel.send(cv2.success('Voice Records Setup', `Successfully setup voice logging in <#${channel.id}>.\nAll VC joins and leaves will be recorded there.`));
       
     } catch (error) {
       console.error(error);
-      message.channel.send({ embeds: [embed.error('Setup Failed', 'Failed to create the voice records channel. Check my permissions.', [], message.guild.id)] });
+      message.channel.send(cv2.error('Setup Failed', 'Failed to create the voice records channel. Check my permissions.'));
     }
   }
 }

@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import Parser from 'rss-parser';
 
 const parser = new Parser();
@@ -78,7 +78,7 @@ export const commands = [
     ],
 
     async executePrefix(message, args) {
-      return message.reply({ embeds: [embed.warn('Slash Command Only', 'Please use the \`/news\` slash command to configure the news feed.')] });
+      return message.reply(cv2.warn('Slash Command Only', 'Please use the \`/news\` slash command to configure the news feed.'));
     },
 
     async executeSlash(interaction) {
@@ -96,13 +96,13 @@ export const commands = [
               mentionable: false,
               reason: 'Role for automated News Feed mentions' });
           } catch (err) {
-            return interaction.reply({ embeds: [embed.danger('Permission Error', 'I lack the "Manage Roles" permission to dynamically create a news ping role. Please create one manually and provide it, or give me Manage Roles.')] });
+            return interaction.reply(cv2.danger('Permission Error', 'I lack the "Manage Roles" permission to dynamically create a news ping role. Please create one manually and provide it, or give me Manage Roles.'));
           }
         }
 
         db.setNewsSetup(interaction.guild.id, channel.id, role.id);
 
-        return interaction.reply({ embeds: [embed.success('News Feed Setup', `Successfully configured news to be sent to ${channel}.\n\nPing Role: ${role}\n*(You can rename or change the color of this role at any time in server settings)*.\n\nNow use \`/news add\` to subscribe to a feed!`)] });
+        return interaction.reply(cv2.success('News Feed Setup', `Successfully configured news to be sent to ${channel}.\n\nPing Role: ${role}\n*(You can rename or change the color of this role at any time in server settings)*.\n\nNow use \`/news add\` to subscribe to a feed!`));
       }
 
       if (subCommand === 'add') {
@@ -110,7 +110,7 @@ export const commands = [
         const customUrl = interaction.options.getString('custom_url');
 
         if (!preset && !customUrl) {
-          return interaction.reply({ embeds: [embed.warn('Missing Input', 'You must select a preset source OR provide a custom RSS URL.')] });
+          return interaction.reply(cv2.warn('Missing Input', 'You must select a preset source OR provide a custom RSS URL.'));
         }
 
         let name = 'Custom Feed';
@@ -131,12 +131,12 @@ export const commands = [
 
           const added = db.addNewsFeed(interaction.guild.id, name, url);
           if (added) {
-            return interaction.editReply({ embeds: [embed.success('Feed Added', `Successfully subscribed to **${name}**.\n\nURL: \`${url}\``)] });
+            return interaction.editReply(cv2.success('Feed Added', `Successfully subscribed to **${name}**.\n\nURL: \`${url}\``));
           } else {
-            return interaction.editReply({ embeds: [embed.warn('Duplicate Feed', 'This server is already subscribed to this exact feed URL.')] });
+            return interaction.editReply(cv2.warn('Duplicate Feed', 'This server is already subscribed to this exact feed URL.'));
           }
         } catch (err) {
-          return interaction.editReply({ embeds: [embed.danger('Invalid RSS Feed', `Failed to parse the provided URL. Make sure it is a valid XML RSS Feed.\n\nError: \`${err.message}\``)] });
+          return interaction.editReply(cv2.danger('Invalid RSS Feed', `Failed to parse the provided URL. Make sure it is a valid XML RSS Feed.\n\nError: \`${err.message}\``));
         }
       }
 
@@ -145,9 +145,9 @@ export const commands = [
         const removed = db.removeNewsFeed(interaction.guild.id, url);
 
         if (removed) {
-          return interaction.reply({ embeds: [embed.success('Feed Removed', `Successfully unsubscribed from \`${url}\`.`)] });
+          return interaction.reply(cv2.success('Feed Removed', `Successfully unsubscribed from \`${url}\`.`));
         } else {
-          return interaction.reply({ embeds: [embed.warn('Not Found', 'Could not find a feed matching that exact URL. Use \`/news list\` to check your active URLs.')] });
+          return interaction.reply(cv2.warn('Not Found', 'Could not find a feed matching that exact URL. Use \`/news list\` to check your active URLs.'));
         }
       }
 
@@ -155,7 +155,7 @@ export const commands = [
         const cfg = db.getNewsConfig(interaction.guild.id);
         
         if (!cfg.feeds || cfg.feeds.length === 0) {
-          return interaction.reply({ embeds: [embed.info('Active Feeds', 'This server is not subscribed to any news feeds yet.')] });
+          return interaction.reply(cv2.info('Active Feeds', 'This server is not subscribed to any news feeds yet.'));
         }
 
         const lines = cfg.feeds.map((f, i) => `**${i + 1}. ${f.name}**\nURL: \`${f.url}\``).join('\n\n');
@@ -164,7 +164,7 @@ export const commands = [
         if (cfg.channelId) header += `**Channel:** <#${cfg.channelId}>\n`;
         if (cfg.roleId) header += `**Ping Role:** <@&${cfg.roleId}>\n`;
         
-        return interaction.reply({ embeds: [embed.info('Active Feeds', `${header}\n${lines}`)] });
+        return interaction.reply(cv2.info('Active Feeds', `${header}\n${lines}`));
       }
     }
   }

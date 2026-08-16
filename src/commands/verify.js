@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export const commands = [
   {
@@ -39,7 +39,7 @@ export const commands = [
         
         // Ensure the bot can manage the role
         if (role.position >= interaction.guild.members.me.roles.highest.position) {
-          return interaction.editReply({ embeds: [embed.error('Permission Error', `I cannot assign ${role} because it is higher than or equal to my highest role!`)] });
+          return interaction.editReply(cv2.error('Permission Error', `I cannot assign ${role} because it is higher than or equal to my highest role!`));
         }
 
         const config = db.getGuildConfig(guildId);
@@ -68,7 +68,7 @@ export const commands = [
           channelId: interaction.channel.id
         });
 
-        await interaction.editReply({ embeds: [embed.success('Verification Deployed', `The verification panel has been deployed successfully. Users will receive ${role} upon clicking the button.`)] });
+        await interaction.editReply(cv2.success('Verification Deployed', `The verification panel has been deployed successfully. Users will receive ${role} upon clicking the button.`));
       } 
       
       else if (subcommand === 'disable') {
@@ -89,7 +89,7 @@ export const commands = [
 
         db.deleteVerification(guildId);
         
-        await interaction.editReply({ embeds: [embed.success('Verification Disabled', 'The verification system has been disabled and the panel was removed.')] });
+        await interaction.editReply(cv2.success('Verification Disabled', 'The verification system has been disabled and the panel was removed.'));
       }
     }
   }

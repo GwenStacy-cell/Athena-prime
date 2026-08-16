@@ -1,6 +1,6 @@
 import { PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 
 // In-memory timers so modmode auto-expires without polling
@@ -22,10 +22,10 @@ export function scheduleModModeExpiry(client, guildId, durationMs) {
       if (config.logChannelId) {
         const logCh = guild.channels.cache.get(config.logChannelId);
         if (logCh) {
-          await logCh.send({ embeds: [embed.warn(
+          await logCh.send(cv2.warn(
             ' Modification Mode Expired',
             '⏰ Modification mode has automatically expired after 30 minutes.\n\n**Auto-restore is now active again** — unauthorized channel/role deletions will be restored.'
-          )] }).catch(() => null);
+          )).catch(() => null);
         }
       }
     } catch { /* ignore */ }
@@ -68,22 +68,22 @@ export const commands = [
 
       const action = args[0]?.toLowerCase();
       if (!action || !['start', 'stop'].includes(action)) {
-        return message.reply({ embeds: [embed.warn('Usage', '`!modmode start` or `!modmode stop`')] });
+        return message.reply(cv2.warn('Usage', '`!modmode start` or `!modmode stop`'));
       }
       const result = await handleModMode(message.guild, message.member, action, message.client);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const isAuthorized = isBotOwnerSync(interaction.user.id) ||
         interaction.user.id === interaction.guild?.ownerId ||
         db.isExtraOwner(interaction.guild?.id, interaction.user.id);
       if (!isAuthorized) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '️ Only Bot Owner, Server Owner, or Extra Owners can use Modification Mode.')] });
+        return interaction.reply(cv2.danger('Access Denied', '️ Only Bot Owner, Server Owner, or Extra Owners can use Modification Mode.'));
       }
 
       const action = interaction.options.getString('action');
       const result = await handleModMode(interaction.guild, interaction.member, action, interaction.client);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   }
 ];
@@ -93,7 +93,7 @@ async function handleModMode(guild, moderator, action, client) {
     if (db.isModModeActive(guild.id)) {
       const mm = db.getModMode(guild.id);
       const remaining = Math.ceil((mm.expiresAt - Date.now()) / 60000);
-      return { embed: embed.warn('Already Active', ` Modification mode is already active.\n**Expires in:** \`${remaining} minute(s)\`\n\nUse \`/modmode stop\` to end it early.`) };
+      return cv2.warn('Already Active', ` Modification mode is already active.\n**Expires in:** \`${remaining} minute(s)\`\n\nUse \`/modmode stop\` to end it early.`);
     }
 
     const DURATION_MS = 30 * 60 * 1000; // fixed 30 minutes max
@@ -101,34 +101,30 @@ async function handleModMode(guild, moderator, action, client) {
     db.setModMode(guild.id, expiresAt, moderator.id);
     scheduleModModeExpiry(client, guild.id, DURATION_MS);
 
-    return {
-      embed: embed.warn(
-        ' Modification Mode ACTIVE',
-        `Auto-restore of deleted channels/roles is **PAUSED** for **30 minutes**.\n\n` +
-        `During this time you can freely delete, create, and reorganise channels and roles without the bot restoring them.\n\n` +
-        `**Auto-expires:** <t:${Math.floor(expiresAt / 1000)}:R>\n` +
-        `Use \`/modmode stop\` to end it early.`,
-        [
-          { name: ' Started By', value: `${moderator}`, inline: true },
-          { name: '⏰ Expires',    value: `<t:${Math.floor(expiresAt / 1000)}:F>`, inline: true }
-        ]
-      )
-    };
+    return cv2.warn(
+      ' Modification Mode ACTIVE',
+      `Auto-restore of deleted channels/roles is **PAUSED** for **30 minutes**.\n\n` +
+      `During this time you can freely delete, create, and reorganise channels and roles without the bot restoring them.\n\n` +
+      `**Auto-expires:** <t:${Math.floor(expiresAt / 1000)}:R>\n` +
+      `Use \`/modmode stop\` to end it early.`,
+      [
+        { name: ' Started By', value: `${moderator}`, inline: true },
+        { name: '⏰ Expires',    value: `<t:${Math.floor(expiresAt / 1000)}:F>`, inline: true }
+      ]
+    );
   }
 
   if (action === 'stop') {
     if (!db.isModModeActive(guild.id)) {
-      return { embed: embed.info('Not Active', 'Modification mode is not currently active.') };
+      return cv2.info('Not Active', 'Modification mode is not currently active.');
     }
     cancelModModeTimer(guild.id);
     db.clearModMode(guild.id);
 
-    return {
-      embed: embed.success(
-        ' Modification Mode STOPPED',
-        `Auto-restore is now **active** again.\n\nAny unauthorized channel or role deletions will be automatically restored.`,
-        [{ name: ' Stopped By', value: `${moderator}`, inline: true }]
-      )
-    };
+    return cv2.success(
+      ' Modification Mode STOPPED',
+      `Auto-restore is now **active** again.\n\nAny unauthorized channel or role deletions will be automatically restored.`,
+      [{ name: ' Stopped By', value: `${moderator}`, inline: true }]
+    );
   }
 }

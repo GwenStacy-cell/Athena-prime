@@ -1,6 +1,6 @@
 import { AuditLogEvent, PermissionFlagsBits, PermissionsBitField } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { logToSecurityChannel, isBotOwnerSync } from './helpers.js';
 import { executeQuarantine } from '../commands/security.js';
 
@@ -270,18 +270,18 @@ async function punish(guild, executor, eventType, config, forceBan = false) {
 
       // DM in background — fire-and-forget, no await
       guild.members.fetch(executor.id).then(m => {
-        m?.send({ embeds: [embed.danger('Eliminated — Athena Prime Firewall',
+        m?.send(cv2.danger('Eliminated — Athena Prime Firewall',
           `You have been permanently banned from **${guild.name}**.\n\n**Violation:** ${eventType}\n\n*Athena Prime detected and neutralized your attack in milliseconds.*`
-        )] }).catch(() => null);
+        )).catch(() => null);
       }).catch(() => null);
 
     } else if (punishment === 'kick') {
       const executorMember = await guild.members.fetch(executor.id).catch(() => null);
       if (!executorMember) return 'Failed (User not in server)';
       const kickPromise = executorMember.kick(reason);
-      executorMember.send({ embeds: [embed.danger('Kicked — Athena Prime Firewall',
+      executorMember.send(cv2.danger('Kicked — Athena Prime Firewall',
         `You have been kicked from **${guild.name}** for triggering Anti-Nuke protection.\n\n**Violation:** ${eventType}`
-      )] }).catch(() => null);
+      )).catch(() => null);
       await kickPromise;
       result = 'Kicked';
 
@@ -311,7 +311,7 @@ async function punish(guild, executor, eventType, config, forceBan = false) {
 const dmThrottle = new Set();
 
 async function notifyAndLog(guild, executor, eventType, punishResult, rollbackResult) {
-  const logEmbed = embed.log(
+  const logEmbed = cv2.log(
     'ATHENA FIREWALL — HOSTILE NEUTRALIZED',
     'A destructive action was intercepted, the threat was eliminated, and damage was reversed.',
     [
@@ -334,7 +334,7 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
         const owner = guild.members.cache.get(guild.ownerId)
           ?? await guild.members.fetch(guild.ownerId).catch(() => null);
         if (owner) {
-          await owner.send({ embeds: [embed.danger(
+          await owner.send(cv2.danger(
             '🛡️ CRITICAL: Athena Firewall Engaged',
             `A hostile action was detected, neutralized, and reversed on **${guild.name}** in milliseconds.`,
             [
@@ -343,7 +343,7 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
               { name: 'Verdict',     value: `**${punishResult}**` },
               { name: 'Rollback',    value: `${rollbackResult}` }
             ]
-          )] }).catch(() => null);
+          )).catch(() => null);
         }
       }
     } catch { /* ignore */ }

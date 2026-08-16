@@ -1,5 +1,5 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import db from '../database.js';
 
 const MODULES = [
@@ -32,46 +32,46 @@ async function handleServerLogs(guild, subcommand, args) {
       value: `Master Switch: ${sl.enabled ? '<a:on:1533844867191406672>' : '<:off:1533844858983157851>'}\nDefault Fallback Channel: ${sl.defaultChannelId ? `<#${sl.defaultChannelId}>` : '`None`'}`
     });
 
-    return { embeds: [embed.info('Server Logs Dashboard', 'Configure advanced server logging. Use `/serverlogs bind` to route events to specific channels.', fields)] };
+    return cv2.info('Server Logs Dashboard', 'Configure advanced server logging. Use `/serverlogs bind` to route events to specific channels.', fields);
   }
 
   if (subcommand === 'master') {
     sl.enabled = !sl.enabled;
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return { embeds: [embed.success('Updated', `Master Server Logs switch is now ${sl.enabled ? '**Enabled**' : '**Disabled**'}.`)] };
+    return cv2.success('Updated', `Master Server Logs switch is now ${sl.enabled ? '**Enabled**' : '**Disabled**'}.`);
   }
 
   if (subcommand === 'toggle') {
     const moduleId = args.moduleId;
     const mod = sl.modules[moduleId];
-    if (!mod) return { embeds: [embed.warn('Error', 'Invalid module ID.')] };
+    if (!mod) return cv2.warn('Error', 'Invalid module ID.');
     
     mod.enabled = !mod.enabled;
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return { embeds: [embed.success('Updated', `Module **${moduleId}** is now ${mod.enabled ? '**Enabled**' : '**Disabled**'}.`)] };
+    return cv2.success('Updated', `Module **${moduleId}** is now ${mod.enabled ? '**Enabled**' : '**Disabled**'}.`);
   }
 
   if (subcommand === 'bind') {
     const moduleId = args.moduleId;
     const channelId = args.channelId;
     const mod = sl.modules[moduleId];
-    if (!mod) return { embeds: [embed.warn('Error', 'Invalid module ID.')] };
+    if (!mod) return cv2.warn('Error', 'Invalid module ID.');
 
     mod.channelId = channelId;
     mod.enabled = true; // Auto-enable the module when bound
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return { embeds: [embed.success('Bound', `Module **${moduleId}** logs will now be routed to <#${channelId}> and has been enabled.`)] };
+    return cv2.success('Bound', `Module **${moduleId}** logs will now be routed to <#${channelId}> and has been enabled.`);
   }
 
   if (subcommand === 'setdefault') {
     sl.defaultChannelId = args.channelId;
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return { embeds: [embed.success('Updated', `Default fallback log channel set to <#${sl.defaultChannelId}>.`)] };
+    return cv2.success('Updated', `Default fallback log channel set to <#${sl.defaultChannelId}>.`);
   }
 
   if (subcommand === 'autosetup') {
     if (sl.defaultChannelId && guild.channels.cache.has(sl.defaultChannelId)) {
-      return { embeds: [embed.info('Already Setup', 'A default channel is already configured.')] };
+      return cv2.info('Already Setup', 'A default channel is already configured.');
     }
 
     try {
@@ -98,13 +98,13 @@ async function handleServerLogs(guild, subcommand, args) {
       sl.enabled = true;
       db.updateGuildConfig(guild.id, { serverLogs: sl });
 
-      return { embeds: [embed.success('Auto-Setup Complete', `Created category **Athena Logs** and default fallback channel <#${logChannel.id}>. Master switch has been enabled.`)] };
+      return cv2.success('Auto-Setup Complete', `Created category **Athena Logs** and default fallback channel <#${logChannel.id}>. Master switch has been enabled.`);
     } catch (e) {
-      return { embeds: [embed.warn('Setup Failed', `Could not create channels: ${e.message}`)] };
+      return cv2.warn('Setup Failed', `Could not create channels: ${e.message}`);
     }
   }
 
-  return { embeds: [embed.warn('Invalid Usage', 'Unknown subcommand.')] };
+  return cv2.warn('Invalid Usage', 'Unknown subcommand.');
 }
 
 export const commands = [

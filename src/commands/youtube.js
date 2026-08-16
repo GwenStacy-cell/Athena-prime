@@ -1,6 +1,6 @@
 import { PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isAuthorized } from '../utils/helpers.js';
 import { resolveYouTubeChannelId, getLatestVideo } from '../utils/youtubeNotifier.js';
 import { manageWebSubSubscription } from '../utils/websub.js';
@@ -13,29 +13,27 @@ export const commands = [
     permissions: [], // Restricted via isAuthorized manually
     async executePrefix(message, args) {
       if (!await isAuthorized(message.author, message.guild)) {
-        return message.reply({ embeds: [embed.error('Access Denied', 'You do not have permission to use this command.')] });
+        return message.reply(cv2.error('Access Denied', 'You do not have permission to use this command.'));
       }
 
       const subcommand = args[0]?.toLowerCase();
       const prefix = db.getGuildConfig(message.guild.id)?.prefix || '!';
 
       if (!subcommand || !['add', 'remove', 'list'].includes(subcommand)) {
-        return message.reply({ 
-          embeds: [embed.info('YouTube Notifier', 
+        return message.reply(cv2.info('YouTube Notifier', 
             `Monitor YouTube channels and send an alert when a new video is uploaded!\n\n` +
             `**Usage:**\n` +
             `\`${prefix}youtube add <url> <#channel> [message]\`\n` +
             `\`${prefix}youtube remove <url>\`\n` +
             `\`${prefix}youtube list\``
-          )] 
-        });
+          ));
       }
 
       // --- LIST COMMAND ---
       if (subcommand === 'list') {
         const notifiers = db.getYouTubeNotifiers(message.guild.id);
         if (notifiers.length === 0) {
-          return message.reply({ embeds: [embed.info('YouTube Notifier', 'There are no active YouTube notifiers in this server.')] });
+          return message.reply(cv2.info('YouTube Notifier', 'There are no active YouTube notifiers in this server.'));
         }
 
         let desc = '';
@@ -44,28 +42,28 @@ export const commands = [
           desc += `<:Dark4luvontop:1533860091818803242> Target Channel: <#${n.discordChannelId}>\n\n`;
         });
 
-        return message.reply({ embeds: [embed.info('YouTube Notifiers', desc)] });
+        return message.reply(cv2.info('YouTube Notifiers', desc));
       }
 
       // --- REMOVE COMMAND ---
       if (subcommand === 'remove') {
         const url = args[1];
-        if (!url) return message.reply({ embeds: [embed.error('Syntax Error', `Usage: \`${prefix}youtube remove <url>\``)] });
+        if (!url) return message.reply(cv2.error('Syntax Error', `Usage: \`${prefix}youtube remove <url>\``));
 
-        const waitMsg = await message.reply({ embeds: [embed.info('Processing...', 'Resolving channel ID...')] });
+        const waitMsg = await message.reply(cv2.info('Processing...', 'Resolving channel ID...'));
         const channelId = await resolveYouTubeChannelId(url);
 
         if (!channelId) {
-          return waitMsg.edit({ embeds: [embed.error('Error', 'Could not resolve a YouTube channel from that URL.')] });
+          return waitMsg.edit(cv2.error('Error', 'Could not resolve a YouTube channel from that URL.'));
         }
 
         const success = db.removeYouTubeNotifier(message.guild.id, channelId);
         if (success) {
           // Send unsubscribe request to YouTube WebSub Hub
           manageWebSubSubscription(channelId, 'unsubscribe');
-          return waitMsg.edit({ embeds: [embed.success('Removed', `Successfully removed YouTube tracker for channel ID \`${channelId}\`.`)] });
+          return waitMsg.edit(cv2.success('Removed', `Successfully removed YouTube tracker for channel ID \`${channelId}\`.`));
         } else {
-          return waitMsg.edit({ embeds: [embed.error('Not Found', 'That channel is not currently being tracked.')] });
+          return waitMsg.edit(cv2.error('Not Found', 'That channel is not currently being tracked.'));
         }
       }
 
@@ -87,7 +85,7 @@ export const commands = [
         }
         
         if (!url || !channelMention) {
-          return message.reply({ embeds: [embed.error('Syntax Error', `Usage: \`${prefix}youtube add <url> <#channel> [message]\`\n\nExample:\n\`${prefix}youtube add https://youtube.com/@MrBeast #videos @everyone New Video!\``)] });
+          return message.reply(cv2.error('Syntax Error', `Usage: \`${prefix}youtube add <url> <#channel> [message]\`\n\nExample:\n\`${prefix}youtube add https://youtube.com/@MrBeast #videos @everyone New Video!\``));
         }
 
         // The custom message is everything after the channel name/mention
@@ -110,17 +108,17 @@ export const commands = [
             }
         }
 
-        const waitMsg = await message.reply({ embeds: [embed.info('Processing...', '<a:Loading:1537404628826587207> Resolving channel ID and fetching data...')] });
+        const waitMsg = await message.reply(cv2.info('Processing...', '<a:Loading:1537404628826587207> Resolving channel ID and fetching data...'));
         
         const channelId = await resolveYouTubeChannelId(url);
         if (!channelId) {
-          return waitMsg.edit({ embeds: [embed.error('Error', 'Could not resolve a YouTube channel from that URL. Please ensure it is a valid channel URL.')] });
+          return waitMsg.edit(cv2.error('Error', 'Could not resolve a YouTube channel from that URL. Please ensure it is a valid channel URL.'));
         }
 
         // Check if already tracking
         const currentNotifiers = db.getYouTubeNotifiers(message.guild.id);
         if (currentNotifiers.some(n => n.youtubeId === channelId)) {
-          return waitMsg.edit({ embeds: [embed.warn('Already Tracked', 'This YouTube channel is already being tracked!')] });
+          return waitMsg.edit(cv2.warn('Already Tracked', 'This YouTube channel is already being tracked!'));
         }
 
         // Fetch latest video to get the channel name and prevent pinging old videos on startup
@@ -148,7 +146,7 @@ export const commands = [
 
         // Delete the processing message
         await waitMsg.delete().catch(() => {});
-        await message.reply({ embeds: [embed.success('System Linked', `YouTube tracker for **${channelName}** successfully bound to ${channelMention}.`)] });
+        await message.reply(cv2.success('System Linked', `YouTube tracker for **${channelName}** successfully bound to ${channelMention}.`));
 
         // Build premium success embed for target channel
         const successEmbed = new EmbedBuilder()

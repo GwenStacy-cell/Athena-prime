@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export const commands = [
 {
@@ -40,7 +40,7 @@ export const commands = [
   // Prefix Command Handler
   async executePrefix(message, args) {
     if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-      return message.reply({ embeds: [embed.danger('Permission Denied', 'You need `ManageGuild` permissions to configure bump settings.')] });
+      return message.reply(cv2.danger('Permission Denied', 'You need `ManageGuild` permissions to configure bump settings.'));
     }
 
     const sub = args[0]?.toLowerCase();
@@ -49,43 +49,43 @@ export const commands = [
 
     if (sub === 'add' || sub === 'remove') {
       const role = message.mentions.roles.first() || message.guild.roles.cache.get(args[1]);
-      if (!role) return message.reply({ embeds: [embed.warn('Invalid Usage', `Please mention a role. Example: \`!bump ${sub} @BumpPing\``)] });
+      if (!role) return message.reply(cv2.warn('Invalid Usage', `Please mention a role. Example: \`!bump ${sub} @BumpPing\``));
 
       if (sub === 'add') {
-        if (cfg.bumpRoleIds.includes(role.id)) return message.reply({ embeds: [embed.warn('Already Added', 'That role is already in the bump ping list.')] });
+        if (cfg.bumpRoleIds.includes(role.id)) return message.reply(cv2.warn('Already Added', 'That role is already in the bump ping list.'));
         cfg.bumpRoleIds.push(role.id);
         db.updateGuildConfig(message.guild.id, cfg);
-        return message.reply({ embeds: [embed.success('Bump Role Added', `Added ${role} to the bump reminder ping list.`)] });
+        return message.reply(cv2.success('Bump Role Added', `Added ${role} to the bump reminder ping list.`));
       }
 
       if (sub === 'remove') {
-        if (!cfg.bumpRoleIds.includes(role.id)) return message.reply({ embeds: [embed.warn('Not Found', 'That role is not in the bump ping list.')] });
+        if (!cfg.bumpRoleIds.includes(role.id)) return message.reply(cv2.warn('Not Found', 'That role is not in the bump ping list.'));
         cfg.bumpRoleIds = cfg.bumpRoleIds.filter(id => id !== role.id);
         db.updateGuildConfig(message.guild.id, cfg);
-        return message.reply({ embeds: [embed.success('Bump Role Removed', `Removed ${role} from the bump reminder ping list.`)] });
+        return message.reply(cv2.success('Bump Role Removed', `Removed ${role} from the bump reminder ping list.`));
       }
     }
 
     if (sub === 'list') {
-      if (cfg.bumpRoleIds.length === 0) return message.reply({ embeds: [embed.info('Bump Roles', 'No roles are currently configured for bump reminders.')] });
+      if (cfg.bumpRoleIds.length === 0) return message.reply(cv2.info('Bump Roles', 'No roles are currently configured for bump reminders.'));
       const roleList = cfg.bumpRoleIds.map(id => `<@&${id}>`).join('\n');
-      return message.reply({ embeds: [embed.info('Bump Roles', `The following roles will be pinged when a bump is available:\n\n${roleList}`)] });
+      return message.reply(cv2.info('Bump Roles', `The following roles will be pinged when a bump is available:\n\n${roleList}`));
     }
 
     if (sub === 'off') {
       cfg.bumpDisabled = true;
       db.updateGuildConfig(message.guild.id, cfg);
       db.deleteBumpReminder(message.guild.id);
-      return message.reply({ embeds: [embed.success('Bump Reminder Disabled', 'The bump reminder system has been turned OFF.')] });
+      return message.reply(cv2.success('Bump Reminder Disabled', 'The bump reminder system has been turned OFF.'));
     }
 
     if (sub === 'on') {
       cfg.bumpDisabled = false;
       db.updateGuildConfig(message.guild.id, cfg);
-      return message.reply({ embeds: [embed.success('Bump Reminder Enabled', 'The bump reminder system has been turned ON.')] });
+      return message.reply(cv2.success('Bump Reminder Enabled', 'The bump reminder system has been turned ON.'));
     }
 
-    return message.reply({ embeds: [embed.warn('Invalid Usage', 'Usage:\n`!bump add @role`\n`!bump remove @role`\n`!bump list`\n`!bump on`\n`!bump off`')] });
+    return message.reply(cv2.warn('Invalid Usage', 'Usage:\n`!bump add @role`\n`!bump remove @role`\n`!bump list`\n`!bump on`\n`!bump off`'));
   },
 
   // Slash Command Handler
@@ -96,37 +96,37 @@ export const commands = [
 
     if (sub === 'add') {
       const role = interaction.options.getRole('role');
-      if (cfg.bumpRoleIds.includes(role.id)) return interaction.reply({ embeds: [embed.warn('Already Added', 'That role is already in the bump ping list.')] });
+      if (cfg.bumpRoleIds.includes(role.id)) return interaction.reply(cv2.warn('Already Added', 'That role is already in the bump ping list.'));
       cfg.bumpRoleIds.push(role.id);
       db.updateGuildConfig(interaction.guild.id, cfg);
-      return interaction.reply({ embeds: [embed.success('Bump Role Added', `Added ${role} to the bump reminder ping list.`)] });
+      return interaction.reply(cv2.success('Bump Role Added', `Added ${role} to the bump reminder ping list.`));
     }
 
     if (sub === 'remove') {
       const role = interaction.options.getRole('role');
-      if (!cfg.bumpRoleIds.includes(role.id)) return interaction.reply({ embeds: [embed.warn('Not Found', 'That role is not in the bump ping list.')] });
+      if (!cfg.bumpRoleIds.includes(role.id)) return interaction.reply(cv2.warn('Not Found', 'That role is not in the bump ping list.'));
       cfg.bumpRoleIds = cfg.bumpRoleIds.filter(id => id !== role.id);
       db.updateGuildConfig(interaction.guild.id, cfg);
-      return interaction.reply({ embeds: [embed.success('Bump Role Removed', `Removed ${role} from the bump reminder ping list.`)] });
+      return interaction.reply(cv2.success('Bump Role Removed', `Removed ${role} from the bump reminder ping list.`));
     }
 
     if (sub === 'list') {
-      if (cfg.bumpRoleIds.length === 0) return interaction.reply({ embeds: [embed.info('Bump Roles', 'No roles are currently configured for bump reminders.')] });
+      if (cfg.bumpRoleIds.length === 0) return interaction.reply(cv2.info('Bump Roles', 'No roles are currently configured for bump reminders.'));
       const roleList = cfg.bumpRoleIds.map(id => `<@&${id}>`).join('\n');
-      return interaction.reply({ embeds: [embed.info('Bump Roles', `The following roles will be pinged when a bump is available:\n\n${roleList}`)] });
+      return interaction.reply(cv2.info('Bump Roles', `The following roles will be pinged when a bump is available:\n\n${roleList}`));
     }
 
     if (sub === 'off') {
       cfg.bumpDisabled = true;
       db.updateGuildConfig(interaction.guild.id, cfg);
       db.deleteBumpReminder(interaction.guild.id);
-      return interaction.reply({ embeds: [embed.success('Bump Reminder Disabled', 'The bump reminder system has been turned OFF.')] });
+      return interaction.reply(cv2.success('Bump Reminder Disabled', 'The bump reminder system has been turned OFF.'));
     }
 
     if (sub === 'on') {
       cfg.bumpDisabled = false;
       db.updateGuildConfig(interaction.guild.id, cfg);
-      return interaction.reply({ embeds: [embed.success('Bump Reminder Enabled', 'The bump reminder system has been turned ON.')] });
+      return interaction.reply(cv2.success('Bump Reminder Enabled', 'The bump reminder system has been turned ON.'));
     }
   }
 }

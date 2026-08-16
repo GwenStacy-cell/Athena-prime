@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { 
   canModerate, 
   logToSecurityChannel, 
@@ -125,7 +125,7 @@ export const commands = [
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} **Usage:** \`!quarantine <@user> [duration] [reason]\`\n\nExamples: \`!qr @user 10m spam\` / \`!qr @user 1h\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} **Usage:** \`!quarantine <@user> [duration] [reason]\`\n\nExamples: \`!qr @user 10m spam\` / \`!qr @user 1h\``));
       }
       // args[0] = mention, args[1] could be duration or start of reason
       let remaining = args.slice(1);
@@ -136,8 +136,8 @@ export const commands = [
       }
       const reason = remaining.join(' ').trim() || 'No reason provided';
       const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
-      if (result.success) await message.reply({ embeds: [result.embed] });
-      else await message.reply({ embeds: [result.embed || embed.danger('Quarantine Failed', result.message)] });
+      if (result.success) await message.reply(result);
+      else await message.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -146,11 +146,11 @@ export const commands = [
       const durationMs = parseDuration(durationStr);
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      if (!target) return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
+      if (!target) return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found.`));
 
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
-      if (result.success) await interaction.reply({ embeds: [result.embed] });
-      else await interaction.reply({ embeds: [result.embed || embed.danger('Quarantine Failed', result.message)] });
+      if (result.success) await interaction.reply(result);
+      else await interaction.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
     }
   },
 
@@ -167,7 +167,7 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       const target = message.mentions.members.first();
-      if (!target) return message.reply({ embeds: [embed.warn('Usage', `${message.author} **Usage:** \`!qr <@user> [duration] [reason]\``)] });
+      if (!target) return message.reply(cv2.warn('Usage', `${message.author} **Usage:** \`!qr <@user> [duration] [reason]\``));
       let remaining = args.slice(1);
       let durationMs = 5 * 60 * 1000;
       if (remaining[0] && /^[\d]+[smhd]?$/i.test(remaining[0])) {
@@ -176,8 +176,8 @@ export const commands = [
       }
       const reason = remaining.join(' ').trim() || 'No reason provided';
       const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
-      if (result.success) await message.reply({ embeds: [result.embed] });
-      else await message.reply({ embeds: [result.embed || embed.danger('Quarantine Failed', result.message)] });
+      if (result.success) await message.reply(result);
+      else await message.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -185,10 +185,10 @@ export const commands = [
       const reason = interaction.options.getString('reason') || 'No reason provided';
       const durationMs = parseDuration(durationStr);
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      if (!target) return interaction.reply({ embeds: [embed.warn('Error', 'Member not found.')] });
+      if (!target) return interaction.reply(cv2.warn('Error', 'Member not found.'));
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
-      if (result.success) await interaction.reply({ embeds: [result.embed] });
-      else await interaction.reply({ embeds: [result.embed || embed.danger('Quarantine Failed', result.message)] });
+      if (result.success) await interaction.reply(result);
+      else await interaction.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
     }
   },
 
@@ -209,14 +209,14 @@ export const commands = [
     async executePrefix(message) {
       const target = message.mentions.members.first();
       if (!target) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please mention a valid member to unquarantine.\n\n**Usage:** \`!unquarantine <@user>\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please mention a valid member to unquarantine.\n\n**Usage:** \`!unquarantine <@user>\``));
       }
 
       const result = await executeUnquarantine(message.guild, target, message.member);
       if (result.success) {
-        await message.reply({ embeds: [result.embed] });
+        await message.reply(result);
       } else {
-        await message.reply({ embeds: [embed.danger('Unquarantine Failed', result.message)] });
+        await message.reply(cv2.danger('Unquarantine Failed', result.message));
       }
     },
     async executeSlash(interaction) {
@@ -224,14 +224,14 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found.`));
       }
 
       const result = await executeUnquarantine(interaction.guild, target, interaction.member);
       if (result.success) {
-        await interaction.reply({ embeds: [result.embed] });
+        await interaction.reply(result);
       } else {
-        await interaction.reply({ embeds: [embed.danger('Unquarantine Failed', result.message)] });
+        await interaction.reply(cv2.danger('Unquarantine Failed', result.message));
       }
     }
   },
@@ -263,8 +263,8 @@ export const commands = [
         else await statusMsg.edit({ embeds: [embedData] }).catch(() => null);
       };
       const result = await handleEmergency(message.guild, message.member, action, updateProgress);
-      if (statusMsg) await statusMsg.edit({ embeds: [result.embed] }).catch(()=>null);
-      else await message.reply({ embeds: [result.embed] });
+      if (statusMsg) await statusMsg.edit(result).catch(()=>null);
+      else await message.reply(result);
     },
     async executeSlash(interaction) {
       const action = interaction.options.getString('action');
@@ -275,7 +275,7 @@ export const commands = [
       };
       
       const result = await handleEmergency(interaction.guild, interaction.member, action, updateProgress);
-      await interaction.editReply({ embeds: [result.embed] }).catch(() => null);
+      await interaction.editReply(result).catch(() => null);
     }
   },
   {
@@ -291,8 +291,8 @@ export const commands = [
         else await statusMsg.edit({ embeds: [embedData] }).catch(() => null);
       };
       const result = await handleEmergency(message.guild, message.member, 'end', updateProgress);
-      if (statusMsg) await statusMsg.edit({ embeds: [result.embed] }).catch(()=>null);
-      else await message.reply({ embeds: [result.embed] });
+      if (statusMsg) await statusMsg.edit(result).catch(()=>null);
+      else await message.reply(result);
     },
     async executeSlash(interaction) {
       await interaction.deferReply({ ephemeral: false }).catch(() => null);
@@ -302,7 +302,7 @@ export const commands = [
       };
       
       const result = await handleEmergency(interaction.guild, interaction.member, 'end', updateProgress);
-      await interaction.editReply({ embeds: [result.embed] }).catch(() => null);
+      await interaction.editReply(result).catch(() => null);
     }
   },
 
@@ -328,12 +328,12 @@ export const commands = [
     async executePrefix(message, args) {
       const mode = args[0]?.toLowerCase() === 'off' ? 'off' : 'on';
       const result = await handleLockdown(message.guild, message.channel, message.member, mode);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const mode = interaction.options.getString('mode');
       const result = await handleLockdown(interaction.guild, interaction.channel, interaction.member, mode);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -359,12 +359,12 @@ export const commands = [
     async executePrefix(message, args) {
       const mode = args[0]?.toLowerCase() === 'on' ? 'on' : 'off';
       const result = await handleRaidMode(message.guild, message.member, mode);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const mode = interaction.options.getString('status');
       const result = await handleRaidMode(interaction.guild, interaction.member, mode);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -386,7 +386,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = message.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || db.isExtraOwner(message.guild.id, message.author.id);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.')] });
+        return message.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.'));
       }
 
       if (!args[0]) {
@@ -417,7 +417,7 @@ export const commands = [
         }
         
         if (!rawId) {
-          return message.reply({ embeds: [embed.warn('Invalid Target', 'Please mention a valid User or Role.')] });
+          return message.reply(cv2.warn('Invalid Target', 'Please mention a valid User or Role.'));
         }
       }
 
@@ -427,7 +427,7 @@ export const commands = [
     async executeSlash(interaction) {
       const allowed = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || db.isExtraOwner(interaction.guild.id, interaction.user.id);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.')] });
+        return interaction.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.'));
       }
 
       const target = interaction.options.getMentionable('target');
@@ -483,22 +483,22 @@ export const commands = [
       const phrase = args.slice(1).join(' ');
 
       if (!action || (action !== 'list' && !phrase)) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!blacklist add <phrase>\`, \`!blacklist remove <phrase>\`, or \`!blacklist list\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!blacklist add <phrase>\`, \`!blacklist remove <phrase>\`, or \`!blacklist list\``));
       }
 
       const result = await handleBlacklist(message.guild, message.member, action, phrase);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const action = interaction.options.getString('action');
       const phrase = interaction.options.getString('phrase');
 
       if (action !== 'list' && !phrase) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a phrase parameter for this action.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please specify a phrase parameter for this action.`));
       }
 
       const result = await handleBlacklist(interaction.guild, interaction.member, action, phrase);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
   // --- AUTONICK COMMAND ---
@@ -549,18 +549,18 @@ export const commands = [
       const value = args[1]?.toLowerCase();
 
       if (!setting || !value) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!config <antinuke|antispam|antiinvite|maxwarnings> <on|off|number>\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!config <antinuke|antispam|antiinvite|maxwarnings> <on|off|number>\``));
       }
 
       const result = await handleConfig(message.guild, message.member, setting, value);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const setting = interaction.options.getString('setting');
       const value = interaction.options.getString('value');
 
       const result = await handleConfig(interaction.guild, interaction.member, setting, value);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -583,15 +583,15 @@ export const commands = [
     async executePrefix(message, args) {
       const value = args[0];
       if (!value) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!maxwarnings <number>\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!maxwarnings <number>\``));
       }
       const result = await handleConfig(message.guild, message.member, 'maxwarnings', value.toString());
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const value = interaction.options.getInteger('limit');
       const result = await handleConfig(interaction.guild, interaction.member, 'maxwarnings', value.toString());
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -615,7 +615,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = message.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || db.isExtraOwner(message.guild.id, message.author.id);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.')] });
+        return message.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.'));
       }
       
       const sub = args.join(' ').toLowerCase();
@@ -624,13 +624,13 @@ export const commands = [
         const panel = await getAntinukeConfigPanel(message.guild);
         await message.reply(panel);
       } else {
-        await message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!antinuke config\``)] });
+        await message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!antinuke config\``));
       }
     },
     async executeSlash(interaction) {
       const allowed = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || db.isExtraOwner(interaction.guild.id, interaction.user.id);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.')] });
+        return interaction.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.'));
       }
 
       const sub = interaction.options.getString('subcommand');
@@ -659,7 +659,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} This command is restricted to the Bot Owner and the Server Owner.`)] });
+        return message.reply(cv2.danger('Permission Denied', `${message.author} This command is restricted to the Bot Owner and the Server Owner.`));
       }
 
       let channelId = args[0]?.replace(/[<#&>]/g, '');
@@ -678,31 +678,31 @@ export const commands = [
       }
 
       if (!channel || !channel.isVoiceBased()) {
-        return message.reply({ embeds: [embed.warn('Setup Error', `${message.author} Please mention a Voice Channel, specify its ID, or join a Voice Channel first.`)] });
+        return message.reply(cv2.warn('Setup Error', `${message.author} Please mention a Voice Channel, specify its ID, or join a Voice Channel first.`));
       }
 
       db.updateGuildConfig(message.guild.id, { homeVcId: channel.id });
       connectToHomeVc(message.guild, channel.id);
 
-      await message.reply({ embeds: [embed.success('Home VC Configured', `Athena Prime has set **${channel.name}** (ID: \`${channel.id}\`) as its Home Voice Channel. The bot will now join and stay there.`)] });
+      await message.reply(cv2.success('Home VC Configured', `Athena Prime has set **${channel.name}** (ID: \`${channel.id}\`) as its Home Voice Channel. The bot will now join and stay there.`));
     },
     async executeSlash(interaction) {
       const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`)] });
+        return interaction.reply(cv2.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`));
       }
 
       const voiceChannel = interaction.options.getChannel('channel');
       let channel = voiceChannel || interaction.member?.voice?.channel;
 
       if (!channel || !channel.isVoiceBased()) {
-        return interaction.reply({ embeds: [embed.warn('Setup Error', `${interaction.user} Please specify a Voice Channel or join one first.`)] });
+        return interaction.reply(cv2.warn('Setup Error', `${interaction.user} Please specify a Voice Channel or join one first.`));
       }
 
       db.updateGuildConfig(interaction.guild.id, { homeVcId: channel.id });
       connectToHomeVc(interaction.guild, channel.id);
 
-      await interaction.reply({ embeds: [embed.success('Home VC Configured', `Athena Prime has set **${channel.name}** (ID: \`${channel.id}\`) as its Home Voice Channel. The bot will now join and stay there.`)] });
+      await interaction.reply(cv2.success('Home VC Configured', `Athena Prime has set **${channel.name}** (ID: \`${channel.id}\`) as its Home Voice Channel. The bot will now join and stay there.`));
     }
   },
 
@@ -716,7 +716,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} This command is restricted to the Bot Owner and the Server Owner.`)] });
+        return message.reply(cv2.danger('Permission Denied', `${message.author} This command is restricted to the Bot Owner and the Server Owner.`));
       }
 
       db.updateGuildConfig(message.guild.id, { homeVcId: null });
@@ -728,12 +728,12 @@ export const commands = [
       // Forcefully disconnect using Discord.js API to guarantee immediate leave
       await message.guild.members.me.voice.setChannel(null).catch(() => null);
 
-      await message.reply({ embeds: [embed.success('Home VC Removed', `Athena Prime's Home Voice Channel has been unset. The bot has disconnected from voice.`)] });
+      await message.reply(cv2.success('Home VC Removed', `Athena Prime's Home Voice Channel has been unset. The bot has disconnected from voice.`));
     },
     async executeSlash(interaction) {
       const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`)] });
+        return interaction.reply(cv2.danger('Permission Denied', `${interaction.user} This command is restricted to the Bot Owner and the Server Owner.`));
       }
 
       db.updateGuildConfig(interaction.guild.id, { homeVcId: null });
@@ -745,7 +745,7 @@ export const commands = [
       // Forcefully disconnect using Discord.js API to guarantee immediate leave
       await interaction.guild.members.me.voice.setChannel(null).catch(() => null);
 
-      await interaction.reply({ embeds: [embed.success('Home VC Removed', `Athena Prime's Home Voice Channel has been unset. The bot has disconnected from voice.`)] });
+      await interaction.reply(cv2.success('Home VC Removed', `Athena Prime's Home Voice Channel has been unset. The bot has disconnected from voice.`));
     }
   },
 
@@ -772,15 +772,15 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
+        return message.reply(cv2.danger('Permission Denied', `${message.author}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`));
       }
 
       const url = args[0] || message.attachments.first()?.url;
       if (!url) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please provide a direct image URL or attach an image.`)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please provide a direct image URL or attach an image.`));
       }
 
-      const responseMsg = await message.reply({ embeds: [embed.info('Updating Avatar', 'Attempting to configure guild-specific member avatar...')] });
+      const responseMsg = await message.reply(cv2.info('Updating Avatar', 'Attempting to configure guild-specific member avatar...'));
 
       try {
         const { buffer, contentType } = await getImageBuffer(url);
@@ -788,21 +788,21 @@ export const commands = [
         await message.client.rest.patch(`/guilds/${message.guild.id}/members/@me`, {
           body: { avatar: dataUri }
         });
-        await responseMsg.edit({ embeds: [embed.success('Avatar Configured', "Successfully updated the bot's server-specific avatar.")] });
+        await responseMsg.edit(cv2.success('Avatar Configured', "Successfully updated the bot's server-specific avatar."));
       } catch (err) {
         console.error(err);
-        await responseMsg.edit({ embeds: [embed.danger('Update Failed', `Could not update avatar: ${err.message}`)] });
+        await responseMsg.edit(cv2.danger('Update Failed', `Could not update avatar: ${err.message}`));
       }
     },
     async executeSlash(interaction) {
       const allowed = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
+        return interaction.reply(cv2.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`));
       }
 
       const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
       if (!url) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`));
       }
 
       await interaction.deferReply();
@@ -813,10 +813,10 @@ export const commands = [
         await interaction.client.rest.patch(`/guilds/${interaction.guild.id}/members/@me`, {
           body: { avatar: dataUri }
         });
-        await interaction.editReply({ embeds: [embed.success('Avatar Configured', "Successfully updated the bot's server-specific avatar.")] });
+        await interaction.editReply(cv2.success('Avatar Configured', "Successfully updated the bot's server-specific avatar."));
       } catch (err) {
         console.error(err);
-        await interaction.editReply({ embeds: [embed.danger('Update Failed', `Could not update avatar: ${err.message}`)] });
+        await interaction.editReply(cv2.danger('Update Failed', `Could not update avatar: ${err.message}`));
       }
     }
   },
@@ -844,15 +844,15 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
+        return message.reply(cv2.danger('Permission Denied', `${message.author}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`));
       }
 
       const url = args[0] || message.attachments.first()?.url;
       if (!url) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Please provide a direct image URL or attach an image.`)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Please provide a direct image URL or attach an image.`));
       }
 
-      const responseMsg = await message.reply({ embeds: [embed.info('Updating Banner', 'Attempting to configure guild-specific member banner...')] });
+      const responseMsg = await message.reply(cv2.info('Updating Banner', 'Attempting to configure guild-specific member banner...'));
 
       try {
         const { buffer, contentType } = await getImageBuffer(url);
@@ -860,21 +860,21 @@ export const commands = [
         await message.client.rest.patch(`/guilds/${message.guild.id}/members/@me`, {
           body: { banner: dataUri }
         });
-        await responseMsg.edit({ embeds: [embed.success('Banner Configured', "Successfully updated the bot's server-specific banner.")] });
+        await responseMsg.edit(cv2.success('Banner Configured', "Successfully updated the bot's server-specific banner."));
       } catch (err) {
         console.error(err);
-        await responseMsg.edit({ embeds: [embed.danger('Update Failed', `Could not update banner: ${err.message}`)] });
+        await responseMsg.edit(cv2.danger('Update Failed', `Could not update banner: ${err.message}`));
       }
     },
     async executeSlash(interaction) {
       const allowed = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`)] });
+        return interaction.reply(cv2.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`));
       }
 
       const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
       if (!url) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`));
       }
 
       await interaction.deferReply();
@@ -885,10 +885,10 @@ export const commands = [
         await interaction.client.rest.patch(`/guilds/${interaction.guild.id}/members/@me`, {
           body: { banner: dataUri }
         });
-        await interaction.editReply({ embeds: [embed.success('Banner Configured', "Successfully updated the bot's server-specific banner.")] });
+        await interaction.editReply(cv2.success('Banner Configured', "Successfully updated the bot's server-specific banner."));
       } catch (err) {
         console.error(err);
-        await interaction.editReply({ embeds: [embed.danger('Update Failed', `Could not update banner: ${err.message}`)] });
+        await interaction.editReply(cv2.danger('Update Failed', `Could not update banner: ${err.message}`));
       }
     }
   },
@@ -922,7 +922,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner** and **Server Owner** can manage extra owners.`)] });
+        return message.reply(cv2.danger('Permission Denied', `${message.author} Only the **Bot Owner** and **Server Owner** can manage extra owners.`));
       }
 
       const action = args[0]?.toLowerCase();
@@ -933,27 +933,27 @@ export const commands = [
       }
 
       if (!action || (action !== 'list' && !targetUser)) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!extraowner add <@user|ID>\`, \`!extraowner remove <@user|ID>\`, or \`!extraowner list\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!extraowner add <@user|ID>\`, \`!extraowner remove <@user|ID>\`, or \`!extraowner list\``));
       }
 
       const result = await handleExtraOwner(message.guild, message.member, action, targetUser);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** and **Server Owner** can manage extra owners.`)] });
+        return interaction.reply(cv2.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** and **Server Owner** can manage extra owners.`));
       }
 
       const action = interaction.options.getString('action');
       const targetUser = interaction.options.getUser('user');
 
       if (action !== 'list' && !targetUser) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user for this action.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please specify a target user for this action.`));
       }
 
       const result = await handleExtraOwner(interaction.guild, interaction.member, action, targetUser);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -985,33 +985,33 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!isBotOwnerSync(message.author.id)) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner** can manage the global bot blacklist.`)] });
+        return message.reply(cv2.danger('Permission Denied', `${message.author} Only the **Bot Owner** can manage the global bot blacklist.`));
       }
 
       const action = args[0]?.toLowerCase();
       let targetId = args[1]?.replace(/[<@!>]/g, '');
 
       if (!action || (action !== 'list' && !targetId)) {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!userblacklist add <ID>\`, \`!userblacklist remove <ID>\`, or \`!userblacklist list\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!userblacklist add <ID>\`, \`!userblacklist remove <ID>\`, or \`!userblacklist list\``));
       }
 
       const result = await handleBotBlacklist(action, targetId);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       if (!isBotOwnerSync(interaction.user.id)) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** can manage the global bot blacklist.`)] });
+        return interaction.reply(cv2.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** can manage the global bot blacklist.`));
       }
 
       const action = interaction.options.getString('action');
       let targetId = interaction.options.getString('user_id')?.replace(/[<@!>]/g, '');
 
       if (action !== 'list' && !targetId) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Please specify a target user ID.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please specify a target user ID.`));
       }
 
       const result = await handleBotBlacklist(action, targetId);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -1044,28 +1044,28 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = await isBotOwnerOrServerOwner(message.author, message.guild);
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only the **Bot Owner** and **Server Owner** can manage the bot whitelist.`)] });
+        return message.reply(cv2.danger('Permission Denied', `${message.author} Only the **Bot Owner** and **Server Owner** can manage the bot whitelist.`));
       }
       const action = args[0]?.toLowerCase();
       const botId = args[1];
       if (!action || (action !== 'list' && !botId)) {
-        return message.reply({ embeds: [embed.warn('Usage', `${message.author} \`!botwhitelist add <botId>\`, \`!botwhitelist remove <botId>\`, or \`!botwhitelist list\``)] });
+        return message.reply(cv2.warn('Usage', `${message.author} \`!botwhitelist add <botId>\`, \`!botwhitelist remove <botId>\`, or \`!botwhitelist list\``));
       }
       const result = await handleBotWhitelist(message.guild, action, botId);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const allowed = await isBotOwnerOrServerOwner(interaction.user, interaction.guild);
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** and **Server Owner** can manage the bot whitelist.`)] });
+        return interaction.reply(cv2.danger('Permission Denied', `${interaction.user} Only the **Bot Owner** and **Server Owner** can manage the bot whitelist.`));
       }
       const action = interaction.options.getString('action');
       const botId = interaction.options.getString('bot_id');
       if (action !== 'list' && !botId) {
-        return interaction.reply({ embeds: [embed.warn('Error', `${interaction.user} Please provide the bot's User ID.`)] });
+        return interaction.reply(cv2.warn('Error', `${interaction.user} Please provide the bot's User ID.`));
       }
       const result = await handleBotWhitelist(interaction.guild, action, botId);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -1090,15 +1090,15 @@ export const commands = [
     async executePrefix(message, args) {
       const mode = args[0]?.toLowerCase();
       if (mode !== 'on' && mode !== 'off') {
-        return message.reply({ embeds: [embed.warn('Command Error', `${message.author} Usage: \`!antilink <on|off>\``)] });
+        return message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!antilink <on|off>\``));
       }
       const result = await handleAntiLink(message.guild, message.member, mode);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const mode = interaction.options.getString('status');
       const result = await handleAntiLink(interaction.guild, interaction.member, mode);
-      await interaction.reply({ embeds: [result.embed], ephemeral: false });
+      await interaction.reply(result);
     }
   },
 
@@ -1110,11 +1110,11 @@ export const commands = [
     permissions: [],
     async executePrefix(message) {
       const result = await getServerInfoEmbed(message.guild);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const result = await getServerInfoEmbed(interaction.guild);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -1135,18 +1135,18 @@ export const commands = [
     async executePrefix(message) {
       const target = message.mentions.members.first() || message.member;
       const result = await getUserInfoEmbed(message.guild, target);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user') || interaction.user;
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.reply({ embeds: [embed.warn('Command Error', `${interaction.user} Member not found.`)] });
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found.`));
       }
 
       const result = await getUserInfoEmbed(interaction.guild, target);
-      await interaction.reply({ embeds: [result.embed] });
+      await interaction.reply(result);
     }
   },
 
@@ -1173,7 +1173,7 @@ export const commands = [
     async executePrefix(message, args) {
       const allowed = isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId;
       if (!allowed) {
-        return message.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.')] });
+        return message.reply(cv2.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.'));
       }
 
       // Check if they used the `!ss` alias directly
@@ -1188,7 +1188,7 @@ export const commands = [
       const status = (sub === 'status');
       
       if (!enable && !disable && !status) {
-        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!security enable all\`, \`!security disable all\`, or \`!security status\``)] });
+        return message.reply(cv2.warn('Usage', `${message.author} Usage: \`!security enable all\`, \`!security disable all\`, or \`!security status\``));
       }
 
       if (status) {
@@ -1199,30 +1199,30 @@ export const commands = [
       if (enable) {
         const config = db.getGuildConfig(message.guild.id);
         if (config.securityEnabled) {
-          return message.reply({ embeds: [embed.warn('Security Active', 'Security is already enabled on this server.')] });
+          return message.reply(cv2.warn('Security Active', 'Security is already enabled on this server.'));
         }
         if (message.guild.memberCount < 200 && !isBotOwnerSync(message.author.id)) {
-          return message.reply({ embeds: [embed.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*')] });
+          return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        const msg = await message.reply({ embeds: [embed.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**')] });
+        const msg = await message.reply(cv2.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**'));
         await runSecurityEnableSequence(message.guild, async (e) => {
           await msg.edit({ embeds: [e] }).catch(() => null);
         });
       } else if (disable) {
         const config = db.getGuildConfig(message.guild.id);
         if (!config.securityEnabled) {
-          return message.reply({ embeds: [embed.warn('Security Inactive', 'Security is already disabled on this server.')] });
+          return message.reply(cv2.warn('Security Inactive', 'Security is already disabled on this server.'));
         }
 
         const result = await handleSecurityToggleAll(message.guild, message.member, false);
-        await message.reply({ embeds: [result.embed] });
+        await message.reply(result);
       }
     },
     async executeSlash(interaction) {
       const allowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
       if (!allowed) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.')] });
+        return interaction.reply(cv2.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.'));
       }
       const action = interaction.options.getString('action');
       const enable = action === 'enable_all';
@@ -1237,24 +1237,24 @@ export const commands = [
       if (enable) {
         const config = db.getGuildConfig(interaction.guild.id);
         if (config.securityEnabled) {
-          return interaction.reply({ embeds: [embed.warn('Security Active', 'Security is already enabled on this server.')] });
+          return interaction.reply(cv2.warn('Security Active', 'Security is already enabled on this server.'));
         }
         if (interaction.guild.memberCount < 200 && !isBotOwnerSync(interaction.user.id)) {
-          return interaction.reply({ embeds: [embed.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*')] });
+          return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        await interaction.reply({ embeds: [embed.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**')] });
+        await interaction.reply(cv2.info('Security Initialization', '<:on:1514996865030946847> **Initializing Security Protocols...**'));
         await runSecurityEnableSequence(interaction.guild, async (e) => {
           await interaction.editReply({ embeds: [e] }).catch(() => null);
         });
       } else if (disable) {
         const config = db.getGuildConfig(interaction.guild.id);
         if (!config.securityEnabled) {
-          return interaction.reply({ embeds: [embed.warn('Security Inactive', 'Security is already disabled on this server.')] });
+          return interaction.reply(cv2.warn('Security Inactive', 'Security is already disabled on this server.'));
         }
 
         const result = await handleSecurityToggleAll(interaction.guild, interaction.member, false);
-        await interaction.reply({ embeds: [result.embed] });
+        await interaction.reply(result);
       }
     }
   },
@@ -1294,7 +1294,7 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       const action = args[0]?.toLowerCase();
-      if (!action) return message.reply({ embeds: [embed.warn('Usage', 'Usage: `!qrmanager setup|setrole|setchannel|setvc|status`')] });
+      if (!action) return message.reply(cv2.warn('Usage', 'Usage: `!qrmanager setup|setrole|setchannel|setvc|status`'));
       
       let role = message.mentions.roles.first() || null;
       let channel = message.mentions.channels.first() || null;
@@ -1307,7 +1307,7 @@ export const commands = [
       }
       
       const result = await handleQrManager(message.guild, message.member, action, role, channel);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       await interaction.deferReply();
@@ -1315,7 +1315,7 @@ export const commands = [
       const role = interaction.options.getRole('role');
       const channel = interaction.options.getChannel('channel');
       const result = await handleQrManager(interaction.guild, interaction.member, action, role, channel);
-      await interaction.editReply({ embeds: [result.embed] });
+      await interaction.editReply(result);
     }
   },
 
@@ -1353,22 +1353,22 @@ export const commands = [
       const domain = args.slice(1).join(' ').trim();
       const nodomainActions = ['list', 'allowall', 'disallowall'];
       if (!action || (!nodomainActions.includes(action) && !domain)) {
-        return message.reply({ embeds: [embed.warn('Usage',
+        return message.reply(cv2.warn('Usage',
           `${message.author} \`!linksallow add <domain>\` / \`!linksallow remove <domain>\` / \`!linksallow list\` / \`!linksallow allowall\` / \`!linksallow disallowall\``
-        )] });
+        ));
       }
       const result = await handleLinksAllow(message.guild, action, domain);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const action = interaction.options.getString('action');
       const domain = interaction.options.getString('domain');
       const nodomainActions = ['list', 'allowall', 'disallowall'];
       if (!nodomainActions.includes(action) && !domain) {
-        return interaction.reply({ embeds: [embed.warn('Missing Domain', 'Please provide a domain name.')] });
+        return interaction.reply(cv2.warn('Missing Domain', 'Please provide a domain name.'));
       }
       const result = await handleLinksAllow(interaction.guild, action, domain);
-      await interaction.reply({ embeds: [result.embed], ephemeral: false });
+      await interaction.reply(result);
     }
   },
 
@@ -1395,19 +1395,19 @@ export const commands = [
     async executePrefix(message, args) {
       const role = message.mentions.roles.first();
       if (!role) {
-        return message.reply({ embeds: [embed.warn('Usage', `${message.author} Usage: \`!massquarantine <@role> [reason]\``)] });
+        return message.reply(cv2.warn('Usage', `${message.author} Usage: \`!massquarantine <@role> [reason]\``));
       }
       const reason = args.slice(1).join(' ').trim() || 'Mass quarantine by administrator';
-      const statusMsg = await message.reply({ embeds: [embed.info('Mass Quarantine Started', ` Quarantining all members with role <@&${role.id}>...`)] });
+      const statusMsg = await message.reply(cv2.info('Mass Quarantine Started', ` Quarantining all members with role <@&${role.id}>...`));
       const result = await handleMassQuarantine(message.guild, message.member, role, reason);
-      await statusMsg.edit({ embeds: [result.embed] });
+      await statusMsg.edit(result);
     },
     async executeSlash(interaction) {
       await interaction.deferReply();
       const role = interaction.options.getRole('role');
       const reason = interaction.options.getString('reason') || 'Mass quarantine by administrator';
       const result = await handleMassQuarantine(interaction.guild, interaction.member, role, reason);
-      await interaction.editReply({ embeds: [result.embed] });
+      await interaction.editReply(result);
     }
   },
 
@@ -1419,14 +1419,14 @@ export const commands = [
     permissions: [PermissionFlagsBits.Administrator],
     options: [],
     async executePrefix(message) {
-      const statusMsg = await message.reply({ embeds: [embed.info('Mass Unquarantine Started', ' Releasing all quarantined members...')] });
+      const statusMsg = await message.reply(cv2.info('Mass Unquarantine Started', ' Releasing all quarantined members...'));
       const result = await handleMassUnquarantine(message.guild, message.member, message.client);
-      await statusMsg.edit({ embeds: [result.embed] });
+      await statusMsg.edit(result);
     },
     async executeSlash(interaction) {
       await interaction.deferReply();
       const result = await handleMassUnquarantine(interaction.guild, interaction.member, interaction.client);
-      await interaction.editReply({ embeds: [result.embed] });
+      await interaction.editReply(result);
     }
   },
 
@@ -1439,7 +1439,7 @@ export const commands = [
     permissions: [PermissionFlagsBits.Administrator],
     async executePrefix(message) {
       if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) && !isExtraOwner(message.guild.id, message.author.id)) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', 'Only Server Owners and Extra Owners can scan the server.')] });
+        return message.reply(cv2.danger('Permission Denied', 'Only Server Owners and Extra Owners can scan the server.'));
       }
       const result = await handleScanServer(message.guild);
       await message.reply(result);
@@ -1454,13 +1454,13 @@ export const commands = [
     permissions: [PermissionFlagsBits.Administrator],
     async executePrefix(message, args) {
       if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) && !isExtraOwner(message.guild.id, message.author.id)) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', 'Only Server Owners and Extra Owners can lock apps.')] });
+        return message.reply(cv2.danger('Permission Denied', 'Only Server Owners and Extra Owners can lock apps.'));
       }
       const mode = args[0]?.toLowerCase();
       if (mode !== 'on' && mode !== 'off') {
-        return message.reply({ embeds: [embed.warn('Invalid Usage', 'Usage: `!lockapps on` or `!lockapps off`')] });
+        return message.reply(cv2.warn('Invalid Usage', 'Usage: `!lockapps on` or `!lockapps off`'));
       }
-      const statusMsg = await message.reply({ embeds: [embed.info('Updating Channels', 'Processing permissions for all channels. This may take a moment...')] });
+      const statusMsg = await message.reply(cv2.info('Updating Channels', 'Processing permissions for all channels. This may take a moment...'));
       
       const allow = mode === 'off';
       let successCount = 0;
@@ -1476,9 +1476,9 @@ export const commands = [
       }
       
       if (allow) {
-        await statusMsg.edit({ embeds: [embed.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`)] });
+        await statusMsg.edit(cv2.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`));
       } else {
-        await statusMsg.edit({ embeds: [embed.success('Apps Locked', `Successfully locked application commands in ${successCount} channels for @everyone.`)] });
+        await statusMsg.edit(cv2.success('Apps Locked', `Successfully locked application commands in ${successCount} channels for @everyone.`));
       }
     }
   },
@@ -1491,9 +1491,9 @@ export const commands = [
     permissions: [PermissionFlagsBits.Administrator],
     async executePrefix(message, args) {
       if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) && !isExtraOwner(message.guild.id, message.author.id)) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', 'Only Server Owners and Extra Owners can unlock apps.')] });
+        return message.reply(cv2.danger('Permission Denied', 'Only Server Owners and Extra Owners can unlock apps.'));
       }
-      const statusMsg = await message.reply({ embeds: [embed.info('Updating Channels', 'Processing permissions for all channels. This may take a moment...')] });
+      const statusMsg = await message.reply(cv2.info('Updating Channels', 'Processing permissions for all channels. This may take a moment...'));
       
       let successCount = 0;
       
@@ -1507,7 +1507,7 @@ export const commands = [
         } catch(e) {}
       }
       
-      await statusMsg.edit({ embeds: [embed.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`)] });
+      await statusMsg.edit(cv2.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`));
     }
   }
 
@@ -1586,7 +1586,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
   if (isBotOwnerSync(targetMember.id) || guild.ownerId === targetMember.id) {
     return { 
       success: false, 
-      embed: embed.danger('Untouchable', `Command overridden. **${targetMember.user.tag}** is untouchable and immune to all moderation protocols.`)
+      embed: cv2.danger('Untouchable', `Command overridden. **${targetMember.user.tag}** is untouchable and immune to all moderation protocols.`)
     };
   }
 
@@ -1666,7 +1666,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
 
     // 7. DM target user
     const durationLabel = durationMs ? formatDuration(durationMs) : 'Until manually lifted';
-    const dmEmbed = embed.danger(
+    const dmEmbed = cv2.danger(
       'Server Isolation Notice',
       ` You have been placed under **Quarantine** in **${guild.name}**.`,
       [
@@ -1679,7 +1679,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
     await targetMember.send({ embeds: [dmEmbed] }).catch(() => null);
 
     // 7. Ping target in quarantine channel and post welcome alert
-    const welcomeEmbed = embed.danger(
+    const welcomeEmbed = cv2.danger(
       'You Have Been Quarantined',
       `Hello ${targetMember}. You have been isolated in this channel due to security policies or staff intervention.`,
       [
@@ -1691,7 +1691,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
     await quarantineChannel.send({ content: `${targetMember}`, embeds: [welcomeEmbed] }).catch(() => null);
 
     // 8. Log the event to logs channel
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Quarantine Applied',
       `Member has been isolated.`,
       [
@@ -1704,7 +1704,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
 
 
 
-    const responseEmbed = embed.danger(
+    const responseEmbed = cv2.danger(
       'User Quarantined',
       `Successfully quarantined **${targetMember.user.tag}**.`,
       [
@@ -1755,13 +1755,13 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     // DM target user
     let dmEmbed;
     if (context === 'raidmode') {
-      dmEmbed = embed.success(
+      dmEmbed = cv2.success(
         'Raid Mode Ended',
         `<:emoji_16:1533860111704002665> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
         []
       );
     } else {
-      dmEmbed = embed.success(
+      dmEmbed = cv2.success(
         'Isolation Terminated',
         `<a:alert1:1533860044154732704> Your quarantine status has been lifted in **${guild.name}**! Your original access privileges have been fully restored.`,
         []
@@ -1771,12 +1771,12 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
 
     // Log the event
     if (context === 'auto') {
-      logToSecurityChannel(guild, embed.info(
+      logToSecurityChannel(guild, cv2.info(
         'Auto-Unquarantine',
         `<@${targetMember.id}>'s quarantine duration expired — automatically released.`
       ));
     } else {
-      logToSecurityChannel(guild, embed.log(
+      logToSecurityChannel(guild, cv2.log(
         'Quarantine Lifted',
         `Member has been restored.`,
         [
@@ -1787,7 +1787,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
       ));
     }
 
-    const responseEmbed = embed.success(
+    const responseEmbed = cv2.success(
       'Quarantine Lifted',
       `Successfully restored **${targetMember.user.tag}** and recovered their original role structure.`,
       [
@@ -1810,7 +1810,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
 export async function handleEmergency(guild, moderator, action, updateProgress) {
   // Ensure we have a high privilege to use this
   if (!isBotOwnerSync(moderator.id) && moderator.id !== guild.ownerId) {
-    return { embed: embed.danger('Access Denied', 'Only the Server Owner and Bot Owners can trigger Emergency Mode. Extra Owners are not authorized to use this command.') };
+    return cv2.danger('Access Denied', 'Only the Server Owner and Bot Owners can trigger Emergency Mode. Extra Owners are not authorized to use this command.');
   }
 
   const botMember = await guild.members.fetch(guild.client.user.id);
@@ -1819,10 +1819,10 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
   if (action === 'mode') {
     const currentState = db.getEmergencyState(guild.id);
     if (currentState) {
-      return { embed: embed.warn('Emergency Active', 'Emergency Mode is already active.') };
+      return cv2.warn('Emergency Active', 'Emergency Mode is already active.');
     }
 
-    if (updateProgress) await updateProgress(embed.warn('Emergency Protocol Initiated', 'Calculating role and channel overwrites...'));
+    if (updateProgress) await updateProgress(cv2.warn('Emergency Protocol Initiated', 'Calculating role and channel overwrites...'));
 
     const stateToSave = { roles: [], channels: [] };
 
@@ -1862,7 +1862,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
         ], `Emergency Mode triggered by ${moderator.user.tag}`);
         
         cCount++;
-        if (cCount % 15 === 0 && updateProgress) updateProgress(embed.warn('Emergency Protocol Initiated', `Hiding channels: **${cCount} / ${channelsToModify.length}** processed...`)).catch(()=>null);
+        if (cCount % 15 === 0 && updateProgress) updateProgress(cv2.warn('Emergency Protocol Initiated', `Hiding channels: **${cCount} / ${channelsToModify.length}** processed...`)).catch(()=>null);
       } catch (e) {
         cErrors++;
         console.error(`Failed to modify channel ${channel.id} during emergency`, e.message);
@@ -1890,7 +1890,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
       try {
         await role.setPermissions(0n, `Emergency Mode triggered by ${moderator.user.tag}`);
         rCount++;
-        if (rCount % 10 === 0 && updateProgress) updateProgress(embed.warn('Emergency Protocol Initiated', `Stripping permissions: **${rCount} / ${rolesToModify.length}** processed...`)).catch(()=>null);
+        if (rCount % 10 === 0 && updateProgress) updateProgress(cv2.warn('Emergency Protocol Initiated', `Stripping permissions: **${rCount} / ${rolesToModify.length}** processed...`)).catch(()=>null);
       } catch (e) {
         rErrors++;
         console.error(`Failed to modify role ${role.id} during emergency`, e.message);
@@ -1904,12 +1904,12 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     db.saveEmergencyState(guild.id, stateToSave);
 
-    logToSecurityChannel(guild, embed.log('Emergency Mode Activated', `**${moderator.user.tag}** has triggered Emergency Mode! All roles below the bot have been stripped of permissions and channels are hidden.`, [], 'danger'));
+    logToSecurityChannel(guild, cv2.log('Emergency Mode Activated', `**${moderator.user.tag}** has triggered Emergency Mode! All roles below the bot have been stripped of permissions and channels are hidden.`, [], 'danger'));
 
     try {
       const owner = await guild.members.fetch(guild.ownerId);
       if (owner) {
-        owner.send({ embeds: [embed.danger('SERVER EMERGENCY ACTIVATED', `**${moderator.user.tag}** has triggered Emergency Mode in **${guild.name}**.\n\nAll permissions have been stripped and channels hidden to contain the threat. To restore normal operations, use \`!end emergency\`.`)] }).catch(() => null);
+        owner.send(cv2.danger('SERVER EMERGENCY ACTIVATED', `**${moderator.user.tag}** has triggered Emergency Mode in **${guild.name}**.\n\nAll permissions have been stripped and channels hidden to contain the threat. To restore normal operations, use \`!end emergency\`.`)).catch(() => null);
       }
     } catch(e) {}
 
@@ -1918,15 +1918,15 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
       errorWarning = `\n\n<a:alert1:1533860044154732704> **WARNING:** Failed to modify ${rErrors} roles and ${cErrors} channels. (Note: Discord prevents bots from hiding Community Default/Onboarding channels). Ensure the bot's role is placed at the top and has Administrator privileges.`;
     }
 
-    return { embed: embed.danger('EMERGENCY MODE ACTIVATED', `All channels have been hidden and all permissions have been stripped from roles. Use \`!end emergency\` or \`/endemergency\` to restore the server.${errorWarning}`) };
+    return cv2.danger('EMERGENCY MODE ACTIVATED', `All channels have been hidden and all permissions have been stripped from roles. Use \`!end emergency\` or \`/endemergency\` to restore the server.${errorWarning}`);
 
   } else if (action === 'end') {
     const savedState = db.getEmergencyState(guild.id);
     if (!savedState) {
-      return { embed: embed.info('No Emergency', 'Emergency Mode is not currently active on this server.') };
+      return cv2.info('No Emergency', 'Emergency Mode is not currently active on this server.');
     }
 
-    if (updateProgress) await updateProgress(embed.info('Restoring Server', 'Calculating original role and channel states...'));
+    if (updateProgress) await updateProgress(cv2.info('Restoring Server', 'Calculating original role and channel states...'));
 
     let rolesRestored = 0;
     let rErrors = 0;
@@ -1936,7 +1936,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
         try {
           await role.setPermissions(BigInt(roleData.perms), `Emergency Mode ended by ${moderator.user.tag}`);
           rolesRestored++;
-          if (rolesRestored % 10 === 0 && updateProgress) await updateProgress(embed.info('Restoring Server', `Restoring permissions: **${rolesRestored} / ${savedState.roles.length}** processed...`)).catch(()=>null);
+          if (rolesRestored % 10 === 0 && updateProgress) await updateProgress(cv2.info('Restoring Server', `Restoring permissions: **${rolesRestored} / ${savedState.roles.length}** processed...`)).catch(()=>null);
         } catch(e) {
           rErrors++;
           console.error(`Failed to restore role ${role.id}`, e);
@@ -1959,7 +1959,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
           }));
           await channel.permissionOverwrites.set(overwrites, `Emergency Mode ended by ${moderator.user.tag}`);
           channelsRestored++;
-          if (channelsRestored % 10 === 0 && updateProgress) await updateProgress(embed.info('Restoring Server', `Restoring channels: **${channelsRestored} / ${savedState.channels.length}** processed...`)).catch(()=>null);
+          if (channelsRestored % 10 === 0 && updateProgress) await updateProgress(cv2.info('Restoring Server', `Restoring channels: **${channelsRestored} / ${savedState.channels.length}** processed...`)).catch(()=>null);
         } catch(e) {
           cErrors++;
           console.error(`Failed to restore channel ${channel.id}`, e);
@@ -1969,12 +1969,12 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     db.clearEmergencyState(guild.id);
 
-    logToSecurityChannel(guild, embed.log('Emergency Mode Ended', `**${moderator.user.tag}** has ended Emergency Mode. Restored ${rolesRestored} roles and ${channelsRestored} channels.`, [], 'success'));
+    logToSecurityChannel(guild, cv2.log('Emergency Mode Ended', `**${moderator.user.tag}** has ended Emergency Mode. Restored ${rolesRestored} roles and ${channelsRestored} channels.`, [], 'success'));
 
     try {
       const owner = await guild.members.fetch(guild.ownerId);
       if (owner) {
-        owner.send({ embeds: [embed.success('EMERGENCY RESOLVED', `**${moderator.user.tag}** has ended Emergency Mode in **${guild.name}**.\n\nAll permissions and channel visibilities have been fully restored.`)] }).catch(() => null);
+        owner.send(cv2.success('EMERGENCY RESOLVED', `**${moderator.user.tag}** has ended Emergency Mode in **${guild.name}**.\n\nAll permissions and channel visibilities have been fully restored.`)).catch(() => null);
       }
     } catch(e) {}
 
@@ -1983,7 +1983,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
       errorWarning = `\n\n<a:alert1:1533860044154732704> **WARNING:** Failed to restore ${rErrors} roles and ${cErrors} channels. You may need to fix them manually.`;
     }
 
-    return { embed: embed.success('Emergency Mode Ended', `All permissions and channel visibilities have been restored.${errorWarning}`) };
+    return cv2.success('Emergency Mode Ended', `All permissions and channel visibilities have been restored.${errorWarning}`);
   }
 }
 
@@ -1995,26 +1995,26 @@ async function handleLockdown(guild, channel, moderator, mode) {
       await channel.permissionOverwrites.edit(guild.roles.everyone, {
         SendMessages: false
       });
-      const lockEmbed = embed.danger(
+      const lockEmbed = cv2.danger(
         'Lockdown Activated', 
         `<:emoji_16:1533860111704002665> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
       );
-      logToSecurityChannel(guild, embed.log('Channel Locked', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
+      logToSecurityChannel(guild, cv2.log('Channel Locked', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
       return { embed: lockEmbed };
     } else {
       await channel.permissionOverwrites.edit(guild.roles.everyone, {
         SendMessages: null
       });
-      const unlockEmbed = embed.success(
+      const unlockEmbed = cv2.success(
         'Lockdown Deactivated', 
         `<:emoji_16:1533860111704002665> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
       );
-      logToSecurityChannel(guild, embed.log('Channel Unlocked', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
+      logToSecurityChannel(guild, cv2.log('Channel Unlocked', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
       return { embed: unlockEmbed };
     }
   } catch (error) {
     console.error(error);
-    return { embed: embed.danger('Lockdown Toggle Failed', 'Could not modify permissions for this channel.') };
+    return cv2.danger('Lockdown Toggle Failed', 'Could not modify permissions for this channel.');
   }
 }
 
@@ -2023,12 +2023,12 @@ async function handleRaidMode(guild, moderator, mode) {
   db.updateGuildConfig(guild.id, { raidMode: enabled });
 
   if (enabled) {
-    const resEmbed = embed.raid(
+    const resEmbed = cv2.raid(
       'Raid Mode Engaged',
       `<a:alert1:1533860044154732704> **Server Raid Protection is now ACTIVE.**\nAll joining accounts will be automatically quarantined immediately to protect the server until deactivated.`,
       [{ name: 'Enforced by', value: `${moderator}` }]
     );
-    logToSecurityChannel(guild, embed.log('Raid Mode Active', `Administrator **${moderator.user.tag}** turned ON Guild Raid Mode.`, [], 'raid'));
+    logToSecurityChannel(guild, cv2.log('Raid Mode Active', `Administrator **${moderator.user.tag}** turned ON Guild Raid Mode.`, [], 'raid'));
     return { embed: resEmbed };
   } else {
     // Automatically mass unquarantine everyone caught in the raid
@@ -2041,12 +2041,12 @@ async function handleRaidMode(guild, moderator, mode) {
        releaseNote = `\n\n*(No quarantined accounts to release)*`;
     }
 
-    const resEmbed = embed.success(
+    const resEmbed = cv2.success(
       'Raid Mode Disengaged',
       ` **Server Raid Protection is now OFF.**\nNew accounts can join normally.${releaseNote}`,
       [{ name: 'Lifted by', value: `${moderator}` }]
     );
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Raid Mode Off', 
       `Administrator **${moderator.user.tag}** turned OFF Guild Raid Mode.`, 
       [], 
@@ -2276,27 +2276,27 @@ async function handleBlacklist(guild, moderator, action, phrase) {
   if (action === 'add') {
     const success = db.addBlacklistWord(guild.id, phrase);
     if (success) {
-      logToSecurityChannel(guild, embed.log('Word Filter Added', `Moderator **${moderator.user.tag}** blacklisted phrase: "${phrase}".`, [], 'warning'));
-      return { embed: embed.success('Word Blacklisted', `Successfully blacklisted term **"${phrase.toLowerCase()}"**. Messages matching this phrase will be deleted.`) };
+      logToSecurityChannel(guild, cv2.log('Word Filter Added', `Moderator **${moderator.user.tag}** blacklisted phrase: "${phrase}".`, [], 'warning'));
+      return cv2.success('Word Blacklisted', `Successfully blacklisted term **"${phrase.toLowerCase()}"**. Messages matching this phrase will be deleted.`);
     } else {
-      return { embed: embed.info('Already Blacklisted', `Term **"${phrase.toLowerCase()}"** is already blacklisted.`) };
+      return cv2.info('Already Blacklisted', `Term **"${phrase.toLowerCase()}"** is already blacklisted.`);
     }
   } else if (action === 'remove') {
     const success = db.removeBlacklistWord(guild.id, phrase);
     if (success) {
-      logToSecurityChannel(guild, embed.log('Word Filter Removed', `Moderator **${moderator.user.tag}** un-blacklisted phrase: "${phrase}".`, [], 'success'));
-      return { embed: embed.success('Word Un-blacklisted', `Successfully removed **"${phrase.toLowerCase()}"** from word blacklist.`) };
+      logToSecurityChannel(guild, cv2.log('Word Filter Removed', `Moderator **${moderator.user.tag}** un-blacklisted phrase: "${phrase}".`, [], 'success'));
+      return cv2.success('Word Un-blacklisted', `Successfully removed **"${phrase.toLowerCase()}"** from word blacklist.`);
     } else {
-      return { embed: embed.warn('Not Blacklisted', `Term **"${phrase.toLowerCase()}"** is not currently blacklisted.`) };
+      return cv2.warn('Not Blacklisted', `Term **"${phrase.toLowerCase()}"** is not currently blacklisted.`);
     }
   } else {
     const config = db.getGuildConfig(guild.id);
     const list = config.blacklistWords || [];
     if (list.length === 0) {
-      return { embed: embed.success('Blacklist Empty', 'There are no active blacklisted words in this server.') };
+      return cv2.success('Blacklist Empty', 'There are no active blacklisted words in this server.');
     }
     const formattedWords = list.map(w => `• \`${w}\``).join('\n');
-    return { embed: embed.info('Filtered Word Blacklist', `If a non-moderator sends a message matching any of these terms, it will be deleted immediately:\n\n${formattedWords}`) };
+    return cv2.info('Filtered Word Blacklist', `If a non-moderator sends a message matching any of these terms, it will be deleted immediately:\n\n${formattedWords}`);
   }
 }
 export async function buildAutonickDashboard(guildId) {
@@ -2343,13 +2343,13 @@ async function handleConfig(guild, moderator, setting, value) {
   if (setting === 'maxwarnings') {
     const num = parseInt(value);
     if (isNaN(num) || num < 1 || num > 10) {
-      return { embed: embed.warn('Invalid Setting', 'Maximum warnings must be a number between 1 and 10.') };
+      return cv2.warn('Invalid Setting', 'Maximum warnings must be a number between 1 and 10.');
     }
     updates.maxWarnings = num;
     db.updateGuildConfig(guild.id, updates);
 
-    logToSecurityChannel(guild, embed.log('Config Updated', `Administrator **${moderator.user.tag}** set maxWarnings to **${num}**.`, [], 'success'));
-    return { embed: embed.success('Warnings Limit Updated', 
+    logToSecurityChannel(guild, cv2.log('Config Updated', `Administrator **${moderator.user.tag}** set maxWarnings to **${num}**.`, [], 'success'));
+    return cv2.success('Warnings Limit Updated', 
       `Exceeding **${num} Warnings** will now result in an automated server quarantine.\n\n` +
       `**Factors that apply Warnings:**\n` +
       `- Usage of Blacklisted Words\n` +
@@ -2358,11 +2358,11 @@ async function handleConfig(guild, moderator, setting, value) {
       `- Sending Discord Invites (Anti-Invite)\n` +
       `- Manual warnings via the \`/warn\` command\n\n` +
       `> **Zero-Tolerance Actions:** Critical server damage like deleting/creating channels, roles, emojis, or adding unauthorized bots will completely bypass this warning system and result in an **instant ban**.`
-    ) };
+    );
   }
 
   if (value !== 'on' && value !== 'off') {
-    return { embed: embed.warn('Invalid Value', 'Value for toggles must be either `on` or `off` (e.g. `!config antispam off`).') };
+    return cv2.warn('Invalid Value', 'Value for toggles must be either `on` or `off` (e.g. `!config antispam off`).');
   }
 
   const enabled = value === 'on';
@@ -2371,28 +2371,28 @@ async function handleConfig(guild, moderator, setting, value) {
     updates.antiNukeEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
     const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE (Rapid deletions or bans trigger instant quarantine)` : `${TOGGLE_OFF} DEACTIVATED`;
-    logToSecurityChannel(guild, embed.log('Config Anti-Nuke Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Nuke to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
+    logToSecurityChannel(guild, cv2.log('Config Anti-Nuke Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Nuke to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
     
     if (enabled) {
       setupDashboardChannel(guild, guild.client);
     }
     
-    return { embed: embed.success('Anti-Nuke Configured', `Anti-Nuke server protections are now **${modeDesc}**.`) };
+    return cv2.success('Anti-Nuke Configured', `Anti-Nuke server protections are now **${modeDesc}**.`);
   } else if (setting === 'antispam') {
     updates.antiSpamEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
     const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
-    logToSecurityChannel(guild, embed.log('Config Anti-Spam Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Spam to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
-    return { embed: embed.success('Anti-Spam Configured', `Automated rate-limit filters are now **${modeDesc}**.`) };
+    logToSecurityChannel(guild, cv2.log('Config Anti-Spam Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Spam to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
+    return cv2.success('Anti-Spam Configured', `Automated rate-limit filters are now **${modeDesc}**.`);
   } else if (setting === 'antiinvite') {
     updates.antiInviteEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
     const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
-    logToSecurityChannel(guild, embed.log('Config Anti-Invite Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Invite to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
-    return { embed: embed.success('Anti-Invite Configured', `Discord invite link auto-mod is now **${modeDesc}**.`) };
+    logToSecurityChannel(guild, cv2.log('Config Anti-Invite Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Invite to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
+    return cv2.success('Anti-Invite Configured', `Discord invite link auto-mod is now **${modeDesc}**.`);
   }
 
-  return { embed: embed.warn('Config Error', 'Unknown configuration option.') };
+  return cv2.warn('Config Error', 'Unknown configuration option.');
 }
 
 export async function getAntinukeConfigPanel(guild) {
@@ -2492,7 +2492,7 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
   }
 
   const resEmbed = enable
-    ? embed.success(
+    ? cv2.success(
         '<:on:1514996865030946847> God-Tier Firewall — Fully Operational',
         `<:on:1514996865030946847> **Firewall Layer:** Raw API Strike Engine Active
 <:on:1514996865030946847> **Predictive Layer:** Behavioral Pattern Detection Online
@@ -2511,13 +2511,13 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
           { name: 'Enforced by', value: `${moderator}`, inline: true }
         ]
       )
-    : embed.warn(
+    : cv2.warn(
         'All Shields Disengaged',
         `Athena Prime firewall layers have been **DEACTIVATED** server-wide. The server is now unprotected.`,
         [{ name: 'Lifted by', value: `${moderator}` }]
       );
 
-  logToSecurityChannel(guild, embed.log(
+  logToSecurityChannel(guild, cv2.log(
     'Toggle All Security',
     `Administrator **${moderator.user.tag}** toggled all shields **${enable ? 'ON' : 'OFF'}**.`,
     [],
@@ -2533,34 +2533,34 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 
 async function handleExtraOwner(guild, moderator, action, targetUser) {
   if (action === 'add') {
-    if (!targetUser) return { embed: embed.warn('Missing User', 'Please specify a user to add as extra owner.') };
+    if (!targetUser) return cv2.warn('Missing User', 'Please specify a user to add as extra owner.');
     
     const success = db.addExtraOwner(guild.id, targetUser.id);
     if (success) {
-      logToSecurityChannel(guild, embed.log('Extra Owner Added', `**${moderator.user.tag}** added **${targetUser.tag}** as an Extra Owner.`, [], 'success'));
-      return { embed: embed.owner('Extra Owner Added', `Successfully added **${targetUser.tag}** as an **Extra Owner**.\n\nThey are now:\n• __**Immune**__ to all moderation actions\n• __**Authorized**__ to use all bot commands\n• __**Whitelisted**__ from all auto-mod filters`) };
+      logToSecurityChannel(guild, cv2.log('Extra Owner Added', `**${moderator.user.tag}** added **${targetUser.tag}** as an Extra Owner.`, [], 'success'));
+      return cv2.owner('Extra Owner Added', `Successfully added **${targetUser.tag}** as an **Extra Owner**.\n\nThey are now:\n• __**Immune**__ to all moderation actions\n• __**Authorized**__ to use all bot commands\n• __**Whitelisted**__ from all auto-mod filters`);
     } else {
-      return { embed: embed.info('Already Extra Owner', `**${targetUser.tag}** is already registered as an Extra Owner.`) };
+      return cv2.info('Already Extra Owner', `**${targetUser.tag}** is already registered as an Extra Owner.`);
     }
   } else if (action === 'remove') {
-    if (!targetUser) return { embed: embed.warn('Missing User', 'Please specify a user to remove from extra owners.') };
+    if (!targetUser) return cv2.warn('Missing User', 'Please specify a user to remove from extra owners.');
     
     const success = db.removeExtraOwner(guild.id, targetUser.id);
     if (success) {
-      logToSecurityChannel(guild, embed.log('Extra Owner Removed', `**${moderator.user.tag}** removed **${targetUser.tag}** from Extra Owners.`, [], 'warning'));
-      return { embed: embed.success('Extra Owner Removed', `Successfully removed **${targetUser.tag}** from Extra Owners. They no longer have owner-level privileges.`) };
+      logToSecurityChannel(guild, cv2.log('Extra Owner Removed', `**${moderator.user.tag}** removed **${targetUser.tag}** from Extra Owners.`, [], 'warning'));
+      return cv2.success('Extra Owner Removed', `Successfully removed **${targetUser.tag}** from Extra Owners. They no longer have owner-level privileges.`);
     } else {
-      return { embed: embed.warn('Not Extra Owner', `**${targetUser.tag}** is not currently an Extra Owner.`) };
+      return cv2.warn('Not Extra Owner', `**${targetUser.tag}** is not currently an Extra Owner.`);
     }
   } else {
     // List
     const owners = db.getExtraOwners(guild.id);
     if (owners.length === 0) {
-      return { embed: embed.info('No Extra Owners', `There are no extra owners configured for this server.\n\n**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>`) };
+      return cv2.info('No Extra Owners', `There are no extra owners configured for this server.\n\n**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>`);
     }
 
     const formattedList = owners.map(id => `• <@${id}> (ID: \`${id}\`)`).join('\n');
-    return { embed: embed.owner('Extra Owners List', `**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>\n\n**Extra Owners:**\n${formattedList}`) };
+    return cv2.owner('Extra Owners List', `**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>\n\n**Extra Owners:**\n${formattedList}`);
   }
 }
 
@@ -2568,7 +2568,7 @@ async function handleBotWhitelist(guild, action, botId) {
   const cleanId = botId ? botId.replace(/[<@&!>]/g, '') : null;
   
   if (action === 'add') {
-    if (!cleanId || !/^\d{17,20}$/.test(cleanId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid bot User ID or a Role mention/ID.') };
+    if (!cleanId || !/^\d{17,20}$/.test(cleanId)) return cv2.warn('Invalid ID', 'Please provide a valid bot User ID or a Role mention/ID.');
     db.addBotToWhitelist(guild.id, cleanId);
     
     const isRole = guild.roles.cache.has(cleanId);
@@ -2585,14 +2585,14 @@ async function handleBotWhitelist(guild, action, botId) {
              `• To revoke this immunity, use \`!botwhitelist remove ${cleanId}\`.`;
     }
     
-    return { embed: embed.success('Whitelisted', desc) };
+    return cv2.success('Whitelisted', desc);
   } else if (action === 'remove') {
-    if (!cleanId) return { embed: embed.warn('Missing ID', 'Please provide the Bot/Role ID to remove.') };
+    if (!cleanId) return cv2.warn('Missing ID', 'Please provide the Bot/Role ID to remove.');
     db.removeBotFromWhitelist(guild.id, cleanId);
-    return { embed: embed.success('Removed', `ID \`${cleanId}\` has been removed from the Bot Whitelist. It no longer has Anti-Nuke immunity.`) };
+    return cv2.success('Removed', `ID \`${cleanId}\` has been removed from the Bot Whitelist. It no longer has Anti-Nuke immunity.`);
   } else {
     const list = db.getBotWhitelist(guild.id);
-    if (list.length === 0) return { embed: embed.info('No Whitelisted Bots/Roles', 'No bots or roles are currently whitelisted.\n\nUse `!botwhitelist add <botId/roleId>` to whitelist a trusted bot or role.') };
+    if (list.length === 0) return cv2.info('No Whitelisted Bots/Roles', 'No bots or roles are currently whitelisted.\n\nUse `!botwhitelist add <botId/roleId>` to whitelist a trusted bot or role.');
     
     const formatted = await Promise.all(list.map(async id => {
       const role = guild.roles.cache.get(id);
@@ -2604,35 +2604,35 @@ async function handleBotWhitelist(guild, action, botId) {
       return `• **Unknown:** \`${id}\``;
     }));
     
-    return { embed: embed.info('Whitelisted Bots & Roles', `The following entities have full Anti-Nuke immunity:\n\n${formatted.join('\n')}`) };
+    return cv2.info('Whitelisted Bots & Roles', `The following entities have full Anti-Nuke immunity:\n\n${formatted.join('\n')}`);
   }
 }
 
 async function handleBotBlacklist(action, targetId) {
   if (action === 'add') {
-    if (!targetId || !/^\d{17,20}$/.test(targetId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid user ID (17-20 digit number).') };
+    if (!targetId || !/^\d{17,20}$/.test(targetId)) return cv2.warn('Invalid ID', 'Please provide a valid user ID (17-20 digit number).');
     const success = db.addUserToBotBlacklist(targetId);
     if (success) {
-      return { embed: embed.success('User Flagged', `User ID \`${targetId}\` has been **flagged**.\nThey are now blacklisted and cannot use any Athena Prime commands globally.`) };
+      return cv2.success('User Flagged', `User ID \`${targetId}\` has been **flagged**.\nThey are now blacklisted and cannot use any Athena Prime commands globally.`);
     } else {
-      return { embed: embed.info('Already Flagged', `User ID \`${targetId}\` is already on the bot blacklist.`) };
+      return cv2.info('Already Flagged', `User ID \`${targetId}\` is already on the bot blacklist.`);
     }
   } else if (action === 'remove') {
-    if (!targetId || !/^\d{17,20}$/.test(targetId)) return { embed: embed.warn('Invalid ID', 'Please provide a valid user ID to unflag.') };
+    if (!targetId || !/^\d{17,20}$/.test(targetId)) return cv2.warn('Invalid ID', 'Please provide a valid user ID to unflag.');
     const success = db.removeUserFromBotBlacklist(targetId);
     if (success) {
-      return { embed: embed.success('User Unflagged', `User ID \`${targetId}\` has been **unflagged** and removed from the global bot blacklist.`) };
+      return cv2.success('User Unflagged', `User ID \`${targetId}\` has been **unflagged** and removed from the global bot blacklist.`);
     } else {
-      return { embed: embed.warn('Not Flagged', `User ID \`${targetId}\` is not currently flagged.`) };
+      return cv2.warn('Not Flagged', `User ID \`${targetId}\` is not currently flagged.`);
     }
   } else {
     // List
     const flagged = db.getBotBlacklist();
     if (flagged.length === 0) {
-      return { embed: embed.info('No Flagged Users', 'There are no users currently flagged on the global bot blacklist.') };
+      return cv2.info('No Flagged Users', 'There are no users currently flagged on the global bot blacklist.');
     }
     const formattedList = flagged.map(id => `• <@${id}> (ID: \`${id}\`)`).join('\n');
-    return { embed: embed.danger('Flagged Users', `These users are globally banned from using the bot:\n\n${formattedList}`) };
+    return cv2.danger('Flagged Users', `These users are globally banned from using the bot:\n\n${formattedList}`);
   }
 }
 
@@ -2641,13 +2641,13 @@ async function handleAntiLink(guild, moderator, mode) {
   db.updateGuildConfig(guild.id, { antiLinkEnabled: enabled });
 
   const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
-  const resEmbed = embed.success(
+  const resEmbed = cv2.success(
     'Anti-Link Configured',
     `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <:emoji_16:1521464002046328944> Discord Invites\n> <:emoji_16:1521464002046328944> NSFW Links\n> <:emoji_16:1521464002046328944> Scam/Phishing Links\n> <:emoji_16:1521464002046328944> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
     [{ name: 'Changed by', value: `${moderator}` }]
   );
 
-  logToSecurityChannel(guild, embed.log(
+  logToSecurityChannel(guild, cv2.log(
     'Anti-Link Toggle',
     `Administrator **${moderator.user.tag}** toggled Anti-Link to **${mode.toUpperCase()}**.`,
     [],
@@ -2693,7 +2693,7 @@ async function getServerInfoEmbed(guild) {
     { name: ' Max Warns', value: `\`${config.maxWarnings}\``, inline: true }
   ];
 
-  const serverEmbed = embed.security(
+  const serverEmbed = cv2.security(
     `${guild.name} — Server Info`,
     `Comprehensive server statistics and Athena Prime security overview.`,
     fields
@@ -2740,7 +2740,7 @@ async function getUserInfoEmbed(guild, member) {
     { name: `<:emoji_16:1533860111704002665> Roles [${member.roles.cache.size - 1}]`, value: roles }
   ];
 
-  const userEmbed = embed.info(
+  const userEmbed = cv2.info(
     `User Info — ${member.user.tag}`,
     `Detailed profile and privilege information.`,
     fields
@@ -2786,7 +2786,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
     const mainDisplay = new TextDisplayBuilder().setContent(textContent);
     const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
 
-    logToSecurityChannel(guild, embed.log(
+    logToSecurityChannel(guild, cv2.log(
       'Security Toggle All',
       `**${moderator.user.tag}** toggled all security shields **OFF**.`,
       [],
@@ -2877,7 +2877,7 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
   if (action === 'setup') {
     // Create/resolve quarantine role + channel
     const qRole = await getOrCreateQuarantineRole(guild);
-    if (!qRole) return { embed: embed.danger('Setup Failed', 'Could not create or find the Quarantine role. Check bot permissions.') };
+    if (!qRole) return cv2.danger('Setup Failed', 'Could not create or find the Quarantine role. Check bot permissions.');
 
     const qChannel = await getOrCreateQuarantineChannel(guild, qRole);
 
@@ -2893,35 +2893,33 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const vc = config.quarantineVcId ? await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
     if (vc) fields.push({ name: '<:emoji_16:1533860111704002665> Quarantine VC', value: `<#${vc.id}>`, inline: true });
 
-    return {
-      embed: embed.success(
+    return cv2.success(
         'Quarantine System Fixed ',
         `The quarantine role and channel have been set up.\nDeny overwrites applied to **${synced}** channels — quarantined users will only see the quarantine zone.`,
         fields
-      )
-    };
+      );
   }
 
   if (action === 'setrole') {
-    if (!roleArg) return { embed: embed.warn('Missing Role', 'Please specify a role using the `role` option.') };
+    if (!roleArg) return cv2.warn('Missing Role', 'Please specify a role using the `role` option.');
     db.updateGuildConfig(guild.id, { quarantineRoleId: roleArg.id });
     const qChannelId = db.getGuildConfig(guild.id).quarantineChannelId;
     await syncQuarantinePermissions(guild, roleArg, qChannelId);
-    return { embed: embed.success('Quarantine Role Set', `Set <@&${roleArg.id}> as the quarantine role and synced deny overwrites across all channels.`) };
+    return cv2.success('Quarantine Role Set', `Set <@&${roleArg.id}> as the quarantine role and synced deny overwrites across all channels.`);
   }
 
   if (action === 'setchannel') {
-    if (!channelArg) return { embed: embed.warn('Missing Channel', 'Please specify a text channel using the `channel` option.') };
+    if (!channelArg) return cv2.warn('Missing Channel', 'Please specify a text channel using the `channel` option.');
     db.updateGuildConfig(guild.id, { quarantineChannelId: channelArg.id });
     const qRole = await getOrCreateQuarantineRole(guild);
     await syncQuarantinePermissions(guild, qRole, channelArg.id);
-    return { embed: embed.success('Quarantine Channel Set', `Set <#${channelArg.id}> as the quarantine text zone and synced deny overwrites across all channels.\nQuarantined users will be able to view and chat here.`) };
+    return cv2.success('Quarantine Channel Set', `Set <#${channelArg.id}> as the quarantine text zone and synced deny overwrites across all channels.\nQuarantined users will be able to view and chat here.`);
   }
 
   if (action === 'setvc') {
-    if (!channelArg) return { embed: embed.warn('Missing VC', 'Please specify a voice channel using the `channel` option.') };
+    if (!channelArg) return cv2.warn('Missing VC', 'Please specify a voice channel using the `channel` option.');
     db.updateGuildConfig(guild.id, { quarantineVcId: channelArg.id });
-    return { embed: embed.success('Quarantine VC Set', `Set <#${channelArg.id}> as the quarantine voice channel.\nWhen a member is quarantined they will be moved here (if they are in a VC). On unquarantine they are returned to their previous VC.`) };
+    return cv2.success('Quarantine VC Set', `Set <#${channelArg.id}> as the quarantine voice channel.\nWhen a member is quarantined they will be moved here (if they are in a VC). On unquarantine they are returned to their previous VC.`);
   }
 
   if (action === 'status') {
@@ -2930,16 +2928,14 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const channel = updatedConfig.quarantineChannelId ? await guild.channels.fetch(updatedConfig.quarantineChannelId).catch(() => null) : null;
     const vc      = updatedConfig.quarantineVcId      ? await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null)      : null;
 
-    return {
-      embed: embed.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
+    return cv2.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
         { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set — run `/qrmanager setup`', inline: true },
         { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set — run `/qrmanager setup`', inline: true },
         { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set — use `/qrmanager setvc`', inline: true }
-      ])
-    };
+      ]);
   }
 
-  return { embed: embed.warn('Unknown Action', 'Valid actions: `setup`, `setrole`, `setchannel`, `setvc`, `status`') };
+  return cv2.warn('Unknown Action', 'Valid actions: `setup`, `setrole`, `setchannel`, `setvc`, `status`');
 }
 
 // ==========================================
@@ -2949,23 +2945,19 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 async function handleLinksAllow(guild, action, domain) {
   if (action === 'allowall') {
     db.updateGuildConfig(guild.id, { allowAllLinks: true });
-    return {
-      embed: embed.success(
+    return cv2.success(
         '<:emoji_16:1533860111704002665> All Links Allowed',
         'The anti-link filter has been **completely disabled** for this server.\n\nAll users can now post any link freely.\n\nUse `/linksallow disallowall` to re-enable the filter.',
         [{ name: ' Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
-      )
-    };
+      );
   }
 
   if (action === 'disallowall') {
     db.updateGuildConfig(guild.id, { allowAllLinks: false, allowedLinks: [] });
-    return {
-      embed: embed.warn(
+    return cv2.warn(
         '<a:AnyaYay:1537513785718476850> Anti-Link Filter Restored',
         'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> <:emoji_16:1521464002046328944> Discord Invites\n> <:emoji_16:1521464002046328944> NSFW Links\n> <:emoji_16:1521464002046328944> Scam/Phishing Links\n> <:emoji_16:1521464002046328944> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
-      )
-    };
+      );
   }
 
   if (action === 'add') {
@@ -2976,15 +2968,13 @@ async function handleLinksAllow(guild, action, domain) {
       .trim()
       .toLowerCase();
 
-    if (!cleanDomain) return { embed: embed.warn('Invalid Domain', 'Please provide a valid domain (e.g. `youtube.com`).') };
+    if (!cleanDomain) return cv2.warn('Invalid Domain', 'Please provide a valid domain (e.g. `youtube.com`).');
 
     const added = db.addAllowedLink(guild.id, cleanDomain);
     if (added) {
-      return {
-        embed: embed.success('Domain Allowed', `Added **\`${cleanDomain}\`** to the allowed links list.\nLinks containing this domain will bypass the anti-link filter.`)
-      };
+      return cv2.success('Domain Allowed', `Added **\`${cleanDomain}\`** to the allowed links list.\nLinks containing this domain will bypass the anti-link filter.`);
     }
-    return { embed: embed.info('Already Allowed', `**\`${cleanDomain}\`** is already in the allowed list.`) };
+    return cv2.info('Already Allowed', `**\`${cleanDomain}\`** is already in the allowed list.`);
   }
 
   if (action === 'remove') {
@@ -2996,9 +2986,9 @@ async function handleLinksAllow(guild, action, domain) {
 
     const removed = db.removeAllowedLink(guild.id, cleanDomain);
     if (removed) {
-      return { embed: embed.success('Domain Removed', `Removed **\`${cleanDomain}\`** from the allowed list.`) };
+      return cv2.success('Domain Removed', `Removed **\`${cleanDomain}\`** from the allowed list.`);
     }
-    return { embed: embed.warn('Not Found', `**\`${cleanDomain}\`** is not in the allowed list.`) };
+    return cv2.warn('Not Found', `**\`${cleanDomain}\`** is not in the allowed list.`);
   }
 
   // list
@@ -3007,30 +2997,24 @@ async function handleLinksAllow(guild, action, domain) {
   const list     = db.getAllowedLinks(guild.id);
 
   if (allOpen) {
-    return {
-      embed: embed.info(
+    return cv2.info(
         '<:emoji_16:1533860111704002665> All Links Allowed',
         'The anti-link filter is currently **fully disabled** — all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
-      )
-    };
+      );
   }
 
   if (list.length === 0) {
-    return {
-      embed: embed.info(
+    return cv2.info(
         'No Allowed Domains',
         'No domains are whitelisted yet.\n\nAdd one with `/linksallow add <domain>` (e.g. `youtube.com`, `tenor.com`, `giphy.com`).\nThese domains will not be blocked by the anti-link filter.'
-      )
-    };
+      );
   }
 
   const formatted = list.map((d, i) => `${i + 1}. \`${d}\``).join('\n');
-  return {
-    embed: embed.info(
+  return cv2.info(
       'Allowed Link Domains',
       `These domains bypass the anti-link filter:\n\n${formatted}\n\n*Use \`/linksallow remove <domain>\` to remove any.*`
-    )
-  };
+    );
 }
 
 // ==========================================
@@ -3040,7 +3024,7 @@ async function handleLinksAllow(guild, action, domain) {
 async function handleMassQuarantine(guild, moderator, targetRole, reason) {
   // Safety guard — prevent quarantining @everyone
   if (targetRole.id === guild.id) {
-    return { embed: embed.danger('Blocked', 'You cannot mass quarantine the `@everyone` role.') };
+    return cv2.danger('Blocked', 'You cannot mass quarantine the `@everyone` role.');
   }
 
   // Fetch all members (ensure cache is populated)
@@ -3058,12 +3042,10 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
   });
 
   if (targets.size === 0) {
-    return {
-      embed: embed.warn(
+    return cv2.warn(
         'No Eligible Targets',
         `No members with <@&${targetRole.id}> can be quarantined.\n\nAll members are either already quarantined, protected (owner/extra owner/whitelisted), or the role is empty.`
-      )
-    };
+      );
   }
 
   let success = 0;
@@ -3082,7 +3064,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
 
   const total = targets.size;
 
-  logToSecurityChannel(guild, embed.log(
+  logToSecurityChannel(guild, cv2.log(
     'Mass Quarantine Executed',
     `**${moderator.user.tag}** mass-quarantined all members with role <@&${targetRole.id}>.`,
     [
@@ -3095,8 +3077,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
     'danger'
   ));
 
-  return {
-    embed: embed.danger(
+  return cv2.danger(
       '<:emoji_16:1533860111704002665> Mass Quarantine Complete',
       `All targeted members with <@&${targetRole.id}> have been processed.`,
       [
@@ -3107,8 +3088,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
         { name: '<:emoji_16:1533860111704002665> Reason',       value: reason,             inline: false },
         { name: '<:emoji_16:1533860111704002665> Executed By',  value: `${moderator}`,    inline: true }
       ]
-    )
-  };
+    );
 }
 
 // ==========================================
@@ -3118,7 +3098,7 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
   const quarantined = db.getQuarantinedInGuild(guild.id);
 
   if (!quarantined || quarantined.length === 0) {
-    return { embed: embed.info('Nothing to Release', 'There are no quarantined members in this server.') };
+    return cv2.info('Nothing to Release', 'There are no quarantined members in this server.');
   }
 
   let success = 0;
@@ -3147,7 +3127,7 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
 
   }
 
-  logToSecurityChannel(guild, embed.log(
+  logToSecurityChannel(guild, cv2.log(
     'Mass Unquarantine Executed',
     `**${moderator.user.tag}** released all quarantined members.`,
     [
@@ -3157,8 +3137,7 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
     'success'
   ));
 
-  return {
-    embed: embed.success(
+  return cv2.success(
       '<:emoji_16:1533860111704002665> Mass Unquarantine Complete',
       `All quarantined members have been processed.`,
       [
@@ -3166,8 +3145,7 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
         { name: ' Failed',        value: `\`${failed}\``,  inline: true },
         { name: '<:emoji_16:1533860111704002665> Executed By', value: `${moderator}`,    inline: true }
       ]
-    )
-  };
+    );
 }
 
 async function runSecurityEnableSequence(guild, updateMessageFn) {

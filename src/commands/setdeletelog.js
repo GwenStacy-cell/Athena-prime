@@ -1,5 +1,5 @@
 import { PermissionFlagsBits } from 'discord.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import db from '../database.js';
 
 export const commands = [
@@ -12,7 +12,7 @@ export const commands = [
       try {
         const channel = message.mentions.channels.first();
         if (!channel) {
-          return await message.reply({ embeds: [embed.warn('Error', 'Please mention a valid channel.')] }).catch(() => null);
+          return await message.reply(cv2.warn('Error', 'Please mention a valid channel.')).catch(() => null);
         }
 
         const guild = message.guild;
@@ -25,7 +25,7 @@ export const commands = [
         
         db.updateGuildConfig(guild.id, { serverLogs: sl });
         
-        const res = { embeds: [embed.success('Ghost Ping & Sniper Logs Set', `<:Dark4luvontop:1533860091818803242> **Ghost Pings** and **Deleted Messages** will now be routed to <#${channel.id}>.`)] };
+        const res = cv2.success('Ghost Ping & Sniper Logs Set', `<:Dark4luvontop:1533860091818803242> **Ghost Pings** and **Deleted Messages** will now be routed to <#${channel.id}>.`);
         await message.reply(res).catch(() => null);
       } catch (error) {
         console.error('Error in setdeletelog:', error);

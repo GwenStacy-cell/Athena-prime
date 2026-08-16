@@ -1,6 +1,6 @@
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isBotOwnerSync, parseDuration } from '../utils/helpers.js';
 
 export const commands = [
@@ -293,11 +293,7 @@ export const commands = [
       const sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]).slice(0, 10);
       const lines = sorted.map((s, i) => `**${i+1}.** \`${s[0]}\` — ${s[1]} uses`);
       
-      const e = new EmbedBuilder()
-        .setColor('#2b2d31')
-        .setTitle('Top 10 Global Command Usage')
-        .setDescription(lines.join('\n') || 'No commands tracked yet.');
-      message.reply({ embeds: [e] });
+      message.reply(cv2.info('Top 10 Global Command Usage', lines.join('\n') || 'No commands tracked yet.'));
     }
   },
   {
@@ -314,11 +310,7 @@ export const commands = [
       const servers = message.client.guilds.cache.size;
       const ping = message.client.ws.ping;
       
-      const e = new EmbedBuilder()
-        .setColor('#2b2d31')
-        .setTitle('Bot System Metrics')
-        .setDescription(`> **Servers:** ${servers}\n> **Memory:** ${memStr}\n> **Latency:** ${ping}ms`);
-      message.reply({ embeds: [e] });
+      message.reply(cv2.info('Bot System Metrics', `> **Servers:** ${servers}\n> **Memory:** ${memStr}\n> **Latency:** ${ping}ms`));
     }
   }
 ];

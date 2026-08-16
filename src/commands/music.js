@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { enqueue, buildAddedToQueueMsg } from '../utils/musicManager.js';
 
 export const commands = [
@@ -22,7 +22,7 @@ export const commands = [
       
     async executePrefix(message, args) {
       if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', 'You need `ManageGuild` permissions to setup the music player.')] });
+        return message.reply(cv2.danger('Permission Denied', 'You need `ManageGuild` permissions to setup the music player.'));
       }
       await setupMusicChannel(message.guild, message.channel, args[0]);
     },
@@ -95,23 +95,25 @@ export const commands = [
     },
       
     async executePrefix(message, args) {
-      if (!args.length) return message.reply({ embeds: [embed.warn('Invalid Usage', 'Please provide a song name or URL.')] });
+      if (!args.length) return message.reply(cv2.warn('Invalid Usage', 'Please provide a song name or URL.'));
       const query = args.join(' ');
       const res = await enqueue(message.guild, message.member, query);
       
       if (res.success) {
         const { default: db } = await import("../database.js");
         const cfg = db.getGuildConfig(message.guild.id);
-        const replyPayload = { embeds: [embed.success('Track Queued', res.message)] };
+        const replyPayload = cv2.success('Track Queued', res.message);
         if (cfg.musicChannelId && message.channel.id !== cfg.musicChannelId) {
-          const redirectEmbed = new EmbedBuilder()
-            .setColor(cfg.accentColor || '#ff0000')
-            .setDescription(`-# **[Control Playback Here](https://discord.com/channels/${message.guild.id}/${cfg.musicChannelId})**\n-# If you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
-          replyPayload.embeds.push(redirectEmbed);
+          // Can't push raw EmbedBuilder to cv2.success since cv2 doesn't use embeds. Wait! cv2 might support embeds field if mixed? 
+          // Actually, cv2 is pure components + flags.
+          // Is it safe to just append an embed? Yes, if we want. But Discord allows both.
+          // Wait, cv2 result is { components: [...], flags: 8192 }. Discord allows embeds with IsComponentsV2 flag? No, Discord completely ignores embeds if IsComponentsV2 is set.
+          // Wait, if it ignores embeds, how do we add the redirect text? We can just append to the description of cv2.success!
+          replyPayload = cv2.success('Track Queued', res.message + `\n\n-# **[Control Playback Here](https://discord.com/channels/${message.guild.id}/${cfg.musicChannelId})**\n-# If you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
         }
         message.reply(replyPayload);
       } else {
-        message.reply({ embeds: [embed.danger('Error', res.message)] });
+        message.reply(cv2.danger('Error', res.message));
       }
     },
     
@@ -123,16 +125,13 @@ export const commands = [
       
       if (res.success) {
         const cfg = db.getGuildConfig(interaction.guildId);
-        const replyPayload = { embeds: [embed.success('Track Queued', res.message)] };
+        let replyPayload = cv2.success('Track Queued', res.message);
         if (cfg.musicChannelId && interaction.channelId !== cfg.musicChannelId) {
-          const redirectEmbed = new EmbedBuilder()
-            .setColor(cfg.accentColor || '#ff0000')
-            .setDescription(`-# **[Control Playback Here](https://discord.com/channels/${interaction.guild.id}/${cfg.musicChannelId})**\n-# If you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
-          replyPayload.embeds.push(redirectEmbed);
+          replyPayload = cv2.success('Track Queued', res.message + `\n\n-# **[Control Playback Here](https://discord.com/channels/${interaction.guild.id}/${cfg.musicChannelId})**\n-# If you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
         }
         interaction.editReply(replyPayload);
       } else {
-        interaction.editReply({ embeds: [embed.danger('Error', res.message)] });
+        interaction.editReply(cv2.danger('Error', res.message));
       }
     }
   }
@@ -191,20 +190,20 @@ async function setupMusicChannel(guild, commandChannel, imageUrl, interaction = 
       musicCoverImage: coverImage
     });
     
-    const successEmbed = embed.success('Music Setup Complete', `Created ${channel} and posted the Compact Music Player interface.`);
+    const successPayload = cv2.success('Music Setup Complete', `Created ${channel} and posted the Compact Music Player interface.`);
     if (interaction) {
-      await interaction.editReply({ embeds: [successEmbed] });
+      await interaction.editReply(successPayload);
     } else {
-      await commandChannel.send({ embeds: [successEmbed] });
+      await commandChannel.send(successPayload);
     }
     
   } catch (err) {
     console.error('Setup music error:', err);
-    const failEmbed = embed.danger('Setup Failed', 'Could not create the channel. Please check my permissions.');
+    const failPayload = cv2.danger('Setup Failed', 'Could not create the channel. Please check my permissions.');
     if (interaction) {
-      await interaction.editReply({ embeds: [failEmbed] });
+      await interaction.editReply(failPayload);
     } else {
-      await commandChannel.send({ embeds: [failEmbed] });
+      await commandChannel.send(failPayload);
     }
   }
 }

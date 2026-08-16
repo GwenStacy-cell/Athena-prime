@@ -1,5 +1,6 @@
 import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import embed, { setGuildContext } from '../embed.js';
+import cv2 from '../cv2.js';
+import { setGuildContext } from '../embed.js';
 import db from '../database.js';
 
 export const commands = [

@@ -9,7 +9,7 @@ import {
   PermissionFlagsBits
 } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 
 // ——————————————————————————————————————————
@@ -246,7 +246,7 @@ export const commands = [
         message.member?.permissions?.has(PermissionFlagsBits.Administrator);
 
       if (!isAuth) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', `${message.author} Only Administrators can manage the accent color.`)] });
+        return message.reply(cv2.danger('Permission Denied', `${message.author} Only Administrators can manage the accent color.`));
       }
 
       const panel = buildAccentPanel(message.guild);
@@ -259,7 +259,7 @@ export const commands = [
         interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
 
       if (!isAuth) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', `${interaction.user} Only Administrators can manage the accent color.`)] });
+        return interaction.reply(cv2.danger('Permission Denied', `${interaction.user} Only Administrators can manage the accent color.`));
       }
 
       const panel = buildAccentPanel(interaction.guild);

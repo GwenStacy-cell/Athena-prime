@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, ChannelType, ApplicationCommandOptionType, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export async function updateServerStatsChannels(guild, stats) {
   await guild.members.fetch().catch(() => null);
@@ -99,7 +99,7 @@ export const commands = [
       
       if (action === 'disable') {
         const stats = db.getServerStats(message.guild.id);
-        if (!stats) return message.reply({ embeds: [embed.warning('Not Setup', 'Server stats are not currently set up.')] });
+        if (!stats) return message.reply(cv2.warning('Not Setup', 'Server stats are not currently set up.'));
         
         const m = await message.reply(' Disabling server stats and deleting channels...');
         
@@ -109,12 +109,12 @@ export const commands = [
         }
         
         db.deleteServerStats(message.guild.id);
-        return m.edit({ content: '', embeds: [embed.success('Disabled', 'Server stats channels have been deleted.')] });
+        return m.edit({ content: '', ...cv2.success('Disabled', 'Server stats channels have been deleted.') });
       }
       
       if (action === 'config') {
         const stats = db.getServerStats(message.guild.id);
-        if (!stats) return message.reply({ embeds: [embed.warning('Not Setup', 'Server stats are not currently set up. Please run `!serverstats setup` first.')] });
+        if (!stats) return message.reply(cv2.warning('Not Setup', 'Server stats are not currently set up. Please run `!serverstats setup` first.'));
         
         let newEmoji = args[1];
         let newFont = args[2]?.toLowerCase();
@@ -148,10 +148,9 @@ export const commands = [
           const row1 = new ActionRowBuilder().addComponents(fontSelect);
           const row2 = new ActionRowBuilder().addComponents(emojiBtn);
 
-          const setupMsg = await message.reply({ 
-            embeds: [embed.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.\n\n⚠️ **Note:** Discord limits voice channel renames to **2 times every 10 minutes**. If your changes don\'t apply immediately, please wait a few minutes for the rate limit to expire.')],
-            components: [row1, row2]
-          });
+          const cv2Reply = cv2.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.\n\n⚠️ **Note:** Discord limits voice channel renames to **2 times every 10 minutes**. If your changes don\'t apply immediately, please wait a few minutes for the rate limit to expire.');
+          cv2Reply.components.push(row1, row2);
+          const setupMsg = await message.reply(cv2Reply);
 
           const collector = setupMsg.createMessageComponentCollector({ filter: i => i.user.id === message.author.id, time: 120000 });
           
@@ -212,9 +211,9 @@ export const commands = [
         
         try {
           await updateServerStatsChannels(message.guild, updatedStats);
-          return message.reply({ embeds: [embed.success('Stats Configured', `Server stats font/emoji updated to **${newFont || 'standard'}** with emoji **${newEmoji || 'none'}**!`)] });
+          return message.reply(cv2.success('Stats Configured', `Server stats font/emoji updated to **${newFont || 'standard'}** with emoji **${newEmoji || 'none'}**!`));
         } catch (err) {
-          return message.reply({ embeds: [embed.warning('Stats Configured, but Discord Ratelimited', `Server stats config updated!\n\n⚠️ **Discord rejected the immediate channel rename!**\nError: \`${err.message}\`\n\nYour choices are saved and will automatically apply in ~10 minutes.`)] });
+          return message.reply(cv2.warning('Stats Configured, but Discord Ratelimited', `Server stats config updated!\n\n⚠️ **Discord rejected the immediate channel rename!**\nError: \`${err.message}\`\n\nYour choices are saved and will automatically apply in ~10 minutes.`));
         }
       }
 
@@ -272,10 +271,10 @@ export const commands = [
             font: 'standard'
           });
           
-          return m.edit({ content: '', embeds: [embed.success('Setup Complete', 'Server stats channels have been created and will automatically update every 6 minutes!')] });
+          return m.edit({ content: '', ...cv2.success('Setup Complete', 'Server stats channels have been created and will automatically update every 6 minutes!') });
         } catch (err) {
           console.error(err);
-          return m.edit({ content: '', embeds: [embed.danger('Error', 'Failed to create channels. Ensure the bot has `Manage Channels` permission.')] });
+          return m.edit({ content: '', ...cv2.danger('Error', 'Failed to create channels. Ensure the bot has `Manage Channels` permission.') });
         }
       }
       
@@ -293,7 +292,7 @@ export const commands = [
         }
       }
       
-      return message.reply({ embeds: [embed.info('Server Stats', 'Usage: `!serverstats setup`, `!serverstats disable`, or `!serverstats config`')] });
+      return message.reply(cv2.info('Server Stats', 'Usage: `!serverstats setup`, `!serverstats disable`, or `!serverstats config`'));
     },
     executeSlash: async (interaction) => {
       await interaction.deferReply();
@@ -301,7 +300,7 @@ export const commands = [
       
       if (action === 'disable') {
         const stats = db.getServerStats(interaction.guild.id);
-        if (!stats) return interaction.editReply({ embeds: [embed.warning('Not Setup', 'Server stats are not currently set up.')] });
+        if (!stats) return interaction.editReply(cv2.warning('Not Setup', 'Server stats are not currently set up.'));
         
         for (const id of [stats.categoryId, stats.totalId, stats.humansId, stats.botsId]) {
           const ch = interaction.guild.channels.cache.get(id);
@@ -309,18 +308,18 @@ export const commands = [
         }
         
         db.deleteServerStats(interaction.guild.id);
-        return interaction.editReply({ embeds: [embed.success('Disabled', 'Server stats channels have been deleted.')] });
+        return interaction.editReply(cv2.success('Disabled', 'Server stats channels have been deleted.'));
       }
       
       if (action === 'config') {
         const stats = db.getServerStats(interaction.guild.id);
-        if (!stats) return interaction.editReply({ embeds: [embed.warning('Not Setup', 'Server stats are not currently set up.')] });
+        if (!stats) return interaction.editReply(cv2.warning('Not Setup', 'Server stats are not currently set up.'));
         
         const newEmoji = interaction.options.getString('emoji');
         const newFont = interaction.options.getString('font');
         
         if (!newEmoji && !newFont) {
-           return interaction.editReply({ embeds: [embed.info('No Changes', 'You must provide either an emoji or a font to configure.')] });
+           return interaction.editReply(cv2.info('No Changes', 'You must provide either an emoji or a font to configure.'));
         }
 
         const updatedStats = { ...stats };
@@ -332,7 +331,7 @@ export const commands = [
         // Trigger manual update right away
         await updateServerStatsChannels(interaction.guild, updatedStats);
 
-        return interaction.editReply({ embeds: [embed.success('Stats Configured', `Server stats font/emoji updated to **${updatedStats.font}** with emoji **${updatedStats.emoji}**!`)] });
+        return interaction.editReply(cv2.success('Stats Configured', `Server stats font/emoji updated to **${updatedStats.font}** with emoji **${updatedStats.emoji}**!`));
       }
 
       if (action === 'setup') {
@@ -385,10 +384,10 @@ export const commands = [
             font: 'standard'
           });
           
-          return interaction.editReply({ embeds: [embed.success('Setup Complete', 'Server stats channels have been created and will automatically update every 6 minutes!')] });
+          return interaction.editReply(cv2.success('Setup Complete', 'Server stats channels have been created and will automatically update every 6 minutes!'));
         } catch (err) {
           console.error(err);
-          return interaction.editReply({ embeds: [embed.danger('Error', 'Failed to create channels. Ensure the bot has `Manage Channels` permission.')] });
+          return interaction.editReply(cv2.danger('Error', 'Failed to create channels. Ensure the bot has `Manage Channels` permission.'));
         }
       }
     }

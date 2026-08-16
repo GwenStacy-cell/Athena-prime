@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isBotOwnerOrServerOwnerStrict, isBotOwnerSync } from '../utils/helpers.js';
 
 const BDAY_EMOJIS = [
@@ -72,16 +72,16 @@ export const commands = [
     async executePrefix(message, args) {
       const isOwnerOrServerOwner = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
       if (!isOwnerOrServerOwner) {
-        return message.reply({ embeds: [embed.danger('Permission Denied', '️ This command is restricted to the **Server Owner** and **Bot Owner** only.')] });
+        return message.reply(cv2.danger('Permission Denied', '️ This command is restricted to the **Server Owner** and **Bot Owner** only.'));
       }
 
       const subcommand = args[0]?.toLowerCase();
 
       if (subcommand === 'setchannel') {
         const channel = message.mentions.channels.first();
-        if (!channel) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please mention a valid channel.')] });
+        if (!channel) return message.reply(cv2.warn('Missing Argument', 'Please mention a valid channel.'));
         db.setBirthdayChannel(message.guild.id, channel.id);
-        return message.reply({ embeds: [embed.success('Success', `Birthday wishes will now be sent to ${channel}`)] });
+        return message.reply(cv2.success('Success', `Birthday wishes will now be sent to ${channel}`));
       }
 
       if (subcommand === 'set') {
@@ -90,26 +90,26 @@ export const commands = [
         const month = parseInt(args[3]);
 
         if (!user || isNaN(day) || isNaN(month)) {
-          return message.reply({ embeds: [embed.warn('Invalid Usage', 'Usage: `!birthday set @user <day> <month>`')] });
+          return message.reply(cv2.warn('Invalid Usage', 'Usage: `!birthday set @user <day> <month>`'));
         }
 
         if (day < 1 || day > 31 || month < 1 || month > 12) {
-          return message.reply({ embeds: [embed.warn('Invalid Date', 'Please provide a valid day (1-31) and month (1-12).')] });
+          return message.reply(cv2.warn('Invalid Date', 'Please provide a valid day (1-31) and month (1-12).'));
         }
 
         db.setBirthday(message.guild.id, user.id, day, month);
-        return message.reply({ embeds: [embed.success('Success', `Saved birthday for ${user} on **${day}/${month}**!`)] });
+        return message.reply(cv2.success('Success', `Saved birthday for ${user} on **${day}/${month}**!`));
       }
 
       if (subcommand === 'remove') {
         const user = message.mentions.users.first();
-        if (!user) return message.reply({ embeds: [embed.warn('Missing Argument', 'Please mention a valid user.')] });
+        if (!user) return message.reply(cv2.warn('Missing Argument', 'Please mention a valid user.'));
 
         const removed = db.removeBirthday(message.guild.id, user.id);
         if (removed) {
-          return message.reply({ embeds: [embed.success('Success', `Removed birthday for ${user}.`)] });
+          return message.reply(cv2.success('Success', `Removed birthday for ${user}.`));
         } else {
-          return message.reply({ embeds: [embed.warn('Not Found', `No birthday saved for ${user}.`)] });
+          return message.reply(cv2.warn('Not Found', `No birthday saved for ${user}.`));
         }
       }
 
@@ -119,7 +119,7 @@ export const commands = [
         const userIds = Object.keys(users);
 
         if (userIds.length === 0) {
-          return message.reply({ embeds: [embed.info('Birthdays', 'No birthdays have been set in this server yet.')] });
+          return message.reply(cv2.info('Birthdays', 'No birthdays have been set in this server yet.'));
         }
 
         const sorted = userIds.map(id => ({ id, ...users[id] })).sort((a, b) => {
@@ -143,20 +143,20 @@ export const commands = [
         return message.reply({ embeds: [listEmbed] });
       }
 
-      return message.reply({ embeds: [embed.info('Help', 'Subcommands: `setchannel #channel`, `set @user DD MM`, `remove @user`, `list`')] });
+      return message.reply(cv2.info('Help', 'Subcommands: `setchannel #channel`, `set @user DD MM`, `remove @user`, `list`'));
     },
     async executeSlash(interaction) {
       const subcommand = interaction.options.getSubcommand();
       const isOwnerOrServerOwner = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
 
       if (!isOwnerOrServerOwner) {
-        return interaction.reply({ embeds: [embed.danger('Permission Denied', '️ This command is restricted to the **Server Owner** and **Bot Owner** only.')] });
+        return interaction.reply(cv2.danger('Permission Denied', '️ This command is restricted to the **Server Owner** and **Bot Owner** only.'));
       }
 
       if (subcommand === 'setchannel') {
         const channel = interaction.options.getChannel('channel');
         db.setBirthdayChannel(interaction.guild.id, channel.id);
-        return interaction.reply({ embeds: [embed.success('Success', `Birthday wishes will now be sent to ${channel}`)] });
+        return interaction.reply(cv2.success('Success', `Birthday wishes will now be sent to ${channel}`));
       }
 
       if (subcommand === 'set') {
@@ -165,20 +165,20 @@ export const commands = [
         const month = interaction.options.getInteger('month');
 
         if (day < 1 || day > 31 || month < 1 || month > 12) {
-          return interaction.reply({ embeds: [embed.warn('Invalid Date', 'Please provide a valid day (1-31) and month (1-12).')] });
+          return interaction.reply(cv2.warn('Invalid Date', 'Please provide a valid day (1-31) and month (1-12).'));
         }
 
         db.setBirthday(interaction.guild.id, user.id, day, month);
-        return interaction.reply({ embeds: [embed.success('Success', `Saved birthday for ${user} on **${day}/${month}**!`)] });
+        return interaction.reply(cv2.success('Success', `Saved birthday for ${user} on **${day}/${month}**!`));
       }
 
       if (subcommand === 'remove') {
         const user = interaction.options.getUser('user');
         const removed = db.removeBirthday(interaction.guild.id, user.id);
         if (removed) {
-          return interaction.reply({ embeds: [embed.success('Success', `Removed birthday for ${user}.`)] });
+          return interaction.reply(cv2.success('Success', `Removed birthday for ${user}.`));
         } else {
-          return interaction.reply({ embeds: [embed.warn('Not Found', `No birthday saved for ${user}.`)] });
+          return interaction.reply(cv2.warn('Not Found', `No birthday saved for ${user}.`));
         }
       }
 
@@ -188,7 +188,7 @@ export const commands = [
         const userIds = Object.keys(users);
 
         if (userIds.length === 0) {
-          return interaction.reply({ embeds: [embed.info('Birthdays', 'No birthdays have been set in this server yet.')] });
+          return interaction.reply(cv2.info('Birthdays', 'No birthdays have been set in this server yet.'));
         }
 
         const sorted = userIds.map(id => ({ id, ...users[id] })).sort((a, b) => {

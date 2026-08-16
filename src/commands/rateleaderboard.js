@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import db from '../database.js';
 
 export const commands = [
@@ -56,7 +56,7 @@ async function sendRateLeaderboard(context, page) {
     .sort((a, b) => b.averageRating - a.averageRating || b.totalVotes - a.totalVotes);
     
   if (leaderboard.length === 0) {
-    const reply = { embeds: [embed.info('Rate Leaderboard', 'There are no rated edits yet! Use `!rate` to post an edit.')] };
+    const reply = cv2.info('Rate Leaderboard', 'There are no rated edits yet! Use `!rate` to post an edit.');
     return context.reply ? await context.reply(reply) : await context.update(reply);
   }
   

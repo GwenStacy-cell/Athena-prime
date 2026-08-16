@@ -1,5 +1,5 @@
 import { ChannelType } from 'discord.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isAuthorized, logToSecurityChannel } from '../utils/helpers.js';
 
 export const createChannelCmd = {
@@ -11,7 +11,7 @@ export const createChannelCmd = {
     if (!await isAuthorized(message.author, message.guild)) return;
     
     if (!args[0]) {
-      return message.reply({ embeds: [embed.error('Missing Argument', 'Please provide a name for the channel.\n**Usage:** `!createchannel <name>`')] });
+      return message.reply(cv2.error('Missing Argument', 'Please provide a name for the channel.\n**Usage:** `!createchannel <name>`'));
     }
 
     const name = args.join('-');
@@ -21,9 +21,9 @@ export const createChannelCmd = {
       reason: `Created via !createchannel by ${message.author.tag}`
     }).catch(() => null);
 
-    if (!channel) return message.reply({ embeds: [embed.error('Error', 'Failed to create channel.')] });
+    if (!channel) return message.reply(cv2.error('Error', 'Failed to create channel.'));
     
-    await message.reply({ embeds: [embed.success('Channel Created', `Successfully created <#${channel.id}>.`)] });
+    await message.reply(cv2.success('Channel Created', `Successfully created <#${channel.id}>.`));
   }
 };
 
@@ -36,7 +36,7 @@ export const deleteChannelCmd = {
     if (!await isAuthorized(message.author, message.guild)) return;
     
     if (!args[0]) {
-      return message.reply({ embeds: [embed.error('Missing Argument', 'Please mention a channel, provide its ID, or its exact name.\n**Usage:** `!deletechannel #channel`')] });
+      return message.reply(cv2.error('Missing Argument', 'Please mention a channel, provide its ID, or its exact name.\n**Usage:** `!deletechannel #channel`'));
     }
 
     let targetChannel = message.mentions.channels.first();
@@ -48,17 +48,17 @@ export const deleteChannelCmd = {
     }
     
     if (!targetChannel) {
-      return message.reply({ embeds: [embed.error('Not Found', 'Could not find that channel in this server.')] });
+      return message.reply(cv2.error('Not Found', 'Could not find that channel in this server.'));
     }
     
     const name = targetChannel.name;
     const deleted = await targetChannel.delete(`Deleted via !deletechannel by ${message.author.tag}`).catch(() => null);
     
     if (!deleted) {
-      return message.reply({ embeds: [embed.error('Error', 'Failed to delete channel. Check my permissions or hierarchy.')] });
+      return message.reply(cv2.error('Error', 'Failed to delete channel. Check my permissions or hierarchy.'));
     }
 
-    await message.reply({ embeds: [embed.success('Channel Deleted', `Successfully deleted **#${name}**.`)] });
+    await message.reply(cv2.success('Channel Deleted', `Successfully deleted **#${name}**.`));
   }
 };
 

@@ -1,5 +1,5 @@
 import { PermissionFlagsBits } from 'discord.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isAuthorized } from '../utils/helpers.js';
 
 export const commands = [
@@ -18,7 +18,7 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!(await isAuthorized(message.author, message.guild))) {
-        return message.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
+        return message.reply(cv2.error('Unauthorized', 'You do not have permission to use this command.'));
       }
 
       let targetChannel = message.channel;
@@ -27,7 +27,7 @@ export const commands = [
         const parsedId = args[0].replace(/<#|>/g, '');
         const found = await message.guild.channels.fetch(parsedId).catch(() => null);
         if (found) targetChannel = found;
-        else return message.reply({ embeds: [embed.error('Error', 'Invalid channel provided.')] });
+        else return message.reply(cv2.error('Error', 'Invalid channel provided.'));
       } else if (message.member.voice.channel) {
         // Default to VC if they are in one and didn't specify a channel
         targetChannel = message.member.voice.channel;
@@ -37,14 +37,14 @@ export const commands = [
         await targetChannel.permissionOverwrites.edit(message.guild.roles.everyone, {
           ViewChannel: false
         });
-        await message.reply({ embeds: [embed.success('Channel Hidden', `**${targetChannel.name}** is now hidden from @everyone.`)] });
+        await message.reply(cv2.success('Channel Hidden', `**${targetChannel.name}** is now hidden from @everyone.`));
       } catch (err) {
-        await message.reply({ embeds: [embed.error('Error', 'Failed to hide the channel. Check my permissions.')] });
+        await message.reply(cv2.error('Error', 'Failed to hide the channel. Check my permissions.'));
       }
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
+        return interaction.reply(cv2.error('Unauthorized', 'You do not have permission to use this command.'));
       }
 
       let targetChannel = interaction.options.getChannel('channel') || (interaction.member.voice.channel ? interaction.member.voice.channel : interaction.channel);
@@ -53,9 +53,9 @@ export const commands = [
         await targetChannel.permissionOverwrites.edit(interaction.guild.roles.everyone, {
           ViewChannel: false
         });
-        await interaction.reply({ embeds: [embed.success('Channel Hidden', `**${targetChannel.name}** is now hidden from @everyone.`)] });
+        await interaction.reply(cv2.success('Channel Hidden', `**${targetChannel.name}** is now hidden from @everyone.`));
       } catch (err) {
-        await interaction.reply({ embeds: [embed.error('Error', 'Failed to hide the channel. Check my permissions.')] });
+        await interaction.reply(cv2.error('Error', 'Failed to hide the channel. Check my permissions.'));
       }
     }
   },
@@ -74,7 +74,7 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!(await isAuthorized(message.author, message.guild))) {
-        return message.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
+        return message.reply(cv2.error('Unauthorized', 'You do not have permission to use this command.'));
       }
 
       let targetChannel = message.channel;
@@ -83,7 +83,7 @@ export const commands = [
         const parsedId = args[0].replace(/<#|>/g, '');
         const found = await message.guild.channels.fetch(parsedId).catch(() => null);
         if (found) targetChannel = found;
-        else return message.reply({ embeds: [embed.error('Error', 'Invalid channel provided.')] });
+        else return message.reply(cv2.error('Error', 'Invalid channel provided.'));
       } else if (message.member.voice.channel) {
         targetChannel = message.member.voice.channel;
       }
@@ -92,14 +92,14 @@ export const commands = [
         await targetChannel.permissionOverwrites.edit(message.guild.roles.everyone, {
           ViewChannel: null
         });
-        await message.reply({ embeds: [embed.success('Channel Unhidden', `**${targetChannel.name}** is now visible to @everyone.`)] });
+        await message.reply(cv2.success('Channel Unhidden', `**${targetChannel.name}** is now visible to @everyone.`));
       } catch (err) {
-        await message.reply({ embeds: [embed.error('Error', 'Failed to unhide the channel. Check my permissions.')] });
+        await message.reply(cv2.error('Error', 'Failed to unhide the channel. Check my permissions.'));
       }
     },
     async executeSlash(interaction) {
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply({ embeds: [embed.error('Unauthorized', 'You do not have permission to use this command.')] });
+        return interaction.reply(cv2.error('Unauthorized', 'You do not have permission to use this command.'));
       }
 
       let targetChannel = interaction.options.getChannel('channel') || (interaction.member.voice.channel ? interaction.member.voice.channel : interaction.channel);
@@ -108,9 +108,9 @@ export const commands = [
         await targetChannel.permissionOverwrites.edit(interaction.guild.roles.everyone, {
           ViewChannel: null
         });
-        await interaction.reply({ embeds: [embed.success('Channel Unhidden', `**${targetChannel.name}** is now visible to @everyone.`)] });
+        await interaction.reply(cv2.success('Channel Unhidden', `**${targetChannel.name}** is now visible to @everyone.`));
       } catch (err) {
-        await interaction.reply({ embeds: [embed.error('Error', 'Failed to unhide the channel. Check my permissions.')] });
+        await interaction.reply(cv2.error('Error', 'Failed to unhide the channel. Check my permissions.'));
       }
     }
   }

@@ -1,7 +1,8 @@
 import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from 'discord.js';
 import { buildXpDashboard } from '../commands/leveling.js';
 import commandMap from '../commands/loader.js';
-import embed, { setGuildContext } from '../embed.js';
+import cv2 from '../cv2.js';
+import { setGuildContext } from '../embed.js';
 import db from '../database.js';
 import { getAntinukeConfigPanel, handleScanServer } from '../commands/security.js';
 import { handleEnukeButton, handleEnukeModal } from '../commands/enuke.js';
@@ -32,9 +33,9 @@ export default {
 
       const cmd = commandMap.get(interaction.commandName);
       if (!cmd) {
-        return interaction.reply({
-          embeds: [embed.warn('Unknown Command', `${interaction.user}  The command \`/${interaction.commandName}\` was not recognized.\n\nUse \`/help\` to see all available commands.`)]
-        });
+        return interaction.reply(
+          cv2.warn('Unknown Command', `${interaction.user}  The command \`/${interaction.commandName}\` was not recognized.\n\nUse \`/help\` to see all available commands.`)
+        );
       }
 
       // Verify permissions — bot owner AND extra owners bypass all checks in every server
@@ -51,9 +52,9 @@ export default {
             ? cmd.permissions.every(perm => interaction.member.permissions.has(perm))
             : false;
           if (!hasPerms) {
-            return interaction.reply({
-              embeds: [embed.danger('Access Denied', `${interaction.user}  You do not possess the required permissions to execute this command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)]
-            });
+            return interaction.reply(
+              cv2.danger('Access Denied', `${interaction.user}  You do not possess the required permissions to execute this command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)
+            );
           }
         }
       }
@@ -62,15 +63,15 @@ export default {
         await cmd.executeSlash(interaction);
       } catch (error) {
         console.error(`Error executing command ${cmd.name} via Slash:`, error);
-        const errEmbed = embed.danger(
+        const errEmbed = cv2.danger(
           'Execution Error', 
           `${interaction.user} An unexpected error occurred while executing \`/${cmd.name}\`.\n\n**Tip:** Check that all required options are filled in correctly. Use \`/help\` for command usage.`
         );
 
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ embeds: [errEmbed] }).catch(() => null);
+          await interaction.followUp(errEmbed).catch(() => null);
         } else {
-          await interaction.reply({ embeds: [errEmbed] }).catch(() => null);
+          await interaction.reply(errEmbed).catch(() => null);
         }
       }
       return;
@@ -216,7 +217,7 @@ export default {
           }
 
           if (!lyrics) {
-            return interaction.editReply({ embeds: [embed.danger('Lyrics Not Found', `Could not find any lyrics for **${songName}**.`)] });
+            return interaction.editReply(cv2.danger('Lyrics Not Found', `Could not find any lyrics for **${songName}**.`));
           }
 
           const cfg = db.getGuildConfig(interaction.guildId);
@@ -228,20 +229,16 @@ export default {
           }
 
           for (let i = 0; i < chunks.length; i++) {
-            const lyricsEmbed = embed.build({
-              title: i === 0 ? `Lyrics: ${trackName}` : `Lyrics: ${trackName} (Part ${i + 1})`,
-              description: chunks[i],
-              author: { name: artistName },
-              color: accentColor
-            });
-            await vc.send({ embeds: [lyricsEmbed] });
+            const title = i === 0 ? `Lyrics: ${trackName}` : `Lyrics: ${trackName} (Part ${i + 1})`;
+            const lyricsEmbed = cv2.info(title, chunks[i]);
+            await vc.send(lyricsEmbed);
           }
 
           return interaction.editReply({ content: `<:emoji_16:1533860111704002665> Lyrics sent to <#${vc.id}>!` });
 
         } catch (error) {
           console.error('Lyrics error:', error);
-          return interaction.editReply({ embeds: [embed.error('Error', 'An error occurred while fetching the lyrics.')] });
+          return interaction.editReply(cv2.error('Error', 'An error occurred while fetching the lyrics.'));
         }
       }
 
@@ -562,14 +559,12 @@ export default {
         let userRatingsStr = recentVotes.map(([uId, v]) => `${v.name}: ${'<a:1z:1517089474369032253>'.repeat(v.stars)}`).join('\n');
         if (!userRatingsStr) userRatingsStr = '_No ratings yet_';
 
-        const guildConfig = interaction.guild ? db.getGuildConfig(interaction.guild.id) : null;
-        const updatedEmbed = embed.build({
-          title: `Rate ${updatedRatingData.authorName}'s Edit`,
-          description: `<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${userRatingsStr}`,
-          color: guildConfig?.accentColor || '#2b2d31'
-        });
+        const updatedEmbed = cv2.info(
+          `Rate ${updatedRatingData.authorName}'s Edit`,
+          `<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${userRatingsStr}`
+        );
 
-        await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
+        await interaction.message.edit(updatedEmbed).catch(() => null);
         return interaction.reply({ content: `You rated this edit ${starCount} <a:1z:1517089474369032253>`, flags: 64 });
       }
 
@@ -667,7 +662,7 @@ export default {
         }
         
         await interaction.deferReply({ ephemeral: false });
-        await interaction.editReply({ embeds: [embed.info('Autonick Sync', 'Starting sync across all members. This may take a moment...')] }).catch(() => null);
+        await interaction.editReply(cv2.info('Autonick Sync', 'Starting sync across all members. This may take a moment...')).catch(() => null);
         
         const { applyAutonick } = await import('../utils/helpers.js');
         await interaction.guild.members.fetch();
@@ -685,21 +680,21 @@ export default {
           if (changed) {
             successCount++;
             if (successCount % 15 === 0) {
-              await interaction.editReply({ embeds: [embed.info('Autonick Sync', `Syncing in progress...\n\n Renamed: **${successCount}**\n Failed/Skipped: **${failCount}**`)] }).catch(() => null);
+              await interaction.editReply(cv2.info('Autonick Sync', `Syncing in progress...\n\n Renamed: **${successCount}**\n Failed/Skipped: **${failCount}**`)).catch(() => null);
             }
           } else {
             failCount++;
           }
         }
         
-        return interaction.editReply({ embeds: [embed.success('Autonick Sync Complete', `Successfully renamed **${successCount}** members.\nSkipped/Failed: **${failCount}**\nBot Owners Ignored: **${skippedCount}**`)] }).catch(() => null);
+        return interaction.editReply(cv2.success('Autonick Sync Complete', `Successfully renamed **${successCount}** members.\nSkipped/Failed: **${failCount}**\nBot Owners Ignored: **${skippedCount}**`)).catch(() => null);
       }
 
       if (interaction.customId === 'autonick_restore') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.' });
         
         await interaction.deferReply({ ephemeral: false });
-        await interaction.editReply({ embeds: [embed.info('Restoring Names', 'Starting to restore all nicknames to original Discord usernames...')] }).catch(() => null);
+        await interaction.editReply(cv2.info('Restoring Names', 'Starting to restore all nicknames to original Discord usernames...')).catch(() => null);
         await interaction.guild.members.fetch();
         
         let successCount = 0;
@@ -712,14 +707,14 @@ export default {
             await member.setNickname(null);
             successCount++;
             if (successCount % 15 === 0) {
-              await interaction.editReply({ embeds: [embed.info('Restoring Names', `Restore in progress...\n\n Restored: **${successCount}**\n Failed: **${failCount}**`)] }).catch(() => null);
+              await interaction.editReply(cv2.info('Restoring Names', `Restore in progress...\n\n Restored: **${successCount}**\n Failed: **${failCount}**`)).catch(() => null);
             }
           } catch(e) {
             failCount++;
           }
         }
         
-        return interaction.editReply({ embeds: [embed.success('Names Restored', `Successfully restored **${successCount}** members to their original Discord usernames.\nSkipped/Failed: **${failCount}**`)] }).catch(() => null);
+        return interaction.editReply(cv2.success('Names Restored', `Successfully restored **${successCount}** members to their original Discord usernames.\nSkipped/Failed: **${failCount}**`)).catch(() => null);
       }
 
       // XP Manager Buttons
@@ -1136,7 +1131,7 @@ export default {
             const option = (ticketConfig.panelOptions || []).find(o => o.value === reasonValue);
             const label = option ? option.label : reasonValue;
 
-            const ticketEmbed = embed.info(
+            const ticketEmbed = cv2.info(
               `Ticket #${ticketId}`,
               `Welcome ${interaction.user}!\n\n**Reason:** ${label}\n\nA staff member will be with you shortly. You have a dedicated text channel here, and a dedicated voice channel: <#${voiceChannel.id}>.`
             );
@@ -1437,14 +1432,14 @@ export default {
         const targetGuild = interaction.client.guilds.cache.get(targetGuildId);
         
         if (!targetGuild) {
-          return interaction.reply({ embeds: [embed.danger('Error', 'Target server not found.')], ephemeral: true });
+          return interaction.reply(cv2.e.danger('Error', 'Target server not found.'));
         }
 
         const isBotOwner = isBotOwnerSync(interaction.user.id);
         const isServerOwner = targetGuild.ownerId === interaction.user.id;
 
         if (!isBotOwner && !isServerOwner) {
-          return interaction.reply({ embeds: [embed.danger('Access Denied', 'You must be the Bot Owner or the Owner of the target server to steal emojis.')], ephemeral: true });
+          return interaction.reply(cv2.e.danger('Access Denied', 'You must be the Bot Owner or the Owner of the target server to steal emojis.'));
         }
 
         await interaction.update({ embeds: [embed.build({ title: 'Emoji Stealer', description: `Stealing emojis and adding them to **${targetGuild.name}**... Please wait.`, color: '#2b2d31' })], components: [] });

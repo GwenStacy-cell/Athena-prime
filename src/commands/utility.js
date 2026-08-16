@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, SeparatorBuilder, MessageFlags } from 'discord.js';
 import db from '../database.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 
 // ──────────────────────────────────────────────
@@ -200,7 +200,7 @@ export const commands = [
     options: [],
     async executePrefix(message, args) {
       if (args[0] && args[0].toLowerCase() === 'music') {
-        return message.reply({ embeds: [embed.warn('Command Redirect', 'To setup the Music Player, please use the `!setupmusic` command instead!')] });
+        return message.reply(cv2.warn('Command Redirect', 'To setup the Music Player, please use the `!setupmusic` command instead!'));
       }
       const channel = message.mentions.channels.first();
       const role = message.mentions.roles.first();
@@ -212,11 +212,11 @@ export const commands = [
       );
 
       if (!channel && !role && !voiceChannel) {
-        return message.reply({ embeds: [embed.warn('Setup Info', `${message.author} Usage: \`!setup <#logChannel>\` or \`!setup <quarantineVoiceChannelName>\` or \`!setup <@quarantineRole>\``)] });
+        return message.reply(cv2.warn('Setup Info', `${message.author} Usage: \`!setup <#logChannel>\` or \`!setup <quarantineVoiceChannelName>\` or \`!setup <@quarantineRole>\``));
       }
 
       const result = await handleSetup(message.guild, channel, role, voiceChannel);
-      await message.reply({ embeds: [result.embed] });
+      await message.reply(result);
     }
   },
 
@@ -273,12 +273,10 @@ export const commands = [
       const matches  = [...input.matchAll(EMOJI_RE)];
 
       if (!matches.length) {
-        return context.reply({
-          embeds: [embed.warn(
+        return context.reply(cv2.warn(
             'No Emojis Found',
             'Provide at least one custom emoji to steal.\n\nExample: `:pog: :lol: :hype:`'
-          )]
-        });
+          ));
       }
 
       // Deduplicate by emoji ID
@@ -327,12 +325,12 @@ export const commands = [
       if (added.length)  lines.push(`**Added (${added.length})**\n${added.join(' ')}`);
       if (failed.length) lines.push(`**Failed (${failed.length})**\n${failed.join('\n')}`);
 
-      const resultEmbed = embed.info(
+      const resultEmbed = cv2.info(
         `Steal — ${added.length}/${emojis.length} Added`,
         lines.join('\n\n')
       );
 
-      return context.reply({ embeds: [resultEmbed] });
+      return context.reply(resultEmbed);
     }
   },
   {
@@ -349,25 +347,25 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (message.author.id !== process.env.OWNER_ID && message.author.id !== message.guild.ownerId) {
-        return message.reply({ embeds: [embed.danger('Access Denied', '️ Only the **Bot Owner** or **Server Owner** can use this command.')] });
+        return message.reply(cv2.danger('Access Denied', '️ Only the **Bot Owner** or **Server Owner** can use this command.'));
       }
       
       const newPrefix = args.join(' ');
       if (!newPrefix) {
-        return message.reply({ embeds: [embed.warn('Missing Prefix', `Please provide a new prefix. Example: \`@Athena Prime prefix !\``)] });
+        return message.reply(cv2.warn('Missing Prefix', `Please provide a new prefix. Example: \`@Athena Prime prefix !\``));
       }
 
       db.updateGuildConfig(message.guild.id, { prefix: newPrefix });
-      await message.reply({ embeds: [embed.success('Prefix Updated', `The bot's prefix has been successfully updated to \`${newPrefix}\``)] });
+      await message.reply(cv2.success('Prefix Updated', `The bot's prefix has been successfully updated to \`${newPrefix}\``));
     },
     async executeSlash(interaction) {
       if (interaction.user.id !== process.env.OWNER_ID && interaction.user.id !== interaction.guild.ownerId) {
-        return interaction.reply({ embeds: [embed.danger('Access Denied', '️ Only the **Bot Owner** or **Server Owner** can use this command.')] });
+        return interaction.reply(cv2.danger('Access Denied', '️ Only the **Bot Owner** or **Server Owner** can use this command.'));
       }
 
       const newPrefix = interaction.options.getString('new_prefix');
       db.updateGuildConfig(interaction.guild.id, { prefix: newPrefix });
-      await interaction.reply({ embeds: [embed.success('Prefix Updated', `The bot's prefix has been successfully updated to \`${newPrefix}\``)] });
+      await interaction.reply(cv2.success('Prefix Updated', `The bot's prefix has been successfully updated to \`${newPrefix}\``));
     }
   }
 ];
@@ -421,13 +419,13 @@ async function getStatusEmbed(client, guild) {
     { name: 'Warning Ceiling', value: `\`${config.maxWarnings} Warnings\``, inline: true }
   ];
 
-  const statusEmbed = embed.security(
+  const statusEmbed = cv2.security(
     'Athena Prime — Security Status',
     `Real-time security overview for **${guild.name}**.\nYour server is fully armed and continuously monitored by ${client.user}.\n\n**God Level Security — ENABLED**`,
     fields
   );
 
-  return { embed: statusEmbed };
+  return statusEmbed;
 }
 
 const helpModules = [
@@ -623,13 +621,13 @@ async function handleSetup(guild, channel, role, voiceChannel) {
 
   db.updateGuildConfig(guild.id, updates);
 
-  const resEmbed = embed.success(
+  const resEmbed = cv2.success(
     'Configuration Updated',
     'Successfully saved server adjustments to database cache.',
     fields
   );
 
-  return { embed: resEmbed };
+  return resEmbed;
 }
 
 // ──────────────────────────────────────────────
@@ -668,29 +666,29 @@ commands.push({
 
     if (action === 'clear') {
       db.updateGuildConfig(interaction.guild.id, { autoroleIds: [] });
-      return interaction.reply({ embeds: [embed.success('Autorole Cleared', 'All autoroles have been removed.')] });
+      return interaction.reply(cv2.success('Autorole Cleared', 'All autoroles have been removed.'));
     }
 
     if (!role) {
-      return interaction.reply({ embeds: [embed.warn('Missing Role', 'You must specify a role to add or remove.')] });
+      return interaction.reply(cv2.warn('Missing Role', 'You must specify a role to add or remove.'));
     }
 
     if (action === 'add') {
       if (currentRoles.includes(role.id)) {
-        return interaction.reply({ embeds: [embed.warn('Already Added', `The role ${role} is already in the autorole list.`)] });
+        return interaction.reply(cv2.warn('Already Added', `The role ${role} is already in the autorole list.`));
       }
       currentRoles.push(role.id);
       db.updateGuildConfig(interaction.guild.id, { autoroleIds: currentRoles });
-      return interaction.reply({ embeds: [embed.success('Autorole Added', `Successfully added ${role} to the autorole list.\nTotal roles: \`${currentRoles.length}\``)] });
+      return interaction.reply(cv2.success('Autorole Added', `Successfully added ${role} to the autorole list.\nTotal roles: \`${currentRoles.length}\``));
     }
 
     if (action === 'remove') {
       if (!currentRoles.includes(role.id)) {
-        return interaction.reply({ embeds: [embed.warn('Not Found', `The role ${role} is not in the autorole list.`)] });
+        return interaction.reply(cv2.warn('Not Found', `The role ${role} is not in the autorole list.`));
       }
       currentRoles = currentRoles.filter(id => id !== role.id);
       db.updateGuildConfig(interaction.guild.id, { autoroleIds: currentRoles });
-      return interaction.reply({ embeds: [embed.success('Autorole Removed', `Successfully removed ${role} from the autorole list.\nTotal roles: \`${currentRoles.length}\``)] });
+      return interaction.reply(cv2.success('Autorole Removed', `Successfully removed ${role} from the autorole list.\nTotal roles: \`${currentRoles.length}\``));
     }
   }
 });
@@ -714,9 +712,9 @@ commands.push({
         reason: `Created by ${interaction.user.tag}`
       });
       if (msg) await thread.send(msg);
-      await interaction.reply({ embeds: [embed.success('Thread Created', `Successfully created ${thread}`)] });
+      await interaction.reply(cv2.success('Thread Created', `Successfully created ${thread}`));
     } catch (err) {
-      await interaction.reply({ embeds: [embed.danger('Error', err.message)] });
+      await interaction.reply(cv2.danger('Error', err.message));
     }
   }
 });
@@ -740,7 +738,7 @@ commands.push({
     const channelId = channelMention.replace(/<#|>/g, '');
     const channel = message.guild.channels.cache.get(channelId);
     if (!channel || ![ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(channel.type)) {
-      return message.reply({ embeds: [embed.warn('Invalid Channel', 'Please mention a valid text channel.')] });
+      return message.reply(cv2.warn('Invalid Channel', 'Please mention a valid text channel.'));
     }
 
     db.setStatsChannel(message.guild.id, channel.id);
@@ -748,13 +746,13 @@ commands.push({
       UseApplicationCommands: true
     }).catch(() => null);
 
-    return message.reply({ embeds: [embed.success('Config Updated', `The \`/stats\` command is now locked to ${channel} and slash commands have been enabled for everyone there.`)] });
+    return message.reply(cv2.success('Config Updated', `The \`/stats\` command is now locked to ${channel} and slash commands have been enabled for everyone there.`));
   },
   async executeSlash(interaction) {
     const channel = interaction.options.getChannel('channel');
     
     if (![ChannelType.GuildText, ChannelType.GuildAnnouncement].includes(channel.type)) {
-      return interaction.reply({ embeds: [embed.warn('Invalid Channel', 'Please select a text or announcement channel.')] });
+      return interaction.reply(cv2.warn('Invalid Channel', 'Please select a text or announcement channel.'));
     }
 
     db.setStatsChannel(interaction.guild.id, channel.id);
@@ -762,7 +760,7 @@ commands.push({
       UseApplicationCommands: true
     }).catch(() => null);
 
-    return interaction.reply({ embeds: [embed.success('Config Updated', `The \`/stats\` command is now locked to ${channel} and slash commands have been enabled for everyone there.`)] });
+    return interaction.reply(cv2.success('Config Updated', `The \`/stats\` command is now locked to ${channel} and slash commands have been enabled for everyone there.`));
   }
 });
 
@@ -774,12 +772,12 @@ commands.push({
   category: 'utility',
   permissions: [PermissionFlagsBits.ManageThreads],
   async executeSlash(interaction) {
-    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')] });
+    if (!interaction.channel.isThread()) return interaction.reply(cv2.warn('Error', 'This is not a thread.'));
     try {
-      await interaction.reply({ embeds: [embed.success('Archived', 'Archiving thread now...')] });
+      await interaction.reply(cv2.success('Archived', 'Archiving thread now...'));
       await interaction.channel.setArchived(true, `Archived by ${interaction.user.tag}`);
     } catch (err) {
-      await interaction.followUp({ embeds: [embed.danger('Error', err.message)] }).catch(() => null);
+      await interaction.followUp(cv2.danger('Error', err.message)).catch(() => null);
     }
   }
 });
@@ -790,11 +788,11 @@ commands.push({
   category: 'utility',
   permissions: [PermissionFlagsBits.ManageThreads],
   async executeSlash(interaction) {
-    if (!interaction.channel.isThread()) return interaction.reply({ embeds: [embed.warn('Error', 'This is not a thread.')] });
+    if (!interaction.channel.isThread()) return interaction.reply(cv2.warn('Error', 'This is not a thread.'));
     try {
       await interaction.channel.delete(`Deleted by ${interaction.user.tag}`);
     } catch (err) {
-      await interaction.reply({ embeds: [embed.danger('Error', err.message)] }).catch(() => null);
+      await interaction.reply(cv2.danger('Error', err.message)).catch(() => null);
     }
   }
 });
@@ -819,12 +817,12 @@ commands.push({
   async executePrefix(message, args) {
     const { isAuthorized } = await import('../utils/helpers.js');
     if (!await isAuthorized(message.author, message.guild)) {
-      return message.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      return message.reply(cv2.danger('Access Denied', 'Only authorized owners can use this.'));
     }
     
     const state = args[0]?.toLowerCase();
     if (!['on', 'off'].includes(state)) {
-      return message.reply({ embeds: [embed.warn('Invalid Usage', 'Please specify `on` or `off`. Example: `!vcstatus off`')] });
+      return message.reply(cv2.warn('Invalid Usage', 'Please specify `on` or `off`. Example: `!vcstatus off`'));
     }
     
     const enabled = state === 'on';
@@ -837,12 +835,12 @@ commands.push({
       if (channel) await updateBotVcStatus(channel);
     }
     
-    return message.reply({ embeds: [embed.success('Config Updated', `Voice Channel status updates have been turned **${state.toUpperCase()}**.`)] });
+    return message.reply(cv2.success('Config Updated', `Voice Channel status updates have been turned **${state.toUpperCase()}**.`));
   },
   async executeSlash(interaction) {
     const { isAuthorized } = await import('../utils/helpers.js');
     if (!await isAuthorized(interaction.user, interaction.guild)) {
-      return interaction.reply({ embeds: [embed.danger('Access Denied', 'Only authorized owners can use this.')] });
+      return interaction.reply(cv2.danger('Access Denied', 'Only authorized owners can use this.'));
     }
 
     const state = interaction.options.getString('state');
@@ -856,7 +854,7 @@ commands.push({
       if (channel) await updateBotVcStatus(channel);
     }
     
-    return interaction.reply({ embeds: [embed.success('Config Updated', `Voice Channel status updates have been turned **${state.toUpperCase()}**.`)] });
+    return interaction.reply(cv2.success('Config Updated', `Voice Channel status updates have been turned **${state.toUpperCase()}**.`));
   }
 });
 

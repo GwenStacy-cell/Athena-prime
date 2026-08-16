@@ -1,7 +1,7 @@
 import { AttachmentBuilder } from 'discord.js';
 import statsDB from '../statsDB.js';
 import { generateServerOverviewImage } from '../utils/statCanvas.js';
-import embed from '../embed.js';
+import cv2 from '../cv2.js';
 
 export const commands = [
   {
@@ -11,7 +11,7 @@ export const commands = [
     // Statbot-style aliases: s?server
     aliases: ['server', 'serverstat', 'serverview'],
     async executePrefix(message, args) {
-      const waitMsg = await message.reply({ embeds: [embed.info('Analyzing...', 'Crunching server data and rendering dashboard...')] });
+      const waitMsg = await message.reply(cv2.info('Analyzing...', 'Crunching server data and rendering dashboard...'));
       
       try {
         const stats = statsDB.getServerOverviewStats(message.guild.id);
@@ -22,7 +22,7 @@ export const commands = [
         await waitMsg.delete().catch(() => null);
       } catch (e) {
         console.error('Server overview error:', e);
-        await waitMsg.edit({ embeds: [embed.error('Error', 'Failed to generate server overview dashboard.')] });
+        await waitMsg.edit(cv2.error('Error', 'Failed to generate server overview dashboard.'));
       }
     },
     async executeSlash(interaction) {
@@ -36,7 +36,7 @@ export const commands = [
         await interaction.editReply({ files: [attachment] });
       } catch (e) {
         console.error('Server overview error:', e);
-        await interaction.editReply({ embeds: [embed.error('Error', 'Failed to generate server overview dashboard.')] });
+        await interaction.editReply(cv2.error('Error', 'Failed to generate server overview dashboard.'));
       }
     }
   }
