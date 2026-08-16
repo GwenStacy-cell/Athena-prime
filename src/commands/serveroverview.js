@@ -18,7 +18,8 @@ export const commands = [
         const buffer = await generateServerOverviewImage(message.guild, stats);
         const attachment = new AttachmentBuilder(buffer, { name: 'server-overview.png' });
         
-        await message.channel.send({ files: [attachment] });
+        const c = cv2.buildContainer(null, null, []);
+        await message.channel.send({ components: [c], files: [attachment], flags: 32768 });
         await waitMsg.delete().catch(() => null);
       } catch (e) {
         console.error('Server overview error:', e);
@@ -33,7 +34,8 @@ export const commands = [
         const buffer = await generateServerOverviewImage(interaction.guild, stats);
         const attachment = new AttachmentBuilder(buffer, { name: 'server-overview.png' });
         
-        await interaction.editReply({ files: [attachment] });
+        const c = cv2.buildContainer(null, null, []);
+        await interaction.editReply({ components: [c], files: [attachment], flags: 32768 });
       } catch (e) {
         console.error('Server overview error:', e);
         await interaction.editReply(cv2.error('Error', 'Failed to generate server overview dashboard.'));

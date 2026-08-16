@@ -66,7 +66,8 @@ export const commands = [
         const buffer = await generateStatCard(targetUser, targetMember, userStats, serverRanks, topChannels, chartData, interaction.guild);
         const attachment = new AttachmentBuilder(buffer, { name: 'statbot-card.png' });
         
-        await interaction.editReply({ files: [attachment] });
+        const c = cv2.buildContainer(null, null, []);
+        await interaction.editReply({ components: [c], files: [attachment], flags: 32768 });
       } catch (err) {
         console.error('Failed to generate stat card:', err);
         await interaction.editReply(cv2.danger('Error', 'Failed to generate statistics card. Please try again later.'));

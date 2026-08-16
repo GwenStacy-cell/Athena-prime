@@ -2702,7 +2702,7 @@ async function getServerInfoEmbed(guild) {
   const container = {
     type: 17,
     components: [
-      headerSection.toJSON(),
+      ...comps,
       { type: 14, divider: true },
       { type: 10, content: statsText },
       { type: 14, divider: true },
@@ -2759,7 +2759,7 @@ async function getUserInfoEmbed(guild, member) {
   const container = {
     type: 17,
     components: [
-      headerSection.toJSON(),
+      ...comps,
       { type: 14, divider: true },
       { type: 10, content: statsText },
       { type: 14, divider: true },
@@ -2872,7 +2872,7 @@ export async function getSecurityStatusPanel(guild) {
   const container = {
     type: 17,
     components: [
-      headerSection.toJSON(),
+      ...comps,
       { type: 14, divider: true },
       { type: 10, content: listText.trimEnd() },
       { type: 14, divider: true },
