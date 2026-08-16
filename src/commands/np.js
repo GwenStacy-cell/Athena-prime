@@ -14,7 +14,7 @@ export const commands = [
       const isManager = db.isNpManager(message.author.id);
       
       if (!isOwner && !isManager) {
-        return message.reply({ content: '❌ You are not an authorized NP Manager.' }).catch(() => null);
+        return message.reply({ content: 'You are not an authorized NP Manager.' }).catch(() => null);
       }
 
       const sub = args[0]?.toLowerCase();
@@ -28,14 +28,14 @@ export const commands = [
         if (type !== 'user' && type !== 'server') return message.reply({ content: '❌ Usage: `np add user <@user|id> [duration]` or `np add server <id> [duration]`' });
         
         let targetId = args[2];
-        if (!targetId) return message.reply({ content: '❌ Provide an ID or mention.' });
+        if (!targetId) return message.reply({ content: 'Provide an ID or mention.' });
         targetId = targetId.replace(/[<@!>]/g, '');
 
         let durationRaw = args.slice(3).join(' ') || 'lifetime';
         let expiresAt = null;
         if (durationRaw.toLowerCase() !== 'lifetime') {
           const ms = parseDuration(durationRaw);
-          if (!ms) return message.reply({ content: '❌ Invalid duration. Use formats like `1w`, `1m`, `lifetime`.' });
+          if (!ms) return message.reply({ content: 'Invalid duration. Use formats like `1w`, `1m`, `lifetime`.' });
           expiresAt = Date.now() + ms;
         }
 
@@ -53,7 +53,7 @@ export const commands = [
         if (type !== 'user' && type !== 'server') return message.reply({ content: '❌ Usage: `np reset user <id>` or `np reset server <id>`' });
         
         let targetId = args[2];
-        if (!targetId) return message.reply({ content: '❌ Provide an ID or mention.' });
+        if (!targetId) return message.reply({ content: 'Provide an ID or mention.' });
         targetId = targetId.replace(/[<@!>]/g, '');
 
         if (type === 'user') {
@@ -73,10 +73,10 @@ export const commands = [
         const action = args[1]?.toLowerCase();
         if (!action || action === 'list') return this.sendManagerList(message);
 
-        if (!isOwner) return message.reply({ content: '❌ Only the Bot Owner can modify NP Managers.' });
+        if (!isOwner) return message.reply({ content: 'Only the Bot Owner can modify NP Managers.' });
         
         let targetId = args[2];
-        if (!targetId) return message.reply({ content: '❌ Provide a user ID.' });
+        if (!targetId) return message.reply({ content: 'Provide a user ID.' });
         targetId = targetId.replace(/[<@!>]/g, '');
 
         if (action === 'add') {
@@ -106,11 +106,11 @@ export const commands = [
 
         if (action === 'ban') {
           if (db.banNpCommand(cmdName)) return message.reply({ content: `✅ Banned command \`${cmdName}\` from NP bypass.` });
-          else return message.reply({ content: `❌ Command \`${cmdName}\` is already banned.` });
+          else return message.reply({ content: `Command \`${cmdName}\` is already banned.` });
         }
         if (action === 'unban') {
           if (db.unbanNpCommand(cmdName)) return message.reply({ content: `✅ Unbanned command \`${cmdName}\` from NP bypass.` });
-          else return message.reply({ content: `❌ Command \`${cmdName}\` is not banned.` });
+          else return message.reply({ content: `Command \`${cmdName}\` is not banned.` });
         }
       }
 
@@ -120,7 +120,7 @@ export const commands = [
         targetId = targetId.replace(/[<@!>]/g, '');
 
         const npUser = db.getNpUser(targetId);
-        if (!npUser) return message.reply({ content: `ℹ️ User \`${targetId}\` does not have NP status.` });
+        if (!npUser) return message.reply({ content: `User \`${targetId}\` does not have NP status.` });
         
         let expStr = 'Lifetime (Expires: Never)';
         if (npUser.expiresAt) {
@@ -200,7 +200,7 @@ export const commands = [
       
       for (let i = 0; i < managers.length; i++) {
         const id = managers[i];
-        lines.push(`**${i+1}.** <@${id}>\n( \`${id}\` ) — 🟢 Active •`);
+        lines.push(`**${i+1}.** <@${id}>\n( \`${id}\` ) — Active •`);
       }
 
       const cfg = db.getGuildConfig(message.guild?.id || '0');
@@ -250,7 +250,7 @@ export const commands = [
 
       collector.on('collect', async (i) => {
         if (i.user.id !== message.author.id) {
-          return i.reply({ content: '❌ You cannot use these buttons.', flags: MessageFlags.Ephemeral }).catch(() => null);
+          return i.reply({ content: 'You cannot use these buttons.', flags: MessageFlags.Ephemeral }).catch(() => null);
         }
         
         if (i.customId === 'np_guide_del') {
