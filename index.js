@@ -144,6 +144,10 @@ const events = [
 // Register Events
 console.log(chalk.gray('🔄 Loading event handlers...'));
 events.forEach(event => {
+  if (event.name === 'guildAuditLogEntryCreate') {
+    // We bind the raw event hook instead of standard djs event below
+    return;
+  }
   if (event.once) {
     client.once(event.name, (...args) => event.execute(...args));
   } else {
@@ -151,6 +155,42 @@ events.forEach(event => {
   }
   console.log(chalk.gray(`   ├─ Bound event: `) + chalk.cyan.bold(event.name));
 });
+
+// ⚡ RAW GATEWAY INTERCEPTOR ⚡
+// Bypasses discord.js cache and managers to achieve 0-latency (light speed) response times
+import { handleAuditLogEntry } from './src/utils/antinuke.js';
+client.on('raw', async (packet) => {
+  if (packet.t === 'GUILD_AUDIT_LOG_ENTRY_CREATE') {
+    try {
+      const guild = client.guilds.cache.get(packet.d.guild_id);
+      if (!guild) return;
+
+      // Map raw API changes to djs format
+      const mappedChanges = (packet.d.changes || []).map(c => ({
+        key: c.key,
+        old: c.old_value,
+        new: c.new_value
+      }));
+
+      // Manually construct a lightweight entry object for the anti-nuke
+      const rawEntry = {
+        id: packet.d.id,
+        action: packet.d.action_type,
+        executorId: packet.d.user_id,
+        targetId: packet.d.target_id,
+        executor: await client.users.fetch(packet.d.user_id).catch(() => ({ id: packet.d.user_id, bot: false })), // minimal mock if not cached
+        changes: mappedChanges,
+        createdAt: new Date(),
+        reason: packet.d.reason
+      };
+
+      await handleAuditLogEntry(guild, rawEntry);
+    } catch (e) {
+      console.error('[AntiNuke] Raw gateway intercept error:', e);
+    }
+  }
+});
+console.log(chalk.gray(`   ├─ Bound event: `) + chalk.yellow.bold('raw (GUILD_AUDIT_LOG_ENTRY_CREATE) ⚡'));
 
 // Global Exception Containment (Avoids random crashes during network drops)
 process.on('unhandledRejection', error => {
