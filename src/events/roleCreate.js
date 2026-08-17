@@ -16,7 +16,7 @@ export default {
     }
 
     const createEmbed = embed.build({
-      description: `__**Role Created |**__ <:emoji_16:1533860111704002665>\n> **Role:** ${role.name} (<@&${role.id}>)\n>  **Executor:** ${executor}`,
+      description: `__**Role Created |**__ <:dark4luvontop:1533860081916182721>\n> **Role:** ${role.name} (<@&${role.id}>)\n>  **Executor:** ${executor}`,
       color: '#2b2d31'
     });
     await logServerEvent(role.guild, 'roles', createEmbed);

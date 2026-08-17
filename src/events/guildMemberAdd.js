@@ -18,7 +18,7 @@ export default {
     // ==========================================
     if (member.user.bot) {
       // BotAdd is handled with zero-latency via the websocket hook (handleAuditLogEntry)
-      // We do NOT proactively strip roles — legitimate bots that haven't been
+      // We do NOT proactively strip roles â€” legitimate bots that haven't been
       // whitelisted yet (MEE6, Dyno, Carl-bot etc.) would break immediately.
       return;
     }
@@ -40,7 +40,7 @@ export default {
           // DM alert
           const bypassDM = embed.danger(
             'Quarantine Bypass Containment',
-            `️ You tried to rejoin **${guild.name}** while your quarantine isolation was still active. Access has been re-restricted.`,
+            `ï¸ You tried to rejoin **${guild.name}** while your quarantine isolation was still active. Access has been re-restricted.`,
             [{ name: 'Reason', value: 'Quarantine bypass attempt detected.' }]
           );
           await member.send({ embeds: [bypassDM] }).catch(() => null);
@@ -130,7 +130,7 @@ export default {
       
       const welcomeDm = embed.build({
         title: `Welcome to ${guild.name}!`,
-        description: `Thank you for joining **${guild.name}**! <:emoji_16:1533860111704002665>\n\nYou are our **${getOrdinal(guild.memberCount)}** member! We hope you have a great time here. Stay safe!`,
+        description: `Thank you for joining **${guild.name}**! <:dark4luvontop:1533860081916182721>\n\nYou are our **${getOrdinal(guild.memberCount)}** member! We hope you have a great time here. Stay safe!`,
         color: config.accentColor || '#2b2d31',
         thumbnail: guild.iconURL({ dynamic: true })
       });
@@ -145,7 +145,7 @@ export default {
     const accountAge = Date.now() - member.user.createdAt.getTime();
     const ageDays = Math.floor(accountAge / (1000 * 60 * 60 * 24));
     const joinEmbed = embed.build({
-      description: `__**Member Joined |**__ <:emoji_16:1533860111704002665>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n>  **Account Age:** ${ageDays} days old\n>  **Total Members:** ${guild.memberCount}`,
+      description: `__**Member Joined |**__ <:dark4luvontop:1533860081916182721>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n>  **Account Age:** ${ageDays} days old\n>  **Total Members:** ${guild.memberCount}`,
       color: '#2b2d31',
       thumbnail: member.user.displayAvatarURL({ dynamic: true })
     });

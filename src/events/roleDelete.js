@@ -34,7 +34,7 @@ export default {
     }
 
     const delEmbed = embed.build({
-      description: `__**Role Deleted |**__ <:emoji_16:1533860111704002665>\n> **Role Name:** ${role.name}\n>  **Executor:** ${executor}`,
+      description: `__**Role Deleted |**__ <:dark4luvontop:1533860081916182721>\n> **Role Name:** ${role.name}\n>  **Executor:** ${executor}`,
       color: '#2b2d31'
     });
     await logServerEvent(role.guild, 'roles', delEmbed);

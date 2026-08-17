@@ -8,13 +8,13 @@ You've been reported to Athena Prime. We know who you are, where you chat, and w
 
 Don't push it again.
 
-— *Athena Prime*`,
+â€” *Athena Prime*`,
 
   `You've been flagged.
 
 Consider this your one and only warning. There won't be another.
 
-— *Athena Prime Enforcement*`,
+â€” *Athena Prime Enforcement*`,
 
   `We see you.
 
@@ -22,7 +22,7 @@ Every move you make in that server is logged. You are one mistake away from cons
 
 Fix yourself. Now.
 
-— *Athena Prime*`,
+â€” *Athena Prime*`,
 
   `This is a formal notice.
 
@@ -30,21 +30,21 @@ Your behavior has been reviewed and found unacceptable. The server owner has bee
 
 Don't make us act.
 
-— *Athena Prime Black Division*`,
+â€” *Athena Prime Black Division*`,
 
   `Tread carefully.
 
 You've been put on our radar. We don't issue second warnings. You don't want to find out what comes next.
 
-— *Athena Prime*`,
+â€” *Athena Prime*`,
 
   `You've crossed the line.
 
 The server owner knows. Athena Prime knows. You have been documented, flagged, and marked.
 
-Fall in line — or fall out entirely.
+Fall in line â€” or fall out entirely.
 
-— *Athena Prime Command*`,
+â€” *Athena Prime Command*`,
 
   `Last warning.
 
@@ -52,7 +52,7 @@ We don't explain ourselves twice. You know what you did. The server owner author
 
 Don't test what comes after it.
 
-— *Athena Prime*`,
+â€” *Athena Prime*`,
 
   `Your name is on our list now.
 
@@ -60,7 +60,7 @@ We don't forget. We don't forgive. And we absolutely do not tolerate whatever it
 
 Clean it up.
 
-— *Athena Prime*`,
+â€” *Athena Prime*`,
 ];
 
 const PUBLIC_LOG_LINES = [
@@ -143,7 +143,7 @@ export const commands = [
 
       const dmEmbed = new EmbedBuilder()
         .setColor(0xcc0000)
-        .setTitle('ATHENA PRIME — OFFICIAL WARNING')
+        .setTitle('ATHENA PRIME â€” OFFICIAL WARNING')
         .setDescription(dmText)
         .setFooter({ text: `Issued by: ${authorName} | ${message.guild.name}` })
         .setTimestamp();
@@ -157,7 +157,7 @@ export const commands = [
 
       const publicEmbed = new EmbedBuilder()
         .setColor(0xcc0000)
-        .setTitle('ATHENA PRIME — ACTION LOG')
+        .setTitle('ATHENA PRIME â€” ACTION LOG')
         .addFields([
           { name: 'Target', value: `<@${targetUser.id}>`, inline: true },
           { name: 'Issued By', value: authorName, inline: true },
@@ -165,7 +165,7 @@ export const commands = [
           {
             name: 'Delivery',
             value: dmSent
-              ? '<:emoji_16:1533860111704002665> Warning DM delivered to target.'
+              ? '<:dark4luvontop:1533860081916182721> Warning DM delivered to target.'
               : 'Target DMs are closed. Warning filed internally.',
             inline: false
           },

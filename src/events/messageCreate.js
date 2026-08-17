@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import db from '../database.js';
 import embed, { setGuildContext } from '../embed.js';
+import cv2 from '../cv2.js';
 import commandMap from '../commands/loader.js';
 import { executeQuarantine } from '../commands/security.js';
 import { handleEzal, handleBackup } from '../commands/ezal.js';
@@ -502,7 +503,7 @@ export default {
     }
 
     // ==========================================
-    // DM CONTEXT — spam commands for permitted users / bot owner
+    // DM CONTEXT â€” spam commands for permitted users / bot owner
     // Works with or without the ! prefix (e.g. "spam @user hi" or "!spam @user hi")
     // ==========================================
     if (!message.guild) {
@@ -518,7 +519,7 @@ export default {
       const cmdName = parts[0].toLowerCase();
       const args = parts.slice(1);
 
-      // Spam command — permitted users and bot owner
+      // Spam command â€” permitted users and bot owner
       if (cmdName === 'spam' && (isBotOwner || isPermitted)) {
         const spamCmd = commandMap.get('spam');
         if (spamCmd) await spamCmd.executePrefix(message, args).catch(() => null);
@@ -947,7 +948,7 @@ export default {
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
           const warnEmbed = embed.build({
-            description: `__**Warned Sending Invites |**__ <:emoji_16:1533860111704002665>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> ㅤhas been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
+            description: `__**Warned Sending Invites |**__ <:dark4luvontop:1533860081916182721>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> ã…¤has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
             color: '#2b2d31',
             thumbnail: message.author.displayAvatarURL({ dynamic: true })
           });
@@ -977,11 +978,11 @@ export default {
           if (hasDisallowedLink) {
             await message.delete().catch(() => null);
 
-            const warnEmbed = embed.warn(
-              '<a:gun:1533859911631376496> Link Deleted',
+            const warnEmbed = cv2.warn(
+              '<:gun:1533859911631376496> Link Deleted',
               `${message.author}, posting links is not allowed in this server.`
             );
-            await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
+            await message.channel.send(warnEmbed).catch(() => null);
 
             logToSecurityChannel(message.guild, embed.log(
               'Link Filtered',
@@ -1049,7 +1050,7 @@ export default {
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
           const filterWarnEmbed = embed.build({
-            description: `__**Word Filter Triggered |**__ <:emoji_16:1533860111704002665>\n> Reason: . ${message.author} , **Posted Blacklisted Word**\n> ㅤhas been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
+            description: `__**Word Filter Triggered |**__ <:dark4luvontop:1533860081916182721>\n> Reason: . ${message.author} , **Posted Blacklisted Word**\n> ã…¤has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
             color: '#2b2d31',
             thumbnail: message.author.displayAvatarURL({ dynamic: true })
           });
@@ -1115,11 +1116,11 @@ export default {
             );
             await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
           } else {
-            const spamWarnEmbed = embed.warn(
-              '<a:gun:1533859911631376496> Anti-Spam Warning',
+            const spamWarnEmbed = cv2.warn(
+              '<:gun:1533859911631376496> Anti-Spam Warning',
               `${message.author}, please slow down. Sending messages too fast is against server security rules.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
             );
-            await message.channel.send({ embeds: [spamWarnEmbed] }).catch(() => null);
+            await message.channel.send(spamWarnEmbed).catch(() => null);
           }
         }
         return;
@@ -1192,7 +1193,7 @@ export default {
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`| <:emoji_16:1533860111704002665> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
+        .setDescription(`| <:dark4luvontop:1533860081916182721> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
         .setImage('attachment://ping_graph.png');
 
       await sent.delete().catch(() => null);
@@ -1264,7 +1265,7 @@ export default {
     statsDB.logMessage(message.guild.id, message.author.id, message.channel.id);
 
     // --- PREFIX COMMAND HANDLING ---
-    // qr is a short alias for quarantine — works without ! prefix
+    // qr is a short alias for quarantine â€” works without ! prefix
     if (msgCheck === 'qr' || msgCheck.startsWith('qr ')) {
       const qrCmd = commandMap.get('qr');
       if (qrCmd) {
@@ -1421,7 +1422,7 @@ export default {
       }
     }
 
-    // Verify moderator permissions — bot owner, server owner, and extra owners bypass ALL checks
+    // Verify moderator permissions â€” bot owner, server owner, and extra owners bypass ALL checks
     if (cmd.permissions && cmd.permissions.length > 0) {
       const isBypass = isBotOwnerSync(message.author.id) ||
         message.author.id === message.guild.ownerId ||
@@ -1430,7 +1431,7 @@ export default {
       if (!isBypass) {
         const hasPerms = cmd.permissions.every(perm => message.member.permissions.has(perm));
         if (!hasPerms) {
-          return message.reply({ embeds: [embed.danger('Access Denied', '️ You do not possess the required permissions to execute this command.')] });
+          return message.reply({ embeds: [embed.danger('Access Denied', 'ï¸ You do not possess the required permissions to execute this command.')] });
         }
       }
     }

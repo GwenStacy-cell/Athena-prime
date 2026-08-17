@@ -20,7 +20,7 @@ import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
 import { StringSelectMenuBuilder, UserSelectMenuBuilder, RoleSelectMenuBuilder } from 'discord.js';
 
-// Toggle emoji constants — used throughout all security/config embeds
+// Toggle emoji constants Ã¢â‚¬â€ used throughout all security/config embeds
 const TOGGLE_ON  = '<:on:1514996865030946847>';
 const TOGGLE_OFF = '<:off:1514996861474177109>';
 
@@ -39,7 +39,7 @@ export function parseDuration(str) {
   if (!str) return 5 * 60 * 1000; // default 5m
   str = String(str).trim().toLowerCase();
 
-  // Bare number → minutes
+  // Bare number Ã¢â€ â€™ minutes
   if (/^\d+$/.test(str)) return Math.min(parseInt(str), 10080) * 60 * 1000;
 
   let ms = 0;
@@ -99,7 +99,7 @@ export const commands = [
   // --- QUARANTINE COMMAND ---
   {
     name: 'quarantine',
-    description: 'Isolates a user — strips roles, moves to quarantine VC, DMs them. Default duration: 5m.',
+    description: 'Isolates a user Ã¢â‚¬â€ strips roles, moves to quarantine VC, DMs them. Default duration: 5m.',
     category: 'security',
     permissions: [PermissionFlagsBits.ModerateMembers],
     options: [
@@ -1036,7 +1036,7 @@ export const commands = [
       },
       {
         name: 'bot_id',
-        description: 'The bot\'s User ID (right-click → Copy ID)',
+        description: 'The bot\'s User ID (right-click Ã¢â€ â€™ Copy ID)',
         type: 3,
         required: false
       }
@@ -1266,7 +1266,7 @@ export const commands = [
   // --- QRMANAGER COMMAND --- Quarantine system setup and repair
   {
     name: 'qrmanager',
-    description: 'Quarantine system manager — fix permissions, set role/channel/VC. (Admin only)',
+    description: 'Quarantine system manager Ã¢â‚¬â€ fix permissions, set role/channel/VC. (Admin only)',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
     options: [
@@ -1629,7 +1629,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
     await quarantineChannel.permissionOverwrites.edit(quarantineRole, {
       ViewChannel:  true,
       SendMessages: true,
-      Connect:      false, // no VC in text channel — just text
+      Connect:      false, // no VC in text channel Ã¢â‚¬â€ just text
       ReadMessageHistory: true
     }, { reason: 'Quarantine zone access grant' }).catch(() => null);
 
@@ -1761,7 +1761,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     if (context === 'raidmode') {
       dmEmbed = cv2.success(
         'Raid Mode Ended',
-        `<:emoji_16:1533860111704002665> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
+        `<:dark4luvontop:1533860081916182721> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
         []
       );
     } else {
@@ -1777,7 +1777,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     if (context === 'auto') {
       logToSecurityChannel(guild, cv2.info(
         'Auto-Unquarantine',
-        `<@${targetMember.id}>'s quarantine duration expired — automatically released.`
+        `<@${targetMember.id}>'s quarantine duration expired Ã¢â‚¬â€ automatically released.`
       ));
     } else {
       logToSecurityChannel(guild, cv2.log(
@@ -2001,7 +2001,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const lockEmbed = cv2.danger(
         'Lockdown Activated', 
-        `<:emoji_16:1533860111704002665> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
+        `<:dark4luvontop:1533860081916182721> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
       );
       logToSecurityChannel(guild, cv2.log('Channel Locked', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
       return lockEmbed;
@@ -2011,7 +2011,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const unlockEmbed = cv2.success(
         'Lockdown Deactivated', 
-        `<:emoji_16:1533860111704002665> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
+        `<:dark4luvontop:1533860081916182721> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
       );
       logToSecurityChannel(guild, cv2.log('Channel Unlocked', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
       return unlockEmbed;
@@ -2299,7 +2299,7 @@ async function handleBlacklist(guild, moderator, action, phrase) {
     if (list.length === 0) {
       return cv2.success('Blacklist Empty', 'There are no active blacklisted words in this server.');
     }
-    const formattedWords = list.map(w => `• \`${w}\``).join('\n');
+    const formattedWords = list.map(w => `Ã¢â‚¬Â¢ \`${w}\``).join('\n');
     return cv2.info('Filtered Word Blacklist', `If a non-moderator sends a message matching any of these terms, it will be deleted immediately:\n\n${formattedWords}`);
   }
 }
@@ -2412,14 +2412,14 @@ export async function getAntinukeConfigPanel(guild) {
 
   const description = 
     `# MODULE CONFIGURATION\n` +
-    `-# **Athena Prime — God-Tier Firewall**\n\n` +
+    `-# **Athena Prime Ã¢â‚¬â€ God-Tier Firewall**\n\n` +
     `> ${nukeState ? emojiOn : emojiOff} Anti-Nuke Firewall\n` +
     `> ${spamState ? emojiOn : emojiOff} Anti-Spam Filter\n` +
     `> ${inviteState ? emojiOn : emojiOff} Anti-Invite Blocker\n` +
     `> ${blacklistState ? emojiOn : emojiOff} Word Filter (${config.blacklistWords ? config.blacklistWords.length : 0} Words)\n` +
     `> Punishment: \`${config.antiNukePunishment.toUpperCase()}\`\n` +
     `> Warn Limit: \`${config.maxWarnings}\`\n\n` +
-    `-# Raw API strike engine active — nuke bots eliminated in ~1-3ms`;
+    `-# Raw API strike engine active Ã¢â‚¬â€ nuke bots eliminated in ~1-3ms`;
 
   const mainDisplay = new TextDisplayBuilder().setContent(description);
   const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
@@ -2468,7 +2468,7 @@ export async function getAntinukeConfigPanel(guild) {
 }
 
 export async function handleAntinukeToggleAll(guild, moderator, enable) {
-  // NOTE: autonick is intentionally NOT touched — it must be enabled manually by server owner
+  // NOTE: autonick is intentionally NOT touched Ã¢â‚¬â€ it must be enabled manually by server owner
   const updates = {
     antiNukeEnabled:   enable,
     antiSpamEnabled:   enable,
@@ -2497,7 +2497,7 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 
   const resEmbed = enable
     ? cv2.success(
-        '<:on:1514996865030946847> God-Tier Firewall — Fully Operational',
+        '<:on:1514996865030946847> God-Tier Firewall Ã¢â‚¬â€ Fully Operational',
         `<:on:1514996865030946847> **Firewall Layer:** Raw API Strike Engine Active
 <:on:1514996865030946847> **Predictive Layer:** Behavioral Pattern Detection Online
 <:on:1514996865030946847> **Restoration Layer:** Zero-Latency Channel & Role Recovery
@@ -2509,9 +2509,9 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
         [
           { name: 'Anti-Nuke',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: 'Anti-Spam',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: 'Enforced by', value: `${moderator}`, inline: true }
         ]
       )
@@ -2542,7 +2542,7 @@ async function handleExtraOwner(guild, moderator, action, targetUser) {
     const success = db.addExtraOwner(guild.id, targetUser.id);
     if (success) {
       logToSecurityChannel(guild, cv2.log('Extra Owner Added', `**${moderator.user.tag}** added **${targetUser.tag}** as an Extra Owner.`, [], 'success'));
-      return cv2.owner('Extra Owner Added', `Successfully added **${targetUser.tag}** as an **Extra Owner**.\n\nThey are now:\n• __**Immune**__ to all moderation actions\n• __**Authorized**__ to use all bot commands\n• __**Whitelisted**__ from all auto-mod filters`);
+      return cv2.owner('Extra Owner Added', `Successfully added **${targetUser.tag}** as an **Extra Owner**.\n\nThey are now:\nÃ¢â‚¬Â¢ __**Immune**__ to all moderation actions\nÃ¢â‚¬Â¢ __**Authorized**__ to use all bot commands\nÃ¢â‚¬Â¢ __**Whitelisted**__ from all auto-mod filters`);
     } else {
       return cv2.info('Already Extra Owner', `**${targetUser.tag}** is already registered as an Extra Owner.`);
     }
@@ -2563,7 +2563,7 @@ async function handleExtraOwner(guild, moderator, action, targetUser) {
       return cv2.info('No Extra Owners', `There are no extra owners configured for this server.\n\n**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>`);
     }
 
-    const formattedList = owners.map(id => `• <@${id}> (ID: \`${id}\`)`).join('\n');
+    const formattedList = owners.map(id => `Ã¢â‚¬Â¢ <@${id}> (ID: \`${id}\`)`).join('\n');
     return cv2.owner('Extra Owners List', `**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>\n\n**Extra Owners:**\n${formattedList}`);
   }
 }
@@ -2579,14 +2579,14 @@ async function handleBotWhitelist(guild, action, botId) {
     let desc = '';
     if (isRole) {
       desc = `Role <@&${cleanId}> has been added to the **Bot Whitelist**.\n\n` +
-             `• Any bot that has this role is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
-             `• They can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
-             `• To revoke a specific bot's immunity, simply remove the <@&${cleanId}> role from them, or use \`!botwhitelist remove <@&${cleanId}>\` to unwhitelist the role entirely.`;
+             `Ã¢â‚¬Â¢ Any bot that has this role is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
+             `Ã¢â‚¬Â¢ They can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
+             `Ã¢â‚¬Â¢ To revoke a specific bot's immunity, simply remove the <@&${cleanId}> role from them, or use \`!botwhitelist remove <@&${cleanId}>\` to unwhitelist the role entirely.`;
     } else {
       desc = `Bot ID <@${cleanId}> (\`${cleanId}\`) has been added to the **Bot Whitelist**.\n\n` +
-             `• This bot is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
-             `• It can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
-             `• To revoke this immunity, use \`!botwhitelist remove ${cleanId}\`.`;
+             `Ã¢â‚¬Â¢ This bot is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
+             `Ã¢â‚¬Â¢ It can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
+             `Ã¢â‚¬Â¢ To revoke this immunity, use \`!botwhitelist remove ${cleanId}\`.`;
     }
     
     return cv2.success('Whitelisted', desc);
@@ -2600,12 +2600,12 @@ async function handleBotWhitelist(guild, action, botId) {
     
     const formatted = await Promise.all(list.map(async id => {
       const role = guild.roles.cache.get(id);
-      if (role) return `• **Role:** ${role} (\`${id}\`)`;
+      if (role) return `Ã¢â‚¬Â¢ **Role:** ${role} (\`${id}\`)`;
       
       const user = await guild.client.users.fetch(id).catch(() => null);
-      if (user) return `• **Bot:** ${user} (\`${id}\`)`;
+      if (user) return `Ã¢â‚¬Â¢ **Bot:** ${user} (\`${id}\`)`;
       
-      return `• **Unknown:** \`${id}\``;
+      return `Ã¢â‚¬Â¢ **Unknown:** \`${id}\``;
     }));
     
     return cv2.info('Whitelisted Bots & Roles', `The following entities have full Anti-Nuke immunity:\n\n${formatted.join('\n')}`);
@@ -2635,7 +2635,7 @@ async function handleBotBlacklist(action, targetId) {
     if (flagged.length === 0) {
       return cv2.info('No Flagged Users', 'There are no users currently flagged on the global bot blacklist.');
     }
-    const formattedList = flagged.map(id => `• <@${id}> (ID: \`${id}\`)`).join('\n');
+    const formattedList = flagged.map(id => `Ã¢â‚¬Â¢ <@${id}> (ID: \`${id}\`)`).join('\n');
     return cv2.danger('Flagged Users', `These users are globally banned from using the bot:\n\n${formattedList}`);
   }
 }
@@ -2647,7 +2647,7 @@ async function handleAntiLink(guild, moderator, mode) {
   const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
   const resEmbed = cv2.success(
     'Anti-Link Configured',
-    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <:emoji_16:1521464002046328944> Discord Invites\n> <:emoji_16:1521464002046328944> NSFW Links\n> <:emoji_16:1521464002046328944> Scam/Phishing Links\n> <:emoji_16:1521464002046328944> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
+    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <:dark4luvontop:1533860081916182721> Discord Invites\n> <:dark4luvontop:1533860081916182721> NSFW Links\n> <:dark4luvontop:1533860081916182721> Scam/Phishing Links\n> <:dark4luvontop:1533860081916182721> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
     [{ name: 'Changed by', value: `${moderator}` }]
   );
 
@@ -2676,13 +2676,13 @@ async function getServerInfoEmbed(guild) {
   const antiSpamStatus   = config.antiSpamEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiInviteStatus = (config.antiInviteEnabled !== false) ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
-  const raidModeStatus   = config.raidMode                      ? '<:emoji_16:1533860111704002665> ENGAGED' : `${TOGGLE_ON} STANDBY`;
+  const raidModeStatus   = config.raidMode                      ? '<:dark4luvontop:1533860081916182721> ENGAGED' : `${TOGGLE_ON} STANDBY`;
 
   let iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
 
   const headerSection = {
     type: 9,
-    components: [{ type: 10, content: `## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**` }]
+    components: [{ type: 10, content: `## **${guild.name} Ã¢â‚¬â€ Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**` }]
   };
   if (iconUrl) {
     headerSection.accessory = { type: 11, media: { url: iconUrl } };
@@ -2695,7 +2695,7 @@ async function getServerInfoEmbed(guild) {
     `-# **Created:** ${createdAt}`;
 
   const securityText =
-    `-# **── Security Status ──**\n` +
+    `-# **Ã¢â€â‚¬Ã¢â€â‚¬ Security Status Ã¢â€â‚¬Ã¢â€â‚¬**\n` +
     `-# **Anti-Nuke:** ${antiNukeStatus}   **Anti-Spam:** ${antiSpamStatus}\n` +
     `-# **Anti-Invite:** ${antiInviteStatus}   **Anti-Link:** ${antiLinkStatus}\n` +
     `-# **Raid Mode:** ${raidModeStatus}   **Max Warns:** \`${config.maxWarnings}\``;
@@ -2744,7 +2744,7 @@ async function getUserInfoEmbed(guild, member) {
 
   const headerSection = {
     type: 9,
-    components: [{ type: 10, content: `## **User Info — ${member.user.tag}**\n-# **Detailed profile and privilege information.**` }]
+    components: [{ type: 10, content: `## **User Info Ã¢â‚¬â€ ${member.user.tag}**\n-# **Detailed profile and privilege information.**` }]
   };
   if (avatarUrl) {
     headerSection.accessory = { type: 11, media: { url: avatarUrl } };
@@ -2774,7 +2774,7 @@ async function getUserInfoEmbed(guild, member) {
 }
 
 // ==========================================
-// SECURITY TOGGLE ALL — Bot Owner / Server Owner only
+// SECURITY TOGGLE ALL Ã¢â‚¬â€ Bot Owner / Server Owner only
 // Enables/disables ALL security features except autonick
 // ==========================================
 async function handleSecurityToggleAll(guild, moderator, enable) {
@@ -2886,7 +2886,7 @@ export async function getSecurityStatusPanel(guild) {
 }
 
 // ==========================================
-// QRMANAGER — Quarantine system setup & repair
+// QRMANAGER Ã¢â‚¬â€ Quarantine system setup & repair
 // ==========================================
 async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
   const config = db.getGuildConfig(guild.id);
@@ -2902,17 +2902,17 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const synced = await syncQuarantinePermissions(guild, qRole, qChannel?.id || null);
 
     const fields = [
-      { name: '<:emoji_16:1533860111704002665> Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
-      { name: '<:emoji_16:1533860111704002665> Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
-      { name: '<:emoji_16:1533860111704002665> Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
+      { name: '<:dark4luvontop:1533860081916182721> Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
+      { name: '<:dark4luvontop:1533860081916182721> Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
+      { name: '<:dark4luvontop:1533860081916182721> Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
     ];
 
     const vc = config.quarantineVcId ? await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
-    if (vc) fields.push({ name: '<:emoji_16:1533860111704002665> Quarantine VC', value: `<#${vc.id}>`, inline: true });
+    if (vc) fields.push({ name: '<:dark4luvontop:1533860081916182721> Quarantine VC', value: `<#${vc.id}>`, inline: true });
 
     return cv2.success(
         'Quarantine System Fixed ',
-        `The quarantine role and channel have been set up.\nDeny overwrites applied to **${synced}** channels — quarantined users will only see the quarantine zone.`,
+        `The quarantine role and channel have been set up.\nDeny overwrites applied to **${synced}** channels Ã¢â‚¬â€ quarantined users will only see the quarantine zone.`,
         fields
       );
   }
@@ -2946,9 +2946,9 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const vc      = updatedConfig.quarantineVcId      ? await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null)      : null;
 
     return cv2.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
-        { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set — run `/qrmanager setup`', inline: true },
-        { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set — run `/qrmanager setup`', inline: true },
-        { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set — use `/qrmanager setvc`', inline: true }
+        { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set Ã¢â‚¬â€ run `/qrmanager setup`', inline: true },
+        { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set Ã¢â‚¬â€ run `/qrmanager setup`', inline: true },
+        { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set Ã¢â‚¬â€ use `/qrmanager setvc`', inline: true }
       ]);
   }
 
@@ -2957,13 +2957,13 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 
 // ==========================================
 // ==========================================
-// LINKSALLOW — Per-guild domain whitelist for anti-link filter
+// LINKSALLOW Ã¢â‚¬â€ Per-guild domain whitelist for anti-link filter
 // ==========================================
 async function handleLinksAllow(guild, action, domain) {
   if (action === 'allowall') {
     db.updateGuildConfig(guild.id, { allowAllLinks: true });
     return cv2.success(
-        '<:emoji_16:1533860111704002665> All Links Allowed',
+        '<:dark4luvontop:1533860081916182721> All Links Allowed',
         'The anti-link filter has been **completely disabled** for this server.\n\nAll users can now post any link freely.\n\nUse `/linksallow disallowall` to re-enable the filter.',
         [{ name: ' Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
       );
@@ -2973,7 +2973,7 @@ async function handleLinksAllow(guild, action, domain) {
     db.updateGuildConfig(guild.id, { allowAllLinks: false, allowedLinks: [] });
     return cv2.warn(
         '<a:AnyaYay:1537513785718476850> Anti-Link Filter Restored',
-        'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> <:emoji_16:1521464002046328944> Discord Invites\n> <:emoji_16:1521464002046328944> NSFW Links\n> <:emoji_16:1521464002046328944> Scam/Phishing Links\n> <:emoji_16:1521464002046328944> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
+        'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> <:dark4luvontop:1533860081916182721> Discord Invites\n> <:dark4luvontop:1533860081916182721> NSFW Links\n> <:dark4luvontop:1533860081916182721> Scam/Phishing Links\n> <:dark4luvontop:1533860081916182721> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
       );
   }
 
@@ -3015,8 +3015,8 @@ async function handleLinksAllow(guild, action, domain) {
 
   if (allOpen) {
     return cv2.info(
-        '<:emoji_16:1533860111704002665> All Links Allowed',
-        'The anti-link filter is currently **fully disabled** — all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
+        '<:dark4luvontop:1533860081916182721> All Links Allowed',
+        'The anti-link filter is currently **fully disabled** Ã¢â‚¬â€ all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
       );
   }
 
@@ -3035,11 +3035,11 @@ async function handleLinksAllow(guild, action, domain) {
 }
 
 // ==========================================
-// MASS QUARANTINE — Quarantine all members with a specific role
+// MASS QUARANTINE Ã¢â‚¬â€ Quarantine all members with a specific role
 // Skips: bot owner, server owner, extra owners, whitelisted, already quarantined
 // ==========================================
 async function handleMassQuarantine(guild, moderator, targetRole, reason) {
-  // Safety guard — prevent quarantining @everyone
+  // Safety guard Ã¢â‚¬â€ prevent quarantining @everyone
   if (targetRole.id === guild.id) {
     return cv2.danger('Blocked', 'You cannot mass quarantine the `@everyone` role.');
   }
@@ -3085,31 +3085,31 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
     'Mass Quarantine Executed',
     `**${moderator.user.tag}** mass-quarantined all members with role <@&${targetRole.id}>.`,
     [
-      { name: '<:emoji_16:1533860111704002665> Role',       value: `<@&${targetRole.id}>`, inline: true },
+      { name: '<:dark4luvontop:1533860081916182721> Role',       value: `<@&${targetRole.id}>`, inline: true },
       { name: ' Quarantined', value: `\`${success}\``,       inline: true },
       { name: ' Failed',      value: `\`${failed}\``,        inline: true },
       { name: ' Skipped',    value: `\`${skipped}\``,       inline: true },
-      { name: '<:emoji_16:1533860111704002665> Reason',     value: reason }
+      { name: '<:dark4luvontop:1533860081916182721> Reason',     value: reason }
     ],
     'danger'
   ));
 
   return cv2.danger(
-      '<:emoji_16:1533860111704002665> Mass Quarantine Complete',
+      '<:dark4luvontop:1533860081916182721> Mass Quarantine Complete',
       `All targeted members with <@&${targetRole.id}> have been processed.`,
       [
-        { name: '<:emoji_16:1533860111704002665> Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
+        { name: '<:dark4luvontop:1533860081916182721> Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
         { name: ' Quarantined',  value: `\`${success}\``,  inline: true },
         { name: ' Failed',       value: `\`${failed}\``,   inline: true },
         { name: ' Skipped',     value: `\`${skipped}\``,  inline: true },
-        { name: '<:emoji_16:1533860111704002665> Reason',       value: reason,             inline: false },
-        { name: '<:emoji_16:1533860111704002665> Executed By',  value: `${moderator}`,    inline: true }
+        { name: '<:dark4luvontop:1533860081916182721> Reason',       value: reason,             inline: false },
+        { name: '<:dark4luvontop:1533860081916182721> Executed By',  value: `${moderator}`,    inline: true }
       ]
     );
 }
 
 // ==========================================
-// MASS UNQUARANTINE — Release all quarantined members in a guild
+// MASS UNQUARANTINE Ã¢â‚¬â€ Release all quarantined members in a guild
 // ==========================================
 async function handleMassUnquarantine(guild, moderator, client, context = null) {
   const quarantined = db.getQuarantinedInGuild(guild.id);
@@ -3155,12 +3155,12 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
   ));
 
   return cv2.success(
-      '<:emoji_16:1533860111704002665> Mass Unquarantine Complete',
+      '<:dark4luvontop:1533860081916182721> Mass Unquarantine Complete',
       `All quarantined members have been processed.`,
       [
         { name: ' Released',     value: `\`${success}\``, inline: true },
         { name: ' Failed',        value: `\`${failed}\``,  inline: true },
-        { name: '<:emoji_16:1533860111704002665> Executed By', value: `${moderator}`,    inline: true }
+        { name: '<:dark4luvontop:1533860081916182721> Executed By', value: `${moderator}`,    inline: true }
       ]
     );
 }
@@ -3365,7 +3365,7 @@ export async function handleScanServer(guild, page = 0) {
 
   const DANGER = '<a:Dark4luvontop:1524405543987445861>';
   const WARNING = '<a:Dark4luvontop:1524405545690202253>';
-  const DOT = '•';
+  const DOT = 'Ã¢â‚¬Â¢';
 
   let desc = `### ${DANGER} SECURITY DIAGNOSTICS\n\n`;
   desc += `> **Total Humans:** \`${allHumans.size}\`\n`;
@@ -3373,7 +3373,7 @@ export async function handleScanServer(guild, page = 0) {
 
   const humansToShow = trustedHumans.slice(startIdx, endIdx);
   if (humansToShow.length > 0) {
-    desc += `### <:emoji_16:1533860111704002665> TRUSTED PERSONNEL\n`;
+    desc += `### <:dark4luvontop:1533860081916182721> TRUSTED PERSONNEL\n`;
     humansToShow.forEach(h => {
       desc += `${DOT} **@${h.user.username}** [\`${h.id}\`]\n`;
     });
@@ -3383,7 +3383,7 @@ export async function handleScanServer(guild, page = 0) {
 
   const whitelistedBotsToShow = whitelistedBots.slice(startIdx, endIdx);
   if (whitelistedBotsToShow.length > 0) {
-    desc += `### <:emoji_16:1533860111704002665> WHITELISTED BOTS\n`;
+    desc += `### <:dark4luvontop:1533860081916182721> WHITELISTED BOTS\n`;
     whitelistedBotsToShow.forEach(b => {
       desc += `${DOT} **@${b.user.username}** [\`${b.id}\`]\n`;
     });
@@ -3395,7 +3395,7 @@ export async function handleScanServer(guild, page = 0) {
   if (highRiskHumansToShow.length > 0) {
     desc += `### ${WARNING} HIGH-RISK PERSONNEL\n`;
     highRiskHumansToShow.forEach(h => {
-      desc += `${DOT} **@${h.member.user.username}** [\`${h.member.id}\`] — ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
+      desc += `${DOT} **@${h.member.user.username}** [\`${h.member.id}\`] Ã¢â‚¬â€ ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
     });
     if (highRiskHumans.length > endIdx) desc += `*...and ${highRiskHumans.length - endIdx} more.*\n`;
     desc += `\n`;

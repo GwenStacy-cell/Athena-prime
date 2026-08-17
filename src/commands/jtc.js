@@ -23,7 +23,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Resolve project root from src/commands/jtc.js → ../../
+// Resolve project root from src/commands/jtc.js â†’ ../../
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
@@ -47,9 +47,9 @@ function getEmoji(key) {
   if (emojiMap[key]?.id) return { id: emojiMap[key].id, name: emojiMap[key].name };
   // Fallback text emoji
   const fallbacks = {
-    name: '', limit: '<:emoji_16:1533860111704002665>', status: '<:emoji_16:1533860111704002665>', game: '<:emoji_16:1533860111704002665>', lfm: '<:emoji_16:1533860111704002665>',
-    bitrate: '<:emoji_16:1533860111704002665>', region: '<:emoji_16:1533860111704002665>', text: '#⃣', nsfw: '', claim: '',
-    lock: '<:emoji_16:1533860111704002665>', unlock: '<:emoji_16:1533860111704002665>', ghost: '<:emoji_16:1533860111704002665>', unghost: '<:emoji_16:1533860111704002665>',
+    name: '', limit: '<:dark4luvontop:1533860081916182721>', status: '<:dark4luvontop:1533860081916182721>', game: '<:dark4luvontop:1533860081916182721>', lfm: '<:dark4luvontop:1533860081916182721>',
+    bitrate: '<:dark4luvontop:1533860081916182721>', region: '<:dark4luvontop:1533860081916182721>', text: '#âƒ£', nsfw: '', claim: '',
+    lock: '<:dark4luvontop:1533860081916182721>', unlock: '<:dark4luvontop:1533860081916182721>', ghost: '<:dark4luvontop:1533860081916182721>', unghost: '<:dark4luvontop:1533860081916182721>',
     permit: '', reject: '', invite: '', transfer: ''
   };
   return fallbacks[key] || '';
@@ -149,7 +149,7 @@ export async function syncPanel(guild) {
 }
 
 // ==========================================
-// SHARED PANEL — one persistent message in the interface channel
+// SHARED PANEL â€” one persistent message in the interface channel
 // Generic, no channel/owner info. All interactions are ephemeral.
 // ==========================================
 export function buildSharedPanel(guild) {
@@ -195,7 +195,7 @@ export function buildSharedPanel(guild) {
             `<a:Dark4luvontop:1518275045963726949> **Take control:** Use the dropdowns to manage your room\n` +
             `<a:Dark4luvontop:1518275045963726949> **Quick access:** Alternatively use \`/vc\` slash commands\n` +
             `<a:Dark4luvontop:1518275045963726949> **Stay private:** All interactions are hidden from others\n\n` +
-            `> Only **you** can see the responses — fully private.`
+            `> Only **you** can see the responses â€” fully private.`
           )
         )
         .setThumbnailAccessory(
@@ -250,7 +250,7 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.warn('Error', 'Could not locate the associated voice channel. You must be connected to it.'));
   }
 
-  // ── CLAIM — anyone in channel can do this ──
+  // â”€â”€ CLAIM â€” anyone in channel can do this â”€â”€
   if (value === 'jtc_claim') {
     const ownerInChannel = vcChannel.members.has(jtcData.ownerId);
     if (ownerInChannel) {
@@ -261,18 +261,18 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.success('Channel Claimed ', `You are now the owner of **${vcChannel.name}**.`));
   }
 
-  // ── INFO — anyone can view ──
+  // â”€â”€ INFO â€” anyone can view â”€â”€
   if (value === 'jtc_info') {
     const members = vcChannel.members.map(m => m.toString()).join(', ') || 'None';
     const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
-    return interaction.reply(cv2.e.info('Channel Info ℹ', null, [
-        { name: '<:emoji_16:1533860111704002665> Name', value: vcChannel.name, inline: true },
+    return interaction.reply(cv2.e.info('Channel Info â„¹', null, [
+        { name: '<:dark4luvontop:1533860081916182721> Name', value: vcChannel.name, inline: true },
         { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
-        { name: '<:emoji_16:1533860111704002665> Limit', value: vcChannel.userLimit === 0 ? 'No Limit' : `${vcChannel.userLimit}`, inline: true },
-        { name: '<:emoji_16:1533860111704002665> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
-        { name: '<:emoji_16:1533860111704002665> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
+        { name: '<:dark4luvontop:1533860081916182721> Limit', value: vcChannel.userLimit === 0 ? 'No Limit' : `${vcChannel.userLimit}`, inline: true },
+        { name: '<:dark4luvontop:1533860081916182721> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
+        { name: '<:dark4luvontop:1533860081916182721> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
         { name: ' NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true },
-        { name: '<:emoji_16:1533860111704002665> Members In Channel', value: members }
+        { name: '<:dark4luvontop:1533860081916182721> Members In Channel', value: members }
       ]));
   }
 
@@ -284,26 +284,26 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.danger('Not Owner', 'Only the channel owner, server owner, or bot owner can use these controls.'));
   }
 
-  // ── DIRECT ACTIONS (no modal needed) ──
+  // â”€â”€ DIRECT ACTIONS (no modal needed) â”€â”€
 
   if (value === 'jtc_lock') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: false });
-    return interaction.reply(cv2.e.danger('Channel Locked <:emoji_16:1533860111704002665>', 'No one new can join your channel.'));
+    return interaction.reply(cv2.e.danger('Channel Locked <:dark4luvontop:1533860081916182721>', 'No one new can join your channel.'));
   }
 
   if (value === 'jtc_unlock') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: null });
-    return interaction.reply(cv2.e.success('Channel Unlocked <:emoji_16:1533860111704002665>', 'Your channel is now open for anyone to join.'));
+    return interaction.reply(cv2.e.success('Channel Unlocked <:dark4luvontop:1533860081916182721>', 'Your channel is now open for anyone to join.'));
   }
 
   if (value === 'jtc_ghost') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
-    return interaction.reply(cv2.e.info('Channel Hidden <:emoji_16:1533860111704002665>', 'Your channel is now invisible to others.\nUsers you permit can still see and join.'));
+    return interaction.reply(cv2.e.info('Channel Hidden <:dark4luvontop:1533860081916182721>', 'Your channel is now invisible to others.\nUsers you permit can still see and join.'));
   }
 
   if (value === 'jtc_unghost') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: null });
-    return interaction.reply(cv2.e.success('Channel Visible <:emoji_16:1533860111704002665>', 'Your channel is now visible to everyone again.'));
+    return interaction.reply(cv2.e.success('Channel Visible <:dark4luvontop:1533860081916182721>', 'Your channel is now visible to everyone again.'));
   }
 
   if (value === 'jtc_nsfw') {
@@ -314,29 +314,29 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.success('NSFW Toggled', `Channel NSFW status set to **${!isNsfw}**.`));
   }
 
-  // ── GAME — set channel name to game ──
+  // â”€â”€ GAME â€” set channel name to game â”€â”€
   if (value === 'jtc_game') {
     const activity = member.presence?.activities.find(a => a.type === 0); // Playing
     if (!activity) {
       return interaction.reply(cv2.e.warn('No Game Detected', 'You are not playing any recognized game right now.'));
     }
     await vcChannel.setName(activity.name).catch(() => null);
-    return interaction.reply(cv2.e.success('Game Set <:emoji_16:1533860111704002665>', `Channel renamed to **${activity.name}**.`));
+    return interaction.reply(cv2.e.success('Game Set <:dark4luvontop:1533860081916182721>', `Channel renamed to **${activity.name}**.`));
   }
 
-  // ── LFM — post Looking For Members message ──
+  // â”€â”€ LFM â€” post Looking For Members message â”€â”€
   if (value === 'jtc_lfm') {
     const lfmEmbed = new EmbedBuilder()
       .setColor(getAccent(guild))
-      .setTitle('<:emoji_16:1533860111704002665> Looking for Members!')
+      .setTitle('<:dark4luvontop:1533860081916182721> Looking for Members!')
       .setDescription(`**${member.displayName}** is looking for members to join their voice channel!\n\n**Channel:** ${vcChannel}\n**Slots Available:** ${vcChannel.userLimit === 0 ? 'Unlimited' : vcChannel.userLimit - vcChannel.members.size}`)
       .setFooter({ text: 'Join their channel to play together!' })
       .setTimestamp();
     await interaction.channel.send({ embeds: [lfmEmbed] }).catch(() => null);
-    return interaction.reply(cv2.e.success('LFM Posted <:emoji_16:1533860111704002665>', 'Your Looking for Members message has been posted in this channel.'));
+    return interaction.reply(cv2.e.success('LFM Posted <:dark4luvontop:1533860081916182721>', 'Your Looking for Members message has been posted in this channel.'));
   }
 
-  // ── TEXT — create a temp text channel linked to VC ──
+  // â”€â”€ TEXT â€” create a temp text channel linked to VC â”€â”€
   if (value === 'jtc_text') {
     const jtcCfg = db.getJtcConfig(guild.id);
     const existing = guild.channels.cache.find(c => c.name === `${vcChannel.name}-text` && c.parentId === (jtcCfg?.categoryId || vcChannel.parentId));
@@ -360,12 +360,12 @@ export async function handleJtcSelectMenu(interaction) {
     for (const [, m] of vcChannel.members) {
       await textCh.permissionOverwrites.edit(m.id, { ViewChannel: true, SendMessages: true }).catch(() => null);
     }
-    return interaction.reply(cv2.success('Text Channel Created #⃣', `Temporary text channel created: ${textCh}
+    return interaction.reply(cv2.success('Text Channel Created #âƒ£', `Temporary text channel created: ${textCh}
 
 It is only visible to members in your voice channel.`));
   }
 
-  // ── MODAL-BASED ACTIONS ──
+  // â”€â”€ MODAL-BASED ACTIONS â”€â”€
 
   if (value === 'jtc_name') {
     const modal = new ModalBuilder().setCustomId('jtc_rename_modal').setTitle('Rename Your Channel');
@@ -389,7 +389,7 @@ It is only visible to members in your voice channel.`));
     const modal = new ModalBuilder().setCustomId('jtc_status_modal').setTitle('Set Channel Status');
     modal.addComponents(new ActionRowBuilder().addComponents(
       new TextInputBuilder().setCustomId('jtc_status_val').setLabel('Channel Status')
-        .setStyle(TextInputStyle.Short).setPlaceholder('e.g. Playing Valorant <:emoji_16:1533860111704002665>').setRequired(true).setMaxLength(500)
+        .setStyle(TextInputStyle.Short).setPlaceholder('e.g. Playing Valorant <:dark4luvontop:1533860081916182721>').setRequired(true).setMaxLength(500)
     ));
     return interaction.showModal(modal);
   }
@@ -419,7 +419,7 @@ It is only visible to members in your voice channel.`));
     const modal = new ModalBuilder().setCustomId('jtc_permit_modal').setTitle('Permit a User');
     modal.addComponents(new ActionRowBuilder().addComponents(
       new TextInputBuilder().setCustomId('jtc_permit_userid').setLabel('User ID to permit')
-        .setStyle(TextInputStyle.Short).setPlaceholder('Right-click user → Copy ID').setRequired(true)
+        .setStyle(TextInputStyle.Short).setPlaceholder('Right-click user â†’ Copy ID').setRequired(true)
     ));
     return interaction.showModal(modal);
   }
@@ -428,7 +428,7 @@ It is only visible to members in your voice channel.`));
     const modal = new ModalBuilder().setCustomId('jtc_reject_modal').setTitle('Reject a User');
     modal.addComponents(new ActionRowBuilder().addComponents(
       new TextInputBuilder().setCustomId('jtc_reject_userid').setLabel('User ID to reject/kick')
-        .setStyle(TextInputStyle.Short).setPlaceholder('Right-click user → Copy ID').setRequired(true)
+        .setStyle(TextInputStyle.Short).setPlaceholder('Right-click user â†’ Copy ID').setRequired(true)
     ));
     return interaction.showModal(modal);
   }
@@ -437,7 +437,7 @@ It is only visible to members in your voice channel.`));
     const modal = new ModalBuilder().setCustomId('jtc_invite_modal').setTitle('Invite a User');
     modal.addComponents(new ActionRowBuilder().addComponents(
       new TextInputBuilder().setCustomId('jtc_invite_userid').setLabel('User ID to invite via DM')
-        .setStyle(TextInputStyle.Short).setPlaceholder('Right-click user → Copy ID').setRequired(true)
+        .setStyle(TextInputStyle.Short).setPlaceholder('Right-click user â†’ Copy ID').setRequired(true)
     ));
     return interaction.showModal(modal);
   }
@@ -446,7 +446,7 @@ It is only visible to members in your voice channel.`));
     const modal = new ModalBuilder().setCustomId('jtc_transfer_modal').setTitle('Transfer Ownership');
     modal.addComponents(new ActionRowBuilder().addComponents(
       new TextInputBuilder().setCustomId('jtc_transfer_userid').setLabel('New Owner User ID (must be in channel)')
-        .setStyle(TextInputStyle.Short).setPlaceholder('Right-click user → Copy ID').setRequired(true)
+        .setStyle(TextInputStyle.Short).setPlaceholder('Right-click user â†’ Copy ID').setRequired(true)
     ));
     return interaction.showModal(modal);
   }
@@ -477,25 +477,25 @@ export async function handleJtcModal(interaction) {
     const val = parseInt(interaction.fields.getTextInputValue('jtc_limit_val')) || 0;
     const limit = Math.min(Math.max(val, 0), 99);
     await vcChannel.setUserLimit(limit).catch(() => null);
-    return interaction.reply(cv2.success('Limit Updated <:emoji_16:1533860111704002665>', `User limit set to **${limit === 0 ? 'Unlimited' : limit}**.`));
+    return interaction.reply(cv2.success('Limit Updated <:dark4luvontop:1533860081916182721>', `User limit set to **${limit === 0 ? 'Unlimited' : limit}**.`));
   }
 
   if (customId === 'jtc_status_modal') {
     const status = interaction.fields.getTextInputValue('jtc_status_val').trim();
     await interaction.client.rest.put(`/channels/${vcChannel.id}/voice-status`, { body: { status } }).catch(() => null);
-    return interaction.reply(cv2.success('Status Set <:emoji_16:1533860111704002665>', `Channel status set to: **${status}**`));
+    return interaction.reply(cv2.success('Status Set <:dark4luvontop:1533860081916182721>', `Channel status set to: **${status}**`));
   }
 
   if (customId === 'jtc_bitrate_modal') {
     const kbps = Math.min(Math.max(parseInt(interaction.fields.getTextInputValue('jtc_bitrate_val')) || 64, 8), 384);
     await vcChannel.setBitrate(kbps * 1000).catch(() => null);
-    return interaction.reply(cv2.success('Bitrate Updated <:emoji_16:1533860111704002665>', `Bitrate set to **${kbps}kbps**.`));
+    return interaction.reply(cv2.success('Bitrate Updated <:dark4luvontop:1533860081916182721>', `Bitrate set to **${kbps}kbps**.`));
   }
 
   if (customId === 'jtc_region_modal') {
     const region = interaction.fields.getTextInputValue('jtc_region_val').trim().toLowerCase() || null;
     await vcChannel.setRTCRegion(region).catch(() => null);
-    return interaction.reply(cv2.success('Region Updated <:emoji_16:1533860111704002665>', `Voice region set to **${region || 'Auto'}**.`));
+    return interaction.reply(cv2.success('Region Updated <:dark4luvontop:1533860081916182721>', `Voice region set to **${region || 'Auto'}**.`));
   }
 
   if (customId === 'jtc_permit_modal') {
@@ -525,7 +525,7 @@ export async function handleJtcModal(interaction) {
       .setColor(getAccent(guild))
       .setTitle(' You\'ve been invited!')
       .setDescription(`**${member.displayName}** has invited you to join their voice channel in **${guild.name}**.\n\n**Channel:** ${vcChannel.name}\n\n${invite ? `[Click to Join](${invite.url})` : 'Join the server and look for their channel.'}`)
-      .setFooter({ text: 'Athena Prime • Join to Create' });
+      .setFooter({ text: 'Athena Prime â€¢ Join to Create' });
 
     const dmSent = await target.send({ embeds: [dmEmbed] }).catch(() => null);
     if (!dmSent) return interaction.reply(cv2.warn('DM Failed', `Could not send a DM to ${target}. They may have DMs disabled.`));
@@ -548,7 +548,7 @@ export async function handleJtcModal(interaction) {
 // SLASH COMMANDS
 // ==========================================
 export const commands = [
-  // ─── JTCSETUP ───
+  // â”€â”€â”€ JTCSETUP â”€â”€â”€
   {
     name: 'jtcsetup',
     description: 'Set up the Join to Create system. (Admin only)',
@@ -590,8 +590,8 @@ export const commands = [
       }
 
       if (!lobbyChannel) {
-        const cat = await guild.channels.create({ name: '➕ Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
-        lobbyChannel = await guild.channels.create({ name: '➕ Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
+        const cat = await guild.channels.create({ name: 'âž• Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
+        lobbyChannel = await guild.channels.create({ name: 'âž• Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
         category = cat;
       }
 
@@ -618,7 +618,7 @@ export const commands = [
         db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
       }
 
-      return message.reply(cv2.success('JTC System Activated 🚀', [
+      return message.reply(cv2.success('JTC System Activated ðŸš€', [
           `**Lobby Channel:** ${lobbyChannel}`,
           `**Category:** ${categoryId ? `<#${categoryId}>` : 'Same as lobby'}`,
           `**Panel Channel:** ${panelChannelId ? `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
@@ -651,8 +651,8 @@ export const commands = [
       if (!panelChannel && panelIdStr) panelChannel = await guild.channels.fetch(panelIdStr.trim().replace(/\D/g, '')).catch(()=>null);
 
       if (!lobbyChannel) {
-        const cat = await guild.channels.create({ name: '➕ Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
-        lobbyChannel = await guild.channels.create({ name: '➕ Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
+        const cat = await guild.channels.create({ name: 'âž• Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
+        lobbyChannel = await guild.channels.create({ name: 'âž• Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
         category = cat;
       }
 
@@ -679,7 +679,7 @@ export const commands = [
         db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
       }
 
-      await interaction.editReply(cv2.success('JTC System Activated 🚀', [
+      await interaction.editReply(cv2.success('JTC System Activated ðŸš€', [
           `**Lobby Channel:** ${lobbyChannel}`,
           `**Category:** ${categoryId ? `<#${categoryId}>` : 'Same as lobby'}`,
           `**Panel Channel:** ${panelChannelId ? `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
@@ -689,7 +689,7 @@ export const commands = [
         ].join('\n')));
     }
   },
-  // ─── SECONDARY JTC SETUP ───
+  // â”€â”€â”€ SECONDARY JTC SETUP â”€â”€â”€
   {
     name: 'secondaryjtc',
     description: 'Set up a secondary Join to Create lobby. (Admin only)',
@@ -722,12 +722,12 @@ export const commands = [
       if (!lobbyChannel) {
         const jtcConfig = db.getJtcConfig(guild.id);
         const parentId = jtcConfig?.categoryId || null;
-        lobbyChannel = await guild.channels.create({ name: '➕ Secondary JTC', type: ChannelType.GuildVoice, parent: parentId, reason: 'Athena Prime Secondary JTC Setup' });
+        lobbyChannel = await guild.channels.create({ name: 'âž• Secondary JTC', type: ChannelType.GuildVoice, parent: parentId, reason: 'Athena Prime Secondary JTC Setup' });
       }
 
       db.setSecondaryJtcConfig(guild.id, lobbyChannel.id);
 
-      return message.reply(cv2.success('Secondary JTC System Activated 🚀', [
+      return message.reply(cv2.success('Secondary JTC System Activated ðŸš€', [
           `**Secondary Lobby:** ${lobbyChannel}`,
           '',
           'When someone joins this lobby, a voice channel will be created automatically, just like the primary lobby.'
@@ -751,12 +751,12 @@ export const commands = [
       if (!lobbyChannel) {
         const jtcConfig = db.getJtcConfig(guild.id);
         const parentId = jtcConfig?.categoryId || null;
-        lobbyChannel = await guild.channels.create({ name: '➕ Secondary JTC', type: ChannelType.GuildVoice, parent: parentId, reason: 'Athena Prime Secondary JTC Setup' });
+        lobbyChannel = await guild.channels.create({ name: 'âž• Secondary JTC', type: ChannelType.GuildVoice, parent: parentId, reason: 'Athena Prime Secondary JTC Setup' });
       }
 
       db.setSecondaryJtcConfig(guild.id, lobbyChannel.id);
 
-      await interaction.editReply(cv2.success('Secondary JTC System Activated 🚀', [
+      await interaction.editReply(cv2.success('Secondary JTC System Activated ðŸš€', [
           `**Secondary Lobby:** ${lobbyChannel}`,
           '',
           'When someone joins this lobby, a voice channel will be created automatically, just like the primary lobby.'
@@ -764,7 +764,7 @@ export const commands = [
     }
   },
 
-  // ─── JTCDISABLE ───
+  // â”€â”€â”€ JTCDISABLE â”€â”€â”€
   {
     name: 'jtcdisable',
     description: ' Disable the Join to Create system. (Admin only)',
@@ -785,10 +785,10 @@ export const commands = [
     }
   },
 
-  // ─── VC SLASH COMMANDS ───
+  // â”€â”€â”€ VC SLASH COMMANDS â”€â”€â”€
   {
     name: 'vc',
-    description: '<:emoji_16:1533860111704002665> Voice channel quick actions. Use the panel buttons for all settings.',
+    description: '<:dark4luvontop:1533860081916182721> Voice channel quick actions. Use the panel buttons for all settings.',
     category: 'utility',
     permissions: [],
     options: [
@@ -818,11 +818,11 @@ export const commands = [
       if (sub === 'info') {
         const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
         return interaction.reply(cv2.info('Channel Info', null, [
-          { name: '<:emoji_16:1533860111704002665> Name', value: vcChannel.name, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Name', value: vcChannel.name, inline: true },
           { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Limit', value: vcChannel.userLimit === 0 ? 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
-          { name: '<:emoji_16:1533860111704002665> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Limit', value: vcChannel.userLimit === 0 ? 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
           { name: ' NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true }
         ]));
       }

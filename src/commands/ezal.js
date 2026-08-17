@@ -6,7 +6,7 @@ import { handleEmergency } from './security.js';
 import fs from 'fs';
 import path from 'path';
 
-// Log helper — writes to restore-log.txt for easy VPS debugging
+// Log helper â€” writes to restore-log.txt for easy VPS debugging
 const RESTORE_LOG = path.resolve('restore-log.txt');
 function rlog(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
@@ -15,7 +15,7 @@ function rlog(msg) {
 }
 
 // ==========================================
-// EZAL — Owner-Only Command Suite
+// EZAL â€” Owner-Only Command Suite
 // All commands are prefix-only. Not in slash. Not in public help.
 // Usage: ezal <command> [args]  OR  just type the command after entering ezal mode
 // ==========================================
@@ -115,7 +115,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   let lastError = null;
   let consecutiveFailures = 0;
 
-  // Wraps any promise with a timeout — prevents Discord rate limit hangs
+  // Wraps any promise with a timeout â€” prevents Discord rate limit hangs
   const withTimeout = (promise, ms = 15000, label = '') => {
     return Promise.race([
       promise,
@@ -128,7 +128,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   // Clear previous restore log
   fs.writeFileSync(RESTORE_LOG, `=== EZAL RESTORE STARTED ${new Date().toISOString()} ===\n`);
   rlog(`Target guild: ${guild.name} (${guild.id})`);
-  rlog(`Backup from: ${backupData.guildName} — Roles: ${backupData.roles.length}, Cats: ${backupData.categories.length}, Channels: ${backupData.channels.length}`);
+  rlog(`Backup from: ${backupData.guildName} â€” Roles: ${backupData.roles.length}, Cats: ${backupData.categories.length}, Channels: ${backupData.channels.length}`);
 
   await statusCallback('**Wiping** existing channels and roles...');
 
@@ -140,7 +140,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   const channelDeletions = [];
   for (const channel of channels.values()) {
     if (!channel || channel.id === excludeChannelId) continue;
-    channelDeletions.push(channel.delete('Athena Prime — Backup Restore Wipe').catch(() => null));
+    channelDeletions.push(channel.delete('Athena Prime â€” Backup Restore Wipe').catch(() => null));
   }
   await Promise.allSettled(channelDeletions);
 
@@ -152,7 +152,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   const roleDeletions = [];
   for (const role of roles.values()) {
     if (!role || role.id === guild.id || role.managed || !role.editable || botRoles.has(role.id) || role.name === UNBYPASSABLE_ROLE_NAME || role.name === FIREWALL_ROLE_NAME) continue;
-    roleDeletions.push(role.delete('Athena Prime — Backup Restore Wipe').catch(() => null));
+    roleDeletions.push(role.delete('Athena Prime â€” Backup Restore Wipe').catch(() => null));
   }
   await Promise.allSettled(roleDeletions);
 
@@ -169,7 +169,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
           permissions: BigInt(roleData.permissions),
           hoist:       roleData.hoist,
           mentionable: roleData.mentionable,
-          reason:      'Athena Prime — Backup Restore' }),
+          reason:      'Athena Prime â€” Backup Restore' }),
         12000,
         `role:${roleData.name}`
       );
@@ -181,11 +181,11 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     } catch (err) { 
       failed++; 
       consecutiveFailures++;
-      rlog(`   Role FAILED: '${roleData.name}' → ${err.message} (code ${err.code}, status ${err.status})`);
+      rlog(`   Role FAILED: '${roleData.name}' â†’ ${err.message} (code ${err.code}, status ${err.status})`);
       if (!lastError) lastError = `Role '${roleData.name}': ${err.message} (code ${err.code})`;
       // Only abort if we have MANY consecutive failures (don't break on just a few timeouts)
       if (consecutiveFailures >= 10) {
-        rlog(`  <:emoji_16:1533860111704002665> 10 consecutive failures — aborting role loop`);
+        rlog(`  <:dark4luvontop:1533860081916182721> 10 consecutive failures â€” aborting role loop`);
         break;
       }
     }
@@ -195,7 +195,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       await statusCallback(`Restoring **roles**...  ${created} created |  ${failed} failed (${i + 1}/${backupData.roles.length})`);
     }
     rlog(`  Role ${i + 1}/${backupData.roles.length}: '${roleData.name}'`);
-    await new Promise(r => setTimeout(r, 700)); // 700ms — tested safe, avoids rate limits
+    await new Promise(r => setTimeout(r, 700)); // 700ms â€” tested safe, avoids rate limits
   }
 
   // Helper to map overwrites
@@ -229,7 +229,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
           name:   catData.name,
           type:   ChannelType.GuildCategory,
           permissionOverwrites: mapOverwrites(catData.permissionOverwrites),
-          reason: 'Athena Prime — Backup Restore'
+          reason: 'Athena Prime â€” Backup Restore'
         }),
         12000,
         `category:${catData.name}`
@@ -241,10 +241,10 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     } catch (err) { 
       failed++;
       consecutiveFailures++;
-      rlog(`   Category FAILED: '${catData.name}' → ${err.message} (code ${err.code})`);
+      rlog(`   Category FAILED: '${catData.name}' â†’ ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Category '${catData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  <:emoji_16:1533860111704002665> 5 consecutive failures — aborting category loop`);
+        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures â€” aborting category loop`);
         break;
       }
     }
@@ -275,7 +275,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
           rateLimitPerUser: chData.slowmode || undefined,
           parent:           parent?.id || undefined,
           permissionOverwrites: mapOverwrites(chData.permissionOverwrites),
-          reason:           'Athena Prime — Backup Restore'
+          reason:           'Athena Prime â€” Backup Restore'
         }),
         12000,
         `channel:${chData.name}`
@@ -286,10 +286,10 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
     } catch (err) { 
       failed++;
       consecutiveFailures++;
-      rlog(`   Channel FAILED: '${chData.name}' → ${err.message} (code ${err.code})`);
+      rlog(`   Channel FAILED: '${chData.name}' â†’ ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Channel '${chData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  <:emoji_16:1533860111704002665> 5 consecutive failures — aborting channel loop`);
+        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures â€” aborting channel loop`);
         break;
       }
     }
@@ -385,7 +385,7 @@ async function handleBcklist(message) {
   ).join('\n');
 
   await message.reply(cv2.info(
-    `Backup List — ${backups.length} backup(s)`,
+    `Backup List â€” ${backups.length} backup(s)`,
     list
   ));
 }
@@ -397,7 +397,7 @@ async function handleServers(message) {
   const lines = guilds.map((g, i) => {
     const backup = db.getBackupByGuild(g.id);
     const bId    = backup ? `\`${db.cache.guildBackupMap[g.id]}\`` : '`No Backup`';
-    return `\`${i + 1}.\` **${g.name}** \`(${g.id})\`\n└ <:emoji_16:1533860111704002665> ${g.memberCount} members |  ${g.roles.cache.size} roles | <:emoji_16:1533860111704002665> ${g.channels.cache.size} channels | Backup: ${bId}`;
+    return `\`${i + 1}.\` **${g.name}** \`(${g.id})\`\nâ”” <:dark4luvontop:1533860081916182721> ${g.memberCount} members |  ${g.roles.cache.size} roles | <:dark4luvontop:1533860081916182721> ${g.channels.cache.size} channels | Backup: ${bId}`;
   }).join('\n\n');
 
   // Split into chunks if too long
@@ -435,7 +435,7 @@ async function handleRestore(message, args) {
     return message.reply(cv2.danger('Not Found', `No backup found with ID \`${backupId}\`.\n\n**Available Backups in DB:**\n${available}`));
   }
 
-  // Resolve target guild — default to the backup's original guild
+  // Resolve target guild â€” default to the backup's original guild
   let targetGuild = message.client.guilds.cache.get(args[1] || backupData.guildId);
   if (!targetGuild) return message.reply(cv2.danger('Guild Not Found', 'Could not find the target server. Provide a valid server ID as the second argument.'));
 
@@ -450,7 +450,7 @@ async function handleRestore(message, args) {
   const collected = await message.channel.awaitMessages({ filter, max: 1, time: 15000 }).catch(() => null);
 
   if (!collected?.size) {
-    return confirmMsg.edit(cv2.info('Cancelled', 'Restore aborted — no confirmation received.'));
+    return confirmMsg.edit(cv2.info('Cancelled', 'Restore aborted â€” no confirmation received.'));
   }
 
   collected.first()?.delete().catch(() => null);
@@ -521,19 +521,19 @@ async function handleEhelp(message) {
     {
       name: 'Backup System',
       value:
-        '`ezal backup [serverId]` — Create a backup of the current or specified server\n' +
-        '`ezal backupall` — Mass backup all servers *(Bot Owner only)*\n' +
-        '`ezal bcklist` — List all saved backup IDs with server info\n' +
-        '`ezal restore <backupId> [targetServerId]` — Restore a server from backup *(Bot Owner only)*'
+        '`ezal backup [serverId]` â€” Create a backup of the current or specified server\n' +
+        '`ezal backupall` â€” Mass backup all servers *(Bot Owner only)*\n' +
+        '`ezal bcklist` â€” List all saved backup IDs with server info\n' +
+        '`ezal restore <backupId> [targetServerId]` â€” Restore a server from backup *(Bot Owner only)*'
     },
     {
       name: 'Server Management',
       value:
-        '`ezal servers` — List all servers the bot is in with their backup IDs and stats\n' +
-        '`ezal emergency <serverId> [mode|end]` — Trigger emergency mode remotely\n' +
-        '`ezal banserver <serverId>` — Ban a server and force leave instantly\n' +
-        '`ezal unbanserver <serverId>` — Unban a server to allow invites\n' +
-        '`ezal restoresetup <serverId>` — Dynamically restore JTC, Welcome, Leave, Accent, and Quarantine setups'
+        '`ezal servers` â€” List all servers the bot is in with their backup IDs and stats\n' +
+        '`ezal emergency <serverId> [mode|end]` â€” Trigger emergency mode remotely\n' +
+        '`ezal banserver <serverId>` â€” Ban a server and force leave instantly\n' +
+        '`ezal unbanserver <serverId>` â€” Unban a server to allow invites\n' +
+        '`ezal restoresetup <serverId>` â€” Dynamically restore JTC, Welcome, Leave, Accent, and Quarantine setups'
     },
     {
       name: 'Access',
@@ -544,7 +544,7 @@ async function handleEhelp(message) {
     }
   ];
 
-  const sent = await message.reply(cv2.info('Ezal — Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields));
+  const sent = await message.reply(cv2.info('Ezal â€” Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields));
   setTimeout(() => {
     sent.delete().catch(() => null);
     message.delete().catch(() => null);
@@ -553,11 +553,11 @@ async function handleEhelp(message) {
 }
 
 // ==========================================
-// MAIN EZAL ROUTER — called from messageCreate.js
-// Bot Owner ONLY — server owners use standalone `backup` command
+// MAIN EZAL ROUTER â€” called from messageCreate.js
+// Bot Owner ONLY â€” server owners use standalone `backup` command
 // ==========================================
 export async function handleEzal(message) {
-  if (!isBotOwnerSync(message.author.id)) return; // Silent — bot owner only
+  if (!isBotOwnerSync(message.author.id)) return; // Silent â€” bot owner only
 
   const parts = message.content.trim().split(/ +/);
   const sub   = (parts[1] || 'help').toLowerCase();
@@ -677,7 +677,7 @@ async function handleCleanBadRoles(message) {
 }
 
 // ==========================================
-// FIXJTC — Updates JTC panels globally to apply current accent color
+// FIXJTC â€” Updates JTC panels globally to apply current accent color
 // ==========================================
 async function handleFixJtc(message) {
   const sent = await message.reply('Starting global JTC panel sync. This might take a moment...');
@@ -733,7 +733,7 @@ async function handleFixJtc(message) {
       }
     }
     
-    await sent.edit(`<:emoji_16:1533860111704002665> **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
+    await sent.edit(`<:dark4luvontop:1533860081916182721> **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
   } catch (e) {
     await sent.edit(`Error during sync: \`${e.message}\``);
   }
@@ -752,7 +752,7 @@ async function handleBanServer(message, args) {
   if (targetGuild) {
     try { await targetGuild.leave(); } catch(e) {}
   }
-  return message.reply(`<:emoji_16:1533860111704002665> **Server Banned:** \`${guildId}\`. The bot has left and cannot be added back.`);
+  return message.reply(`<:dark4luvontop:1533860081916182721> **Server Banned:** \`${guildId}\`. The bot has left and cannot be added back.`);
 }
 
 async function handleUnbanServer(message, args) {
@@ -761,7 +761,7 @@ async function handleUnbanServer(message, args) {
   if (!db.isServerBanned(guildId)) return message.reply('Server is not banned.');
   
   db.removeBannedServer(guildId);
-  return message.reply(`<:emoji_16:1533860111704002665> **Server Unbanned:** \`${guildId}\`. The bot can now be invited again.`);
+  return message.reply(`<:dark4luvontop:1533860081916182721> **Server Unbanned:** \`${guildId}\`. The bot can now be invited again.`);
 }
 
 async function handleRestoreSetup(message, args) {
@@ -784,8 +784,8 @@ async function handleRestoreSetup(message, args) {
     if (jtcConfig && jtcConfig.lobbyChannelId) {
       let lobby = guild.channels.cache.get(jtcConfig.lobbyChannelId);
       if (!lobby) {
-        const cat = guild.channels.cache.get(jtcConfig.categoryId) || await guild.channels.create({ name: '➕ Voice Rooms', type: ChannelType.GuildCategory });
-        lobby = await guild.channels.create({ name: '➕ Join to Create', type: ChannelType.GuildVoice, parent: cat.id });
+        const cat = guild.channels.cache.get(jtcConfig.categoryId) || await guild.channels.create({ name: 'âž• Voice Rooms', type: ChannelType.GuildCategory });
+        lobby = await guild.channels.create({ name: 'âž• Join to Create', type: ChannelType.GuildVoice, parent: cat.id });
         db.cache.jtc[guildId] = { lobbyChannelId: lobby.id, categoryId: cat.id };
         db.save();
         if (jtcConfig.panelChannelId) {
@@ -832,7 +832,7 @@ async function handleRestoreSetup(message, args) {
     }
   } catch(e) {}
 
-  await sent.edit(`<:emoji_16:1533860111704002665> **Setup Restoration Complete!** Rebuilt JTC, Quarantine, Accent, and Welcome/Leave perfectly.`);
+  await sent.edit(`<:dark4luvontop:1533860081916182721> **Setup Restoration Complete!** Rebuilt JTC, Quarantine, Accent, and Welcome/Leave perfectly.`);
 }
 
 // Export commands so they can be used directly with the standard prefix

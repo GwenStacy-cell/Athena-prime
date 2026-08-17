@@ -116,18 +116,18 @@ function getManagerPanel(guildId, type) {
   const prefix = isWelcome ? 'welcmgr_' : 'leavmgr_';
 
   const replyData = cv2.info(
-    `<:emoji_16:1533860111704002665> ${label} Manager`,
+    `<:dark4luvontop:1533860081916182721> ${label} Manager`,
     `Manage the settings for your server's ${label.toLowerCase()} messages.\n\n` +
     `**Current Configuration:**\n` +
-    `<:emoji_16:1533860111704002665> **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : 'Not Set'}\n` +
     ` **Status:** ${cfg.enabled ? ' Enabled' : ' Disabled'}\n` +
-    `<:emoji_16:1533860111704002665> **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `<:emoji_16:1533860111704002665> **Author (From):** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `<:emoji_16:1533860111704002665> **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `<:emoji_16:1533860111704002665> **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `<:emoji_16:1533860111704002665> **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
-    `<:emoji_16:1533860111704002665> **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
-    `<:emoji_16:1533860111704002665> **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Author (From):** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
     ` **Thumbnail (Avatar):** ${cfg.thumbnail !== false ? ' On' : ' Off'}\n` +
     ` **Timestamp:** ${cfg.timestamp !== false ? ' On' : ' Off'}`
   );
@@ -405,7 +405,7 @@ export async function handleWelcomeManagerModal(interaction) {
 export const commands = [
   {
     name: 'welcome',
-    description: '<:emoji_16:1533860111704002665> Open the Welcome Message Manager.',
+    description: '<:dark4luvontop:1533860081916182721> Open the Welcome Message Manager.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [], // No subcommands anymore!
@@ -418,7 +418,7 @@ export const commands = [
   },
   {
     name: 'leave',
-    description: '<:emoji_16:1533860111704002665> Open the Leave Message Manager.',
+    description: '<:dark4luvontop:1533860081916182721> Open the Leave Message Manager.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [],

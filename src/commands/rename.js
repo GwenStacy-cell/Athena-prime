@@ -64,7 +64,7 @@ export const commands = [
         
         const successEmbed = new EmbedBuilder()
           .setColor('#c6ff00')
-          .setDescription(`<:emoji_16:1521464002046328944> ${interaction.user} **Has Renamed** ${target} **|\n${newName}**`)
+          .setDescription(`<:dark4luvontop:1533860081916182721> ${interaction.user} **Has Renamed** ${target} **|\n${newName}**`)
           .setFooter({ text: 'Athena Prime Unbypassable Security' });
 
         await interaction.reply({ embeds: [successEmbed] });

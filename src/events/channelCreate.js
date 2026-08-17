@@ -16,7 +16,7 @@ export default {
     }
 
     const createEmbed = embed.build({
-      description: `__**Channel Created |**__ <:emoji_16:1533860111704002665>\n> **Channel:** ${channel.name} (<#${channel.id}>)\n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
+      description: `__**Channel Created |**__ <:dark4luvontop:1533860081916182721>\n> **Channel:** ${channel.name} (<#${channel.id}>)\n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
       color: '#2b2d31'
     });
     await logServerEvent(channel.guild, 'channels', createEmbed);
@@ -37,7 +37,7 @@ export default {
               SendMessages: false,
               Connect: false,
               Speak: false
-            }, { reason: 'Athena Prime — auto-hide new channel from quarantined users' });
+            }, { reason: 'Athena Prime â€” auto-hide new channel from quarantined users' });
           }
         }
       }

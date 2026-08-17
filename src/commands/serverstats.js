@@ -12,7 +12,7 @@ export async function updateServerStatsChannels(guild, stats) {
   const humansCh = guild.channels.cache.get(stats.humansId);
   const botsCh = guild.channels.cache.get(stats.botsId);
   
-  const e = stats.emoji || '❗';
+  const e = stats.emoji || 'â—';
   const f = stats.font || 'standard';
 
   const tName = formatServerStatChannelName('USERS', total, e, f);
@@ -29,22 +29,22 @@ export async function updateServerStatsChannels(guild, stats) {
   if (lastErr) throw lastErr;
 }
 
-export function formatServerStatChannelName(type, count, prefixEmoji = '❗', fontStyle = 'standard') {
+export function formatServerStatChannelName(type, count, prefixEmoji = 'â—', fontStyle = 'standard') {
   const fonts = {
     standard: { USERS: 'USERS', MEMBERS: 'MEMBERS', BOTS: 'BOTS' },
-    bold: { USERS: '𝗨𝗦𝗘𝗥𝗦', MEMBERS: '𝗠𝗘𝗠𝗕𝗘𝗥𝗦', BOTS: '𝗕𝗢𝗧𝗦' },
-    italic: { USERS: '𝘜𝘚𝘌𝘙𝘚', MEMBERS: '𝘔𝘌𝘔𝘉𝘌𝘙𝘚', BOTS: '𝘉𝘖𝘛𝘚' },
-    smallcaps: { USERS: 'ᴜsᴇʀs', MEMBERS: 'ᴍᴇᴍʙᴇʀs', BOTS: 'ʙᴏᴛs' },
-    serif: { USERS: '𝐔𝐒𝐄𝐑𝐒', MEMBERS: '𝐌𝐄𝐌𝐁𝐄𝐑𝐒', BOTS: '𝐁𝐎𝐓𝐒' },
-    script: { USERS: '𝓤𝓢𝓔𝓡𝓢', MEMBERS: '𝓜𝓔𝓜𝓑𝓔𝓡𝓢', BOTS: '𝓑𝓞𝓣𝓢' },
-    gothic: { USERS: '𝔘𝔖𝔈ℜ𝔖', MEMBERS: '𝔐𝔈𝔐𝔅𝔈ℜ𝔖', BOTS: '𝔅𝔒𝔗𝔖' },
-    mono: { USERS: 'ＵＳＥＲＳ', MEMBERS: 'ＭＥＭＢＥＲＳ', BOTS: 'ＢＯＴＳ' }
+    bold: { USERS: 'ð—¨ð—¦ð—˜ð—¥ð—¦', MEMBERS: 'ð— ð—˜ð— ð—•ð—˜ð—¥ð—¦', BOTS: 'ð—•ð—¢ð—§ð—¦' },
+    italic: { USERS: 'ð˜œð˜šð˜Œð˜™ð˜š', MEMBERS: 'ð˜”ð˜Œð˜”ð˜‰ð˜Œð˜™ð˜š', BOTS: 'ð˜‰ð˜–ð˜›ð˜š' },
+    smallcaps: { USERS: 'á´œsá´‡Ê€s', MEMBERS: 'á´á´‡á´Ê™á´‡Ê€s', BOTS: 'Ê™á´á´›s' },
+    serif: { USERS: 'ð”ð’ð„ð‘ð’', MEMBERS: 'ðŒð„ðŒðð„ð‘ð’', BOTS: 'ððŽð“ð’' },
+    script: { USERS: 'ð“¤ð“¢ð“”ð“¡ð“¢', MEMBERS: 'ð“œð“”ð“œð“‘ð“”ð“¡ð“¢', BOTS: 'ð“‘ð“žð“£ð“¢' },
+    gothic: { USERS: 'ð”˜ð”–ð”ˆâ„œð”–', MEMBERS: 'ð”ð”ˆð”ð”…ð”ˆâ„œð”–', BOTS: 'ð”…ð”’ð”—ð”–' },
+    mono: { USERS: 'ï¼µï¼³ï¼¥ï¼²ï¼³', MEMBERS: 'ï¼­ï¼¥ï¼­ï¼¢ï¼¥ï¼²ï¼³', BOTS: 'ï¼¢ï¼¯ï¼´ï¼³' }
   };
   
   const selectedFont = fonts[fontStyle.toLowerCase()] || fonts.standard;
   const word = selectedFont[type] || fonts.standard[type];
   
-  return `${prefixEmoji}・${word}: ${count}`;
+  return `${prefixEmoji}ãƒ»${word}: ${count}`;
 }
 
 export const commands = [
@@ -66,7 +66,7 @@ export const commands = [
         options: [
           {
             name: 'emoji',
-            description: 'The emoji prefix to use (e.g. 📊 or custom emoji)',
+            description: 'The emoji prefix to use (e.g. ðŸ“Š or custom emoji)',
             type: ApplicationCommandOptionType.String,
             required: false
           },
@@ -148,7 +148,7 @@ export const commands = [
           const row1 = new ActionRowBuilder().addComponents(fontSelect);
           const row2 = new ActionRowBuilder().addComponents(emojiBtn);
 
-          const cv2Reply = cv2.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.\n\n⚠️ **Note:** Discord limits voice channel renames to **2 times every 10 minutes**. If your changes don\'t apply immediately, please wait a few minutes for the rate limit to expire.');
+          const cv2Reply = cv2.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.\n\nâš ï¸ **Note:** Discord limits voice channel renames to **2 times every 10 minutes**. If your changes don\'t apply immediately, please wait a few minutes for the rate limit to expire.');
           cv2Reply.components.push(row1, row2);
           const setupMsg = await message.reply(cv2Reply);
 
@@ -164,9 +164,9 @@ export const commands = [
               await i.deferReply();
               try {
                 await updateServerStatsChannels(message.guild, updated);
-                await i.editReply({ content: `<:emoji_16:1533860111704002665> Font updated to **${selected}**!` });
+                await i.editReply({ content: `<:dark4luvontop:1533860081916182721> Font updated to **${selected}**!` });
               } catch (err) {
-                await i.editReply({ content: `⚠️ Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour font choice **${selected}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
+                await i.editReply({ content: `âš ï¸ Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour font choice **${selected}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
               }
             } else if (i.customId === 'serverstats_emoji') {
               const modal = new ModalBuilder()
@@ -193,9 +193,9 @@ export const commands = [
                 
                 try {
                   await updateServerStatsChannels(message.guild, updated);
-                  await modalSubmit.editReply({ content: `<:emoji_16:1533860111704002665> Emoji updated to ${emojiVal}!` });
+                  await modalSubmit.editReply({ content: `<:dark4luvontop:1533860081916182721> Emoji updated to ${emojiVal}!` });
                 } catch (err) {
-                  await modalSubmit.editReply({ content: `⚠️ Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour emoji choice **${emojiVal}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
+                  await modalSubmit.editReply({ content: `âš ï¸ Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour emoji choice **${emojiVal}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
                 }
               } catch(err) {}
             }
@@ -213,7 +213,7 @@ export const commands = [
           await updateServerStatsChannels(message.guild, updatedStats);
           return message.reply(cv2.success('Stats Configured', `Server stats font/emoji updated to **${newFont || 'standard'}** with emoji **${newEmoji || 'none'}**!`));
         } catch (err) {
-          return message.reply(cv2.warning('Stats Configured, but Discord Ratelimited', `Server stats config updated!\n\n⚠️ **Discord rejected the immediate channel rename!**\nError: \`${err.message}\`\n\nYour choices are saved and will automatically apply in ~10 minutes.`));
+          return message.reply(cv2.warning('Stats Configured, but Discord Ratelimited', `Server stats config updated!\n\nâš ï¸ **Discord rejected the immediate channel rename!**\nError: \`${err.message}\`\n\nYour choices are saved and will automatically apply in ~10 minutes.`));
         }
       }
 
@@ -267,7 +267,7 @@ export const commands = [
             totalId: totalCh.id,
             humansId: humansCh.id,
             botsId: botsCh.id,
-            emoji: '❗',
+            emoji: 'â—',
             font: 'standard'
           });
           
@@ -380,7 +380,7 @@ export const commands = [
             totalId: totalCh.id,
             humansId: humansCh.id,
             botsId: botsCh.id,
-            emoji: '❗',
+            emoji: 'â—',
             font: 'standard'
           });
           

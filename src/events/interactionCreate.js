@@ -38,7 +38,7 @@ export default {
         );
       }
 
-      // Verify permissions — bot owner AND extra owners bypass all checks in every server
+      // Verify permissions â€” bot owner AND extra owners bypass all checks in every server
       if (cmd.permissions && cmd.permissions.length > 0) {
         const isBypass = isBotOwnerSync(interaction.user.id) ||
           (interaction.guild && (
@@ -47,7 +47,7 @@ export default {
           ));
 
         if (!isBypass) {
-          // interaction.member may be null in User App DM context — skip guild perm check
+          // interaction.member may be null in User App DM context â€” skip guild perm check
           const hasPerms = interaction.member
             ? cmd.permissions.every(perm => interaction.member.permissions.has(perm))
             : false;
@@ -234,7 +234,7 @@ export default {
             await vc.send(lyricsEmbed);
           }
 
-          return interaction.editReply({ content: `<:emoji_16:1533860111704002665> Lyrics sent to <#${vc.id}>!` });
+          return interaction.editReply({ content: `<:dark4luvontop:1533860081916182721> Lyrics sent to <#${vc.id}>!` });
 
         } catch (error) {
           console.error('Lyrics error:', error);
@@ -1030,7 +1030,7 @@ export default {
         }
         
         if (isTest) {
-          return interaction.reply({ content: '🧪 **TEST PREVIEW ONLY** - Buttons will not work correctly in this preview.', embeds: [panelEmbed], components, ephemeral: true });
+          return interaction.reply({ content: 'ðŸ§ª **TEST PREVIEW ONLY** - Buttons will not work correctly in this preview.', embeds: [panelEmbed], components, ephemeral: true });
         }
         
         const targetChannelId = config.targetChannelId || interaction.channel.id;
@@ -1113,14 +1113,14 @@ export default {
             }
 
             const textChannel = await interaction.guild.channels.create({
-              name: `🎫-ticket-${interaction.user.username}`,
+              name: `ðŸŽ«-ticket-${interaction.user.username}`,
               type: 0,
               parent: category.id,
               permissionOverwrites
             });
 
             const voiceChannel = await interaction.guild.channels.create({
-              name: `🎫 Ticket Voice`,
+              name: `ðŸŽ« Ticket Voice`,
               type: 2,
               parent: category.id,
               permissionOverwrites
@@ -1141,7 +1141,7 @@ export default {
               new ButtonBuilder()
                 .setCustomId(`ticket_ping_${ticketId}`)
                 .setLabel('Staff Ping')
-                .setEmoji('🔔') 
+                .setEmoji('ðŸ””') 
                 .setStyle(ButtonStyle.Secondary),
               new ButtonBuilder()
                 .setCustomId(`ticket_close_${ticketId}`)
@@ -1331,7 +1331,7 @@ export default {
       }
 
       if (validButtons.includes(interaction.customId)) {
-      // Verify Administrator permissions for config buttons — bot owner + extra owners bypass
+      // Verify Administrator permissions for config buttons â€” bot owner + extra owners bypass
       const isBtnBypass = isBotOwnerSync(interaction.user.id) ||
         interaction.user.id === interaction.guild.ownerId ||
         db.isExtraOwner(interaction.guild.id, interaction.user.id);

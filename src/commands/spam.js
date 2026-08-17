@@ -21,14 +21,14 @@ export const spamMoreCache = new Map();
 
 export const commands = [
 
-  // ─────────────────────────────────────────
-  // SPAM — Spam a user's DM or the current channel
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // SPAM â€” Spam a user's DM or the current channel
   // Usage:
-  //   !spam @user <message>      → spams target user's DM
-  //   !spam <message>            → spams current channel anonymously
-  //   /spam user:@user message:  → spams target user's DM
-  //   /spam message:             → spams current channel anonymously
-  // ─────────────────────────────────────────
+  //   !spam @user <message>      â†’ spams target user's DM
+  //   !spam <message>            â†’ spams current channel anonymously
+  //   /spam user:@user message:  â†’ spams target user's DM
+  //   /spam message:             â†’ spams current channel anonymously
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     name: 'spam',
     description: ' Spam a user\'s DM or current channel. (Permitted users only)',
@@ -78,7 +78,7 @@ export const commands = [
         }
         text = remaining.join(' ').trim();
       } else {
-        // !spam [count] <message>  — no target, spam current channel
+        // !spam [count] <message>  â€” no target, spam current channel
         if (args[0] && /^\d+$/.test(args[0])) {
           count = Math.min(Math.max(parseInt(args[0]), 1), 10);
           text = args.slice(1).join(' ').trim();
@@ -177,9 +177,9 @@ export const commands = [
     }
   },
 
-  // ─────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // SPAMPERMIT
-  // ─────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     name: 'spampermit',
     description: ' Grant a user permission to use the spam command. (Bot Owner only)',
@@ -233,9 +233,9 @@ export const commands = [
     }
   },
 
-  // ─────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // SPAMREVOKE
-  // ─────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     name: 'spamrevoke',
     description: ' Revoke a user\'s spam permission. (Bot Owner only)',
@@ -278,9 +278,9 @@ export const commands = [
     }
   },
 
-  // ─────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // SPAMLIST
-  // ─────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     name: 'spamlist',
     description: ' List all permitted spam users. (Bot Owner only)',
@@ -293,28 +293,28 @@ export const commands = [
     async executePrefix(message) {
       if (!(await isBotOwner(message.author))) return;
       const list = db.getSpamPermitted();
-      if (list.length === 0) return message.reply(cv2.info('Spam Permitted List', '<:emoji_16:1533860111704002665> No users have spam access yet.'));
+      if (list.length === 0) return message.reply(cv2.info('Spam Permitted List', '<:dark4luvontop:1533860081916182721> No users have spam access yet.'));
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await message.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return message.reply(cv2.security('Spam Access List', `<:emoji_16:1533860111704002665> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
+      return message.reply(cv2.security('Spam Access List', `<:dark4luvontop:1533860081916182721> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
     },
 
     async executeSlash(interaction) {
       if (!(await isBotOwner(interaction.user))) return interaction.reply(cv2.e.danger('Access Denied', 'Bot Owner only.'));
       const list = db.getSpamPermitted();
-      if (list.length === 0) return interaction.reply(cv2.info('Spam Permitted List', '<:emoji_16:1533860111704002665> No users have spam access yet.'));
+      if (list.length === 0) return interaction.reply(cv2.info('Spam Permitted List', '<:dark4luvontop:1533860081916182721> No users have spam access yet.'));
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await interaction.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return interaction.reply(cv2.security('Spam Access List', `<:emoji_16:1533860111704002665> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
+      return interaction.reply(cv2.security('Spam Access List', `<:dark4luvontop:1533860081916182721> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
     }
   }
 ];
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MODAL HANDLER
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function handleSpamModal(interaction) {
   const userId = interaction.user.id;
   if (!(await isBotOwner(interaction.user)) && !db.isSpamPermitted(userId)) {
@@ -337,10 +337,10 @@ export async function handleSpamModal(interaction) {
   await interaction.followUp(_r).catch(() => null);
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // SPAM MORE BUTTON HANDLER
 // Button only works for the user who triggered the original spam
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export async function handleSpamMoreButton(interaction) {
   const customId = interaction.customId; // spam_more_<userId>_<timestamp>
   const parts = customId.split('_');
@@ -381,10 +381,10 @@ export async function handleSpamMoreButton(interaction) {
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // BUILD SPAM MORE BUTTON ROW
 // Caches session data and returns an ActionRowBuilder
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function buildSpamMoreRow(requesterId, channelId, targetUserId, text, mode) {
   const buttonId = `spam_more_${requesterId}_${Date.now()}`;
   spamMoreCache.set(buttonId, { text, channelId, targetUserId, mode, requesterId });
@@ -398,10 +398,10 @@ function buildSpamMoreRow(requesterId, channelId, targetUserId, text, mode) {
   );
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // SPAM A TARGET USER'S DM
 // Opens DM with target and sends the message N times
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function spamUserDm(client, targetUserId, text, count, requesterId) {
   try {
     const targetUser = await client.users.fetch(targetUserId);
@@ -416,14 +416,14 @@ async function spamUserDm(client, targetUserId, text, count, requesterId) {
   } catch (err) {
     console.error('[SpamUserDM]', err);
     // Common reason: user has DMs closed
-    if (err.code === 50007) return { success: false, message: 'Cannot send DMs to that user — they have DMs closed or have blocked the bot.' };
+    if (err.code === 50007) return { success: false, message: 'Cannot send DMs to that user â€” they have DMs closed or have blocked the bot.' };
     return { success: false, message: `Failed to DM: ${err.message}` };
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // SPAM CURRENT CHANNEL (anonymous via webhook)
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function executeChannelSpam(channel, text, count) {
   // Guild channel: use webhook for anonymity
   if (channel.guild) {

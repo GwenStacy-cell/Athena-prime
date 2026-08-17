@@ -427,7 +427,7 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        // Not in server — ban by user ID directly
+        // Not in server â€” ban by user ID directly
         const result = await handleBanById(interaction.guild, interaction.member, targetUser.id, reason, targetUser);
         return interaction.reply(result);
       }
@@ -695,7 +695,7 @@ export const commands = [
     options: [
       {
         name: 'userid',
-        description: 'The User ID to unban (or paste @mention — digits will be parsed)',
+        description: 'The User ID to unban (or paste @mention â€” digits will be parsed)',
         type: 3, // String
         required: true
       },
@@ -738,9 +738,9 @@ export const commands = [
                       message.author.id === message.guild.ownerId ||
                       isExtraOwner(message.guild.id, message.author.id);
       if (!allowed) {
-        return message.reply(cv2.danger('Access Denied', `${message.author} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
+        return message.reply(cv2.danger('Access Denied', `${message.author} ï¸ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
       }
-      const sentMsg = await message.reply(cv2.info('Processing…', 'Fetching ban list and removing bans, please wait.'));
+      const sentMsg = await message.reply(cv2.info('Processingâ€¦', 'Fetching ban list and removing bans, please wait.'));
       const result = await handleUnbanAll(message.guild, message.member);
       await sentMsg.edit(result);
     },
@@ -749,7 +749,7 @@ export const commands = [
                       interaction.user.id === interaction.guild.ownerId ||
                       isExtraOwner(interaction.guild.id, interaction.user.id);
       if (!allowed) {
-        return interaction.reply(cv2.danger('Access Denied', `${interaction.user} ️ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
+        return interaction.reply(cv2.danger('Access Denied', `${interaction.user} ï¸ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
       }
       await interaction.deferReply();
       const result = await handleUnbanAll(interaction.guild, interaction.member);
@@ -920,7 +920,7 @@ export async function handleWarn(guild, moderator, target, reason, force = false
 
   // Response channel embed
   const resEmbed = cv2.buildContainer({
-    description: `__**User Warned |**__ <:emoji_16:1533860111704002665>\n> Reason: . ${target} , **${reason}**\n> ㅤhas been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
+    description: `__**User Warned |**__ <:dark4luvontop:1533860081916182721>\n> Reason: . ${target} , **${reason}**\n> ã…¤has been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
     color: '#2b2d31',
     thumbnail: target.user.displayAvatarURL({ dynamic: true })
   });
@@ -998,7 +998,7 @@ async function handleClearWarns(guild, moderator, target) {
 async function handleTimeout(guild, moderator, target, durationStr, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return cv2.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.');
+    return cv2.danger(' Untouchable', 'ï¸ This user is protected by **Athena Prime** and cannot be moderated.');
   }
 
   if (!canModerate(moderator, target)) {
@@ -1048,7 +1048,7 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
 async function handleKick(guild, moderator, target, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return cv2.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.');
+    return cv2.danger(' Untouchable', 'ï¸ This user is protected by **Athena Prime** and cannot be moderated.');
   }
 
   if (!canModerate(moderator, target)) {
@@ -1094,7 +1094,7 @@ async function handleKick(guild, moderator, target, reason) {
 async function handleBan(guild, moderator, target, reason) {
   // Owner immunity check
   if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return cv2.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be moderated.');
+    return cv2.danger(' Untouchable', 'ï¸ This user is protected by **Athena Prime** and cannot be moderated.');
   }
 
   if (!canModerate(moderator, target)) {
@@ -1308,12 +1308,12 @@ async function handleUnban(guild, moderator, userId, reason) {
 }
 
 // ==========================================
-// BAN BY ID — for users not in the server
+// BAN BY ID â€” for users not in the server
 // ==========================================
 async function handleBanById(guild, moderator, userId, reason, userObj = null) {
   // Protection check
   if (isBotOwnerSync(userId) || isExtraOwner(guild.id, userId)) {
-    return cv2.danger(' Untouchable', '️ This user is protected by **Athena Prime** and cannot be banned.');
+    return cv2.danger(' Untouchable', 'ï¸ This user is protected by **Athena Prime** and cannot be banned.');
   }
 
   if (!isBotOwnerSync(moderator.id) && !moderator.permissions.has(PermissionFlagsBits.BanMembers)) {
@@ -1326,7 +1326,7 @@ async function handleBanById(guild, moderator, userId, reason, userObj = null) {
       return cv2.warn('Already Banned', `User \`${userId}\` is already banned from this server.`);
     }
 
-    await guild.bans.create(userId, { reason: `${reason} — by ${moderator.user.tag}` });
+    await guild.bans.create(userId, { reason: `${reason} â€” by ${moderator.user.tag}` });
 
     const displayName = userObj ? `**${userObj.tag}**` : `\`${userId}\``;
     const resEmbed = cv2.danger('User Banned', `Successfully banned ${displayName}.`, [
@@ -1349,7 +1349,7 @@ async function handleBanById(guild, moderator, userId, reason, userObj = null) {
 }
 
 // ==========================================
-// UNBAN ALL — mass unban
+// UNBAN ALL â€” mass unban
 // ==========================================
 async function handleUnbanAll(guild, moderator) {
   try {
@@ -1389,7 +1389,7 @@ async function handleUnbanAll(guild, moderator) {
 }
 
 // ==========================================
-// VOICE STATE CONTROL — mute/deafen users
+// VOICE STATE CONTROL â€” mute/deafen users
 // ==========================================
 async function handleVcAction(guild, moderator, targets, action) {
   let successCount = 0;
@@ -1416,8 +1416,8 @@ async function handleVcAction(guild, moderator, targets, action) {
 
   const actionName = action.charAt(0).toUpperCase() + action.slice(1);
   const embedRes = cv2.success(`${actionName} Complete`, `Processed **${targets.size}** member(s).`, [
-    { name: '<:emoji_16:1533860111704002665> Success', value: `\`${successCount}\``, inline: true },
-    { name: '❌ Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
+    { name: '<:dark4luvontop:1533860081916182721> Success', value: `\`${successCount}\``, inline: true },
+    { name: 'âŒ Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
   ]);
 
   return embedRes;
