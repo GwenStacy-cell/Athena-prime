@@ -1574,19 +1574,31 @@ async function handleSecurityPanelInteractions(interaction) {
       return interaction.message.delete().catch(() => null);
     }
     else if (customId === 'al_toggle_link') {
-      db.updateGuildConfig(guild.id, { antiLinkEnabled: !config.antiLinkEnabled });
+      const newVal = !config.antiLinkEnabled;
+      const updateData = { antiLinkEnabled: newVal };
+      if (newVal) updateData.allowAllLinks = false; // Turn OFF Allow All if turning ON Anti-Link
+      db.updateGuildConfig(guild.id, updateData);
       updated = true;
     }
     else if (customId === 'al_toggle_invite') {
-      db.updateGuildConfig(guild.id, { antiInviteEnabled: !config.antiInviteEnabled });
+      const newVal = !config.antiInviteEnabled;
+      const updateData = { antiInviteEnabled: newVal };
+      if (newVal) updateData.allowInvitesGlobally = false; // Turn OFF Allow Invites if turning ON Anti-Invite
+      db.updateGuildConfig(guild.id, updateData);
       updated = true;
     }
     else if (customId === 'al_toggle_all_links') {
-      db.updateGuildConfig(guild.id, { allowAllLinks: !config.allowAllLinks });
+      const newVal = !config.allowAllLinks;
+      const updateData = { allowAllLinks: newVal };
+      if (newVal) updateData.antiLinkEnabled = false; // Turn OFF Anti-Link if turning ON Allow All
+      db.updateGuildConfig(guild.id, updateData);
       updated = true;
     }
     else if (customId === 'al_toggle_global_invites') {
-      db.updateGuildConfig(guild.id, { allowInvitesGlobally: !config.allowInvitesGlobally });
+      const newVal = !config.allowInvitesGlobally;
+      const updateData = { allowInvitesGlobally: newVal };
+      if (newVal) updateData.antiInviteEnabled = false; // Turn OFF Anti-Invite if turning ON Allow Invites
+      db.updateGuildConfig(guild.id, updateData);
       updated = true;
     }
     else if (customId === 'al_select_invite_channel') {
