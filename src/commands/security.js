@@ -3420,45 +3420,47 @@ export async function getAntilinkModulePanel(guild) {
 
   const TOGGLE_ON = '<:on:1514996865030946847>';
   const TOGGLE_OFF = '<:off:1514996861474177109>';
+  
+  const DOT = '\u2022'; // Unicode bullet point
 
   const description = 
     `# ANTILINK & INVITE MODULE
 ` +
-    `**Athena Unbypassable !**
-
+    `> **Athena Unbypassable !**
+>
 ` +
-    `### Filters Active:
+    `> **Filters Active:**
 ` +
-    `**� Standard URLs (unless bypassed)**
+    `> **${DOT} Standard URLs (unless bypassed)**
 ` +
-    `**� Discord Invites**
+    `> **${DOT} Discord Invites**
 ` +
-    `**� NSFW Links**
+    `> **${DOT} NSFW Links**
 ` +
-    `**� Phishing & Scams**
-
+    `> **${DOT} Phishing & Scams**
+>
 ` +
-    `### Current Configurations:
+    `> **Current Configurations:**
 ` +
-    `**| Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}
+    `> **| Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}
 ` +
-    `**| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}
+    `> **| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}
 ` +
-    `**| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}
+    `> **| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}
 ` +
-    `**| Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}
-
+    `> **| Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}
+>
 ` +
-    `### Bypass Settings:
+    `> **Bypass Settings:**
 ` +
-    `**| Link Bypass Role:** ${linkRole}
+    `> **| Link Bypass Role:** ${linkRole}
 ` +
-    `**| Invite Bypass Role:** ${inviteRole}
+    `> **| Invite Bypass Role:** ${inviteRole}
 ` +
-    `**| Invite Allowed Channel:** ${inviteChannel}
-
+    `> **| Invite Allowed Channel:** ${inviteChannel}
+>
 ` +
-    `**Note: When "Allow All" is enabled, all links pass except known scams. Global invite allowance overrides the invite filter for everyone.**`;
+    `> **Note: When "Allow All" is enabled, all links pass except known scams. Global invite allowance overrides the invite filter for everyone.**`;
 
   const mainDisplay = new TextDisplayBuilder().setContent(description);
   const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
