@@ -3482,6 +3482,12 @@ export async function getAntilinkModulePanel(guild) {
     `-# **Note: When "Allow All" is enabled, all links pass except known scams. Global invite allowance overrides the invite filter for everyone.**`
   ));
 
+  // Part 6: Footer
+  panelContainer.addSeparatorComponents(new SeparatorBuilder().setDivider(true));
+  panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `-# **Athena Bulletproof Security !!!**`
+  ));
+
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('al_toggle_link').setLabel('Anti-Link').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('al_toggle_invite').setLabel('Anti-Invite').setStyle(ButtonStyle.Secondary),
