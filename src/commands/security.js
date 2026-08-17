@@ -1971,8 +1971,8 @@ async function handleRaidMode(guild, moderator, mode) {
     const unquarantineResult = await handleMassUnquarantine(guild, moderator, guild.client, 'raidmode');
     
     let releaseNote = '';
-    if (unquarantineResult.embed.data.title !== 'Nothing to Release') {
-       releaseNote = `\n\n**Auto-Release Triggered:**\n${unquarantineResult.embed.data.description}`;
+    if (unquarantineResult.success > 0 || unquarantineResult.failed > 0) {
+       releaseNote = `\n\n**Auto-Release Triggered:**\nSuccessfully released \`${unquarantineResult.success}\` members (\`${unquarantineResult.failed}\` failed).`;
     } else {
        releaseNote = `\n\n*(No quarantined accounts to release)*`;
     }
@@ -2344,14 +2344,14 @@ export async function getAntinukeConfigPanel(guild) {
 
   const description = 
     `# MODULE CONFIGURATION\n` +
-    `-# **Athena Prime Ã¢â‚¬â€ God-Tier Firewall**\n\n` +
+    `-# **Athena Prime Ã¢â‚¬â€  God-Tier Firewall**\n\n` +
     `> ${nukeState ? emojiOn : emojiOff} Anti-Nuke Firewall\n` +
     `> ${spamState ? emojiOn : emojiOff} Anti-Spam Filter\n` +
     `> ${inviteState ? emojiOn : emojiOff} Anti-Invite Blocker\n` +
     `> ${blacklistState ? emojiOn : emojiOff} Word Filter (${config.blacklistWords ? config.blacklistWords.length : 0} Words)\n` +
     `> Punishment: \`${config.antiNukePunishment.toUpperCase()}\`\n` +
     `> Warn Limit: \`${config.maxWarnings}\`\n\n` +
-    `-# Raw API strike engine active Ã¢â‚¬â€ nuke bots eliminated in ~1-3ms`;
+    `-# Raw API strike engine active Ã¢â‚¬â€  nuke bots eliminated in ~1-3ms`;
 
   const mainDisplay = new TextDisplayBuilder().setContent(description);
   const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
@@ -2400,7 +2400,7 @@ export async function getAntinukeConfigPanel(guild) {
 }
 
 export async function handleAntinukeToggleAll(guild, moderator, enable) {
-  // NOTE: autonick is intentionally NOT touched Ã¢â‚¬â€ it must be enabled manually by server owner
+  // NOTE: autonick is intentionally NOT touched Ã¢â‚¬â€  it must be enabled manually by server owner
   const updates = {
     antiNukeEnabled:   enable,
     antiSpamEnabled:   enable,
@@ -2429,7 +2429,7 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 
   const resEmbed = enable
     ? cv2.success(
-        '<:on:1514996865030946847> God-Tier Firewall Ã¢â‚¬â€ Fully Operational',
+        '<:on:1514996865030946847> God-Tier Firewall Ã¢â‚¬â€  Fully Operational',
         `<:on:1514996865030946847> **Firewall Layer:** Raw API Strike Engine Active
 <:on:1514996865030946847> **Predictive Layer:** Behavioral Pattern Detection Online
 <:on:1514996865030946847> **Restoration Layer:** Zero-Latency Channel & Role Recovery
@@ -2614,7 +2614,7 @@ async function getServerInfoEmbed(guild) {
 
   const headerSection = {
     type: 9,
-    components: [{ type: 10, content: `## **${guild.name} Ã¢â‚¬â€ Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**` }]
+    components: [{ type: 10, content: `## **${guild.name} Ã¢â‚¬â€  Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**` }]
   };
   if (iconUrl) {
     headerSection.accessory = { type: 11, media: { url: iconUrl } };
@@ -2627,7 +2627,7 @@ async function getServerInfoEmbed(guild) {
     `-# **Created:** ${createdAt}`;
 
   const securityText =
-    `-# **Ã¢â€â‚¬Ã¢â€â‚¬ Security Status Ã¢â€â‚¬Ã¢â€â‚¬**\n` +
+    `-# **Ã¢â€ â‚¬Ã¢â€ â‚¬ Security Status Ã¢â€ â‚¬Ã¢â€ â‚¬**\n` +
     `-# **Anti-Nuke:** ${antiNukeStatus}   **Anti-Spam:** ${antiSpamStatus}\n` +
     `-# **Anti-Invite:** ${antiInviteStatus}   **Anti-Link:** ${antiLinkStatus}\n` +
     `-# **Raid Mode:** ${raidModeStatus}   **Max Warns:** \`${config.maxWarnings}\``;
@@ -2676,7 +2676,7 @@ async function getUserInfoEmbed(guild, member) {
 
   const headerSection = {
     type: 9,
-    components: [{ type: 10, content: `## **User Info Ã¢â‚¬â€ ${member.user.tag}**\n-# **Detailed profile and privilege information.**` }]
+    components: [{ type: 10, content: `## **User Info Ã¢â‚¬â€  ${member.user.tag}**\n-# **Detailed profile and privilege information.**` }]
   };
   if (avatarUrl) {
     headerSection.accessory = { type: 11, media: { url: avatarUrl } };
@@ -2706,7 +2706,7 @@ async function getUserInfoEmbed(guild, member) {
 }
 
 // ==========================================
-// SECURITY TOGGLE ALL Ã¢â‚¬â€ Bot Owner / Server Owner only
+// SECURITY TOGGLE ALL Ã¢â‚¬â€  Bot Owner / Server Owner only
 // Enables/disables ALL security features except autonick
 // ==========================================
 async function handleSecurityToggleAll(guild, moderator, enable) {
@@ -2818,7 +2818,7 @@ export async function getSecurityStatusPanel(guild) {
 }
 
 // ==========================================
-// QRMANAGER Ã¢â‚¬â€ Quarantine system setup & repair
+// QRMANAGER Ã¢â‚¬â€  Quarantine system setup & repair
 // ==========================================
 async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
   const config = db.getGuildConfig(guild.id);
@@ -2844,7 +2844,7 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 
     return cv2.success(
         'Quarantine System Fixed ',
-        `The quarantine role and channel have been set up.\nDeny overwrites applied to **${synced}** channels Ã¢â‚¬â€ quarantined users will only see the quarantine zone.`,
+        `The quarantine role and channel have been set up.\nDeny overwrites applied to **${synced}** channels Ã¢â‚¬â€  quarantined users will only see the quarantine zone.`,
         fields
       );
   }
@@ -2878,9 +2878,9 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const vc      = updatedConfig.quarantineVcId      ? await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null)      : null;
 
     return cv2.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
-        { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set Ã¢â‚¬â€ run `/qrmanager setup`', inline: true },
-        { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set Ã¢â‚¬â€ run `/qrmanager setup`', inline: true },
-        { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set Ã¢â‚¬â€ use `/qrmanager setvc`', inline: true }
+        { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set Ã¢â‚¬â€  run `/qrmanager setup`', inline: true },
+        { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set Ã¢â‚¬â€  run `/qrmanager setup`', inline: true },
+        { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set Ã¢â‚¬â€  use `/qrmanager setvc`', inline: true }
       ]);
   }
 
@@ -2889,7 +2889,7 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 
 // ==========================================
 // ==========================================
-// LINKSALLOW Ã¢â‚¬â€ Per-guild domain whitelist for anti-link filter
+// LINKSALLOW Ã¢â‚¬â€  Per-guild domain whitelist for anti-link filter
 // ==========================================
 async function handleLinksAllow(guild, action, domain) {
   if (action === 'allowall') {
@@ -2948,7 +2948,7 @@ async function handleLinksAllow(guild, action, domain) {
   if (allOpen) {
     return cv2.info(
         '<:dark4luvontop:1533860081916182721> All Links Allowed',
-        'The anti-link filter is currently **fully disabled** Ã¢â‚¬â€ all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
+        'The anti-link filter is currently **fully disabled** Ã¢â‚¬â€  all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
       );
   }
 
@@ -2967,11 +2967,11 @@ async function handleLinksAllow(guild, action, domain) {
 }
 
 // ==========================================
-// MASS QUARANTINE Ã¢â‚¬â€ Quarantine all members with a specific role
+// MASS QUARANTINE Ã¢â‚¬â€  Quarantine all members with a specific role
 // Skips: bot owner, server owner, extra owners, whitelisted, already quarantined
 // ==========================================
 async function handleMassQuarantine(guild, moderator, targetRole, reason) {
-  // Safety guard Ã¢â‚¬â€ prevent quarantining @everyone
+  // Safety guard Ã¢â‚¬â€  prevent quarantining @everyone
   if (targetRole.id === guild.id) {
     return cv2.danger('Blocked', 'You cannot mass quarantine the `@everyone` role.');
   }
@@ -3041,12 +3041,13 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
 }
 
 // ==========================================
-// MASS UNQUARANTINE Ã¢â‚¬â€ Release all quarantined members in a guild
+// MASS UNQUARANTINE Ã¢â‚¬â€  Release all quarantined members in a guild
 // ==========================================
 async function handleMassUnquarantine(guild, moderator, client, context = null) {
   const quarantined = db.getQuarantinedInGuild(guild.id);
 
   if (!quarantined || quarantined.length === 0) {
+    if (context === 'raidmode') return { success: 0, failed: 0 };
     return cv2.info('Nothing to Release', 'There are no quarantined members in this server.');
   }
 
