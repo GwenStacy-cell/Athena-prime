@@ -1570,7 +1570,7 @@ async function handleSecurityPanelInteractions(interaction) {
     const config = db.getGuildConfig(guild.id);
     let updated = false;
 
-    if (customId === 'al_close') {
+    if (customId === 'al_close' || customId === 'al_save') {
       return interaction.message.delete().catch(() => null);
     }
     else if (customId === 'al_toggle_link') {

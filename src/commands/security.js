@@ -3406,9 +3406,8 @@ export async function handleScanServer(guild, page = 0) {
 export async function getAntilinkModulePanel(guild) {
   const db = (await import('../database.js')).default;
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, RoleSelectMenuBuilder, ChannelType, MessageFlags } = await import('discord.js');
-  const { ContainerBuilder, TextDisplayBuilder } = await import('discord.js'); // Assuming these are correctly imported in the file or we can just rely on the existing imports
+  const { ContainerBuilder, TextDisplayBuilder } = await import('discord.js');
   
-  // Wait, let's just use the exact panelCode that assumes globals in security.js
   const config = db.getGuildConfig(guild.id);
   const antiLinkOn = config.antiLinkEnabled;
   const antiInviteOn = config.antiInviteEnabled;
@@ -3423,34 +3422,53 @@ export async function getAntilinkModulePanel(guild) {
   const TOGGLE_OFF = '<:off:1514996861474177109>';
 
   const description = 
-    `# ANTILINK & INVITE MODULE\n` +
-    `**Athena Unbypassable !**\n\n` +
-    `**Filters Active:**\n` +
-    `| <:dark4luvontop:1533860081916182721> Standard URLs (unless bypassed)\n` +
-    `| <:dark4luvontop:1533860081916182721> Discord Invites\n` +
-    `| <:dark4luvontop:1533860081916182721> NSFW Links\n` +
-    `| <:dark4luvontop:1533860081916182721> Phishing & Scams\n\n` +
-    `**Current Configurations:**\n` +
-    `| **Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
-    `| **Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
-    `| **Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
-    `| **Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}\n\n` +
-    `**Bypass Settings:**\n` +
-    `| **Link Bypass Role:** ${linkRole}\n` +
-    `| **Invite Bypass Role:** ${inviteRole}\n` +
-    `| **Invite Allowed Channel:** ${inviteChannel}\n\n` +
-    `*Note: When "Allow All" is enabled, all links pass except known scams. Global invite allowance overrides the invite filter for everyone.*`;
+    `-# **ANTILINK & INVITE MODULE**
+` +
+    `-# **Athena Unbypassable !**
 
-  // We rely on the existing imports in security.js: TextDisplayBuilder, ContainerBuilder, ActionRowBuilder, etc.
+` +
+    `-# **Filters Active:**
+` +
+    `-# **� Standard URLs (unless bypassed)**
+` +
+    `-# **� Discord Invites**
+` +
+    `-# **� NSFW Links**
+` +
+    `-# **� Phishing & Scams**
+
+` +
+    `-# **Current Configurations:**
+` +
+    `-# **| Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}
+` +
+    `-# **| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}
+` +
+    `-# **| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}
+` +
+    `-# **| Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}
+
+` +
+    `-# **Bypass Settings:**
+` +
+    `-# **| Link Bypass Role:** ${linkRole}
+` +
+    `-# **| Invite Bypass Role:** ${inviteRole}
+` +
+    `-# **| Invite Allowed Channel:** ${inviteChannel}
+
+` +
+    `-# **Note: When "Allow All" is enabled, all links pass except known scams. Global invite allowance overrides the invite filter for everyone.**`;
+
   const mainDisplay = new TextDisplayBuilder().setContent(description);
   const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
 
   const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('al_toggle_link').setLabel('Anti-Link').setStyle(antiLinkOn ? ButtonStyle.Success : ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('al_toggle_invite').setLabel('Anti-Invite').setStyle(antiInviteOn ? ButtonStyle.Success : ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('al_toggle_all_links').setLabel('Allow ALL Links').setStyle(allowAllOn ? ButtonStyle.Success : ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('al_toggle_global_invites').setLabel('Global Invites').setStyle(globalInvOn ? ButtonStyle.Success : ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('al_close').setLabel('Close').setStyle(ButtonStyle.Danger)
+    new ButtonBuilder().setCustomId('al_toggle_link').setLabel('Anti-Link').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('al_toggle_invite').setLabel('Anti-Invite').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('al_toggle_all_links').setLabel('Allow ALL Links').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('al_toggle_global_invites').setLabel('Global Invites').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('al_save').setLabel('Save').setStyle(ButtonStyle.Success)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
@@ -3472,5 +3490,7 @@ export async function getAntilinkModulePanel(guild) {
       .setPlaceholder('Select Invite Bypass Role...')
   );
 
-  return { components: [panelContainer, row1, row2, row3, row4], flags: MessageFlags.IsComponentsV2 };
+  panelContainer.addActionRowComponents(row1, row2, row3, row4);
+
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
