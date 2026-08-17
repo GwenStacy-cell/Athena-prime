@@ -788,7 +788,7 @@ export const commands = [
   // â”€â”€â”€ VC SLASH COMMANDS â”€â”€â”€
   {
     name: 'vc',
-    description: '<:dark4luvontop:1533860081916182721> Voice channel quick actions. Use the panel buttons for all settings.',
+    description: '<:dark4luvontop:1533860081916182721> Voice channel quick actions.',
     category: 'utility',
     permissions: [],
     options: [
