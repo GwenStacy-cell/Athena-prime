@@ -3406,7 +3406,7 @@ export async function handleScanServer(guild, page = 0) {
 export async function getAntilinkModulePanel(guild) {
   const db = (await import('../database.js')).default;
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, RoleSelectMenuBuilder, ChannelType, MessageFlags } = await import('discord.js');
-  const { ContainerBuilder, TextDisplayBuilder } = await import('discord.js');
+  const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder } = await import('discord.js');
   
   const config = db.getGuildConfig(guild.id);
   const antiLinkOn = config.antiLinkEnabled;
@@ -3423,47 +3423,64 @@ export async function getAntilinkModulePanel(guild) {
   
   const DOT = '\u2022'; // Unicode bullet point
 
-  const description = 
+  const panelContainer = new ContainerBuilder();
+
+  // Part 1: Header
+  panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `# ANTILINK & INVITE MODULE
 ` +
-    `> **Athena Unbypassable !**
->
-` +
-    `> **Filters Active:**
-` +
-    `> **${DOT} Standard URLs (unless bypassed)**
-` +
-    `> **${DOT} Discord Invites**
-` +
-    `> **${DOT} NSFW Links**
-` +
-    `> **${DOT} Phishing & Scams**
->
-` +
-    `> **Current Configurations:**
-` +
-    `> **| Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}
-` +
-    `> **| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}
-` +
-    `> **| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}
-` +
-    `> **| Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}
->
-` +
-    `> **Bypass Settings:**
-` +
-    `> **| Link Bypass Role:** ${linkRole}
-` +
-    `> **| Invite Bypass Role:** ${inviteRole}
-` +
-    `> **| Invite Allowed Channel:** ${inviteChannel}
->
-` +
-    `> **Note: When "Allow All" is enabled, all links pass except known scams. Global invite allowance overrides the invite filter for everyone.**`;
+    `**Athena Unbypassable !**`
+  ));
 
-  const mainDisplay = new TextDisplayBuilder().setContent(description);
-  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+  panelContainer.addSeparatorComponents(new SeparatorBuilder().setDivider(true));
+
+  // Part 2: Filters Active
+  panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `### **Filters Active:**
+` +
+    `-# **${DOT} Standard URLs (unless bypassed)**
+` +
+    `-# **${DOT} Discord Invites**
+` +
+    `-# **${DOT} NSFW Links**
+` +
+    `-# **${DOT} Phishing & Scams**`
+  ));
+
+  panelContainer.addSeparatorComponents(new SeparatorBuilder().setDivider(true));
+
+  // Part 3: Current Configurations
+  panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `### **Current Configurations:**
+` +
+    `-# **| Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}
+` +
+    `-# **| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}
+` +
+    `-# **| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}
+` +
+    `-# **| Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}`
+  ));
+
+  panelContainer.addSeparatorComponents(new SeparatorBuilder().setDivider(true));
+
+  // Part 4: Bypass Settings
+  panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `### **Bypass Settings:**
+` +
+    `-# **| Link Bypass Role:** ${linkRole}
+` +
+    `-# **| Invite Bypass Role:** ${inviteRole}
+` +
+    `-# **| Invite Allowed Channel:** ${inviteChannel}`
+  ));
+
+  panelContainer.addSeparatorComponents(new SeparatorBuilder().setDivider(true));
+
+  // Part 5: Note
+  panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `-# **Note: When "Allow All" is enabled, all links pass except known scams. Global invite allowance overrides the invite filter for everyone.**`
+  ));
 
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('al_toggle_link').setLabel('Anti-Link').setStyle(ButtonStyle.Secondary),
