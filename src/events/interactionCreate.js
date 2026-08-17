@@ -1325,13 +1325,13 @@ export default {
         try { await handleJtcButton(interaction); } catch (e) { console.error('[JTC button]', e); }
         return;
       }
-      if (interaction.isButton() && (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('wlo_') || interaction.customId.startsWith('sec_'))) {
+      if (interaction.isButton() && (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('wlo_') || interaction.customId.startsWith('sec_') || interaction.customId.startsWith('al_'))) {
         try { await handleSecurityPanelInteractions(interaction); } catch (e) { console.error('[SecPanel button]', e); }
         return;
       }
 
       if (validButtons.includes(interaction.customId)) {
-      // Verify Administrator permissions for config buttons â€” bot owner + extra owners bypass
+      // Verify Administrator permissions for config buttons — bot owner + extra owners bypass
       const isBtnBypass = isBotOwnerSync(interaction.user.id) ||
         interaction.user.id === interaction.guild.ownerId ||
         db.isExtraOwner(interaction.guild.id, interaction.user.id);
@@ -1409,7 +1409,7 @@ export default {
     // 4. STRING SELECT MENU (JTC & Emoji Stealer)
     // ==========================================
     if (interaction.isAnySelectMenu()) {
-      if (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('wlo_') || interaction.customId.startsWith('sec_')) {
+      if (interaction.customId.startsWith('wl_') || interaction.customId.startsWith('wlo_') || interaction.customId.startsWith('sec_') || interaction.customId.startsWith('al_')) {
         try { await handleSecurityPanelInteractions(interaction); } catch (e) { console.error('[SecPanel select]', e); }
         return;
       }
@@ -1563,6 +1563,58 @@ async function handleSecurityPanelInteractions(interaction) {
       console.error(e);
       return interaction.reply({ content: 'Failed to return to Security Dashboard.', ephemeral: true });
     }
+  }
+
+  // Antilink & Invite Logic
+  if (customId.startsWith('al_')) {
+    const config = db.getGuildConfig(guild.id);
+    let updated = false;
+
+    if (customId === 'al_close') {
+      return interaction.message.delete().catch(() => null);
+    }
+    else if (customId === 'al_toggle_link') {
+      db.updateGuildConfig(guild.id, { antiLinkEnabled: !config.antiLinkEnabled });
+      updated = true;
+    }
+    else if (customId === 'al_toggle_invite') {
+      db.updateGuildConfig(guild.id, { antiInviteEnabled: !config.antiInviteEnabled });
+      updated = true;
+    }
+    else if (customId === 'al_toggle_all_links') {
+      db.updateGuildConfig(guild.id, { allowAllLinks: !config.allowAllLinks });
+      updated = true;
+    }
+    else if (customId === 'al_toggle_global_invites') {
+      db.updateGuildConfig(guild.id, { allowInvitesGlobally: !config.allowInvitesGlobally });
+      updated = true;
+    }
+    else if (customId === 'al_select_invite_channel') {
+      const channelId = interaction.values[0];
+      db.updateGuildConfig(guild.id, { inviteAllowedChannel: channelId });
+      updated = true;
+    }
+    else if (customId === 'al_select_link_role') {
+      const roleId = interaction.values[0];
+      db.updateGuildConfig(guild.id, { linkBypassRole: roleId });
+      updated = true;
+    }
+    else if (customId === 'al_select_invite_role') {
+      const roleId = interaction.values[0];
+      db.updateGuildConfig(guild.id, { inviteBypassRole: roleId });
+      updated = true;
+    }
+
+    if (updated) {
+      try {
+        const sec = await import('../commands/security.js');
+        const panel = await sec.getAntilinkModulePanel(guild);
+        return interaction.update(panel);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return;
   }
 
   // Whitelist Logic

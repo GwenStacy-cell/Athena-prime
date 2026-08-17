@@ -18,7 +18,7 @@ import {
 } from '../utils/helpers.js';
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
-import { StringSelectMenuBuilder, UserSelectMenuBuilder, RoleSelectMenuBuilder } from 'discord.js';
+import { StringSelectMenuBuilder, UserSelectMenuBuilder, RoleSelectMenuBuilder, ChannelSelectMenuBuilder } from 'discord.js';
 
 // Toggle emoji constants Ã¢â‚¬â€ used throughout all security/config embeds
 const TOGGLE_ON  = '<:on:1514996865030946847>';
@@ -1068,39 +1068,24 @@ export const commands = [
       await interaction.reply(result);
     }
   },
-
-  // --- ANTILINK COMMAND ---
-  {
-    name: 'antilink',
-    description: 'Toggles anti-link protection that blocks ALL external URLs from non-moderators.',
-    category: 'security',
-    permissions: [PermissionFlagsBits.Administrator],
-    options: [
-      {
-        name: 'status',
-        description: 'Turn anti-link ON or OFF',
-        type: 3,
-        required: true,
-        choices: [
-          { name: 'Enable Anti-Link', value: 'on' },
-          { name: 'Disable Anti-Link', value: 'off' }
-        ]
+    // --- ANTILINK MODULE COMMAND ---
+    {
+      name: 'antilink',
+      aliases: ['linksallow'],
+      description: 'Opens the interactive Antilink & Invite Module Dashboard (Admin only).',
+      category: 'security',
+      permissions: [PermissionFlagsBits.Administrator],
+      options: [],
+      async executePrefix(message) {
+        const panel = await getAntilinkModulePanel(message.guild);
+        await message.reply(panel);
+      },
+      async executeSlash(interaction) {
+        await interaction.deferReply();
+        const panel = await getAntilinkModulePanel(interaction.guild);
+        await interaction.editReply(panel);
       }
-    ],
-    async executePrefix(message, args) {
-      const mode = args[0]?.toLowerCase();
-      if (mode !== 'on' && mode !== 'off') {
-        return message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!antilink <on|off>\``));
-      }
-      const result = await handleAntiLink(message.guild, message.member, mode);
-      await message.reply(result);
     },
-    async executeSlash(interaction) {
-      const mode = interaction.options.getString('status');
-      const result = await handleAntiLink(interaction.guild, interaction.member, mode);
-      await interaction.reply(result);
-    }
-  },
 
   // --- SERVERINFO COMMAND ---
   {
@@ -1320,59 +1305,6 @@ export const commands = [
       const channel = interaction.options.getChannel('channel');
       const result = await handleQrManager(interaction.guild, interaction.member, action, role, channel);
       await interaction.editReply(result);
-    }
-  },
-
-
-
-  // --- LINKSALLOW COMMAND --- Whitelist domains from anti-link filter
-  {
-    name: 'linksallow',
-    description: 'Whitelist domains or allow ALL links. (Admin only)',
-    category: 'security',
-    permissions: [PermissionFlagsBits.Administrator],
-    options: [
-      {
-        name: 'action',
-        description: 'What to do',
-        type: 3,
-        required: true,
-        choices: [
-          { name: 'Add Domain',        value: 'add' },
-          { name: 'Remove Domain',     value: 'remove' },
-          { name: 'List Domains',      value: 'list' },
-          { name: 'Allow ALL Links',   value: 'allowall' },
-          { name: 'Disallow All Links (reset)', value: 'disallowall' }
-        ]
-      },
-      {
-        name: 'domain',
-        description: 'Domain to add/remove (e.g. youtube.com, tenor.com)',
-        type: 3,
-        required: false
-      }
-    ],
-    async executePrefix(message, args) {
-      const action = args[0]?.toLowerCase();
-      const domain = args.slice(1).join(' ').trim();
-      const nodomainActions = ['list', 'allowall', 'disallowall'];
-      if (!action || (!nodomainActions.includes(action) && !domain)) {
-        return message.reply(cv2.warn('Usage',
-          `${message.author} \`!linksallow add <domain>\` / \`!linksallow remove <domain>\` / \`!linksallow list\` / \`!linksallow allowall\` / \`!linksallow disallowall\``
-        ));
-      }
-      const result = await handleLinksAllow(message.guild, action, domain);
-      await message.reply(result);
-    },
-    async executeSlash(interaction) {
-      const action = interaction.options.getString('action');
-      const domain = interaction.options.getString('domain');
-      const nodomainActions = ['list', 'allowall', 'disallowall'];
-      if (!nodomainActions.includes(action) && !domain) {
-        return interaction.reply(cv2.warn('Missing Domain', 'Please provide a domain name.'));
-      }
-      const result = await handleLinksAllow(interaction.guild, action, domain);
-      await interaction.reply(result);
     }
   },
 

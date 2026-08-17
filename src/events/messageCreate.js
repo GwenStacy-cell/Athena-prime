@@ -904,7 +904,6 @@ export default {
       }
     }
 
-    // Granular Whitelist checks
     const hasAntiInviteImmunity = db.isWhitelisted(message.guild, userId, 'antiinvite');
     const hasAntiLinkImmunity = db.isWhitelisted(message.guild, userId, 'antilink');
     const hasAntiSpamImmunity = db.isWhitelisted(message.guild, userId, 'antispam');
@@ -913,7 +912,11 @@ export default {
     // 1. AUTO-MODERATION: ANTI-INVITE
     // ==========================================
     const antiInviteActive = dbConfig.antiInviteEnabled !== undefined ? dbConfig.antiInviteEnabled : config.antiInvite.enabled;
-    if (!hasAntiInviteImmunity && antiInviteActive && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+    const isGlobalInviteAllowed = dbConfig.allowInvitesGlobally === true;
+    const isInviteAllowedChannel = dbConfig.inviteAllowedChannel === message.channel.id;
+    const hasInviteBypassRole = dbConfig.inviteBypassRole && message.member.roles.cache.has(dbConfig.inviteBypassRole);
+
+    if (!isGlobalInviteAllowed && !isInviteAllowedChannel && !hasInviteBypassRole && !hasAntiInviteImmunity && antiInviteActive && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const inviteRegex = /(discord\.(gg|io|me|li)\/.+|discord(app)?\.com\/invite\/.+)/gi;
       if (inviteRegex.test(message.content)) {
         if (config.antiInvite.deleteInvites) {
@@ -962,41 +965,33 @@ export default {
     // ==========================================
     // 1.5. AUTO-MODERATION: ANTI-LINK
     // ==========================================
-    if (!hasAntiLinkImmunity && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      // allowAllLinks = true means admin has disabled the filter for all links
+    const hasLinkBypassRole = dbConfig.linkBypassRole && message.member.roles.cache.has(dbConfig.linkBypassRole);
+
+    if (!hasLinkBypassRole && !hasAntiLinkImmunity && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       if (dbConfig.allowAllLinks !== true) {
         const linkRegex = /https?:\/\/[^\s]+/gi;
         const matches = message.content.match(linkRegex);
         if (matches) {
-          const allowedLinks = dbConfig.allowedLinks || [];
-          // A link is disallowed if it doesn't match any allowed domain
-          const hasDisallowedLink = matches.some(url => {
-            if (allowedLinks.length === 0) return true;
-            return !allowedLinks.some(domain => url.toLowerCase().includes(domain.toLowerCase()));
-          });
+          await message.delete().catch(() => null);
 
-          if (hasDisallowedLink) {
-            await message.delete().catch(() => null);
+          const warnEmbed = cv2.warn(
+            '<:gun:1533859911631376496> Link Deleted',
+            `${message.author}, posting links is not allowed in this server.`
+          );
+          await message.channel.send(warnEmbed).catch(() => null);
 
-            const warnEmbed = cv2.warn(
-              '<:gun:1533859911631376496> Link Deleted',
-              `${message.author}, posting links is not allowed in this server.`
-            );
-            await message.channel.send(warnEmbed).catch(() => null);
+          logToSecurityChannel(message.guild, embed.log(
+            'Link Filtered',
+            `Deleted message containing a URL from member.`,
+            [
+              { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
+              { name: 'Channel', value: `${message.channel}`, inline: true },
+              { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
+            ],
+            'warning'
+          ));
 
-            logToSecurityChannel(message.guild, embed.log(
-              'Link Filtered',
-              `Deleted message containing a disallowed URL from member.`,
-              [
-                { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
-                { name: 'Channel', value: `${message.channel}`, inline: true },
-                { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
-              ],
-              'warning'
-            ));
-
-            return;
-          }
+          return;
         }
       }
     }
