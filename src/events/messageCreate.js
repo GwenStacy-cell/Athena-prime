@@ -915,8 +915,12 @@ export default {
       const spamMentionActive = dbConfig.antiSpamMentionEnabled === true;
       const spamMentionBypassRoles = dbConfig.antiSpamMentionBypassRoles || [];
       const hasSpamMentionBypass = spamMentionBypassRoles.length > 0 && message.member.roles.cache.hasAny(...spamMentionBypassRoles);
+      const isBotOwner = isBotOwnerSync(message.author.id);
+      const isExtraOwner = db.isExtraOwner(message.guild.id, message.author.id);
+      const isServerOwner = message.author.id === message.guild.ownerId;
+      const isImmuneToSpam = isBotOwner || isExtraOwner || isServerOwner || hasSpamMentionBypass || hasAntiSpamImmunity;
       
-      if (spamMentionActive && !hasSpamMentionBypass && !hasAntiSpamImmunity && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+      if (spamMentionActive && !isImmuneToSpam) {
          const mentions = message.mentions.users;
          if (mentions.size > 0) {
              let timeoutTriggered = false;
@@ -927,11 +931,15 @@ export default {
                  const now = Date.now();
                  let data = massMentionCache.get(cacheKey) || { count: 0, timestamp: now };
                  
+                 const regex = new RegExp(`<@!?${targetId}>`, 'g');
+                 const occurrences = (message.content.match(regex) || []).length;
+                 const countToAdd = Math.max(1, occurrences);
+                 
                  // Time window: 15 seconds
                  if (now - data.timestamp > 15000) {
-                     data.count = 1;
+                     data.count = countToAdd;
                  } else {
-                     data.count++;
+                     data.count += countToAdd;
                  }
                  data.timestamp = now;
                  massMentionCache.set(cacheKey, data);
