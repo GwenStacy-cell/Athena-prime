@@ -887,12 +887,15 @@ commands.push({
   async _handleDev(context) {
     const isInteraction = !!context.commandName;
     const client = context.client;
-    // Get bot owner dynamically, fallback to hardcoded
+    // Get bot owner dynamically (handle Teams vs Single User)
     let ownerId = '1423292960744804383';
     try {
       if (!client.application?.owner) await client.application?.fetch();
-      if (client.application?.owner?.id) ownerId = client.application.owner.id;
-      else if (client.application?.owner?.ownerId) ownerId = client.application.owner.ownerId; // Team owner fallback
+      if (client.application?.owner?.ownerId) {
+        ownerId = client.application.owner.ownerId; // It's a Team, get the owner of the team
+      } else if (client.application?.owner?.id) {
+        ownerId = client.application.owner.id; // It's a single User
+      }
     } catch (e) {}
 
     const rawComponents = [
