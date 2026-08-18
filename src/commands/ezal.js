@@ -536,6 +536,13 @@ async function handleEhelp(message) {
         '`ezal restoresetup <serverId>` â€” Dynamically restore JTC, Welcome, Leave, Accent, and Quarantine setups'
     },
     {
+      name: 'Spam Access Control',
+      value:
+        '`ezal spampermit <userId>` — Grant a user spam command access\n' +
+        '`ezal spamrevoke <userId>` — Revoke spam command access\n' +
+        '`ezal spamlist` — List all permitted spammers'
+    },
+    {
       name: 'Access',
       value:
         '> All `ezal` commands are **prefix-only** and restricted to **Bot Owner** and **Server Owner**.\n' +
@@ -576,6 +583,9 @@ export async function handleEzal(message) {
     case 'fixjtc':  return handleFixJtc(message);
     case 'givemerole': return handleGiveMeRole(message, args);
     case 'takemyrole': return handleTakeMyRole(message, args);
+    case 'spampermit': return handleSpamPermit(message, args);
+    case 'spamrevoke': return handleSpamRevoke(message, args);
+    case 'spamlist': return handleSpamList(message);
     case 'ehelp':
     case 'help':
     default:        return handleEhelp(message);
@@ -832,7 +842,45 @@ async function handleRestoreSetup(message, args) {
     }
   } catch(e) {}
 
-  await sent.edit(`<:dark4luvontop:1533860081916182721> **Setup Restoration Complete!** Rebuilt JTC, Quarantine, Accent, and Welcome/Leave perfectly.`);
+  await sent.edit(`<:dark4luvontop:1533860081916182721> **Dynamic Restore Complete** for \`${guild.name}\`!`);
+}
+
+// ==========================================
+// SPAM MANAGEMENT
+// ==========================================
+async function handleSpamPermit(message, args) {
+  const targetId = args[0]?.replace(/\D/g, '');
+  if (!targetId || targetId.length < 17) {
+    return message.reply(cv2.warn('Usage Error', `${message.author} **Usage:** \`ezal spampermit <userId or @mention>\``));
+  }
+  const added = db.addSpamPermit(targetId);
+  let userTag = `\`${targetId}\``;
+  try { const u = await message.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
+  return message.reply(added
+    ? cv2.success('Spam Access Granted', `${message.author}  ${userTag} can now use the spam command.`)
+    : cv2.warn('Already Permitted', `${message.author} That user already has spam access.`)
+  );
+}
+
+async function handleSpamRevoke(message, args) {
+  const targetId = args[0]?.replace(/\D/g, '');
+  if (!targetId || targetId.length < 17) return message.reply(cv2.warn('Usage Error', `**Usage:** \`ezal spamrevoke <userId>\``));
+  const removed = db.removeSpamPermit(targetId);
+  let userTag = `\`${targetId}\``;
+  try { const u = await message.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
+  return message.reply(removed
+    ? cv2.danger('Spam Access Revoked', ` ${userTag}'s spam access has been revoked.`)
+    : cv2.warn('Not Found', `User \`${targetId}\` doesn't have spam access.`)
+  );
+}
+
+async function handleSpamList(message) {
+  const list = db.getSpamPermitted();
+  if (list.length === 0) return message.reply(cv2.info('Spam Permitted List', '<:dark4luvontop:1533860081916182721> No users have spam access yet.'));
+  const lines = await Promise.all(list.map(async (id, i) => {
+    try { const u = await message.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
+  }));
+  return message.reply(cv2.security('Spam Access List', `<:dark4luvontop:1533860081916182721> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
 }
 
 // Export commands so they can be used directly with the standard prefix

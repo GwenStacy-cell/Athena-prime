@@ -184,8 +184,6 @@ export const commands = [
     name: 'spampermit',
     description: ' Grant a user permission to use the spam command. (Bot Owner only)',
     category: 'owner',
-    slashHidden: true,
-    hidden: true,
     permissions: [],
     options: [
       {
@@ -240,8 +238,6 @@ export const commands = [
     name: 'spamrevoke',
     description: ' Revoke a user\'s spam permission. (Bot Owner only)',
     category: 'owner',
-    slashHidden: true,
-    hidden: true,
     permissions: [],
     options: [
       {
@@ -285,8 +281,6 @@ export const commands = [
     name: 'spamlist',
     description: ' List all permitted spam users. (Bot Owner only)',
     category: 'owner',
-    slashHidden: true,
-    hidden: true,
     permissions: [],
     options: [],
 
