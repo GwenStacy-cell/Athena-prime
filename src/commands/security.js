@@ -2231,7 +2231,7 @@ async function handleBlacklist(guild, moderator, action, phrase) {
     if (list.length === 0) {
       return cv2.success('Blacklist Empty', 'There are no active blacklisted words in this server.');
     }
-    const formattedWords = list.map(w => `Ã¢â‚¬Â¢ \`${w}\``).join('\n');
+    const formattedWords = list.map(w => `- \`${w}\``).join('\n');
     return cv2.info('Filtered Word Blacklist', `If a non-moderator sends a message matching any of these terms, it will be deleted immediately:\n\n${formattedWords}`);
   }
 }
@@ -2474,7 +2474,7 @@ async function handleExtraOwner(guild, moderator, action, targetUser) {
     const success = db.addExtraOwner(guild.id, targetUser.id);
     if (success) {
       logToSecurityChannel(guild, cv2.log('Extra Owner Added', `**${moderator.user.tag}** added **${targetUser.tag}** as an Extra Owner.`, [], 'success'));
-      return cv2.owner('Extra Owner Added', `Successfully added **${targetUser.tag}** as an **Extra Owner**.\n\nThey are now:\nÃ¢â‚¬Â¢ __**Immune**__ to all moderation actions\nÃ¢â‚¬Â¢ __**Authorized**__ to use all bot commands\nÃ¢â‚¬Â¢ __**Whitelisted**__ from all auto-mod filters`);
+      return cv2.owner('Extra Owner Added', `Successfully added **${targetUser.tag}** as an **Extra Owner**.\n\nThey are now:\n- __**Immune**__ to all moderation actions\n- __**Authorized**__ to use all bot commands\n- __**Whitelisted**__ from all auto-mod filters`);
     } else {
       return cv2.info('Already Extra Owner', `**${targetUser.tag}** is already registered as an Extra Owner.`);
     }
@@ -2495,7 +2495,7 @@ async function handleExtraOwner(guild, moderator, action, targetUser) {
       return cv2.info('No Extra Owners', `There are no extra owners configured for this server.\n\n**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>`);
     }
 
-    const formattedList = owners.map(id => `Ã¢â‚¬Â¢ <@${id}> (ID: \`${id}\`)`).join('\n');
+    const formattedList = owners.map(id => `- <@${id}> (ID: \`${id}\`)`).join('\n');
     return cv2.owner('Extra Owners List', `**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>\n\n**Extra Owners:**\n${formattedList}`);
   }
 }
@@ -2511,14 +2511,14 @@ async function handleBotWhitelist(guild, action, botId) {
     let desc = '';
     if (isRole) {
       desc = `Role <@&${cleanId}> has been added to the **Bot Whitelist**.\n\n` +
-             `Ã¢â‚¬Â¢ Any bot that has this role is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
-             `Ã¢â‚¬Â¢ They can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
-             `Ã¢â‚¬Â¢ To revoke a specific bot's immunity, simply remove the <@&${cleanId}> role from them, or use \`!botwhitelist remove <@&${cleanId}>\` to unwhitelist the role entirely.`;
+             `- Any bot that has this role is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
+             `- They can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
+             `- To revoke a specific bot's immunity, simply remove the <@&${cleanId}> role from them, or use \`!botwhitelist remove <@&${cleanId}>\` to unwhitelist the role entirely.`;
     } else {
       desc = `Bot ID <@${cleanId}> (\`${cleanId}\`) has been added to the **Bot Whitelist**.\n\n` +
-             `Ã¢â‚¬Â¢ This bot is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
-             `Ã¢â‚¬Â¢ It can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
-             `Ã¢â‚¬Â¢ To revoke this immunity, use \`!botwhitelist remove ${cleanId}\`.`;
+             `- This bot is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
+             `- It can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
+             `- To revoke this immunity, use \`!botwhitelist remove ${cleanId}\`.`;
     }
     
     return cv2.success('Whitelisted', desc);
@@ -2532,12 +2532,12 @@ async function handleBotWhitelist(guild, action, botId) {
     
     const formatted = await Promise.all(list.map(async id => {
       const role = guild.roles.cache.get(id);
-      if (role) return `Ã¢â‚¬Â¢ **Role:** ${role} (\`${id}\`)`;
+      if (role) return `- **Role:** ${role} (\`${id}\`)`;
       
       const user = await guild.client.users.fetch(id).catch(() => null);
-      if (user) return `Ã¢â‚¬Â¢ **Bot:** ${user} (\`${id}\`)`;
+      if (user) return `- **Bot:** ${user} (\`${id}\`)`;
       
-      return `Ã¢â‚¬Â¢ **Unknown:** \`${id}\``;
+      return `- **Unknown:** \`${id}\``;
     }));
     
     return cv2.info('Whitelisted Bots & Roles', `The following entities have full Anti-Nuke immunity:\n\n${formatted.join('\n')}`);
@@ -2567,7 +2567,7 @@ async function handleBotBlacklist(action, targetId) {
     if (flagged.length === 0) {
       return cv2.info('No Flagged Users', 'There are no users currently flagged on the global bot blacklist.');
     }
-    const formattedList = flagged.map(id => `Ã¢â‚¬Â¢ <@${id}> (ID: \`${id}\`)`).join('\n');
+    const formattedList = flagged.map(id => `- <@${id}> (ID: \`${id}\`)`).join('\n');
     return cv2.danger('Flagged Users', `These users are globally banned from using the bot:\n\n${formattedList}`);
   }
 }
@@ -3298,7 +3298,7 @@ export async function handleScanServer(guild, page = 0) {
 
   const DANGER = '<a:Dark4luvontop:1524405543987445861>';
   const WARNING = '<a:Dark4luvontop:1524405545690202253>';
-  const DOT = 'Ã¢â‚¬Â¢';
+  const DOT = '-';
 
   let desc = `### ${DANGER} SECURITY DIAGNOSTICS\n\n`;
   desc += `> **Total Humans:** \`${allHumans.size}\`\n`;
