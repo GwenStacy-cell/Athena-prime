@@ -140,7 +140,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   const channelDeletions = [];
   for (const channel of channels.values()) {
     if (!channel || channel.id === excludeChannelId) continue;
-    channelDeletions.push(channel.delete('Athena Prime â€” Backup Restore Wipe').catch(() => null));
+    channelDeletions.push(channel.delete('Athena Prime - Backup Restore Wipe').catch(() => null));
   }
   await Promise.allSettled(channelDeletions);
 
@@ -152,7 +152,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   const roleDeletions = [];
   for (const role of roles.values()) {
     if (!role || role.id === guild.id || role.managed || !role.editable || botRoles.has(role.id) || role.name === UNBYPASSABLE_ROLE_NAME || role.name === FIREWALL_ROLE_NAME) continue;
-    roleDeletions.push(role.delete('Athena Prime â€” Backup Restore Wipe').catch(() => null));
+    roleDeletions.push(role.delete('Athena Prime - Backup Restore Wipe').catch(() => null));
   }
   await Promise.allSettled(roleDeletions);
 
@@ -169,7 +169,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
           permissions: BigInt(roleData.permissions),
           hoist:       roleData.hoist,
           mentionable: roleData.mentionable,
-          reason:      'Athena Prime â€” Backup Restore' }),
+          reason:      'Athena Prime - Backup Restore' }),
         12000,
         `role:${roleData.name}`
       );
@@ -229,7 +229,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
           name:   catData.name,
           type:   ChannelType.GuildCategory,
           permissionOverwrites: mapOverwrites(catData.permissionOverwrites),
-          reason: 'Athena Prime â€” Backup Restore'
+          reason: 'Athena Prime - Backup Restore'
         }),
         12000,
         `category:${catData.name}`
@@ -275,7 +275,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
           rateLimitPerUser: chData.slowmode || undefined,
           parent:           parent?.id || undefined,
           permissionOverwrites: mapOverwrites(chData.permissionOverwrites),
-          reason:           'Athena Prime â€” Backup Restore'
+          reason:           'Athena Prime - Backup Restore'
         }),
         12000,
         `channel:${chData.name}`
@@ -385,7 +385,7 @@ async function handleBcklist(message) {
   ).join('\n');
 
   await message.reply(cv2.info(
-    `Backup List â€” ${backups.length} backup(s)`,
+    `Backup List - ${backups.length} backup(s)`,
     list
   ));
 }
@@ -521,19 +521,19 @@ async function handleEhelp(message) {
     {
       name: 'Backup System',
       value:
-        '`ezal backup [serverId]` â€” Create a backup of the current or specified server\n' +
-        '`ezal backupall` â€” Mass backup all servers *(Bot Owner only)*\n' +
-        '`ezal bcklist` â€” List all saved backup IDs with server info\n' +
-        '`ezal restore <backupId> [targetServerId]` â€” Restore a server from backup *(Bot Owner only)*'
+        '`ezal backup [serverId]` - Create a backup of the current or specified server\n' +
+        '`ezal backupall` - Mass backup all servers *(Bot Owner only)*\n' +
+        '`ezal bcklist` - List all saved backup IDs with server info\n' +
+        '`ezal restore <backupId> [targetServerId]` - Restore a server from backup *(Bot Owner only)*'
     },
     {
       name: 'Server Management',
       value:
-        '`ezal servers` â€” List all servers the bot is in with their backup IDs and stats\n' +
-        '`ezal emergency <serverId> [mode|end]` â€” Trigger emergency mode remotely\n' +
-        '`ezal banserver <serverId>` â€” Ban a server and force leave instantly\n' +
-        '`ezal unbanserver <serverId>` â€” Unban a server to allow invites\n' +
-        '`ezal restoresetup <serverId>` â€” Dynamically restore JTC, Welcome, Leave, Accent, and Quarantine setups'
+        '`ezal servers` - List all servers the bot is in with their backup IDs and stats\n' +
+        '`ezal emergency <serverId> [mode|end]` - Trigger emergency mode remotely\n' +
+        '`ezal banserver <serverId>` - Ban a server and force leave instantly\n' +
+        '`ezal unbanserver <serverId>` - Unban a server to allow invites\n' +
+        '`ezal restoresetup <serverId>` - Dynamically restore JTC, Welcome, Leave, Accent, and Quarantine setups'
     },
     {
       name: 'Spam Access Control',
@@ -551,7 +551,7 @@ async function handleEhelp(message) {
     }
   ];
 
-  const sent = await message.reply(cv2.info('Ezal â€” Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields));
+  const sent = await message.reply(cv2.info('Ezal - Owner Suite Help', 'Private command suite for server management. Not visible to anyone else.', fields));
   setTimeout(() => {
     sent.delete().catch(() => null);
     message.delete().catch(() => null);
@@ -560,11 +560,11 @@ async function handleEhelp(message) {
 }
 
 // ==========================================
-// MAIN EZAL ROUTER â€” called from messageCreate.js
-// Bot Owner ONLY â€” server owners use standalone `backup` command
+// MAIN EZAL ROUTER - called from messageCreate.js
+// Bot Owner ONLY - server owners use standalone `backup` command
 // ==========================================
 export async function handleEzal(message) {
-  if (!isBotOwnerSync(message.author.id)) return; // Silent â€” bot owner only
+  if (!isBotOwnerSync(message.author.id)) return; // Silent - bot owner only
 
   const parts = message.content.trim().split(/ +/);
   const sub   = (parts[1] || 'help').toLowerCase();
