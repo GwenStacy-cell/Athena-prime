@@ -946,9 +946,11 @@ export default {
                      // Trigger timeout
                      try {
                          await message.member.timeout(5 * 60 * 1000, 'Mass Mention Spam Tagging');
+                         const targetUser = await message.client.users.fetch(targetId).catch(() => null);
+                         const targetName = targetUser ? targetUser.tag : targetId;
                          const warnEmbed = cv2.danger(
                              'Timeout Applied',
-                             `<@${message.author.id}> has been timed out for 5 minutes for spam tagging <@${targetId}>.`
+                             `**${message.author.tag}** has been timed out for 5 minutes for spam tagging **${targetName}**.`
                          );
                          await message.channel.send(warnEmbed).catch(() => null);
                      } catch (e) {
