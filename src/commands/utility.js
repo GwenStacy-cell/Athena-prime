@@ -920,6 +920,11 @@ commands.push({
       },
       { type: 14, divider: true },
       {
+        type: 12,
+        items: [{ media: { url: 'https://files.catbox.moe/pvrim3.jpg' } }]
+      },
+      { type: 14, divider: true },
+      {
         type: 10,
         content: '-# **Athena Prime | By Developer Prince**'
       }
