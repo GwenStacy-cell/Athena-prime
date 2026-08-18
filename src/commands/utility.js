@@ -895,21 +895,49 @@ commands.push({
       else if (client.application?.owner?.ownerId) ownerId = client.application.owner.ownerId; // Team owner fallback
     } catch (e) {}
 
-    const embed = new EmbedBuilder()
-      .setColor('#2b2d31')
-      .setDescription(
-        '# LEAD ARCHITECT\n' +
-        `-# **Athena Prime was systematically engineered and deployed by <@${ownerId}>. Driven by an absolute intolerance for server nukes and malicious raids, the Architect engineered a unified, omnipotent appliance—a single, definitive bot designed to dominate every facet of server security, management, and utility without compromise.**\n\n` +
-        '### CORE FEATURES\n' +
-        '-# **Anti-Nuke Engine:** **A predictive, zero-tolerance firewall that neutralizes structural threats in milliseconds and autonomously reconstructs deleted channels, roles, and server hierarchies via intelligent caching.**\n' +
-        '-# **Dynamic Voice Infrastructure:** **An auto-scaling Join-To-Create (JTC) architecture equipped with granular, real-time control panels.**\n' +
-        '-# **Advanced Threat Firewall:** **Heuristic anti-spam filtering, real-time malicious link scanning, and predictive quarantine protocols.**\n\n' +
-        '### ARCHITECTURE\n' +
-        '-# **The core engine operates on a highly concurrent Node.js runtime, utilizing direct REST API invocations to bypass standard discord.js caching and manager overhead. This guarantees zero-latency, sub-millisecond execution for anti-nuke mechanisms via raw asynchronous HTTP streams. The proprietary CV2 UI framework was engineered as a polymorphic factory model to dynamically construct and hydrate atomic payload structures. It enforces strict memory allocation protocols and leverages non-blocking I/O event loops, ensuring maximum throughput, thread safety, and impenetrable scalability across distributed sharded environments.**\n'
+    const container = new ContainerBuilder()
+      .addSectionComponents(
+        new SectionBuilder()
+          .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
+              '# __LEAD ARCHITECT !__\n' +
+              `-# **Athena Prime was systematically engineered and deployed by <@${ownerId}>. Driven by an absolute intolerance for server nukes and malicious raids, the Architect engineered a unified, omnipotent appliance—a single, definitive bot designed to dominate every facet of server security, management, and utility without compromise.**`
+            )
+          )
       )
-      .setFooter({ text: 'Athena Bulletproof Security !!!' });
+      .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+      .addSectionComponents(
+        new SectionBuilder()
+          .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
+              '### CORE FEATURES\n' +
+              '-# **Anti-Nuke Engine:** **A predictive, zero-tolerance firewall that neutralizes structural threats in milliseconds and autonomously reconstructs deleted channels, roles, and server hierarchies via intelligent caching.**\n' +
+              '-# **Dynamic Voice Infrastructure:** **An auto-scaling Join-To-Create (JTC) architecture equipped with granular, real-time control panels.**\n' +
+              '-# **Advanced Threat Firewall:** **Heuristic anti-spam filtering, real-time malicious link scanning, and predictive quarantine protocols.**'
+            )
+          )
+      )
+      .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+      .addSectionComponents(
+        new SectionBuilder()
+          .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
+              '### ARCHITECTURE\n' +
+              '-# **The core engine operates on a highly concurrent Node.js runtime, utilizing direct REST API invocations to bypass standard discord.js caching and manager overhead. This guarantees zero-latency, sub-millisecond execution for anti-nuke mechanisms via raw asynchronous HTTP streams. The proprietary CV2 UI framework was engineered as a polymorphic factory model to dynamically construct and hydrate atomic payload structures. It enforces strict memory allocation protocols and leverages non-blocking I/O event loops, ensuring maximum throughput, thread safety, and impenetrable scalability across distributed sharded environments.**'
+            )
+          )
+      )
+      .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+      .addSectionComponents(
+        new SectionBuilder()
+          .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
+              '-# **Athena Bulletproof Security !!!**'
+            )
+          )
+      );
 
-    return context.reply({ embeds: [embed] });
+    return context.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
   }
 });
 
