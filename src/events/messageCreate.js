@@ -20,6 +20,7 @@ export { getCachedGif };
 
 const nbClient = new Client();
 const gifCache = new Map();
+const massMentionCache = new Map();
 
 function mapAnimeAction(action) {
   const map = {
@@ -907,6 +908,58 @@ export default {
     const hasAntiInviteImmunity = db.isWhitelisted(message.guild, userId, 'antiinvite');
     const hasAntiLinkImmunity = db.isWhitelisted(message.guild, userId, 'antilink');
     const hasAntiSpamImmunity = db.isWhitelisted(message.guild, userId, 'antispam');
+
+      // ==========================================
+      // 0. AUTO-MODERATION: MASS MENTION SPAM
+      // ==========================================
+      const spamMentionActive = dbConfig.antiSpamMentionEnabled === true;
+      const spamMentionBypassRoles = dbConfig.antiSpamMentionBypassRoles || [];
+      const hasSpamMentionBypass = spamMentionBypassRoles.length > 0 && message.member.roles.cache.hasAny(...spamMentionBypassRoles);
+      
+      if (spamMentionActive && !hasSpamMentionBypass && !hasAntiSpamImmunity && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+         const mentions = message.mentions.users;
+         if (mentions.size > 0) {
+             let timeoutTriggered = false;
+             for (const [targetId, user] of mentions) {
+                 if (targetId === message.author.id || user.bot) continue;
+                 
+                 const cacheKey = `${message.guild.id}_${message.author.id}_${targetId}`;
+                 const now = Date.now();
+                 let data = massMentionCache.get(cacheKey) || { count: 0, timestamp: now };
+                 
+                 // Time window: 15 seconds
+                 if (now - data.timestamp > 15000) {
+                     data.count = 1;
+                 } else {
+                     data.count++;
+                 }
+                 data.timestamp = now;
+                 massMentionCache.set(cacheKey, data);
+                 
+                 if (data.count >= 3) {
+                     // Trigger timeout
+                     try {
+                         await message.member.timeout(5 * 60 * 1000, 'Mass Mention Spam Tagging');
+                         const warnEmbed = cv2.danger(
+                             'Timeout Applied',
+                             `<@${message.author.id}> has been timed out for 5 minutes for spam tagging <@${targetId}>.`
+                         );
+                         await message.channel.send(warnEmbed).catch(() => null);
+                         
+                         // Delete the spam message
+                         await message.delete().catch(() => null);
+                         
+                     } catch (e) {
+                         console.log('Failed to timeout member for mass mention:', e);
+                     }
+                     massMentionCache.delete(cacheKey);
+                     timeoutTriggered = true;
+                     break; // No need to check other mentions if they just got timed out
+                 }
+             }
+             if (timeoutTriggered) return;
+         }
+      }
 
     // ==========================================
     // 1. AUTO-MODERATION: ANTI-INVITE

@@ -161,6 +161,8 @@ class Database {
         inviteBypassRole: null,
         allowInvitesGlobally: false,
         antiSpamEnabled: true,
+        antiSpamMentionEnabled: false,
+        antiSpamMentionBypassRoles: [],
         antiLinkEnabled: false,
         antiInviteEnabled: true,
         raidMode: false,
@@ -272,6 +274,8 @@ class Database {
       if (cfg.antiNukePunishment === undefined) { cfg.antiNukePunishment = 'ban'; updated = true; }
       if (cfg.antiNukeThreshold === undefined) { cfg.antiNukeThreshold = 1; updated = true; }
       if (cfg.antiLinkEnabled === undefined) { cfg.antiLinkEnabled = false; updated = true; }
+      if (cfg.antiSpamMentionEnabled === undefined) { cfg.antiSpamMentionEnabled = false; updated = true; }
+      if (cfg.antiSpamMentionBypassRoles === undefined) { cfg.antiSpamMentionBypassRoles = []; updated = true; }
       if (cfg.antiInviteEnabled === undefined) { cfg.antiInviteEnabled = true; updated = true; }
       if (cfg.allowedLinks === undefined) { cfg.allowedLinks = []; updated = true; }
       if (cfg.accentColor === undefined) { cfg.accentColor = null; updated = true; }

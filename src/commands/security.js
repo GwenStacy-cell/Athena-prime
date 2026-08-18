@@ -3414,10 +3414,14 @@ export async function getAntilinkModulePanel(guild) {
   const antiInviteOn = config.antiInviteEnabled;
   const allowAllOn = config.allowAllLinks;
   const globalInvOn = config.allowInvitesGlobally;
+  const spamMentionOn = config.antiSpamMentionEnabled;
 
   const linkRole = config.linkBypassRole ? `<@&${config.linkBypassRole}>` : 'None';
   const inviteRole = config.inviteBypassRole ? `<@&${config.inviteBypassRole}>` : 'None';
   const inviteChannel = config.inviteAllowedChannel ? `<#${config.inviteAllowedChannel}>` : 'None';
+  const spamMentionRoles = config.antiSpamMentionBypassRoles && config.antiSpamMentionBypassRoles.length > 0 
+    ? config.antiSpamMentionBypassRoles.map(id => `<@&${id}>`).join(', ') 
+    : 'None';
 
   const TOGGLE_ON = '<:on:1514996865030946847>';
   const TOGGLE_OFF = '<:off:1514996861474177109>';
@@ -3428,8 +3432,7 @@ export async function getAntilinkModulePanel(guild) {
 
   // Part 1: Header
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
-    `# ANTILINK & INVITE MODULE
-` +
+    `# ANTILINK & INVITE MODULE\n` +
     `**Athena Unbypassable !**`
   ));
 
@@ -3437,14 +3440,11 @@ export async function getAntilinkModulePanel(guild) {
 
   // Part 2: Filters Active
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
-    `### **Filters Active:**
-` +
-    `-# **${DOT} Standard URLs (unless bypassed)**
-` +
-    `-# **${DOT} Discord Invites**
-` +
-    `-# **${DOT} NSFW Links**
-` +
+    `### **Filters Active:**\n` +
+    `-# **${DOT} Mass Mention / Spam Tag Filter**\n` +
+    `-# **${DOT} Standard URLs (unless bypassed)**\n` +
+    `-# **${DOT} Discord Invites**\n` +
+    `-# **${DOT} NSFW Links**\n` +
     `-# **${DOT} Phishing & Scams**`
   ));
 
@@ -3452,14 +3452,11 @@ export async function getAntilinkModulePanel(guild) {
 
   // Part 3: Current Configurations
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
-    `### **Current Configurations:**
-` +
-    `-# **| Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}
-` +
-    `-# **| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}
-` +
-    `-# **| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}
-` +
+    `### **Current Configurations:**\n` +
+    `-# **| Mass Mention Filter:** ${spamMentionOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}`
   ));
 
@@ -3467,12 +3464,10 @@ export async function getAntilinkModulePanel(guild) {
 
   // Part 4: Bypass Settings
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
-    `### **Bypass Settings:**
-` +
-    `-# **| Link Bypass Role:** ${linkRole}
-` +
-    `-# **| Invite Bypass Role:** ${inviteRole}
-` +
+    `### **Bypass Settings:**\n` +
+    `-# **| Mass Mention Bypass Roles:** ${spamMentionRoles}\n` +
+    `-# **| Link Bypass Role:** ${linkRole}\n` +
+    `-# **| Invite Bypass Role:** ${inviteRole}\n` +
     `-# **| Invite Allowed Channel:** ${inviteChannel}`
   ));
 
@@ -3480,7 +3475,7 @@ export async function getAntilinkModulePanel(guild) {
 
   // Part 5: Note
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
-    `-# **Note: When "Allow All" is enabled, all links pass except known scams. Global invite allowance overrides the invite filter for everyone.**`
+    `-# **Note: The Mass Mention Filter automatically times out users for 5 minutes if they tag the same person 3 times in a row quickly. When "Allow All" is enabled, all links pass except known scams. Global invite allowance overrides the invite filter for everyone.**`
   ));
 
   // Part 6: Footer
@@ -3490,11 +3485,15 @@ export async function getAntilinkModulePanel(guild) {
   ));
 
   const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('al_toggle_spam_mention').setLabel('Mass Mention').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('al_toggle_link').setLabel('Anti-Link').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('al_toggle_invite').setLabel('Anti-Invite').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('al_toggle_all_links').setLabel('Allow ALL Links').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('al_toggle_global_invites').setLabel('Global Invites').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('al_save').setLabel('Save').setStyle(ButtonStyle.Success)
+  );
+
+  const row1b = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('al_toggle_global_invites').setLabel('Global Invites').setStyle(ButtonStyle.Secondary)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
@@ -3516,7 +3515,15 @@ export async function getAntilinkModulePanel(guild) {
       .setPlaceholder('Select Invite Bypass Role...')
   );
 
-  panelContainer.addActionRowComponents(row1, row2, row3, row4);
+  const row5 = new ActionRowBuilder().addComponents(
+    new RoleSelectMenuBuilder()
+      .setCustomId('al_select_spam_mention_role')
+      .setPlaceholder('Select Mass Mention Bypass Roles...')
+      .setMinValues(0)
+      .setMaxValues(10)
+  );
+
+  panelContainer.addActionRowComponents(row1, row1b, row2, row3, row4, row5);
 
   return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
 }

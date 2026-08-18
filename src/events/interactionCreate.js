@@ -1594,6 +1594,11 @@ async function handleSecurityPanelInteractions(interaction) {
       db.updateGuildConfig(guild.id, updateData);
       updated = true;
     }
+    else if (customId === 'al_toggle_spam_mention') {
+      const newVal = !config.antiSpamMentionEnabled;
+      db.updateGuildConfig(guild.id, { antiSpamMentionEnabled: newVal });
+      updated = true;
+    }
     else if (customId === 'al_toggle_global_invites') {
       const newVal = !config.allowInvitesGlobally;
       const updateData = { allowInvitesGlobally: newVal };
@@ -1614,6 +1619,11 @@ async function handleSecurityPanelInteractions(interaction) {
     else if (customId === 'al_select_invite_role') {
       const roleId = interaction.values[0];
       db.updateGuildConfig(guild.id, { inviteBypassRole: roleId });
+      updated = true;
+    }
+    else if (customId === 'al_select_spam_mention_role') {
+      const roleIds = interaction.values;
+      db.updateGuildConfig(guild.id, { antiSpamMentionBypassRoles: roleIds });
       updated = true;
     }
 
