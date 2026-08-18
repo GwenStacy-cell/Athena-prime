@@ -894,15 +894,7 @@ export default {
         console.error('[Owner Mention]', err);
       }
 
-      // If the message is just a ping and not a command, halt further processing
-      const currentPrefix = db.getGuildConfig(guildId).prefix || '!';
-      const botMentionSpace = `<@${message.client.user.id}> `;
-      const botMentionNickSpace = `<@!${message.client.user.id}> `;
-      if (!message.content.startsWith(currentPrefix) && 
-          !message.content.startsWith(botMentionSpace) && 
-          !message.content.startsWith(botMentionNickSpace)) {
-        return; 
-      }
+      // Removed premature return to allow auto-mod to run
     }
 
     const hasAntiInviteImmunity = db.isWhitelisted(message.guild, userId, 'antiinvite');
@@ -935,6 +927,9 @@ export default {
                  const occurrences = (message.content.match(regex) || []).length;
                  const countToAdd = Math.max(1, occurrences);
                  
+                 console.log(`[DEBUG MASS MENTION] User: ${message.author.id}, Target: ${targetId}, Occurrences: ${occurrences}, CountToAdd: ${countToAdd}`);
+                 console.log(`[DEBUG MASS MENTION] Content: ${message.content}`);
+                 
                  // Time window: 15 seconds
                  if (now - data.timestamp > 15000) {
                      data.count = countToAdd;
@@ -945,6 +940,9 @@ export default {
                  massMentionCache.set(cacheKey, data);
                  
                  if (data.count >= 3) {
+                     // Delete the spam message regardless of timeout success
+                     await message.delete().catch(() => null);
+                     
                      // Trigger timeout
                      try {
                          await message.member.timeout(5 * 60 * 1000, 'Mass Mention Spam Tagging');
@@ -953,12 +951,8 @@ export default {
                              `<@${message.author.id}> has been timed out for 5 minutes for spam tagging <@${targetId}>.`
                          );
                          await message.channel.send(warnEmbed).catch(() => null);
-                         
-                         // Delete the spam message
-                         await message.delete().catch(() => null);
-                         
                      } catch (e) {
-                         console.log('Failed to timeout member for mass mention:', e);
+                         console.log('[Mass Mention Filter] Failed to timeout member. Possibly due to hierarchy or permissions.', e.message || e);
                      }
                      massMentionCache.delete(cacheKey);
                      timeoutTriggered = true;
