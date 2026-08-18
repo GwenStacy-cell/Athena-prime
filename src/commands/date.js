@@ -47,7 +47,7 @@ export const commands = [
 
       const embed = new EmbedBuilder()
         .setColor(0xFF1493) // Brighter neon DeepPink
-        .setTitle('<a:pinkroses:1511975147782012988> A Romantic Date')
+        .setTitle('<a:redrose:1539251705579966557> A Romantic Date')
         .setDescription(text)
         .setFooter({ text: `Sparks are flying between ${authorName} and ${targetName}...` });
 
