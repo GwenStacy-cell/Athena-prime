@@ -921,7 +921,7 @@ commands.push({
       { type: 14, divider: true },
       {
         type: 10,
-        content: '-# **Athena Bulletproof Security !!!**'
+        content: '-# **Athena Prime | By Developer Prince**'
       }
     ];
 
