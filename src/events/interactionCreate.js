@@ -559,12 +559,10 @@ export default {
         let userRatingsStr = recentVotes.map(([uId, v]) => `${v.name}: ${'<a:1z:1517089474369032253>'.repeat(v.stars)}`).join('\n');
         if (!userRatingsStr) userRatingsStr = '_No ratings yet_';
 
-        const updatedEmbed = cv2.info(
-          `Rate ${updatedRatingData.authorName}'s Edit`,
-          `<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${userRatingsStr}`
-        );
+        const updatedEmbed = new EmbedBuilder(interaction.message.embeds[0].data)
+          .setDescription(`<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${userRatingsStr}`);
 
-        await interaction.message.edit(updatedEmbed).catch(() => null);
+        await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
         return interaction.reply({ content: `You rated this edit ${starCount} <a:1z:1517089474369032253>`, flags: 64 });
       }
 
