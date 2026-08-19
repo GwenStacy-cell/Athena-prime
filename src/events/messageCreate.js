@@ -948,6 +948,13 @@ export default {
                          await message.member.timeout(5 * 60 * 1000, 'Mass Mention Spam Tagging');
                          const targetUser = await message.client.users.fetch(targetId).catch(() => null);
                          const targetName = targetUser ? targetUser.tag : targetId;
+                         
+                         const dmEmbed = new EmbedBuilder()
+                             .setColor(0xFF0000)
+                             .setTitle('Timeout Applied')
+                             .setDescription(`You have been timed out in **${message.guild.name}** for 5 minutes.\n\n**Reason:** Mass Mention Spam Tagging (${targetName})`);
+                         await message.member.send({ embeds: [dmEmbed] }).catch(() => null);
+
                          const warnEmbed = cv2.danger(
                              'Timeout Applied',
                              `**${message.author.tag}** has been timed out for 5 minutes for spam tagging **${targetName}**.`

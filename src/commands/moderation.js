@@ -908,15 +908,11 @@ export async function handleWarn(guild, moderator, target, reason, force = false
   const warns = db.addWarning(guild.id, target.id, moderator.id, reason);
 
   // Advanced DM Embed
-  const dmEmbed = cv2.warn(
-    'Warning Received', 
-    `You have been issued a warning in **${guild.name}** by one of the server moderators.`,
-    [
-      { name: 'Reason', value: reason, inline: true },
-      { name: 'Warn Total', value: `\`${warns.length}\` / 3`, inline: true }
-    ]
-  );
-  await target.send({ embeds: [dmEmbed] }).catch(() => null);
+  const dmEmbed = new EmbedBuilder()
+      .setColor(0xFF0000)
+      .setTitle('Warning Received')
+      .setDescription(`You have been issued a warning in **${guild.name}**.\n\n**Reason:** ${reason}\n**Warn Total:** ${warns.length} / 3`);
+    await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
   // Response channel embed
   const resEmbed = cv2.buildContainer({
@@ -1014,10 +1010,10 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
     await target.timeout(ms, `${reason} - by ${moderator.user.tag}`);
 
     // Send DM
-    const dmEmbed = cv2.danger('Timeout Restrict', `You have been timed out in **${guild.name}**.`, [
-      { name: 'Duration', value: durationStr, inline: true },
-      { name: 'Reason', value: reason, inline: true }
-    ]);
+    const dmEmbed = new EmbedBuilder()
+      .setColor(0xFF0000)
+      .setTitle('Timeout Applied')
+      .setDescription(`You have been timed out in **${guild.name}**.\n\n**Duration:** ${durationStr}\n**Reason:** ${reason}`);
     await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
     const resEmbed = cv2.danger('Timeout Executed', `Successfully placed **${target.user.tag}** on timeout.`, [
@@ -1061,9 +1057,10 @@ async function handleKick(guild, moderator, target, reason) {
 
   try {
     // DM target
-    const dmEmbed = cv2.danger('Kicked from Server', `You have been kicked from **${guild.name}**.`, [
-      { name: 'Reason', value: reason }
-    ]);
+    const dmEmbed = new EmbedBuilder()
+      .setColor(0xFF0000)
+      .setTitle('Kicked from Server')
+      .setDescription(`You have been kicked from **${guild.name}**.\n\n**Reason:** ${reason}`);
     await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
     await target.kick(`${reason} - by ${moderator.user.tag}`);
@@ -1107,9 +1104,10 @@ async function handleBan(guild, moderator, target, reason) {
 
   try {
     // DM target
-    const dmEmbed = cv2.danger('Banned from Server', `You have been permanently banned from **${guild.name}**.`, [
-      { name: 'Reason', value: reason }
-    ]);
+    const dmEmbed = new EmbedBuilder()
+      .setColor(0xFF0000)
+      .setTitle('Banned from Server')
+      .setDescription(`You have been permanently banned from **${guild.name}**.\n\n**Reason:** ${reason}`);
     await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
     await target.ban({ reason: `${reason} - by ${moderator.user.tag}` });

@@ -1,4 +1,4 @@
-import { AuditLogEvent, PermissionFlagsBits, PermissionsBitField } from 'discord.js';
+import { EmbedBuilder, AuditLogEvent, PermissionFlagsBits, PermissionsBitField } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { logToSecurityChannel, isBotOwnerSync } from './helpers.js';
