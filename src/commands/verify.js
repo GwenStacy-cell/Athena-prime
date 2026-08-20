@@ -117,20 +117,25 @@ export const commands = [
               await role.setPermissions(role.permissions.add(PermissionFlagsBits.ViewChannel));
               await interaction.channel.permissionOverwrites.edit(everyone, { ViewChannel: true });
               
-              const rulesChannel = interaction.guild.rulesChannelId ? `<#${interaction.guild.rulesChannelId}>` : null;
-              const publicUpdatesChannel = interaction.guild.publicUpdatesChannelId ? `<#${interaction.guild.publicUpdatesChannelId}>` : null;
+              const rulesChannel = interaction.guild.rulesChannelId;
+              const publicUpdatesChannel = interaction.guild.publicUpdatesChannelId;
+              let forcedIds = [rulesChannel, publicUpdatesChannel].filter(Boolean);
               
-              const explicitChannels = interaction.guild.channels.cache.filter(c => {
-                const ow = c.permissionOverwrites.cache.get(interaction.guild.id);
-                return ow && ow.allow.has(PermissionFlagsBits.ViewChannel) && c.id !== interaction.channel.id;
-              }).map(c => `<#${c.id}>`);
+              try {
+                const onboarding = await interaction.guild.onboarding.fetch().catch(() => null);
+                if (onboarding && onboarding.enabled) {
+                  forcedIds.push(...onboarding.defaultChannelIds);
+                }
+              } catch(e) {}
               
-              const allMentions = [...new Set([...(rulesChannel ? [rulesChannel] : []), ...(publicUpdatesChannel ? [publicUpdatesChannel] : []), ...explicitChannels])];
+              forcedIds = [...new Set(forcedIds)]; // Remove duplicates
+              const allMentions = forcedIds.map(id => `<#${id}>`);
+              
               let channelsText = "";
               if (allMentions.length > 0) {
                 const displayChannels = allMentions.slice(0, 15).join(' ');
                 const extra = allMentions.length > 15 ? ` and ${allMentions.length - 15} more...` : '';
-                channelsText = `\n\n-# **Note: The following channels have forced visibility or explicit overwrites, so they cannot be hidden and remain visible to @everyone:**\n-# **${displayChannels}${extra}**`;
+                channelsText = `\n\n-# **Note: The following channels have forced visibility due to Discord Onboarding or Community settings and cannot be hidden from @everyone:**\n-# **${displayChannels}${extra}**`;
               } else {
                 channelsText = `\n\n-# **Note: Channels used in Discord Onboarding or Community Rules have forced visibility. Their visibility cannot be hidden from @everyone due to Discord restrictions.**`;
               }
