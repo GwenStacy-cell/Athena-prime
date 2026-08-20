@@ -43,6 +43,11 @@ export function createMockInteraction(message, args, cmd) {
          }
          return null;
       },
+      get: function(name) {
+         const val = this._findOption(name);
+         if (!val) return null;
+         return { name: name, value: val };
+      },
       getString: function(name) {
          return this._findOption(name);
       },
