@@ -132,7 +132,7 @@ export default {
         if (config.homeVcId) {
           setTimeout(() => {
             connectToHomeVc(guild, config.homeVcId, true);
-          }, 4000);
+          }, 10000);
         }
         
         // Retroactively update existing music request channels with the new Repeat button

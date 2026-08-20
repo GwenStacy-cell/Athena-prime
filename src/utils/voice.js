@@ -17,7 +17,13 @@ export async function connectToHomeVc(guild, channelId, force = false) {
     setTimeout(() => reconnectTimeouts.delete(guild.id), 3000);
   }
 
-  const channel = guild.channels.cache.get(channelId);
+  let channel = guild.channels.cache.get(channelId);
+  if (!channel) {
+    try {
+      channel = await guild.channels.fetch(channelId);
+    } catch(e) {}
+  }
+
   if (!channel) {
     console.error(`[Athena Prime] Home Voice Channel ${channelId} not found in guild ${guild.name}`);
     return null;
