@@ -1082,6 +1082,25 @@ class Database {
   // ==========================================
   // GIVEAWAY SYSTEM
   // ==========================================
+
+  // Verification System
+  getVerification(guildId) {
+    if (!this.cache.verification) this.cache.verification = {};
+    return this.cache.verification[guildId] || {};
+  }
+
+  updateVerification(guildId, data) {
+    if (!this.cache.verification) this.cache.verification = {};
+    this.cache.verification[guildId] = data;
+    this.save();
+  }
+
+  deleteVerification(guildId) {
+    if (!this.cache.verification) return;
+    delete this.cache.verification[guildId];
+    this.save();
+  }
+
   getGiveaway(messageId) {
     if (!this.cache.giveaways) this.cache.giveaways = {};
     return this.cache.giveaways[messageId] || null;
