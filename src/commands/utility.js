@@ -1,11 +1,8 @@
-import { PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, SeparatorBuilder, MessageFlags } from 'discord.js';
-import db from '../database.js';
-import cv2 from '../cv2.js';
-import { isBotOwnerSync } from '../utils/helpers.js';
+import { isAuthorized } from '../utils/helpers.js';
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Bold underline header formatter â€” matches embed title style
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ——————————————————————————————————————————————————
+// Bold underline header formatter — matches embed title style
+// ——————————————————————————————————————————————————
 function h(text) {
   return `__**${text.toUpperCase()}**__`;
 }
@@ -21,14 +18,14 @@ export const commands = [
         { name: 'channel', description: 'The channel to monitor for media links', type: 7, required: true }
       ],
       async executePrefix(message, args) {
-        if (!isAuthorized(message.member, ['extra_owner'])) return message.reply('-# <:emoji_16:1521464002046328944> **You are not authorized to use this command.**');
+        if (!(await isAuthorized(message.author, message.guild))) return message.reply('-# <:emoji_16:1521464002046328944> **You are not authorized to use this command.**');
         const channelMention = message.mentions.channels.first();
         if (!channelMention) return message.reply('-# <:emoji_16:1521464002046328944> **Please mention a valid text channel.**');
         db.updateGuildConfig(message.guild.id, { mediaChannelId: channelMention.id });
         return message.reply(`-# <:emoji_16:1521464002046328944> **Success! The Auto-Media Downloader has been bound to <#${channelMention.id}>. Paste TikTok/Instagram/Twitter links there to rip the videos.**`);
       },
       async executeSlash(interaction) {
-        if (!isAuthorized(interaction.member, ['extra_owner'])) return interaction.reply({ content: '-# <:emoji_16:1521464002046328944> **You are not authorized to use this command.**', flags: 64 });
+        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: '-# <:emoji_16:1521464002046328944> **You are not authorized to use this command.**', flags: 64 });
         const channel = interaction.options.getChannel('channel');
         db.updateGuildConfig(interaction.guild.id, { mediaChannelId: channel.id });
         return interaction.reply({ content: `-# <:emoji_16:1521464002046328944> **Success! The Auto-Media Downloader has been bound to <#${channel.id}>. Paste TikTok/Instagram/Twitter links there to rip the videos.**` });
