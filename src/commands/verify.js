@@ -33,7 +33,7 @@ export const commands = [
       const guildId = interaction.guild.id;
 
       if (subcommand === 'setup') {
-        await interaction.deferReply();
+        await interaction.deferReply({ ephemeral: true }); // Keep wizard hidden
         
         const role = interaction.options.getRole('role');
         
@@ -78,11 +78,47 @@ export const commands = [
           channelId: interaction.channel.id
         });
 
-        await interaction.editReply(cv2.success('Verification Deployed', `The verification panel has been deployed successfully. Users will receive ${role} upon clicking the button.`));
+        
+        const promptEmbed = new EmbedBuilder()
+          .setColor(0x2b2d31)
+          .setTitle('<:status_jtc:1524089009163337758> Verification Panel Deployed!')
+          .setDescription(`The panel is live. Users clicking the button will now receive ${role}.\n\n**Would you like Athena Prime to automatically configure the server permissions for you?**\n\nIf you select **Auto-Configure**, I will:\n1. Disable \`View Channels\` globally for \`@everyone\`.\n2. Enable \`View Channels\` globally for the ${role} role.\n3. Make sure *this* verification channel remains visible to everyone.`);
+
+        const promptRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('auto_conf').setLabel('Auto-Configure').setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setCustomId('manual_conf').setLabel("I'll do it manually").setStyle(ButtonStyle.Secondary)
+        );
+
+        const promptMsg = await interaction.editReply({ embeds: [promptEmbed], components: [promptRow] });
+
+        // Await button click for configuration (Ephemeral component collector)
+        const filter = i => i.user.id === interaction.user.id && ['auto_conf', 'manual_conf'].includes(i.customId);
+        try {
+          const response = await promptMsg.awaitMessageComponent({ filter, time: 60000 });
+          
+          if (response.customId === 'auto_conf') {
+            await response.deferUpdate();
+            try {
+              const everyone = interaction.guild.roles.everyone;
+              await everyone.setPermissions(everyone.permissions.remove(PermissionFlagsBits.ViewChannel));
+              await role.setPermissions(role.permissions.add(PermissionFlagsBits.ViewChannel));
+              await interaction.channel.permissionOverwrites.edit(everyone, { ViewChannel: true });
+              
+              await interaction.editReply({ embeds: [new EmbedBuilder().setColor(0x00FF00).setTitle('<:status_jtc:1524089009163337758> Auto-Configuration Complete').setDescription('The server is now securely locked behind the verification gate.')], components: [] });
+            } catch (err) {
+              await interaction.editReply({ embeds: [new EmbedBuilder().setColor(0xFF0000).setTitle('<:reject_jtc:1524118914525827072> Configuration Failed').setDescription(`I do not have enough permissions to modify server roles or channel overwrites.\n\n\`${err.message}\``)], components: [] });
+            }
+          } else {
+            await response.update({ embeds: [new EmbedBuilder().setColor(0x2b2d31).setTitle('<:info_jtc:1524111455404953663> Manual Configuration').setDescription(`You chose to do it manually. Please remember to restrict \`@everyone\` and allow ${role} to view channels.`)], components: [] });
+          }
+        } catch (e) {
+          // Timeout
+          await interaction.editReply({ components: [] }).catch(() => null);
+        }
       } 
       
       else if (subcommand === 'disable') {
-        await interaction.deferReply();
+        await interaction.deferReply({ ephemeral: true });
         
         const verifyData = db.getVerification(guildId);
         if (verifyData.messageId && verifyData.channelId) {
