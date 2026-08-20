@@ -10,8 +10,20 @@ export async function processMediaLink(client, message, url) {
       const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
       const data = await res.json();
       if (data.data && data.data.play) directUrl = data.data.play;
+    } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const { youtube } = await import('btch-downloader');
+      const res = await youtube(url);
+      if (res && res.status && res.mp4) {
+        directUrl = res.mp4;
+      }
+    } else if (url.includes('twitter.com') || url.includes('x.com')) {
+      const { twitter } = await import('btch-downloader');
+      const res = await twitter(url);
+      if (res && res.status && res.url && res.url.length > 0) {
+        directUrl = res.url[0].hd || res.url[0].sd || res.url[0].url;
+      }
     } else {
-      // Use btch-downloader for Instagram/Twitter/etc
+      // Instagram / Fallback
       const { igdl } = await import('btch-downloader');
       const res = await igdl(url);
       if (res && res.status && res.result && res.result.length > 0) {

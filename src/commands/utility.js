@@ -28,7 +28,7 @@ export const commands = [
         
         return message.reply(cv2.success(
           'MEDIA DOWNLOADER BOUND',
-          `The Auto-Media Downloader is now monitoring <#${channelMention.id}>.\nPaste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`
+          `The Auto-Media Downloader is now monitoring <#${channelMention.id}>.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`
         ));
       },
       async executeSlash(interaction) {
@@ -38,7 +38,7 @@ export const commands = [
         
         return interaction.reply(cv2.success(
           'MEDIA DOWNLOADER BOUND',
-          `The Auto-Media Downloader is now monitoring <#${channel.id}>.\nPaste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`
+          `The Auto-Media Downloader is now monitoring <#${channel.id}>.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`
         ));
       }
     },
