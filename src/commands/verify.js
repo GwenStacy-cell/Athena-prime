@@ -36,11 +36,18 @@ export const commands = [
         // Public visible reply
         await interaction.deferReply();
         
-        const roleInput = interaction.options.getString('role').replace(/[<@&>]/g, '');
-        const role = interaction.guild.roles.cache.get(roleInput);
+        const roleOption = interaction.options.get('role');
+        let role = null;
+        
+        if (roleOption?.role) {
+          role = roleOption.role;
+        } else if (roleOption?.value && typeof roleOption.value === 'string') {
+          const roleInput = roleOption.value.replace(/[<@&>]/g, '');
+          role = interaction.guild.roles.cache.get(roleInput);
+        }
         
         if (!role) {
-          return interaction.editReply(cv2.danger('Role Not Found', 'Could not find a valid role with that ID. Make sure to provide a valid Role ID or mention.'));
+          return interaction.editReply(cv2.danger('Role Not Found', 'Could not find a valid role. Make sure to provide a valid Role ID or mention.'));
         }
         
         // Ensure the bot can manage the role
