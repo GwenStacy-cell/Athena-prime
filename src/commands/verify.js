@@ -134,6 +134,25 @@ export const commands = [
                 const onboarding = await interaction.guild.onboarding.fetch().catch(() => null);
                 if (onboarding && onboarding.enabled) {
                   forcedIds.push(...onboarding.defaultChannelIds);
+                  
+                  // Strip ViewChannels from all roles assigned by Onboarding prompts
+                  if (onboarding.prompts) {
+                    const onboardingRoleIds = new Set();
+                    onboarding.prompts.forEach(prompt => {
+                      prompt.options.forEach(opt => {
+                        opt.roleIds.forEach(id => onboardingRoleIds.add(id));
+                      });
+                    });
+                    
+                    for (const roleId of onboardingRoleIds) {
+                      const onboardRole = interaction.guild.roles.cache.get(roleId);
+                      if (onboardRole && onboardRole.permissions.has(PermissionFlagsBits.ViewChannel)) {
+                        if (onboardRole.position < interaction.guild.members.me.roles.highest.position) {
+                          await onboardRole.setPermissions(onboardRole.permissions.remove(PermissionFlagsBits.ViewChannel)).catch(() => null);
+                        }
+                      }
+                    }
+                  }
                 }
               } catch(e) {}
               
@@ -152,7 +171,7 @@ export const commands = [
               const successPayload = {
                 content: "",
                 components: [{ type: 17, components: [
-  { type: 10, content: `## **Auto-Configuration Complete**\n\n-# **The server is now securely locked behind the verification gate.**${channelsText}` },
+  { type: 10, content: `## **Auto-Configuration Complete**\n\n-# **The server is now securely locked behind the verification gate.**\n-# **• \`View Channels\` has been stripped from @everyone and all Discord Onboarding roles.**${channelsText}` },
   { type: 14, divider: true },
   { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
 ] }],
