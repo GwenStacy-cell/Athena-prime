@@ -26,7 +26,7 @@ export const commands = [
         if (!channelMention) return message.reply('-# ❌ **Please mention a valid text channel.**');
         db.updateGuildConfig(message.guild.id, { mediaChannelId: channelMention.id });
         const embed = new EmbedBuilder()
-          .setColor(db.getAccentColor(message.guild.id))
+          .setColor((db.getGuildConfig(message.guild.id)?.accentColor || '#2b2d31'))
           .setTitle('Media Downloader Bound')
           .setDescription(`**Success!** The Auto-Media Downloader is now monitoring <#${channelMention.id}>.\n\n-# Paste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`);
         return message.reply({ embeds: [embed] });
@@ -36,7 +36,7 @@ export const commands = [
         const channel = interaction.options.getChannel('channel');
         db.updateGuildConfig(interaction.guild.id, { mediaChannelId: channel.id });
         const embed = new EmbedBuilder()
-          .setColor(db.getAccentColor(interaction.guild.id))
+          .setColor((db.getGuildConfig(interaction.guild.id)?.accentColor || '#2b2d31'))
           .setTitle('Media Downloader Bound')
           .setDescription(`**Success!** The Auto-Media Downloader is now monitoring <#${channel.id}>.\n\n-# Paste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`);
         return interaction.reply({ embeds: [embed] });
@@ -53,7 +53,7 @@ export const commands = [
         if (!(await isAuthorized(message.author, message.guild))) return message.reply('-# ❌ **You are not authorized to use this command.**');
         db.updateGuildConfig(message.guild.id, { mediaChannelId: null });
         const embed = new EmbedBuilder()
-          .setColor(db.getAccentColor(message.guild.id))
+          .setColor((db.getGuildConfig(message.guild.id)?.accentColor || '#2b2d31'))
           .setTitle('Media Downloader Disabled')
           .setDescription(`**Success!** The Auto-Media Downloader has been completely unbound and disabled for this server.`);
         return message.reply({ embeds: [embed] });
@@ -62,7 +62,7 @@ export const commands = [
         if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: '-# ❌ **You are not authorized to use this command.**', flags: 64 });
         db.updateGuildConfig(interaction.guild.id, { mediaChannelId: null });
         const embed = new EmbedBuilder()
-          .setColor(db.getAccentColor(interaction.guild.id))
+          .setColor((db.getGuildConfig(interaction.guild.id)?.accentColor || '#2b2d31'))
           .setTitle('Media Downloader Disabled')
           .setDescription(`**Success!** The Auto-Media Downloader has been completely unbound and disabled for this server.`);
         return interaction.reply({ embeds: [embed] });
