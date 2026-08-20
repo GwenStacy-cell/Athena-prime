@@ -87,7 +87,7 @@ export const commands = [
               components: [
                 {
                   type: 10,
-                  content: `## **Verification Panel Deployed!**\n\n-# **The panel is live. Users clicking the button will now receive ${role}.**\n\n**Would you like Athena Prime to automatically configure the server permissions for you?**\n\nIf you select **Auto-Configure**, I will:\n1. Disable \`View Channels\` globally for \`@everyone\`.\n2. Enable \`View Channels\` globally for the ${role} role.\n3. Make sure -# **this** verification channel remains visible to everyone.\n\n-# **Note: Channels used in Discord Onboarding or Community Rules have forced visibility. Their visibility cannot be hidden from @everyone due to Discord restrictions.**\n\n-# **Athena Bulletproof Security !!!**`
+                  content: `## **Verification Panel Deployed!**\n\n-# **The panel is live. Users clicking the button will now receive ${role}.**\n\n**Would you like Athena Prime to automatically configure the server permissions for you?**\n\nIf you select **Auto-Configure**, I will:\n1. Disable \`View Channels\` globally for \`@everyone\`.\n2. Enable \`View Channels\` globally for the ${role} role.\n3. Make sure **this** verification channel remains visible to everyone.\n\n-# **Note: Channels used in Discord Onboarding or Community Rules have forced visibility. Their visibility cannot be hidden from @everyone due to Discord restrictions.**\n\n-# **Athena Bulletproof Security !!!**`
                 }
               ]
             },
