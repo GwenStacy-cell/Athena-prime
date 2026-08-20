@@ -42,25 +42,35 @@ export const commands = [
           return interaction.editReply(cv2.error('Permission Error', `I cannot assign ${role} because it is higher than or equal to my highest role!`));
         }
 
-        const config = db.getGuildConfig(guildId);
-        const accentColor = config.accentColor || '#3b82f6';
+        const rawPayload = {
+          content: "",
+          components: [
+            {
+              type: 17, // ContainerBuilder
+              components: [
+                {
+                  type: 10, // TextDisplayBuilder
+                  content: "## **System Authentication**\n\n-# **Welcome to the server! Access to standard channels is currently restricted.**\n-# **To gain entry, you must verify your identity by clicking the authentication button below.**\n\n<:info_jtc:1524111455404953663> **__Authentication Details__**\n-# **\u2022 Account verification prevents automated bot raids.**\n-# **\u2022 Ensure your DMs are open to receive status updates.**\n-# **\u2022 Failure to authenticate may result in removal.**"
+                }
+              ]
+            },
+            {
+              type: 1, // ActionRow
+              components: [
+                {
+                  type: 2, // Button
+                  custom_id: "verify_button",
+                  label: "Authenticate Identity",
+                  style: 2, // Secondary (Grey)
+                  emoji: { id: "1524120618864214206" } // <:permit_jtc:>
+                }
+              ]
+            }
+          ],
+          flags: 32768 // MessageFlags.IsComponentsV2
+        };
 
-        const verifyEmbed = new EmbedBuilder()
-          .setColor(accentColor)
-          .setTitle('️ Server Verification')
-          .setDescription('Welcome to the server! To gain access to the rest of the channels, please verify that you are human by clicking the button below.')
-          .setFooter({ text: 'Athena Prime Killer System', iconURL: interaction.client.user.displayAvatarURL() });
-
-        const row = new ActionRowBuilder()
-          .addComponents(
-            new ButtonBuilder()
-              .setCustomId('verify_button')
-              .setLabel('Verify')
-              .setEmoji('<a:emoji_18:1533024067169550527>') // Custom user emoji
-              .setStyle(ButtonStyle.Secondary)
-          );
-
-        const msg = await interaction.channel.send({ embeds: [verifyEmbed], components: [row] });
+        const msg = await interaction.channel.send(rawPayload);
 
         db.updateVerification(guildId, {
           roleId: role.id,

@@ -893,28 +893,28 @@ export default {
         try {
           const verifyData = db.getVerification(interaction.guild.id);
           if (!verifyData || !verifyData.roleId) {
-            return interaction.reply({ content: 'The verification system is currently disabled or improperly configured.' });
+            return interaction.reply({ content: '', components: [{type:17, components:[{type:10, content:'<:reject_jtc:1524118914525827072> **Authentication Failed**\n-# **The verification system is currently disabled or improperly configured.**'}]}], flags: 32832 });
           }
           const role = interaction.guild.roles.cache.get(verifyData.roleId);
           if (!role) {
-            return interaction.reply({ content: 'The verification role no longer exists on this server!' });
+            return interaction.reply({ content: '', components: [{type:17, components:[{type:10, content:'<:reject_jtc:1524118914525827072> **Authentication Failed**\n-# **The target authentication role no longer exists on this server.**'}]}], flags: 32832 });
           }
           
-          // Ensure we have a full GuildMember object, not an APIInteractionGuildMember
+          // Ensure we have a full GuildMember object
           const member = await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
           if (!member) {
-            return interaction.reply({ content: 'Could not resolve your server profile.' });
+            return interaction.reply({ content: '', components: [{type:17, components:[{type:10, content:'<:reject_jtc:1524118914525827072> **Authentication Failed**\n-# **Could not resolve your server profile.**'}]}], flags: 32832 });
           }
 
           if (member.roles.cache.has(role.id)) {
-            return interaction.reply({ content: 'You are already verified!' });
+            return interaction.reply({ content: '', components: [{type:17, components:[{type:10, content:'<:info_jtc:1524111455404953663> **Already Authenticated**\n-# **You have already verified your identity and possess the required role.**'}]}], flags: 32832 });
           }
           
           await member.roles.add(role);
-          return interaction.reply({ content: `<a:emoji_18:1533024067169550527> You have been successfully verified! Access granted.` });
+          return interaction.reply({ content: '', components: [{type:17, components:[{type:10, content:'<:permit_jtc:1524120618864214206> **Authentication Successful**\n-# **Identity verified. You have been granted access to the server.**'}]}], flags: 32832 });
         } catch (err) {
           console.error('Verify error:', err);
-          return interaction.reply({ content: 'I do not have permission to assign the verification role. Please contact an admin.' }).catch(() => null);
+          return interaction.reply({ content: '', components: [{type:17, components:[{type:10, content:'<:reject_jtc:1524118914525827072> **Authentication Error**\n-# **I do not have sufficient permissions to assign the authentication role.**'}]}], flags: 32832 }).catch(() => null);
         }
       }      // Ticket Panel Manager Interactive Buttons
       if (interaction.customId === 'tp_edit_text') {
