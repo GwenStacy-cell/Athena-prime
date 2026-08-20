@@ -15,6 +15,7 @@ import fetch from 'node-fetch';
 import { createRateMessage } from '../commands/rate.js';
 import { scanImageForScam, scanTextForScam, flaggedMessages } from '../utils/antiScam.js';
 import { createMockInteraction } from '../utils/mockInteraction.js';
+import { processMediaLink } from '../utils/mediaDownloader.js';
 
 export { getCachedGif };
 

@@ -11,6 +11,30 @@ function h(text) {
 }
 
 export const commands = [
+
+    // --- SET MEDIA CHANNEL COMMAND ---
+    {
+      name: 'setmedia',
+      description: 'Bind the Auto Media Downloader to a specific channel',
+      type: 1,
+      options: [
+        { name: 'channel', description: 'The channel to monitor for media links', type: 7, required: true }
+      ],
+      async executePrefix(message, args) {
+        if (!isAuthorized(message.member, ['extra_owner'])) return message.reply('-# <:emoji_16:1521464002046328944> **You are not authorized to use this command.**');
+        const channelMention = message.mentions.channels.first();
+        if (!channelMention) return message.reply('-# <:emoji_16:1521464002046328944> **Please mention a valid text channel.**');
+        db.updateGuildConfig(message.guild.id, { mediaChannelId: channelMention.id });
+        return message.reply(`-# <:emoji_16:1521464002046328944> **Success! The Auto-Media Downloader has been bound to <#${channelMention.id}>. Paste TikTok/Instagram/Twitter links there to rip the videos.**`);
+      },
+      async executeSlash(interaction) {
+        if (!isAuthorized(interaction.member, ['extra_owner'])) return interaction.reply({ content: '-# <:emoji_16:1521464002046328944> **You are not authorized to use this command.**', flags: 64 });
+        const channel = interaction.options.getChannel('channel');
+        db.updateGuildConfig(interaction.guild.id, { mediaChannelId: channel.id });
+        return interaction.reply({ content: `-# <:emoji_16:1521464002046328944> **Success! The Auto-Media Downloader has been bound to <#${channel.id}>. Paste TikTok/Instagram/Twitter links there to rip the videos.**` });
+      }
+    },
+  
   // --- HELP COMMAND ---
   {
     name: 'help',
