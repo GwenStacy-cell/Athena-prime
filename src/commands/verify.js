@@ -60,7 +60,7 @@ export const commands = [
           components: [
             {
               type: 17, // ContainerBuilder
-              components: [{"type":10,"content":"## **System Authentication**\\n\\n-# **Welcome to the server! Access to standard channels is currently restricted.**\\n-# **To gain entry, you must verify your identity by clicking the authentication button below.**\\n\\n<:info_jtc:1524111455404953663> **__Authentication Details__**\\n-# **\\u2022 Account verification prevents automated bot raids.**\\n-# **\\u2022 Ensure your DMs are open to receive status updates.**\\n-# **\\u2022 Failure to authenticate may result in removal.**"}]
+              components: [{ type: 10, content: "## **System Authentication**\n\n-# **Welcome to the server! Access to standard channels is currently restricted.**\n-# **To gain entry, you must verify your identity by clicking the authentication button below.**\n\n<:info_jtc:1524111455404953663> **__Authentication Details__**\n-# **\u2022 Account verification prevents automated bot raids.**\n-# **\u2022 Ensure your DMs are open to receive status updates.**\n-# **\u2022 Failure to authenticate may result in removal.**" }]
             },
             {
               type: 1, // ActionRow
