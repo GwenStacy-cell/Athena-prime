@@ -43,6 +43,32 @@ export const commands = [
       }
     },
 
+    // --- UNSET MEDIA CHANNEL COMMAND ---
+    {
+      name: 'unsetmedia',
+      description: 'Unbind and disable the Auto Media Downloader',
+      type: 1,
+      options: [],
+      async executePrefix(message, args) {
+        if (!(await isAuthorized(message.author, message.guild))) return message.reply('-# ❌ **You are not authorized to use this command.**');
+        db.updateGuildConfig(message.guild.id, { mediaChannelId: null });
+        const embed = new EmbedBuilder()
+          .setColor(db.getAccentColor(message.guild.id))
+          .setTitle('Media Downloader Disabled')
+          .setDescription(`**Success!** The Auto-Media Downloader has been completely unbound and disabled for this server.`);
+        return message.reply({ embeds: [embed] });
+      },
+      async executeSlash(interaction) {
+        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: '-# ❌ **You are not authorized to use this command.**', flags: 64 });
+        db.updateGuildConfig(interaction.guild.id, { mediaChannelId: null });
+        const embed = new EmbedBuilder()
+          .setColor(db.getAccentColor(interaction.guild.id))
+          .setTitle('Media Downloader Disabled')
+          .setDescription(`**Success!** The Auto-Media Downloader has been completely unbound and disabled for this server.`);
+        return interaction.reply({ embeds: [embed] });
+      }
+    },
+
   // --- SETUP COMMAND ---
   {
     name: 'setup',
