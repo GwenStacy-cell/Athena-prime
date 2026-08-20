@@ -48,12 +48,7 @@ export const commands = [
           components: [
             {
               type: 17, // ContainerBuilder
-              components: [
-                {
-                  type: 10, // TextDisplayBuilder
-                  content: "## **System Authentication**\n\n-# **Welcome to the server! Access to standard channels is currently restricted.**\n-# **To gain entry, you must verify your identity by clicking the authentication button below.**\n\n<:info_jtc:1524111455404953663> **__Authentication Details__**\n-# **\u2022 Account verification prevents automated bot raids.**\n-# **\u2022 Ensure your DMs are open to receive status updates.**\n-# **\u2022 Failure to authenticate may result in removal.**"
-                }
-              ]
+              components: [{"type":9,"components":[{"type":10,"content":"## **System Authentication**\\n\\n-# **Welcome to the server! Access to standard channels is currently restricted.**\\n-# **To gain entry, you must verify your identity by clicking the authentication button below.**\\n\\n<:info_jtc:1524111455404953663> **__Authentication Details__**\\n-# **\\u2022 Account verification prevents automated bot raids.**\\n-# **\\u2022 Ensure your DMs are open to receive status updates.**\\n-# **\\u2022 Failure to authenticate may result in removal.**"}]}]
             },
             {
               type: 1, // ActionRow
@@ -85,11 +80,18 @@ export const commands = [
             {
               type: 17,
               components: [
-                {
-                  type: 10,
-                  content: `## **Verification Panel Deployed!**\n\n-# **The panel is live. Users clicking the button will now receive ${role}.**\n\n**Would you like Athena Prime to automatically configure the server permissions for you?**\n\n-# **If you select Auto-Configure, I will:**\n-# **• Disable \`View Channels\` globally for \`@everyone\`.**\n-# **• Enable \`View Channels\` globally for the ${role} role.**\n-# **• Make sure this verification channel remains visible to everyone.**\n\n-# **Note: Channels used in Discord Onboarding or Community Rules have forced visibility. Their visibility cannot be hidden from @everyone due to Discord restrictions.**\n\n-# **Athena Bulletproof Security !!!**`
-                }
-              ]
+    {
+      type: 9,
+      components: [
+        {
+          type: 10,
+          content: `## **Verification Panel Deployed!**\n\n-# **The panel is live. Users clicking the button will now receive ${role}.**\n\n**Would you like Athena Prime to automatically configure the server permissions for you•**\n\n-# **If you select Auto-Configure, I will:**\n-# **• Disable \`View Channels\` globally for \`@everyone\`.**\n-# **• Enable \`View Channels\` globally for the ${role} role.**\n-# **• Make sure this verification channel remains visible to everyone.**\n\n-# **Note: Channels used in Discord Onboarding or Community Rules have forced visibility. Their visibility cannot be hidden from @everyone due to Discord restrictions.**`
+        }
+      ]
+    },
+    { type: 14, divider: true },
+    { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
+  ]
             },
             {
               type: 1,
@@ -134,7 +136,7 @@ export const commands = [
               let channelsText = "";
               if (allMentions.length > 0) {
                 const displayChannels = allMentions.slice(0, 15).join(' ');
-                const extra = allMentions.length > 15 ? ` and ${allMentions.length - 15} more...` : '';
+                const extra = allMentions.length > 15 • ` and ${allMentions.length - 15} more...` : '';
                 channelsText = `\n\n-# **Note: The following channels have forced visibility due to Discord Onboarding or Community settings and cannot be hidden from @everyone:**\n-# **${displayChannels}${extra}**`;
               } else {
                 channelsText = `\n\n-# **Note: Channels used in Discord Onboarding or Community Rules have forced visibility. Their visibility cannot be hidden from @everyone due to Discord restrictions.**`;
@@ -142,14 +144,22 @@ export const commands = [
               
               const successPayload = {
                 content: "",
-                components: [{ type: 17, components: [{ type: 10, content: `## **Auto-Configuration Complete**\n\n-# **The server is now securely locked behind the verification gate.**${channelsText}\n\n-# **Athena Bulletproof Security !!!**` }] }],
+                components: [{ type: 17, components: [
+  { type: 9, components: [{ type: 10, content: `## **Auto-Configuration Complete**\n\n-# **The server is now securely locked behind the verification gate.**${channelsText}` }] },
+  { type: 14, divider: true },
+  { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
+] }],
                 flags: 32768
               };
               await interaction.editReply(successPayload);
             } catch (err) {
               const errorPayload = {
                 content: "",
-                components: [{ type: 17, components: [{ type: 10, content: `## **Configuration Failed**\n\n-# **I do not have enough permissions to modify server roles or channel overwrites.**\n-# **\`${err.message}\`**\n\n-# **Athena Bulletproof Security !!!**` }] }],
+                components: [{ type: 17, components: [
+  { type: 9, components: [{ type: 10, content: `## **Configuration Failed**\n\n-# **I do not have enough permissions to modify server roles or channel overwrites.**\n-# **\`${err.message}\`**` }] },
+  { type: 14, divider: true },
+  { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
+] }],
                 flags: 32768
               };
               await interaction.editReply(errorPayload);
@@ -157,7 +167,11 @@ export const commands = [
           } else {
             const manualPayload = {
               content: "",
-              components: [{ type: 17, components: [{ type: 10, content: `## **Manual Configuration**\n\n-# **You chose to do it manually. Please remember to restrict \`@everyone\` and allow ${role} to view channels.**\n\n-# **Athena Bulletproof Security !!!**` }] }],
+              components: [{ type: 17, components: [
+  { type: 9, components: [{ type: 10, content: `## **Manual Configuration**\n\n-# **You chose to do it manually. Please remember to restrict \`@everyone\` and allow ${role} to view channels.**` }] },
+  { type: 14, divider: true },
+  { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
+] }],
               flags: 32768
             };
             await response.update(manualPayload);
@@ -201,11 +215,18 @@ export const commands = [
             {
               type: 17,
               components: [
-                {
-                  type: 10,
-                  content: `## **Verification Disabled**\n\n-# **The verification system has been disabled and the panel was removed.**\n-# **\u2022 Server visibility permissions have been restored for @everyone.**\n\n-# **Athena Bulletproof Security !!!**`
-                }
-              ]
+    {
+      type: 9,
+      components: [
+        {
+          type: 10,
+          content: `## **Verification Disabled**\n\n-# **The verification system has been disabled and the panel was removed.**\n-# **• Server visibility permissions have been restored for @everyone.**`
+        }
+      ]
+    },
+    { type: 14, divider: true },
+    { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
+  ]
             }
           ],
           flags: 32768
