@@ -21,25 +21,25 @@ export const commands = [
         { name: 'channel', description: 'The channel to monitor for media links', type: 7, required: true }
       ],
       async executePrefix(message, args) {
-        if (!(await isAuthorized(message.author, message.guild))) return message.reply('-# ❌ **You are not authorized to use this command.**');
+        if (!(await isAuthorized(message.author, message.guild))) return message.reply(cv2.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
         const channelMention = message.mentions.channels.first();
-        if (!channelMention) return message.reply('-# ❌ **Please mention a valid text channel.**');
+        if (!channelMention) return message.reply(cv2.error('INVALID TARGET', 'Please mention a valid text channel to bind the extraction module.'));
         db.updateGuildConfig(message.guild.id, { mediaChannelId: channelMention.id });
-        const embed = new EmbedBuilder()
-          .setColor((db.getGuildConfig(message.guild.id)?.accentColor || '#2b2d31'))
-          .setTitle('Media Downloader Bound')
-          .setDescription(`**Success!** The Auto-Media Downloader is now monitoring <#${channelMention.id}>.\n\n-# Paste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`);
-        return message.reply({ embeds: [embed] });
+        
+        return message.reply(cv2.success(
+          'MEDIA DOWNLOADER BOUND',
+          `The Auto-Media Downloader is now monitoring <#${channelMention.id}>.\nPaste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`
+        ));
       },
       async executeSlash(interaction) {
-        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: '-# ❌ **You are not authorized to use this command.**', flags: 64 });
+        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply(cv2.e.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
         const channel = interaction.options.getChannel('channel');
         db.updateGuildConfig(interaction.guild.id, { mediaChannelId: channel.id });
-        const embed = new EmbedBuilder()
-          .setColor((db.getGuildConfig(interaction.guild.id)?.accentColor || '#2b2d31'))
-          .setTitle('Media Downloader Bound')
-          .setDescription(`**Success!** The Auto-Media Downloader is now monitoring <#${channel.id}>.\n\n-# Paste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`);
-        return interaction.reply({ embeds: [embed] });
+        
+        return interaction.reply(cv2.success(
+          'MEDIA DOWNLOADER BOUND',
+          `The Auto-Media Downloader is now monitoring <#${channel.id}>.\nPaste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`
+        ));
       }
     },
 
@@ -50,22 +50,22 @@ export const commands = [
       type: 1,
       options: [],
       async executePrefix(message, args) {
-        if (!(await isAuthorized(message.author, message.guild))) return message.reply('-# ❌ **You are not authorized to use this command.**');
+        if (!(await isAuthorized(message.author, message.guild))) return message.reply(cv2.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
         db.updateGuildConfig(message.guild.id, { mediaChannelId: null });
-        const embed = new EmbedBuilder()
-          .setColor((db.getGuildConfig(message.guild.id)?.accentColor || '#2b2d31'))
-          .setTitle('Media Downloader Disabled')
-          .setDescription(`**Success!** The Auto-Media Downloader has been completely unbound and disabled for this server.`);
-        return message.reply({ embeds: [embed] });
+        
+        return message.reply(cv2.success(
+          'MEDIA DOWNLOADER DISABLED',
+          'The Auto-Media Downloader has been completely unbound and disabled for this server.'
+        ));
       },
       async executeSlash(interaction) {
-        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: '-# ❌ **You are not authorized to use this command.**', flags: 64 });
+        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply(cv2.e.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
         db.updateGuildConfig(interaction.guild.id, { mediaChannelId: null });
-        const embed = new EmbedBuilder()
-          .setColor((db.getGuildConfig(interaction.guild.id)?.accentColor || '#2b2d31'))
-          .setTitle('Media Downloader Disabled')
-          .setDescription(`**Success!** The Auto-Media Downloader has been completely unbound and disabled for this server.`);
-        return interaction.reply({ embeds: [embed] });
+        
+        return interaction.reply(cv2.success(
+          'MEDIA DOWNLOADER DISABLED',
+          'The Auto-Media Downloader has been completely unbound and disabled for this server.'
+        ));
       }
     },
 

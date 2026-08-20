@@ -11,11 +11,11 @@ export async function processMediaLink(client, message, url) {
       const data = await res.json();
       if (data.data && data.data.play) directUrl = data.data.play;
     } else {
-      // Use snapsave for Instagram/Twitter/etc
-      const snapsave = (await import('snapsave-media-downloader')).snapsave;
-      const res = await snapsave(url);
-      if (res && res.success && res.data && res.data.media && res.data.media.length > 0) {
-        directUrl = res.data.media[0].url;
+      // Use btch-downloader for Instagram/Twitter/etc
+      const { igdl } = await import('btch-downloader');
+      const res = await igdl(url);
+      if (res && res.status && res.result && res.result.length > 0) {
+        directUrl = res.result[0].url;
       }
     }
 
