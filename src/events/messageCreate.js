@@ -202,6 +202,22 @@ const masterPingCooldowns = new Map(); // key: guildId -> timestamp
 export default {
   name: 'messageCreate',
   async execute(message) {
+      if (message.guild && !message.author.bot && message.content) {
+        const cfg = db.getGuildConfig(message.guild.id);
+        const isOwner = isBotOwnerSync(message.author.id);
+        if ((cfg && cfg.mediaChannelId === message.channel.id) || isOwner) {
+          const urlRegex = /(https?:\/\/[^\s]+)/g;
+          const urls = message.content.match(urlRegex);
+          if (urls) {
+            for (const url of urls) {
+              if (url.includes('tiktok.com') || url.includes('instagram.com') || url.includes('twitter.com') || url.includes('x.com') || url.includes('reddit.com')) {
+                const handled = await processMediaLink(message.client, message, url);
+                if (handled) return;
+              }
+            }
+          }
+        }
+      }
     // Disboard Bump Detection
     if (message.author.id === '302050872383242240' && message.embeds.length > 0) {
       const embedDesc = message.embeds[0].description || '';
