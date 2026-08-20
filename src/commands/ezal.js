@@ -415,8 +415,8 @@ async function handleServers(message) {
 
   for (let i = 0; i < chunks.length; i++) {
     const e = cv2.info(`Server List (${guilds.length} servers) ${chunks.length > 1 ? `[${i + 1}/${chunks.length}]` : ''}`, chunks[i]);
-    if (i === 0) await message.reply({ embeds: [e] });
-    else await message.channel.send({ embeds: [e] });
+    if (i === 0) await message.reply(e);
+    else await message.channel.send(e);
   }
 }
 
@@ -502,8 +502,8 @@ async function handleRemoteEmergency(message, args) {
 
   let statusMsg = null;
   const updateProgress = async (embedData) => {
-    if (!statusMsg) statusMsg = await message.reply({ embeds: [embedData] }).catch(() => null);
-    else await statusMsg.edit({ embeds: [embedData] }).catch(() => null);
+    if (!statusMsg) statusMsg = await message.reply(embedData).catch(() => null);
+    else await statusMsg.edit(embedData).catch(() => null);
   };
 
   const mockModerator = {
