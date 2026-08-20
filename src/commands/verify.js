@@ -223,9 +223,9 @@ export const commands = [
               type: 17,
               components: [
     {
-          type: 10,
-          content: `## **Verification Disabled**\n\n-# **The verification system has been disabled and the panel was removed.**\n-# **• Server visibility permissions have been restored for @everyone.**`
-        ,
+      type: 10,
+      content: `## **Verification Disabled**\n\n-# **The verification system has been disabled and the panel was removed.**\n-# **• Server visibility permissions have been restored for @everyone.**`
+    },
     { type: 14, divider: true },
     { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
   ]
