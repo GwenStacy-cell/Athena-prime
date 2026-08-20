@@ -136,7 +136,7 @@ export const commands = [
               let channelsText = "";
               if (allMentions.length > 0) {
                 const displayChannels = allMentions.slice(0, 15).join(' ');
-                const extra = allMentions.length > 15 • ` and ${allMentions.length - 15} more...` : '';
+                const extra = allMentions.length > 15 ? ` and ${allMentions.length - 15} more...` : '';
                 channelsText = `\n\n-# **Note: The following channels have forced visibility due to Discord Onboarding or Community settings and cannot be hidden from @everyone:**\n-# **${displayChannels}${extra}**`;
               } else {
                 channelsText = `\n\n-# **Note: Channels used in Discord Onboarding or Community Rules have forced visibility. Their visibility cannot be hidden from @everyone due to Discord restrictions.**`;
