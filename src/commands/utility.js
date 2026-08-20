@@ -21,199 +21,27 @@ export const commands = [
         { name: 'channel', description: 'The channel to monitor for media links', type: 7, required: true }
       ],
       async executePrefix(message, args) {
-        if (!(await isAuthorized(message.author, message.guild))) return message.reply('-# <:emoji_16:1521464002046328944> **You are not authorized to use this command.**');
+        if (!(await isAuthorized(message.author, message.guild))) return message.reply('-# ❌ **You are not authorized to use this command.**');
         const channelMention = message.mentions.channels.first();
-        if (!channelMention) return message.reply('-# <:emoji_16:1521464002046328944> **Please mention a valid text channel.**');
+        if (!channelMention) return message.reply('-# ❌ **Please mention a valid text channel.**');
         db.updateGuildConfig(message.guild.id, { mediaChannelId: channelMention.id });
-        return message.reply(`-# <:emoji_16:1521464002046328944> **Success! The Auto-Media Downloader has been bound to <#${channelMention.id}>. Paste TikTok/Instagram/Twitter links there to rip the videos.**`);
+        const embed = new EmbedBuilder()
+          .setColor(db.getAccentColor(message.guild.id))
+          .setTitle('Media Downloader Bound')
+          .setDescription(`**Success!** The Auto-Media Downloader is now monitoring <#${channelMention.id}>.\n\n-# Paste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`);
+        return message.reply({ embeds: [embed] });
       },
       async executeSlash(interaction) {
-        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: '-# <:emoji_16:1521464002046328944> **You are not authorized to use this command.**', flags: 64 });
+        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply({ content: '-# ❌ **You are not authorized to use this command.**', flags: 64 });
         const channel = interaction.options.getChannel('channel');
         db.updateGuildConfig(interaction.guild.id, { mediaChannelId: channel.id });
-        return interaction.reply({ content: `-# <:emoji_16:1521464002046328944> **Success! The Auto-Media Downloader has been bound to <#${channel.id}>. Paste TikTok/Instagram/Twitter links there to rip the videos.**` });
+        const embed = new EmbedBuilder()
+          .setColor(db.getAccentColor(interaction.guild.id))
+          .setTitle('Media Downloader Bound')
+          .setDescription(`**Success!** The Auto-Media Downloader is now monitoring <#${channel.id}>.\n\n-# Paste TikTok, Instagram, Twitter/X, or Reddit links in that channel to automatically extract and download the raw videos.`);
+        return interaction.reply({ embeds: [embed] });
       }
     },
-  
-  // --- HELP COMMAND ---
-  {
-    name: 'help',
-    description: 'Show Athena Prime command menu',
-    type: 1,
-    async executePrefix(message) {
-      let reply;
-      try {
-        const components = buildHelpContainer(message.client, message.guild?.id, 'home');
-        reply = await message.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
-      } catch (e) {
-        return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
-      }
-      const collector = reply.createMessageComponentCollector({ idle: 60000 });
-      
-      let currentIdx = -1;
-
-      collector.on('collect', async i => {
-        // Allow anyone to interact with the menu
-        
-        if (i.customId === 'help_delete') {
-          return reply.delete().catch(() => null);
-        }
-        
-        if (i.customId === 'help_home') currentIdx = -1;
-        else if (i.customId === 'help_prev') currentIdx = currentIdx <= 0 ? helpModules.length - 1 : currentIdx - 1;
-        else if (i.customId === 'help_next') currentIdx = currentIdx >= helpModules.length - 1 ? 0 : currentIdx + 1;
-        else if (i.customId === 'help_module_select') {
-          const val = i.values[0];
-          if (val === 'home') currentIdx = -1;
-          else currentIdx = helpModules.findIndex(m => m.id === val);
-        }
-
-        const newComponents = buildHelpContainer(message.client, message.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
-      });
-      
-      collector.on('end', () => reply.delete().catch(() => null));
-    },
-    async executeSlash(interaction) {
-      const components = buildHelpContainer(interaction.client, interaction.guild?.id, 'home');
-      
-      let reply;
-      try {
-        reply = await interaction.reply({ components: [components], fetchReply: true, flags: MessageFlags.IsComponentsV2 });
-      } catch (e) {
-        return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
-      }
-      if (!reply) return; // Prevent crashes if reply is undefined
-      const collector = reply.createMessageComponentCollector({ idle: 60000 });
-      
-      let currentIdx = -1;
-
-      collector.on('collect', async i => {
-        // Allow anyone to interact with the menu
-        
-        if (i.customId === 'help_delete') {
-          return interaction.deleteReply().catch(() => null);
-        }
-        
-        if (i.customId === 'help_home') currentIdx = -1;
-        else if (i.customId === 'help_prev') currentIdx = currentIdx <= 0 ? helpModules.length - 1 : currentIdx - 1;
-        else if (i.customId === 'help_next') currentIdx = currentIdx >= helpModules.length - 1 ? 0 : currentIdx + 1;
-        else if (i.customId === 'help_module_select') {
-          const val = i.values[0];
-          if (val === 'home') currentIdx = -1;
-          else currentIdx = helpModules.findIndex(m => m.id === val);
-        }
-
-        const newComponents = buildHelpContainer(interaction.client, interaction.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
-      });
-      
-      collector.on('end', () => interaction.deleteReply().catch(() => null));
-    }
-  },
-
-  // --- PING COMMAND ---
-  {
-    name: 'ping',
-    description: 'Checks the bot and gateway latency.',
-    category: 'utility',
-    permissions: [],
-    async executePrefix(message) {
-      const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
-      const { generatePingGraph } = await import('../utils/graph.js');
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentHex = cfg?.accentColor || '#00e5ff';
-      const accentInt = parseInt(accentHex.replace('#', ''), 16);
-
-      const sent = await message.reply({ content: 'Calculating ping...' });
-      const apiMs = sent.createdTimestamp - message.createdTimestamp;
-      const wsMs  = Math.round(message.client.ws.ping);
-
-      const dbStart = Date.now();
-      db.getGuildConfig(message.guild?.id || '0');
-      const dbMs = Date.now() - dbStart;
-
-      const rSet = Math.floor(Math.random() * 3) + 1;
-      const rGet = Math.floor(Math.random() * 2) + 1;
-      const rDel = Math.floor(Math.random() * 2) + 1;
-
-      const buffer = await generatePingGraph(wsMs, accentHex, message.client.guilds.cache.size);
-      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
-
-      const e = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`| <:dark4luvontop:1533860081916182721> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
-        .setImage('attachment://ping_graph.png');
-
-      await sent.edit({ content: '', embeds: [e], files: [attachment] });
-    },
-    async executeSlash(interaction) {
-      const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
-      const { generatePingGraph } = await import('../utils/graph.js');
-      const cfg = db.getGuildConfig(interaction.guild?.id || '0');
-      const accentHex = cfg?.accentColor || '#00e5ff';
-      const accentInt = parseInt(accentHex.replace('#', ''), 16);
-
-      const sent = await interaction.reply({ content: 'Calculating ping...', fetchReply: true });
-      const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
-      const wsMs  = Math.round(interaction.client.ws.ping);
-
-      const dbStart = Date.now();
-      db.getGuildConfig(interaction.guild?.id || '0');
-      const dbMs = Date.now() - dbStart;
-
-      const rSet = Math.floor(Math.random() * 3) + 1;
-      const rGet = Math.floor(Math.random() * 2) + 1;
-      const rDel = Math.floor(Math.random() * 2) + 1;
-
-      const buffer = await generatePingGraph(wsMs, accentHex, interaction.client.guilds.cache.size);
-      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
-
-      const e = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`| <:dark4luvontop:1533860081916182721> ${interaction.user} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
-        .setImage('attachment://ping_graph.png');
-
-      await interaction.editReply({ content: '', embeds: [e], files: [attachment] });
-    }
-  },
-
-  // --- TIME COMMAND ---
-  {
-    name: 'time',
-    description: 'Check the current Indian Standard Time (IST)',
-    category: 'utility',
-    permissions: [],
-    async executePrefix(message) {
-      await this._executeTime(message.guild, message.client, message, message.author);
-    },
-    async executeSlash(interaction) {
-      await this._executeTime(interaction.guild, interaction.client, interaction, interaction.user);
-    },
-    async _executeTime(guild, client, context, user) {
-      const { EmbedBuilder } = await import('discord.js');
-      const cfg = db.getGuildConfig(guild?.id || '0');
-      const accentHex = cfg?.accentColor || '#00e5ff';
-      const accentInt = parseInt(accentHex.replace('#', ''), 16);
-
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' });
-      const dateStr = now.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-
-      const e1 = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`> **COMMAND | â•**`);
-
-      const e2 = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`> â€¢ <@${user.id}> executed\n> **<:emoji_25:1515041866796503180> Time :**\n# ${timeStr}\n> **(IST) - ${dateStr}**`)
-        .setThumbnail(user.displayAvatarURL({ size: 256, dynamic: true }));
-
-      if (context.reply) {
-        await context.reply({ embeds: [e1, e2] });
-      }
-    }
-  },
 
   // --- SETUP COMMAND ---
   {

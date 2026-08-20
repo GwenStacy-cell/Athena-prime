@@ -12,6 +12,7 @@
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
     "@fontsource/inter": "^5.2.8",
+    "@mrnima/instagram-downloader": "^1.0.0",
     "anime-actions": "^2.1.2",
     "better-sqlite3": "^12.11.1",
     "canvas": "^3.2.3",
@@ -33,6 +34,7 @@
     "node-fetch": "^3.3.2",
     "rss-parser": "^3.13.0",
     "shoukaku": "^4.3.0",
+    "snapsave-media-downloader": "^2.4.1",
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {

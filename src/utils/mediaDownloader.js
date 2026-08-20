@@ -11,16 +11,12 @@ export async function processMediaLink(client, message, url) {
       const data = await res.json();
       if (data.data && data.data.play) directUrl = data.data.play;
     } else {
-      const res = await fetch('https://api.cobalt.tools/api/json', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ url: url, isNoWatermark: true })
-      });
-      const data = await res.json();
-      if (data && data.url) directUrl = data.url;
+      // Use snapsave for Instagram/Twitter/etc
+      const snapsave = (await import('snapsave-media-downloader')).snapsave;
+      const res = await snapsave(url);
+      if (res && res.success && res.data && res.data.media && res.data.media.length > 0) {
+        directUrl = res.data.media[0].url;
+      }
     }
 
     if (!directUrl) return false;
@@ -43,6 +39,7 @@ export async function processMediaLink(client, message, url) {
     await message.delete().catch(() => {});
     return true;
   } catch (error) {
+    console.error("Media Downloader Error:", error);
     return false;
   }
 }
