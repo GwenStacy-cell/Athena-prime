@@ -902,7 +902,7 @@ commands.push({
       {
         type: 10,
         content: '# __ELITE DEVELOPER INTELLIGENCE__\n### Lead Architect\n' +
-                 `-# **Athena Prime was systematically engineered and deployed by <@${ownerId}>. Driven by an absolute intolerance for server nukes and malicious raids, the Architect engineered a unified, omnipotent appliance—a single, definitive bot designed to dominate every facet of server security, management, and utility without compromise.**`
+                 `-# **Athena Prime was systematically engineered and deployed by [♡ 𝙋𝙧𝙞𝙣𝙘𝙚](discord://-/users/${ownerId}). Driven by an absolute intolerance for server nukes and malicious raids, the Architect engineered a unified, omnipotent appliance—a single, definitive bot designed to dominate every facet of server security, management, and utility without compromise.**`
       },
       { type: 14, divider: true },
       {
