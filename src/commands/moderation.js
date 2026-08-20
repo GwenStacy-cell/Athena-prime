@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';

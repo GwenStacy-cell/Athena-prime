@@ -33,7 +33,8 @@ export const commands = [
       const guildId = interaction.guild.id;
 
       if (subcommand === 'setup') {
-        await interaction.deferReply({ ephemeral: true }); // Keep wizard hidden
+        // Public visible reply
+        await interaction.deferReply();
         
         const role = interaction.options.getRole('role');
         
@@ -78,20 +79,32 @@ export const commands = [
           channelId: interaction.channel.id
         });
 
-        
-        const promptEmbed = new EmbedBuilder()
-          .setColor(0x2b2d31)
-          .setTitle('<:status_jtc:1524089009163337758> Verification Panel Deployed!')
-          .setDescription(`The panel is live. Users clicking the button will now receive ${role}.\n\n**Would you like Athena Prime to automatically configure the server permissions for you?**\n\nIf you select **Auto-Configure**, I will:\n1. Disable \`View Channels\` globally for \`@everyone\`.\n2. Enable \`View Channels\` globally for the ${role} role.\n3. Make sure *this* verification channel remains visible to everyone.`);
+        const promptPayload = {
+          content: "",
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `## **Verification Panel Deployed!**\n\n-# **The panel is live. Users clicking the button will now receive ${role}.**\n\n**Would you like Athena Prime to automatically configure the server permissions for you?**\n\nIf you select **Auto-Configure**, I will:\n1. Disable \`View Channels\` globally for \`@everyone\`.\n2. Enable \`View Channels\` globally for the ${role} role.\n3. Make sure -# **this** verification channel remains visible to everyone.\n\n-# **Note: Channels used in Discord Onboarding or Community Rules have forced visibility. Their visibility cannot be hidden from @everyone due to Discord restrictions.**\n\n-# **Athena Bulletproof Security !!!**`
+                }
+              ]
+            },
+            {
+              type: 1,
+              components: [
+                { type: 2, custom_id: 'auto_conf', label: 'Auto-Configure', style: 3 }, // 3 is Success (Green)
+                { type: 2, custom_id: 'manual_conf', label: 'I\'ll do it manually', style: 2 } // 2 is Secondary (Grey)
+              ]
+            }
+          ],
+          flags: 32768
+        };
 
-        const promptRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('auto_conf').setLabel('Auto-Configure').setStyle(ButtonStyle.Success),
-          new ButtonBuilder().setCustomId('manual_conf').setLabel("I'll do it manually").setStyle(ButtonStyle.Secondary)
-        );
+        const promptMsg = await interaction.editReply(promptPayload);
 
-        const promptMsg = await interaction.editReply({ embeds: [promptEmbed], components: [promptRow] });
-
-        // Await button click for configuration (Ephemeral component collector)
+        // Await button click for configuration (Component collector)
         const filter = i => i.user.id === interaction.user.id && ['auto_conf', 'manual_conf'].includes(i.customId);
         try {
           const response = await promptMsg.awaitMessageComponent({ filter, time: 60000 });
@@ -104,21 +117,39 @@ export const commands = [
               await role.setPermissions(role.permissions.add(PermissionFlagsBits.ViewChannel));
               await interaction.channel.permissionOverwrites.edit(everyone, { ViewChannel: true });
               
-              await interaction.editReply({ embeds: [new EmbedBuilder().setColor(0x00FF00).setTitle('<:status_jtc:1524089009163337758> Auto-Configuration Complete').setDescription('The server is now securely locked behind the verification gate.')], components: [] });
+              const successPayload = {
+                content: "",
+                components: [{ type: 17, components: [{ type: 10, content: `## **Auto-Configuration Complete**\n\n-# **The server is now securely locked behind the verification gate.**\n\n-# **Athena Bulletproof Security !!!**` }] }],
+                flags: 32768
+              };
+              await interaction.editReply(successPayload);
             } catch (err) {
-              await interaction.editReply({ embeds: [new EmbedBuilder().setColor(0xFF0000).setTitle('<:reject_jtc:1524118914525827072> Configuration Failed').setDescription(`I do not have enough permissions to modify server roles or channel overwrites.\n\n\`${err.message}\``)], components: [] });
+              const errorPayload = {
+                content: "",
+                components: [{ type: 17, components: [{ type: 10, content: `## **Configuration Failed**\n\n-# **I do not have enough permissions to modify server roles or channel overwrites.**\n-# **\`${err.message}\`**\n\n-# **Athena Bulletproof Security !!!**` }] }],
+                flags: 32768
+              };
+              await interaction.editReply(errorPayload);
             }
           } else {
-            await response.update({ embeds: [new EmbedBuilder().setColor(0x2b2d31).setTitle('<:info_jtc:1524111455404953663> Manual Configuration').setDescription(`You chose to do it manually. Please remember to restrict \`@everyone\` and allow ${role} to view channels.`)], components: [] });
+            const manualPayload = {
+              content: "",
+              components: [{ type: 17, components: [{ type: 10, content: `## **Manual Configuration**\n\n-# **You chose to do it manually. Please remember to restrict \`@everyone\` and allow ${role} to view channels.**\n\n-# **Athena Bulletproof Security !!!**` }] }],
+              flags: 32768
+            };
+            await response.update(manualPayload);
           }
         } catch (e) {
-          // Timeout
-          await interaction.editReply({ components: [] }).catch(() => null);
+          // Timeout - strip buttons
+          promptPayload.components.pop();
+          await interaction.editReply(promptPayload).catch(() => null);
         }
+
       } 
       
       else if (subcommand === 'disable') {
-        await interaction.deferReply({ ephemeral: true });
+        // Public visible reply
+        await interaction.deferReply();
         
         const verifyData = db.getVerification(guildId);
         if (verifyData.messageId && verifyData.channelId) {
@@ -133,9 +164,30 @@ export const commands = [
           }
         }
 
+        // Restore permissions
+        try {
+          const everyone = interaction.guild.roles.everyone;
+          await everyone.setPermissions(everyone.permissions.add(PermissionFlagsBits.ViewChannel));
+        } catch(e) {}
+
         db.deleteVerification(guildId);
         
-        await interaction.editReply(cv2.success('Verification Disabled', 'The verification system has been disabled and the panel was removed.'));
+        const disablePayload = {
+          content: "",
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `## **Verification Disabled**\n\n-# **The verification system has been disabled and the panel was removed.**\n-# **\u2022 Server visibility permissions have been restored for @everyone.**\n\n-# **Athena Bulletproof Security !!!**`
+                }
+              ]
+            }
+          ],
+          flags: 32768
+        };
+        await interaction.editReply(disablePayload);
       }
     }
   }
