@@ -397,7 +397,7 @@ async function handleServers(message) {
   const lines = guilds.map((g, i) => {
     const backup = db.getBackupByGuild(g.id);
     const bId    = backup ? `\`${db.cache.guildBackupMap[g.id]}\`` : '`No Backup`';
-    return `\`${i + 1}.\` **${g.name}** \`(${g.id})\`\nâ”” <:dark4luvontop:1533860081916182721> ${g.memberCount} members |  ${g.roles.cache.size} roles | <:dark4luvontop:1533860081916182721> ${g.channels.cache.size} channels | Backup: ${bId}`;
+    return `\`${i + 1}.\` **${g.name}** \`(${g.id})\`\n-# • ${g.memberCount} members | ${g.roles.cache.size} roles | ${g.channels.cache.size} channels | Backup: ${bId}`;
   }).join('\n\n');
 
   // Split into chunks if too long

@@ -378,7 +378,7 @@ export default {
           if (connection) connection.destroy();
         }
 
-        connectToHomeVc(guild, homeVcId);
+        connectToHomeVc(guild, homeVcId, true);
       }
       return;
     }
