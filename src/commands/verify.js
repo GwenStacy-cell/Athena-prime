@@ -117,9 +117,27 @@ export const commands = [
               await role.setPermissions(role.permissions.add(PermissionFlagsBits.ViewChannel));
               await interaction.channel.permissionOverwrites.edit(everyone, { ViewChannel: true });
               
+              const rulesChannel = interaction.guild.rulesChannelId ? `<#${interaction.guild.rulesChannelId}>` : null;
+              const publicUpdatesChannel = interaction.guild.publicUpdatesChannelId ? `<#${interaction.guild.publicUpdatesChannelId}>` : null;
+              
+              const explicitChannels = interaction.guild.channels.cache.filter(c => {
+                const ow = c.permissionOverwrites.cache.get(interaction.guild.id);
+                return ow && ow.allow.has(PermissionFlagsBits.ViewChannel) && c.id !== interaction.channel.id;
+              }).map(c => `<#${c.id}>`);
+              
+              const allMentions = [...new Set([...(rulesChannel ? [rulesChannel] : []), ...(publicUpdatesChannel ? [publicUpdatesChannel] : []), ...explicitChannels])];
+              let channelsText = "";
+              if (allMentions.length > 0) {
+                const displayChannels = allMentions.slice(0, 15).join(' ');
+                const extra = allMentions.length > 15 ? ` and ${allMentions.length - 15} more...` : '';
+                channelsText = `\n\n-# **Note: The following channels have forced visibility or explicit overwrites, so they cannot be hidden and remain visible to @everyone:**\n-# **${displayChannels}${extra}**`;
+              } else {
+                channelsText = `\n\n-# **Note: Channels used in Discord Onboarding or Community Rules have forced visibility. Their visibility cannot be hidden from @everyone due to Discord restrictions.**`;
+              }
+              
               const successPayload = {
                 content: "",
-                components: [{ type: 17, components: [{ type: 10, content: `## **Auto-Configuration Complete**\n\n-# **The server is now securely locked behind the verification gate.**\n\n-# **Athena Bulletproof Security !!!**` }] }],
+                components: [{ type: 17, components: [{ type: 10, content: `## **Auto-Configuration Complete**\n\n-# **The server is now securely locked behind the verification gate.**${channelsText}\n\n-# **Athena Bulletproof Security !!!**` }] }],
                 flags: 32768
               };
               await interaction.editReply(successPayload);
