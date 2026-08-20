@@ -16,8 +16,8 @@ export const commands = [
         options: [
           {
             name: 'role',
-            description: 'The role to grant upon verification',
-            type: 8, // ROLE
+            description: 'The role ID or mention to grant upon verification',
+            type: 3, // STRING
             required: true
           }
         ]
@@ -36,11 +36,16 @@ export const commands = [
         // Public visible reply
         await interaction.deferReply();
         
-        const role = interaction.options.getRole('role');
+        const roleInput = interaction.options.getString('role').replace(/[<@&>]/g, '');
+        const role = interaction.guild.roles.cache.get(roleInput);
+        
+        if (!role) {
+          return interaction.editReply(cv2.danger('Role Not Found', 'Could not find a valid role with that ID. Make sure to provide a valid Role ID or mention.'));
+        }
         
         // Ensure the bot can manage the role
         if (role.position >= interaction.guild.members.me.roles.highest.position) {
-          return interaction.editReply(cv2.error('Permission Error', `I cannot assign ${role} because it is higher than or equal to my highest role!`));
+          return interaction.editReply(cv2.danger('Permission Error', `I cannot assign ${role} because it is higher than or equal to my highest role!`));
         }
 
         const rawPayload = {
