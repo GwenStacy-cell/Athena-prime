@@ -1,3 +1,6 @@
+import { PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, SeparatorBuilder, MessageFlags } from 'discord.js';
+import db from '../database.js';
+import cv2 from '../cv2.js';
 import { isAuthorized } from '../utils/helpers.js';
 
 // ——————————————————————————————————————————————————
