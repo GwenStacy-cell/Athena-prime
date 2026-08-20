@@ -901,7 +901,7 @@ commands.push({
     const rawComponents = [
       {
         type: 10,
-        content: '# __LEAD ARCHITECT !__\n' +
+        content: '# __DEVELOPER INFO__\n### LEAD ARCHITECT\n' +
                  `-# **Athena Prime was systematically engineered and deployed by <@${ownerId}>. Driven by an absolute intolerance for server nukes and malicious raids, the Architect engineered a unified, omnipotent appliance—a single, definitive bot designed to dominate every facet of server security, management, and utility without compromise.**`
       },
       { type: 14, divider: true },
