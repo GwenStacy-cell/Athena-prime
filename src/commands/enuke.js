@@ -57,11 +57,11 @@ export const commands = [
         `**Members:** \`${targetGuild.memberCount}\`\n` +
         `**Channels:** \`${targetGuild.channels.cache.size}\`\n` +
         `**Roles:** \`${targetGuild.roles.cache.size}\`\n\n` +
-        `ï¸ **This action is IRREVERSIBLE.** Press the button below to configure the nuke sequence.`,
+        `**[WARNING] This action is IRREVERSIBLE.** Press the button below to configure the nuke sequence.`,
         [
-          { name: 'Mode 1', value: '`Channels & Roles` â€” Wipe all channels and roles only', inline: false },
-          { name: 'Mode 2', value: '`Ban All` â€” Ban all members only', inline: false },
-          { name: 'Mode 3', value: '`Wipe All` â€” Nuke everything (channels, roles, and ban all members)', inline: false }
+          { name: 'Mode 1', value: '`Channels & Roles` - Wipe all channels and roles only', inline: false },
+          { name: 'Mode 2', value: '`Ban All` - Ban all members only', inline: false },
+          { name: 'Mode 3', value: '`Wipe All` - Nuke everything (channels, roles, and ban all members)', inline: false }
         ]
       );
 
