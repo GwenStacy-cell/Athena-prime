@@ -53,16 +53,16 @@ function buildContainer(title, description, fields) {
   for (var i = 0; i < fields.length; i++) {
     var f = fields[i];
     if (f.inline) {
-      inlineBuf.push('-# **' + f.name + ':** ' + f.value);
+      inlineBuf.push('**' + f.name + ':** ' + f.value);
     } else {
-      if (inlineBuf.length > 0) { fieldText += inlineBuf.join('  **\u00b7**  ') + '\n'; inlineBuf = []; }
+      if (inlineBuf.length > 0) { fieldText += '-# ' + inlineBuf.join('  **\u00b7**  ') + '\n'; inlineBuf = []; }
       fieldText += '\n**' + f.name + '**\n';
       var vLines = f.value.split('\n');
       var vPlain = vLines.filter(function(l) { return l.trim() && !isPreformatted(l) && !hasEmojiStart(l); }).length;
       fieldText += vLines.map(function(l) { return styleLine(l, vPlain > 1); }).join('\n') + '\n';
     }
   }
-  if (inlineBuf.length > 0) fieldText += '\n' + inlineBuf.join('  **\u00b7**  ') + '\n';
+  if (inlineBuf.length > 0) fieldText += '\n-# ' + inlineBuf.join('  **\u00b7**  ') + '\n';
   if (fieldText.trim()) {
     comps.push(SEP);
     comps.push({ type: 10, content: fieldText.trim() });
