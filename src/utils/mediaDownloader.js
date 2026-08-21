@@ -85,3 +85,39 @@ export async function processMediaLink(client, message, url) {
     return false;
   }
 }
+
+export async function processMp3Link(client, message, url) {
+  try {
+    await message.channel.sendTyping();
+    const ytdlpPath = await downloadYtDlp();
+    const uniqueId = Date.now().toString();
+    const tempPattern = path.join(process.cwd(), `yt_dlp_audio_${uniqueId}.%(ext)s`);
+    
+    await execPromise(`python3 "${ytdlpPath}" -f "bestaudio[filesize<24M]/best" -o "${tempPattern}" "${url}"`);
+    
+    const downloadedFile = fs.readdirSync(process.cwd()).find(f => f.startsWith(`yt_dlp_audio_${uniqueId}.`));
+    
+    if (downloadedFile) {
+      const fullPath = path.join(process.cwd(), downloadedFile);
+      const buffer = fs.readFileSync(fullPath);
+      fs.unlinkSync(fullPath);
+      
+      if (buffer.length > 25 * 1024 * 1024) {
+        await message.reply({ content: '-# ❌ **The audio is too large (Limit: 25MB).**' }).catch(() => {});
+        return true;
+      }
+      
+      const attachment = new AttachmentBuilder(buffer, { name: `Athena_Audio${path.extname(downloadedFile)}` });
+      await message.reply({
+        content: `-# 🎵 **Audio Extracted** | Requested by ${message.author}`,
+        files: [attachment]
+      });
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Audio Downloader Error:", error);
+    await message.reply({ content: '-# ❌ **Failed to extract audio from that link.**' }).catch(() => {});
+    return false;
+  }
+}

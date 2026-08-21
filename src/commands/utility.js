@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, SeparatorBuilder, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
+import { processMp3Link } from '../utils/mediaDownloader.js';
 import { isAuthorized } from '../utils/helpers.js';
 
 // ——————————————————————————————————————————————————
@@ -11,6 +12,34 @@ function h(text) {
 }
 
 export const commands = [
+
+    // --- MP3 EXTRACTOR COMMAND ---
+    {
+      name: 'mp3',
+      description: 'Extract audio from any video link (YouTube, TikTok, Twitter, etc)',
+      type: 1,
+      options: [
+        { name: 'link', description: 'The video link to extract audio from', type: 3, required: true }
+      ],
+      async executePrefix(message, args) {
+        if (!args[0]) return message.reply(cv2.error('MISSING ARGUMENT', 'Please provide a valid video link.'));
+        await processMp3Link(message.client, message, args[0]);
+      },
+      async executeSlash(interaction) {
+        const link = interaction.options.getString('link');
+        // Acknowledge interaction since downloading can take time
+        await interaction.deferReply();
+        // Since processMp3Link replies to 'message', we create a mock message
+        const mockMessage = {
+          client: interaction.client,
+          author: interaction.user,
+          channel: { sendTyping: async () => {} },
+          reply: async (data) => await interaction.editReply(data)
+        };
+        await processMp3Link(interaction.client, mockMessage, link);
+      }
+    },
+
 
     // --- SET MEDIA CHANNEL COMMAND ---
     {
