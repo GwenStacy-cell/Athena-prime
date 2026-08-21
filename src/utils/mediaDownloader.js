@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { AttachmentBuilder } from 'discord.js';
+import { AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { exec } from 'child_process';
 import util from 'util';
 import fs from 'fs';
