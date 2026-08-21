@@ -88,40 +88,43 @@ export async function processMediaLink(client, message, url) {
       return false; // Failed to extract
     }
 
-    if (buffer.length > 25 * 1024 * 1024) {
-      await message.reply({ content: '-# **The video is too large to upload directly to Discord (Limit: 25MB).**' }).catch(() => {});
-      return true;
-    }
-
     const attachment = new AttachmentBuilder(buffer, { name: 'Athena_Video.mp4' });
 
-    await message.channel.send({
-      content: `-# **Media Extracted** | Requested by ${message.author}`,
-      files: [attachment]
-    });
-
-    await message.delete().catch(() => {});
-    return true;
-  } catch (error) {
-    console.error("Media Downloader Error:", error);
-    if (error && error.code === 40005) {
-      if (buffer) {
+    try {
+      await message.channel.send({
+        content: `-# **Media Extracted** | Requested by ${message.author}`,
+        files: [attachment]
+      });
+      await message.delete().catch(() => {});
+      return true;
+    } catch (sendError) {
+      if (sendError && sendError.code === 40005) {
+        // Discord rejected the file — upload to catbox.moe instead (up to 200MB, no account needed)
         const mb = (buffer.length / 1024 / 1024).toFixed(1);
-        const row = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('compress_10mb').setLabel('Compress to 10MB').setStyle(ButtonStyle.Primary)
-        );
-        const reply = await message.channel.send({ 
-          content: `-# **Upload Failed:** The video is **${mb}MB** and was rejected by Discord's upload limit for this server.\n-# Would you like Athena to attempt downloading a highly compressed version under 10MB?`,
-          components: [row]
-        }).catch(() => null);
-        
-        if (reply) {
-          pendingCompressions.set(reply.id, url);
-          setTimeout(() => pendingCompressions.delete(reply.id), 600000); // 10 min cleanup
+        console.log(`[Media] Discord rejected ${mb}MB file — uploading to catbox.moe...`);
+        try {
+          const form = new FormData();
+          form.append('reqtype', 'fileupload');
+          form.append('fileToUpload', new Blob([buffer], { type: 'video/mp4' }), 'video.mp4');
+          const catboxRes = await fetch('https://catbox.moe/user/api.php', { method: 'POST', body: form });
+          const catboxUrl = (await catboxRes.text()).trim();
+          if (catboxUrl && catboxUrl.startsWith('https://')) {
+            await message.channel.send({
+              content: `-# **Media Extracted** | Requested by ${message.author}\n${catboxUrl}`
+            });
+            await message.delete().catch(() => {});
+            return true;
+          }
+        } catch (catboxError) {
+          console.error('[Media] Catbox upload failed:', catboxError);
         }
+        await message.channel.send({ content: `-# **Upload Failed:** The video is **${mb}MB** and exceeded Discord's file limit. External upload also failed.` }).catch(() => null);
         return true;
       }
+      throw sendError;
     }
+  } catch (error) {
+    console.error("Media Downloader Error:", error);
     return false;
   }
 }
