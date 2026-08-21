@@ -46,8 +46,16 @@ export async function processMediaLink(client, message, url) {
       if (res && res.status && res.url && res.url.length > 0) {
         directUrl = res.url[0].hd || res.url[0].sd || res.url[0].url;
       }
+    } else if (url.includes('instagram.com')) {
+      const ytdlpPath = await downloadYtDlp();
+      const tempPath = path.join(process.cwd(), `yt_dlp_video_${Date.now()}.mp4`);
+      console.log(`[Media] Downloading Instagram video via yt-dlp: ${url}`);
+      await execPromise(`python3 "${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<24M]/best" -o "${tempPath}" "${url}"`);
+      if (fs.existsSync(tempPath)) {
+        localFile = tempPath;
+      }
     } else {
-      // Instagram / Fallback
+      // General Fallback
       const { igdl } = await import('btch-downloader');
       const res = await igdl(url);
       if (res && res.status && res.result && res.result.length > 0) {
