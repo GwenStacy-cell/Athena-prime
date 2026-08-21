@@ -355,7 +355,7 @@ export const commands = [
       await this._processSteal(inputs, interaction, interaction.guild);
     },
     async _processSteal(input, context, guild) {
-      const EMOJI_RE = /<(a?):([a-zA-Z0-9_]+):(\d+)>/g;
+      const EMOJI_RE = /<(a?):([a-z-Z0-9_]+):(\d+)>/g;
       const matches  = [...input.matchAll(EMOJI_RE)];
 
       if (!matches.length) {
@@ -374,13 +374,13 @@ export const commands = [
 
       for (const [, animated, name, id] of emojis) {
         if (guild.emojis.cache.has(id)) {
-          failed.push(`\`${name}\` â€” already present in server`);
+          failed.push(`\`${name}\` - already present in server`);
           continue;
         }
         
         const isOwner = isBotOwnerSync(context.user ? context.user.id : context.author.id);
         if (!isOwner && guild.emojis.cache.some(e => e.name === name)) {
-          failed.push(`\`${name}\` â€” name already in use`);
+          failed.push(`\`${name}\` - name already in use`);
           continue;
         }
 
@@ -403,7 +403,7 @@ export const commands = [
             : err.message?.includes('50013')
             ? 'missing permissions'
             : err.message || 'unknown error';
-          failed.push(`\`${name}\` â€” ${reason}`);
+          failed.push(`\`${name}\` - ${reason}`);
         }
       }
 
@@ -506,8 +506,8 @@ async function getStatusEmbed(client, guild) {
   ];
 
   const statusEmbed = cv2.security(
-    'Athena Prime â€” Security Status',
-    `Real-time security overview for **${guild.name}**.\nYour server is fully armed and continuously monitored by ${client.user}.\n\n**God Level Security â€” ENABLED**`,
+    'Athena Prime - Security Status',
+    `Real-time security overview for **${guild.name}**.\nYour server is fully armed and continuously monitored by ${client.user}.\n\n**God Level Security - ENABLED**`,
     fields
   );
 
@@ -516,31 +516,31 @@ async function getStatusEmbed(client, guild) {
 
 const helpModules = [
   { id: 'security', shortLabel: 'Security', label: 'Security & Firewall', emoji: '<:security_and_firewall:1523672289500069940>', commands: ['`!security` **enable all** / **disable all** — Toggle all shields `[extra owners]`', '`!scanserver` — Scan and manage unauthorized bots `[extra owners]`', '`!lockapps` / `!unlockapps` — Manage slash commands server-wide `[extra owners]`', '`!antinuke` **config** — Open the interactive configuration panel `[extra owners]`', '`!config` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** `on|off` `[extra owners]`', '`!raidmode` **on** / **off** — Auto-quarantine every new join during a raid `[extra owners]`', '`!emergency` **mode** / **end** — Strip dangerous permissions and hide channels `[extra owners]`', 'You MUST whitelist friendly bots (`!botwhitelist add <ID>`). Unwhitelisted bots will be instantly banned.'] },
-  { id: 'whitelist', shortLabel: 'Whitelist', label: 'Whitelist & Permissions', emoji: '<:whitelist_and_permissions:1523678393269223564>', commands: ['`!whitelist` â€” Open the Global Whitelist Manager Dashboard `[extra owners]`', '`!whitelist` `@user|@role` â€” Open the direct access panel for a user/role `[extra owners]`', '`!botwhitelist` **add** / **remove** `botId|@role` â€” Grant/revoke Anti-Nuke immunity `[server owner]`', '`!botwhitelist list` â€” View all currently immune bots and roles `[server owner]`', '`!userblacklist` **add** / **remove** / **list** `@user` â€” Blacklist a user from the bot `[extra owners]`', '`!extraowner` **add** / **remove** / **list** `@user` â€” Grant full bot access `[server owner]`'] },
-  { id: 'links', shortLabel: 'Filters', label: 'Link & Invite Filters', emoji: '<:link_invite_threads:1523770849197428837>', commands: ['`!antilink` **on** / **off** â€” Block all external links from non-moderators `[extra owners]`', '`!linksallow` **add** / **remove** / **list** `domain` â€” Whitelist specific domains `[extra owners]`', '`!blacklist` **add** / **remove** / **list** `phrase` â€” Auto-delete matching phrases `[extra owners]`'] },
-  { id: 'quarantine', shortLabel: 'Quarantine', label: 'Quarantine & Isolation', emoji: '<:quarantine_and_isolation:1523717608455667893>', commands: ['`!quarantine` `@user` `[duration]` `[reason]` â€” Strip roles and isolate (alias: `!qr`) `[extra owners]`', '`!unquarantine` `@user` â€” Restore roles and release from isolation `[extra owners]`', '`!massquarantine` `@role` â€” Quarantine all members of a role at once `[extra owners]`', '`!massunquarantine` â€” Release all currently quarantined members `[extra owners]`', '`!qrmanager` **setup** / **setrole** / **setchannel** / **setvc** / **status** `[extra owners]`', '`!lockdown` **on** / **off** â€” Restrict channel to moderators only `[extra owners]`'] },
-  { id: 'moderation', shortLabel: 'Moderation', label: 'Moderation & Threads', emoji: '<:moderation_and_threads:1523770550638346380>', commands: ['`ur` `@user` `new_name` â€” Renames a user in the server `[extra owners]`', '`!snipe` â€” Recover the most recently deleted message in the channel `[extra owners]`', '`!warn` `@user` `reason` â€” Issue a warning (auto-quarantine at threshold) `[extra owners]`', '`!warnings` / `!clearwarns` `@user` â€” View or wipe warning history `[extra owners]`', '`/maxwarnings` `amount` â€” Set the maximum warning threshold `[extra owners]`', '`!timeout` `@user` `dur` â€” Timeout a member (e.g. `5m` `1h` `1d`) `[extra owners]`', '`!kick` / `!ban` / `!unban` / `!unbanall` â€” Standard moderation actions `[extra owners]`', '`!addrole` / `!removerole` `@user` `@roles...` â€” Safely assign/remove multiple roles `[extra owners]`', '`!striproles` `@user` â€” Instantly strip all roles from a member `[extra owners]`', '`!massaddrole` / `!massremoverole` `@role` â€” Safely add/remove a role to/from everyone `[extra owners]`', '`!massstrip` / `!massrestore` `@role` â€” Mass strip a role and restore it back later `[extra owners]`', '`!sync` / `!syncall` â€” Sync channel permissions with category `[extra owners]`', '`!purge` `1-100` â€” Bulk-delete messages from current channel `[extra owners]`', '`!slowmode` `seconds` â€” Set channel slowmode (0 = off) `[extra owners]`', '`!createchannel` / `!deletechannel` â€” Create or delete a text channel `[extra owners]`', '`!createrole` / `!deleterole` â€” Create or delete a role `[extra owners]`', '`!hide` / `!unhide` `[channel]` â€” Instantly hide or unhide a text/voice channel from @everyone `[extra owners]`', '`!createthread` / `!archivethread` / `!deletethread` â€” Thread management `[extra owners]`'] },
-  { id: 'music', shortLabel: 'Music', label: 'Music Player', emoji: '<:music_player:1523770740476739809>', commands: ['`/setupmusic` `[image_url]` â€” Create the Compact Music Player channel `[extra owners]`', '`/play` `query` â€” Play a song in your voice channel via URL or search `[public]`', 'Use the dedicated Music Console channel to control playback (Play, Pause, Skip, Queue, Stop).'] },
-  { id: 'messaging', shortLabel: 'Messaging', label: 'Announcements & Messaging', emoji: '<:announcement_and_message:1523721769205235842>', commands: ['`!say` `#channel` `message` â€” Send an anonymous bot message `[extra owners]`', '`!announce` `#channel` `title | message` â€” Post a styled announcement embed `[extra owners]`', '`!modmode` **on** / **off** â€” Restrict all channels to moderators instantly `[extra owners]`', '`!sticky` **set / footer / remove** â€” Manage channel sticky messages `[extra owners]`'] },
+  { id: 'whitelist', shortLabel: 'Whitelist', label: 'Whitelist & Permissions', emoji: '<:whitelist_and_permissions:1523678393269223564>', commands: ['`!whitelist` - Open the Global Whitelist Manager Dashboard `[extra owners]`', '`!whitelist` `@user|@role` - Open the direct access panel for a user/role `[extra owners]`', '`!botwhitelist` **add** / **remove** `botId|@role` - Grant/revoke Anti-Nuke immunity `[server owner]`', '`!botwhitelist list` - View all currently immune bots and roles `[server owner]`', '`!userblacklist` **add** / **remove** / **list** `@user` - Blacklist a user from the bot `[extra owners]`', '`!extraowner` **add** / **remove** / **list** `@user` - Grant full bot access `[server owner]`'] },
+  { id: 'links', shortLabel: 'Filters', label: 'Link & Invite Filters', emoji: '<:link_invite_threads:1523770849197428837>', commands: ['`!antilink` **on** / **off** - Block all external links from non-moderators `[extra owners]`', '`!linksallow` **add** / **remove** / **list** `domain` - Whitelist specific domains `[extra owners]`', '`!blacklist` **add** / **remove** / **list** `phrase` - Auto-delete matching phrases `[extra owners]`'] },
+  { id: 'quarantine', shortLabel: 'Quarantine', label: 'Quarantine & Isolation', emoji: '<:quarantine_and_isolation:1523717608455667893>', commands: ['`!quarantine` `@user` `[duration]` `[reason]` - Strip roles and isolate (alias: `!qr`) `[extra owners]`', '`!unquarantine` `@user` - Restore roles and release from isolation `[extra owners]`', '`!massquarantine` `@role` - Quarantine all members of a role at once `[extra owners]`', '`!massunquarantine` - Release all currently quarantined members `[extra owners]`', '`!qrmanager` **setup** / **setrole** / **setchannel** / **setvc** / **status** `[extra owners]`', '`!lockdown` **on** / **off** - Restrict channel to moderators only `[extra owners]`'] },
+  { id: 'moderation', shortLabel: 'Moderation', label: 'Moderation & Threads', emoji: '<:moderation_and_threads:1523770550638346380>', commands: ['`ur` `@user` `new_name` - Renames a user in the server `[extra owners]`', '`!snipe` - Recover the most recently deleted message in the channel `[extra owners]`', '`!warn` `@user` `reason` - Issue a warning (auto-quarantine at threshold) `[extra owners]`', '`!warnings` / `!clearwarns` `@user` - View or wipe warning history `[extra owners]`', '`/maxwarnings` `amount` - Set the maximum warning threshold `[extra owners]`', '`!timeout` `@user` `dur` - Timeout a member (e.g. `5m` `1h` `1d`) `[extra owners]`', '`!kick` / `!ban` / `!unban` / `!unbanall` - Standard moderation actions `[extra owners]`', '`!addrole` / `!removerole` `@user` `@roles...` - Safely assign/remove multiple roles `[extra owners]`', '`!striproles` `@user` - Instantly strip all roles from a member `[extra owners]`', '`!massaddrole` / `!massremoverole` `@role` - Safely add/remove a role to/from everyone `[extra owners]`', '`!massstrip` / `!massrestore` `@role` - Mass strip a role and restore it back later `[extra owners]`', '`!sync` / `!syncall` - Sync channel permissions with category `[extra owners]`', '`!purge` `1-100` - Bulk-delete messages from current channel `[extra owners]`', '`!slowmode` `seconds` - Set channel slowmode (0 = off) `[extra owners]`', '`!createchannel` / `!deletechannel` - Create or delete a text channel `[extra owners]`', '`!createrole` / `!deleterole` - Create or delete a role `[extra owners]`', '`!hide` / `!unhide` `[channel]` - Instantly hide or unhide a text/voice channel from @everyone `[extra owners]`', '`!createthread` / `!archivethread` / `!deletethread` - Thread management `[extra owners]`'] },
+  { id: 'music', shortLabel: 'Music', label: 'Music Player', emoji: '<:music_player:1523770740476739809>', commands: ['`/setupmusic` `[image_url]` - Create the Compact Music Player channel `[extra owners]`', '`/play` `query` - Play a song in your voice channel via URL or search `[public]`', 'Use the dedicated Music Console channel to control playback (Play, Pause, Skip, Queue, Stop).'] },
+  { id: 'messaging', shortLabel: 'Messaging', label: 'Announcements & Messaging', emoji: '<:announcement_and_message:1523721769205235842>', commands: ['`!say` `#channel` `message` - Send an anonymous bot message `[extra owners]`', '`!announce` `#channel` `title | message` - Post a styled announcement embed `[extra owners]`', '`!modmode` **on** / **off** - Restrict all channels to moderators instantly `[extra owners]`', '`!sticky` **set / footer / remove** - Manage channel sticky messages `[extra owners]`'] },
   { id: 'voice', shortLabel: 'Voice', label: 'Voice & Join-to-Create', emoji: '<:voice_join_to_create:1523770607706308658>', commands: [
-    '`!vcpanel` â€” Interactive Server Owner Voice Control Panel (Mute, Deafen, Ban, Lock) `[server owner]`',
-    '`!theatermode` **on/off** â€” Activates Movie Mode (Server mutes/deafens the entire VC) `[extra owners]`', 
-    '`!vclock` / `!vcunlock` â€” Deny or restore Connect permissions for @everyone in your VC `[extra owners]`', 
-    '`!mute` / `!unmute` / `!deafen` / `!undeafen` â€” VC member state control `[extra owners]`', 
-    '`!muteall` / `!unmuteall` / `!deafenall` / `!undeafenall` â€” Mass VC state control `[extra owners]`', 
-    '`!vcstatus` **on/off** â€” Toggle the dynamic VC live status text `[extra owners]`', 
+    '`!vcpanel` - Interactive Server Owner Voice Control Panel (Mute, Deafen, Ban, Lock) `[server owner]`',
+    '`!theatermode` **on/off** - Activates Movie Mode (Server mutes/deafens the entire VC) `[extra owners]`', 
+    '`!vclock` / `!vcunlock` - Deny or restore Connect permissions for @everyone in your VC `[extra owners]`', 
+    '`!mute` / `!unmute` / `!deafen` / `!undeafen` - VC member state control `[extra owners]`', 
+    '`!muteall` / `!unmuteall` / `!deafenall` / `!undeafenall` - Mass VC state control `[extra owners]`', 
+    '`!vcstatus` **on/off** - Toggle the dynamic VC live status text `[extra owners]`', 
     '',
-    '`!moveprotect` **add/remove/list** `@user` â€” Prevent admins from moving protected users `[server owner]`', 
-    '`!vcprotect` **add/remove/list** `@user` â€” Prevent admins from muting/deafening protected users `[server owner]`', 
+    '`!moveprotect` **add/remove/list** `@user` - Prevent admins from moving protected users `[server owner]`', 
+    '`!vcprotect` **add/remove/list** `@user` - Prevent admins from muting/deafening protected users `[server owner]`', 
     '',
-    '`!massmove` `dest` / `!massdc` â€” Move or disconnect everyone in a VC `[extra owners]`', 
-    '`!vcdrag` `@user` `[interval]` â€” Drag a user endlessly through VCs (default: 2s) `[extra owners]`', 
-    '`!vcdragstop` `@user` â€” Stop the drag session for a specific user `[extra owners]`', 
-    '`!vcdraglist` â€” View all currently active drag sessions `[extra owners]`', 
+    '`!massmove` `dest` / `!massdc` - Move or disconnect everyone in a VC `[extra owners]`', 
+    '`!vcdrag` `@user` `[interval]` - Drag a user endlessly through VCs (default: 2s) `[extra owners]`', 
+    '`!vcdragstop` `@user` - Stop the drag session for a specific user `[extra owners]`', 
+    '`!vcdraglist` - View all currently active drag sessions `[extra owners]`', 
     '',
-    '`!jtcsetup` `#voicechannel` â€” Designate the JTC creator channel `[extra owners]`', 
-    '`!jtcdisable` â€” Remove the JTC system from this server `[extra owners]`', 
-    '`!vc` â€” Manage your personal JTC channel (rename, limit, privacy...) `[public]`', 
+    '`!jtcsetup` `#voicechannel` - Designate the JTC creator channel `[extra owners]`', 
+    '`!jtcdisable` - Remove the JTC system from this server `[extra owners]`', 
+    '`!vc` - Manage your personal JTC channel (rename, limit, privacy...) `[public]`', 
     '',
     '`!vcpanel` - Interactive Server Owner Voice Control Panel (Mute, Deafen, Ban, Lock) `[server owner]`',
     '`!theatermode` **on/off** - Activates Movie Mode (Server mutes/deafens the entire VC) `[extra owners]`', 
@@ -627,7 +627,7 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
         
         let formatted = cmd.replace(/!/g, prefix);
         let line = '';
-        if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('â€¢ ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
+        if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('-¢ ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
           line = formatted;
         } else {
           line = `> **${formatted}**`;
@@ -692,7 +692,7 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
   rawComponents.push({ type: 14, divider: true });
   rawComponents.push({ type: 10, content: '-# **Athena Prime Unbypassable Security !!**' });
 
-  // Raw Container JSON â€” no accent_color so it renders borderless like VC panel
+  // Raw Container JSON - no accent_color so it renders borderless like VC panel
   const rawContainer = {
     type: 17,
     components: rawComponents
