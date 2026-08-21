@@ -540,7 +540,7 @@ export default {
           
           const ytdlpPath = await downloadYtDlp();
           const tempPath = path.join(process.cwd(), `yt_dlp_compressed_${Date.now()}.mp4`);
-          await execPromise(`python3 "${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<9M]/bestvideo[ext=mp4][filesize<7M]+bestaudio[ext=m4a]/worst" -o "${tempPath}" "${url}"`);
+          await execPromise(`"${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<9M]/bestvideo[ext=mp4][filesize<7M]+bestaudio[ext=m4a]/worst" -o "${tempPath}" "${url}"`);
           
           if (fs.existsSync(tempPath)) {
             const smallBuffer = fs.readFileSync(tempPath);

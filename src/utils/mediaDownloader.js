@@ -38,7 +38,7 @@ export async function processMediaLink(client, message, url) {
       console.log(`[Media] Downloading YouTube video via yt-dlp: ${url}`);
       
       // Execute yt-dlp via python3 (using the binary zipapp)
-      await execPromise(`python3 "${ytdlpPath}" --extractor-args "youtube:lang=en" -S "lang:en" -f "best[ext=mp4][filesize<24M]/bestvideo[ext=mp4][filesize<15M]+bestaudio[ext=m4a]/best" -o "${tempPath}" "${url}"`);
+      await execPromise(`"${ytdlpPath}" --extractor-args "youtube:lang=en" -S "lang:en" -f "best[ext=mp4][filesize<24M]/bestvideo[ext=mp4][filesize<15M]+bestaudio[ext=m4a]/best" -o "${tempPath}" "${url}"`);
       
       if (fs.existsSync(tempPath)) {
         localFile = tempPath;
@@ -53,7 +53,7 @@ export async function processMediaLink(client, message, url) {
       const ytdlpPath = await downloadYtDlp();
       const tempPath = path.join(process.cwd(), `yt_dlp_video_${Date.now()}.mp4`);
       console.log(`[Media] Downloading Instagram video via yt-dlp: ${url}`);
-      await execPromise(`python3 "${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<24M]/best" -o "${tempPath}" "${url}"`);
+      await execPromise(`"${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<24M]/best" -o "${tempPath}" "${url}"`);
       if (fs.existsSync(tempPath)) {
         localFile = tempPath;
       }
@@ -72,7 +72,7 @@ export async function processMediaLink(client, message, url) {
       try {
         const ytdlpPath = await downloadYtDlp();
         const tempPath = path.join(process.cwd(), `yt_dlp_fallback_video_${Date.now()}.mp4`);
-        await execPromise(`python3 "${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<24M]/best" -o "${tempPath}" "${url}"`);
+        await execPromise(`"${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<24M]/best" -o "${tempPath}" "${url}"`);
         if (fs.existsSync(tempPath)) {
           localFile = tempPath;
         }
@@ -137,7 +137,7 @@ export async function processMp3Link(client, message, url) {
     const uniqueId = Date.now().toString();
     const tempPattern = path.join(process.cwd(), `yt_dlp_audio_${uniqueId}.%(ext)s`);
     
-    await execPromise(`python3 "${ytdlpPath}" --extractor-args "youtube:lang=en" -S "lang:en" -x --audio-format mp3 -f "bestaudio[filesize<24M]/best" -o "${tempPattern}" "${url}"`);
+    await execPromise(`"${ytdlpPath}" --extractor-args "youtube:lang=en" -S "lang:en" -x --audio-format mp3 -f "bestaudio[filesize<24M]/best" -o "${tempPattern}" "${url}"`);
     
     const downloadedFile = fs.readdirSync(process.cwd()).find(f => f.startsWith(`yt_dlp_audio_${uniqueId}.`));
     
