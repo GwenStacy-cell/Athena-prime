@@ -501,7 +501,7 @@ export default {
           if (!urls) return interaction.reply({ content: 'No URL found in the original message.', ephemeral: true });
           const url = urls[0];
 
-          await interaction.update({ content: `-# ⏳ **Downloading ${interaction.customId === 'dl_mp4' ? 'MP4' : 'MP3'}...**`, components: [] });
+          await interaction.update({ content: `-# **Downloading ${interaction.customId === 'dl_mp4' ? 'MP4' : 'MP3'}...**`, components: [] });
           
           const downloader = await import('../utils/mediaDownloader.js');
           let success = false;
@@ -514,7 +514,7 @@ export default {
           if (success) {
             await interaction.message.delete().catch(() => {});
           } else {
-            await interaction.message.edit({ content: '-# ❌ **Failed to process media.**', components: [] }).catch(() => {});
+            await interaction.message.edit({ content: '-# **Failed to process media.**', components: [] }).catch(() => {});
           }
         } catch (e) {
           console.error(e);

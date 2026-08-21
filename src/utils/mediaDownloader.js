@@ -67,14 +67,14 @@ export async function processMediaLink(client, message, url) {
     }
 
     if (buffer.length > 25 * 1024 * 1024) {
-      await message.reply({ content: '-# ❌ **The video is too large to upload directly to Discord (Limit: 25MB).**' }).catch(() => {});
+      await message.reply({ content: '-# **The video is too large to upload directly to Discord (Limit: 25MB).**' }).catch(() => {});
       return true;
     }
 
     const attachment = new AttachmentBuilder(buffer, { name: 'Athena_Video.mp4' });
 
     await message.channel.send({
-      content: `-# 📥 **Media Extracted** | Requested by ${message.author}`,
+      content: `-# **Media Extracted** | Requested by ${message.author}`,
       files: [attachment]
     });
 
@@ -103,13 +103,13 @@ export async function processMp3Link(client, message, url) {
       fs.unlinkSync(fullPath);
       
       if (buffer.length > 25 * 1024 * 1024) {
-        await message.reply({ content: '-# ❌ **The audio is too large (Limit: 25MB).**' }).catch(() => {});
+        await message.reply({ content: '-# **The audio is too large (Limit: 25MB).**' }).catch(() => {});
         return true;
       }
       
       const attachment = new AttachmentBuilder(buffer, { name: `Athena_Audio${path.extname(downloadedFile)}` });
       await message.reply({
-        content: `-# 🎵 **Audio Extracted** | Requested by ${message.author}`,
+        content: `-# **Audio Extracted** | Requested by ${message.author}`,
         files: [attachment]
       });
       return true;
@@ -117,7 +117,7 @@ export async function processMp3Link(client, message, url) {
     return false;
   } catch (error) {
     console.error("Audio Downloader Error:", error);
-    await message.reply({ content: '-# ❌ **Failed to extract audio from that link.**' }).catch(() => {});
+    await message.reply({ content: '-# **Failed to extract audio from that link.**' }).catch(() => {});
     return false;
   }
 }
