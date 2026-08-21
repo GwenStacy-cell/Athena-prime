@@ -35,12 +35,12 @@ export const commands = [
       if (action === 'set') {
         const content = args.slice(1).join(' ');
         if (!content) {
-          return message.reply(cv2.warn('Command Error', `${message.author} You must provide a message to set. Example: \`!sticky set Welcome to general!\``));
+          return message.reply(cv2.warn('Command Error', `${message.author} You must provide a message to set. Example: \`!sticky set MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring...\``));
         }
 
         db.setStickyMessage(message.guild.id, message.channel.id, content);
         
-        return message.reply(cv2.success('Sticky Set', `Sticky message has been configured for this channel.\n\n**Preview:**\n> ${content}`));
+        return message.reply(cv2.success('Sticky Set', `Sticky message has been configured for this channel.\n\n**Note:** You can use \`|\` to separate the title and description.`));
       }
       
       if (action === 'footer') {

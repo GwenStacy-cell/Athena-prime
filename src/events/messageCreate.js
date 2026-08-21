@@ -308,17 +308,18 @@ export default {
               message.channel.messages.delete(stickyData.lastMessageId).catch(() => null);
             }
             
-            const guildConfig = db.getGuildConfig(message.guild.id);
-            const accentColor = guildConfig?.accentColor || '#2b2d31';
+            let title = '';
+            let desc = stickyData.content;
+            if (stickyData.content.includes('|')) {
+              const parts = stickyData.content.split('|');
+              title = parts.shift().trim();
+              desc = parts.join('|').trim();
+            }
             
-            const stickyEmbed = embed.build({
-              description: stickyData.content,
-              color: accentColor,
-              footerText: stickyData.footerText || 'Sticky Message'
-            });
+            const stickyPayload = cv2.success(title, desc);
 
             // Send new sticky and update DB
-            message.channel.send({ embeds: [stickyEmbed] }).then(sentMessage => {
+            message.channel.send(stickyPayload).then(sentMessage => {
               db.updateStickyMessageData(message.guild.id, message.channel.id, sentMessage.id, now);
             }).catch(() => null);
           }

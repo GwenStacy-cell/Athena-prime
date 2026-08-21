@@ -54,6 +54,8 @@ export const commands = [
         const channelMention = message.mentions.channels.first();
         if (!channelMention) return message.reply(cv2.error('INVALID TARGET', 'Please mention a valid text channel to bind the extraction module.'));
         db.updateGuildConfig(message.guild.id, { mediaChannelId: channelMention.id });
+          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\n- Paste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\n- **Note:** Files are strictly limited to under 25MB to comply with Discord\'s attachment size limits.';
+          db.setStickyMessage(message.guild.id, channelMention.id, stickyText);
         
         return message.reply(cv2.success(
           'MEDIA DOWNLOADER BOUND',
@@ -64,6 +66,8 @@ export const commands = [
         if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply(cv2.e.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
         const channel = interaction.options.getChannel('channel');
         db.updateGuildConfig(interaction.guild.id, { mediaChannelId: channel.id });
+          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\n- Paste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\n- **Note:** Files are strictly limited to under 25MB to comply with Discord\'s attachment size limits.';
+          db.setStickyMessage(interaction.guild.id, channel.id, stickyText);
         
         return interaction.reply(cv2.success(
           'MEDIA DOWNLOADER BOUND',
