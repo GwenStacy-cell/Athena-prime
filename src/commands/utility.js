@@ -57,7 +57,7 @@ export const commands = [
         
         return message.reply(cv2.success(
           'MEDIA DOWNLOADER BOUND',
-          `The Auto-Media Downloader is now monitoring <#${channelMention ? channelMention.id : channel.id}>.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.`
+          `The Auto-Media Downloader is now monitoring <#${channelMention ? channelMention.id : channel.id}>.\n- Paste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.\n- **Note:** Files are strictly limited to under 25MB to comply with Discord's attachment size limits.`
         ));
       },
       async executeSlash(interaction) {
@@ -67,7 +67,7 @@ export const commands = [
         
         return interaction.reply(cv2.success(
           'MEDIA DOWNLOADER BOUND',
-          `The Auto-Media Downloader is now monitoring <#${channel.id}>.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.`
+          `The Auto-Media Downloader is now monitoring <#${channel.id}>.\n- Paste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.\n- **Note:** Files are strictly limited to under 25MB to comply with Discord's attachment size limits.`
         ));
       }
     },
