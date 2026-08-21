@@ -545,6 +545,10 @@ export default {
           if (fs.existsSync(tempPath)) {
             const smallBuffer = fs.readFileSync(tempPath);
             fs.unlinkSync(tempPath);
+            if (smallBuffer.length > 10 * 1024 * 1024) {
+              await interaction.message.edit({ content: `-# **Compression Failed:** Even the absolute lowest quality stream for this video is **${(smallBuffer.length / 1024 / 1024).toFixed(1)}MB**, which still exceeds your 10MB limit.` });
+              return;
+            }
             const { AttachmentBuilder } = await import('discord.js');
             const att = new AttachmentBuilder(smallBuffer, { name: 'Athena_Video_Compressed.mp4' });
             await interaction.message.edit({ content: `-# **Media Extracted (Compressed)** | Requested by ${interaction.user}`, files: [att] });
@@ -553,7 +557,11 @@ export default {
           }
         } catch (e) {
           console.error("Compression failed:", e);
-          await interaction.message.edit({ content: '-# **Failed to compress media.**' }).catch(()=>null);
+          if (e.message && e.message.includes('Requested format is not available')) {
+            await interaction.message.edit({ content: '-# **Compression Failed:** Could not find a small enough version of this video to bypass the 10MB limit.' }).catch(()=>null);
+          } else {
+            await interaction.message.edit({ content: '-# **Compression Failed:** Could not find a small enough version of this video to bypass the 10MB limit.' }).catch(()=>null);
+          }
         }
         return;
       }

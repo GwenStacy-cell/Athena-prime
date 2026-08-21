@@ -205,7 +205,7 @@ export default {
       if (message.guild && !message.author.bot && message.content) {
         const cfg = db.getGuildConfig(message.guild.id);
         const isOwner = isBotOwnerSync(message.author.id);
-        if ((cfg && cfg.mediaChannelId === message.channel.id) || isOwner) {
+        if (cfg && cfg.mediaChannelId === message.channel.id) {
           const urlRegex = /(https?:\/\/[^\s]+)/g;
           const urls = message.content.match(urlRegex);
           if (urls) {
