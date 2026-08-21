@@ -19,7 +19,10 @@ async function downloadYtDlp() {
   return ytdlpPath;
 }
 
+export const pendingCompressions = new Map();
+
 export async function processMediaLink(client, message, url) {
+  let buffer;
   try {
     await message.channel.sendTyping();
     let directUrl = null;
@@ -78,7 +81,6 @@ export async function processMediaLink(client, message, url) {
       }
     }
 
-    let buffer;
     if (localFile) {
       buffer = fs.readFileSync(localFile);
       fs.unlinkSync(localFile); // Cleanup
@@ -106,8 +108,23 @@ export async function processMediaLink(client, message, url) {
   } catch (error) {
     console.error("Media Downloader Error:", error);
     if (error && error.code === 40005) {
-      await message.channel.send({ content: '-# **The media file is too large for this server\'s Discord upload limit.**' }).catch(() => {});
-      return true;
+      if (buffer) {
+        const mb = (buffer.length / 1024 / 1024).toFixed(1);
+        const limit = message.guild.premiumTier === 3 ? 100 : (message.guild.premiumTier === 2 ? 50 : 10);
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('compress_10mb').setLabel('Compress to 10MB').setStyle(ButtonStyle.Primary)
+        );
+        const reply = await message.channel.send({ 
+          content: `-# **Upload Failed:** The video is **${mb}MB**, but this server's limit is **${limit}MB**.\n-# Would you like Athena to attempt downloading a highly compressed version under 10MB?`,
+          components: [row]
+        }).catch(() => null);
+        
+        if (reply) {
+          pendingCompressions.set(reply.id, url);
+          setTimeout(() => pendingCompressions.delete(reply.id), 600000); // 10 min cleanup
+        }
+        return true;
+      }
     }
     return false;
   }
