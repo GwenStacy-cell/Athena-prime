@@ -93,7 +93,7 @@ export async function processMp3Link(client, message, url) {
     const uniqueId = Date.now().toString();
     const tempPattern = path.join(process.cwd(), `yt_dlp_audio_${uniqueId}.%(ext)s`);
     
-    await execPromise(`python3 "${ytdlpPath}" --extractor-args "youtube:lang=en" -S "lang:en" -f "bestaudio[filesize<24M]/best" -o "${tempPattern}" "${url}"`);
+    await execPromise(`python3 "${ytdlpPath}" --extractor-args "youtube:lang=en" -S "lang:en" -x --audio-format mp3 -f "bestaudio[filesize<24M]/best" -o "${tempPattern}" "${url}"`);
     
     const downloadedFile = fs.readdirSync(process.cwd()).find(f => f.startsWith(`yt_dlp_audio_${uniqueId}.`));
     
