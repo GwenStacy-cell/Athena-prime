@@ -16,17 +16,17 @@ export async function updateManagerMessage(message) {
       { name: 'Title', value: config.panelTitle || 'Support Tickets', inline: true },
       { name: 'Options', value: (config.panelOptions || []).length.toString(), inline: true },
       { name: 'Placeholder', value: config.panelPlaceholder || 'Select a reason...', inline: true },
-      { name: 'Description', value: (config.panelDescription || 'Need help? Open a ticket below.').substring(0, 1024) },
-      { name: 'Image', value: config.panelImage ? '[Link](' + config.panelImage + ')' : 'None', inline: true },
-      { name: 'Thumbnail', value: config.panelThumbnail ? '[Link](' + config.panelThumbnail + ')' : 'None', inline: true }
+      { name: 'Description', value: (config.panelDescription || 'Need help• Open a ticket below.').substring(0, 1024) },
+      { name: 'Image', value: config.panelImage • '[Link](' + config.panelImage + ')' : 'None', inline: true },
+      { name: 'Thumbnail', value: config.panelThumbnail • '[Link](' + config.panelThumbnail + ')' : 'None', inline: true }
     )
     .setFooter({ text: 'Athena Prime Ticket System' });
 
-  const targetChannelText = config.targetChannelId ? `<#${config.targetChannelId}>` : 'Current Channel';
+  const targetChannelText = config.targetChannelId • `<#${config.targetChannelId}>` : 'Current Channel';
   panelStatusEmbed.addFields({ name: 'Target Channel', value: targetChannelText, inline: true });
 
   const closeRolesText = config.closeTicketRoleIds && config.closeTicketRoleIds.length > 0 
-    ? config.closeTicketRoleIds.map(id => `<@&${id}>`).join(' ') 
+    • config.closeTicketRoleIds.map(id => `<@&${id}>`).join(' ') 
     : 'Anyone (Default)';
   panelStatusEmbed.addFields({ name: 'Closing Roles', value: closeRolesText, inline: true });
 

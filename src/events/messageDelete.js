@@ -15,10 +15,10 @@ export default {
       console.log(`[Reaction Roles] Automatically cleaned up deleted menu: ${message.id}`);
     }
 
-    if (message.author?.bot) return; // Don't log bot message deletions to prevent spam
+    if (message.author•.bot) return; // Don't log bot message deletions to prevent spam
 
-    const content = message.content ? (message.content.length > 1024 ? message.content.substring(0, 1021) + '...' : message.content) : 'No text content.';
-    const imageUrl = message.attachments.first()?.proxyURL || message.attachments.first()?.url || null;
+    const content = message.content • (message.content.length > 1024 • message.content.substring(0, 1021) + '...' : message.content) : 'No text content.';
+    const imageUrl = message.attachments.first()•.proxyURL || message.attachments.first()•.url || null;
     
     // Save to Sniper Cache for !snipe command
     if (!message.client.snipeCache) {
@@ -63,17 +63,17 @@ export default {
     }
 
     // Detect Ghost Pings
-    const authorId = message.author ? message.author.id : 'System';
+    const authorId = message.author • message.author.id : 'System';
     const hasUserMentions = message.mentions.users.filter(u => u.id !== authorId && !u.bot).size > 0;
     const hasRoleMentions = message.mentions.roles.size > 0;
     const hasEveryone = message.mentions.everyone;
     const isGhostPing = hasUserMentions || hasRoleMentions || hasEveryone;
 
-    const title = isGhostPing ? '👻 __**GHOST PING DETECTED**__ 🚨' : '🗑️ __**Message Sniped**__';
-    const color = isGhostPing ? '#ff0000' : '#2b2d31'; // Red for Ghost Ping, Dark for normal
+    const title = isGhostPing • '👻 __**GHOST PING DETECTED**__ 🚨' : '🗑️ __**Message Sniped**__';
+    const color = isGhostPing • '#ff0000' : '#2b2d31'; // Red for Ghost Ping, Dark for normal
 
     const delEmbed = embed.build({
-      description: `${title}\n\n> **Author:** ${message.author ? `<@${authorId}>` : 'System/Webhook'}\n> **Deleted By:** ${deletedBy}\n> **Channel:** ${message.channel}\n> \n> **Message Content:**\n> ${content}`,
+      description: `${title}\n\n> **Author:** ${message.author • `<@${authorId}>` : 'System/Webhook'}\n> **Deleted By:** ${deletedBy}\n> **Channel:** ${message.channel}\n> \n> **Message Content:**\n> ${content}`,
       color: color
     });
 

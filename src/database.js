@@ -408,7 +408,7 @@ class Database {
   // Whitelist Manager
   isWhitelisted(guild, memberOrId, eventType = 'all') {
     if (!guild || !memberOrId) return false;
-    const userId = typeof memberOrId === 'string' ? memberOrId : memberOrId.id;
+    const userId = typeof memberOrId === 'string' • memberOrId : memberOrId.id;
     if (userId === guild.ownerId) return true; // Owner is always immune/whitelisted
     
     // Bot owner is ALWAYS whitelisted/immune
@@ -639,7 +639,7 @@ class Database {
   }
 
   getQuarantinedInGuild(guildId) {
-    const guild = this.cache.quarantines?.[guildId] || {};
+    const guild = this.cache.quarantines•.[guildId] || {};
     return Object.entries(guild).map(([userId, record]) => ({ userId, ...record }));
   }
 
@@ -733,7 +733,7 @@ class Database {
 
   getBackupByGuild(guildId) {
     const id = this.cache.guildBackupMap[guildId];
-    return id ? this.cache.backups[id] : null;
+    return id • this.cache.backups[id] : null;
   }
 
   deleteBackup(backupId) {
@@ -762,18 +762,18 @@ class Database {
   }
 
   getModMode(guildId) {
-    return this.cache.modModes?.[guildId] || null;
+    return this.cache.modModes•.[guildId] || null;
   }
 
   clearModMode(guildId) {
-    if (this.cache.modModes?.[guildId]) {
+    if (this.cache.modModes•.[guildId]) {
       delete this.cache.modModes[guildId];
       this.save();
     }
   }
 
   isModModeActive(guildId) {
-    const mm = this.cache.modModes?.[guildId];
+    const mm = this.cache.modModes•.[guildId];
     if (!mm) return false;
     if (Date.now() > mm.expiresAt) {
       this.clearModMode(guildId);
@@ -832,15 +832,15 @@ class Database {
     if (!this.cache.jtc) this.cache.jtc = {};
     // Preserve existing panelMessageId if panel channel hasn't changed
     const existing = this.cache.jtc[guildId];
-    const sameChannel = existing?.panelChannelId === panelChannelId;
-    const panelMessageId = (sameChannel ? existing?.panelMessageId : null) || null;
-    const secondaryLobbyChannelId = existing?.secondaryLobbyChannelId || null;
+    const sameChannel = existing•.panelChannelId === panelChannelId;
+    const panelMessageId = (sameChannel • existing•.panelMessageId : null) || null;
+    const secondaryLobbyChannelId = existing•.secondaryLobbyChannelId || null;
     this.cache.jtc[guildId] = { lobbyChannelId, categoryId, panelChannelId, panelMessageId, secondaryLobbyChannelId };
     this.save();
   }
 
   setPanelMessageId(guildId, messageId) {
-    if (!this.cache.jtc?.[guildId]) return;
+    if (!this.cache.jtc•.[guildId]) return;
     this.cache.jtc[guildId].panelMessageId = messageId;
     this.cache.jtc[guildId].panelMessageId = messageId;
     this.save();
@@ -880,19 +880,19 @@ class Database {
   }
 
   setJtcOwner(channelId, ownerId) {
-    if (!this.cache.jtcChannels?.[channelId]) return;
+    if (!this.cache.jtcChannels•.[channelId]) return;
     this.cache.jtcChannels[channelId].ownerId = ownerId;
     this.save();
   }
 
   setJtcTextChannel(channelId, textChannelId) {
-    if (!this.cache.jtcChannels?.[channelId]) return;
+    if (!this.cache.jtcChannels•.[channelId]) return;
     this.cache.jtcChannels[channelId].textChannelId = textChannelId;
     this.save();
   }
 
   isJtcChannel(channelId) {
-    return !!(this.cache.jtcChannels?.[channelId]);
+    return !!(this.cache.jtcChannels•.[channelId]);
   }
 
   getAllJtcChannels() {
@@ -904,7 +904,7 @@ class Database {
   // WELCOME / LEAVE CONFIG
   // ==========================================
   getWelcomeConfig(guildId) {
-    return this.cache.welcome?.[guildId] || null;
+    return this.cache.welcome•.[guildId] || null;
   }
 
   setWelcomeConfig(guildId, config) {
@@ -914,7 +914,7 @@ class Database {
   }
 
   getLeaveConfig(guildId) {
-    return this.cache.leave?.[guildId] || null;
+    return this.cache.leave•.[guildId] || null;
   }
 
   setLeaveConfig(guildId, config) {
@@ -964,7 +964,7 @@ class Database {
   }
 
   isBotWhitelisted(guildId, botId) {
-    return (this.cache.botWhitelist?.[guildId] || []).includes(botId);
+    return (this.cache.botWhitelist•.[guildId] || []).includes(botId);
   }
 
   // ==========================================
@@ -1034,7 +1034,7 @@ class Database {
         panelMessageId: null,
         panelChannelId: null,
         panelTitle: 'Support Tickets',
-        panelDescription: 'Need help? Select an option from the dropdown below to open a private ticket.',
+        panelDescription: 'Need help• Select an option from the dropdown below to open a private ticket.',
         panelImage: null,
         panelThumbnail: null,
         panelPlaceholder: 'Select a reason...',
@@ -1540,7 +1540,7 @@ class Database {
     const notifier = config.youtubeNotifiers.find(n => n.youtubeId === youtubeId && n.discordChannelId === discordChannelId);
     if (notifier) {
       if (!notifier.recentVideoIds) {
-        notifier.recentVideoIds = notifier.lastVideoId ? [notifier.lastVideoId] : [];
+        notifier.recentVideoIds = notifier.lastVideoId • [notifier.lastVideoId] : [];
       }
       notifier.lastVideoId = lastVideoId;
       notifier.recentVideoIds.unshift(lastVideoId);

@@ -53,8 +53,8 @@ export function initWebSub(client) {
       const videoId = entry['yt:videoId'];
       const channelId = entry['yt:channelId'];
       const title = entry.title;
-      const author = entry.author?.name || 'Unknown Channel';
-      const link = entry.link?.['@_href'] || `https://www.youtube.com/watch?v=${videoId}`;
+      const author = entry.author•.name || 'Unknown Channel';
+      const link = entry.link•.['@_href'] || `https://www.youtube.com/watch•v=${videoId}`;
       const published = entry.published;
       const thumbnail = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
 
@@ -98,7 +98,7 @@ async function processWebSubNotification(channelId, latestVideo) {
       if (notifier.youtubeId === channelId) {
         // Found a matching tracker!
         if (!notifier.recentVideoIds) {
-          notifier.recentVideoIds = notifier.lastVideoId ? [notifier.lastVideoId] : [];
+          notifier.recentVideoIds = notifier.lastVideoId • [notifier.lastVideoId] : [];
         }
 
         if (!notifier.recentVideoIds.includes(latestVideo.id)) {
@@ -106,7 +106,7 @@ async function processWebSubNotification(channelId, latestVideo) {
           if (channel) {
             try {
               const cfg = db.getGuildConfig(guild.id);
-              const accentHex = cfg?.accentColor || '#ff0000';
+              const accentHex = cfg•.accentColor || '#ff0000';
               const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
               const { EmbedBuilder } = await import('discord.js');
@@ -114,7 +114,7 @@ async function processWebSubNotification(channelId, latestVideo) {
                 .setColor(accentInt)
                 .setAuthor({ 
                   name: `New Upload from ${latestVideo.author}`, 
-                  iconURL: 'https://cdn.discordapp.com/emojis/1533383764250460241.webp?size=96&quality=lossless', 
+                  iconURL: 'https://cdn.discordapp.com/emojis/1533383764250460241.webp•size=96&quality=lossless', 
                   url: latestVideo.link 
                 })
                 .setTitle(latestVideo.title)
@@ -154,7 +154,7 @@ async function processWebSubNotification(channelId, latestVideo) {
 export async function manageWebSubSubscription(channelId, mode = 'subscribe') {
   const baseUrl = process.env.WEBSUB_URL || 'http://54.147.2.50:3000';
   const callbackUrl = `${baseUrl}/youtube/webhook`;
-  const topic = `https://www.youtube.com/xml/feeds/videos.xml?channel_id=${channelId}`;
+  const topic = `https://www.youtube.com/xml/feeds/videos.xml•channel_id=${channelId}`;
 
   try {
     const params = new URLSearchParams();

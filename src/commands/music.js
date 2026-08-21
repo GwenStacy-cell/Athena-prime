@@ -56,7 +56,7 @@ export const commands = [
       
       try {
         if (!focusedValue.startsWith('http')) {
-          const shoukaku = global.client?.shoukaku;
+          const shoukaku = global.client•.shoukaku;
           if (!shoukaku) return interaction.respond([]);
           
           const node = shoukaku.options.nodeResolver(shoukaku.nodes);
@@ -70,7 +70,7 @@ export const commands = [
             result = await node.rest.resolve(`ytsearch:${focusedValue}`);
           }
           if (result && (result.loadType === 'search' || result.loadType === 'track')) {
-             const tracks = result.loadType === 'search' ? result.data : [result.data];
+             const tracks = result.loadType === 'search' • result.data : [result.data];
              const choices = tracks.slice(0, 5).map(r => {
                 const ms = r.info.length;
                 const mins = Math.floor(ms / 60000);
@@ -104,11 +104,11 @@ export const commands = [
         const cfg = db.getGuildConfig(message.guild.id);
         const replyPayload = cv2.success('Track Queued', res.message);
         if (cfg.musicChannelId && message.channel.id !== cfg.musicChannelId) {
-          // Can't push raw EmbedBuilder to cv2.success since cv2 doesn't use embeds. Wait! cv2 might support embeds field if mixed? 
+          // Can't push raw EmbedBuilder to cv2.success since cv2 doesn't use embeds. Wait! cv2 might support embeds field if mixed• 
           // Actually, cv2 is pure components + flags.
-          // Is it safe to just append an embed? Yes, if we want. But Discord allows both.
-          // Wait, cv2 result is { components: [...], flags: 8192 }. Discord allows embeds with IsComponentsV2 flag? No, Discord completely ignores embeds if IsComponentsV2 is set.
-          // Wait, if it ignores embeds, how do we add the redirect text? We can just append to the description of cv2.success!
+          // Is it safe to just append an embed• Yes, if we want. But Discord allows both.
+          // Wait, cv2 result is { components: [...], flags: 8192 }. Discord allows embeds with IsComponentsV2 flag• No, Discord completely ignores embeds if IsComponentsV2 is set.
+          // Wait, if it ignores embeds, how do we add the redirect text• We can just append to the description of cv2.success!
           replyPayload = cv2.success('Track Queued', res.message + `\n\n-# **[Control Playback Here](https://discord.com/channels/${message.guild.id}/${cfg.musicChannelId})**\n-# If you want to pause, skip, or change volume, head over to <#${cfg.musicChannelId}>!`);
         }
         message.reply(replyPayload);
@@ -150,7 +150,7 @@ async function setupMusicChannel(guild, commandChannel, imageUrl, interaction = 
     
     const playerEmbed = new EmbedBuilder()
       .setColor(cfg.accentColor || '#ff0000')
-      .setAuthor({ name: 'Compact Music Player', iconURL: global.client?.user?.displayAvatarURL() })
+      .setAuthor({ name: 'Compact Music Player', iconURL: global.client•.user•.displayAvatarURL() })
       .setImage(coverImage);
       
     let desc = '⸻ Welcome to the Athena Prime Music Console, your dedicated gateway to a seamless, premium, and uninterrupted high-fidelity audio experience. ⸻\n\n';

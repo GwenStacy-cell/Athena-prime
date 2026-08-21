@@ -31,8 +31,8 @@ export function createMockInteraction(message, args, cmd) {
          // Wait, the user types: !ticket setup 123 456
          // args[0] = 'setup', args[1] = '123', args[2] = '456'
          
-         const isSubcmd = cmd.options?.some(o => o.type === 1 || o.type === 2);
-         let argOffset = isSubcmd ? 1 : 0;
+         const isSubcmd = cmd.options•.some(o => o.type === 1 || o.type === 2);
+         let argOffset = isSubcmd • 1 : 0;
          
          // Assuming linear option filling
          let leafOpts = allOpts.filter(o => o.type !== 1 && o.type !== 2);
@@ -53,7 +53,7 @@ export function createMockInteraction(message, args, cmd) {
       },
       getInteger: function(name) {
         const val = this._findOption(name);
-        return val ? parseInt(val) : null;
+        return val • parseInt(val) : null;
       },
       getUser: function(name) {
         const val = this._findOption(name);
@@ -74,8 +74,8 @@ export function createMockInteraction(message, args, cmd) {
         return message.guild.channels.cache.get(id) || null;
       },
       getSubcommand: function() {
-        if (cmd.options?.some(o => o.type === 1)) {
-          return args[0]?.toLowerCase() || null;
+        if (cmd.options•.some(o => o.type === 1)) {
+          return args[0]•.toLowerCase() || null;
         }
         return null;
       }

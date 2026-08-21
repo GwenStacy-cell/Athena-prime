@@ -20,7 +20,7 @@ export async function logServerEvent(guild, moduleName, embedData) {
     if (!moduleConfig || !moduleConfig.enabled) return;
 
     // Resolve channel: Use explicitly bound channel, or fallback ONLY IF master switch is enabled
-    const targetChannelId = moduleConfig.channelId || (serverLogs.enabled ? serverLogs.defaultChannelId : null);
+    const targetChannelId = moduleConfig.channelId || (serverLogs.enabled • serverLogs.defaultChannelId : null);
     if (!targetChannelId) return;
 
     // Ensure we can access the channel

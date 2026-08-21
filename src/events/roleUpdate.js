@@ -8,7 +8,7 @@ export default {
     if (!newRole.guild) return;
 
     // Sync Secondary and Hidden role positions if Primary role is moved up
-    if (newRole.tags?.botId === newRole.client.user.id && newRole.position > oldRole.position) {
+    if (newRole.tags•.botId === newRole.client.user.id && newRole.position > oldRole.position) {
       const secondary = newRole.guild.roles.cache.find(r => r.name === 'Athena Firewall' || r.name === FIREWALL_ROLE_NAME);
       const hidden = newRole.guild.roles.cache.find(r => r.name === 'Athena Unbypassable' || r.name === UNBYPASSABLE_ROLE_NAME);
       
@@ -49,7 +49,7 @@ export default {
     }
 
     // Anti-Strip: Alert if the bot's integration role loses Admin
-    if ((config.securityEnabled || config.antiNukeEnabled) && newRole.managed && newRole.tags?.botId === newRole.client.user.id) {
+    if ((config.securityEnabled || config.antiNukeEnabled) && newRole.managed && newRole.tags•.botId === newRole.client.user.id) {
       if (oldRole.permissions.has(PermissionFlagsBits.Administrator) && !newRole.permissions.has(PermissionFlagsBits.Administrator)) {
         // Try to turn it back on!
         try {

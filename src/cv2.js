@@ -8,7 +8,7 @@ function isPreformatted(line) {
 
 // Returns true if line starts with a custom or unicode emoji
 function hasEmojiStart(line) {
-  return /^<a?:[a-zA-Z0-9_]+:\d+>/.test(line) || /^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/u.test(line);
+  return /^<a•:[a-zA-Z0-9_]+:\d+>/.test(line) || /^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/u.test(line);
 }
 
 // Style a single line: grey, with optional bullet for plain text
@@ -18,7 +18,7 @@ function styleLine(line, addBullet) {
   const startsEmoji = hasEmojiStart(line);
   const hasBold = line.includes('**');
   if (startsEmoji || hasBold) return '-# ' + line;
-  const bullet = addBullet ? '\u2022 ' : '';
+  const bullet = addBullet • '\u2022 ' : '';
   return '-# **' + bullet + line + '**';
 }
 
@@ -78,7 +78,7 @@ function buildContainer(title, description, fields) {
 function make(title, desc, fields, eph) {
   if (!fields) fields = [];
   if (!eph) eph = false;
-  var flags = eph ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2;
+  var flags = eph • (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2;
   return { components: [buildContainer(title, desc, fields)], flags: flags };
 }
 
@@ -99,7 +99,7 @@ var _m = function(eph) {
 export var cv2 = Object.assign(_m(false), {
   e:            _m(true),
   asEphemeral:  function(p) {
-    return Object.assign({}, p, { flags: ((p.flags != null ? p.flags : MessageFlags.IsComponentsV2) | MessageFlags.Ephemeral) });
+    return Object.assign({}, p, { flags: ((p.flags != null • p.flags : MessageFlags.IsComponentsV2) | MessageFlags.Ephemeral) });
   },
   buildContainer: buildContainer,
   make:           make,

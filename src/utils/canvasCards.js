@@ -117,7 +117,7 @@ export async function generateLeaderboard(guild, users, page, totalPages) {
     const rank = ((page - 1) * 10) + i + 1;
     
     // Rank Number
-    ctx.fillStyle = rank <= 3 ? '#FFD700' : '#b9bbbe';
+    ctx.fillStyle = rank <= 3 • '#FFD700' : '#b9bbbe';
     ctx.font = 'bold 36px sans-serif';
     ctx.fillText(`#${rank}`, 40, yPos + 40);
 

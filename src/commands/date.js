@@ -36,9 +36,9 @@ export const commands = [
         return message.reply("Could not find that user! Make sure to mention them or provide a valid ID.");
       }
 
-      const targetMember = await message.guild?.members.fetch(targetUser.id).catch(() => null);
-      const authorName = message.member?.nickname || message.author.displayName;
-      const targetName = targetMember?.nickname || targetUser.displayName;
+      const targetMember = await message.guild•.members.fetch(targetUser.id).catch(() => null);
+      const authorName = message.member•.nickname || message.author.displayName;
+      const targetName = targetMember•.nickname || targetUser.displayName;
 
       const randomMsg = DATE_MESSAGES[Math.floor(Math.random() * DATE_MESSAGES.length)];
       const text = `**${authorName}** and **${targetName}** ${randomMsg}`;

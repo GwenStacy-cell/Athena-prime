@@ -16,8 +16,8 @@ export const commands = [
         return message.reply(cv2.error('Access Denied', 'You do not have permission to use this command.'));
       }
 
-      const subcommand = args[0]?.toLowerCase();
-      const prefix = db.getGuildConfig(message.guild.id)?.prefix || '!';
+      const subcommand = args[0]•.toLowerCase();
+      const prefix = db.getGuildConfig(message.guild.id)•.prefix || '!';
 
       if (!subcommand || !['add', 'remove', 'list'].includes(subcommand)) {
         return message.reply(cv2.info('YouTube Notifier', 
@@ -123,8 +123,8 @@ export const commands = [
 
         // Fetch latest video to get the channel name and prevent pinging old videos on startup
         const latestVideo = await getLatestVideo(channelId);
-        const channelName = latestVideo ? latestVideo.channelName : 'Unknown Channel';
-        const lastVideoId = latestVideo ? latestVideo.id : null;
+        const channelName = latestVideo • latestVideo.channelName : 'Unknown Channel';
+        const lastVideoId = latestVideo • latestVideo.id : null;
 
         db.addYouTubeNotifier(message.guild.id, {
           youtubeId: channelId,
@@ -132,7 +132,7 @@ export const commands = [
           discordChannelId: channelMention.id,
           customMessage: customMessage,
           lastVideoId: lastVideoId,
-          recentVideoIds: lastVideoId ? [lastVideoId] : [],
+          recentVideoIds: lastVideoId • [lastVideoId] : [],
           channelName: channelName
         });
 
@@ -140,7 +140,7 @@ export const commands = [
         manageWebSubSubscription(channelId, 'subscribe');
 
         const cfg = db.getGuildConfig(message.guild.id);
-        const accentHex = cfg?.accentColor || '#ff0000';
+        const accentHex = cfg•.accentColor || '#ff0000';
         const accentInt = parseInt(accentHex.replace('#', ''), 16);
         const { EmbedBuilder } = await import('discord.js');
 
@@ -153,7 +153,7 @@ export const commands = [
           .setColor(accentInt)
           .setAuthor({ 
             name: `YouTube Integration Active`, 
-            iconURL: 'https://cdn.discordapp.com/emojis/1533383764250460241.webp?size=96&quality=lossless'
+            iconURL: 'https://cdn.discordapp.com/emojis/1533383764250460241.webp•size=96&quality=lossless'
           })
           .setTitle(`Successfully Linked: ${channelName}`)
           .setURL(url)

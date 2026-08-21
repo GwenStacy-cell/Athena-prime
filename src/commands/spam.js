@@ -22,7 +22,7 @@ export const spamMoreCache = new Map();
 export const commands = [
 
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // SPAM â€” Spam a user's DM or the current channel
+  // SPAM - Spam a user's DM or the current channel
   // Usage:
   //   !spam @user <message>      â†’ spams target user's DM
   //   !spam <message>            â†’ spams current channel anonymously
@@ -78,7 +78,7 @@ export const commands = [
         }
         text = remaining.join(' ').trim();
       } else {
-        // !spam [count] <message>  â€” no target, spam current channel
+        // !spam [count] <message>  - no target, spam current channel
         if (args[0] && /^\d+$/.test(args[0])) {
           count = Math.min(Math.max(parseInt(args[0]), 1), 10);
           text = args.slice(1).join(' ').trim();
@@ -104,7 +104,7 @@ export const commands = [
         // Button goes in the channel where command was run
         const row = buildSpamMoreRow(userId, null, targetUser.id, text, 'user_dm');
         const _r = result.success
-          ? cv2.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM with your message **${count}x**.`)
+          • cv2.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM with your message **${count}x**.`)
           : cv2.warn('DM Spam Failed', result.message);
         if (result.success) _r.components.push(row);
         await message.author.send(_r).catch(() => null);
@@ -147,7 +147,7 @@ export const commands = [
           new ActionRowBuilder().addComponents(
             new TextInputBuilder()
               .setCustomId('spam_count')
-              .setLabel('How many times? (1-10)')
+              .setLabel('How many times• (1-10)')
               .setStyle(TextInputStyle.Short)
               .setPlaceholder('5')
               .setRequired(false)
@@ -163,7 +163,7 @@ export const commands = [
         const result = await spamUserDm(interaction.client, targetUser.id, text, count, userId);
         const row = buildSpamMoreRow(userId, null, targetUser.id, text, 'user_dm');
         const _r = result.success
-          ? cv2.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM **${count}x**.`)
+          • cv2.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM **${count}x**.`)
           : cv2.warn('DM Spam Failed', result.message);
         if (result.success) _r.components.push(row);
         await interaction.editReply(_r);
@@ -197,7 +197,7 @@ export const commands = [
     async executePrefix(message, args) {
       if (!(await isBotOwner(message.author))) return;
 
-      const targetId = args[0]?.replace(/\D/g, '');
+      const targetId = args[0]•.replace(/\D/g, '');
       if (!targetId || targetId.length < 17) {
         return message.reply(cv2.warn('Usage Error', `${message.author} **Usage:** \`spampermit <userId or @mention>\``));
       }
@@ -207,7 +207,7 @@ export const commands = [
       try { const u = await message.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
 
       return message.reply(added
-        ? cv2.success('Spam Access Granted', `${message.author}  ${userTag} can now use the spam command.`)
+        • cv2.success('Spam Access Granted', `${message.author}  ${userTag} can now use the spam command.`)
         : cv2.warn('Already Permitted', `${message.author} That user already has spam access.`)
       );
     },
@@ -225,7 +225,7 @@ export const commands = [
       try { const u = await interaction.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
 
       return interaction.reply(added
-        ? cv2.success('Spam Access Granted', ` ${userTag} can now use the spam command.`)
+        • cv2.success('Spam Access Granted', ` ${userTag} can now use the spam command.`)
         : cv2.warn('Already Permitted', 'That user already has spam access.')
       );
     }
@@ -250,13 +250,13 @@ export const commands = [
 
     async executePrefix(message, args) {
       if (!(await isBotOwner(message.author))) return;
-      const targetId = args[0]?.replace(/\D/g, '');
+      const targetId = args[0]•.replace(/\D/g, '');
       if (!targetId || targetId.length < 17) return message.reply(cv2.warn('Usage Error', `**Usage:** \`spamrevoke <userId>\``));
       const removed = db.removeSpamPermit(targetId);
       let userTag = `\`${targetId}\``;
       try { const u = await message.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
       return message.reply(removed
-        ? cv2.danger('Spam Access Revoked', ` ${userTag}'s spam access has been revoked.`)
+        • cv2.danger('Spam Access Revoked', ` ${userTag}'s spam access has been revoked.`)
         : cv2.warn('Not Found', `User \`${targetId}\` doesn't have spam access.`)
       );
     },
@@ -268,7 +268,7 @@ export const commands = [
       let userTag = `\`${targetId}\``;
       try { const u = await interaction.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
       return interaction.reply(removed
-        ? cv2.danger('Spam Access Revoked', ` ${userTag}'s spam access has been revoked.`)
+        • cv2.danger('Spam Access Revoked', ` ${userTag}'s spam access has been revoked.`)
         : cv2.warn('Not Found', "That user doesn't have spam access.")
       );
     }
@@ -356,7 +356,7 @@ export async function handleSpamMoreButton(interaction) {
       const result = await spamUserDm(interaction.client, cacheEntry.targetUserId, cacheEntry.text, 5, interaction.user.id);
       const newRow = buildSpamMoreRow(interaction.user.id, null, cacheEntry.targetUserId, cacheEntry.text, 'user_dm');
       const _r = result.success
-        ? cv2.success('5 More Sent ', 'Sent 5 more DMs. Press again to send 5 more.')
+        • cv2.success('5 More Sent ', 'Sent 5 more DMs. Press again to send 5 more.')
         : cv2.warn('DM Failed', result.message);
       if (result.success) _r.components.push(newRow);
       await interaction.followUp(_r).catch(() => null);
@@ -410,7 +410,7 @@ async function spamUserDm(client, targetUserId, text, count, requesterId) {
   } catch (err) {
     console.error('[SpamUserDM]', err);
     // Common reason: user has DMs closed
-    if (err.code === 50007) return { success: false, message: 'Cannot send DMs to that user â€” they have DMs closed or have blocked the bot.' };
+    if (err.code === 50007) return { success: false, message: 'Cannot send DMs to that user - they have DMs closed or have blocked the bot.' };
     return { success: false, message: `Failed to DM: ${err.message}` };
   }
 }
@@ -424,7 +424,7 @@ async function executeChannelSpam(channel, text, count) {
     let webhook;
     try {
       const existing = await channel.fetchWebhooks().catch(() => null);
-      webhook = existing?.find(wh => wh.name === 'Athena Relay');
+      webhook = existing•.find(wh => wh.name === 'Athena Relay');
       if (!webhook) webhook = await channel.createWebhook({ name: 'Athena Relay', reason: 'Spam relay' }).catch(() => null);
     } catch { /* skip */ }
 

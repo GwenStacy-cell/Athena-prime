@@ -11,8 +11,8 @@ export const commands = [
     permissions: [],
     async executePrefix(message, args) {
       const stats = db.cache.botAnalytics || { joins: 0, leaves: 0, cmds: {} };
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+      const cfg = db.getGuildConfig(message.guild•.id || '0');
+      const accentInt = cfg.accentColor • parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
@@ -29,8 +29,8 @@ export const commands = [
     permissions: [],
     async executePrefix(message, args) {
       const stats = db.cache.botAnalytics || { joins: 0, leaves: 0, cmds: {} };
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+      const cfg = db.getGuildConfig(message.guild•.id || '0');
+      const accentInt = cfg.accentColor • parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
@@ -47,13 +47,13 @@ export const commands = [
     permissions: [],
     async executePrefix(message, args) {
       const stats = db.cache.botAnalytics || { joins: 0, leaves: 0, cmds: {} };
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+      const cfg = db.getGuildConfig(message.guild•.id || '0');
+      const accentInt = cfg.accentColor • parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
       const net = stats.joins - stats.leaves;
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`<:emoji_25:1515041866796503180> **Growth Summary:**\n> Joins: ${stats.joins}\n> Leaves: ${stats.leaves}\n> Net Growth: ${net > 0 ? '+' : ''}${net}`);
+        .setDescription(`<:emoji_25:1515041866796503180> **Growth Summary:**\n> Joins: ${stats.joins}\n> Leaves: ${stats.leaves}\n> Net Growth: ${net > 0 • '+' : ''}${net}`);
 
       await message.reply({ embeds: [e] });
     }
@@ -65,7 +65,7 @@ export const commands = [
     category: 'utilities',
     permissions: [],
     async executePrefix(message, args) {
-      const stats = db.cache.botAnalytics?.cmds || {};
+      const stats = db.cache.botAnalytics•.cmds || {};
       const sortedCmds = Object.entries(stats).sort((a, b) => b[1] - a[1]).slice(0, 10);
       
       let lines = [];
@@ -80,8 +80,8 @@ export const commands = [
         });
       }
 
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+      const cfg = db.getGuildConfig(message.guild•.id || '0');
+      const accentInt = cfg.accentColor • parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
 
       const e = new EmbedBuilder()
         .setColor(accentInt)
@@ -103,8 +103,8 @@ export const commands = [
       const ping = Math.round(client.ws.ping);
       const memUsage = process.memoryUsage().heapUsed / 1024 / 1024;
 
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+      const cfg = db.getGuildConfig(message.guild•.id || '0');
+      const accentInt = cfg.accentColor • parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
 
       const e = new EmbedBuilder()
         .setColor(accentInt)

@@ -8,7 +8,7 @@ export const commands = [
     name: 'serveroverview',
     slashHidden: true,
     description: 'View a highly detailed graphical overview of server statistics',
-    // Statbot-style aliases: s?server
+    // Statbot-style aliases: s•server
     aliases: ['server', 'serverstat', 'serverview'],
     async executePrefix(message, args) {
       const waitMsg = await message.reply(cv2.info('Analyzing...', 'Crunching server data and rendering dashboard...'));

@@ -54,11 +54,11 @@ export async function connectToHomeVc(guild, channelId, force = false) {
 export async function toggleBotDeafen(guild, deaf) {
   try {
     const me = guild.members.me;
-    if (!me || !me.voice?.channelId) {
+    if (!me || !me.voice•.channelId) {
       return { success: false, message: 'The bot is not currently in a voice channel.' };
     }
 
-    const shoukaku = global.client?.shoukaku;
+    const shoukaku = global.client•.shoukaku;
     if (shoukaku) {
       const player = shoukaku.players.get(guild.id);
       if (player) {

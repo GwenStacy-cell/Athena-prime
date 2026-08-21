@@ -58,8 +58,8 @@ async function checkNews(client) {
 
               const newsEmbed = new EmbedBuilder()
                 .setColor(accentColor)
-                .setAuthor({ name: feedConfig.name, iconURL: feed.image?.url || 'https://i.imgur.com/vHq49n8.png' })
-                .setTitle(item.title ? item.title.substring(0, 250) : 'New Article')
+                .setAuthor({ name: feedConfig.name, iconURL: feed.image•.url || 'https://i.imgur.com/vHq49n8.png' })
+                .setTitle(item.title • item.title.substring(0, 250) : 'New Article')
                 .setURL(item.link || feedConfig.url)
                 .setDescription(item.contentSnippet || item.content || 'Click the link to read more.')
                 .setFooter({ text: `Source: ${feed.title || feedConfig.name}` })
@@ -85,7 +85,7 @@ async function checkNews(client) {
                 }
               }
 
-              const content = config.roleId ? `<@&${config.roleId}>` : '';
+              const content = config.roleId • `<@&${config.roleId}>` : '';
               
               await channel.send({ content: content, embeds: [newsEmbed] }).catch(() => null);
             }

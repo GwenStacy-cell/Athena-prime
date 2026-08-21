@@ -31,16 +31,16 @@ export default {
     // Determine if kicked or left voluntarily
     await new Promise(r => setTimeout(r, 500));
     const logs = await guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberKick }).catch(() => null);
-    const entry = logs?.entries?.first();
+    const entry = logs•.entries•.first();
 
     let isKick = false;
     let executor = 'Unknown (Native/Other Bot)';
     let reason = 'No reason provided';
     
     // Check if the kick entry was created within the last 5 seconds for this specific user
-    if (entry && entry.target?.id === member.id && Date.now() - entry.createdAt.getTime() < 5000) {
+    if (entry && entry.target•.id === member.id && Date.now() - entry.createdAt.getTime() < 5000) {
       isKick = true;
-      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
+      executor = entry.executor • `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
       reason = entry.reason || reason;
     }
 

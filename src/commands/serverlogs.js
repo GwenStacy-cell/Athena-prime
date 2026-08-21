@@ -22,14 +22,14 @@ async function handleServerLogs(guild, subcommand, args) {
       const modCfg = sl.modules[mod.id];
       const hasRoute = modCfg.channelId || sl.defaultChannelId;
       const actuallyEnabled = modCfg.enabled && hasRoute;
-      const statusStr = actuallyEnabled ? '<a:on:1533844867191406672> **Enabled**' : '<:off:1533844858983157851> **Disabled**';
-      const channelStr = modCfg.channelId ? `<#${modCfg.channelId}>` : (sl.defaultChannelId ? `<#${sl.defaultChannelId}> (Fallback)` : '`None`');
+      const statusStr = actuallyEnabled • '<a:on:1533844867191406672> **Enabled**' : '<:off:1533844858983157851> **Disabled**';
+      const channelStr = modCfg.channelId • `<#${modCfg.channelId}>` : (sl.defaultChannelId • `<#${sl.defaultChannelId}> (Fallback)` : '`None`');
       return { name: mod.name, value: `${statusStr}\nRoute: ${channelStr}`, inline: true };
     });
 
     fields.unshift({
       name: 'Global Settings',
-      value: `Master Switch: ${sl.enabled ? '<a:on:1533844867191406672>' : '<:off:1533844858983157851>'}\nDefault Fallback Channel: ${sl.defaultChannelId ? `<#${sl.defaultChannelId}>` : '`None`'}`
+      value: `Master Switch: ${sl.enabled • '<a:on:1533844867191406672>' : '<:off:1533844858983157851>'}\nDefault Fallback Channel: ${sl.defaultChannelId • `<#${sl.defaultChannelId}>` : '`None`'}`
     });
 
     return cv2.info('Server Logs Dashboard', 'Configure advanced server logging. Use `/serverlogs bind` to route events to specific channels.', fields);
@@ -38,7 +38,7 @@ async function handleServerLogs(guild, subcommand, args) {
   if (subcommand === 'master') {
     sl.enabled = !sl.enabled;
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return cv2.success('Updated', `Master Server Logs switch is now ${sl.enabled ? '**Enabled**' : '**Disabled**'}.`);
+    return cv2.success('Updated', `Master Server Logs switch is now ${sl.enabled • '**Enabled**' : '**Disabled**'}.`);
   }
 
   if (subcommand === 'toggle') {
@@ -48,7 +48,7 @@ async function handleServerLogs(guild, subcommand, args) {
     
     mod.enabled = !mod.enabled;
     db.updateGuildConfig(guild.id, { serverLogs: sl });
-    return cv2.success('Updated', `Module **${moduleId}** is now ${mod.enabled ? '**Enabled**' : '**Disabled**'}.`);
+    return cv2.success('Updated', `Module **${moduleId}** is now ${mod.enabled • '**Enabled**' : '**Disabled**'}.`);
   }
 
   if (subcommand === 'bind') {
@@ -75,7 +75,7 @@ async function handleServerLogs(guild, subcommand, args) {
     }
 
     try {
-      let category = sl.categoryId ? guild.channels.cache.get(sl.categoryId) : null;
+      let category = sl.categoryId • guild.channels.cache.get(sl.categoryId) : null;
       if (!category) {
         category = await guild.channels.create({
           name: 'Athena Logs',
@@ -168,16 +168,16 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const sub = args[0]?.toLowerCase() || 'status';
+      const sub = args[0]•.toLowerCase() || 'status';
       
       let modId = null;
       let chanId = null;
 
       if (sub === 'toggle') modId = args[1];
-      if (sub === 'setdefault') chanId = message.mentions.channels.first()?.id;
+      if (sub === 'setdefault') chanId = message.mentions.channels.first()•.id;
       if (sub === 'bind') {
         modId = args[1];
-        chanId = message.mentions.channels.first()?.id;
+        chanId = message.mentions.channels.first()•.id;
       }
 
       const result = await handleServerLogs(message.guild, sub, { moduleId: modId, channelId: chanId });
@@ -189,10 +189,10 @@ export const commands = [
       let chanId = null;
 
       if (sub === 'toggle') modId = interaction.options.getString('module');
-      if (sub === 'setdefault') chanId = interaction.options.getChannel('channel')?.id;
+      if (sub === 'setdefault') chanId = interaction.options.getChannel('channel')•.id;
       if (sub === 'bind') {
         modId = interaction.options.getString('module');
-        chanId = interaction.options.getChannel('channel')?.id;
+        chanId = interaction.options.getChannel('channel')•.id;
       }
 
       const result = await handleServerLogs(interaction.guild, sub, { moduleId: modId, channelId: chanId });

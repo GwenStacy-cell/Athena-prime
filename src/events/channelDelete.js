@@ -9,16 +9,16 @@ export default {
     if (!channel.guild) return;
     if (db.isModModeActive(channel.guild.id)) return;
 
-    // Cache the channel IMMEDIATELY for restoration â€” no delay
+    // Cache the channel IMMEDIATELY for restoration - no delay
     cacheDeletedItem(channel.id, channel);
 
-    // Fetch audit log with NO delay â€” guildAuditLogEntryCreate handles the antinuke,
+    // Fetch audit log with NO delay - guildAuditLogEntryCreate handles the antinuke,
     // this is purely for server logging purposes
     const logs = await channel.guild.fetchAuditLogs({ limit: 1, type: 12 /* ChannelDelete */ }).catch(() => null);
-    const entry = logs?.entries?.first();
+    const entry = logs•.entries•.first();
     let executor = 'Unknown';
-    if (entry && entry.target?.id === channel.id) {
-      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
+    if (entry && entry.target•.id === channel.id) {
+      executor = entry.executor • `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
     }
 
     const delEmbed = embed.build({

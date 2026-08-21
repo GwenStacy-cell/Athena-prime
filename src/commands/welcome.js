@@ -38,7 +38,7 @@ export function buildWelcomeEmbed(member, cfg) {
     try {
       e.setAuthor({
         name: resolve(cfg.from, member),
-        iconURL: cfg.fromIcon ? resolve(cfg.fromIcon, member) : member.guild.iconURL({ dynamic: true }) || undefined
+        iconURL: cfg.fromIcon • resolve(cfg.fromIcon, member) : member.guild.iconURL({ dynamic: true }) || undefined
       });
     } catch (err) {}
   }
@@ -50,7 +50,7 @@ export function buildWelcomeEmbed(member, cfg) {
 
   if (cfg.thumbnail !== false) {
     try {
-      const thumbUrl = cfg.thumbnailUrl ? resolve(cfg.thumbnailUrl, member) : member.user.displayAvatarURL({ dynamic: true, size: 256 });
+      const thumbUrl = cfg.thumbnailUrl • resolve(cfg.thumbnailUrl, member) : member.user.displayAvatarURL({ dynamic: true, size: 256 });
       e.setThumbnail(thumbUrl);
     } catch (err) {}
   }
@@ -65,7 +65,7 @@ export function buildWelcomeEmbed(member, cfg) {
     try {
       e.setFooter({
         text: resolve(cfg.footer, member),
-        iconURL: cfg.footerIcon ? resolve(cfg.footerIcon, member) : undefined
+        iconURL: cfg.footerIcon • resolve(cfg.footerIcon, member) : undefined
       });
     } catch (err) {}
   }
@@ -80,10 +80,10 @@ export function buildWelcomeEmbed(member, cfg) {
 // ============================================================
 export async function sendWelcomeMessage(member) {
   const cfg = db.getWelcomeConfig(member.guild.id);
-  if (!cfg?.enabled || !cfg?.channelId) return;
+  if (!cfg•.enabled || !cfg•.channelId) return;
   const channel = member.guild.channels.cache.get(cfg.channelId);
   if (!channel) return;
-  const content = cfg.message ? resolve(cfg.message, member) : undefined;
+  const content = cfg.message • resolve(cfg.message, member) : undefined;
   const embedObj = buildWelcomeEmbed(member, cfg);
   const payload = {};
   if (content) payload.content = content;
@@ -94,10 +94,10 @@ export async function sendWelcomeMessage(member) {
 
 export async function sendLeaveMessage(member) {
   const cfg = db.getLeaveConfig(member.guild.id);
-  if (!cfg?.enabled || !cfg?.channelId) return;
+  if (!cfg•.enabled || !cfg•.channelId) return;
   const channel = member.guild.channels.cache.get(cfg.channelId);
   if (!channel) return;
-  const content = cfg.message ? resolve(cfg.message, member) : undefined;
+  const content = cfg.message • resolve(cfg.message, member) : undefined;
   const embedObj = buildWelcomeEmbed(member, cfg);
   const payload = {};
   if (content) payload.content = content;
@@ -111,25 +111,25 @@ export async function sendLeaveMessage(member) {
 // ============================================================
 function getManagerPanel(guildId, type) {
   const isWelcome = type === 'welcome';
-  const cfg = (isWelcome ? db.getWelcomeConfig(guildId) : db.getLeaveConfig(guildId)) || {};
-  const label = isWelcome ? 'Welcome' : 'Leave';
-  const prefix = isWelcome ? 'welcmgr_' : 'leavmgr_';
+  const cfg = (isWelcome • db.getWelcomeConfig(guildId) : db.getLeaveConfig(guildId)) || {};
+  const label = isWelcome • 'Welcome' : 'Leave';
+  const prefix = isWelcome • 'welcmgr_' : 'leavmgr_';
 
   const replyData = cv2.info(
     `<:dark4luvontop:1533860081916182721> ${label} Manager`,
     `Manage the settings for your server's ${label.toLowerCase()} messages.\n\n` +
     `**Current Configuration:**\n` +
-    `<:dark4luvontop:1533860081916182721> **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : 'Not Set'}\n` +
-    ` **Status:** ${cfg.enabled ? ' Enabled' : ' Disabled'}\n` +
-    `<:dark4luvontop:1533860081916182721> **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `<:dark4luvontop:1533860081916182721> **Author (From):** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `<:dark4luvontop:1533860081916182721> **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `<:dark4luvontop:1533860081916182721> **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `<:dark4luvontop:1533860081916182721> **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
-    `<:dark4luvontop:1533860081916182721> **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
-    `<:dark4luvontop:1533860081916182721> **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    ` **Thumbnail (Avatar):** ${cfg.thumbnail !== false ? ' On' : ' Off'}\n` +
-    ` **Timestamp:** ${cfg.timestamp !== false ? ' On' : ' Off'}`
+    `<:dark4luvontop:1533860081916182721> **Channel:** ${cfg.channelId • `<#${cfg.channelId}>` : 'Not Set'}\n` +
+    ` **Status:** ${cfg.enabled • ' Enabled' : ' Disabled'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Top Text:** ${cfg.message • `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Author (From):** ${cfg.from • `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Title:** ${cfg.title • `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Description:** ${cfg.description • `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Color:** ${cfg.color • `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Image:** ${cfg.image • '[Link Set]' : 'Not Set'}\n` +
+    `<:dark4luvontop:1533860081916182721> **Footer:** ${cfg.footer • `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    ` **Thumbnail (Avatar):** ${cfg.thumbnail !== false • ' On' : ' Off'}\n` +
+    ` **Timestamp:** ${cfg.timestamp !== false • ' On' : ' Off'}`
   );
 
   const channelSelectRow = new ActionRowBuilder().addComponents(
@@ -155,7 +155,7 @@ function getManagerPanel(guildId, type) {
   );
 
   const row3 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`${prefix}status`).setLabel(cfg.enabled ? 'Disable System' : 'Enable System').setStyle(cfg.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`${prefix}status`).setLabel(cfg.enabled • 'Disable System' : 'Enable System').setStyle(cfg.enabled • ButtonStyle.Danger : ButtonStyle.Success),
     new ButtonBuilder().setCustomId(`${prefix}test`).setLabel('Test Message').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`${prefix}reset`).setLabel('Reset All').setStyle(ButtonStyle.Danger)
   );
@@ -177,9 +177,9 @@ export async function handleWelcomeManagerMenu(interaction) {
   }
   const guildId = interaction.guild.id;
   const isWelcome = interaction.customId.startsWith('welcmgr_');
-  const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
-  const setConfig = isWelcome ? db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
-  const typeStr = isWelcome ? 'welcome' : 'leave';
+  const getConfig = isWelcome • db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
+  const setConfig = isWelcome • db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
+  const typeStr = isWelcome • 'welcome' : 'leave';
 
   const cfg = getConfig(guildId) || {};
   const selectedChannel = interaction.values[0];
@@ -193,7 +193,7 @@ export async function handleWelcomeManagerButton(interaction) {
   const guildId = interaction.guild.id;
   const customId = interaction.customId;
   const isWelcome = customId.startsWith('welcmgr_');
-  const action = isWelcome ? customId.replace('welcmgr_', '') : customId.replace('leavmgr_', '');
+  const action = isWelcome • customId.replace('welcmgr_', '') : customId.replace('leavmgr_', '');
 
   const isServerOwner = interaction.guild.ownerId === interaction.user.id;
   const isBotOwner = isBotOwnerSync(interaction.user.id);
@@ -203,9 +203,9 @@ export async function handleWelcomeManagerButton(interaction) {
     return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
   }
 
-  const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
-  const setConfig = isWelcome ? db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
-  const typeStr = isWelcome ? 'welcome' : 'leave';
+  const getConfig = isWelcome • db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
+  const setConfig = isWelcome • db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
+  const typeStr = isWelcome • 'welcome' : 'leave';
 
   const cfg = getConfig(guildId) || {};
 
@@ -240,7 +240,7 @@ export async function handleWelcomeManagerButton(interaction) {
     
     await interaction.deferReply();
     
-    const content = cfg.message ? resolve(cfg.message, interaction.member) : undefined;
+    const content = cfg.message • resolve(cfg.message, interaction.member) : undefined;
     const testEmbed = buildWelcomeEmbed(interaction.member, cfg);
     const payload = { embeds: [] };
     if (content) payload.content = `**[Preview]** ${content}`;
@@ -251,7 +251,7 @@ export async function handleWelcomeManagerButton(interaction) {
   }
 
   // Modals for everything else
-  const prefix = isWelcome ? 'welc_' : 'leav_';
+  const prefix = isWelcome • 'welc_' : 'leav_';
 
   if (action === 'text') {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_text`).setTitle('Set Top Text');
@@ -289,7 +289,7 @@ export async function handleWelcomeManagerButton(interaction) {
   if (action === 'color') {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_color`).setTitle('Set Embed Color');
     modal.addComponents(new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('val').setLabel('Hex Color Code (e.g. #5865F2)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.color ? `#${cfg.color.toString(16).toUpperCase()}` : '')
+      new TextInputBuilder().setCustomId('val').setLabel('Hex Color Code (e.g. #5865F2)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.color • `#${cfg.color.toString(16).toUpperCase()}` : '')
     ));
     return interaction.showModal(modal);
   }
@@ -325,13 +325,13 @@ export async function handleWelcomeManagerModal(interaction) {
   const guildId = interaction.guild.id;
   const customId = interaction.customId;
   const isWelcome = customId.startsWith('welc_');
-  const action = isWelcome ? customId.replace('welc_modal_', '') : customId.replace('leav_modal_', '');
-  const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
-  const setConfig = isWelcome ? db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
-  const typeStr = isWelcome ? 'welcome' : 'leave';
+  const action = isWelcome • customId.replace('welc_modal_', '') : customId.replace('leav_modal_', '');
+  const getConfig = isWelcome • db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
+  const setConfig = isWelcome • db.setWelcomeConfig.bind(db) : db.setLeaveConfig.bind(db);
+  const typeStr = isWelcome • 'welcome' : 'leave';
 
   const cfg = getConfig(guildId) || {};
-  let val = interaction.fields.getTextInputValue('val')?.trim() || null;
+  let val = interaction.fields.getTextInputValue('val')•.trim() || null;
 
   if (action === 'text') cfg.message = val;
   if (action === 'title') cfg.title = val;
@@ -339,12 +339,12 @@ export async function handleWelcomeManagerModal(interaction) {
   
   if (action === 'author') {
     cfg.from = val;
-    cfg.fromIcon = interaction.fields.getTextInputValue('icon')?.trim() || null;
+    cfg.fromIcon = interaction.fields.getTextInputValue('icon')•.trim() || null;
   }
   
   if (action === 'footer') {
     cfg.footer = val;
-    cfg.footerIcon = interaction.fields.getTextInputValue('icon')?.trim() || null;
+    cfg.footerIcon = interaction.fields.getTextInputValue('icon')•.trim() || null;
   }
 
   if (action === 'color') {
@@ -373,7 +373,7 @@ export async function handleWelcomeManagerModal(interaction) {
       cfg.image = val;
     }
     
-    let thumbVal = interaction.fields.getTextInputValue('thumb')?.trim() || null;
+    let thumbVal = interaction.fields.getTextInputValue('thumb')•.trim() || null;
     if (!thumbVal || thumbVal.toLowerCase() === 'none') {
       delete cfg.thumbnailUrl;
     } else {

@@ -57,7 +57,7 @@ export const commands = [
         
         return message.reply(cv2.success(
           'MEDIA DOWNLOADER BOUND',
-          `The Auto-Media Downloader is now monitoring <#${channelMention ? channelMention.id : channel.id}>.\n- Paste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.\n- **Note:** Files are strictly limited to under 25MB to comply with Discord's attachment size limits.`
+          `The Auto-Media Downloader is now monitoring <#${channelMention • channelMention.id : channel.id}>.\n- Paste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.\n- **Note:** Files are strictly limited to under 25MB to comply with Discord's attachment size limits.`
         ));
       },
       async executeSlash(interaction) {
@@ -106,7 +106,7 @@ export const commands = [
     async executePrefix(message) {
       let reply;
       try {
-        const components = buildHelpContainer(message.client, message.guild?.id, 'home');
+        const components = buildHelpContainer(message.client, message.guild•.id, 'home');
         reply = await message.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
       } catch (e) {
         return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
@@ -123,22 +123,22 @@ export const commands = [
         }
         
         if (i.customId === 'help_home') currentIdx = -1;
-        else if (i.customId === 'help_prev') currentIdx = currentIdx <= 0 ? helpModules.length - 1 : currentIdx - 1;
-        else if (i.customId === 'help_next') currentIdx = currentIdx >= helpModules.length - 1 ? 0 : currentIdx + 1;
+        else if (i.customId === 'help_prev') currentIdx = currentIdx <= 0 • helpModules.length - 1 : currentIdx - 1;
+        else if (i.customId === 'help_next') currentIdx = currentIdx >= helpModules.length - 1 • 0 : currentIdx + 1;
         else if (i.customId === 'help_module_select') {
           const val = i.values[0];
           if (val === 'home') currentIdx = -1;
           else currentIdx = helpModules.findIndex(m => m.id === val);
         }
 
-        const newComponents = buildHelpContainer(message.client, message.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
+        const newComponents = buildHelpContainer(message.client, message.guild•.id, currentIdx === -1 • 'home' : helpModules[currentIdx].id);
         await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
       
       collector.on('end', () => reply.delete().catch(() => null));
     },
     async executeSlash(interaction) {
-      const components = buildHelpContainer(interaction.client, interaction.guild?.id, 'home');
+      const components = buildHelpContainer(interaction.client, interaction.guild•.id, 'home');
       
       let reply;
       try {
@@ -159,15 +159,15 @@ export const commands = [
         }
         
         if (i.customId === 'help_home') currentIdx = -1;
-        else if (i.customId === 'help_prev') currentIdx = currentIdx <= 0 ? helpModules.length - 1 : currentIdx - 1;
-        else if (i.customId === 'help_next') currentIdx = currentIdx >= helpModules.length - 1 ? 0 : currentIdx + 1;
+        else if (i.customId === 'help_prev') currentIdx = currentIdx <= 0 • helpModules.length - 1 : currentIdx - 1;
+        else if (i.customId === 'help_next') currentIdx = currentIdx >= helpModules.length - 1 • 0 : currentIdx + 1;
         else if (i.customId === 'help_module_select') {
           const val = i.values[0];
           if (val === 'home') currentIdx = -1;
           else currentIdx = helpModules.findIndex(m => m.id === val);
         }
 
-        const newComponents = buildHelpContainer(interaction.client, interaction.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
+        const newComponents = buildHelpContainer(interaction.client, interaction.guild•.id, currentIdx === -1 • 'home' : helpModules[currentIdx].id);
         await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
       
@@ -184,8 +184,8 @@ export const commands = [
     async executePrefix(message) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
       const { generatePingGraph } = await import('../utils/graph.js');
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentHex = cfg?.accentColor || '#00e5ff';
+      const cfg = db.getGuildConfig(message.guild•.id || '0');
+      const accentHex = cfg•.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
       const sent = await message.reply({ content: 'Calculating ping...' });
@@ -193,7 +193,7 @@ export const commands = [
       const wsMs  = Math.round(message.client.ws.ping);
 
       const dbStart = Date.now();
-      db.getGuildConfig(message.guild?.id || '0');
+      db.getGuildConfig(message.guild•.id || '0');
       const dbMs = Date.now() - dbStart;
 
       const rSet = Math.floor(Math.random() * 3) + 1;
@@ -213,8 +213,8 @@ export const commands = [
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
       const { generatePingGraph } = await import('../utils/graph.js');
-      const cfg = db.getGuildConfig(interaction.guild?.id || '0');
-      const accentHex = cfg?.accentColor || '#00e5ff';
+      const cfg = db.getGuildConfig(interaction.guild•.id || '0');
+      const accentHex = cfg•.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
       const sent = await interaction.reply({ content: 'Calculating ping...', fetchReply: true });
@@ -222,7 +222,7 @@ export const commands = [
       const wsMs  = Math.round(interaction.client.ws.ping);
 
       const dbStart = Date.now();
-      db.getGuildConfig(interaction.guild?.id || '0');
+      db.getGuildConfig(interaction.guild•.id || '0');
       const dbMs = Date.now() - dbStart;
 
       const rSet = Math.floor(Math.random() * 3) + 1;
@@ -255,8 +255,8 @@ export const commands = [
     },
     async _executeTime(guild, client, context, user) {
       const { EmbedBuilder } = await import('discord.js');
-      const cfg = db.getGuildConfig(guild?.id || '0');
-      const accentHex = cfg?.accentColor || '#00e5ff';
+      const cfg = db.getGuildConfig(guild•.id || '0');
+      const accentHex = cfg•.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
       const now = new Date();
@@ -355,7 +355,7 @@ export const commands = [
       await this._processSteal(inputs, interaction, interaction.guild);
     },
     async _processSteal(input, context, guild) {
-      const EMOJI_RE = /<(a?):([a-z-Z0-9_]+):(\d+)>/g;
+      const EMOJI_RE = /<(a•):([a-z-Z0-9_]+):(\d+)>/g;
       const matches  = [...input.matchAll(EMOJI_RE)];
 
       if (!matches.length) {
@@ -378,14 +378,14 @@ export const commands = [
           continue;
         }
         
-        const isOwner = isBotOwnerSync(context.user ? context.user.id : context.author.id);
+        const isOwner = isBotOwnerSync(context.user • context.user.id : context.author.id);
         if (!isOwner && guild.emojis.cache.some(e => e.name === name)) {
           failed.push(`\`${name}\` - name already in use`);
           continue;
         }
 
-        const ext = animated ? 'gif' : 'png';
-        const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
+        const ext = animated • 'gif' : 'png';
+        const url = `https://cdn.discordapp.com/emojis/${id}.${ext}•size=128&quality=lossless`;
         
         try {
           const response = await fetch(url);
@@ -398,10 +398,10 @@ export const commands = [
           const created = await guild.emojis.create({ attachment: buffer, name });
           added.push(created.toString());
         } catch (err) {
-          const reason = err.message?.includes('30008')
-            ? 'server emoji limit reached'
-            : err.message?.includes('50013')
-            ? 'missing permissions'
+          const reason = err.message•.includes('30008')
+            • 'server emoji limit reached'
+            : err.message•.includes('50013')
+            • 'missing permissions'
             : err.message || 'unknown error';
           failed.push(`\`${name}\` - ${reason}`);
         }
@@ -483,14 +483,14 @@ async function getStatusEmbed(client, guild) {
   const onEmoji = '<:on:1514996865030946847>';
   const offEmoji = '<:off:1514996861474177109>';
   
-  const getStatusText = (isEnabled) => isEnabled ? `${onEmoji} **ENABLED**` : `${offEmoji} **DISABLED**`;
+  const getStatusText = (isEnabled) => isEnabled • `${onEmoji} **ENABLED**` : `${offEmoji} **DISABLED**`;
 
   const antiNukeStatus = getStatusText(config.antiNukeEnabled);
   const firewallStatus = getStatusText(config.antiNukeEnabled); // Athena Firewall is tied to core security
   const antiSpamStatus = getStatusText(config.antiSpamEnabled);
   const antiInviteStatus = getStatusText(config.antiInviteEnabled !== false);
   const antiLinkStatus = getStatusText(config.antiLinkEnabled);
-  const raidModeStatus = config.raidMode ? `${onEmoji} **ENGAGED**` : `${offEmoji} **STANDBY**`;
+  const raidModeStatus = config.raidMode • `${onEmoji} **ENGAGED**` : `${offEmoji} **STANDBY**`;
 
   const fields = [
     { name: 'Bot Uptime', value: formatUptime(uptimeMs), inline: true },
@@ -576,12 +576,12 @@ const helpModules = [
   { id: 'utilities', shortLabel: 'Utility', label: 'Utilities', emoji: '<:utilities:1523747124653723838>', commands: ['`!afk` `[reason]` - Set your AFK status `[public]`', '`/bump` - Set a bump reminder and boost the server `[public]`', '`!avatar` / `!banner` `[@user]` - View a member\'s global/server avatar or banner `[public]`', '`!status` - Real-time security health overview `[public]`', '`!serverinfo` / `!serveroverview` / `!userinfo` `[@user]` - View stats and profile information `[public]`', '`!setmedia` `#channel` - Bind auto-media extractor to a channel `[extra owners]`', '`!mp3` `link` - Extract audio from any media link `[public]`', '`!rate` `[url/attachment]` - Post an edit to be rated `[public]`', '`!rateleaderboard` - View top rated edits globally `[public]`', '`!rate` `#channel` - Bind ratings to a specific channel `[extra owners]`', '`!date` `@user` - Go on a beautiful, romantic date with someone `[public]`', '`!ping` / `!time` - Check bot latency and Indian Standard Time (IST) `[public]`', '`!setup` - Quick-bind log channel, quarantine VC and quarantine role `[extra owners]`', '`!dev` - View Lead Architect & Developer details `[public]`'] }
 ];
 
-const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
+const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif•ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
 
 function buildHelpContainer(client, guildId, moduleId = 'home') {
   const config = db.getGuildConfig(guildId || '0');
-  const prefix = config?.prefix || '!';
-  const botId = client?.user?.id || '1347071663182676059';
+  const prefix = config•.prefix || '!';
+  const botId = client•.user•.id || '1347071663182676059';
 
   let rawComponents = [];
 
@@ -601,7 +601,7 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
       let label = mod.shortLabel || mod.label;
       let targetLength = 10; 
       let spaces = targetLength - label.length;
-      let padding = '\u00A0'.repeat(spaces > 0 ? spaces : 0);
+      let padding = '\u00A0'.repeat(spaces > 0 • spaces : 0);
       let displayLabel = label.replace(/ /g, '\u00A0');
       grid += `${mod.emoji} **\` ${displayLabel}${padding} \`** `;
       if (col === 2) grid += '\n'; 
@@ -639,7 +639,7 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
           }
           currentChunk = line;
         } else {
-          currentChunk += (currentChunk ? '\n\n' : '') + line;
+          currentChunk += (currentChunk • '\n\n' : '') + line;
         }
       }
 
@@ -682,7 +682,7 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
   const row1 = new ActionRowBuilder().addComponents(selectMenu);
   const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
 
-  const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
+  const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif•ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
 
   rawComponents.push({ type: 12, items: [{ media: { url: HELP_GIF } }] });
   rawComponents.push({ type: 14, divider: true });
@@ -922,7 +922,7 @@ commands.push({
       return message.reply(cv2.danger('Access Denied', 'Only authorized owners can use this.'));
     }
     
-    const state = args[0]?.toLowerCase();
+    const state = args[0]•.toLowerCase();
     if (!['on', 'off'].includes(state)) {
       return message.reply(cv2.warn('Invalid Usage', 'Please specify `on` or `off`. Example: `!vcstatus off`'));
     }
@@ -930,7 +930,7 @@ commands.push({
     const enabled = state === 'on';
     db.updateGuildConfig(message.guild.id, { vcStatusEnabled: enabled });
     
-    const botVcId = message.guild.members.me?.voice?.channelId;
+    const botVcId = message.guild.members.me•.voice•.channelId;
     if (botVcId) {
       const { updateBotVcStatus } = await import('../utils/voice.js');
       const channel = message.guild.channels.cache.get(botVcId);
@@ -949,7 +949,7 @@ commands.push({
     const enabled = state === 'on';
     db.updateGuildConfig(interaction.guild.id, { vcStatusEnabled: enabled });
     
-    const botVcId = interaction.guild.members.me?.voice?.channelId;
+    const botVcId = interaction.guild.members.me•.voice•.channelId;
     if (botVcId) {
       const { updateBotVcStatus } = await import('../utils/voice.js');
       const channel = interaction.guild.channels.cache.get(botVcId);
@@ -977,10 +977,10 @@ commands.push({
     // Get bot owner dynamically (handle Teams vs Single User)
     let ownerId = '1423292960744804383';
     try {
-      if (!client.application?.owner) await client.application?.fetch();
-      if (client.application?.owner?.ownerId) {
+      if (!client.application•.owner) await client.application•.fetch();
+      if (client.application•.owner•.ownerId) {
         ownerId = client.application.owner.ownerId; // It's a Team, get the owner of the team
-      } else if (client.application?.owner?.id) {
+      } else if (client.application•.owner•.id) {
         ownerId = client.application.owner.id; // It's a single User
       }
     } catch (e) {}
@@ -1017,7 +1017,7 @@ commands.push({
       { type: 14, divider: true },
       {
         type: 12,
-        items: [{ media: { url: 'https://cdn.discordapp.com/attachments/1516850846984437801/1539301235369312256/content.png?ex=6a85d17d&is=6a847ffd&hm=1dc8831b54f332ef885aaf0b16b62d6c3af9cfecc7dc2004c651083277e55f2c&' } }]
+        items: [{ media: { url: 'https://cdn.discordapp.com/attachments/1516850846984437801/1539301235369312256/content.png•ex=6a85d17d&is=6a847ffd&hm=1dc8831b54f332ef885aaf0b16b62d6c3af9cfecc7dc2004c651083277e55f2c&' } }]
       },
       { type: 14, divider: true },
       {

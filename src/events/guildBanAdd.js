@@ -10,12 +10,12 @@ export default {
     // Fetch audit logs to find executor
     await new Promise(r => setTimeout(r, 500)); // Delay for audit log generation
     const logs = await ban.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberBanAdd }).catch(() => null);
-    const entry = logs?.entries?.first();
+    const entry = logs•.entries•.first();
 
     let executor = 'Unknown (Native/Other Bot)';
     let reason = ban.reason || 'No reason provided';
-    if (entry && entry.target?.id === ban.user.id) {
-      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
+    if (entry && entry.target•.id === ban.user.id) {
+      executor = entry.executor • `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
       reason = entry.reason || reason;
     }
 

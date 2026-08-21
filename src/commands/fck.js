@@ -8,13 +8,13 @@ You've been reported to Athena Prime. We know who you are, where you chat, and w
 
 Don't push it again.
 
-â€” *Athena Prime*`,
+- *Athena Prime*`,
 
   `You've been flagged.
 
 Consider this your one and only warning. There won't be another.
 
-â€” *Athena Prime Enforcement*`,
+- *Athena Prime Enforcement*`,
 
   `We see you.
 
@@ -22,7 +22,7 @@ Every move you make in that server is logged. You are one mistake away from cons
 
 Fix yourself. Now.
 
-â€” *Athena Prime*`,
+- *Athena Prime*`,
 
   `This is a formal notice.
 
@@ -30,21 +30,21 @@ Your behavior has been reviewed and found unacceptable. The server owner has bee
 
 Don't make us act.
 
-â€” *Athena Prime Black Division*`,
+- *Athena Prime Black Division*`,
 
   `Tread carefully.
 
 You've been put on our radar. We don't issue second warnings. You don't want to find out what comes next.
 
-â€” *Athena Prime*`,
+- *Athena Prime*`,
 
   `You've crossed the line.
 
 The server owner knows. Athena Prime knows. You have been documented, flagged, and marked.
 
-Fall in line â€” or fall out entirely.
+Fall in line - or fall out entirely.
 
-â€” *Athena Prime Command*`,
+- *Athena Prime Command*`,
 
   `Last warning.
 
@@ -52,7 +52,7 @@ We don't explain ourselves twice. You know what you did. The server owner author
 
 Don't test what comes after it.
 
-â€” *Athena Prime*`,
+- *Athena Prime*`,
 
   `Your name is on our list now.
 
@@ -60,7 +60,7 @@ We don't forget. We don't forgive. And we absolutely do not tolerate whatever it
 
 Clean it up.
 
-â€” *Athena Prime*`,
+- *Athena Prime*`,
 ];
 
 const PUBLIC_LOG_LINES = [
@@ -137,13 +137,13 @@ export const commands = [
       const dmText = DM_THREATS[Math.floor(Math.random() * DM_THREATS.length)];
       const publicText = PUBLIC_LOG_LINES[Math.floor(Math.random() * PUBLIC_LOG_LINES.length)];
 
-      const targetMember = await message.guild?.members.fetch(targetUser.id).catch(() => null);
-      const targetName = targetMember?.nickname || targetUser.displayName || targetUser.username;
-      const authorName = message.member?.nickname || message.author.displayName || message.author.username;
+      const targetMember = await message.guild•.members.fetch(targetUser.id).catch(() => null);
+      const targetName = targetMember•.nickname || targetUser.displayName || targetUser.username;
+      const authorName = message.member•.nickname || message.author.displayName || message.author.username;
 
       const dmEmbed = new EmbedBuilder()
         .setColor(0xcc0000)
-        .setTitle('ATHENA PRIME â€” OFFICIAL WARNING')
+        .setTitle('ATHENA PRIME - OFFICIAL WARNING')
         .setDescription(dmText)
         .setFooter({ text: `Issued by: ${authorName} | ${message.guild.name}` })
         .setTimestamp();
@@ -157,7 +157,7 @@ export const commands = [
 
       const publicEmbed = new EmbedBuilder()
         .setColor(0xcc0000)
-        .setTitle('ATHENA PRIME â€” ACTION LOG')
+        .setTitle('ATHENA PRIME - ACTION LOG')
         .addFields([
           { name: 'Target', value: `<@${targetUser.id}>`, inline: true },
           { name: 'Issued By', value: authorName, inline: true },
@@ -165,7 +165,7 @@ export const commands = [
           {
             name: 'Delivery',
             value: dmSent
-              ? '<:dark4luvontop:1533860081916182721> Warning DM delivered to target.'
+              • '<:dark4luvontop:1533860081916182721> Warning DM delivered to target.'
               : 'Target DMs are closed. Warning filed internally.',
             inline: false
           },

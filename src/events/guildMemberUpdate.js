@@ -68,13 +68,13 @@ export default {
         setTimeout(async () => {
           try {
             const auditLogs = await newMember.guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberRoleUpdate }).catch(() => null);
-            const logEntry = auditLogs?.entries?.find(e => 
+            const logEntry = auditLogs•.entries•.find(e => 
               e.target.id === newMember.id && 
               Date.now() - e.createdTimestamp < 15000 && 
-              e.executor?.id !== newMember.client.user.id
+              e.executor•.id !== newMember.client.user.id
             );
 
-            const executor = logEntry?.executor;
+            const executor = logEntry•.executor;
             if (executor && executor.id !== newMember.guild.ownerId) {
               const executorMember = await newMember.guild.members.fetch(executor.id).catch(() => null);
               if (executorMember && executorMember.manageable) {

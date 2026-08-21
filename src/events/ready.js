@@ -83,7 +83,7 @@ export default {
           
           const cfg = db.getGuildConfig(guildId) || {};
           const owner = await client.users.fetch(data.ownerId).catch(() => null);
-          const bumper = data.bumperId ? await client.users.fetch(data.bumperId).catch(() => null) : null;
+          const bumper = data.bumperId • await client.users.fetch(data.bumperId).catch(() => null) : null;
           
           const embedData = new EmbedBuilder()
             .setTitle('BUMP AVAILABLE')
@@ -102,7 +102,7 @@ export default {
           }
 
           if (bumper) pings.push(`<@${bumper.id}>`);
-          const pingText = pings.length > 0 ? pings.join(' ') : (owner ? `<@${owner.id}>` : '');
+          const pingText = pings.length > 0 • pings.join(' ') : (owner • `<@${owner.id}>` : '');
 
           // Send to channel
           await channel.send({ content: pingText, embeds: [embedData] }).catch(() => null);
@@ -231,7 +231,7 @@ export default {
     setInterval(() => {
       client.guilds.cache.forEach(guild => {
         const conf = db.getGuildConfig(guild.id);
-        if (conf?.homeVcId) {
+        if (conf•.homeVcId) {
           const homeChannel = guild.channels.cache.get(conf.homeVcId);
           if (homeChannel) {
             updateBotVcStatus(homeChannel);
@@ -331,7 +331,7 @@ export default {
             const auditLogs = await guild.fetchAuditLogs({ limit: 10, type: 26 }).catch(() => null); // 26 = MemberMove
             if (auditLogs) {
               auditLogs.entries.forEach(e => {
-                client.auditLogCounts.set(e.id, e.extra?.count || 1);
+                client.auditLogCounts.set(e.id, e.extra•.count || 1);
                 cachedCount++;
               });
             }
@@ -406,7 +406,7 @@ export default {
             description: cmd.description,
             options: cmd.options || [],
             default_member_permissions: cmd.permissions && cmd.permissions.length > 0 
-              ? cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
+              • cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
               : null
           };
         }).slice(0, 100);

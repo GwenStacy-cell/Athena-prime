@@ -47,7 +47,7 @@ export const commands = roleplayActions.map(action => ({
     let target = message.mentions.users.first();
     if (!target && args[0]) {
       try {
-        target = await message.client.users.fetch(args[0].replace(/<@!?>/g, ''));
+        target = await message.client.users.fetch(args[0].replace(/<@!•>/g, ''));
       } catch {
         // ignore
       }
@@ -59,7 +59,7 @@ export const commands = roleplayActions.map(action => ({
     }
 
     const description = target 
-      ? `**${message.author.username}** ${action.verb} **${target.username}**!` 
+      • `**${message.author.username}** ${action.verb} **${target.username}**!` 
       : `**${message.author.username}** ${action.selfVerb}!`;
 
     const replyEmbed = cv2.info(null, description, [], message.guild.id).setImage(gifUrl);
@@ -74,7 +74,7 @@ export const commands = roleplayActions.map(action => ({
     }
 
     const description = target 
-      ? `**${interaction.user.username}** ${action.verb} **${target.username}**!` 
+      • `**${interaction.user.username}** ${action.verb} **${target.username}**!` 
       : `**${interaction.user.username}** ${action.selfVerb}!`;
 
     const replyEmbed = cv2.info(null, description, [], interaction.guild.id).setImage(gifUrl);

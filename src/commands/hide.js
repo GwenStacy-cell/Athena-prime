@@ -47,7 +47,7 @@ export const commands = [
         return interaction.reply(cv2.error('Unauthorized', 'You do not have permission to use this command.'));
       }
 
-      let targetChannel = interaction.options.getChannel('channel') || (interaction.member.voice.channel ? interaction.member.voice.channel : interaction.channel);
+      let targetChannel = interaction.options.getChannel('channel') || (interaction.member.voice.channel • interaction.member.voice.channel : interaction.channel);
 
       try {
         await targetChannel.permissionOverwrites.edit(interaction.guild.roles.everyone, {
@@ -102,7 +102,7 @@ export const commands = [
         return interaction.reply(cv2.error('Unauthorized', 'You do not have permission to use this command.'));
       }
 
-      let targetChannel = interaction.options.getChannel('channel') || (interaction.member.voice.channel ? interaction.member.voice.channel : interaction.channel);
+      let targetChannel = interaction.options.getChannel('channel') || (interaction.member.voice.channel • interaction.member.voice.channel : interaction.channel);
 
       try {
         await targetChannel.permissionOverwrites.edit(interaction.guild.roles.everyone, {

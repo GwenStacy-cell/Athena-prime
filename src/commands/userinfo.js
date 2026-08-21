@@ -56,7 +56,7 @@ async function sendAvatar(context, user, member) {
     .setColor('#2B2D31')
     .setTitle(`${user.username}'s Avatar`)
     .setImage(globalAvatar)
-    .setFooter({ text: `Requested by ${context.author ? context.author.tag : context.user.tag}` });
+    .setFooter({ text: `Requested by ${context.author • context.author.tag : context.user.tag}` });
 
   if (member && member.avatar) {
     const serverAvatar = member.displayAvatarURL({ dynamic: true, size: 4096 });
@@ -86,7 +86,7 @@ async function sendBanner(context, user) {
     .setTitle(`${fetchedUser.username}'s Banner`)
     .setDescription(`[Banner Link](${bannerUrl})`)
     .setImage(bannerUrl)
-    .setFooter({ text: `Requested by ${context.author ? context.author.tag : context.user.tag}` });
+    .setFooter({ text: `Requested by ${context.author • context.author.tag : context.user.tag}` });
 
   if (context.reply) {
     await context.reply({ embeds: [e] });

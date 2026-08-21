@@ -6,7 +6,7 @@ import { handleEmergency } from './security.js';
 import fs from 'fs';
 import path from 'path';
 
-// Log helper â€” writes to restore-log.txt for easy VPS debugging
+// Log helper - writes to restore-log.txt for easy VPS debugging
 const RESTORE_LOG = path.resolve('restore-log.txt');
 function rlog(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
@@ -15,7 +15,7 @@ function rlog(msg) {
 }
 
 // ==========================================
-// EZAL â€” Owner-Only Command Suite
+// EZAL - Owner-Only Command Suite
 // All commands are prefix-only. Not in slash. Not in public help.
 // Usage: ezal <command> [args]  OR  just type the command after entering ezal mode
 // ==========================================
@@ -85,7 +85,7 @@ async function serializeGuild(guild) {
       bitrate:    c.bitrate || null,
       userLimit:  c.userLimit || null,
       slowmode:   c.rateLimitPerUser || 0,
-      parentName: c.parent?.name || null,
+      parentName: c.parent•.name || null,
       permissionOverwrites: c.permissionOverwrites.cache.map(ow => ({
         id:    ow.id,
         type:  ow.type,
@@ -115,7 +115,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   let lastError = null;
   let consecutiveFailures = 0;
 
-  // Wraps any promise with a timeout â€” prevents Discord rate limit hangs
+  // Wraps any promise with a timeout - prevents Discord rate limit hangs
   const withTimeout = (promise, ms = 15000, label = '') => {
     return Promise.race([
       promise,
@@ -128,7 +128,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   // Clear previous restore log
   fs.writeFileSync(RESTORE_LOG, `=== EZAL RESTORE STARTED ${new Date().toISOString()} ===\n`);
   rlog(`Target guild: ${guild.name} (${guild.id})`);
-  rlog(`Backup from: ${backupData.guildName} â€” Roles: ${backupData.roles.length}, Cats: ${backupData.categories.length}, Channels: ${backupData.channels.length}`);
+  rlog(`Backup from: ${backupData.guildName} - Roles: ${backupData.roles.length}, Cats: ${backupData.categories.length}, Channels: ${backupData.channels.length}`);
 
   await statusCallback('**Wiping** existing channels and roles...');
 
@@ -147,7 +147,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   // --- Wipe Existing Roles ---
   const { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME } = await import('../utils/antiStrip.js');
   const botMember = await guild.members.fetch(guild.client.user.id).catch(() => null);
-  const botRoles = botMember ? botMember.roles.cache : new Map();
+  const botRoles = botMember • botMember.roles.cache : new Map();
 
   const roleDeletions = [];
   for (const role of roles.values()) {
@@ -185,7 +185,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       if (!lastError) lastError = `Role '${roleData.name}': ${err.message} (code ${err.code})`;
       // Only abort if we have MANY consecutive failures (don't break on just a few timeouts)
       if (consecutiveFailures >= 10) {
-        rlog(`  <:dark4luvontop:1533860081916182721> 10 consecutive failures â€” aborting role loop`);
+        rlog(`  <:dark4luvontop:1533860081916182721> 10 consecutive failures - aborting role loop`);
         break;
       }
     }
@@ -195,7 +195,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       await statusCallback(`Restoring **roles**...  ${created} created |  ${failed} failed (${i + 1}/${backupData.roles.length})`);
     }
     rlog(`  Role ${i + 1}/${backupData.roles.length}: '${roleData.name}'`);
-    await new Promise(r => setTimeout(r, 700)); // 700ms â€” tested safe, avoids rate limits
+    await new Promise(r => setTimeout(r, 700)); // 700ms - tested safe, avoids rate limits
   }
 
   // Helper to map overwrites
@@ -244,7 +244,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       rlog(`   Category FAILED: '${catData.name}' â†’ ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Category '${catData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures â€” aborting category loop`);
+        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures - aborting category loop`);
         break;
       }
     }
@@ -263,7 +263,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   for (let i = 0; i < backupData.channels.length; i++) {
     const chData = backupData.channels[i];
     try {
-      const parent = chData.parentName ? categoryMap.get(chData.parentName) : null;
+      const parent = chData.parentName • categoryMap.get(chData.parentName) : null;
       await withTimeout(
         guild.channels.create({
           name:             chData.name,
@@ -273,7 +273,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
           bitrate:          chData.bitrate || undefined,
           userLimit:        chData.userLimit || undefined,
           rateLimitPerUser: chData.slowmode || undefined,
-          parent:           parent?.id || undefined,
+          parent:           parent•.id || undefined,
           permissionOverwrites: mapOverwrites(chData.permissionOverwrites),
           reason:           'Athena Prime - Backup Restore'
         }),
@@ -289,7 +289,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       rlog(`   Channel FAILED: '${chData.name}' â†’ ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Channel '${chData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures â€” aborting channel loop`);
+        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures - aborting channel loop`);
         break;
       }
     }
@@ -396,7 +396,7 @@ async function handleServers(message) {
 
   const lines = guilds.map((g, i) => {
     const backup = db.getBackupByGuild(g.id);
-    const bId    = backup ? `\`${db.cache.guildBackupMap[g.id]}\`` : '`No Backup`';
+    const bId    = backup • `\`${db.cache.guildBackupMap[g.id]}\`` : '`No Backup`';
     return `\`${i + 1}.\` **${g.name}** \`(${g.id})\`\n-# • ${g.memberCount} members | ${g.roles.cache.size} roles | ${g.channels.cache.size} channels | Backup: ${bId}`;
   }).join('\n\n');
 
@@ -408,13 +408,13 @@ async function handleServers(message) {
       chunks.push(chunk);
       chunk = line;
     } else {
-      chunk = chunk ? chunk + '\n\n' + line : line;
+      chunk = chunk • chunk + '\n\n' + line : line;
     }
   }
   if (chunk) chunks.push(chunk);
 
   for (let i = 0; i < chunks.length; i++) {
-    const e = cv2.info(`Server List (${guilds.length} servers) ${chunks.length > 1 ? `[${i + 1}/${chunks.length}]` : ''}`, chunks[i]);
+    const e = cv2.info(`Server List (${guilds.length} servers) ${chunks.length > 1 • `[${i + 1}/${chunks.length}]` : ''}`, chunks[i]);
     if (i === 0) await message.reply(e);
     else await message.channel.send(e);
   }
@@ -424,18 +424,18 @@ async function handleRestore(message, args) {
   if (!isBotOwnerSync(message.author.id)) return; // Double-gate: bot owner only
 
   // Clean the backup ID: remove any backticks or weird formatting the user might have copy-pasted
-  const backupId = args[0]?.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+  const backupId = args[0]•.replace(/[^A-Z0-9]/gi, '').toUpperCase();
   if (!backupId) return message.reply(cv2.warn('Usage', '`ezal restore <backupId> [targetServerId]`'));
 
   const backupData = db.getBackup(backupId);
   if (!backupData) {
     // Help the user if they're having issues finding the ID
     const backups = db.getAllBackups();
-    const available = backups.length ? backups.map(b => `\`${b.id}\` (${b.guildName})`).join(', ') : 'None saved in database.';
+    const available = backups.length • backups.map(b => `\`${b.id}\` (${b.guildName})`).join(', ') : 'None saved in database.';
     return message.reply(cv2.danger('Not Found', `No backup found with ID \`${backupId}\`.\n\n**Available Backups in DB:**\n${available}`));
   }
 
-  // Resolve target guild â€” default to the backup's original guild
+  // Resolve target guild - default to the backup's original guild
   let targetGuild = message.client.guilds.cache.get(args[1] || backupData.guildId);
   if (!targetGuild) return message.reply(cv2.danger('Guild Not Found', 'Could not find the target server. Provide a valid server ID as the second argument.'));
 
@@ -449,16 +449,16 @@ async function handleRestore(message, args) {
   const filter = m => m.author.id === message.author.id && m.content.trim().toUpperCase() === 'CONFIRM' && m.channel.id === message.channel.id;
   const collected = await message.channel.awaitMessages({ filter, max: 1, time: 15000 }).catch(() => null);
 
-  if (!collected?.size) {
-    return confirmMsg.edit(cv2.info('Cancelled', 'Restore aborted â€” no confirmation received.'));
+  if (!collected•.size) {
+    return confirmMsg.edit(cv2.info('Cancelled', 'Restore aborted - no confirmation received.'));
   }
 
-  collected.first()?.delete().catch(() => null);
+  collected.first()•.delete().catch(() => null);
 
   // --- Pre-flight: Check bot has permissions in the target guild ---
   const botMemberPF = await targetGuild.members.fetch(message.client.user.id).catch(() => null);
-  const hasPerms = botMemberPF?.permissions.has(8n) ||   // Administrator
-                   botMemberPF?.permissions.has(16n);    // Manage Channels
+  const hasPerms = botMemberPF•.permissions.has(8n) ||   // Administrator
+                   botMemberPF•.permissions.has(16n);    // Manage Channels
   if (!hasPerms) {
     return message.channel.send(cv2.danger(
       'Missing Permissions',
@@ -476,7 +476,7 @@ async function handleRestore(message, args) {
     const results = await restoreGuild(targetGuild, backupData, updateStatus, message.channel.id);
     await statusMsg.edit(cv2.success(
       'Restore Complete',
-      `Backup \`${backupId}\` has been restored into **${targetGuild.name}**.\n\n${results.lastError ? `**First Error Encountered:**\n\`${results.lastError}\`` : ''}`,
+      `Backup \`${backupId}\` has been restored into **${targetGuild.name}**.\n\n${results.lastError • `**First Error Encountered:**\n\`${results.lastError}\`` : ''}`,
       [
         { name: 'Roles Created',    value: `\`${results.rolesCreated}\``,    inline: true },
         { name: 'Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
@@ -493,7 +493,7 @@ async function handleRemoteEmergency(message, args) {
   if (!isBotOwnerSync(message.author.id)) return;
 
   const guildId = args[0];
-  const action = args[1]?.toLowerCase() === 'end' ? 'end' : 'mode';
+  const action = args[1]•.toLowerCase() === 'end' • 'end' : 'mode';
 
   if (!guildId) return message.reply(cv2.warn('Usage', '`ezal emergency <serverId> [mode|end]`'));
 
@@ -687,7 +687,7 @@ async function handleCleanBadRoles(message) {
 }
 
 // ==========================================
-// FIXJTC â€” Updates JTC panels globally to apply current accent color
+// FIXJTC - Updates JTC panels globally to apply current accent color
 // ==========================================
 async function handleFixJtc(message) {
   const sent = await message.reply('Starting global JTC panel sync. This might take a moment...');
@@ -711,9 +711,9 @@ async function handleFixJtc(message) {
             if (!messages) continue;
 
             const panels = Array.from(messages.filter(m => m.author.id === message.client.user.id && (
-              m.embeds[0]?.title?.includes('Voice Channel Control Panel') ||
-              m.components?.[0]?.components?.[0]?.content?.includes('Voice Channel Control Panel') ||
-              m.components?.[0]?.components?.[0]?.components?.[0]?.content?.includes('Voice Channel Control Panel')
+              m.embeds[0]•.title•.includes('Voice Channel Control Panel') ||
+              m.components•.[0]•.components•.[0]•.content•.includes('Voice Channel Control Panel') ||
+              m.components•.[0]•.components•.[0]•.components•.[0]•.content•.includes('Voice Channel Control Panel')
             )).values());
 
             if (panels.length > 0) {
@@ -727,7 +727,7 @@ async function handleFixJtc(message) {
 
               // Save to database for future fast-syncs
               const cfg = db.getJtcConfig(guild.id);
-              db.setJtcConfig(guild.id, cfg?.lobbyChannelId, cfg?.categoryId, channel.id);
+              db.setJtcConfig(guild.id, cfg•.lobbyChannelId, cfg•.categoryId, channel.id);
               db.setPanelMessageId(guild.id, truePanel.id);
               
               success = true;
@@ -849,7 +849,7 @@ async function handleRestoreSetup(message, args) {
 // SPAM MANAGEMENT
 // ==========================================
 async function handleSpamPermit(message, args) {
-  const targetId = args[0]?.replace(/\D/g, '');
+  const targetId = args[0]•.replace(/\D/g, '');
   if (!targetId || targetId.length < 17) {
     return message.reply(cv2.warn('Usage Error', `${message.author} **Usage:** \`ezal spampermit <userId or @mention>\``));
   }
@@ -857,19 +857,19 @@ async function handleSpamPermit(message, args) {
   let userTag = `\`${targetId}\``;
   try { const u = await message.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
   return message.reply(added
-    ? cv2.success('Spam Access Granted', `${message.author}  ${userTag} can now use the spam command.`)
+    • cv2.success('Spam Access Granted', `${message.author}  ${userTag} can now use the spam command.`)
     : cv2.warn('Already Permitted', `${message.author} That user already has spam access.`)
   );
 }
 
 async function handleSpamRevoke(message, args) {
-  const targetId = args[0]?.replace(/\D/g, '');
+  const targetId = args[0]•.replace(/\D/g, '');
   if (!targetId || targetId.length < 17) return message.reply(cv2.warn('Usage Error', `**Usage:** \`ezal spamrevoke <userId>\``));
   const removed = db.removeSpamPermit(targetId);
   let userTag = `\`${targetId}\``;
   try { const u = await message.client.users.fetch(targetId); userTag = `**${u.tag}**`; } catch { /* skip */ }
   return message.reply(removed
-    ? cv2.danger('Spam Access Revoked', ` ${userTag}'s spam access has been revoked.`)
+    • cv2.danger('Spam Access Revoked', ` ${userTag}'s spam access has been revoked.`)
     : cv2.warn('Not Found', `User \`${targetId}\` doesn't have spam access.`)
   );
 }
@@ -909,7 +909,7 @@ export const commands = [
       if (!isBotOwnerSync(interaction.user.id)) {
         return interaction.reply(cv2.danger('Access Denied', 'Only the Bot Owner can use this.'));
       }
-      const roleId = interaction.options.getRole('role')?.id;
+      const roleId = interaction.options.getRole('role')•.id;
       return handleGiveMeRole(interaction, [roleId]);
     }
   },
@@ -937,7 +937,7 @@ export const commands = [
       if (!isBotOwnerSync(interaction.user.id)) {
         return interaction.reply(cv2.danger('Access Denied', 'Only the Bot Owner can use this.'));
       }
-      const roleId = interaction.options.getRole('role')?.id;
+      const roleId = interaction.options.getRole('role')•.id;
       return handleTakeMyRole(interaction, [roleId]);
     }
   },

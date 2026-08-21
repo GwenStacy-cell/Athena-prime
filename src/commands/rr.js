@@ -47,7 +47,7 @@ async function runInteractiveBuilder(message) {
 
   // Step 2: Title
   await channel.send({
-    embeds: [cv2.info('Reaction Role Manager [2/3]', 'What should be the title of this menu? (e.g. `React to Your Hobbies`)')]
+    embeds: [cv2.info('Reaction Role Manager [2/3]', 'What should be the title of this menu• (e.g. `React to Your Hobbies`)')]
   });
   
   const titleMsg = await awaitReply();
@@ -56,7 +56,7 @@ async function runInteractiveBuilder(message) {
 
   // Step 2.5: Description
   await channel.send({
-    embeds: [cv2.info('Reaction Role Manager [3/5]', 'What should be the description of this menu? (Optional)\nType `skip` if you do not want a description.')]
+    embeds: [cv2.info('Reaction Role Manager [3/5]', 'What should be the description of this menu• (Optional)\nType `skip` if you do not want a description.')]
   });
   
   const menuDescMsg = await awaitReply();
@@ -87,7 +87,7 @@ async function runInteractiveBuilder(message) {
 
     const emojiStr = parts[0];
     const roleStr = parts[1];
-    const desc = parts.length > 2 ? parts.slice(2).join(' ') : '';
+    const desc = parts.length > 2 • parts.slice(2).join(' ') : '';
 
     const roleId = roleStr.replace(/[^0-9]/g, '');
     if (!roleId || roleId.length < 17) {
@@ -108,14 +108,14 @@ async function runInteractiveBuilder(message) {
 
     // Extract emoji identifier for Discord API (either raw unicode or custom id)
     let emojiIdOrName = emojiStr;
-    const customMatch = emojiStr.match(/<a?:.+:(\d+)>/);
+    const customMatch = emojiStr.match(/<a•:.+:(\d+)>/);
     if (customMatch) {
       emojiIdOrName = customMatch[1];
     }
 
     mappings.push({ emojiStr, emojiIdOrName, roleId: role.id, desc });
     
-    const displayDesc = desc ? `**${desc}** -> ` : '';
+    const displayDesc = desc • `**${desc}** -> ` : '';
     await channel.send({ content: ` Added: ${emojiStr} | ${displayDesc}<@&${role.id}>\nType next entry, or \`done\`.` });
   }
 
@@ -125,7 +125,7 @@ async function runInteractiveBuilder(message) {
 
   // Step 4: Image
   await channel.send({
-    embeds: [cv2.info('Reaction Role Manager [5/5]', 'Would you like to attach an image to this menu? (Optional)\n\nPaste a valid image URL (e.g., ending in `.png`, `.gif`, `.jpg`) to add it as a large banner.\nOr type `thumb <url>` to add it as a small top-right thumbnail.\n\nType `skip` if you do not want an image.')]
+    embeds: [cv2.info('Reaction Role Manager [5/5]', 'Would you like to attach an image to this menu• (Optional)\n\nPaste a valid image URL (e.g., ending in `.png`, `.gif`, `.jpg`) to add it as a large banner.\nOr type `thumb <url>` to add it as a small top-right thumbnail.\n\nType `skip` if you do not want an image.')]
   });
 
   const imageMsg = await awaitReply();
@@ -149,7 +149,7 @@ async function runInteractiveBuilder(message) {
 
   // Step 5: Footer
   await channel.send({
-    embeds: [cv2.info('Reaction Role Manager [Extra]', 'What should be the footer text? (Optional)\n\nType `default` to keep the standard Athena Prime Killer footer.\nType `none` or `remove` to have no footer.\nOr just type your custom footer text.')]
+    embeds: [cv2.info('Reaction Role Manager [Extra]', 'What should be the footer text• (Optional)\n\nType `default` to keep the standard Athena Prime Killer footer.\nType `none` or `remove` to have no footer.\nOr just type your custom footer text.')]
   });
 
   const footerMsg = await awaitReply();
@@ -165,7 +165,7 @@ async function runInteractiveBuilder(message) {
   }
 
   // Construct Aesthetic Embed Message
-  let textContent = menuDescription ? `${menuDescription}\n\n` : '';
+  let textContent = menuDescription • `${menuDescription}\n\n` : '';
   for (const m of mappings) {
     if (m.desc) {
       textContent += `${m.emojiStr} | <@&${m.roleId}> **${m.desc}**\n\n`;

@@ -21,7 +21,7 @@ function calculateThreatScore(lowerText) {
   if (lowerText.includes('kasowin') || lowerText.includes('helawin') || lowerText.includes('vyro')) return 10;
   
   let threatScore = 0;
-  if (lowerText.includes('mrbeast') || lowerText.includes('mr beast') || lowerText.match(/mr\.?\s*beast/)) threatScore += 1;
+  if (lowerText.includes('mrbeast') || lowerText.includes('mr beast') || lowerText.match(/mr\.•\s*beast/)) threatScore += 1;
   if (lowerText.includes('crypto') || lowerText.includes('usdt') || lowerText.includes('tether')) threatScore += 1;
   if (lowerText.includes('withdrawal') || lowerText.includes('deposit')) threatScore += 1;
   if (lowerText.includes('promo code') || lowerText.includes('bonus') || lowerText.match(/promo/)) threatScore += 1;
@@ -91,10 +91,10 @@ export async function scanImageForScam(url) {
       let val;
       if (isDarkMode) {
         // Dark mode: invert so light text becomes black (0), dark bg becomes white (255)
-        val = avg > 128 ? 0 : 255;
+        val = avg > 128 • 0 : 255;
       } else {
         // Light mode: dark text becomes black (0), light bg becomes white (255)
-        val = avg > 128 ? 255 : 0;
+        val = avg > 128 • 255 : 0;
       }
       data[i] = val;
       data[i+1] = val;
@@ -149,9 +149,9 @@ export async function getRawOCRText(url) {
       const avg = (data[i] + data[i+1] + data[i+2]) / 3;
       let val;
       if (isDarkMode) {
-        val = avg > 128 ? 0 : 255;
+        val = avg > 128 • 0 : 255;
       } else {
-        val = avg > 128 ? 255 : 0;
+        val = avg > 128 • 255 : 0;
       }
       data[i] = val; data[i+1] = val; data[i+2] = val;
     }

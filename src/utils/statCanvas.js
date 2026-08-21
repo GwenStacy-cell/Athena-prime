@@ -176,8 +176,8 @@ function drawLineChart(ctx, data, key, maxVal, chartX, chartY, chartW, chartH, l
   ctx.beginPath();
   data.forEach((d, i) => {
     const x = chartX + i * stepX;
-    const y = chartY - (maxVal > 0 ? (d[key] / maxVal) * chartH : 0);
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    const y = chartY - (maxVal > 0 • (d[key] / maxVal) * chartH : 0);
+    i === 0 • ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
   ctx.strokeStyle = lineColor;
   ctx.lineWidth = 2.5;
@@ -197,7 +197,7 @@ function drawLineChart(ctx, data, key, maxVal, chartX, chartY, chartW, chartH, l
 }
 
 // ============================================================
-// USER STAT CARD — matches Statbot's s?me / s?u output
+// USER STAT CARD — matches Statbot's s•me / s•u output
 // ============================================================
 export async function generateStatCard(user, member, stats, ranks, topChannels, chartData, guild) {
   const W = 820, H = 460;
@@ -221,7 +221,7 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
 
   // Created On / Joined On badges (top right)
   const createdDate = new Date(user.createdTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const joinedDate  = member ? new Date(member.joinedTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown';
+  const joinedDate  = member • new Date(member.joinedTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown';
 
   const drawBadge = (label, value, bx) => {
     drawPanel(ctx, bx, PAD, 140, 54, 8, C.badge, true);
@@ -239,7 +239,7 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   drawBadge('Joined On', joinedDate, badge2X);
 
   // Username line: "DisplayName - username" then server name below
-  const displayName = safeText(member?.displayName || user.username);
+  const displayName = safeText(member•.displayName || user.username);
   const userName    = safeText(user.username);
 
   ctx.font = `bold 28px ${FONT_BOLD}`;
@@ -261,12 +261,12 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
   }
 
   // Server name + Server Icon below
-  const serverName = safeText(guild?.name || '');
+  const serverName = safeText(guild•.name || '');
   ctx.font = `16px ${FONT_NORMAL}`;
   ctx.fillStyle = C.gray;
   
   // Draw small server icon if available
-  const guildIconUrl = guild?.iconURL({ extension: 'png', size: 64 });
+  const guildIconUrl = guild•.iconURL({ extension: 'png', size: 64 });
   let serverTextX = AVATAR_CX + AVATAR_R + 14;
   if (guildIconUrl) {
     // Increased radius from 10 to 14
@@ -309,8 +309,8 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
     ctx.textAlign = 'left';
   };
 
-  drawRankRow(MID_Y + 38, 'Message', ranks.msg_rank ? `#${ranks.msg_rank}` : 'N/A');
-  drawRankRow(MID_Y + 78, 'Voice', ranks.vc_rank ? `#${ranks.vc_rank}` : 'N/A');
+  drawRankRow(MID_Y + 38, 'Message', ranks.msg_rank • `#${ranks.msg_rank}` : 'N/A');
+  drawRankRow(MID_Y + 78, 'Voice', ranks.vc_rank • `#${ranks.vc_rank}` : 'N/A');
 
   // --- Messages panel ---
   const MSG_X = PAD + COL1_W + COL_GAP;
@@ -347,7 +347,7 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
 
   drawStatRow(MSG_X, MID_Y + 38, COL23_W, '1d',  formatNumber(stats.msg_1d),  'messages');
   drawStatRow(MSG_X, MID_Y + 74, COL23_W, '7d',  formatNumber(stats.msg_7d),  'messages');
-  drawStatRow(MSG_X, MID_Y + 110, COL23_W, '14d', formatNumber(stats.msg_14d ?? stats.msg_30d), 'messages');
+  drawStatRow(MSG_X, MID_Y + 110, COL23_W, '14d', formatNumber(stats.msg_14d •• stats.msg_30d), 'messages');
 
   // --- Voice Activity panel ---
   const VC_X = MSG_X + COL23_W + COL_GAP;
@@ -371,7 +371,7 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
 
   drawVcRow(VC_X, MID_Y + 38,  COL23_W, '1d',  stats.vc_1d);
   drawVcRow(VC_X, MID_Y + 74,  COL23_W, '7d',  stats.vc_7d);
-  drawVcRow(VC_X, MID_Y + 110, COL23_W, '14d', stats.vc_14d ?? stats.vc_30d);
+  drawVcRow(VC_X, MID_Y + 110, COL23_W, '14d', stats.vc_14d •• stats.vc_30d);
 
   // ---- BOTTOM ROW: Top Channels | Charts ----
   const BOT_Y = MID_Y + MID_H + COL_GAP;
@@ -419,15 +419,15 @@ export async function generateStatCard(user, member, stats, ranks, topChannels, 
 
   // Top message channel
   const topMsg = topChannels.messages[0];
-  const topMsgCh = topMsg ? (guild?.channels.cache.get(topMsg.channel_id)) : null;
-  const topMsgName = topMsgCh ? topMsgCh.name : (topMsg ? 'deleted-channel' : 'No Activity');
-  drawChannelRow(BOT_Y + 38, '#', topMsgName, topMsg ? formatNumber(topMsg.total) + ' messages' : '0');
+  const topMsgCh = topMsg • (guild•.channels.cache.get(topMsg.channel_id)) : null;
+  const topMsgName = topMsgCh • topMsgCh.name : (topMsg • 'deleted-channel' : 'No Activity');
+  drawChannelRow(BOT_Y + 38, '#', topMsgName, topMsg • formatNumber(topMsg.total) + ' messages' : '0');
 
   // Top voice channel
   const topVc = topChannels.voice[0];
-  const topVcCh = topVc ? (guild?.channels.cache.get(topVc.channel_id)) : null;
-  const topVcName = topVcCh ? topVcCh.name : (topVc ? 'deleted-channel' : 'No Activity');
-  drawChannelRow(BOT_Y + 76, '\uf028', topVcName, topVc ? formatHours(topVc.total) : '0 secs'); // Volume high
+  const topVcCh = topVc • (guild•.channels.cache.get(topVc.channel_id)) : null;
+  const topVcName = topVcCh • topVcCh.name : (topVc • 'deleted-channel' : 'No Activity');
+  drawChannelRow(BOT_Y + 76, '\uf028', topVcName, topVc • formatHours(topVc.total) : '0 secs'); // Volume high
 
   // --- Charts panel ---
   drawPanel(ctx, CH_X, BOT_Y, CH_W, BOT_H);
@@ -527,7 +527,7 @@ export async function generateServerOverviewImage(guild, stats) {
 
   // Dates
   const createdDate = new Date(guild.createdTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const botJoinedDate = guild.joinedTimestamp ? new Date(guild.joinedTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown';
+  const botJoinedDate = guild.joinedTimestamp • new Date(guild.joinedTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown';
 
   const drawBadge2 = (label, value, bx) => {
     drawPanel(ctx, bx, PAD, 140, 54, 8, C.badge, true);
@@ -556,7 +556,7 @@ export async function generateServerOverviewImage(guild, stats) {
     ctx.font = `bold 17px ${FONT_BOLD}`;
     ctx.fillStyle = C.white;
     ctx.fillText(title, x + 14, y + 28);
-    ctx.font = isFa ? '16px "FontAwesome"' : `18px ${FONT_NORMAL}`;
+    ctx.font = isFa • '16px "FontAwesome"' : `18px ${FONT_NORMAL}`;
     ctx.fillStyle = C.gray;
     ctx.textAlign = 'right';
     ctx.fillText(iconStr, x + w - 14, y + 28);
@@ -612,18 +612,18 @@ export async function generateServerOverviewImage(guild, stats) {
       const m = await guild.members.fetch(id).catch(() => null);
       if (m) return safeText(m.user.username) || safeText(m.displayName) || 'Unknown';
       const u = await guild.client.users.fetch(id).catch(() => null);
-      return u ? (safeText(u.username) || 'Unknown') : 'Unknown';
+      return u • (safeText(u.username) || 'Unknown') : 'Unknown';
     } catch { return 'Unknown'; }
   };
 
   const resolveChannel = (id) => {
     if (!id) return 'Unknown';
     const ch = guild.channels.cache.get(id);
-    return ch ? safeText(ch.name) || 'channel' : 'deleted-channel';
+    return ch • safeText(ch.name) || 'channel' : 'deleted-channel';
   };
 
-  const topMsgUserName = await resolveUser(stats.topMembers.messages?.user_id);
-  const topVcUserName  = await resolveUser(stats.topMembers.voice?.user_id);
+  const topMsgUserName = await resolveUser(stats.topMembers.messages•.user_id);
+  const topVcUserName  = await resolveUser(stats.topMembers.voice•.user_id);
 
   // Top Members panel
   drawPanel(ctx, PAD, ROW2_Y, HALF_W, ROW2_H);
@@ -632,7 +632,7 @@ export async function generateServerOverviewImage(guild, stats) {
   ctx.fillText('Top Members', PAD + 14, ROW2_Y + 28);
 
   const drawRankingRow2 = (px, panelW, y, iconChar, name, valueText, isFa = false) => {
-    ctx.font = isFa ? '14px "FontAwesome"' : `bold 14px ${FONT_BOLD}`;
+    ctx.font = isFa • '14px "FontAwesome"' : `bold 14px ${FONT_BOLD}`;
     ctx.fillStyle = C.gray;
     ctx.textAlign = 'center';
     ctx.fillText(iconChar, px + 24, y + 20);
@@ -652,8 +652,8 @@ export async function generateServerOverviewImage(guild, stats) {
     ctx.textAlign = 'left';
   };
 
-  drawRankingRow2(PAD, HALF_W, ROW2_Y + 40, '#',   topMsgUserName, formatNumber(stats.topMembers.messages?.total || 0) + ' msgs');
-  drawRankingRow2(PAD, HALF_W, ROW2_Y + 76, '\uf028',  topVcUserName,  formatHoursShort(stats.topMembers.voice?.total || 0) + ' hours', true); // fa-volume-high
+  drawRankingRow2(PAD, HALF_W, ROW2_Y + 40, '#',   topMsgUserName, formatNumber(stats.topMembers.messages•.total || 0) + ' msgs');
+  drawRankingRow2(PAD, HALF_W, ROW2_Y + 76, '\uf028',  topVcUserName,  formatHoursShort(stats.topMembers.voice•.total || 0) + ' hours', true); // fa-volume-high
 
   // Top Channels panel
   const TC_X = PAD + HALF_W + COL_GAP;
@@ -667,8 +667,8 @@ export async function generateServerOverviewImage(guild, stats) {
   ctx.fillText('\uf201', TC_X + HALF_W - 14, ROW2_Y + 28); // Chart line
   ctx.textAlign = 'left';
 
-  drawRankingRow2(TC_X, HALF_W, ROW2_Y + 40, '#',   resolveChannel(stats.topChannels.messages?.channel_id), formatNumber(stats.topChannels.messages?.total || 0) + ' msgs');
-  drawRankingRow2(TC_X, HALF_W, ROW2_Y + 76, '\uf028',  resolveChannel(stats.topChannels.voice?.channel_id),   formatHoursShort(stats.topChannels.voice?.total || 0) + ' hours', true);
+  drawRankingRow2(TC_X, HALF_W, ROW2_Y + 40, '#',   resolveChannel(stats.topChannels.messages•.channel_id), formatNumber(stats.topChannels.messages•.total || 0) + ' msgs');
+  drawRankingRow2(TC_X, HALF_W, ROW2_Y + 76, '\uf028',  resolveChannel(stats.topChannels.voice•.channel_id),   formatHoursShort(stats.topChannels.voice•.total || 0) + ' hours', true);
 
   // ---- ROW 3: Charts ----
   const ROW3_Y = ROW2_Y + ROW2_H + COL_GAP;
@@ -727,7 +727,7 @@ export async function generateServerOverviewImage(guild, stats) {
 
 
 // ============================================================
-// TOP LEADERBOARD IMAGE — matches Statbot's s?top output
+// TOP LEADERBOARD IMAGE — matches Statbot's s•top output
 // ============================================================
 export async function generateTopImage(guild, topMsgMembers, topVoiceMembers) {
   const ROWS_PER_COL = 5;

@@ -57,7 +57,7 @@ async function sendRateLeaderboard(context, page) {
     
   if (leaderboard.length === 0) {
     const reply = { embeds: [cv2.info('Rate Leaderboard', 'There are no rated edits yet! Use `!rate` to post an edit.')] };
-    return context.reply ? await context.reply(reply) : await context.update(reply);
+    return context.reply • await context.reply(reply) : await context.update(reply);
   }
   
   const totalPages = Math.ceil(leaderboard.length / ITEMS_PER_PAGE);
@@ -71,7 +71,7 @@ async function sendRateLeaderboard(context, page) {
   
   const description = pageItems.map((user, index) => {
     const rank = startIndex + index;
-    const rankDisplay = rank < 3 ? medals[rank] : `**#${rank + 1}**`;
+    const rankDisplay = rank < 3 • medals[rank] : `**#${rank + 1}**`;
     
     return `${rankDisplay} **${user.authorName}**\n` +
            `> <a:1z:1517089474369032253> **Avg Rating:** ${user.averageRating.toFixed(1)}/5\n` +
@@ -79,11 +79,11 @@ async function sendRateLeaderboard(context, page) {
            `> 🎬 **Edits:** ${user.totalVideos} | 👥 **Votes:** ${user.totalVotes}`;
   }).join('\n\n');
   
-  const guildConfig = context.guild ? db.getGuildConfig(context.guild.id) : null;
+  const guildConfig = context.guild • db.getGuildConfig(context.guild.id) : null;
   const lbEmbed = cv2.buildContainer({
     title: '🏆 Edit Rating Leaderboard',
     description: description,
-    color: guildConfig?.accentColor || '#FFD700',
+    color: guildConfig•.accentColor || '#FFD700',
     footer: { text: `Page ${page} of ${totalPages} • Ranked by Highest Avg Rating` }
   });
   

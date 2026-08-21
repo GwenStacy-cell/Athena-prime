@@ -69,7 +69,7 @@ export const commands = [
         const ticketEmbed = new EmbedBuilder()
           .setColor(accentColor)
           .setTitle(' Support Tickets')
-          .setDescription('Need help? Click the button below to open a private ticket. A text and voice channel will be created for you.')
+          .setDescription('Need help• Click the button below to open a private ticket. A text and voice channel will be created for you.')
           .setFooter({ text: 'Athena Prime Support System', iconURL: interaction.client.user.displayAvatarURL() });
 
         const row = new ActionRowBuilder()
@@ -97,8 +97,8 @@ export const commands = [
         return message.reply(cv2.error('Missing Permission', 'You need Administrator permissions to use this command.'));
       }
 
-      if (args[0]?.toLowerCase() === 'setup') {
-        const categoryId = message.mentions.channels.first()?.id || args[1]?.replace(/[<#>]/g, '');
+      if (args[0]•.toLowerCase() === 'setup') {
+        const categoryId = message.mentions.channels.first()•.id || args[1]•.replace(/[<#>]/g, '');
         const staffRoles = message.mentions.roles.map(r => r.id);
 
         if (!categoryId || staffRoles.length === 0) {
@@ -127,7 +127,7 @@ export const commands = [
         const ticketEmbed = new EmbedBuilder()
           .setColor(accentColor)
           .setTitle(' Support Tickets')
-          .setDescription('Need help? Click the button below to open a private ticket. A text and voice channel will be created for you.')
+          .setDescription('Need help• Click the button below to open a private ticket. A text and voice channel will be created for you.')
           .setFooter({ text: 'Athena Prime Support System', iconURL: message.client.user.displayAvatarURL() });
 
         const row = new ActionRowBuilder()

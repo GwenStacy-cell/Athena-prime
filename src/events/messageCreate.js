@@ -54,28 +54,28 @@ const gifEngines = [
     try {
       const mapped = mapAnimeAction(action);
       const res = await nbClient.fetch(mapped, 10);
-      return res?.results?.map(r => r.url) || [];
+      return res•.results•.map(r => r.url) || [];
     } catch { return []; }
   },
   async (action) => {
     try {
       const mapped = mapAnimeAction(action);
       const res = await fetch(`https://nekos.life/api/v2/img/${mapped}`).then(r => r.json());
-      return res.url ? [res.url] : [];
+      return res.url • [res.url] : [];
     } catch { return []; }
   },
   async (action) => {
     try {
       const mapped = mapAnimeAction(action);
       const res = await fetch(`https://api.purrbot.site/v2/img/sfw/${mapped}/gif`).then(r => r.json());
-      return res.link ? [res.link] : [];
+      return res.link • [res.link] : [];
     } catch { return []; }
   },
   async (action) => {
     try {
       const mapped = mapAnimeAction(action);
-      const res = await fetch(`https://api.otakugifs.xyz/gif?reaction=${mapped}`).then(r => r.json());
-      return res.url ? [res.url] : [];
+      const res = await fetch(`https://api.otakugifs.xyz/gif•reaction=${mapped}`).then(r => r.json());
+      return res.url • [res.url] : [];
     } catch { return []; }
   },
   async (action) => {
@@ -103,8 +103,8 @@ const gifEngines = [
         date: 'anime boy and girl romantic date'
       };
       const query = tenorQueryMap[action] || `anime ${action}`;
-      const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${tenorKey}&client_key=athena_prime&limit=10`).then(r => r.json());
-      return res?.results?.map(i => i.media_formats.gif.url) || [];
+      const res = await fetch(`https://tenor.googleapis.com/v2/search•q=${encodeURIComponent(query)}&key=${tenorKey}&client_key=athena_prime&limit=10`).then(r => r.json());
+      return res•.results•.map(i => i.media_formats.gif.url) || [];
     } catch { return []; }
   }
 ];
@@ -206,7 +206,7 @@ export default {
         const cfg = db.getGuildConfig(message.guild.id);
         const isOwner = isBotOwnerSync(message.author.id);
         if ((cfg && cfg.mediaChannelId === message.channel.id) || isOwner) {
-          const urlRegex = /(https?:\/\/[^\s]+)/g;
+          const urlRegex = /(https•:\/\/[^\s]+)/g;
           const urls = message.content.match(urlRegex);
           if (urls) {
             for (const url of urls) {
@@ -309,7 +309,7 @@ export default {
             }
             
             const guildConfig = db.getGuildConfig(message.guild.id);
-            const accentColor = guildConfig?.accentColor || '#2b2d31';
+            const accentColor = guildConfig•.accentColor || '#2b2d31';
             
             const stickyEmbed = embed.build({
               description: stickyData.content,
@@ -329,7 +329,7 @@ export default {
     // ==========================================
     // DEBUG OCR COMMAND
     // ==========================================
-    if (message.content === '?ocrtest') {
+    if (message.content === '•ocrtest') {
       let testUrl = null;
       
       const getImageUrl = (msg) => {
@@ -355,7 +355,7 @@ export default {
         const text = await getRawOCRText(testUrl);
         return message.channel.send(`\`\`\`\n${text.substring(0, 1900)}\n\`\`\``);
       } else {
-        return message.channel.send('Please reply to an image or attach one with `?ocrtest`');
+        return message.channel.send('Please reply to an image or attach one with `•ocrtest`');
       }
     }
     
@@ -435,11 +435,11 @@ export default {
       
       // 4. Raw Text Links (e.g. pasted media links)
       if (message.content) {
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const urlRegex = /(https•:\/\/[^\s]+)/g;
         const links = message.content.match(urlRegex);
         if (links) {
           links.forEach(link => {
-            if (link.match(/\.(png|jpg|jpeg|webp|gif)(\?.*)?$/i) || link.includes('cdn.discordapp.com/attachments/') || link.includes('media.discordapp.net/attachments/')) {
+            if (link.match(/\.(png|jpg|jpeg|webp|gif)(\•.*)•$/i) || link.includes('cdn.discordapp.com/attachments/') || link.includes('media.discordapp.net/attachments/')) {
               urlsToScan.push(link);
             }
           });
@@ -510,12 +510,12 @@ export default {
         if (message.attachments.size > 0) {
           mediaUrl = message.attachments.first().url;
         } else {
-          const urlMatch = message.content.match(/(https?:\/\/[^\s]+)/);
+          const urlMatch = message.content.match(/(https•:\/\/[^\s]+)/);
           if (urlMatch) mediaUrl = urlMatch[0];
         }
 
         if (mediaUrl) {
-          const prefix = db.getGuildConfig(message.guild.id)?.prefix || '!';
+          const prefix = db.getGuildConfig(message.guild.id)•.prefix || '!';
           if (!message.content.startsWith(prefix) || !message.content.toLowerCase().includes('rate')) {
             // It's a media upload without the !rate command, automate it!
             return createRateMessage(message, mediaUrl);
@@ -525,7 +525,7 @@ export default {
     }
 
     // ==========================================
-    // DM CONTEXT â€” spam commands for permitted users / bot owner
+    // DM CONTEXT - spam commands for permitted users / bot owner
     // Works with or without the ! prefix (e.g. "spam @user hi" or "!spam @user hi")
     // ==========================================
     if (!message.guild) {
@@ -541,7 +541,7 @@ export default {
       const cmdName = parts[0].toLowerCase();
       const args = parts.slice(1);
 
-      // Spam command â€” permitted users and bot owner
+      // Spam command - permitted users and bot owner
       if (cmdName === 'spam' && (isBotOwner || isPermitted)) {
         const spamCmd = commandMap.get('spam');
         if (spamCmd) await spamCmd.executePrefix(message, args).catch(() => null);
@@ -631,10 +631,10 @@ export default {
     // 0.5. ROLEPLAY / REACTION SYSTEM
     // ==========================================
     // Check if message strictly starts with the bot mention
-    const botMentionSpaceRegex = new RegExp(`^<@!?${message.client.user.id}>\\s+`);
+    const botMentionSpaceRegex = new RegExp(`^<@!•${message.client.user.id}>\\s+`);
     if (botMentionSpaceRegex.test(message.content)) {
       const args = message.content.replace(botMentionSpaceRegex, '').trim().split(/ +/);
-      const actionRaw = args[0]?.toLowerCase();
+      const actionRaw = args[0]•.toLowerCase();
       
       if (actionRaw) {
         // Find if there is a target mention (anywhere in the arguments after the action)
@@ -692,167 +692,167 @@ export default {
         if (mappedAction) {
           try {
               
-              const targetStr = targetUser ? `<@${targetUser.id}>` : null;
+              const targetStr = targetUser • `<@${targetUser.id}>` : null;
 
               const actionSentences = {
-                kiss: targetStr ? `gives ${targetStr} a kiss` : 'blows a kiss',
-                hug: targetStr ? `gives ${targetStr} a hug` : 'wants a hug',
-                slap: targetStr ? `gives ${targetStr} a slap` : 'is slapping the air',
-                punch: targetStr ? `gives ${targetStr} a punch` : 'is punching the air',
-                kick: targetStr ? `gives ${targetStr} a kick` : 'is kicking the air',
-                lick: targetStr ? `gives ${targetStr} a lick` : 'is licking their lips',
-                protect: targetStr ? `protects ${targetStr}` : 'is feeling protective',
-                wiggle: targetStr ? `wiggles at ${targetStr}` : 'is wiggling',
-                move: targetStr ? `moves towards ${targetStr}` : 'is moving',
-                bite: targetStr ? `gives ${targetStr} a bite` : 'is biting the air',
-                pat: targetStr ? `gives ${targetStr} a pat` : 'wants a pat',
-                kill: targetStr ? `kills ${targetStr}` : 'is out for blood',
-                poke: targetStr ? `gives ${targetStr} a poke` : 'is poking around',
-                cringe: targetStr ? `cringes at ${targetStr}` : 'is cringing',
-                sleep: targetStr ? `sleeps next to ${targetStr}` : 'is sleeping',
-                lift: targetStr ? `lifts ${targetStr} up` : 'is lifting weights',
-                roll: targetStr ? `rolls around with ${targetStr}` : 'is rolling around',
-                cuddle: targetStr ? `cuddles with ${targetStr}` : 'wants to cuddle',
-                see: targetStr ? `looks at ${targetStr}` : 'is looking around',
-                look: targetStr ? `stares at ${targetStr}` : 'is staring',
-                greet: targetStr ? `greets ${targetStr}` : 'is waving hello',
-                angry: targetStr ? `is angry at ${targetStr}` : 'is angry',
-                shake: targetStr ? `shakes ${targetStr}` : 'is shaking',
-                clause: targetStr ? `stares closely at ${targetStr}` : 'is staring closely',
-                think: targetStr ? `thinks about ${targetStr}` : 'is thinking',
-                pinch: targetStr ? `gives ${targetStr} a pinch` : 'wants to pinch someone',
-                bait: targetStr ? `baits ${targetStr}` : 'is baiting',
-                smile: targetStr ? `smiles at ${targetStr}` : 'is smiling',
-                laugh: targetStr ? `laughs at ${targetStr}` : 'is laughing',
-                tease: targetStr ? `teases ${targetStr}` : 'is feeling teasing',
-                smooch: targetStr ? `gives ${targetStr} a smooch` : 'wants a smooch',
-                romance: targetStr ? `romances ${targetStr}` : 'is feeling romantic',
-                love: targetStr ? `loves ${targetStr}` : 'is feeling loving',
-                hate: targetStr ? `hates ${targetStr}` : 'is feeling hateful',
-                hifi: targetStr ? `gives ${targetStr} a high-five` : 'wants a high-five',
-                hi: targetStr ? `says hi to ${targetStr}` : 'is saying hi',
-                deal: targetStr ? `makes a deal with ${targetStr}` : 'wants to make a deal',
-                happy: targetStr ? `is happy with ${targetStr}` : 'is happy',
-                sad: targetStr ? `is sad with ${targetStr}` : 'is sad',
-                appreciate: targetStr ? `appreciates ${targetStr}` : 'feels appreciative',
-                compliment: targetStr ? `compliments ${targetStr}` : 'gives a compliment',
-                compliments: targetStr ? `compliments ${targetStr}` : 'gives a compliment',
-                complimenting: targetStr ? `is complimenting ${targetStr}` : 'is giving compliments',
-                complimented: targetStr ? `complimented ${targetStr}` : 'gave a compliment',
-                count: targetStr ? `counts with ${targetStr}` : 'is counting',
-                fuck: targetStr ? `pins ${targetStr} against the wall` : 'is acting bold',
-                propose: targetStr ? `proposes to ${targetStr}` : 'is proposing to the air',
-                throw: targetStr ? `throws ${targetStr} across the room` : 'is throwing things',
-                crush: targetStr ? `has a crush on ${targetStr}` : 'is crushing hard',
-                eat: targetStr ? `takes a bite out of ${targetStr}` : 'is eating',
-                secure: targetStr ? `securely holds ${targetStr}` : 'is securing the area',
-                confused: targetStr ? `is confused by ${targetStr}` : 'is confused',
-                blow: targetStr ? `blows a kiss to ${targetStr}` : 'blows a kiss',
-                lock: targetStr ? `locks arms with ${targetStr}` : 'is locked in',
-                unlock: targetStr ? `unlocks ${targetStr}` : 'is unlocked',
-                tie: targetStr ? `ties up ${targetStr}` : 'is tying knots',
-                hold: targetStr ? `holds ${targetStr}` : 'wants to be held',
-                bye: targetStr ? `waves goodbye to ${targetStr}` : 'says goodbye',
-                tata: targetStr ? `says ta-ta to ${targetStr}` : 'says ta-ta',
-                squeeze: targetStr ? `squeezes ${targetStr}` : 'is squeezing',
-                gesture: targetStr ? `gestures to ${targetStr}` : 'makes a gesture',
-                pray: targetStr ? `prays for ${targetStr}` : 'is praying',
-                please: targetStr ? `begs ${targetStr}` : 'says please',
-                tweak: targetStr ? `tweaks ${targetStr}` : 'is tweaking',
-                comb: targetStr ? `combs ${targetStr}'s hair` : 'is combing hair',
-                alert: targetStr ? `alerts ${targetStr}` : 'is on high alert',
-                wipe: targetStr ? `wipes ${targetStr}` : 'is wiping',
-                swipe: targetStr ? `swipes at ${targetStr}` : 'is swiping',
-                play: targetStr ? `plays with ${targetStr}` : 'is playing',
-                blush: targetStr ? `blushes at ${targetStr}` : 'is blushing',
-                shy: targetStr ? `is acting shy around ${targetStr}` : 'is feeling shy',
-                marry: targetStr ? `marries ${targetStr}` : 'is getting married',
-                bully: targetStr ? `bullies ${targetStr}` : 'is being a bully',
-                nod: targetStr ? `nods at ${targetStr}` : 'nods',
-                feed: targetStr ? `feeds ${targetStr}` : 'is sharing food',
-                salute: targetStr ? `salutes ${targetStr}` : 'is saluting',
-                point: targetStr ? `points at ${targetStr}` : 'is pointing',
-                run: targetStr ? `runs around with ${targetStr}` : 'is running around',
-                walk: targetStr ? `walks with ${targetStr}` : 'is walking',
-                keep: targetStr ? `keeps ${targetStr} close` : 'is keeping things close',
-                wave: targetStr ? `waves at ${targetStr}` : 'is waving',
-                ping: targetStr ? `pings ${targetStr}` : 'is pinging',
-                call: targetStr ? `calls out to ${targetStr}` : 'is calling out',
-                sing: targetStr ? `sings a song for ${targetStr}` : 'is singing',
-                movie: targetStr ? `watches a movie with ${targetStr}` : 'is watching a movie',
-                flex: targetStr ? `flexes on ${targetStr}` : 'is flexing',
-                fight: targetStr ? `fights with ${targetStr}` : 'wants to fight',
-                awkward: targetStr ? `feels awkward around ${targetStr}` : 'feels awkward',
-                akward: targetStr ? `feels awkward around ${targetStr}` : 'feels awkward',
-                bury: targetStr ? `buries ${targetStr}` : 'is burying things',
-                drink: targetStr ? `drinks with ${targetStr}` : 'is drinking',
-                care: targetStr ? `cares for ${targetStr}` : 'is feeling caring',
-                kidnap: targetStr ? `kidnaps ${targetStr}` : 'is kidnapping someone',
-                rotate: targetStr ? `rotates ${targetStr}` : 'is rotating',
-                revolve: targetStr ? `revolves around ${targetStr}` : 'is revolving',
-                swing: targetStr ? `swings ${targetStr} around` : 'is swinging',
-                jiggle: targetStr ? `jiggles ${targetStr}` : 'is jiggling',
-                chop: targetStr ? `karate chops ${targetStr}` : 'is doing karate chops',
-                fire: targetStr ? `fires at ${targetStr}` : 'is firing',
-                train: targetStr ? `trains with ${targetStr}` : 'is training',
-                dress: targetStr ? `dresses up ${targetStr}` : 'is dressing up',
-                tag: targetStr ? `tags ${targetStr}` : 'is playing tag',
-                bath: targetStr ? `bathes ${targetStr}` : 'is taking a bath',
-                dump: targetStr ? `dumps ${targetStr}` : 'is dumping things',
-                bump: targetStr ? `fist-bumps ${targetStr}` : 'is bumping fists',
-                fry: targetStr ? `fries ${targetStr}` : 'is frying things',
-                trash: targetStr ? `trashes ${targetStr}` : 'is trashing the place',
-                scratch: targetStr ? `scratches ${targetStr}` : 'is scratching',
-                touch: targetStr ? `touches ${targetStr}` : 'is touching things',
-                lean: targetStr ? `leans on ${targetStr}` : 'is leaning',
-                heat: targetStr ? `heats up ${targetStr}` : 'is heating up',
-                cool: targetStr ? `cools down ${targetStr}` : 'is cooling down',
-                release: targetStr ? `releases ${targetStr}` : 'is releasing things',
-                shut: targetStr ? `tells ${targetStr} to shut up` : 'wants everyone to shut up',
-                block: targetStr ? `blocks ${targetStr}` : 'is blocking things',
-                strike: targetStr ? `strikes ${targetStr}` : 'is striking',
-                push: targetStr ? `pushes ${targetStr}` : 'is pushing things',
-                pull: targetStr ? `pulls ${targetStr} closer` : 'is pulling',
-                taste: targetStr ? `tastes ${targetStr}` : 'is tasting things',
-                thanks: targetStr ? `thanks ${targetStr}` : 'is thankful',
-                knock: targetStr ? `knocks on ${targetStr}` : 'is knocking',
-                suck: targetStr ? `sucks on ${targetStr}` : 'is sucking',
-                fly: targetStr ? `flies with ${targetStr}` : 'is flying',
-                watch: targetStr ? `watches ${targetStr}` : 'is watching',
-                pet: targetStr ? `pets ${targetStr}` : 'is petting',
-                ride: targetStr ? `rides with ${targetStr}` : 'is riding',
-                shop: targetStr ? `shops with ${targetStr}` : 'is shopping',
-                arm: targetStr ? `arms ${targetStr}` : 'is armed',
-                touch: targetStr ? `touches ${targetStr}` : 'is touching things',
-                rub: targetStr ? `rubs ${targetStr}` : 'is rubbing',
-                duet: targetStr ? `duets with ${targetStr}` : 'is dueting',
-                refuse: targetStr ? `refuses ${targetStr}` : 'refuses',
-                no: targetStr ? `says no to ${targetStr}` : 'says no',
-                nothanks: targetStr ? `says no thanks to ${targetStr}` : 'says no thanks',
-                drop: targetStr ? `drops ${targetStr}` : 'is dropping things',
-                cover: targetStr ? `covers ${targetStr}` : 'is taking cover',
-                praise: targetStr ? `praises ${targetStr}` : 'is praising',
-                'delete': targetStr ? `deletes ${targetStr}` : 'is deleting things',
-                devour: targetStr ? `devours ${targetStr}` : 'is devouring',
-                chew: targetStr ? `chews on ${targetStr}` : 'is chewing',
-                hello: targetStr ? `says hello to ${targetStr}` : 'says hello',
-                hi: targetStr ? `says hi to ${targetStr}` : 'says hi',
-                welcome: targetStr ? `welcomes ${targetStr}` : 'says you are welcome',
-                buy: targetStr ? `buys from ${targetStr}` : 'is buying',
-                sell: targetStr ? `sells to ${targetStr}` : 'is selling',
-                purchase: targetStr ? `purchases from ${targetStr}` : 'is purchasing',
-                rage: targetStr ? `rages at ${targetStr}` : 'is raging',
-                fury: targetStr ? `unleashes fury on ${targetStr}` : 'is furious',
-                question: targetStr ? `questions ${targetStr}` : 'has a question',
-                query: targetStr ? `queries ${targetStr}` : 'has a query',
-                doubt: targetStr ? `doubts ${targetStr}` : 'is doubting',
-                send: targetStr ? `sends ${targetStr}` : 'is sending things',
-                receive: targetStr ? `receives ${targetStr}` : 'is receiving',
-                grab: targetStr ? `grabs ${targetStr}` : 'is grabbing',
-                stand: targetStr ? `stands with ${targetStr}` : 'is standing',
-                sit: targetStr ? `sits with ${targetStr}` : 'is sitting',
-                trim: targetStr ? `trims ${targetStr}` : 'is trimming',
-                dash: targetStr ? `dashes to ${targetStr}` : 'is dashing'
+                kiss: targetStr • `gives ${targetStr} a kiss` : 'blows a kiss',
+                hug: targetStr • `gives ${targetStr} a hug` : 'wants a hug',
+                slap: targetStr • `gives ${targetStr} a slap` : 'is slapping the air',
+                punch: targetStr • `gives ${targetStr} a punch` : 'is punching the air',
+                kick: targetStr • `gives ${targetStr} a kick` : 'is kicking the air',
+                lick: targetStr • `gives ${targetStr} a lick` : 'is licking their lips',
+                protect: targetStr • `protects ${targetStr}` : 'is feeling protective',
+                wiggle: targetStr • `wiggles at ${targetStr}` : 'is wiggling',
+                move: targetStr • `moves towards ${targetStr}` : 'is moving',
+                bite: targetStr • `gives ${targetStr} a bite` : 'is biting the air',
+                pat: targetStr • `gives ${targetStr} a pat` : 'wants a pat',
+                kill: targetStr • `kills ${targetStr}` : 'is out for blood',
+                poke: targetStr • `gives ${targetStr} a poke` : 'is poking around',
+                cringe: targetStr • `cringes at ${targetStr}` : 'is cringing',
+                sleep: targetStr • `sleeps next to ${targetStr}` : 'is sleeping',
+                lift: targetStr • `lifts ${targetStr} up` : 'is lifting weights',
+                roll: targetStr • `rolls around with ${targetStr}` : 'is rolling around',
+                cuddle: targetStr • `cuddles with ${targetStr}` : 'wants to cuddle',
+                see: targetStr • `looks at ${targetStr}` : 'is looking around',
+                look: targetStr • `stares at ${targetStr}` : 'is staring',
+                greet: targetStr • `greets ${targetStr}` : 'is waving hello',
+                angry: targetStr • `is angry at ${targetStr}` : 'is angry',
+                shake: targetStr • `shakes ${targetStr}` : 'is shaking',
+                clause: targetStr • `stares closely at ${targetStr}` : 'is staring closely',
+                think: targetStr • `thinks about ${targetStr}` : 'is thinking',
+                pinch: targetStr • `gives ${targetStr} a pinch` : 'wants to pinch someone',
+                bait: targetStr • `baits ${targetStr}` : 'is baiting',
+                smile: targetStr • `smiles at ${targetStr}` : 'is smiling',
+                laugh: targetStr • `laughs at ${targetStr}` : 'is laughing',
+                tease: targetStr • `teases ${targetStr}` : 'is feeling teasing',
+                smooch: targetStr • `gives ${targetStr} a smooch` : 'wants a smooch',
+                romance: targetStr • `romances ${targetStr}` : 'is feeling romantic',
+                love: targetStr • `loves ${targetStr}` : 'is feeling loving',
+                hate: targetStr • `hates ${targetStr}` : 'is feeling hateful',
+                hifi: targetStr • `gives ${targetStr} a high-five` : 'wants a high-five',
+                hi: targetStr • `says hi to ${targetStr}` : 'is saying hi',
+                deal: targetStr • `makes a deal with ${targetStr}` : 'wants to make a deal',
+                happy: targetStr • `is happy with ${targetStr}` : 'is happy',
+                sad: targetStr • `is sad with ${targetStr}` : 'is sad',
+                appreciate: targetStr • `appreciates ${targetStr}` : 'feels appreciative',
+                compliment: targetStr • `compliments ${targetStr}` : 'gives a compliment',
+                compliments: targetStr • `compliments ${targetStr}` : 'gives a compliment',
+                complimenting: targetStr • `is complimenting ${targetStr}` : 'is giving compliments',
+                complimented: targetStr • `complimented ${targetStr}` : 'gave a compliment',
+                count: targetStr • `counts with ${targetStr}` : 'is counting',
+                fuck: targetStr • `pins ${targetStr} against the wall` : 'is acting bold',
+                propose: targetStr • `proposes to ${targetStr}` : 'is proposing to the air',
+                throw: targetStr • `throws ${targetStr} across the room` : 'is throwing things',
+                crush: targetStr • `has a crush on ${targetStr}` : 'is crushing hard',
+                eat: targetStr • `takes a bite out of ${targetStr}` : 'is eating',
+                secure: targetStr • `securely holds ${targetStr}` : 'is securing the area',
+                confused: targetStr • `is confused by ${targetStr}` : 'is confused',
+                blow: targetStr • `blows a kiss to ${targetStr}` : 'blows a kiss',
+                lock: targetStr • `locks arms with ${targetStr}` : 'is locked in',
+                unlock: targetStr • `unlocks ${targetStr}` : 'is unlocked',
+                tie: targetStr • `ties up ${targetStr}` : 'is tying knots',
+                hold: targetStr • `holds ${targetStr}` : 'wants to be held',
+                bye: targetStr • `waves goodbye to ${targetStr}` : 'says goodbye',
+                tata: targetStr • `says ta-ta to ${targetStr}` : 'says ta-ta',
+                squeeze: targetStr • `squeezes ${targetStr}` : 'is squeezing',
+                gesture: targetStr • `gestures to ${targetStr}` : 'makes a gesture',
+                pray: targetStr • `prays for ${targetStr}` : 'is praying',
+                please: targetStr • `begs ${targetStr}` : 'says please',
+                tweak: targetStr • `tweaks ${targetStr}` : 'is tweaking',
+                comb: targetStr • `combs ${targetStr}'s hair` : 'is combing hair',
+                alert: targetStr • `alerts ${targetStr}` : 'is on high alert',
+                wipe: targetStr • `wipes ${targetStr}` : 'is wiping',
+                swipe: targetStr • `swipes at ${targetStr}` : 'is swiping',
+                play: targetStr • `plays with ${targetStr}` : 'is playing',
+                blush: targetStr • `blushes at ${targetStr}` : 'is blushing',
+                shy: targetStr • `is acting shy around ${targetStr}` : 'is feeling shy',
+                marry: targetStr • `marries ${targetStr}` : 'is getting married',
+                bully: targetStr • `bullies ${targetStr}` : 'is being a bully',
+                nod: targetStr • `nods at ${targetStr}` : 'nods',
+                feed: targetStr • `feeds ${targetStr}` : 'is sharing food',
+                salute: targetStr • `salutes ${targetStr}` : 'is saluting',
+                point: targetStr • `points at ${targetStr}` : 'is pointing',
+                run: targetStr • `runs around with ${targetStr}` : 'is running around',
+                walk: targetStr • `walks with ${targetStr}` : 'is walking',
+                keep: targetStr • `keeps ${targetStr} close` : 'is keeping things close',
+                wave: targetStr • `waves at ${targetStr}` : 'is waving',
+                ping: targetStr • `pings ${targetStr}` : 'is pinging',
+                call: targetStr • `calls out to ${targetStr}` : 'is calling out',
+                sing: targetStr • `sings a song for ${targetStr}` : 'is singing',
+                movie: targetStr • `watches a movie with ${targetStr}` : 'is watching a movie',
+                flex: targetStr • `flexes on ${targetStr}` : 'is flexing',
+                fight: targetStr • `fights with ${targetStr}` : 'wants to fight',
+                awkward: targetStr • `feels awkward around ${targetStr}` : 'feels awkward',
+                akward: targetStr • `feels awkward around ${targetStr}` : 'feels awkward',
+                bury: targetStr • `buries ${targetStr}` : 'is burying things',
+                drink: targetStr • `drinks with ${targetStr}` : 'is drinking',
+                care: targetStr • `cares for ${targetStr}` : 'is feeling caring',
+                kidnap: targetStr • `kidnaps ${targetStr}` : 'is kidnapping someone',
+                rotate: targetStr • `rotates ${targetStr}` : 'is rotating',
+                revolve: targetStr • `revolves around ${targetStr}` : 'is revolving',
+                swing: targetStr • `swings ${targetStr} around` : 'is swinging',
+                jiggle: targetStr • `jiggles ${targetStr}` : 'is jiggling',
+                chop: targetStr • `karate chops ${targetStr}` : 'is doing karate chops',
+                fire: targetStr • `fires at ${targetStr}` : 'is firing',
+                train: targetStr • `trains with ${targetStr}` : 'is training',
+                dress: targetStr • `dresses up ${targetStr}` : 'is dressing up',
+                tag: targetStr • `tags ${targetStr}` : 'is playing tag',
+                bath: targetStr • `bathes ${targetStr}` : 'is taking a bath',
+                dump: targetStr • `dumps ${targetStr}` : 'is dumping things',
+                bump: targetStr • `fist-bumps ${targetStr}` : 'is bumping fists',
+                fry: targetStr • `fries ${targetStr}` : 'is frying things',
+                trash: targetStr • `trashes ${targetStr}` : 'is trashing the place',
+                scratch: targetStr • `scratches ${targetStr}` : 'is scratching',
+                touch: targetStr • `touches ${targetStr}` : 'is touching things',
+                lean: targetStr • `leans on ${targetStr}` : 'is leaning',
+                heat: targetStr • `heats up ${targetStr}` : 'is heating up',
+                cool: targetStr • `cools down ${targetStr}` : 'is cooling down',
+                release: targetStr • `releases ${targetStr}` : 'is releasing things',
+                shut: targetStr • `tells ${targetStr} to shut up` : 'wants everyone to shut up',
+                block: targetStr • `blocks ${targetStr}` : 'is blocking things',
+                strike: targetStr • `strikes ${targetStr}` : 'is striking',
+                push: targetStr • `pushes ${targetStr}` : 'is pushing things',
+                pull: targetStr • `pulls ${targetStr} closer` : 'is pulling',
+                taste: targetStr • `tastes ${targetStr}` : 'is tasting things',
+                thanks: targetStr • `thanks ${targetStr}` : 'is thankful',
+                knock: targetStr • `knocks on ${targetStr}` : 'is knocking',
+                suck: targetStr • `sucks on ${targetStr}` : 'is sucking',
+                fly: targetStr • `flies with ${targetStr}` : 'is flying',
+                watch: targetStr • `watches ${targetStr}` : 'is watching',
+                pet: targetStr • `pets ${targetStr}` : 'is petting',
+                ride: targetStr • `rides with ${targetStr}` : 'is riding',
+                shop: targetStr • `shops with ${targetStr}` : 'is shopping',
+                arm: targetStr • `arms ${targetStr}` : 'is armed',
+                touch: targetStr • `touches ${targetStr}` : 'is touching things',
+                rub: targetStr • `rubs ${targetStr}` : 'is rubbing',
+                duet: targetStr • `duets with ${targetStr}` : 'is dueting',
+                refuse: targetStr • `refuses ${targetStr}` : 'refuses',
+                no: targetStr • `says no to ${targetStr}` : 'says no',
+                nothanks: targetStr • `says no thanks to ${targetStr}` : 'says no thanks',
+                drop: targetStr • `drops ${targetStr}` : 'is dropping things',
+                cover: targetStr • `covers ${targetStr}` : 'is taking cover',
+                praise: targetStr • `praises ${targetStr}` : 'is praising',
+                'delete': targetStr • `deletes ${targetStr}` : 'is deleting things',
+                devour: targetStr • `devours ${targetStr}` : 'is devouring',
+                chew: targetStr • `chews on ${targetStr}` : 'is chewing',
+                hello: targetStr • `says hello to ${targetStr}` : 'says hello',
+                hi: targetStr • `says hi to ${targetStr}` : 'says hi',
+                welcome: targetStr • `welcomes ${targetStr}` : 'says you are welcome',
+                buy: targetStr • `buys from ${targetStr}` : 'is buying',
+                sell: targetStr • `sells to ${targetStr}` : 'is selling',
+                purchase: targetStr • `purchases from ${targetStr}` : 'is purchasing',
+                rage: targetStr • `rages at ${targetStr}` : 'is raging',
+                fury: targetStr • `unleashes fury on ${targetStr}` : 'is furious',
+                question: targetStr • `questions ${targetStr}` : 'has a question',
+                query: targetStr • `queries ${targetStr}` : 'has a query',
+                doubt: targetStr • `doubts ${targetStr}` : 'is doubting',
+                send: targetStr • `sends ${targetStr}` : 'is sending things',
+                receive: targetStr • `receives ${targetStr}` : 'is receiving',
+                grab: targetStr • `grabs ${targetStr}` : 'is grabbing',
+                stand: targetStr • `stands with ${targetStr}` : 'is standing',
+                sit: targetStr • `sits with ${targetStr}` : 'is sitting',
+                trim: targetStr • `trims ${targetStr}` : 'is trimming',
+                dash: targetStr • `dashes to ${targetStr}` : 'is dashing'
               };
 
               let desc = '';
@@ -865,11 +865,11 @@ export default {
                 else if (verb.endsWith('y') && !['a','e','i','o','u'].includes(verb[verb.length-2])) verb = verb.slice(0, -1) + 'ies';
                 else verb += 's';
 
-                desc = targetStr ? `**<@${message.author.id}> ${verb} ${targetStr}!**` : `**<@${message.author.id}> ${verb}!**`;
+                desc = targetStr • `**<@${message.author.id}> ${verb} ${targetStr}!**` : `**<@${message.author.id}> ${verb}!**`;
               }
 
               const rpEmbed = new EmbedBuilder()
-                .setColor(dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31)
+                .setColor(dbConfig.accentColor • parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31)
                 .setDescription(desc)
                 .setFooter({ text: 'Athena Prime Roleplay' });
 
@@ -944,7 +944,7 @@ export default {
                  const now = Date.now();
                  let data = massMentionCache.get(cacheKey) || { count: 0, timestamp: now };
                  
-                 const regex = new RegExp(`<@!?${targetId}>`, 'g');
+                 const regex = new RegExp(`<@!•${targetId}>`, 'g');
                  const occurrences = (message.content.match(regex) || []).length;
                  const countToAdd = Math.max(1, occurrences);
                  
@@ -968,7 +968,7 @@ export default {
                      try {
                          await message.member.timeout(5 * 60 * 1000, 'Mass Mention Spam Tagging');
                          const targetUser = await message.client.users.fetch(targetId).catch(() => null);
-                         const targetName = targetUser ? targetUser.tag : targetId;
+                         const targetName = targetUser • targetUser.tag : targetId;
                          
                          const dmEmbed = new EmbedBuilder()
                              .setColor(0xFF0000)
@@ -996,13 +996,13 @@ export default {
     // ==========================================
     // 1. AUTO-MODERATION: ANTI-INVITE
     // ==========================================
-    const antiInviteActive = dbConfig.antiInviteEnabled !== undefined ? dbConfig.antiInviteEnabled : config.antiInvite.enabled;
+    const antiInviteActive = dbConfig.antiInviteEnabled !== undefined • dbConfig.antiInviteEnabled : config.antiInvite.enabled;
     const isGlobalInviteAllowed = dbConfig.allowInvitesGlobally === true;
     const isInviteAllowedChannel = dbConfig.inviteAllowedChannel === message.channel.id;
     const hasInviteBypassRole = dbConfig.inviteBypassRole && message.member.roles.cache.has(dbConfig.inviteBypassRole);
 
     if (!isGlobalInviteAllowed && !isInviteAllowedChannel && !hasInviteBypassRole && !hasAntiInviteImmunity && antiInviteActive && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      const inviteRegex = /(discord\.(gg|io|me|li)\/.+|discord(app)?\.com\/invite\/.+)/gi;
+      const inviteRegex = /(discord\.(gg|io|me|li)\/.+|discord(app)•\.com\/invite\/.+)/gi;
       if (inviteRegex.test(message.content)) {
         if (config.antiInvite.deleteInvites) {
           await message.delete().catch(() => null);
@@ -1054,7 +1054,7 @@ export default {
 
     if (!hasLinkBypassRole && !hasAntiLinkImmunity && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       if (dbConfig.allowAllLinks !== true) {
-        const linkRegex = /https?:\/\/[^\s]+/gi;
+        const linkRegex = /https•:\/\/[^\s]+/gi;
         const matches = message.content.match(linkRegex);
         if (matches) {
           await message.delete().catch(() => null);
@@ -1087,8 +1087,8 @@ export default {
     if (!hasAntiSpamImmunity && dbConfig.blacklistWords && dbConfig.blacklistWords.length > 0 && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const msgLower = message.content.toLowerCase();
       const matchedWords = dbConfig.blacklistWords.filter(word => {
-        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return new RegExp(`(?:^|\\W)${escapedWord}(?:$|\\W)`, 'i').test(msgLower);
+        const escapedWord = word.replace(/[.*+•^${}()|[\]\\]/g, '\\$&');
+        return new RegExp(`(•:^|\\W)${escapedWord}(•:$|\\W)`, 'i').test(msgLower);
       });
       
       if (matchedWords.length > 0) {
@@ -1100,10 +1100,10 @@ export default {
 
         let highlightedMessage = message.content;
         for (const mw of matchedWords) {
-          const escapedMatch = mw.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-          highlightedMessage = highlightedMessage.replace(new RegExp(`(^|\\W)(${escapedMatch})(?=$|\\W)`, 'gi'), '$1**__$2__**');
+          const escapedMatch = mw.replace(/[.*+•^${}()|[\\]\\\\]/g, '\\\\$&');
+          highlightedMessage = highlightedMessage.replace(new RegExp(`(^|\\W)(${escapedMatch})(•=$|\\W)`, 'gi'), '$1**__$2__**');
         }
-        const safeMessage = highlightedMessage.length > 1000 ? highlightedMessage.substring(0, 1000) + '...' : highlightedMessage;
+        const safeMessage = highlightedMessage.length > 1000 • highlightedMessage.substring(0, 1000) + '...' : highlightedMessage;
 
         logToSecurityChannel(message.guild, embed.log(
           'Blacklisted Word Detected',
@@ -1227,11 +1227,11 @@ export default {
             responseText = 'https://' + proxyMatch[1];
           }
 
-          const isUrl = /^https?:\/\/[^\s]+$/i.test(responseText);
+          const isUrl = /^https•:\/\/[^\s]+$/i.test(responseText);
 
           if (isUrl) {
-            if (/\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(responseText)) {
-              const embedColor = dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31;
+            if (/\.(png|jpg|jpeg|gif|webp)(\•.*)•$/i.test(responseText)) {
+              const embedColor = dbConfig.accentColor • parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31;
               const e = new EmbedBuilder().setImage(responseText).setColor(embedColor);
               await message.channel.send({ embeds: [e] }).catch(() => null);
             } else {
@@ -1253,7 +1253,7 @@ export default {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
       const { generatePingGraph } = await import('../utils/graph.js');
       const cfg = db.getGuildConfig(guildId);
-      const accentHex = cfg?.accentColor || '#00e5ff';
+      const accentHex = cfg•.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
       const sent = await message.reply({ content: 'Calculating ping...' });
@@ -1345,7 +1345,7 @@ export default {
     statsDB.logMessage(message.guild.id, message.author.id, message.channel.id);
 
     // --- PREFIX COMMAND HANDLING ---
-    // qr is a short alias for quarantine â€” works without ! prefix
+    // qr is a short alias for quarantine - works without ! prefix
     if (msgCheck === 'qr' || msgCheck.startsWith('qr ')) {
       const qrCmd = commandMap.get('qr');
       if (qrCmd) {
@@ -1485,12 +1485,12 @@ export default {
     // Intelligent command error correction with fuzzy matching
     if (!cmd) {
       const closest = findClosestCommand(commandName, [...commandMap.keys()]);
-      const triggerUsed = usedPrefix === prefix ? prefix : `@${message.client.user.username} `;
+      const triggerUsed = usedPrefix === prefix • prefix : `@${message.client.user.username} `;
       
       if (closest) {
         const suggestEmbed = embed.warn(
           'Unknown Command',
-          `${message.author}  Command \`${triggerUsed}${commandName}\` not found.\n\n Did you mean: \`${prefix}${closest}\`?\n\nUse \`${prefix}help\` for all commands.`
+          `${message.author}  Command \`${triggerUsed}${commandName}\` not found.\n\n Did you mean: \`${prefix}${closest}\`•\n\nUse \`${prefix}help\` for all commands.`
         );
         return message.reply({ embeds: [suggestEmbed] }).catch(() => null);
       } else {
@@ -1502,7 +1502,7 @@ export default {
       }
     }
 
-    // Verify moderator permissions â€” bot owner, server owner, and extra owners bypass ALL checks
+    // Verify moderator permissions - bot owner, server owner, and extra owners bypass ALL checks
     if (cmd.permissions && cmd.permissions.length > 0) {
       const isBypass = isBotOwnerSync(message.author.id) ||
         message.author.id === message.guild.ownerId ||

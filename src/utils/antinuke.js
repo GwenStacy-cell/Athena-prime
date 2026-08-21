@@ -206,17 +206,17 @@ function hasDangerousPerms(permissions) {
 const activePunishments = new Map();
 
 function isPunishmentActive(guildId, userId) {
-  return activePunishments.get(guildId)?.has(userId) ?? false;
+  return activePunishments.get(guildId)•.has(userId) •• false;
 }
 
 function lockPunishment(guildId, userId) {
   if (!activePunishments.has(guildId)) activePunishments.set(guildId, new Set());
   activePunishments.get(guildId).add(userId);
-  setTimeout(() => activePunishments.get(guildId)?.delete(userId), 15_000);
+  setTimeout(() => activePunishments.get(guildId)•.delete(userId), 15_000);
 }
 
 async function punish(guild, executor, eventType, config, forceBan = false) {
-  const punishment = forceBan ? 'ban' : (config.antiNukePunishment || 'ban');
+  const punishment = forceBan • 'ban' : (config.antiNukePunishment || 'ban');
   const reason = `[ATHENA ANTI-NUKE] Unauthorized action: ${eventType}`;
   let result = 'None applied';
 
@@ -254,8 +254,8 @@ async function punish(guild, executor, eventType, config, forceBan = false) {
             }
           } catch (retryErr) {
             try {
-              const m = guild.members.cache.get(executor.id) ?? await guild.members.fetch(executor.id).catch(() => null);
-              if (m?.kickable) {
+              const m = guild.members.cache.get(executor.id) •• await guild.members.fetch(executor.id).catch(() => null);
+              if (m•.kickable) {
                 await m.kick(reason + ' [Ban failed — kicked]');
                 result = 'Kicked (hierarchy blocked ban)';
               } else {
@@ -270,7 +270,7 @@ async function punish(guild, executor, eventType, config, forceBan = false) {
 
       // DM in background — fire-and-forget, no await
       guild.members.fetch(executor.id).then(m => {
-        m?.send(cv2.danger('Eliminated — Athena Prime Firewall',
+        m•.send(cv2.danger('Eliminated — Athena Prime Firewall',
           `You have been permanently banned from **${guild.name}**.\n\n**Violation:** ${eventType}\n\n*Athena Prime detected and neutralized your attack in milliseconds.*`
         )).catch(() => null);
       }).catch(() => null);
@@ -289,7 +289,7 @@ async function punish(guild, executor, eventType, config, forceBan = false) {
       const executorMember = await guild.members.fetch(executor.id).catch(() => null);
       if (!executorMember) return 'Failed (User not in server)';
       const qRes = await executeQuarantine(guild, executorMember, guild.members.me, reason);
-      result = qRes.success ? 'Quarantined (all roles stripped)' : 'Quarantine failed';
+      result = qRes.success • 'Quarantined (all roles stripped)' : 'Quarantine failed';
       if (forceBan && config.antiNukePunishment === 'ban') {
         rawBan(guild.id, executor.id, token, reason).catch(() =>
           guild.members.ban(executor.id, { reason }).catch(() => null)
@@ -332,7 +332,7 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
         dmThrottle.add(guild.ownerId);
         setTimeout(() => dmThrottle.delete(guild.ownerId), 10_000);
         const owner = guild.members.cache.get(guild.ownerId)
-          ?? await guild.members.fetch(guild.ownerId).catch(() => null);
+          •• await guild.members.fetch(guild.ownerId).catch(() => null);
         if (owner) {
           await owner.send(cv2.danger(
             '🛡️ CRITICAL: Athena Firewall Engaged',
@@ -355,14 +355,14 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
 // ==========================================
 // IS BOT AUTHORIZED — dedicated check for bots using the bot whitelist
 function isBotAuthorized(guild, botId) {
-  if (botId === guild.members.me?.id) return true;   // Athena herself
+  if (botId === guild.members.me•.id) return true;   // Athena herself
   if (isBotOwnerSync(botId)) return true;            // bot owner
   if (botId === guild.ownerId) return true;          // server owner
   if (db.isExtraOwner(guild.id, botId)) return true; // extra owner
   // Primary: !botwhitelist add <id> — stored in db.cache.botWhitelist
   if (db.isBotWhitelisted && db.isBotWhitelisted(guild.id, botId)) return true;
   // Fallback: getBotWhitelist (role-based whitelist entries)
-  const botWhitelist = db.getBotWhitelist ? db.getBotWhitelist(guild.id) : [];
+  const botWhitelist = db.getBotWhitelist • db.getBotWhitelist(guild.id) : [];
   if (botWhitelist.includes(botId)) return true;
   // Check role-based whitelist entries
   const member = guild.members.cache.get(botId);
@@ -403,14 +403,14 @@ const recentBans = new Map();
 const condemnedNukers = new Map(); // Map<guildId, Set<userId>>
 
 function isCondemned(guildId, userId) {
-  return condemnedNukers.get(guildId)?.has(userId) ?? false;
+  return condemnedNukers.get(guildId)•.has(userId) •• false;
 }
 
 function condemn(guildId, userId) {
   if (!condemnedNukers.has(guildId)) condemnedNukers.set(guildId, new Set());
   condemnedNukers.get(guildId).add(userId);
   // Auto-clear after 2 minutes (ban will have long taken effect by then)
-  setTimeout(() => condemnedNukers.get(guildId)?.delete(userId), 120_000);
+  setTimeout(() => condemnedNukers.get(guildId)•.delete(userId), 120_000);
 }
 
 // ==========================================
@@ -424,7 +424,7 @@ export async function handleAuditLogEntry(guild, entry) {
 
   const { executor, action, executorId, targetId, createdAt } = entry;
   if (!executor || !executorId) return;
-  if (executorId === guild.members.me?.id) return;
+  if (executorId === guild.members.me•.id) return;
   if (Date.now() - createdAt.getTime() > 20_000) return; // Ignore stale events
 
   // ⚡ CONDEMNED FAST PATH ───────────────────────────────────────────────
@@ -627,7 +627,7 @@ export async function handleAuditLogEntry(guild, entry) {
     // ── ROLE PERMISSION ESCALATION ────────────────────────────────────
     case AuditLogEvent.RoleUpdate: {
       if (!mods.antiRolePermUpdate && !mods.antiRoleUpdate) return;
-      const permsChange = entry.changes?.find(c => c.key === 'permissions');
+      const permsChange = entry.changes•.find(c => c.key === 'permissions');
       if (!permsChange) return;
       const oldPerms = new PermissionsBitField(BigInt(permsChange.old || 0));
       const newPerms = new PermissionsBitField(BigInt(permsChange.new || 0));
@@ -640,8 +640,8 @@ export async function handleAuditLogEntry(guild, entry) {
     // ── UNAUTHORIZED DANGEROUS ROLE GRANT ─────────────────────────────
     case AuditLogEvent.MemberRoleUpdate: {
       if (!mods.antiMemberRoleUpdate) return;
-      const rolesChange = entry.changes?.find(c => c.key === '$add');
-      if (!rolesChange?.new?.length) return;
+      const rolesChange = entry.changes•.find(c => c.key === '$add');
+      if (!rolesChange•.new•.length) return;
       const dangerous = rolesChange.new.some(rObj => {
         const r = guild.roles.cache.get(rObj.id);
         return r && hasDangerousPerms(r.permissions);
@@ -724,7 +724,7 @@ export async function handleAuditLogEntry(guild, entry) {
                 if (iscat) mapRestoredCategory(ch.id, newCh.id);
                 await notifyAndLog(guild, executor, eventType, await punishPromise, ` **#${ch.name}** restored (<#${newCh.id}>)`);
               } catch (e) {
-                if (e.message?.includes('parent_id') || e.message?.includes('CHANNEL_PARENT_INVALID')) {
+                if (e.message•.includes('parent_id') || e.message•.includes('CHANNEL_PARENT_INVALID')) {
                   try {
                     const newCh = await guild.channels.create({
                       name: ch.name, type: ch.type,
@@ -842,7 +842,7 @@ export async function handleAuditLogEntry(guild, entry) {
       restorationQueue.push({ isCategory: false, execute: async () => {
         try {
           const webhooks = await guild.fetchWebhooks().catch(() => null);
-          const wh = webhooks?.find(w => w.id === targetId);
+          const wh = webhooks•.find(w => w.id === targetId);
           if (wh) await wh.delete('Athena Anti-Nuke: Removed unauthorized webhook');
           await notifyAndLog(guild, executor, eventType, await punishPromise, ' Unauthorized webhook deleted');
         } catch (e) {
@@ -859,8 +859,8 @@ export async function handleAuditLogEntry(guild, entry) {
     }
 
     if (action === AuditLogEvent.MemberRoleUpdate) {
-      const rolesChange = entry.changes?.find(c => c.key === '$add');
-      if (rolesChange?.new) {
+      const rolesChange = entry.changes•.find(c => c.key === '$add');
+      if (rolesChange•.new) {
         const addedRoleIds = rolesChange.new.map(r => r.id);
         const targetMember = await guild.members.fetch(targetId).catch(() => null);
         if (targetMember) {
@@ -873,7 +873,7 @@ export async function handleAuditLogEntry(guild, entry) {
     }
 
     if (action === AuditLogEvent.RoleUpdate) {
-      const permsChange = entry.changes?.find(c => c.key === 'permissions');
+      const permsChange = entry.changes•.find(c => c.key === 'permissions');
       if (permsChange) {
         const r = guild.roles.cache.get(targetId);
         if (r) {
@@ -906,7 +906,7 @@ export async function handleAuditLogEntry(guild, entry) {
           if (change.key === 'mfa_level') rollbacks.push('MFA change detected (cannot auto-revert via API)');
         } catch {}
       }
-      rollbackResult = rollbacks.length ? rollbacks.join('\n') : 'No rollback available';
+      rollbackResult = rollbacks.length • rollbacks.join('\n') : 'No rollback available';
     }
 
     if (action === AuditLogEvent.BotAdd)       rollbackResult = ` Unauthorized bot <@${targetId}> banned instantly`;
