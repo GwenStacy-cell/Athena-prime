@@ -37,7 +37,7 @@ export default {
               SendMessages: false,
               Connect: false,
               Speak: false
-            }, { reason: 'Athena Prime â€” auto-hide new channel from quarantined users' });
+            }, { reason: 'Athena Prime - auto-hide new channel from quarantined users' });
           }
         }
       }

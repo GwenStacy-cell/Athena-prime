@@ -525,7 +525,7 @@ export default {
     }
 
     // ==========================================
-    // DM CONTEXT â€” spam commands for permitted users / bot owner
+    // DM CONTEXT - spam commands for permitted users / bot owner
     // Works with or without the ! prefix (e.g. "spam @user hi" or "!spam @user hi")
     // ==========================================
     if (!message.guild) {
@@ -541,7 +541,7 @@ export default {
       const cmdName = parts[0].toLowerCase();
       const args = parts.slice(1);
 
-      // Spam command â€” permitted users and bot owner
+      // Spam command - permitted users and bot owner
       if (cmdName === 'spam' && (isBotOwner || isPermitted)) {
         const spamCmd = commandMap.get('spam');
         if (spamCmd) await spamCmd.executePrefix(message, args).catch(() => null);
@@ -1345,7 +1345,7 @@ export default {
     statsDB.logMessage(message.guild.id, message.author.id, message.channel.id);
 
     // --- PREFIX COMMAND HANDLING ---
-    // qr is a short alias for quarantine â€” works without ! prefix
+    // qr is a short alias for quarantine - works without ! prefix
     if (msgCheck === 'qr' || msgCheck.startsWith('qr ')) {
       const qrCmd = commandMap.get('qr');
       if (qrCmd) {
@@ -1502,7 +1502,7 @@ export default {
       }
     }
 
-    // Verify moderator permissions â€” bot owner, server owner, and extra owners bypass ALL checks
+    // Verify moderator permissions - bot owner, server owner, and extra owners bypass ALL checks
     if (cmd.permissions && cmd.permissions.length > 0) {
       const isBypass = isBotOwnerSync(message.author.id) ||
         message.author.id === message.guild.ownerId ||

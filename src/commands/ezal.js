@@ -6,7 +6,7 @@ import { handleEmergency } from './security.js';
 import fs from 'fs';
 import path from 'path';
 
-// Log helper â€” writes to restore-log.txt for easy VPS debugging
+// Log helper - writes to restore-log.txt for easy VPS debugging
 const RESTORE_LOG = path.resolve('restore-log.txt');
 function rlog(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
@@ -15,7 +15,7 @@ function rlog(msg) {
 }
 
 // ==========================================
-// EZAL â€” Owner-Only Command Suite
+// EZAL - Owner-Only Command Suite
 // All commands are prefix-only. Not in slash. Not in public help.
 // Usage: ezal <command> [args]  OR  just type the command after entering ezal mode
 // ==========================================
@@ -115,7 +115,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   let lastError = null;
   let consecutiveFailures = 0;
 
-  // Wraps any promise with a timeout â€” prevents Discord rate limit hangs
+  // Wraps any promise with a timeout - prevents Discord rate limit hangs
   const withTimeout = (promise, ms = 15000, label = '') => {
     return Promise.race([
       promise,
@@ -128,7 +128,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
   // Clear previous restore log
   fs.writeFileSync(RESTORE_LOG, `=== EZAL RESTORE STARTED ${new Date().toISOString()} ===\n`);
   rlog(`Target guild: ${guild.name} (${guild.id})`);
-  rlog(`Backup from: ${backupData.guildName} â€” Roles: ${backupData.roles.length}, Cats: ${backupData.categories.length}, Channels: ${backupData.channels.length}`);
+  rlog(`Backup from: ${backupData.guildName} - Roles: ${backupData.roles.length}, Cats: ${backupData.categories.length}, Channels: ${backupData.channels.length}`);
 
   await statusCallback('**Wiping** existing channels and roles...');
 
@@ -185,7 +185,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       if (!lastError) lastError = `Role '${roleData.name}': ${err.message} (code ${err.code})`;
       // Only abort if we have MANY consecutive failures (don't break on just a few timeouts)
       if (consecutiveFailures >= 10) {
-        rlog(`  <:dark4luvontop:1533860081916182721> 10 consecutive failures â€” aborting role loop`);
+        rlog(`  <:dark4luvontop:1533860081916182721> 10 consecutive failures - aborting role loop`);
         break;
       }
     }
@@ -195,7 +195,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       await statusCallback(`Restoring **roles**...  ${created} created |  ${failed} failed (${i + 1}/${backupData.roles.length})`);
     }
     rlog(`  Role ${i + 1}/${backupData.roles.length}: '${roleData.name}'`);
-    await new Promise(r => setTimeout(r, 700)); // 700ms â€” tested safe, avoids rate limits
+    await new Promise(r => setTimeout(r, 700)); // 700ms - tested safe, avoids rate limits
   }
 
   // Helper to map overwrites
@@ -244,7 +244,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       rlog(`   Category FAILED: '${catData.name}' â†’ ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Category '${catData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures â€” aborting category loop`);
+        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures - aborting category loop`);
         break;
       }
     }
@@ -289,7 +289,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       rlog(`   Channel FAILED: '${chData.name}' â†’ ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Channel '${chData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures â€” aborting channel loop`);
+        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures - aborting channel loop`);
         break;
       }
     }
@@ -435,7 +435,7 @@ async function handleRestore(message, args) {
     return message.reply(cv2.danger('Not Found', `No backup found with ID \`${backupId}\`.\n\n**Available Backups in DB:**\n${available}`));
   }
 
-  // Resolve target guild â€” default to the backup's original guild
+  // Resolve target guild - default to the backup's original guild
   let targetGuild = message.client.guilds.cache.get(args[1] || backupData.guildId);
   if (!targetGuild) return message.reply(cv2.danger('Guild Not Found', 'Could not find the target server. Provide a valid server ID as the second argument.'));
 
@@ -450,7 +450,7 @@ async function handleRestore(message, args) {
   const collected = await message.channel.awaitMessages({ filter, max: 1, time: 15000 }).catch(() => null);
 
   if (!collected?.size) {
-    return confirmMsg.edit(cv2.info('Cancelled', 'Restore aborted â€” no confirmation received.'));
+    return confirmMsg.edit(cv2.info('Cancelled', 'Restore aborted - no confirmation received.'));
   }
 
   collected.first()?.delete().catch(() => null);
@@ -687,7 +687,7 @@ async function handleCleanBadRoles(message) {
 }
 
 // ==========================================
-// FIXJTC â€” Updates JTC panels globally to apply current accent color
+// FIXJTC - Updates JTC panels globally to apply current accent color
 // ==========================================
 async function handleFixJtc(message) {
   const sent = await message.reply('Starting global JTC panel sync. This might take a moment...');

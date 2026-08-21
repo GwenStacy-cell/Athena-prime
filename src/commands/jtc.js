@@ -149,7 +149,7 @@ export async function syncPanel(guild) {
 }
 
 // ==========================================
-// SHARED PANEL â€” one persistent message in the interface channel
+// SHARED PANEL - one persistent message in the interface channel
 // Generic, no channel/owner info. All interactions are ephemeral.
 // ==========================================
 export function buildSharedPanel(guild) {
@@ -195,7 +195,7 @@ export function buildSharedPanel(guild) {
             `<a:Dark4luvontop:1518275045963726949> **Take control:** Use the dropdowns to manage your room\n` +
             `<a:Dark4luvontop:1518275045963726949> **Quick access:** Alternatively use \`/vc\` slash commands\n` +
             `<a:Dark4luvontop:1518275045963726949> **Stay private:** All interactions are hidden from others\n\n` +
-            `> Only **you** can see the responses â€” fully private.`
+            `> Only **you** can see the responses - fully private.`
           )
         )
         .setThumbnailAccessory(
@@ -250,7 +250,7 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.warn('Error', 'Could not locate the associated voice channel. You must be connected to it.'));
   }
 
-  // â”€â”€ CLAIM â€” anyone in channel can do this â”€â”€
+  // â”€â”€ CLAIM - anyone in channel can do this â”€â”€
   if (value === 'jtc_claim') {
     const ownerInChannel = vcChannel.members.has(jtcData.ownerId);
     if (ownerInChannel) {
@@ -261,7 +261,7 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.success('Channel Claimed ', `You are now the owner of **${vcChannel.name}**.`));
   }
 
-  // â”€â”€ INFO â€” anyone can view â”€â”€
+  // â”€â”€ INFO - anyone can view â”€â”€
   if (value === 'jtc_info') {
     const members = vcChannel.members.map(m => m.toString()).join(', ') || 'None';
     const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
@@ -314,7 +314,7 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.success('NSFW Toggled', `Channel NSFW status set to **${!isNsfw}**.`));
   }
 
-  // â”€â”€ GAME â€” set channel name to game â”€â”€
+  // â”€â”€ GAME - set channel name to game â”€â”€
   if (value === 'jtc_game') {
     const activity = member.presence?.activities.find(a => a.type === 0); // Playing
     if (!activity) {
@@ -324,7 +324,7 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.success('Game Set <:dark4luvontop:1533860081916182721>', `Channel renamed to **${activity.name}**.`));
   }
 
-  // â”€â”€ LFM â€” post Looking For Members message â”€â”€
+  // â”€â”€ LFM - post Looking For Members message â”€â”€
   if (value === 'jtc_lfm') {
     const lfmEmbed = new EmbedBuilder()
       .setColor(getAccent(guild))
@@ -336,7 +336,7 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.success('LFM Posted <:dark4luvontop:1533860081916182721>', 'Your Looking for Members message has been posted in this channel.'));
   }
 
-  // â”€â”€ TEXT â€” create a temp text channel linked to VC â”€â”€
+  // â”€â”€ TEXT - create a temp text channel linked to VC â”€â”€
   if (value === 'jtc_text') {
     const jtcCfg = db.getJtcConfig(guild.id);
     const existing = guild.channels.cache.find(c => c.name === `${vcChannel.name}-text` && c.parentId === (jtcCfg?.categoryId || vcChannel.parentId));

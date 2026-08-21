@@ -22,7 +22,7 @@ export const spamMoreCache = new Map();
 export const commands = [
 
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // SPAM â€” Spam a user's DM or the current channel
+  // SPAM - Spam a user's DM or the current channel
   // Usage:
   //   !spam @user <message>      â†’ spams target user's DM
   //   !spam <message>            â†’ spams current channel anonymously
@@ -78,7 +78,7 @@ export const commands = [
         }
         text = remaining.join(' ').trim();
       } else {
-        // !spam [count] <message>  â€” no target, spam current channel
+        // !spam [count] <message>  - no target, spam current channel
         if (args[0] && /^\d+$/.test(args[0])) {
           count = Math.min(Math.max(parseInt(args[0]), 1), 10);
           text = args.slice(1).join(' ').trim();
@@ -410,7 +410,7 @@ async function spamUserDm(client, targetUserId, text, count, requesterId) {
   } catch (err) {
     console.error('[SpamUserDM]', err);
     // Common reason: user has DMs closed
-    if (err.code === 50007) return { success: false, message: 'Cannot send DMs to that user â€” they have DMs closed or have blocked the bot.' };
+    if (err.code === 50007) return { success: false, message: 'Cannot send DMs to that user - they have DMs closed or have blocked the bot.' };
     return { success: false, message: `Failed to DM: ${err.message}` };
   }
 }

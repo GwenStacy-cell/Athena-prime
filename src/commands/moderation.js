@@ -427,7 +427,7 @@ export const commands = [
 
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) {
-        // Not in server â€” ban by user ID directly
+        // Not in server - ban by user ID directly
         const result = await handleBanById(interaction.guild, interaction.member, targetUser.id, reason, targetUser);
         return interaction.reply(result);
       }
@@ -695,7 +695,7 @@ export const commands = [
     options: [
       {
         name: 'userid',
-        description: 'The User ID to unban (or paste @mention â€” digits will be parsed)',
+        description: 'The User ID to unban (or paste @mention - digits will be parsed)',
         type: 3, // String
         required: true
       },
@@ -740,7 +740,7 @@ export const commands = [
       if (!allowed) {
         return message.reply(cv2.danger('Access Denied', `${message.author} ï¸ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
       }
-      const sentMsg = await message.reply(cv2.info('Processingâ€¦', 'Fetching ban list and removing bans, please wait.'));
+      const sentMsg = await message.reply(cv2.info('Processing...', 'Fetching ban list and removing bans, please wait.'));
       const result = await handleUnbanAll(message.guild, message.member);
       await sentMsg.edit(result);
     },
@@ -1306,7 +1306,7 @@ async function handleUnban(guild, moderator, userId, reason) {
 }
 
 // ==========================================
-// BAN BY ID â€” for users not in the server
+// BAN BY ID - for users not in the server
 // ==========================================
 async function handleBanById(guild, moderator, userId, reason, userObj = null) {
   // Protection check
@@ -1324,7 +1324,7 @@ async function handleBanById(guild, moderator, userId, reason, userObj = null) {
       return cv2.warn('Already Banned', `User \`${userId}\` is already banned from this server.`);
     }
 
-    await guild.bans.create(userId, { reason: `${reason} â€” by ${moderator.user.tag}` });
+    await guild.bans.create(userId, { reason: `${reason} - by ${moderator.user.tag}` });
 
     const displayName = userObj ? `**${userObj.tag}**` : `\`${userId}\``;
     const resEmbed = cv2.danger('User Banned', `Successfully banned ${displayName}.`, [
@@ -1347,7 +1347,7 @@ async function handleBanById(guild, moderator, userId, reason, userObj = null) {
 }
 
 // ==========================================
-// UNBAN ALL â€” mass unban
+// UNBAN ALL - mass unban
 // ==========================================
 async function handleUnbanAll(guild, moderator) {
   try {
@@ -1387,7 +1387,7 @@ async function handleUnbanAll(guild, moderator) {
 }
 
 // ==========================================
-// VOICE STATE CONTROL â€” mute/deafen users
+// VOICE STATE CONTROL - mute/deafen users
 // ==========================================
 async function handleVcAction(guild, moderator, targets, action) {
   let successCount = 0;

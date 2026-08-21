@@ -38,7 +38,7 @@ export default {
         );
       }
 
-      // Verify permissions â€” bot owner AND extra owners bypass all checks in every server
+      // Verify permissions - bot owner AND extra owners bypass all checks in every server
       if (cmd.permissions && cmd.permissions.length > 0) {
         const isBypass = isBotOwnerSync(interaction.user.id) ||
           (interaction.guild && (
@@ -47,7 +47,7 @@ export default {
           ));
 
         if (!isBypass) {
-          // interaction.member may be null in User App DM context â€” skip guild perm check
+          // interaction.member may be null in User App DM context - skip guild perm check
           const hasPerms = interaction.member
             ? cmd.permissions.every(perm => interaction.member.permissions.has(perm))
             : false;

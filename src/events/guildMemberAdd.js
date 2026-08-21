@@ -18,7 +18,7 @@ export default {
     // ==========================================
     if (member.user.bot) {
       // BotAdd is handled with zero-latency via the websocket hook (handleAuditLogEntry)
-      // We do NOT proactively strip roles â€” legitimate bots that haven't been
+      // We do NOT proactively strip roles - legitimate bots that haven't been
       // whitelisted yet (MEE6, Dyno, Carl-bot etc.) would break immediately.
       return;
     }

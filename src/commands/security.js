@@ -39,7 +39,7 @@ export function parseDuration(str) {
   if (!str) return 5 * 60 * 1000; // default 5m
   str = String(str).trim().toLowerCase();
 
-  // Bare number Ã¢â€ â€™ minutes
+  // Bare number Ã¢â€ ' minutes
   if (/^\d+$/.test(str)) return Math.min(parseInt(str), 10080) * 60 * 1000;
 
   let ms = 0;
@@ -1036,7 +1036,7 @@ export const commands = [
       },
       {
         name: 'bot_id',
-        description: 'The bot\'s User ID (right-click Ã¢â€ â€™ Copy ID)',
+        description: 'The bot\'s User ID (right-click -> Copy ID)',
         type: 3,
         required: false
       }
