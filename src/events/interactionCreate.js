@@ -488,6 +488,40 @@ export default {
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
+
+      // MEDIA PROMPT BUTTONS
+      if (interaction.customId === 'dl_mp4' || interaction.customId === 'dl_mp3') {
+        const originalMessageId = interaction.message.reference ? interaction.message.reference.messageId : null;
+        if (!originalMessageId) return interaction.reply({ content: 'Original message not found.', ephemeral: true });
+        
+        try {
+          const originalMessage = await interaction.channel.messages.fetch(originalMessageId);
+          const urlRegex = /(https?:\/\/[^\s]+)/g;
+          const urls = originalMessage.content.match(urlRegex);
+          if (!urls) return interaction.reply({ content: 'No URL found in the original message.', ephemeral: true });
+          const url = urls[0];
+
+          await interaction.update({ content: `-# ⏳ **Downloading ${interaction.customId === 'dl_mp4' ? 'MP4' : 'MP3'}...**`, components: [] });
+          
+          const downloader = await import('../utils/mediaDownloader.js');
+          let success = false;
+          if (interaction.customId === 'dl_mp4') {
+            success = await downloader.processMediaLink(interaction.client, originalMessage, url);
+          } else {
+            success = await downloader.processMp3Link(interaction.client, originalMessage, url);
+          }
+
+          if (success) {
+            await interaction.message.delete().catch(() => {});
+          } else {
+            await interaction.message.edit({ content: '-# ❌ **Failed to process media.**', components: [] }).catch(() => {});
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        return;
+      }
+
       // Global Server Invite Generator (Bot Owner DM)
       if (interaction.customId.startsWith('gen_invite_')) {
         const targetGuildId = interaction.customId.replace('gen_invite_', '');
