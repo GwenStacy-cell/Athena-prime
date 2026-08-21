@@ -210,15 +210,13 @@ export default {
           const urls = message.content.match(urlRegex);
           if (urls) {
             for (const url of urls) {
-              if (url.includes('tiktok.com') || url.includes('instagram.com') || url.includes('twitter.com') || url.includes('x.com') || url.includes('reddit.com')) {
+              if (url.includes('tiktok.com') || url.includes('instagram.com') || url.includes('twitter.com') || url.includes('x.com') || url.includes('reddit.com') || url.includes('youtube.com') || url.includes('youtu.be')) {
                 const handled = await processMediaLink(message.client, message, url);
                 if (handled) return;
               }
             }
           }
         }
-      }
-    // Disboard Bump Detection
     if (message.author.id === '302050872383242240' && message.embeds.length > 0) {
       const embedDesc = message.embeds[0].description || '';
       if (embedDesc.includes('Bump done!') || embedDesc.includes('Check it out on DISBOARD')) {
