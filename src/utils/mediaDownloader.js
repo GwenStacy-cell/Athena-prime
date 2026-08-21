@@ -166,3 +166,15 @@ export async function processMp3Link(client, message, url) {
     return false;
   }
 }
+
+export async function compressVideo(url) {
+  const ytdlpPath = await downloadYtDlp();
+  const tempPath = path.join(process.cwd(), `yt_dlp_compressed_${Date.now()}.mp4`);
+  await execPromise(`"${ytdlpPath}" -f "best[ext=mp4][filesize<9M]/bestvideo[ext=mp4][filesize<7M]+bestaudio[ext=m4a]/worst" -o "${tempPath}" "${url}"`);
+  if (fs.existsSync(tempPath)) {
+    const buffer = fs.readFileSync(tempPath);
+    fs.unlinkSync(tempPath);
+    return buffer;
+  }
+  return null;
+}
