@@ -217,6 +217,8 @@ export default {
             }
           }
         }
+      }
+    // Disboard Bump Detection
     if (message.author.id === '302050872383242240' && message.embeds.length > 0) {
       const embedDesc = message.embeds[0].description || '';
       if (embedDesc.includes('Bump done!') || embedDesc.includes('Check it out on DISBOARD')) {
