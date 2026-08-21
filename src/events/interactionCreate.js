@@ -522,6 +522,42 @@ export default {
         return;
       }
 
+      if (interaction.customId === 'compress_10mb') {
+        const downloader = await import('../utils/mediaDownloader.js');
+        const url = downloader.pendingCompressions.get(interaction.message.id);
+        if (!url) return interaction.reply({ content: 'Compression session expired or invalid.', ephemeral: true });
+        
+        await interaction.update({ content: '-# **Forcing yt-dlp to find a low-quality stream under 10MB...**', components: [] });
+        downloader.pendingCompressions.delete(interaction.message.id);
+        
+        try {
+          const { downloadYtDlp, processMediaLink } = await import('../utils/mediaDownloader.js');
+          const path = await import('path');
+          const fs = await import('fs');
+          const util = await import('util');
+          const { exec } = await import('child_process');
+          const execPromise = util.promisify(exec);
+          
+          const ytdlpPath = await downloadYtDlp();
+          const tempPath = path.join(process.cwd(), `yt_dlp_compressed_${Date.now()}.mp4`);
+          await execPromise(`python3 "${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<9M]/bestvideo[ext=mp4][filesize<7M]+bestaudio[ext=m4a]/worst" -o "${tempPath}" "${url}"`);
+          
+          if (fs.existsSync(tempPath)) {
+            const smallBuffer = fs.readFileSync(tempPath);
+            fs.unlinkSync(tempPath);
+            const { AttachmentBuilder } = await import('discord.js');
+            const att = new AttachmentBuilder(smallBuffer, { name: 'Athena_Video_Compressed.mp4' });
+            await interaction.message.edit({ content: `-# **Media Extracted (Compressed)** | Requested by ${interaction.user}`, files: [att] });
+          } else {
+            await interaction.message.edit({ content: '-# **Could not find a small enough version of this video to bypass the 10MB limit.**' });
+          }
+        } catch (e) {
+          console.error("Compression failed:", e);
+          await interaction.message.edit({ content: '-# **Failed to compress media.**' }).catch(()=>null);
+        }
+        return;
+      }
+
       // Global Server Invite Generator (Bot Owner DM)
       if (interaction.customId.startsWith('gen_invite_')) {
         const targetGuildId = interaction.customId.replace('gen_invite_', '');
