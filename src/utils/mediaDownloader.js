@@ -36,10 +36,7 @@ export async function processMediaLink(client, message, url) {
       const ytdlpPath = await downloadYtDlp();
       const tempPath = path.join(process.cwd(), `yt_dlp_video_${Date.now()}.mp4`);
       console.log(`[Media] Downloading YouTube video via yt-dlp: ${url}`);
-      
-      // Execute yt-dlp via python3 (using the binary zipapp)
-      await execPromise(`"${ytdlpPath}" --extractor-args "youtube:lang=en" -S "lang:en" -f "best[ext=mp4][filesize<24M]/bestvideo[ext=mp4][filesize<15M]+bestaudio[ext=m4a]/best" -o "${tempPath}" "${url}"`);
-      
+      await execPromise(`"${ytdlpPath}" -S "lang:en" -f "bestvideo[ext=mp4][height<=720]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "${tempPath}" "${url}"`);
       if (fs.existsSync(tempPath)) {
         localFile = tempPath;
       }
@@ -53,7 +50,7 @@ export async function processMediaLink(client, message, url) {
       const ytdlpPath = await downloadYtDlp();
       const tempPath = path.join(process.cwd(), `yt_dlp_video_${Date.now()}.mp4`);
       console.log(`[Media] Downloading Instagram video via yt-dlp: ${url}`);
-      await execPromise(`"${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<24M]/best" -o "${tempPath}" "${url}"`);
+      await execPromise(`"${ytdlpPath}" -f "best[ext=mp4]/best" -o "${tempPath}" "${url}"`);
       if (fs.existsSync(tempPath)) {
         localFile = tempPath;
       }
@@ -72,7 +69,7 @@ export async function processMediaLink(client, message, url) {
       try {
         const ytdlpPath = await downloadYtDlp();
         const tempPath = path.join(process.cwd(), `yt_dlp_fallback_video_${Date.now()}.mp4`);
-        await execPromise(`"${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<24M]/best" -o "${tempPath}" "${url}"`);
+        await execPromise(`"${ytdlpPath}" -f "best[ext=mp4]/best" -o "${tempPath}" "${url}"`);
         if (fs.existsSync(tempPath)) {
           localFile = tempPath;
         }
@@ -110,7 +107,7 @@ export async function processMediaLink(client, message, url) {
     if (error && error.code === 40005) {
       if (buffer) {
         const mb = (buffer.length / 1024 / 1024).toFixed(1);
-        const limit = message.guild.premiumTier === 3 ? 100 : (message.guild.premiumTier === 2 ? 50 : 10);
+        const limit = message.guild.premiumTier === 3 ? 100 : (message.guild.premiumTier === 2 ? 50 : (message.guild.premiumTier === 1 ? 25 : 10));
         const row = new ActionRowBuilder().addComponents(
           new ButtonBuilder().setCustomId('compress_10mb').setLabel('Compress to 10MB').setStyle(ButtonStyle.Primary)
         );
