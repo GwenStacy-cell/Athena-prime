@@ -1,20 +1,44 @@
 import fetch from 'node-fetch';
 import { AttachmentBuilder } from 'discord.js';
+import { exec } from 'child_process';
+import util from 'util';
+import fs from 'fs';
+import path from 'path';
+
+const execPromise = util.promisify(exec);
+
+async function downloadYtDlp() {
+  const ytdlpPath = path.join(process.cwd(), 'yt-dlp');
+  if (!fs.existsSync(ytdlpPath)) {
+    console.log('[Media] Downloading yt-dlp binary...');
+    const res = await fetch('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp');
+    const buffer = await res.buffer();
+    fs.writeFileSync(ytdlpPath, buffer);
+    fs.chmodSync(ytdlpPath, 0o755);
+  }
+  return ytdlpPath;
+}
 
 export async function processMediaLink(client, message, url) {
   try {
     await message.channel.sendTyping();
     let directUrl = null;
+    let localFile = null;
 
     if (url.includes('tiktok.com')) {
       const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
       const data = await res.json();
       if (data.data && data.data.play) directUrl = data.data.play;
     } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const { youtube } = await import('btch-downloader');
-      const res = await youtube(url);
-      if (res && res.status && res.mp4) {
-        directUrl = res.mp4;
+      const ytdlpPath = await downloadYtDlp();
+      const tempPath = path.join(process.cwd(), `yt_dlp_video_${Date.now()}.mp4`);
+      console.log(`[Media] Downloading YouTube video via yt-dlp: ${url}`);
+      
+      // Execute yt-dlp via python3 (using the binary zipapp)
+      await execPromise(`python3 "${ytdlpPath}" -f "best[ext=mp4][filesize<24M]/bestvideo[ext=mp4][filesize<15M]+bestaudio[ext=m4a]/best" -o "${tempPath}" "${url}"`);
+      
+      if (fs.existsSync(tempPath)) {
+        localFile = tempPath;
       }
     } else if (url.includes('twitter.com') || url.includes('x.com')) {
       const { twitter } = await import('btch-downloader');
@@ -31,10 +55,16 @@ export async function processMediaLink(client, message, url) {
       }
     }
 
-    if (!directUrl) return false;
-
-    const videoRes = await fetch(directUrl);
-    const buffer = await videoRes.buffer();
+    let buffer;
+    if (localFile) {
+      buffer = fs.readFileSync(localFile);
+      fs.unlinkSync(localFile); // Cleanup
+    } else if (directUrl) {
+      const videoRes = await fetch(directUrl);
+      buffer = await videoRes.buffer();
+    } else {
+      return false; // Failed to extract
+    }
 
     if (buffer.length > 25 * 1024 * 1024) {
       await message.reply({ content: '-# ❌ **The video is too large to upload directly to Discord (Limit: 25MB).**' }).catch(() => {});
