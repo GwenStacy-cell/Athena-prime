@@ -51,15 +51,15 @@ export function buildAccentPanel(guild) {
   const current = cfg.accentColor || null;
 
   // Find the label of the current color if it's a preset
-  const currentPreset = PRESETS.find(p => p.hex.toUpperCase() === current•.toUpperCase());
+  const currentPreset = PRESETS.find(p => p.hex.toUpperCase() === current?.toUpperCase());
 
   const panelEmbed = new EmbedBuilder()
-    .setColor(current • hexToInt(current) : 0x2b2d31)
+    .setColor(current ? hexToInt(current) : 0x2b2d31)
     .setTitle('__**ACCENT MANAGER**__')
     .setDescription(
       `Customize the accent color used across all of **Athena Prime's** responses in this server.\n\n` +
       `All \`256³\` colors are available — choose a preset below, enter a custom hex code, or reset to the default.\n\n` +
-      `**CURRENT COLOR:** ${current • `\`${current.toUpperCase()}\`` : 'Default (no accent set)'}`
+      `**CURRENT COLOR:** ${current ? `\`${current.toUpperCase()}\`` : 'Default (no accent set)'}`
     )
     .setFooter({ text: 'Athena Prime Customization • Changes apply instantly' })
     .setTimestamp();
@@ -70,7 +70,7 @@ export function buildAccentPanel(guild) {
       const btn = new ButtonBuilder()
         .setCustomId(`accent_preset_${p.hex.replace('#', '')}`)
         .setLabel(p.label)
-        .setStyle(current•.toUpperCase() === p.hex.toUpperCase() • ButtonStyle.Primary : ButtonStyle.Secondary);
+        .setStyle(current?.toUpperCase() === p.hex.toUpperCase() ? ButtonStyle.Primary : ButtonStyle.Secondary);
       if (p.emoji) btn.setEmoji(p.emoji);
       return btn;
     })
@@ -82,7 +82,7 @@ export function buildAccentPanel(guild) {
       const btn = new ButtonBuilder()
         .setCustomId(`accent_preset_${p.hex.replace('#', '')}`)
         .setLabel(p.label)
-        .setStyle(current•.toUpperCase() === p.hex.toUpperCase() • ButtonStyle.Primary : ButtonStyle.Secondary);
+        .setStyle(current?.toUpperCase() === p.hex.toUpperCase() ? ButtonStyle.Primary : ButtonStyle.Secondary);
       if (p.emoji) btn.setEmoji(p.emoji);
       return btn;
     })
@@ -117,7 +117,7 @@ export async function handleAccentButton(interaction) {
   const isAuth = isBotOwnerSync(user.id) ||
     user.id === guild.ownerId ||
     db.isExtraOwner(guild.id, user.id) ||
-    interaction.member•.permissions•.has(PermissionFlagsBits.Administrator);
+    interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
 
   if (!isAuth) {
     return interaction.reply({
@@ -148,7 +148,7 @@ export async function handleAccentButton(interaction) {
   if (customId.startsWith('accent_preset_')) {
     const hex = '#' + customId.replace('accent_preset_', '');
     const preset = PRESETS.find(p => p.hex.toUpperCase() === hex.toUpperCase());
-    const colorName = preset•.label || 'Custom';
+    const colorName = preset?.label || 'Custom';
 
     db.updateGuildConfig(guild.id, { accentColor: hex.toUpperCase() });
 
@@ -196,7 +196,7 @@ export async function handleAccentButton(interaction) {
 // ——————————————————————————————————————————
 export async function handleAccentModal(interaction) {
   const rawHex = interaction.fields.getTextInputValue('accent_hex_input').trim();
-  const clean = rawHex.startsWith('#') • rawHex : `#${rawHex}`;
+  const clean = rawHex.startsWith('#') ? rawHex : `#${rawHex}`;
   const valid = /^#[0-9A-Fa-f]{6}$/.test(clean);
 
   if (!valid) {
@@ -209,7 +209,7 @@ export async function handleAccentModal(interaction) {
 
   // Check if it matches a known preset name
   const preset = PRESETS.find(p => p.hex.toUpperCase() === finalHex);
-  const colorName = preset•.label || 'Custom';
+  const colorName = preset?.label || 'Custom';
 
   db.updateGuildConfig(interaction.guild.id, { accentColor: finalHex });
 
@@ -243,7 +243,7 @@ export const commands = [
       const isAuth = isBotOwnerSync(message.author.id) ||
         message.author.id === message.guild.ownerId ||
         db.isExtraOwner(message.guild.id, message.author.id) ||
-        message.member•.permissions•.has(PermissionFlagsBits.Administrator);
+        message.member?.permissions?.has(PermissionFlagsBits.Administrator);
 
       if (!isAuth) {
         return message.reply(cv2.danger('Permission Denied', `${message.author} Only Administrators can manage the accent color.`));
@@ -256,7 +256,7 @@ export const commands = [
       const isAuth = isBotOwnerSync(interaction.user.id) ||
         interaction.user.id === interaction.guild.ownerId ||
         db.isExtraOwner(interaction.guild.id, interaction.user.id) ||
-        interaction.member•.permissions•.has(PermissionFlagsBits.Administrator);
+        interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
 
       if (!isAuth) {
         return interaction.reply(cv2.danger('Permission Denied', `${interaction.user} Only Administrators can manage the accent color.`));

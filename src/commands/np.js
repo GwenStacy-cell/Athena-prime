@@ -17,14 +17,14 @@ export const commands = [
         return message.reply({ content: 'You are not an authorized NP Manager.' }).catch(() => null);
       }
 
-      const sub = args[0]•.toLowerCase();
+      const sub = args[0]?.toLowerCase();
 
       if (!sub || sub === 'guide' || sub === 'help') {
         return this.sendGuide(message);
       }
 
       if (sub === 'add') {
-        const type = args[1]•.toLowerCase();
+        const type = args[1]?.toLowerCase();
         if (type !== 'user' && type !== 'server') return message.reply({ content: '❌ Usage: `np add user <@user|id> [duration]` or `np add server <id> [duration]`' });
         
         let targetId = args[2];
@@ -49,7 +49,7 @@ export const commands = [
       }
 
       if (sub === 'reset') {
-        const type = args[1]•.toLowerCase();
+        const type = args[1]?.toLowerCase();
         if (type !== 'user' && type !== 'server') return message.reply({ content: '❌ Usage: `np reset user <id>` or `np reset server <id>`' });
         
         let targetId = args[2];
@@ -70,7 +70,7 @@ export const commands = [
       }
 
       if (sub === 'manager' || sub === 'managers') {
-        const action = args[1]•.toLowerCase();
+        const action = args[1]?.toLowerCase();
         if (!action || action === 'list') return this.sendManagerList(message);
 
         if (!isOwner) return message.reply({ content: 'Only the Bot Owner can modify NP Managers.' });
@@ -90,8 +90,8 @@ export const commands = [
       }
 
       if (sub === 'cmds') {
-        const action = args[1]•.toLowerCase();
-        const cmdName = args[2]•.toLowerCase();
+        const action = args[1]?.toLowerCase();
+        const cmdName = args[2]?.toLowerCase();
         
         if (action === 'pause') {
           db.setNpPaused(true);
@@ -179,7 +179,7 @@ export const commands = [
         i++;
       }
 
-      const cfg = db.getGuildConfig(message.guild•.id || '0');
+      const cfg = db.getGuildConfig(message.guild?.id || '0');
             const comps = [];
       comps.push({ type: 10, content: `# GLOBAL NO-PREFIX STATUS PANEL` });
       comps.push({ type: 14, divider: true });
@@ -203,7 +203,7 @@ export const commands = [
         lines.push(`**${i+1}.** <@${id}>\n( \`${id}\` ) — Active •`);
       }
 
-      const cfg = db.getGuildConfig(message.guild•.id || '0');
+      const cfg = db.getGuildConfig(message.guild?.id || '0');
             const comps = [];
       comps.push({ type: 10, content: `# NP Managers List\n## **Active & Configured NP Managers**` });
       comps.push({ type: 14, divider: true });
@@ -215,7 +215,7 @@ export const commands = [
     },
 
     async sendGuide(message) {
-      const cfg = db.getGuildConfig(message.guild•.id || '0');
+      const cfg = db.getGuildConfig(message.guild?.id || '0');
             const buildGuideContainer = (page) => {
         const comps = [];
         
@@ -283,7 +283,7 @@ export const commands = [
     permissions: [],
     async executePrefix(message) {
       if (!db.isNpManager(message.author.id) && !isBotOwnerSync(message.author.id)) return;
-      const stats = db.cache.botAnalytics•.cmds || {};
+      const stats = db.cache.botAnalytics?.cmds || {};
       const sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]).slice(0, 10);
       const lines = sorted.map((s, i) => `**${i+1}.** \`${s[0]}\` — ${s[1]} uses`);
       

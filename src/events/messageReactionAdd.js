@@ -51,7 +51,7 @@ export default {
       console.error('Failed to grant reaction role:', err);
       // Attempt to DM the user about the error
       await user.send({
-        embeds: [embed.error('Reaction Role Error', `I was unable to give you the role in **${reaction.message.guild•.name || 'the server'}**. This usually happens because my bot role is lower than the role you are trying to get, or I am missing the "Manage Roles" permission.`)]
+        embeds: [embed.error('Reaction Role Error', `I was unable to give you the role in **${reaction.message.guild?.name || 'the server'}**. This usually happens because my bot role is lower than the role you are trying to get, or I am missing the "Manage Roles" permission.`)]
       }).catch(() => null);
     }
   }

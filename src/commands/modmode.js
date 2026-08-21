@@ -62,11 +62,11 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       const isAuthorized = isBotOwnerSync(message.author.id) ||
-        message.author.id === message.guild•.ownerId ||
-        db.isExtraOwner(message.guild•.id, message.author.id);
+        message.author.id === message.guild?.ownerId ||
+        db.isExtraOwner(message.guild?.id, message.author.id);
       if (!isAuthorized) return;
 
-      const action = args[0]•.toLowerCase();
+      const action = args[0]?.toLowerCase();
       if (!action || !['start', 'stop'].includes(action)) {
         return message.reply(cv2.warn('Usage', '`!modmode start` or `!modmode stop`'));
       }
@@ -75,8 +75,8 @@ export const commands = [
     },
     async executeSlash(interaction) {
       const isAuthorized = isBotOwnerSync(interaction.user.id) ||
-        interaction.user.id === interaction.guild•.ownerId ||
-        db.isExtraOwner(interaction.guild•.id, interaction.user.id);
+        interaction.user.id === interaction.guild?.ownerId ||
+        db.isExtraOwner(interaction.guild?.id, interaction.user.id);
       if (!isAuthorized) {
         return interaction.reply(cv2.danger('Access Denied', '️ Only Bot Owner, Server Owner, or Extra Owners can use Modification Mode.'));
       }

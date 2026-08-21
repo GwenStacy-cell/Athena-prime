@@ -95,7 +95,7 @@ export const commands = [
     ],
     aliases: ['statsetup', 'serverstat', 'statsconfig'],
     executePrefix: async (message, args) => {
-      const action = args[0]•.toLowerCase();
+      const action = args[0]?.toLowerCase();
       
       if (action === 'disable') {
         const stats = db.getServerStats(message.guild.id);
@@ -117,7 +117,7 @@ export const commands = [
         if (!stats) return message.reply(cv2.warning('Not Setup', 'Server stats are not currently set up. Please run `!serverstats setup` first.'));
         
         let newEmoji = args[1];
-        let newFont = args[2]•.toLowerCase();
+        let newFont = args[2]?.toLowerCase();
         
         // Handle if user only provided font
         const validFonts = ['standard', 'bold', 'italic', 'smallcaps', 'serif', 'script', 'gothic', 'mono'];

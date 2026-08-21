@@ -26,7 +26,7 @@ export async function processMediaLink(client, message, url) {
     let localFile = null;
 
     if (url.includes('tiktok.com')) {
-      const res = await fetch(`https://www.tikwm.com/api/•url=${encodeURIComponent(url)}`);
+      const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
       const data = await res.json();
       if (data.data && data.data.play) directUrl = data.data.play;
     } else if (url.includes('youtube.com') || url.includes('youtu.be')) {

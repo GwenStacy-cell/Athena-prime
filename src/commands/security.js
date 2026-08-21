@@ -39,7 +39,7 @@ export function parseDuration(str) {
   if (!str) return 5 * 60 * 1000; // default 5m
   str = String(str).trim().toLowerCase();
 
-  // Bare number Ã¢â€ ' minutes
+  // Bare number Ã¢â€ â€™ minutes
   if (/^\d+$/.test(str)) return Math.min(parseInt(str), 10080) * 60 * 1000;
 
   let ms = 0;
@@ -55,7 +55,7 @@ export function parseDuration(str) {
     }
   }
   // Cap at 7 days
-  return ms > 0 • Math.min(ms, 7 * 86400 * 1000) : 5 * 60 * 1000;
+  return ms > 0 ? Math.min(ms, 7 * 86400 * 1000) : 5 * 60 * 1000;
 }
 
 /** Format ms into human-readable string e.g. "5m", "1h 30m" */
@@ -130,7 +130,7 @@ export const commands = [
       // args[0] = mention, args[1] could be duration or start of reason
       let remaining = args.slice(1);
       let durationMs = 5 * 60 * 1000; // default 5m
-      if (remaining[0] && /^[\d]+[smhd]•$/i.test(remaining[0])) {
+      if (remaining[0] && /^[\d]+[smhd]?$/i.test(remaining[0])) {
         durationMs = parseDuration(remaining[0]);
         remaining = remaining.slice(1);
       }
@@ -170,7 +170,7 @@ export const commands = [
       if (!target) return message.reply(cv2.warn('Usage', `${message.author} **Usage:** \`!qr <@user> [duration] [reason]\``));
       let remaining = args.slice(1);
       let durationMs = 5 * 60 * 1000;
-      if (remaining[0] && /^[\d]+[smhd]•$/i.test(remaining[0])) {
+      if (remaining[0] && /^[\d]+[smhd]?$/i.test(remaining[0])) {
         durationMs = parseDuration(remaining[0]);
         remaining = remaining.slice(1);
       }
@@ -256,7 +256,7 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const action = args[0]•.toLowerCase() === 'end' • 'end' : 'mode';
+      const action = args[0]?.toLowerCase() === 'end' ? 'end' : 'mode';
       let statusMsg = null;
       const updateProgress = async (embedData) => {
         if (!statusMsg) statusMsg = await message.reply({ embeds: [embedData] }).catch(() => null);
@@ -326,7 +326,7 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const mode = args[0]•.toLowerCase() === 'off' • 'off' : 'on';
+      const mode = args[0]?.toLowerCase() === 'off' ? 'off' : 'on';
       const result = await handleLockdown(message.guild, message.channel, message.member, mode);
       await message.reply(result);
     },
@@ -357,7 +357,7 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const mode = args[0]•.toLowerCase() === 'on' • 'on' : 'off';
+      const mode = args[0]?.toLowerCase() === 'on' ? 'on' : 'off';
       const result = await handleRaidMode(message.guild, message.member, mode);
       await message.reply(result);
     },
@@ -479,7 +479,7 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const action = args[0]•.toLowerCase();
+      const action = args[0]?.toLowerCase();
       const phrase = args.slice(1).join(' ');
 
       if (!action || (action !== 'list' && !phrase)) {
@@ -545,8 +545,8 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const setting = args[0]•.toLowerCase();
-      const value = args[1]•.toLowerCase();
+      const setting = args[0]?.toLowerCase();
+      const value = args[1]?.toLowerCase();
 
       if (!setting || !value) {
         return message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!config <antinuke|antispam|antiinvite|maxwarnings> <on|off|number>\``));
@@ -662,7 +662,7 @@ export const commands = [
         return message.reply(cv2.danger('Permission Denied', `${message.author} This command is restricted to the Bot Owner and the Server Owner.`));
       }
 
-      let channelId = args[0]•.replace(/[<#&>]/g, '');
+      let channelId = args[0]?.replace(/[<#&>]/g, '');
       let channel = null;
       if (channelId) {
         channel = await message.guild.channels.fetch(channelId).catch(() => null);
@@ -674,7 +674,7 @@ export const commands = [
         channel = message.guild.channels.cache.find(c => c.name.toLowerCase() === args.join(' ').toLowerCase() && c.isVoiceBased());
       }
       if (!channel) {
-        channel = message.member•.voice•.channel;
+        channel = message.member?.voice?.channel;
       }
 
       if (!channel || !channel.isVoiceBased()) {
@@ -693,7 +693,7 @@ export const commands = [
       }
 
       const voiceChannel = interaction.options.getChannel('channel');
-      let channel = voiceChannel || interaction.member•.voice•.channel;
+      let channel = voiceChannel || interaction.member?.voice?.channel;
 
       if (!channel || !channel.isVoiceBased()) {
         return interaction.reply(cv2.warn('Setup Error', `${interaction.user} Please specify a Voice Channel or join one first.`));
@@ -775,7 +775,7 @@ export const commands = [
         return message.reply(cv2.danger('Permission Denied', `${message.author}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`));
       }
 
-      const url = args[0] || message.attachments.first()•.url;
+      const url = args[0] || message.attachments.first()?.url;
       if (!url) {
         return message.reply(cv2.warn('Command Error', `${message.author} Please provide a direct image URL or attach an image.`));
       }
@@ -800,7 +800,7 @@ export const commands = [
         return interaction.reply(cv2.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`));
       }
 
-      const url = interaction.options.getString('url') || interaction.options.getAttachment('image')•.url;
+      const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
       if (!url) {
         return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`));
       }
@@ -847,7 +847,7 @@ export const commands = [
         return message.reply(cv2.danger('Permission Denied', `${message.author}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`));
       }
 
-      const url = args[0] || message.attachments.first()•.url;
+      const url = args[0] || message.attachments.first()?.url;
       if (!url) {
         return message.reply(cv2.warn('Command Error', `${message.author} Please provide a direct image URL or attach an image.`));
       }
@@ -872,7 +872,7 @@ export const commands = [
         return interaction.reply(cv2.danger('Permission Denied', `${interaction.user}  This command is restricted to the **Bot Owner** and **Server Owner** only. Extra Owners do not have access.`));
       }
 
-      const url = interaction.options.getString('url') || interaction.options.getAttachment('image')•.url;
+      const url = interaction.options.getString('url') || interaction.options.getAttachment('image')?.url;
       if (!url) {
         return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`));
       }
@@ -925,7 +925,7 @@ export const commands = [
         return message.reply(cv2.danger('Permission Denied', `${message.author} Only the **Bot Owner** and **Server Owner** can manage extra owners.`));
       }
 
-      const action = args[0]•.toLowerCase();
+      const action = args[0]?.toLowerCase();
       let targetUser = message.mentions.users.first();
       
       if (!targetUser && args[1]) {
@@ -988,8 +988,8 @@ export const commands = [
         return message.reply(cv2.danger('Permission Denied', `${message.author} Only the **Bot Owner** can manage the global bot blacklist.`));
       }
 
-      const action = args[0]•.toLowerCase();
-      let targetId = args[1]•.replace(/[<@!>]/g, '');
+      const action = args[0]?.toLowerCase();
+      let targetId = args[1]?.replace(/[<@!>]/g, '');
 
       if (!action || (action !== 'list' && !targetId)) {
         return message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!userblacklist add <ID>\`, \`!userblacklist remove <ID>\`, or \`!userblacklist list\``));
@@ -1004,7 +1004,7 @@ export const commands = [
       }
 
       const action = interaction.options.getString('action');
-      let targetId = interaction.options.getString('user_id')•.replace(/[<@!>]/g, '');
+      let targetId = interaction.options.getString('user_id')?.replace(/[<@!>]/g, '');
 
       if (action !== 'list' && !targetId) {
         return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please specify a target user ID.`));
@@ -1036,7 +1036,7 @@ export const commands = [
       },
       {
         name: 'bot_id',
-        description: 'The bot\'s User ID (right-click Ã¢â€ ' Copy ID)',
+        description: 'The bot\'s User ID (right-click Ã¢â€ â€™ Copy ID)',
         type: 3,
         required: false
       }
@@ -1046,7 +1046,7 @@ export const commands = [
       if (!allowed) {
         return message.reply(cv2.danger('Permission Denied', `${message.author} Only the **Bot Owner** and **Server Owner** can manage the bot whitelist.`));
       }
-      const action = args[0]•.toLowerCase();
+      const action = args[0]?.toLowerCase();
       const botId = args[1];
       if (!action || (action !== 'list' && !botId)) {
         return message.reply(cv2.warn('Usage', `${message.author} \`!botwhitelist add <botId>\`, \`!botwhitelist remove <botId>\`, or \`!botwhitelist list\``));
@@ -1162,7 +1162,7 @@ export const commands = [
       }
 
       // Check if they used the `!ss` alias directly
-      const cmdName = message.content.slice(process.env.DEFAULT_PREFIX•.length || 1).split(/ +/)[0].toLowerCase();
+      const cmdName = message.content.slice(process.env.DEFAULT_PREFIX?.length || 1).split(/ +/)[0].toLowerCase();
       let sub = args.join(' ').toLowerCase().trim();
       if (cmdName === 'ss') {
         sub = 'status';
@@ -1282,7 +1282,7 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const action = args[0]•.toLowerCase();
+      const action = args[0]?.toLowerCase();
       if (!action) return message.reply(cv2.warn('Usage', 'Usage: `!qrmanager setup|setrole|setchannel|setvc|status`'));
       
       let role = message.mentions.roles.first() || null;
@@ -1392,7 +1392,7 @@ export const commands = [
       if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) && !isExtraOwner(message.guild.id, message.author.id)) {
         return message.reply(cv2.danger('Permission Denied', 'Only Server Owners and Extra Owners can lock apps.'));
       }
-      const mode = args[0]•.toLowerCase();
+      const mode = args[0]?.toLowerCase();
       if (mode !== 'on' && mode !== 'off') {
         return message.reply(cv2.warn('Invalid Usage', 'Usage: `!lockapps on` or `!lockapps off`'));
       }
@@ -1405,7 +1405,7 @@ export const commands = [
         if (!channel.isTextBased() && channel.type !== ChannelType.GuildVoice) continue;
         try {
            await channel.permissionOverwrites.edit(message.guild.roles.everyone, {
-             UseApplicationCommands: allow • null : false
+             UseApplicationCommands: allow ? null : false
            });
            successCount++;
         } catch(e) {}
@@ -1577,7 +1577,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
       .filter(r => !r.managed && r.id !== guild.id)
       .map(r => r.id);
 
-    const expiresAt = durationMs • Date.now() + durationMs : null;
+    const expiresAt = durationMs ? Date.now() + durationMs : null;
     db.addQuarantine(guild.id, targetMember.id, roleIdsToSave, reason, prevVoiceChannelId, expiresAt);
 
     // If target is connected to voice and quarantineVcId is set, drag them to the isolated VC
@@ -1593,7 +1593,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
     const managedRoles = targetMember.roles.cache.filter(r => r.managed).map(r => r.id);
     const newRoles = [...managedRoles, quarantineRole.id];
     
-    await targetMember.roles.set(newRoles, `Quarantined by ${moderator.user•.tag || 'System'} | Reason: ${reason}`);
+    await targetMember.roles.set(newRoles, `Quarantined by ${moderator.user?.tag || 'System'} | Reason: ${reason}`);
 
     // 6. Schedule auto-unquarantine if duration set
     if (durationMs && client) {
@@ -1601,14 +1601,14 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
     }
 
     // 7. DM target user
-    const durationLabel = durationMs • formatDuration(durationMs) : 'Until manually lifted';
+    const durationLabel = durationMs ? formatDuration(durationMs) : 'Until manually lifted';
     const dmEmbed = cv2.danger(
       'Server Isolation Notice',
       ` You have been placed under **Quarantine** in **${guild.name}**.`,
       [
         { name: 'Reason', value: reason },
         { name: 'Duration', value: durationLabel, inline: true },
-        { name: 'Assigned By', value: `${moderator.user•.tag || 'Automated System'}`, inline: true },
+        { name: 'Assigned By', value: `${moderator.user?.tag || 'Automated System'}`, inline: true },
         { name: 'Instructions', value: `Your access to the rest of the server has been restricted. Please navigate to <#${quarantineChannel.id}> to resolve this matter.` }
       ]
     );
@@ -1632,7 +1632,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
       `Member has been isolated.`,
       [
         { name: 'Target', value: `${targetMember.user.tag} (${targetMember.id})`, inline: true },
-        { name: 'Enforcer', value: `${moderator.user•.tag || 'System'}`, inline: true },
+        { name: 'Enforcer', value: `${moderator.user?.tag || 'System'}`, inline: true },
         { name: 'Reason', value: reason }
       ],
       'danger'
@@ -1673,12 +1673,12 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     const managedRoleIds = targetMember.roles.cache.filter(r => r.managed).map(r => r.id);
     
     // Add saved + managed, remove quarantine
-    const restoreRoles = [...new Set([...savedRoleIds, ...managedRoleIds])].filter(id => id !== quarantineRole•.id);
+    const restoreRoles = [...new Set([...savedRoleIds, ...managedRoleIds])].filter(id => id !== quarantineRole?.id);
 
     // Remove DB entry BEFORE restoring roles so the guildMemberUpdate interceptor doesn't falsely strip them!
     db.removeQuarantine(guild.id, targetMember.id);
 
-    await targetMember.roles.set(restoreRoles, `Unquarantined by ${moderator.user•.tag || 'System'}`);
+    await targetMember.roles.set(restoreRoles, `Unquarantined by ${moderator.user?.tag || 'System'}`);
 
     // If target was in voice before quarantine, and is currently connected to voice, restore their channel position
     if (record.previousVoiceChannelId && targetMember.voice.channelId) {
@@ -1717,7 +1717,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
         `Member has been restored.`,
         [
           { name: 'Target', value: `${targetMember.user.tag} (${targetMember.id})`, inline: true },
-          { name: 'Moderator', value: `${moderator.user•.tag || 'System'}`, inline: true }
+          { name: 'Moderator', value: `${moderator.user?.tag || 'System'}`, inline: true }
         ],
         'success'
       ));
@@ -1787,7 +1787,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
         await channel.permissionOverwrites.set([
           {
             id: guild.id,
-            deny: isProtectedCommunityChannel • [PermissionFlagsBits.SendMessages] : [PermissionFlagsBits.ViewChannel],
+            deny: isProtectedCommunityChannel ? [PermissionFlagsBits.SendMessages] : [PermissionFlagsBits.ViewChannel],
             type: 0
           },
           {
@@ -2041,10 +2041,10 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
   
   for (const k of modulesKeys) {
     const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
-    moduleListText += `> ${isEnabled • emojiOn : emojiOff} ${modLabels[k]}\n`;
+    moduleListText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 
-  const limitText = wData.triggerLimit === 0 • '0' : wData.triggerLimit;
+  const limitText = wData.triggerLimit === 0 ? '0' : wData.triggerLimit;
   
   const description = 
     `# WHITELIST ACCESS\n` +
@@ -2068,7 +2068,7 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
       return {
         label: modLabels[k],
         value: k,
-        emoji: isEnabled • { id: '1514996865030946847' } : { id: '1514996861474177109' }
+        emoji: isEnabled ? { id: '1514996865030946847' } : { id: '1514996861474177109' }
       };
     }).slice(0, 25);
 
@@ -2111,11 +2111,11 @@ export async function getWhitelistOverviewPanel(guild) {
   const roleIds = Object.keys(wlData.roles || {});
   
   let usersText = userIds.length > 0 
-    • userIds.map(id => `| <@${id}>`).slice(0, 10).join('\n') + (userIds.length > 10 • '\n| ...and more' : '')
+    ? userIds.map(id => `| <@${id}>`).slice(0, 10).join('\n') + (userIds.length > 10 ? '\n| ...and more' : '')
     : '| None';
     
   let rolesText = roleIds.length > 0
-    • roleIds.map(id => `| <@&${id}>`).slice(0, 10).join('\n') + (roleIds.length > 10 • '\n| ...and more' : '')
+    ? roleIds.map(id => `| <@&${id}>`).slice(0, 10).join('\n') + (roleIds.length > 10 ? '\n| ...and more' : '')
     : '| None';
 
   const description = 
@@ -2159,7 +2159,7 @@ export async function getWhitelistSelectPanel(guild, type, action) {
   const ids = Object.keys(wlData[type] || {});
 
   if (action === 'add') {
-    placeholder = `Select a ${isUser • 'user' : 'role'} to add to whitelist`;
+    placeholder = `Select a ${isUser ? 'user' : 'role'} to add to whitelist`;
     if (isUser) {
       menu = new UserSelectMenuBuilder().setCustomId(`wlo_selectadd_${type}`).setPlaceholder(placeholder);
     } else {
@@ -2167,8 +2167,8 @@ export async function getWhitelistSelectPanel(guild, type, action) {
     }
   } else {
     placeholder = action === 'manage' 
-      • `Select a ${isUser • 'user' : 'role'} to manage permissions`
-      : `Select a ${isUser • 'user' : 'role'} to remove from whitelist`;
+      ? `Select a ${isUser ? 'user' : 'role'} to manage permissions`
+      : `Select a ${isUser ? 'user' : 'role'} to remove from whitelist`;
       
     if (ids.length === 0) {
       menu = new StringSelectMenuBuilder()
@@ -2181,10 +2181,10 @@ export async function getWhitelistSelectPanel(guild, type, action) {
       for (const id of ids.slice(0, 25)) {
         if (isUser) {
           const u = await guild.client.users.fetch(id).catch(()=>null);
-          options.push({ label: u • u.tag : id, value: id });
+          options.push({ label: u ? u.tag : id, value: id });
         } else {
           const r = guild.roles.cache.get(id);
-          options.push({ label: r • r.name : id, value: id });
+          options.push({ label: r ? r.name : id, value: id });
         }
       }
       menu = new StringSelectMenuBuilder()
@@ -2194,7 +2194,7 @@ export async function getWhitelistSelectPanel(guild, type, action) {
     }
   }
 
-  const description = `| Select a ${isUser • 'user' : 'role'} to ${action === 'manage' • 'manage their whitelist permissions' : (action === 'add' • 'add to whitelist' : 'remove from whitelist')}`;
+  const description = `| Select a ${isUser ? 'user' : 'role'} to ${action === 'manage' ? 'manage their whitelist permissions' : (action === 'add' ? 'add to whitelist' : 'remove from whitelist')}`;
     
   const mainDisplay = new TextDisplayBuilder().setContent(description);
   const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
@@ -2242,8 +2242,8 @@ export async function buildAutonickDashboard(guildId) {
     db.updateGuildConfig(guildId, { autonick: cfg.autonick });
   }
 
-  const state = cfg.autonick.enabled • 'ENABLED' : 'DISABLED';
-  const color = cfg.autonick.enabled • 'success' : 'danger';
+  const state = cfg.autonick.enabled ? 'ENABLED' : 'DISABLED';
+  const color = cfg.autonick.enabled ? 'success' : 'danger';
   const layout = cfg.autonick.layout || '{name}';
   const exampleName = layout.replace('{name}', 'Username');
   
@@ -2251,8 +2251,8 @@ export async function buildAutonickDashboard(guildId) {
 
   const toggleBtn = new ButtonBuilder()
     .setCustomId('autonick_toggle')
-    .setLabel(cfg.autonick.enabled • 'Disable' : 'Enable')
-    .setStyle(cfg.autonick.enabled • ButtonStyle.Danger : ButtonStyle.Success);
+    .setLabel(cfg.autonick.enabled ? 'Disable' : 'Enable')
+    .setStyle(cfg.autonick.enabled ? ButtonStyle.Danger : ButtonStyle.Success);
     
   const editBtn = new ButtonBuilder()
     .setCustomId('autonick_edit')
@@ -2306,8 +2306,8 @@ async function handleConfig(guild, moderator, setting, value) {
   if (setting === 'antinuke') {
     updates.antiNukeEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
-    const modeDesc = enabled • `${TOGGLE_ON} ACTIVE (Rapid deletions or bans trigger instant quarantine)` : `${TOGGLE_OFF} DEACTIVATED`;
-    logToSecurityChannel(guild, cv2.log('Config Anti-Nuke Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Nuke to **${value.toUpperCase()}**.`, [], enabled • 'success' : 'warning'));
+    const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE (Rapid deletions or bans trigger instant quarantine)` : `${TOGGLE_OFF} DEACTIVATED`;
+    logToSecurityChannel(guild, cv2.log('Config Anti-Nuke Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Nuke to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
     
     if (enabled) {
       setupDashboardChannel(guild, guild.client);
@@ -2317,14 +2317,14 @@ async function handleConfig(guild, moderator, setting, value) {
   } else if (setting === 'antispam') {
     updates.antiSpamEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
-    const modeDesc = enabled • `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
-    logToSecurityChannel(guild, cv2.log('Config Anti-Spam Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Spam to **${value.toUpperCase()}**.`, [], enabled • 'success' : 'warning'));
+    const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
+    logToSecurityChannel(guild, cv2.log('Config Anti-Spam Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Spam to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
     return cv2.success('Anti-Spam Configured', `Automated rate-limit filters are now **${modeDesc}**.`);
   } else if (setting === 'antiinvite') {
     updates.antiInviteEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
-    const modeDesc = enabled • `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
-    logToSecurityChannel(guild, cv2.log('Config Anti-Invite Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Invite to **${value.toUpperCase()}**.`, [], enabled • 'success' : 'warning'));
+    const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
+    logToSecurityChannel(guild, cv2.log('Config Anti-Invite Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Invite to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
     return cv2.success('Anti-Invite Configured', `Discord invite link auto-mod is now **${modeDesc}**.`);
   }
 
@@ -2345,10 +2345,10 @@ export async function getAntinukeConfigPanel(guild) {
   const description = 
     `# MODULE CONFIGURATION\n` +
     `-# **Athena Prime - God-Tier Firewall**\n\n` +
-    `> ${nukeState • emojiOn : emojiOff} Anti-Nuke Firewall\n` +
-    `> ${spamState • emojiOn : emojiOff} Anti-Spam Filter\n` +
-    `> ${inviteState • emojiOn : emojiOff} Anti-Invite Blocker\n` +
-    `> ${blacklistState • emojiOn : emojiOff} Word Filter (${config.blacklistWords • config.blacklistWords.length : 0} Words)\n` +
+    `> ${nukeState ? emojiOn : emojiOff} Anti-Nuke Firewall\n` +
+    `> ${spamState ? emojiOn : emojiOff} Anti-Spam Filter\n` +
+    `> ${inviteState ? emojiOn : emojiOff} Anti-Invite Blocker\n` +
+    `> ${blacklistState ? emojiOn : emojiOff} Word Filter (${config.blacklistWords ? config.blacklistWords.length : 0} Words)\n` +
     `> Punishment: \`${config.antiNukePunishment.toUpperCase()}\`\n` +
     `> Warn Limit: \`${config.maxWarnings}\`\n\n` +
     `-# Raw API strike engine active - nuke bots eliminated in ~1-3ms`;
@@ -2359,26 +2359,26 @@ export async function getAntinukeConfigPanel(guild) {
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('toggle_antinuke')
-      .setLabel(`Anti-Nuke ${nukeState • 'ON' : 'OFF'}`)
-      .setEmoji(nukeState • { id: '1514996865030946847' } : { id: '1514996861474177109' })
+      .setLabel(`Anti-Nuke ${nukeState ? 'ON' : 'OFF'}`)
+      .setEmoji(nukeState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_spam')
-      .setLabel(`Anti-Spam ${spamState • 'ON' : 'OFF'}`)
-      .setEmoji(spamState • { id: '1514996865030946847' } : { id: '1514996861474177109' })
+      .setLabel(`Anti-Spam ${spamState ? 'ON' : 'OFF'}`)
+      .setEmoji(spamState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_invite')
-      .setLabel(`Anti-Invite ${inviteState • 'ON' : 'OFF'}`)
-      .setEmoji(inviteState • { id: '1514996865030946847' } : { id: '1514996861474177109' })
+      .setLabel(`Anti-Invite ${inviteState ? 'ON' : 'OFF'}`)
+      .setEmoji(inviteState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
       .setStyle(ButtonStyle.Secondary)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('toggle_blacklist_filter')
-      .setLabel(`Word Filter ${blacklistState • 'ON' : 'OFF'}`)
-      .setEmoji(blacklistState • { id: '1514996865030946847' } : { id: '1514996861474177109' })
+      .setLabel(`Word Filter ${blacklistState ? 'ON' : 'OFF'}`)
+      .setEmoji(blacklistState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('cycle_punishment')
@@ -2428,7 +2428,7 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
   }
 
   const resEmbed = enable
-    • cv2.success(
+    ? cv2.success(
         '<:on:1514996865030946847> God-Tier Firewall - Fully Operational',
         `<:on:1514996865030946847> **Firewall Layer:** Raw API Strike Engine Active
 <:on:1514996865030946847> **Predictive Layer:** Behavioral Pattern Detection Online
@@ -2455,9 +2455,9 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 
   logToSecurityChannel(guild, cv2.log(
     'Toggle All Security',
-    `Administrator **${moderator.user.tag}** toggled all shields **${enable • 'ON' : 'OFF'}**.`,
+    `Administrator **${moderator.user.tag}** toggled all shields **${enable ? 'ON' : 'OFF'}**.`,
     [],
-    enable • 'success' : 'warning'
+    enable ? 'success' : 'warning'
   ));
 
   return resEmbed;
@@ -2501,7 +2501,7 @@ async function handleExtraOwner(guild, moderator, action, targetUser) {
 }
 
 async function handleBotWhitelist(guild, action, botId) {
-  const cleanId = botId • botId.replace(/[<@&!>]/g, '') : null;
+  const cleanId = botId ? botId.replace(/[<@&!>]/g, '') : null;
   
   if (action === 'add') {
     if (!cleanId || !/^\d{17,20}$/.test(cleanId)) return cv2.warn('Invalid ID', 'Please provide a valid bot User ID or a Role mention/ID.');
@@ -2576,10 +2576,10 @@ async function handleAntiLink(guild, moderator, mode) {
   const enabled = mode === 'on';
   db.updateGuildConfig(guild.id, { antiLinkEnabled: enabled });
 
-  const modeDesc = enabled • `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
+  const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
   const resEmbed = cv2.success(
     'Anti-Link Configured',
-    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled • 'The following links will now be **strictly blocked**:\n> <:dark4luvontop:1533860081916182721> Discord Invites\n> <:dark4luvontop:1533860081916182721> NSFW Links\n> <:dark4luvontop:1533860081916182721> Scam/Phishing Links\n> <:dark4luvontop:1533860081916182721> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
+    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <:dark4luvontop:1533860081916182721> Discord Invites\n> <:dark4luvontop:1533860081916182721> NSFW Links\n> <:dark4luvontop:1533860081916182721> Scam/Phishing Links\n> <:dark4luvontop:1533860081916182721> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
     [{ name: 'Changed by', value: `${moderator}` }]
   );
 
@@ -2587,7 +2587,7 @@ async function handleAntiLink(guild, moderator, mode) {
     'Anti-Link Toggle',
     `Administrator **${moderator.user.tag}** toggled Anti-Link to **${mode.toUpperCase()}**.`,
     [],
-    enabled • 'success' : 'warning'
+    enabled ? 'success' : 'warning'
   ));
 
   return resEmbed;
@@ -2596,7 +2596,7 @@ async function handleAntiLink(guild, moderator, mode) {
 async function getServerInfoEmbed(guild) {
   const config = db.getGuildConfig(guild.id);
   const owner = await guild.members.fetch(guild.ownerId).catch(() => null);
-  const ownerTag = owner • owner.user.tag : 'Unknown';
+  const ownerTag = owner ? owner.user.tag : 'Unknown';
   const totalMembers = guild.memberCount;
   const roleCount = guild.roles.cache.size;
   const channelCount = guild.channels.cache.size;
@@ -2604,11 +2604,11 @@ async function getServerInfoEmbed(guild) {
   const boostCount = guild.premiumSubscriptionCount || 0;
   const createdAt = `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>`;
 
-  const antiNukeStatus   = config.antiNukeEnabled               • `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
-  const antiSpamStatus   = config.antiSpamEnabled               • `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
-  const antiInviteStatus = (config.antiInviteEnabled !== false) • `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
-  const antiLinkStatus   = config.antiLinkEnabled               • `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
-  const raidModeStatus   = config.raidMode                      • '<:dark4luvontop:1533860081916182721> ENGAGED' : `${TOGGLE_ON} STANDBY`;
+  const antiNukeStatus   = config.antiNukeEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const antiSpamStatus   = config.antiSpamEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const antiInviteStatus = (config.antiInviteEnabled !== false) ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const raidModeStatus   = config.raidMode                      ? '<:dark4luvontop:1533860081916182721> ENGAGED' : `${TOGGLE_ON} STANDBY`;
 
   let iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
 
@@ -2652,7 +2652,7 @@ async function getUserInfoEmbed(guild, member) {
   const isExtraOwner = db.isExtraOwner(guild.id, member.id);
   const wlMap = db.getGuildConfig(guild.id).whitelist || {};
   const isWhitelisted = !!wlMap[member.id];
-  const wlEvents = isWhitelisted • wlMap[member.id].join(', ') : '';
+  const wlEvents = isWhitelisted ? wlMap[member.id].join(', ') : '';
   const warnings = db.getWarnings(guild.id, member.id);
   const isExtra = db.isExtraOwner(guild.id, member.id);
   const isBotOwn = isBotOwnerSync(member.id);
@@ -2749,7 +2749,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
 export async function getSecurityStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
   const isSecured = !!(config.securityEnabled || config.antiNukeEnabled);
-  let botAvatarUrl = guild.client•.user•.displayAvatarURL({ dynamic: true, size: 256 }) || null;
+  let botAvatarUrl = guild.client?.user?.displayAvatarURL({ dynamic: true, size: 256 }) || null;
 
   const modLabels = {
     antiRoleCreate: 'Anti Role Create',
@@ -2786,15 +2786,15 @@ export async function getSecurityStatusPanel(guild) {
 
   let listText = '';
   for (const k of Object.keys(modLabels)) {
-    const moduleFlag = config.antinukeModules•.[k];
-    const isEnabled = isSecured && (moduleFlag === undefined • true : !!moduleFlag);
-    listText += `> ${isEnabled • emojiOn : emojiOff} ${modLabels[k]}\n`;
+    const moduleFlag = config.antinukeModules?.[k];
+    const isEnabled = isSecured && (moduleFlag === undefined ? true : !!moduleFlag);
+    listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 
   const headerSection = { type: 10, content: `# SECURITY FIREWALL STATUS\n` +
-          `-# **Global Status:** ${isSecured • 'God-Tier Firewall ACTIVE' : 'Offline \u2014 Unprotected'}\n` +
-          `-# **Strike Engine:** ${isSecured • 'Raw API \u2014 ~1-3ms elimination' : 'Disabled'}\n` +
-          `-# **Predictive Layer:** ${isSecured • 'Online \u2014 Behavioral scanning active' : 'Disabled'}`
+          `-# **Global Status:** ${isSecured ? 'God-Tier Firewall ACTIVE' : 'Offline \u2014 Unprotected'}\n` +
+          `-# **Strike Engine:** ${isSecured ? 'Raw API \u2014 ~1-3ms elimination' : 'Disabled'}\n` +
+          `-# **Predictive Layer:** ${isSecured ? 'Online \u2014 Behavioral scanning active' : 'Disabled'}`
      };
   
 
@@ -2831,15 +2831,15 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const qChannel = await getOrCreateQuarantineChannel(guild, qRole);
 
     // Sync deny overwrites on ALL channels (except quarantine-zone)
-    const synced = await syncQuarantinePermissions(guild, qRole, qChannel•.id || null);
+    const synced = await syncQuarantinePermissions(guild, qRole, qChannel?.id || null);
 
     const fields = [
-      { name: '<:dark4luvontop:1533860081916182721> Quarantine Role',    value: qRole    • `<@&${qRole.id}>`     : ' Not Created', inline: true },
-      { name: '<:dark4luvontop:1533860081916182721> Quarantine Channel', value: qChannel • `<#${qChannel.id}>`   : ' Not Created', inline: true },
+      { name: '<:dark4luvontop:1533860081916182721> Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
+      { name: '<:dark4luvontop:1533860081916182721> Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
       { name: '<:dark4luvontop:1533860081916182721> Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
     ];
 
-    const vc = config.quarantineVcId • await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
+    const vc = config.quarantineVcId ? await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
     if (vc) fields.push({ name: '<:dark4luvontop:1533860081916182721> Quarantine VC', value: `<#${vc.id}>`, inline: true });
 
     return cv2.success(
@@ -2873,14 +2873,14 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 
   if (action === 'status') {
     const updatedConfig = db.getGuildConfig(guild.id);
-    const role    = updatedConfig.quarantineRoleId    • await guild.roles.fetch(updatedConfig.quarantineRoleId).catch(() => null)       : null;
-    const channel = updatedConfig.quarantineChannelId • await guild.channels.fetch(updatedConfig.quarantineChannelId).catch(() => null) : null;
-    const vc      = updatedConfig.quarantineVcId      • await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null)      : null;
+    const role    = updatedConfig.quarantineRoleId    ? await guild.roles.fetch(updatedConfig.quarantineRoleId).catch(() => null)       : null;
+    const channel = updatedConfig.quarantineChannelId ? await guild.channels.fetch(updatedConfig.quarantineChannelId).catch(() => null) : null;
+    const vc      = updatedConfig.quarantineVcId      ? await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null)      : null;
 
     return cv2.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
-        { name: 'Quarantine Role',    value: role    • `<@&${role.id}>`   : ' Not Set - run `/qrmanager setup`', inline: true },
-        { name: 'Quarantine Channel', value: channel • `<#${channel.id}>` : ' Not Set - run `/qrmanager setup`', inline: true },
-        { name: 'Quarantine VC',      value: vc      • `<#${vc.id}>`      : ' Not Set - use `/qrmanager setvc`', inline: true }
+        { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set - run `/qrmanager setup`', inline: true },
+        { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set - run `/qrmanager setup`', inline: true },
+        { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set - use `/qrmanager setvc`', inline: true }
       ]);
   }
 
@@ -2912,7 +2912,7 @@ async function handleLinksAllow(guild, action, domain) {
   if (action === 'add') {
     // Normalize: strip protocol and path, keep domain only
     const cleanDomain = (domain || '')
-      .replace(/^https•:\/\//i, '')
+      .replace(/^https?:\/\//i, '')
       .replace(/\/.*$/, '')
       .trim()
       .toLowerCase();
@@ -2928,7 +2928,7 @@ async function handleLinksAllow(guild, action, domain) {
 
   if (action === 'remove') {
     const cleanDomain = (domain || '')
-      .replace(/^https•:\/\//i, '')
+      .replace(/^https?:\/\//i, '')
       .replace(/\/.*$/, '')
       .trim()
       .toLowerCase();
@@ -3004,7 +3004,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
   for (const [, member] of targets) {
     const result = await executeQuarantine(guild, member, moderator, reason);
     if (result.success)            success++;
-    else if (result.message•.includes('already quarantined')) skipped++;
+    else if (result.message?.includes('already quarantined')) skipped++;
     else                           failed++;
 
     // 600ms delay between each to avoid Discord rate limits
@@ -3113,7 +3113,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   ];
 
   const sendPayload = async (text, isError = false) => {
-    const heading = isError • '# Initialization Failed' : '# SECURITY SHIELD SEQUENCE';
+    const heading = isError ? '# Initialization Failed' : '# SECURITY SHIELD SEQUENCE';
     const fullText = heading + '\n\n' + text;
     const display = new TextDisplayBuilder().setContent(fullText);
     const container = new ContainerBuilder().addTextDisplayComponents(display);
@@ -3122,7 +3122,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 
   let currentText = '';
   for (let i = 0; i < steps.length; i++) {
-    currentText += (i > 0 • '\n' : '') + steps[i];
+    currentText += (i > 0 ? '\n' : '') + steps[i];
     await sendPayload(currentText);
     await new Promise(r => setTimeout(r, 800));
   }
@@ -3339,7 +3339,7 @@ export async function handleScanServer(guild, page = 0) {
     desc += `### ${DANGER} UNAUTHORIZED BOTS\n`;
     unauthorizedBotsToShow.forEach(b => {
       const badRoles = getDangerousRoles(b);
-      desc += `${DOT} **@${b.user.username}** [\`${b.id}\`] ${badRoles.size > 0 • `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
+      desc += `${DOT} **@${b.user.username}** [\`${b.id}\`] ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
     });
     if (unauthorizedBots.length > endIdx) desc += `*...and ${unauthorizedBots.length - endIdx} more.*\n`;
     desc += `\n`;
@@ -3416,11 +3416,11 @@ export async function getAntilinkModulePanel(guild) {
   const globalInvOn = config.allowInvitesGlobally;
   const spamMentionOn = config.antiSpamMentionEnabled;
 
-  const linkRole = config.linkBypassRole • `<@&${config.linkBypassRole}>` : 'None';
-  const inviteRole = config.inviteBypassRole • `<@&${config.inviteBypassRole}>` : 'None';
-  const inviteChannel = config.inviteAllowedChannel • `<#${config.inviteAllowedChannel}>` : 'None';
+  const linkRole = config.linkBypassRole ? `<@&${config.linkBypassRole}>` : 'None';
+  const inviteRole = config.inviteBypassRole ? `<@&${config.inviteBypassRole}>` : 'None';
+  const inviteChannel = config.inviteAllowedChannel ? `<#${config.inviteAllowedChannel}>` : 'None';
   const spamMentionRoles = config.antiSpamMentionBypassRoles && config.antiSpamMentionBypassRoles.length > 0 
-    • config.antiSpamMentionBypassRoles.map(id => `<@&${id}>`).join(', ') 
+    ? config.antiSpamMentionBypassRoles.map(id => `<@&${id}>`).join(', ') 
     : 'None';
 
   const TOGGLE_ON = '<:on:1514996865030946847>';
@@ -3453,11 +3453,11 @@ export async function getAntilinkModulePanel(guild) {
   // Part 3: Current Configurations
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `### **Current Configurations:**\n` +
-    `-# **| Mass Mention Filter:** ${spamMentionOn • TOGGLE_ON : TOGGLE_OFF}\n` +
-    `-# **| Anti-Link Engine:** ${antiLinkOn • TOGGLE_ON : TOGGLE_OFF}\n` +
-    `-# **| Anti-Invite Engine:** ${antiInviteOn • TOGGLE_ON : TOGGLE_OFF}\n` +
-    `-# **| Allow All Links (Global):** ${allowAllOn • TOGGLE_ON : TOGGLE_OFF}\n` +
-    `-# **| Allow Invites (Global):** ${globalInvOn • TOGGLE_ON : TOGGLE_OFF}`
+    `-# **| Mass Mention Filter:** ${spamMentionOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}`
   ));
 
   panelContainer.addSeparatorComponents(new SeparatorBuilder().setDivider(true));

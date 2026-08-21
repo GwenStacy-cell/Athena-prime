@@ -37,8 +37,8 @@ export const commands = [
       try {
         await target.setNickname(newName);
         
-        const cfg = (await import('../database.js')).default.getGuildConfig(message.guild•.id || '0');
-        const accentInt = cfg.accentColor • parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+        const cfg = (await import('../database.js')).default.getGuildConfig(message.guild?.id || '0');
+        const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
 
         const successEmbed = new EmbedBuilder()
           .setColor(accentInt)

@@ -27,9 +27,9 @@ export const commands = [
           return Promise.all(rawTop.map(async (row) => {
             try {
               const member = await message.guild.members.fetch(row.user_id).catch(() => null);
-              const username = member•.user•.username
-                || member•.displayName
-                || (await message.client.users.fetch(row.user_id).catch(() => null))•.username
+              const username = member?.user?.username
+                || member?.displayName
+                || (await message.client.users.fetch(row.user_id).catch(() => null))?.username
                 || `User ${row.user_id.slice(-4)}`;
               return { user_id: row.user_id, username, total: row.total };
             } catch {
@@ -67,9 +67,9 @@ export const commands = [
           return Promise.all(rawTop.map(async (row) => {
             try {
               const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
-              const username = member•.user•.username
-                || member•.displayName
-                || (await interaction.client.users.fetch(row.user_id).catch(() => null))•.username
+              const username = member?.user?.username
+                || member?.displayName
+                || (await interaction.client.users.fetch(row.user_id).catch(() => null))?.username
                 || `User ${row.user_id.slice(-4)}`;
               return { user_id: row.user_id, username, total: row.total };
             } catch {

@@ -13,7 +13,7 @@ export async function buildXpDashboard(guildId) {
 
   const ON_EMOJI = '<a:on:1533844867191406672>';
   const OFF_EMOJI = '<:off:1533844858983157851>';
-  const statusIcon = system.enabled • ON_EMOJI : OFF_EMOJI;
+  const statusIcon = system.enabled ? ON_EMOJI : OFF_EMOJI;
 
   let rewardsText = 'None';
   if (Object.keys(system.roleRewards).length > 0) {
@@ -32,7 +32,7 @@ export async function buildXpDashboard(guildId) {
 
   const payload = cv2.info(
     'XP Manager',
-    `Welcome to the Interactive XP Control Panel.\n\n**Status**: ${statusIcon}\n**Announce Channel**: ${system.announceChannelId • `<#${system.announceChannelId}>` : 'Not Set'}\n**Command Channel**: ${system.cmdChannelId • `<#${system.cmdChannelId}>` : 'Not Set'}`,
+    `Welcome to the Interactive XP Control Panel.\n\n**Status**: ${statusIcon}\n**Announce Channel**: ${system.announceChannelId ? `<#${system.announceChannelId}>` : 'Not Set'}\n**Command Channel**: ${system.cmdChannelId ? `<#${system.cmdChannelId}>` : 'Not Set'}`,
     [
       { name: 'Role Rewards (Auto-Milestones)', value: rewardsText, inline: true },
       { name: 'XP Multipliers (1.5x Auto-Boost)', value: multipliersText, inline: true }
@@ -40,7 +40,7 @@ export async function buildXpDashboard(guildId) {
   );
 
   const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('xp_toggle').setLabel(system.enabled • 'Disable System' : 'Enable System').setStyle(system.enabled • ButtonStyle.Danger : ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('xp_toggle').setLabel(system.enabled ? 'Disable System' : 'Enable System').setStyle(system.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
     new ButtonBuilder().setCustomId('xp_set_announce').setLabel('Announce Ch (ID)').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('xp_set_cmd').setLabel('Command Ch (ID)').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('xp_clear').setLabel('Clear Setup').setStyle(ButtonStyle.Danger),

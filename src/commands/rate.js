@@ -19,7 +19,7 @@ export const commands = [
           if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
             return message.reply({ embeds: [cv2.danger('Permission Denied', 'You must be a Server Administrator to set the rating channel.')] });
           }
-          const channelId = channelMatch • channelMatch[1] : args[0];
+          const channelId = channelMatch ? channelMatch[1] : args[0];
           db.setRateChannel(message.guild.id, channelId);
           return message.reply({ embeds: [cv2.success('Channel Configured', `The designated edit rating channel is now <#${channelId}>.`)] });
         }
@@ -49,11 +49,11 @@ export const commands = [
 
 export async function createRateMessage(message, mediaUrl) {
   // Setup Base Embed
-  const guildConfig = message.guild • db.getGuildConfig(message.guild.id) : null;
+  const guildConfig = message.guild ? db.getGuildConfig(message.guild.id) : null;
   const rateEmbed = new EmbedBuilder()
     .setTitle(`Rate ${message.author.username}'s Edit`)
     .setDescription(`<a:1z:1517089474369032253> **Current Rating**\n0.0/5 (0 votes)\n\n**User Ratings**\n_No ratings yet_`)
-    .setColor(guildConfig•.accentColor || '#2b2d31');
+    .setColor(guildConfig?.accentColor || '#2b2d31');
 
   const starEmoji = { id: '1517089474369032253' };
 

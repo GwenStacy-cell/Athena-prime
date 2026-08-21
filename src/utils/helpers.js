@@ -117,7 +117,7 @@ export function canModerate(moderator, target) {
   
   // Bot owner is UNMODERATABLE
   if (isBotOwnerSync(target.id)) return false;
-  if (isBotOwnerSync(target.user•.id || target.id)) return false;
+  if (isBotOwnerSync(target.user?.id || target.id)) return false;
   
   // Extra owners are UNMODERATABLE
   if (target.guild && isExtraOwner(target.guild.id, target.id)) return false;
@@ -155,7 +155,7 @@ export async function logToSecurityChannel(guild, embedObject) {
         channel = await guild.channels.create({
           name: 'security-logs',
           type: ChannelType.GuildText,
-          topic: 'ï¸ Automated security audits and moderation records - Athena Prime',
+          topic: 'ï¸ Automated security audits and moderation records â€” Athena Prime',
           permissionOverwrites: [
             {
               id: guild.roles.everyone.id,
@@ -226,7 +226,7 @@ export async function getOrCreateQuarantineChannel(guild, quarantineRole) {
       channel = await guild.channels.create({
         name: 'quarantine-zone',
         type: ChannelType.GuildText,
-        topic: ' Under Investigation - Restricted Access Area - Athena Prime',
+        topic: ' Under Investigation - Restricted Access Area â€” Athena Prime',
         permissionOverwrites: [
           {
             id: guild.roles.everyone.id,
@@ -264,7 +264,7 @@ export async function isBotOwnerOrServerOwner(user, guild) {
   // Check extra owners
   if (guild && isExtraOwner(guild.id, user.id)) return true;
   
-  const client = guild • guild.client : user.client;
+  const client = guild ? guild.client : user.client;
   try {
     if (!client.application.owner) {
       await client.application.fetch();
@@ -285,7 +285,7 @@ export async function isBotOwnerOrServerOwner(user, guild) {
 }
 
 /**
- * STRICT version - only bot owner OR server owner. Extra owners are NOT included.
+ * STRICT version â€” only bot owner OR server owner. Extra owners are NOT included.
  * Used for sensitive commands like setguildavatar and setguildbanner.
  */
 export function isBotOwnerOrServerOwnerStrict(userId, guild) {
@@ -370,30 +370,30 @@ export async function syncQuarantinePermissions(guild, quarantineRole, excludeCh
 
     try {
       if (allowedChannelIds.has(channelId)) {
-        // Quarantine zone channels - grant access
+        // Quarantine zone channels â€” grant access
         if (channel.type === ChannelType.GuildVoice || channel.type === ChannelType.GuildStageVoice) {
           await channel.permissionOverwrites.edit(quarantineRole, {
             ViewChannel:  true,
             Connect:      true,
             Speak:        false, // can hear but not speak by default
             SendMessages: false
-          }, { reason: 'Athena Prime - quarantine VC access grant' });
+          }, { reason: 'Athena Prime â€” quarantine VC access grant' });
         } else {
           await channel.permissionOverwrites.edit(quarantineRole, {
             ViewChannel:      true,
             SendMessages:     true,
             ReadMessageHistory: true,
             Connect:          false
-          }, { reason: 'Athena Prime - quarantine text access grant' });
+          }, { reason: 'Athena Prime â€” quarantine text access grant' });
         }
       } else {
-        // All other channels - fully deny
+        // All other channels â€” fully deny
         await channel.permissionOverwrites.edit(quarantineRole, {
           ViewChannel:  false,
           SendMessages: false,
           Connect:      false,
           Speak:        false
-        }, { reason: 'Athena Prime - quarantine permission sync' });
+        }, { reason: 'Athena Prime â€” quarantine permission sync' });
       }
       synced++;
     } catch { /* Skip channels where bot lacks manage permissions */ }

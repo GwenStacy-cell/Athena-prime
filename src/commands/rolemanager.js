@@ -8,22 +8,22 @@ async function handleMassRole(context, role, action) {
   const executor = context.author || context.user;
   
   const highestBotRole = guild.members.me.roles.highest.position;
-  const highestUserRole = context.member•.roles.highest.position;
+  const highestUserRole = context.member?.roles.highest.position;
 
   if (role.position >= highestBotRole) {
     const reply = { embeds: [cv2.danger('Hierarchy Error', 'My highest role must be above the role you are trying to manage.')] };
-    return context.reply • await context.reply(reply) : await context.editReply(reply);
+    return context.reply ? await context.reply(reply) : await context.editReply(reply);
   }
   
   if (!isBotOwnerSync(executor.id) && guild.ownerId !== executor.id && role.position >= highestUserRole) {
     const reply = { embeds: [cv2.danger('Hierarchy Error', 'Your highest role must be above the role you are trying to manage.')] };
-    return context.reply • await context.reply(reply) : await context.editReply(reply);
+    return context.reply ? await context.reply(reply) : await context.editReply(reply);
   }
 
   const isSlash = !!context.commandName;
   if (isSlash) await context.deferReply();
   
-  const actionName = action === 'add' • 'Add' : action === 'remove' • 'Remove' : action === 'strip' • 'Strip' : 'Restore';
+  const actionName = action === 'add' ? 'Add' : action === 'remove' ? 'Remove' : action === 'strip' ? 'Strip' : 'Restore';
   
   const initialReply = { embeds: [cv2.success(`Mass ${actionName} Started`, `Processing \`${role.name}\`...`)] };
   let statusMessage;
@@ -77,7 +77,7 @@ async function handleMassRole(context, role, action) {
     
     const finishEmbed = cv2.success(
       `Mass ${actionName} Completed`, 
-      `Successfully processed ${action === 'add' || action === 'restore' • 'addition' : 'removal'} for **${successCount}** members.\nFailed: **${failCount}**`
+      `Successfully processed ${action === 'add' || action === 'restore' ? 'addition' : 'removal'} for **${successCount}** members.\nFailed: **${failCount}**`
     );
     await statusMessage.edit({ embeds: [finishEmbed] }).catch(() => null);
   } catch (err) {

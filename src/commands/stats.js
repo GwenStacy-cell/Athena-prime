@@ -8,7 +8,7 @@ export const commands = [
   {
     name: 'stats',
     description: 'View server statistics and insights',
-    // Statbot-style aliases: s•me, s•u, s•stats, s•statsme
+    // Statbot-style aliases: s?me, s?u, s?stats, s?statsme
     aliases: ['me', 'u', 'statsme', 'statme', 'mystat', 'mystats'],
     category: 'utility',
     options: [
@@ -83,7 +83,7 @@ export const commands = [
       let targetMember = message.member;
 
       // Check if they typed !statsme or !stats me
-      const isMe = message.content.toLowerCase().includes('statsme') || args[0]•.toLowerCase() === 'me';
+      const isMe = message.content.toLowerCase().includes('statsme') || args[0]?.toLowerCase() === 'me';
       const mentionedUser = message.mentions.users.first();
 
       if (mentionedUser) {

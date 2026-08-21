@@ -53,7 +53,7 @@ export const commands = [
       }
       
       const targetChannel = interaction.options.getChannel('channel');
-      const vc = targetChannel && targetChannel.isVoiceBased() • targetChannel : interaction.member•.voice•.channel;
+      const vc = targetChannel && targetChannel.isVoiceBased() ? targetChannel : interaction.member?.voice?.channel;
       
       if (!vc) return interaction.reply(cv2.error('Error', 'You must be in a voice channel or select one.'));
       
@@ -117,7 +117,7 @@ export const commands = [
       }
       
       const targetChannel = interaction.options.getChannel('channel');
-      const vc = targetChannel && targetChannel.isVoiceBased() • targetChannel : interaction.member•.voice•.channel;
+      const vc = targetChannel && targetChannel.isVoiceBased() ? targetChannel : interaction.member?.voice?.channel;
       
       if (!vc) return interaction.reply(cv2.error('Error', 'You must be in a voice channel or select one.'));
       
@@ -158,7 +158,7 @@ export const commands = [
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
         return interaction.reply(cv2.error('Unauthorized', 'You do not have permission.')).catch(() => null);
       }
-      const vc = interaction.member•.voice•.channel;
+      const vc = interaction.member?.voice?.channel;
       if (!vc) return interaction.reply(cv2.error('Error', 'You must be in a voice channel.'));
       
       await interaction.deferReply({ ephemeral: false });
@@ -210,7 +210,7 @@ export const commands = [
       if (!(await isAuthorized(interaction.user, interaction.guild))) {
         return interaction.reply(cv2.error('Unauthorized', 'You do not have permission.')).catch(() => null);
       }
-      const vc = interaction.member•.voice•.channel;
+      const vc = interaction.member?.voice?.channel;
       if (!vc) return interaction.reply(cv2.error('Error', 'You must be in a voice channel.'));
       
       await interaction.deferReply({ ephemeral: false });

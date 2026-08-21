@@ -172,7 +172,7 @@ export async function enqueue(guild, member, query) {
                          const unplayed = likedSongs.filter(ls => !queue.history.slice(-10).some(h => h.url === ls.url));
                          if (unplayed.length > 0) {
                             const chosen = unplayed[Math.floor(Math.random() * unplayed.length)];
-                            let result = await node.rest.resolve(chosen.encoded • chosen.encoded : `ytmsearch:${chosen.title}`);
+                            let result = await node.rest.resolve(chosen.encoded ? chosen.encoded : `ytmsearch:${chosen.title}`);
                             if (result && result.loadType === 'track') {
                                nextSong = result.data;
                                nextSong.requester = global.client.user;
@@ -189,8 +189,8 @@ export async function enqueue(guild, member, query) {
              if (!nextSong && queue.current) {
                 try {
                    // Clean title for search
-                   const cleanTitle = queue.current.title.replace(/\[.*•\]|\(.*•\)|\{.*•\}/g, '').split('|')[0].trim();
-                   const author = queue.current.author • queue.current.author.replace(/- Topic/i, '').trim() : '';
+                   const cleanTitle = queue.current.title.replace(/\[.*?\]|\(.*?\)|\{.*?\}/g, '').split('|')[0].trim();
+                   const author = queue.current.author ? queue.current.author.replace(/- Topic/i, '').trim() : '';
                    
                    // Fetch related tracks by searching for the same artist or similar vibe
                    let result = await node.rest.resolve(`ytmsearch:${author} mix audio`);
@@ -216,7 +216,7 @@ export async function enqueue(guild, member, query) {
              if (nextSong) {
                 const getThumbnail = (track) => {
                   if (track.info.artworkUrl) return track.info.artworkUrl;
-                  if (track.info.uri && track.info.uri.includes('youtube.com/watch•v=')) {
+                  if (track.info.uri && track.info.uri.includes('youtube.com/watch?v=')) {
                     const videoId = track.info.uri.split('v=')[1].split('&')[0];
                     return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
                   }
@@ -260,9 +260,9 @@ export async function enqueue(guild, member, query) {
         fs.writeFileSync('music_exception_log.txt', JSON.stringify(err, null, 2));
         
         // Graceful Fallback for LavaSrc Mirror Crashes (Spotify -> YouTube)
-        if (err.exception•.cause•.includes('TrackNotFoundException') && queue.current) {
+        if (err.exception?.cause?.includes('TrackNotFoundException') && queue.current) {
            const failedTrack = queue.current;
-           if (failedTrack.url•.includes('spotify.com') && !failedTrack.isFallback) {
+           if (failedTrack.url?.includes('spotify.com') && !failedTrack.isFallback) {
                console.log(`[Fallback] LavaSrc mirror failed for ${failedTrack.title}. Searching YouTube directly...`);
                const node = global.client.shoukaku.options.nodeResolver(global.client.shoukaku.nodes);
                if (node) {
@@ -281,7 +281,7 @@ export async function enqueue(guild, member, query) {
                      };
                      const targetMs = timeToMs(failedTrack.duration);
                      
-                     const searchData = result.loadType === 'track' • [result.data] : result.data.slice(0, 5);
+                     const searchData = result.loadType === 'track' ? [result.data] : result.data.slice(0, 5);
                      
                      let candidates = [];
                      
@@ -339,7 +339,7 @@ export async function enqueue(guild, member, query) {
                          if (rawTTitle.includes('reverb')) score -= 4;
                          if (rawTTitle.includes('karaoke')) score -= 4;
                          
-                         candidates.push({ track: t, score: score, diffMs: targetMs > 0 • (t.info.length - targetMs) : 0 });
+                         candidates.push({ track: t, score: score, diffMs: targetMs > 0 ? (t.info.length - targetMs) : 0 });
                      }
                      
                      if (candidates.length === 0) return;
@@ -363,7 +363,7 @@ export async function enqueue(guild, member, query) {
                      let candidatesLog = '';
                      for (let i = 0; i < Math.min(3, candidates.length); i++) {
                         const c = candidates[i];
-                        const sign = c.diffMs > 0 • '+' : '';
+                        const sign = c.diffMs > 0 ? '+' : '';
                         candidatesLog += `${i+1}. ${c.track.info.title} — ${c.track.info.author}\n   Score: ${c.score}\n   Duration: ${c.track.info.length}ms\n   Δ ${sign}${c.diffMs}ms\n\n`;
                      }
 
@@ -449,8 +449,8 @@ ${candidatesLog.trim()}
 
     if (!query.startsWith('http')) {
       const isFanEdit = /sped up|slowed|reverb|remix|cover|karaoke|instrumental|mashup|8d|bass boosted|lofi/i.test(query);
-      const searchEngine = isFanEdit • 'ytsearch:' : 'ytmsearch:';
-      const suffix = isFanEdit • '' : ' official audio';
+      const searchEngine = isFanEdit ? 'ytsearch:' : 'ytmsearch:';
+      const suffix = isFanEdit ? '' : ' official audio';
 
       const { searchSpotifyTrack } = await import('./spotify.js');
       const spotifyQuery = await searchSpotifyTrack(query);
@@ -523,8 +523,8 @@ ${candidatesLog.trim()}
     if (!result || (result.loadType !== 'track' && result.loadType !== 'playlist' && result.loadType !== 'search')) {
       if (searchStr.startsWith('spsearch:')) {
          const isFanEdit = /sped up|slowed|reverb|remix|cover|karaoke|instrumental|mashup|8d|bass boosted|lofi/i.test(query);
-         const searchEngine = isFanEdit • 'ytsearch:' : 'ytmsearch:';
-         const suffix = isFanEdit • '' : ' official audio';
+         const searchEngine = isFanEdit ? 'ytsearch:' : 'ytmsearch:';
+         const suffix = isFanEdit ? '' : ' official audio';
          searchStr = `${searchEngine}${query}${suffix}`;
          result = await resolveMultiNode(searchStr);
       }
@@ -532,7 +532,7 @@ ${candidatesLog.trim()}
     
     const getThumbnail = (track) => {
       if (track.info.artworkUrl) return track.info.artworkUrl;
-      if (track.info.uri && track.info.uri.includes('youtube.com/watch•v=')) {
+      if (track.info.uri && track.info.uri.includes('youtube.com/watch?v=')) {
         const videoId = track.info.uri.split('v=')[1].split('&')[0];
         return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
       }
@@ -628,7 +628,7 @@ async function playResource(guildId, song) {
     if (queue.player && song.encoded) {
 
        console.log("[DEBUG] About to play:", {
-         title: song.info•.title,
+         title: song.info?.title,
          encoded: !!song.encoded
        });
        try {
@@ -649,7 +649,7 @@ async function playResource(guildId, song) {
     }
   } catch (error) {
     console.error(`Error streaming song:`, error);
-    fs.writeFileSync('music_error_log.txt', String(error•.stack || error));
+    fs.writeFileSync('music_error_log.txt', String(error?.stack || error));
     
     if (global.client && queue.textChannel) {
       const channel = global.client.channels.cache.get(queue.textChannel);
@@ -668,7 +668,7 @@ function formatDuration(ms) {
 }
 function createTextProgressBar(currentMs, totalMs) {
   const size = 15;
-  const progress = totalMs === 0 • 0 : Math.min(currentMs / totalMs, 1);
+  const progress = totalMs === 0 ? 0 : Math.min(currentMs / totalMs, 1);
   const activeCount = Math.round(progress * size);
   const inactiveCount = size - activeCount;
   
@@ -678,7 +678,7 @@ function createTextProgressBar(currentMs, totalMs) {
     const totalSec = Math.floor(ms / 1000);
     const m = Math.floor(totalSec / 60);
     const s = Math.floor(totalSec % 60);
-    return `${m}:${s < 10 • '0' : ''}${s}`;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
   
   return `\`${formatTime(currentMs)}\` ${bar} \`${formatTime(totalMs)}\``;
@@ -692,18 +692,18 @@ async function updateNowPlayingEmbeds(guildId) {
   
   // Calculate total duration in ms
   const [mins, secs] = queue.current.duration.split(':').map(Number);
-  const totalMs = queue.current.duration === 'Unknown' • 0 : (mins * 60 + secs) * 1000;
+  const totalMs = queue.current.duration === 'Unknown' ? 0 : (mins * 60 + secs) * 1000;
   
   if (queue.player) {
      try {
        const guild = global.client.guilds.cache.get(guildId);
-       const vcId = guild.members.me.voice•.channelId;
+       const vcId = guild.members.me.voice?.channelId;
        const vc = guild.channels.cache.get(vcId);
        if (vc && vc.isTextBased()) {
          const nowPlayingEmbed = buildAddedToQueueMsg(queue.current, cfg.accentColor).embeds[0];
          nowPlayingEmbed.data.title = "🎶 Now Playing"; // Differentiate from "Added to Queue"
          
-         const textBar = createTextProgressBar(queue.player•.position || 0, totalMs);
+         const textBar = createTextProgressBar(queue.player?.position || 0, totalMs);
          nowPlayingEmbed.setDescription(nowPlayingEmbed.data.description + `\n\n${textBar}`);
          
          const embedsToSend = [nowPlayingEmbed];
@@ -736,7 +736,7 @@ async function clearNowPlayingEmbeds(guildId) {
   if (queue.player) {
     try {
        const guild = global.client.guilds.cache.get(guildId);
-       const vcId = guild.members.me.voice•.channelId;
+       const vcId = guild.members.me.voice?.channelId;
        const vc = guild.channels.cache.get(vcId);
        if (vc && queue.nowPlayingMsgVcId) {
           const msg = await vc.messages.fetch(queue.nowPlayingMsgVcId);
@@ -771,7 +771,7 @@ export async function updatePlayerUI(guildId) {
     
     const embed = new EmbedBuilder()
       .setColor(cfg.accentColor || '#ff0000')
-      .setAuthor({ name: 'Compact Music Player', iconURL: global.client•.user•.displayAvatarURL() });
+      .setAuthor({ name: 'Compact Music Player', iconURL: global.client?.user?.displayAvatarURL() });
 
     if (cfg.musicCoverImage) embed.setImage(cfg.musicCoverImage);
     
@@ -796,7 +796,7 @@ export async function updatePlayerUI(guildId) {
     const isPaused = queue.player && queue.player.paused;
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('music_prev').setLabel('Prev').setStyle(ButtonStyle.Secondary).setEmoji('⏮️'),
-      new ButtonBuilder().setCustomId('music_pause').setLabel(isPaused • 'Resume' : 'Pause').setStyle(ButtonStyle.Secondary).setEmoji(isPaused • '<:play:1528165307150241852>' : '<:pause_:1528165159686770740>'),
+      new ButtonBuilder().setCustomId('music_pause').setLabel(isPaused ? 'Resume' : 'Pause').setStyle(ButtonStyle.Secondary).setEmoji(isPaused ? '<:play:1528165307150241852>' : '<:pause_:1528165159686770740>'),
       new ButtonBuilder().setCustomId('music_skip').setLabel('Skip').setStyle(ButtonStyle.Secondary).setEmoji('<:skip:1528165408807588050>')
     );
     
@@ -806,8 +806,8 @@ export async function updatePlayerUI(guildId) {
     
     const row3 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('music_like').setLabel('Like').setStyle(ButtonStyle.Secondary).setEmoji('🤍'),
-      new ButtonBuilder().setCustomId('music_autoplay').setLabel(queue.autoplay • 'Autoplay (ON)' : 'Autoplay').setStyle(ButtonStyle.Secondary).setEmoji('<:autoplay:1524695881339764767>'),
-      new ButtonBuilder().setCustomId('music_repeat').setLabel(queue.repeatTrack • 'Replay (ON)' : 'Replay').setStyle(ButtonStyle.Secondary).setEmoji('🔁')
+      new ButtonBuilder().setCustomId('music_autoplay').setLabel(queue.autoplay ? 'Autoplay (ON)' : 'Autoplay').setStyle(ButtonStyle.Secondary).setEmoji('<:autoplay:1524695881339764767>'),
+      new ButtonBuilder().setCustomId('music_repeat').setLabel(queue.repeatTrack ? 'Replay (ON)' : 'Replay').setStyle(ButtonStyle.Secondary).setEmoji('🔁')
     );
 
     const row4 = new ActionRowBuilder().addComponents(
@@ -830,7 +830,7 @@ export async function handleInteraction(interaction) {
   const announceToVC = async (text) => {
      try {
        const guild = interaction.guild;
-       const vcId = guild.members.me.voice•.channelId;
+       const vcId = guild.members.me.voice?.channelId;
        const vc = guild.channels.cache.get(vcId);
        if (vc && vc.isTextBased()) {
          const cfg = db.getGuildConfig(guild.id);
@@ -849,9 +849,9 @@ export async function handleInteraction(interaction) {
     if (queue.player) {
       await queue.player.setPaused(!queue.player.paused);
       updatePlayerUI(interaction.guildId);
-      await interaction.reply({ content: queue.player.paused • `Playback paused.` : `Playback resumed.` });
-      const emoji = queue.player.paused • '<:pause_:1528165159686770740>' : '<:play:1528165307150241852>';
-      announceToVC(`${emoji} **${interaction.user.displayName}** ${queue.player.paused • 'paused' : 'resumed'} the playback.`);
+      await interaction.reply({ content: queue.player.paused ? `Playback paused.` : `Playback resumed.` });
+      const emoji = queue.player.paused ? '<:pause_:1528165159686770740>' : '<:play:1528165307150241852>';
+      announceToVC(`${emoji} **${interaction.user.displayName}** ${queue.player.paused ? 'paused' : 'resumed'} the playback.`);
     }
   } else if (action === 'skip') {
     if (!queue.current) return interaction.reply({ content: `There is nothing to skip.` });
@@ -874,17 +874,17 @@ export async function handleInteraction(interaction) {
   } else if (action === 'repeat') {
     queue.repeatTrack = !queue.repeatTrack;
     updatePlayerUI(interaction.guildId);
-    await interaction.reply({ content: `Repeat is now **${queue.repeatTrack • 'ON' : 'OFF'}**.` });
-    announceToVC(`🔁 **${interaction.user.displayName}** turned repeat **${queue.repeatTrack • 'ON' : 'OFF'}**.`);
+    await interaction.reply({ content: `Repeat is now **${queue.repeatTrack ? 'ON' : 'OFF'}**.` });
+    announceToVC(`🔁 **${interaction.user.displayName}** turned repeat **${queue.repeatTrack ? 'ON' : 'OFF'}**.`);
   } else if (action === 'autoplay') {
     queue.autoplay = !queue.autoplay;
     updatePlayerUI(interaction.guildId);
-    await interaction.reply({ content: `Autoplay is now **${queue.autoplay • 'ON' : 'OFF'}**.` });
-    announceToVC(`<:autoplay:1524695881339764767> **${interaction.user.displayName}** turned autoplay **${queue.autoplay • 'ON' : 'OFF'}**.`);
+    await interaction.reply({ content: `Autoplay is now **${queue.autoplay ? 'ON' : 'OFF'}**.` });
+    announceToVC(`<:autoplay:1524695881339764767> **${interaction.user.displayName}** turned autoplay **${queue.autoplay ? 'ON' : 'OFF'}**.`);
   } else if (action === 'like') {
     if (!queue.current) return interaction.reply({ content: `Nothing is playing to like!` });
     const added = db.toggleLikedSong(interaction.user.id, queue.current);
-    await interaction.reply({ content: added • `🤍 Added **${queue.current.title}** to your Liked Songs! (Autoplay will prioritize these)` : `Removed from Liked Songs.` });
+    await interaction.reply({ content: added ? `🤍 Added **${queue.current.title}** to your Liked Songs! (Autoplay will prioritize these)` : `Removed from Liked Songs.` });
     if (added) announceToVC(`🤍 **${interaction.user.displayName}** liked the current song!`);
   } else if (action === 'voldown') {
     queue.volume = Math.max(0, queue.volume - 10);
@@ -917,7 +917,7 @@ export function buildAddedToQueueMsg(track, accentColor = '#ff0000') {
   let desc = `# <:music:1528159649780732046> [${track.title.substring(0, 100)}](${track.url})\n`;
   desc += `By ${track.author || 'Unknown'}\n\n`;
   
-  const platformIcon = track.url.includes('spotify') • '<:spotify:1528161641601044690>' : '<:ytlogo:1528154904944709722>';
+  const platformIcon = track.url.includes('spotify') ? '<:spotify:1528161641601044690>' : '<:ytlogo:1528154904944709722>';
   desc += `${platformIcon} • ${track.duration} • <:author:1533860133770105002> <@${track.requester.id}>`;
   
   embed.setDescription(desc);

@@ -9,10 +9,10 @@ export default {
     // Fetch audit log to find creator
     await new Promise(r => setTimeout(r, 500));
     const logs = await channel.guild.fetchAuditLogs({ limit: 1, type: 10 /* ChannelCreate */ }).catch(() => null);
-    const entry = logs•.entries•.first();
+    const entry = logs?.entries?.first();
     let executor = 'Unknown';
-    if (entry && entry.target•.id === channel.id) {
-      executor = entry.executor • `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
+    if (entry && entry.target?.id === channel.id) {
+      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
     }
 
     const createEmbed = embed.build({
@@ -37,7 +37,7 @@ export default {
               SendMessages: false,
               Connect: false,
               Speak: false
-            }, { reason: 'Athena Prime - auto-hide new channel from quarantined users' });
+            }, { reason: 'Athena Prime â€” auto-hide new channel from quarantined users' });
           }
         }
       }

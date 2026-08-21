@@ -44,7 +44,7 @@ try {
 
 // Get emoji object for a given key (custom or text fallback)
 function getEmoji(key) {
-  if (emojiMap[key]•.id) return { id: emojiMap[key].id, name: emojiMap[key].name };
+  if (emojiMap[key]?.id) return { id: emojiMap[key].id, name: emojiMap[key].name };
   // Fallback text emoji
   const fallbacks = {
     name: '', limit: '<:dark4luvontop:1533860081916182721>', status: '<:dark4luvontop:1533860081916182721>', game: '<:dark4luvontop:1533860081916182721>', lfm: '<:dark4luvontop:1533860081916182721>',
@@ -58,7 +58,7 @@ function getEmoji(key) {
 function getAccent(guild) {
   if (!guild) return 0x2f3136;
   const cfg = db.getGuildConfig(guild.id);
-  if (cfg•.accentColor) {
+  if (cfg?.accentColor) {
     return parseInt(cfg.accentColor.replace('#', ''), 16);
   }
   return 0x2f3136; // Matches config.colors.dark
@@ -131,7 +131,7 @@ export function buildControlPanel(vcChannel, ownerMember) {
 export async function syncPanel(guild) {
   const { default: db } = await import('../database.js');
   const cfg = db.getJtcConfig(guild.id);
-  if (!cfg•.panelChannelId || !cfg•.panelMessageId) return false;
+  if (!cfg?.panelChannelId || !cfg?.panelMessageId) return false;
 
   const channel = await guild.channels.fetch(cfg.panelChannelId).catch(() => null);
   if (!channel) return false;
@@ -149,7 +149,7 @@ export async function syncPanel(guild) {
 }
 
 // ==========================================
-// SHARED PANEL - one persistent message in the interface channel
+// SHARED PANEL â€” one persistent message in the interface channel
 // Generic, no channel/owner info. All interactions are ephemeral.
 // ==========================================
 export function buildSharedPanel(guild) {
@@ -195,7 +195,7 @@ export function buildSharedPanel(guild) {
             `<a:Dark4luvontop:1518275045963726949> **Take control:** Use the dropdowns to manage your room\n` +
             `<a:Dark4luvontop:1518275045963726949> **Quick access:** Alternatively use \`/vc\` slash commands\n` +
             `<a:Dark4luvontop:1518275045963726949> **Stay private:** All interactions are hidden from others\n\n` +
-            `> Only **you** can see the responses - fully private.`
+            `> Only **you** can see the responses â€” fully private.`
           )
         )
         .setThumbnailAccessory(
@@ -221,7 +221,7 @@ export async function handleJtcSelectMenu(interaction) {
   const guild = interaction.guild;
 
   // Find the JTC channel - either from voice state or by extracting from the panel message
-  let vcChannel = member.voice•.channel;
+  let vcChannel = member.voice?.channel;
   
   if (!vcChannel) {
     // Safely extract channel ID from message text without JSON.stringify which causes circular errors
@@ -244,13 +244,13 @@ export async function handleJtcSelectMenu(interaction) {
     }
   }
 
-  const jtcData = vcChannel • db.getJtcChannel(vcChannel.id) : null;
+  const jtcData = vcChannel ? db.getJtcChannel(vcChannel.id) : null;
 
   if (!vcChannel || !jtcData) {
     return interaction.reply(cv2.e.warn('Error', 'Could not locate the associated voice channel. You must be connected to it.'));
   }
 
-  // â”€â”€ CLAIM - anyone in channel can do this â”€â”€
+  // â”€â”€ CLAIM â€” anyone in channel can do this â”€â”€
   if (value === 'jtc_claim') {
     const ownerInChannel = vcChannel.members.has(jtcData.ownerId);
     if (ownerInChannel) {
@@ -261,17 +261,17 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.success('Channel Claimed ', `You are now the owner of **${vcChannel.name}**.`));
   }
 
-  // â”€â”€ INFO - anyone can view â”€â”€
+  // â”€â”€ INFO â€” anyone can view â”€â”€
   if (value === 'jtc_info') {
     const members = vcChannel.members.map(m => m.toString()).join(', ') || 'None';
     const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
     return interaction.reply(cv2.e.info('Channel Info â„¹', null, [
         { name: '<:dark4luvontop:1533860081916182721> Name', value: vcChannel.name, inline: true },
-        { name: ' Owner', value: owner•.toString() || `\`${jtcData.ownerId}\``, inline: true },
-        { name: '<:dark4luvontop:1533860081916182721> Limit', value: vcChannel.userLimit === 0 • 'No Limit' : `${vcChannel.userLimit}`, inline: true },
+        { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
+        { name: '<:dark4luvontop:1533860081916182721> Limit', value: vcChannel.userLimit === 0 ? 'No Limit' : `${vcChannel.userLimit}`, inline: true },
         { name: '<:dark4luvontop:1533860081916182721> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
         { name: '<:dark4luvontop:1533860081916182721> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
-        { name: ' NSFW', value: vcChannel.nsfw • 'Yes' : 'No', inline: true },
+        { name: ' NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true },
         { name: '<:dark4luvontop:1533860081916182721> Members In Channel', value: members }
       ]));
   }
@@ -314,9 +314,9 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.success('NSFW Toggled', `Channel NSFW status set to **${!isNsfw}**.`));
   }
 
-  // â”€â”€ GAME - set channel name to game â”€â”€
+  // â”€â”€ GAME â€” set channel name to game â”€â”€
   if (value === 'jtc_game') {
-    const activity = member.presence•.activities.find(a => a.type === 0); // Playing
+    const activity = member.presence?.activities.find(a => a.type === 0); // Playing
     if (!activity) {
       return interaction.reply(cv2.e.warn('No Game Detected', 'You are not playing any recognized game right now.'));
     }
@@ -324,29 +324,29 @@ export async function handleJtcSelectMenu(interaction) {
     return interaction.reply(cv2.e.success('Game Set <:dark4luvontop:1533860081916182721>', `Channel renamed to **${activity.name}**.`));
   }
 
-  // â”€â”€ LFM - post Looking For Members message â”€â”€
+  // â”€â”€ LFM â€” post Looking For Members message â”€â”€
   if (value === 'jtc_lfm') {
     const lfmEmbed = new EmbedBuilder()
       .setColor(getAccent(guild))
       .setTitle('<:dark4luvontop:1533860081916182721> Looking for Members!')
-      .setDescription(`**${member.displayName}** is looking for members to join their voice channel!\n\n**Channel:** ${vcChannel}\n**Slots Available:** ${vcChannel.userLimit === 0 • 'Unlimited' : vcChannel.userLimit - vcChannel.members.size}`)
+      .setDescription(`**${member.displayName}** is looking for members to join their voice channel!\n\n**Channel:** ${vcChannel}\n**Slots Available:** ${vcChannel.userLimit === 0 ? 'Unlimited' : vcChannel.userLimit - vcChannel.members.size}`)
       .setFooter({ text: 'Join their channel to play together!' })
       .setTimestamp();
     await interaction.channel.send({ embeds: [lfmEmbed] }).catch(() => null);
     return interaction.reply(cv2.e.success('LFM Posted <:dark4luvontop:1533860081916182721>', 'Your Looking for Members message has been posted in this channel.'));
   }
 
-  // â”€â”€ TEXT - create a temp text channel linked to VC â”€â”€
+  // â”€â”€ TEXT â€” create a temp text channel linked to VC â”€â”€
   if (value === 'jtc_text') {
     const jtcCfg = db.getJtcConfig(guild.id);
-    const existing = guild.channels.cache.find(c => c.name === `${vcChannel.name}-text` && c.parentId === (jtcCfg•.categoryId || vcChannel.parentId));
+    const existing = guild.channels.cache.find(c => c.name === `${vcChannel.name}-text` && c.parentId === (jtcCfg?.categoryId || vcChannel.parentId));
     if (existing) {
       return interaction.reply(cv2.e.warn('Already Exists', `A text channel already exists: ${existing}`));
     }
     const textCh = await guild.channels.create({
       name: `${vcChannel.name.toLowerCase().replace(/\s+/g, '-')}-text`,
       type: ChannelType.GuildText,
-      parent: jtcCfg•.categoryId || vcChannel.parentId || null,
+      parent: jtcCfg?.categoryId || vcChannel.parentId || null,
       permissionOverwrites: [
         { id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] },
         { id: member.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ManageChannels] }
@@ -459,8 +459,8 @@ export async function handleJtcModal(interaction) {
   const customId = interaction.customId;
   const member = interaction.member;
   const guild = interaction.guild;
-  const vcChannel = member.voice•.channel;
-  const jtcData = vcChannel • db.getJtcChannel(vcChannel.id) : null;
+  const vcChannel = member.voice?.channel;
+  const jtcData = vcChannel ? db.getJtcChannel(vcChannel.id) : null;
 
   const isBotOwner = isBotOwnerSync(member.id);
   if (!jtcData || (!isBotOwner && jtcData.ownerId !== member.id)) {
@@ -477,7 +477,7 @@ export async function handleJtcModal(interaction) {
     const val = parseInt(interaction.fields.getTextInputValue('jtc_limit_val')) || 0;
     const limit = Math.min(Math.max(val, 0), 99);
     await vcChannel.setUserLimit(limit).catch(() => null);
-    return interaction.reply(cv2.success('Limit Updated <:dark4luvontop:1533860081916182721>', `User limit set to **${limit === 0 • 'Unlimited' : limit}**.`));
+    return interaction.reply(cv2.success('Limit Updated <:dark4luvontop:1533860081916182721>', `User limit set to **${limit === 0 ? 'Unlimited' : limit}**.`));
   }
 
   if (customId === 'jtc_status_modal') {
@@ -510,7 +510,7 @@ export async function handleJtcModal(interaction) {
     const userId = interaction.fields.getTextInputValue('jtc_reject_userid').trim().replace(/\D/g, '');
     const target = await guild.members.fetch(userId).catch(() => null);
     if (!target) return interaction.reply(cv2.warn('User Not Found', 'Could not find that user.'));
-    if (target.voice•.channelId === vcChannel.id) await target.voice.disconnect().catch(() => null);
+    if (target.voice?.channelId === vcChannel.id) await target.voice.disconnect().catch(() => null);
     await vcChannel.permissionOverwrites.edit(userId, { Connect: false, ViewChannel: false });
     return interaction.reply(cv2.danger('User Rejected ', `${target} has been removed and banned from your channel.`));
   }
@@ -524,7 +524,7 @@ export async function handleJtcModal(interaction) {
     const dmEmbed = new EmbedBuilder()
       .setColor(getAccent(guild))
       .setTitle(' You\'ve been invited!')
-      .setDescription(`**${member.displayName}** has invited you to join their voice channel in **${guild.name}**.\n\n**Channel:** ${vcChannel.name}\n\n${invite • `[Click to Join](${invite.url})` : 'Join the server and look for their channel.'}`)
+      .setDescription(`**${member.displayName}** has invited you to join their voice channel in **${guild.name}**.\n\n**Channel:** ${vcChannel.name}\n\n${invite ? `[Click to Join](${invite.url})` : 'Join the server and look for their channel.'}`)
       .setFooter({ text: 'Athena Prime â€¢ Join to Create' });
 
     const dmSent = await target.send({ embeds: [dmEmbed] }).catch(() => null);
@@ -595,14 +595,14 @@ export const commands = [
         category = cat;
       }
 
-      const categoryId = category•.id || lobbyChannel.parentId;
-      const panelChannelId = panelChannel•.id || null;
+      const categoryId = category?.id || lobbyChannel.parentId;
+      const panelChannelId = panelChannel?.id || null;
 
       if (panelChannel) {
         // Delete old panels to prevent duplicates
         const messages = await panelChannel.messages.fetch({ limit: 20 }).catch(() => null);
         if (messages) {
-          const panels = messages.filter(m => m.author.id === message.client.user.id && m.embeds[0]•.title === 'Voice Channel Control Panel');
+          const panels = messages.filter(m => m.author.id === message.client.user.id && m.embeds[0]?.title === 'Voice Channel Control Panel');
           for (const p of panels.values()) await p.delete().catch(() => null);
         }
 
@@ -620,8 +620,8 @@ export const commands = [
 
       return message.reply(cv2.success('JTC System Activated ðŸš€', [
           `**Lobby Channel:** ${lobbyChannel}`,
-          `**Category:** ${categoryId • `<#${categoryId}>` : 'Same as lobby'}`,
-          `**Panel Channel:** ${panelChannelId • `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
+          `**Category:** ${categoryId ? `<#${categoryId}>` : 'Same as lobby'}`,
+          `**Panel Channel:** ${panelChannelId ? `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
           '',
           'When someone joins the lobby, a private voice channel and control panel will be created automatically.',
           'To disable: `/jtcdisable`'
@@ -656,14 +656,14 @@ export const commands = [
         category = cat;
       }
 
-      const categoryId = category•.id || lobbyChannel.parentId;
-      const panelChannelId = panelChannel•.id || null;
+      const categoryId = category?.id || lobbyChannel.parentId;
+      const panelChannelId = panelChannel?.id || null;
 
       if (panelChannel) {
         // Delete old panels to prevent duplicates
         const messages = await panelChannel.messages.fetch({ limit: 20 }).catch(() => null);
         if (messages) {
-          const panels = messages.filter(m => m.author.id === interaction.client.user.id && m.embeds[0]•.title === 'Voice Channel Control Panel');
+          const panels = messages.filter(m => m.author.id === interaction.client.user.id && m.embeds[0]?.title === 'Voice Channel Control Panel');
           for (const p of panels.values()) await p.delete().catch(() => null);
         }
 
@@ -681,8 +681,8 @@ export const commands = [
 
       await interaction.editReply(cv2.success('JTC System Activated ðŸš€', [
           `**Lobby Channel:** ${lobbyChannel}`,
-          `**Category:** ${categoryId • `<#${categoryId}>` : 'Same as lobby'}`,
-          `**Panel Channel:** ${panelChannelId • `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
+          `**Category:** ${categoryId ? `<#${categoryId}>` : 'Same as lobby'}`,
+          `**Panel Channel:** ${panelChannelId ? `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
           '',
           'When someone joins the lobby, a private voice channel and control panel will be created automatically.',
           'To disable: `/jtcdisable`'
@@ -721,7 +721,7 @@ export const commands = [
 
       if (!lobbyChannel) {
         const jtcConfig = db.getJtcConfig(guild.id);
-        const parentId = jtcConfig•.categoryId || null;
+        const parentId = jtcConfig?.categoryId || null;
         lobbyChannel = await guild.channels.create({ name: 'âž• Secondary JTC', type: ChannelType.GuildVoice, parent: parentId, reason: 'Athena Prime Secondary JTC Setup' });
       }
 
@@ -750,7 +750,7 @@ export const commands = [
 
       if (!lobbyChannel) {
         const jtcConfig = db.getJtcConfig(guild.id);
-        const parentId = jtcConfig•.categoryId || null;
+        const parentId = jtcConfig?.categoryId || null;
         lobbyChannel = await guild.channels.create({ name: 'âž• Secondary JTC', type: ChannelType.GuildVoice, parent: parentId, reason: 'Athena Prime Secondary JTC Setup' });
       }
 
@@ -802,7 +802,7 @@ export const commands = [
       const sub = interaction.options.getSubcommand();
       const member = interaction.member;
       const guild = interaction.guild;
-      const vcChannel = member.voice•.channel;
+      const vcChannel = member.voice?.channel;
 
       if (!vcChannel) return interaction.reply(cv2.warn('Not In Voice', 'You must be in a voice channel to use this.'));
       const jtcData = db.getJtcChannel(vcChannel.id);
@@ -819,11 +819,11 @@ export const commands = [
         const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
         return interaction.reply(cv2.info('Channel Info', null, [
           { name: '<:dark4luvontop:1533860081916182721> Name', value: vcChannel.name, inline: true },
-          { name: ' Owner', value: owner•.toString() || `\`${jtcData.ownerId}\``, inline: true },
-          { name: '<:dark4luvontop:1533860081916182721> Limit', value: vcChannel.userLimit === 0 • 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
+          { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Limit', value: vcChannel.userLimit === 0 ? 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
           { name: '<:dark4luvontop:1533860081916182721> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
           { name: '<:dark4luvontop:1533860081916182721> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
-          { name: ' NSFW', value: vcChannel.nsfw • 'Yes' : 'No', inline: true }
+          { name: ' NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true }
         ]));
       }
     }
@@ -854,7 +854,7 @@ export const commands = [
     async executeSlash(interaction) {
       const sub = interaction.options.getSubcommand();
       const member = interaction.member;
-      const vcChannel = member.voice•.channel;
+      const vcChannel = member.voice?.channel;
 
       if (!vcChannel) return interaction.reply(cv2.warn('Not In Voice', 'You must be in a voice channel to use this.'));
       const jtcData = db.getJtcChannel(vcChannel.id);

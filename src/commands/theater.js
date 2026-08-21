@@ -23,7 +23,7 @@ export const commands = [
     ],
     async executePrefix(message, args) {
       if (!(await isAuthorized(message.author, message.guild))) return;
-      const status = args[0]•.toLowerCase();
+      const status = args[0]?.toLowerCase();
       if (status !== 'on' && status !== 'off') {
         return message.reply(cv2.warn('Command Error', `Usage: \`!theatermode <on|off>\``));
       }
@@ -43,9 +43,9 @@ export const commands = [
 ];
 
 async function handleTheaterMode(guild, moderator, status, client) {
-  const userId = moderator•.user•.id || moderator•.id;
+  const userId = moderator?.user?.id || moderator?.id;
   const fullModerator = await guild.members.fetch(userId).catch(() => moderator);
-  const vc = fullModerator•.voice•.channel;
+  const vc = fullModerator?.voice?.channel;
   if (!vc && status === 'on') {
     return cv2.error('Error', 'You must be in a Voice Channel to activate Theater Mode.');
   }

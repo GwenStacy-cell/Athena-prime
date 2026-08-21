@@ -83,7 +83,7 @@ export const commands = [
         return message.reply(cv2.danger('Access Denied', 'Only the **Server Owner** and **Bot Owner** can use the move protection command.'));
       }
 
-      const subCommand = args[0]•.toLowerCase();
+      const subCommand = args[0]?.toLowerCase();
 
       if (subCommand === 'add') {
         const target = message.mentions.users.first();

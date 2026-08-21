@@ -6,18 +6,18 @@ import embed from '../embed.js';
 export default {
   name: 'messageUpdate',
   async execute(oldMessage, newMessage) {
-    if (newMessage.author•.bot || newMessage.webhookId) return;
+    if (newMessage.author?.bot || newMessage.webhookId) return;
     if (!newMessage.guild) return;
 
     // ==========================================
     // SERVER LOGS: Message Edit
     // ==========================================
     if (oldMessage.content !== newMessage.content) {
-      const oldContent = oldMessage.content • (oldMessage.content.length > 1000 • oldMessage.content.substring(0, 997) + '...' : oldMessage.content) : 'No old content';
-      const newContent = newMessage.content • (newMessage.content.length > 1000 • newMessage.content.substring(0, 997) + '...' : newMessage.content) : 'No new content';
+      const oldContent = oldMessage.content ? (oldMessage.content.length > 1000 ? oldMessage.content.substring(0, 997) + '...' : oldMessage.content) : 'No old content';
+      const newContent = newMessage.content ? (newMessage.content.length > 1000 ? newMessage.content.substring(0, 997) + '...' : newMessage.content) : 'No new content';
 
       const editEmbed = embed.build({
-        description: `__**Message Edited |**__ <:dark4luvontop:1533860081916182721>\n> **Author:** ${newMessage.author•.tag} (<@${newMessage.author•.id}>)\n>  **Channel:** ${newMessage.channel}\n>  [Jump to Message](${newMessage.url})\n>  **Before:**\n>  ${oldContent}\n>  **After:**\n>  ${newContent}`,
+        description: `__**Message Edited |**__ <:dark4luvontop:1533860081916182721>\n> **Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n>  **Channel:** ${newMessage.channel}\n>  [Jump to Message](${newMessage.url})\n>  **Before:**\n>  ${oldContent}\n>  **After:**\n>  ${newContent}`,
         color: '#2b2d31'
       });
 

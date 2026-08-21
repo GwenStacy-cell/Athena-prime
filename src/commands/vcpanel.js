@@ -31,7 +31,7 @@ export const commands = [
       // 3. Build UI Function
       const generatePayload = () => {
         const currentMembers = voiceChannel.members;
-        const connectedTags = currentMembers.size > 0 • currentMembers.map(m => `<@${m.id}>`).join(', ') : 'None';
+        const connectedTags = currentMembers.size > 0 ? currentMembers.map(m => `<@${m.id}>`).join(', ') : 'None';
         const guildIconUrl = message.guild.iconURL({ dynamic: true, size: 128 }) || null;
 
         const headerSection = {
@@ -41,7 +41,7 @@ export const commands = [
             `-# **Server Owner:** <@${message.guild.ownerId}> | **Channel:** <#${voiceChannel.id}>\n` +
             `-# **Connected Members (${currentMembers.size}):** ${connectedTags}`
           }],
-          ...(guildIconUrl • { accessory: { type: 11, media: { url: guildIconUrl } } } : {})
+          ...(guildIconUrl ? { accessory: { type: 11, media: { url: guildIconUrl } } } : {})
         };
 
         const controlsText =

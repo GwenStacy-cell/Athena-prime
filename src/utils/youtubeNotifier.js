@@ -51,7 +51,7 @@ export async function resolveYouTubeChannelId(url) {
 export async function getLatestVideo(channelId) {
   try {
     // Add cache buster to bypass YouTube's CDN caching (which can take 15 mins)
-    const feedUrl = `https://www.youtube.com/feeds/videos.xml•channel_id=${channelId}&_=${Date.now()}`;
+    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}&_=${Date.now()}`;
     const feed = await parser.parseURL(feedUrl);
     
     if (feed.items && feed.items.length > 0) {
@@ -97,7 +97,7 @@ export function startYouTubeNotifier(client) {
             
             if (!notifier.recentVideoIds) {
               // Migrate existing string to array
-              notifier.recentVideoIds = notifier.lastVideoId • [notifier.lastVideoId] : [];
+              notifier.recentVideoIds = notifier.lastVideoId ? [notifier.lastVideoId] : [];
             }
 
             if (latestVideo && !notifier.recentVideoIds.includes(latestVideo.id)) {
@@ -107,7 +107,7 @@ export function startYouTubeNotifier(client) {
               if (channel) {
                 // Determine Accent Color
                 const cfg = db.getGuildConfig(guild.id);
-                const accentHex = cfg•.accentColor || '#ff0000'; // Default to red for YouTube
+                const accentHex = cfg?.accentColor || '#ff0000'; // Default to red for YouTube
                 const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
                 // Construct Premium Embed
@@ -117,7 +117,7 @@ export function startYouTubeNotifier(client) {
                   .setColor(accentInt)
                   .setAuthor({ 
                     name: `New Upload from ${latestVideo.author}`, 
-                    iconURL: 'https://cdn.discordapp.com/emojis/1533383764250460241.webp•size=96&quality=lossless', 
+                    iconURL: 'https://cdn.discordapp.com/emojis/1533383764250460241.webp?size=96&quality=lossless', 
                     url: latestVideo.link 
                   })
                   .setTitle(latestVideo.title)

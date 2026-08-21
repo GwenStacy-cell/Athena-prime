@@ -38,7 +38,7 @@ export default {
         );
       }
 
-      // Verify permissions - bot owner AND extra owners bypass all checks in every server
+      // Verify permissions â€” bot owner AND extra owners bypass all checks in every server
       if (cmd.permissions && cmd.permissions.length > 0) {
         const isBypass = isBotOwnerSync(interaction.user.id) ||
           (interaction.guild && (
@@ -47,13 +47,13 @@ export default {
           ));
 
         if (!isBypass) {
-          // interaction.member may be null in User App DM context - skip guild perm check
+          // interaction.member may be null in User App DM context â€” skip guild perm check
           const hasPerms = interaction.member
-            • cmd.permissions.every(perm => interaction.member.permissions.has(perm))
+            ? cmd.permissions.every(perm => interaction.member.permissions.has(perm))
             : false;
           if (!hasPerms) {
             return interaction.reply(
-              cv2.danger('Access Denied', `${interaction.user}  You do not possess the required permissions to execute this command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)•.[0] || 'Unknown'}\``).join(', ')}`)
+              cv2.danger('Access Denied', `${interaction.user}  You do not possess the required permissions to execute this command.\n\n**Required:** ${cmd.permissions.map(p => `\`${Object.entries(PermissionFlagsBits).find(([, v]) => v === p)?.[0] || 'Unknown'}\``).join(', ')}`)
             );
           }
         }
@@ -140,7 +140,7 @@ export default {
         const songName = interaction.fields.getTextInputValue('song_name');
         if (!songName) return interaction.reply({ content: 'You must provide a song name.' });
 
-        const vc = interaction.member.voice•.channel;
+        const vc = interaction.member.voice?.channel;
         if (!vc) {
           return interaction.reply({ content: 'You must be in a Voice Channel to request lyrics.' });
         }
@@ -153,7 +153,7 @@ export default {
           let artistName = 'Unknown Artist';
 
           try {
-            const res = await fetch(`https://lrclib.net/api/search•q=${encodeURIComponent(songName)}`);
+            const res = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(songName)}`);
             if (res.ok) {
               const data = await res.json();
               if (data && data.length > 0 && data[0].plainLyrics) {
@@ -177,7 +177,7 @@ export default {
 
           if (!lyrics) {
             try {
-              const searchUrl = `https://html.duckduckgo.com/html/•q=${encodeURIComponent(songName + " lyrics genius")}`;
+              const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(songName + " lyrics genius")}`;
               const searchRes = await fetch(searchUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
               const searchHtml = await searchRes.text();
               const cheerio = await import('cheerio');
@@ -221,7 +221,7 @@ export default {
           }
 
           const cfg = db.getGuildConfig(interaction.guildId);
-          const accentColor = cfg•.accentColor || '#2b2d31';
+          const accentColor = cfg?.accentColor || '#2b2d31';
 
           const chunks = [];
           for (let i = 0; i < lyrics.length; i += 4000) {
@@ -229,7 +229,7 @@ export default {
           }
 
           for (let i = 0; i < chunks.length; i++) {
-            const title = i === 0 • `Lyrics: ${trackName}` : `Lyrics: ${trackName} (Part ${i + 1})`;
+            const title = i === 0 ? `Lyrics: ${trackName}` : `Lyrics: ${trackName} (Part ${i + 1})`;
             const lyricsEmbed = cv2.info(title, chunks[i]);
             await vc.send(lyricsEmbed);
           }
@@ -491,17 +491,17 @@ export default {
 
       // MEDIA PROMPT BUTTONS
       if (interaction.customId === 'dl_mp4' || interaction.customId === 'dl_mp3') {
-        const originalMessageId = interaction.message.reference • interaction.message.reference.messageId : null;
+        const originalMessageId = interaction.message.reference ? interaction.message.reference.messageId : null;
         if (!originalMessageId) return interaction.reply({ content: 'Original message not found.', ephemeral: true });
         
         try {
           const originalMessage = await interaction.channel.messages.fetch(originalMessageId);
-          const urlRegex = /(https•:\/\/[^\s]+)/g;
+          const urlRegex = /(https?:\/\/[^\s]+)/g;
           const urls = originalMessage.content.match(urlRegex);
           if (!urls) return interaction.reply({ content: 'No URL found in the original message.', ephemeral: true });
           const url = urls[0];
 
-          await interaction.update({ content: `-# **Downloading ${interaction.customId === 'dl_mp4' • 'MP4' : 'MP3'}...**`, components: [] });
+          await interaction.update({ content: `-# **Downloading ${interaction.customId === 'dl_mp4' ? 'MP4' : 'MP3'}...**`, components: [] });
           
           const downloader = await import('../utils/mediaDownloader.js');
           let success = false;
@@ -530,7 +530,7 @@ export default {
         
         try {
           const channels = await targetGuild.channels.fetch();
-          const textChannel = channels.find(c => c && c.type === 0 && c.permissionsFor(interaction.client.user.id)•.has(PermissionFlagsBits.CreateInstantInvite));
+          const textChannel = channels.find(c => c && c.type === 0 && c.permissionsFor(interaction.client.user.id)?.has(PermissionFlagsBits.CreateInstantInvite));
           if (!textChannel) return interaction.reply({ content: 'Could not find a text channel where I have permission to create invites.' });
           
           const invite = await textChannel.createInvite({ maxAge: 86400, maxUses: 1, reason: 'Requested by Bot Owner' });
@@ -587,14 +587,14 @@ export default {
         const votes = Object.values(updatedRatingData.votes);
         const totalVotes = votes.length;
         const sumStars = votes.reduce((acc, curr) => acc + curr.stars, 0);
-        const avgStars = totalVotes > 0 • (sumStars / totalVotes).toFixed(1) : '0.0';
+        const avgStars = totalVotes > 0 ? (sumStars / totalVotes).toFixed(1) : '0.0';
 
         const recentVotes = Object.entries(updatedRatingData.votes).slice(-15);
         let userRatingsStr = recentVotes.map(([uId, v]) => `${v.name}: ${'<a:1z:1517089474369032253>'.repeat(v.stars)}`).join('\n');
         if (!userRatingsStr) userRatingsStr = '_No ratings yet_';
 
         const updatedEmbed = new EmbedBuilder(interaction.message.embeds[0].data)
-          .setDescription(`<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 • 's' : ''})\n\n**User Ratings**\n${userRatingsStr}`);
+          .setDescription(`<a:1z:1517089474369032253> **Current Rating**\n${avgStars}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${userRatingsStr}`);
 
         await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
         return interaction.reply({ content: `You rated this edit ${starCount} <a:1z:1517089474369032253>`, flags: 64 });
@@ -666,7 +666,7 @@ export default {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.' });
         
         let cfg = db.getGuildConfig(interaction.guild.id);
-        const currentLayout = cfg.autonick•.layout || '{name}';
+        const currentLayout = cfg.autonick?.layout || '{name}';
 
         const modal = new ModalBuilder()
           .setCustomId('autonick_modal')
@@ -689,7 +689,7 @@ export default {
       if (interaction.customId === 'autonick_sync') {
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageNicknames)) return interaction.reply({ content: 'Unauthorized.' });
         let cfg = db.getGuildConfig(interaction.guild.id);
-        if (!cfg.autonick•.enabled) {
+        if (!cfg.autonick?.enabled) {
           return interaction.reply({ content: 'You must enable Autonick before syncing.' });
         }
         
@@ -821,14 +821,14 @@ export default {
           .setStyle(TextInputStyle.Short)
           .setMaxLength(256)
           .setRequired(false)
-          .setValue(currentEmbed•.title || '');
+          .setValue(currentEmbed?.title || '');
           
         const descInput = new TextInputBuilder()
           .setCustomId('ann_desc')
           .setLabel('Description (Supports Links/Newlines)')
           .setStyle(TextInputStyle.Paragraph)
           .setRequired(false)
-          .setValue(currentEmbed•.description || '');
+          .setValue(currentEmbed?.description || '');
           
         modal.addComponents(new ActionRowBuilder().addComponents(titleInput), new ActionRowBuilder().addComponents(descInput));
         await interaction.showModal(modal);
@@ -846,14 +846,14 @@ export default {
           .setLabel('Large Image URL (Supports GIF)')
           .setStyle(TextInputStyle.Short)
           .setRequired(false)
-          .setValue(currentEmbed•.image•.url || '');
+          .setValue(currentEmbed?.image?.url || '');
           
         const thumbInput = new TextInputBuilder()
           .setCustomId('ann_thumb')
           .setLabel('Thumbnail URL (Supports GIF)')
           .setStyle(TextInputStyle.Short)
           .setRequired(false)
-          .setValue(currentEmbed•.thumbnail•.url || '');
+          .setValue(currentEmbed?.thumbnail?.url || '');
           
         modal.addComponents(new ActionRowBuilder().addComponents(imgInput), new ActionRowBuilder().addComponents(thumbInput));
         await interaction.showModal(modal);
@@ -878,7 +878,7 @@ export default {
 
       if (interaction.customId === 'ann_publish') {
         const currentEmbed = interaction.message.embeds[0];
-        const footerText = currentEmbed•.footer•.text || '';
+        const footerText = currentEmbed?.footer?.text || '';
         const channelIdMatch = footerText.match(/Target Channel: (\d+)/);
         
         if (!channelIdMatch) {
@@ -957,7 +957,7 @@ export default {
         const modal = new ModalBuilder().setCustomId('tp_modal_text').setTitle('Edit Panel Text');
         modal.addComponents(
           new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('title').setLabel('Title').setStyle(TextInputStyle.Short).setValue(ticketConfig.panelTitle || 'Support Tickets').setRequired(true)),
-          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('description').setLabel('Description').setStyle(TextInputStyle.Paragraph).setValue(ticketConfig.panelDescription || 'Need help• Open a ticket below.').setRequired(true))
+          new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('description').setLabel('Description').setStyle(TextInputStyle.Paragraph).setValue(ticketConfig.panelDescription || 'Need help? Open a ticket below.').setRequired(true))
         );
         return interaction.showModal(modal);
       }
@@ -1034,7 +1034,7 @@ export default {
         const panelEmbed = new EmbedBuilder()
           .setColor(accentColor)
           .setTitle(config.panelTitle || 'Support Tickets')
-          .setDescription(config.panelDescription || 'Need help• Open a ticket below.')
+          .setDescription(config.panelDescription || 'Need help? Open a ticket below.')
           .setFooter({ text: 'Athena Prime Support System', iconURL: interaction.client.user.displayAvatarURL() });
 
         if (config.panelImage) panelEmbed.setImage(config.panelImage);
@@ -1049,8 +1049,8 @@ export default {
               const optionData = { label: opt.label.substring(0, 100), value: opt.value.substring(0, 100) };
               if (opt.description) optionData.description = opt.description.substring(0, 100);
               if (opt.emoji) {
-                const match = opt.emoji.match(/<a•:.+•:(\d+)>/);
-                optionData.emoji = match • match[1] : opt.emoji;
+                const match = opt.emoji.match(/<a?:.+?:(\d+)>/);
+                optionData.emoji = match ? match[1] : opt.emoji;
               }
               return optionData;
             }));
@@ -1084,7 +1084,7 @@ export default {
         const value = interaction.values[0];
         const ticketConfig = db.getTickets(interaction.guild.id);
         const option = (ticketConfig.panelOptions || []).find(o => o.value === value);
-        const label = option • option.label : value;
+        const label = option ? option.label : value;
 
         const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
         const row = new ActionRowBuilder().addComponents(
@@ -1136,7 +1136,7 @@ export default {
               { id: interaction.client.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels] }
             ];
 
-            const staffRoleIds = ticketConfig.staffRoleIds || (ticketConfig.staffRoleId • [ticketConfig.staffRoleId] : []);
+            const staffRoleIds = ticketConfig.staffRoleIds || (ticketConfig.staffRoleId ? [ticketConfig.staffRoleId] : []);
             for (const roleId of staffRoleIds) {
               permissionOverwrites.push({
                 id: roleId,
@@ -1161,7 +1161,7 @@ export default {
             const ticketId = db.createTicket(interaction.guild.id, textChannel.id, voiceChannel.id, interaction.user.id);
 
             const option = (ticketConfig.panelOptions || []).find(o => o.value === reasonValue);
-            const label = option • option.label : reasonValue;
+            const label = option ? option.label : reasonValue;
 
             const ticketEmbed = cv2.info(
               `Ticket #${ticketId}`,
@@ -1184,7 +1184,7 @@ export default {
 
             const roleMentions = staffRoleIds.map(id => `<@&${id}>`).join(' ');
             await textChannel.send({
-              content: roleMentions.length > 0 • roleMentions : undefined,
+              content: roleMentions.length > 0 ? roleMentions : undefined,
               embeds: [ticketEmbed],
               components: [closeRow]
             });

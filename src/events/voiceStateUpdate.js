@@ -35,7 +35,7 @@ export default {
     // THEATER MODE ("MOVIE MODE") ENFORCEMENT
     // ==========================================
     const guildCfg = db.getGuildConfig(guild.id);
-    const theaterVcId = guildCfg•.theaterModeVcId;
+    const theaterVcId = guildCfg?.theaterModeVcId;
     if (theaterVcId && member && !member.user.bot) {
       import('../utils/helpers.js').then(async ({ isAuthorized }) => {
         if (!(await isAuthorized(member.user, guild))) {
@@ -194,7 +194,7 @@ export default {
     // ==========================================
     // STATS TRACKER & VOICE XP
     // ==========================================
-    if (!newState.member•.user.bot) {
+    if (!newState.member?.user.bot) {
       const oldChannelId = oldState.channelId;
       const newChannelId = newState.channelId;
 
@@ -238,7 +238,7 @@ export default {
                 });
 
                 if (moveLog) {
-                  console.log(`[MoveProtection] Found matching log! Executor: ${moveLog.executor•.id}`);
+                  console.log(`[MoveProtection] Found matching log! Executor: ${moveLog.executor?.id}`);
                   const executor = moveLog.executor;
                   if (executor.id !== client.user.id && executor.id !== userId) {
                     // Check if executor is Bot Owner or Server Owner (Bypass allowed)
@@ -369,7 +369,7 @@ export default {
         console.log(`[JTC] Bot voice state changed in ${guild.name}. Force restoring home VC...`);
         
         if (!newState.channelId) {
-          const shoukaku = global.client•.shoukaku;
+          const shoukaku = global.client?.shoukaku;
           if (shoukaku) {
              const player = shoukaku.players.get(guild.id);
              if (player) shoukaku.leaveVoiceChannel(guild.id);
@@ -446,7 +446,7 @@ export default {
 
         // ── Interface channel: ONE persistent panel, never duplicated ──
         const freshCfg = db.getJtcConfig(guild.id);
-        if (freshCfg•.panelChannelId) {
+        if (freshCfg?.panelChannelId) {
           const panelCh = guild.channels.cache.get(freshCfg.panelChannelId);
           if (panelCh) {
             let existingMsg = null;
@@ -458,7 +458,7 @@ export default {
               try {
                 // Fetch again to be absolutely sure no other process created it in the last few ms
                 const freshCfgCheck = db.getJtcConfig(guild.id);
-                const stillNoMsg = freshCfgCheck.panelMessageId • await panelCh.messages.fetch(freshCfgCheck.panelMessageId).catch(() => null) : null;
+                const stillNoMsg = freshCfgCheck.panelMessageId ? await panelCh.messages.fetch(freshCfgCheck.panelMessageId).catch(() => null) : null;
                 
                 if (!stillNoMsg) {
                   const sharedPanel = buildSharedPanel(newState.guild.id);
@@ -524,7 +524,7 @@ export default {
             
             // Look for a linked text channel
             let textChannel = null;
-            if (jtcRecord•.textChannelId) {
+            if (jtcRecord?.textChannelId) {
               textChannel = guild.channels.cache.get(jtcRecord.textChannelId) || await guild.channels.fetch(jtcRecord.textChannelId).catch(() => null);
             }
             
@@ -534,7 +534,7 @@ export default {
                  c.type === 0 && // GuildText
                  c.parentId === leftChannel.parentId &&
                  c.name.endsWith('-text') &&
-                 c.permissionOverwrites.cache.get(jtcRecord.ownerId)•.allow.has('ManageChannels')
+                 c.permissionOverwrites.cache.get(jtcRecord.ownerId)?.allow.has('ManageChannels')
                );
             }
 

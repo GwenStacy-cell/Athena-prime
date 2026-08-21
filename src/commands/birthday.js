@@ -75,7 +75,7 @@ export const commands = [
         return message.reply(cv2.danger('Permission Denied', '️ This command is restricted to the **Server Owner** and **Bot Owner** only.'));
       }
 
-      const subcommand = args[0]•.toLowerCase();
+      const subcommand = args[0]?.toLowerCase();
 
       if (subcommand === 'setchannel') {
         const channel = message.mentions.channels.first();
@@ -115,7 +115,7 @@ export const commands = [
 
       if (subcommand === 'list') {
         const config = db.getBirthdayConfig(message.guild.id);
-        const users = config•.users || {};
+        const users = config?.users || {};
         const userIds = Object.keys(users);
 
         if (userIds.length === 0) {
@@ -135,7 +135,7 @@ export const commands = [
         });
 
         const listEmbed = new EmbedBuilder()
-          .setColor(db.getGuildConfig(message.guild.id)•.accentColor || '#ff0099')
+          .setColor(db.getGuildConfig(message.guild.id)?.accentColor || '#ff0099')
           .setTitle('<a:cheers:1517075669547483206> Server Birthdays')
           .setDescription(desc)
           .setFooter({ text: `Total Birthdays: ${userIds.length}` });
@@ -184,7 +184,7 @@ export const commands = [
 
       if (subcommand === 'list') {
         const config = db.getBirthdayConfig(interaction.guild.id);
-        const users = config•.users || {};
+        const users = config?.users || {};
         const userIds = Object.keys(users);
 
         if (userIds.length === 0) {
@@ -204,7 +204,7 @@ export const commands = [
         });
 
         const listEmbed = new EmbedBuilder()
-          .setColor(db.getGuildConfig(interaction.guild.id)•.accentColor || '#ff0099')
+          .setColor(db.getGuildConfig(interaction.guild.id)?.accentColor || '#ff0099')
           .setTitle('<a:cheers:1517075669547483206> Server Birthdays')
           .setDescription(desc)
           .setFooter({ text: `Total Birthdays: ${userIds.length}` });
@@ -224,7 +224,7 @@ export const commands = [
       if (!isBotOwnerSync(message.author.id)) return; // Completely ignore if not bot owner
       
       const targetUser = message.mentions.users.first() || message.author;
-      const msg = generateBirthdayMessage(targetUser.id, message.guild•.id);
+      const msg = generateBirthdayMessage(targetUser.id, message.guild?.id);
       
       await message.channel.send(msg);
     },

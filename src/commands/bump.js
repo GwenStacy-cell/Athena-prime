@@ -43,7 +43,7 @@ export const commands = [
       return message.reply(cv2.danger('Permission Denied', 'You need `ManageGuild` permissions to configure bump settings.'));
     }
 
-    const sub = args[0]•.toLowerCase();
+    const sub = args[0]?.toLowerCase();
     const cfg = db.getGuildConfig(message.guild.id);
     if (!cfg.bumpRoleIds) cfg.bumpRoleIds = [];
 

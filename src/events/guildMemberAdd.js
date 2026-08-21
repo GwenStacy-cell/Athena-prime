@@ -18,7 +18,7 @@ export default {
     // ==========================================
     if (member.user.bot) {
       // BotAdd is handled with zero-latency via the websocket hook (handleAuditLogEntry)
-      // We do NOT proactively strip roles - legitimate bots that haven't been
+      // We do NOT proactively strip roles â€” legitimate bots that haven't been
       // whitelisted yet (MEE6, Dyno, Carl-bot etc.) would break immediately.
       return;
     }
@@ -157,7 +157,7 @@ export default {
     if (config.inviteChannelId) {
       try {
         const newInvites = await guild.invites.fetch().catch(() => new Map());
-        const oldInvites = member.client.invites•.get(guild.id) || new Map();
+        const oldInvites = member.client.invites?.get(guild.id) || new Map();
         
         let usedInvite = null;
         const possibleInvites = [];
@@ -194,17 +194,17 @@ export default {
 
         const inviteChannel = guild.channels.cache.get(config.inviteChannelId);
         if (inviteChannel) {
-          const inviter = usedInvite•.inviter;
-          const inviterText = inviter • `<@${inviter.id}> (${inviter.tag})` : 'Unknown / Vanity URL / Temp Invite';
-          const codeText = usedInvite • usedInvite.code : 'Unknown';
-          const usesText = usedInvite • usedInvite.uses : 'N/A';
-          const maxUses = usedInvite • (usedInvite.maxUses === 0 • 'Infinite' : usedInvite.maxUses) : 'N/A';
-          const maxAge = usedInvite • (usedInvite.maxAge === 0 • 'Permanent' : `${usedInvite.maxAge} seconds`) : 'N/A';
-          const createdTime = usedInvite•.createdTimestamp • `<t:${Math.floor(usedInvite.createdTimestamp / 1000)}:F>` : 'N/A';
+          const inviter = usedInvite?.inviter;
+          const inviterText = inviter ? `<@${inviter.id}> (${inviter.tag})` : 'Unknown / Vanity URL / Temp Invite';
+          const codeText = usedInvite ? usedInvite.code : 'Unknown';
+          const usesText = usedInvite ? usedInvite.uses : 'N/A';
+          const maxUses = usedInvite ? (usedInvite.maxUses === 0 ? 'Infinite' : usedInvite.maxUses) : 'N/A';
+          const maxAge = usedInvite ? (usedInvite.maxAge === 0 ? 'Permanent' : `${usedInvite.maxAge} seconds`) : 'N/A';
+          const createdTime = usedInvite?.createdTimestamp ? `<t:${Math.floor(usedInvite.createdTimestamp / 1000)}:F>` : 'N/A';
           const bullet = '<a:61589pinkglock:1451707353450676265>';
           
           const inviteEmbed = {
-            color: config.accentColor • parseInt(config.accentColor.replace('#', ''), 16) : 0x2b2d31,
+            color: config.accentColor ? parseInt(config.accentColor.replace('#', ''), 16) : 0x2b2d31,
             author: { name: 'MEMBER JOINED', icon_url: member.user.displayAvatarURL({ dynamic: true }) },
             description: `${bullet} **User Joined:** ${member} (\`${member.id}\`)\n${bullet} **Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n\n**INVITE DETAILS**\n${bullet} **Creator:** ${inviterText}\n${bullet} **Invite Code:** \`${codeText}\`\n${bullet} **Total Uses:** ${usesText} / ${maxUses}\n${bullet} **Duration:** ${maxAge}\n${bullet} **Created At:** ${createdTime}`,
             timestamp: new Date().toISOString(),

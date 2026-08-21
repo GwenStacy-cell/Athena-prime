@@ -20,7 +20,7 @@ export async function ensureUnbypassableRole(guild) {
     // Clear duplicates
     if (unbypRoles.length > 1) {
       for (const r of unbypRoles) {
-        if (r.id !== (unbypassableRole • unbypassableRole.id : unbypRoles[0].id) && r.editable) {
+        if (r.id !== (unbypassableRole ? unbypassableRole.id : unbypRoles[0].id) && r.editable) {
           await r.delete().catch(() => null);
         }
       }
@@ -46,7 +46,7 @@ export async function ensureUnbypassableRole(guild) {
     // Clear duplicates
     if (fwRoles.length > 1) {
       for (const r of fwRoles) {
-        if (r.id !== (firewallRole • firewallRole.id : fwRoles[0].id) && r.editable) {
+        if (r.id !== (firewallRole ? firewallRole.id : fwRoles[0].id) && r.editable) {
           await r.delete().catch(() => null);
         }
       }
@@ -107,13 +107,13 @@ export async function handleAntiStab(guild, actionText, auditLogType) {
 
     // No delay — rely on audit log already being fetched from the WebSocket event that triggered this
     const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: auditLogType }).catch(() => null);
-    const logEntry = auditLogs•.entries•.find(e => Date.now() - e.createdTimestamp < 15000 && e.executor•.id !== guild.client.user.id);
-    const executor = logEntry•.executor;
+    const logEntry = auditLogs?.entries?.find(e => Date.now() - e.createdTimestamp < 15000 && e.executor?.id !== guild.client.user.id);
+    const executor = logEntry?.executor;
 
     let punishedText = '';
     if (executor && executor.id !== guild.ownerId && executor.id !== guild.client.user.id) {
       try {
-        const member = guild.members.cache.get(executor.id) •• await guild.members.fetch(executor.id).catch(() => null);
+        const member = guild.members.cache.get(executor.id) ?? await guild.members.fetch(executor.id).catch(() => null);
         if (member && member.bannable) {
           // Strip roles and ban in parallel for maximum speed
           await Promise.all([
@@ -127,7 +127,7 @@ export async function handleAntiStab(guild, actionText, auditLogType) {
       } catch (e) {
         punishedText = `\n\nFailed to execute a **Hostile Neutralization** automatically (missing permissions or hierarchy).`;
       }
-    } else if (executor•.id === guild.ownerId) {
+    } else if (executor?.id === guild.ownerId) {
       punishedText = `\n\nSince they are the Server Owner, I cannot execute a **Hostile Neutralization**, but I have forced my permissions back on.`;
     }
 
@@ -135,7 +135,7 @@ export async function handleAntiStab(guild, actionText, auditLogType) {
     const owner = await guild.fetchOwner().catch(() => null);
     if (!owner) return;
     
-    const stabberMention = executor • `<@${executor.id}> (${executor.tag})` : 'an Unknown Admin (Audit log hidden)';
+    const stabberMention = executor ? `<@${executor.id}> (${executor.tag})` : 'an Unknown Admin (Audit log hidden)';
     
     const alertEmbed = embed.danger(
       'ANTI-STAB: Hostile Neutralization Initiated',

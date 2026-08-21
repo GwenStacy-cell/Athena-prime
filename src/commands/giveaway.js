@@ -31,7 +31,7 @@ export async function endGiveaway(client, messageId, gwData) {
     // Update the embed
     const originalEmbed = EmbedBuilder.from(message.embeds[0]);
     originalEmbed.setColor('#2b2d31');
-    originalEmbed.setDescription(`**Prize:** ${gwData.prize}\n**Ended:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Hosted By:** <@${gwData.hostId}>\n\n**Winners:** ${winners.length > 0 • winners.map(id => `<@${id}>`).join(', ') : 'None'}`);
+    originalEmbed.setDescription(`**Prize:** ${gwData.prize}\n**Ended:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Hosted By:** <@${gwData.hostId}>\n\n**Winners:** ${winners.length > 0 ? winners.map(id => `<@${id}>`).join(', ') : 'None'}`);
     originalEmbed.setFooter({ text: `Ended • ${participants.length} Entries` });
 
     // Disable the button
@@ -140,7 +140,7 @@ export const commands = [
         const accentColor = guildConfig.accentColor || '#5865F2';
 
         const gwEmbed = new EmbedBuilder()
-          .setDescription(`## ${EMOJI_HEADER} GIVEAWAY ${EMOJI_HEADER}\n\n**Prize:** ${prize}\n**Ends:** <t:${endsAtTimestamp}:R> (<t:${endsAtTimestamp}:f>)\n**Hosted By:** ${interaction.user}\n**Winners:** ${winners}\n\n${customMessage • `*${customMessage}*\n\n` : ''}Click the button below to enter!`)
+          .setDescription(`## ${EMOJI_HEADER} GIVEAWAY ${EMOJI_HEADER}\n\n**Prize:** ${prize}\n**Ends:** <t:${endsAtTimestamp}:R> (<t:${endsAtTimestamp}:f>)\n**Hosted By:** ${interaction.user}\n**Winners:** ${winners}\n\n${customMessage ? `*${customMessage}*\n\n` : ''}Click the button below to enter!`)
           .setColor(accentColor)
           .setFooter({ text: '0 Entries' })
           .setTimestamp(new Date(endsAt));

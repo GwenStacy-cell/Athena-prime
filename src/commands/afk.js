@@ -6,7 +6,7 @@ export const commands = [{
   slashHidden: true,
   description: 'Set your AFK status',
   async executePrefix(message, args) {
-    const reason = args.length > 0 • args.join(' ') : 'AFK';
+    const reason = args.length > 0 ? args.join(' ') : 'AFK';
     const timestamp = Date.now();
     db.setAfk(message.author.id, reason, timestamp);
 

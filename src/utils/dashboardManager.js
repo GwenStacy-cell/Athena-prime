@@ -38,7 +38,7 @@ export async function fetchDashboardStats(guild) {
   
   // Firewall Status
   const cfg = db.getGuildConfig(guild.id);
-  const firewall = cfg.antiNukeEnabled • 'Active' : 'Offline';
+  const firewall = cfg.antiNukeEnabled ? 'Active' : 'Offline';
 
   // Integrity Index Calculation (0-100%)
   // Start at 100%. Deduct for high ratios of admins to members, threat roles, offline firewall.
@@ -57,7 +57,7 @@ export async function fetchDashboardStats(guild) {
     
     for (const entry of auditLogs.entries.values()) {
       const timeStr = formatLogTime(entry.createdAt);
-      const user = entry.executor • entry.executor.username : 'Unknown';
+      const user = entry.executor ? entry.executor.username : 'Unknown';
 
       // General Monitoring Core
       if ([
@@ -67,7 +67,7 @@ export async function fetchDashboardStats(guild) {
       ].includes(entry.action)) {
         if (logs.length < 6) {
           const actionStr = AuditLogEvent[entry.action].replace(/([A-Z])/g, ' $1').trim().toUpperCase();
-          const target = entry.target • (entry.target.username || entry.target.name || 'Unknown') : 'Unknown';
+          const target = entry.target ? (entry.target.username || entry.target.name || 'Unknown') : 'Unknown';
           logs.push(`${timeStr} ${actionStr} > ${user} > ${target}`);
         }
       }
@@ -77,8 +77,8 @@ export async function fetchDashboardStats(guild) {
         const timeoutChange = entry.changes.find(c => c.key === 'communication_disabled_until');
         if (timeoutChange) {
           if (timeoutLogs.length < 4) {
-            const target = entry.target • entry.target.username : 'Unknown';
-            const actionStr = timeoutChange.new • 'TIMEOUT ADDED' : 'TIMEOUT REMOVED';
+            const target = entry.target ? entry.target.username : 'Unknown';
+            const actionStr = timeoutChange.new ? 'TIMEOUT ADDED' : 'TIMEOUT REMOVED';
             timeoutLogs.push(`${timeStr} ${actionStr} > ${user} > ${target}`);
           }
         }
@@ -139,7 +139,7 @@ export async function updateDashboardMessage(guild, client) {
     const embedDb = new EmbedBuilder()
       .setColor(accentInt)
       .setTitle("ATHENA'S SECURITY DASHBOARD")
-      .setDescription(`**Status:** **${stats.metrics.firewall === 'Active' • 'PROTECTED' : 'VULNERABLE'}**\n**Last Sync:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Live Monitoring:** **Active**`)
+      .setDescription(`**Status:** **${stats.metrics.firewall === 'Active' ? 'PROTECTED' : 'VULNERABLE'}**\n**Last Sync:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Live Monitoring:** **Active**`)
       .setImage(`attachment://dashboard_${timestamp}.png`);
 
     const embedTo = new EmbedBuilder()
