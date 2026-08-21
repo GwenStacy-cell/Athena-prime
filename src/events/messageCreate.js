@@ -211,8 +211,12 @@ export default {
           if (urls) {
             for (const url of urls) {
               if (url.includes('tiktok.com') || url.includes('instagram.com') || url.includes('twitter.com') || url.includes('x.com') || url.includes('reddit.com') || url.includes('youtube.com') || url.includes('youtu.be')) {
-                const handled = await processMediaLink(message.client, message, url);
-                if (handled) return;
+                const row = new ActionRowBuilder().addComponents(
+                  new ButtonBuilder().setCustomId('dl_mp4').setLabel('Download MP4').setStyle(ButtonStyle.Primary),
+                  new ButtonBuilder().setCustomId('dl_mp3').setLabel('Extract MP3').setStyle(ButtonStyle.Success)
+                );
+                await message.reply({ content: '-# **Media Link Detected!** Choose your format:', components: [row] });
+                return;
               }
             }
           }
