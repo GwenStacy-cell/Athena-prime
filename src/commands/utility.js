@@ -84,7 +84,16 @@ export const commands = [
       options: [],
       async executePrefix(message, args) {
         if (!(await isAuthorized(message.author, message.guild))) return message.reply(cv2.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
-        db.updateGuildConfig(message.guild.id, { mediaChannelId: null });
+        const cfg = db.getGuildConfig(message.guild.id);
+          if (cfg && cfg.mediaChannelId) {
+            const stickyData = db.getStickyMessage(message.guild.id, cfg.mediaChannelId);
+            if (stickyData && stickyData.lastMessageId) {
+              const ch = message.guild.channels.cache.get(cfg.mediaChannelId);
+              if (ch) ch.messages.delete(stickyData.lastMessageId).catch(() => null);
+            }
+            db.removeStickyMessage(message.guild.id, cfg.mediaChannelId);
+          }
+          db.updateGuildConfig(message.guild.id, { mediaChannelId: null });
         
         return message.reply(cv2.success(
           'MEDIA DOWNLOADER DISABLED',
@@ -93,7 +102,16 @@ export const commands = [
       },
       async executeSlash(interaction) {
         if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply(cv2.e.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
-        db.updateGuildConfig(interaction.guild.id, { mediaChannelId: null });
+        const cfg = db.getGuildConfig(interaction.guild.id);
+          if (cfg && cfg.mediaChannelId) {
+            const stickyData = db.getStickyMessage(interaction.guild.id, cfg.mediaChannelId);
+            if (stickyData && stickyData.lastMessageId) {
+              const ch = interaction.guild.channels.cache.get(cfg.mediaChannelId);
+              if (ch) ch.messages.delete(stickyData.lastMessageId).catch(() => null);
+            }
+            db.removeStickyMessage(interaction.guild.id, cfg.mediaChannelId);
+          }
+          db.updateGuildConfig(interaction.guild.id, { mediaChannelId: null });
         
         return interaction.reply(cv2.success(
           'MEDIA DOWNLOADER DISABLED',
