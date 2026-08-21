@@ -105,6 +105,10 @@ export async function processMediaLink(client, message, url) {
     return true;
   } catch (error) {
     console.error("Media Downloader Error:", error);
+    if (error && error.code === 40005) {
+      await message.channel.send({ content: '-# **The media file is too large for this server\'s Discord upload limit.**' }).catch(() => {});
+      return true;
+    }
     return false;
   }
 }
@@ -140,6 +144,10 @@ export async function processMp3Link(client, message, url) {
     return false;
   } catch (error) {
     console.error("Audio Downloader Error:", error);
+    if (error && error.code === 40005) {
+      await message.reply({ content: '-# **The media file is too large for this server\'s Discord upload limit.**' }).catch(() => {});
+      return true;
+    }
     await message.reply({ content: '-# **Failed to extract audio from that link.**' }).catch(() => {});
     return false;
   }
