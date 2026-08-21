@@ -54,7 +54,7 @@ export const commands = [
         const channelMention = message.mentions.channels.first();
         if (!channelMention) return message.reply(cv2.error('INVALID TARGET', 'Please mention a valid text channel to bind the extraction module.'));
         db.updateGuildConfig(message.guild.id, { mediaChannelId: channelMention.id });
-          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\nNote: Discord limits uploads based on server boosts (Level 0: 10MB, Level 1: 25MB, Level 2: 50MB, Level 3: 100MB).\nIf a video exceeds your server\'s limit, Athena will ask if you want to compress it.';
+          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\nNote: Discord limits uploads based on server boosts (Level 0/1: 10MB, Level 2: 50MB, Level 3: 100MB).\nIf a video exceeds your server\'s limit, Athena will ask if you want to compress it.';
           db.setStickyMessage(message.guild.id, channelMention.id, stickyText);
         
         return message.reply(cv2.success(
@@ -66,7 +66,7 @@ export const commands = [
         if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply(cv2.e.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
         const channel = interaction.options.getChannel('channel');
         db.updateGuildConfig(interaction.guild.id, { mediaChannelId: channel.id });
-          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\nNote: Discord limits uploads based on server boosts (Level 0: 10MB, Level 1: 25MB, Level 2: 50MB, Level 3: 100MB).\nIf a video exceeds your server\'s limit, Athena will ask if you want to compress it.';
+          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\nNote: Discord limits uploads based on server boosts (Level 0/1: 10MB, Level 2: 50MB, Level 3: 100MB).\nIf a video exceeds your server\'s limit, Athena will ask if you want to compress it.';
           db.setStickyMessage(interaction.guild.id, channel.id, stickyText);
         
         return interaction.reply(cv2.success(
