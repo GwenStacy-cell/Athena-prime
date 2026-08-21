@@ -107,12 +107,11 @@ export async function processMediaLink(client, message, url) {
     if (error && error.code === 40005) {
       if (buffer) {
         const mb = (buffer.length / 1024 / 1024).toFixed(1);
-        const limit = message.guild.premiumTier === 3 ? 100 : (message.guild.premiumTier === 2 ? 50 : (message.guild.premiumTier === 1 ? 25 : 10));
         const row = new ActionRowBuilder().addComponents(
           new ButtonBuilder().setCustomId('compress_10mb').setLabel('Compress to 10MB').setStyle(ButtonStyle.Primary)
         );
         const reply = await message.channel.send({ 
-          content: `-# **Upload Failed:** The video is **${mb}MB**, but this server's limit is **${limit}MB**.\n-# Would you like Athena to attempt downloading a highly compressed version under 10MB?`,
+          content: `-# **Upload Failed:** The video is **${mb}MB** and was rejected by Discord's upload limit for this server.\n-# Would you like Athena to attempt downloading a highly compressed version under 10MB?`,
           components: [row]
         }).catch(() => null);
         
