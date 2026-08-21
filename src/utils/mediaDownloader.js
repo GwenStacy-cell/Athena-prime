@@ -55,6 +55,21 @@ export async function processMediaLink(client, message, url) {
       }
     }
 
+    // Universal Fallback if third-party APIs fail
+    if (!localFile && !directUrl) {
+      console.log(`[Media] Scraper APIs failed, using yt-dlp universally for: ${url}`);
+      try {
+        const ytdlpPath = await downloadYtDlp();
+        const tempPath = path.join(process.cwd(), `yt_dlp_fallback_video_${Date.now()}.mp4`);
+        await execPromise(`python3 "${ytdlpPath}" -S "lang:en" -f "best[ext=mp4][filesize<24M]/best" -o "${tempPath}" "${url}"`);
+        if (fs.existsSync(tempPath)) {
+          localFile = tempPath;
+        }
+      } catch (e) {
+        console.error("yt-dlp fallback failed:", e);
+      }
+    }
+
     let buffer;
     if (localFile) {
       buffer = fs.readFileSync(localFile);
