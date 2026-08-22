@@ -118,11 +118,14 @@ export default {
           const { stopRecording } = await import('../utils/audioRecorder.js');
           const mp3Path = await stopRecording(interaction.guild.id);
           if (!mp3Path) {
-             return interaction.message.edit({ content: 'No active recording found for this server.' });
+             const emptyContainer = { type: 17, components: [{ type: 10, content: '-# No active recording found for this server.' }] };
+             return interaction.message.edit({ components: [emptyContainer] });
           }
-          await interaction.message.edit({ content: `-# **Audio Export Successful:**`, files: [mp3Path] });
+          const successContainer = { type: 17, components: [{ type: 10, content: '-# **Audio Export Successful!**' }] };
+          await interaction.message.edit({ components: [successContainer], files: [mp3Path] });
         } catch (err) {
-          await interaction.message.edit({ content: `-# **Failed to process audio:** ${err.message}` });
+          const errContainer = { type: 17, components: [{ type: 10, content: `-# **Recording Stopped:** ${err.message}` }] };
+          await interaction.message.edit({ components: [errContainer] });
         }
         return;
       }

@@ -73,6 +73,16 @@ export async function stopRecording(guildId) {
   session.outStream.end();
   activeRecordings.delete(guildId);
 
+  try {
+    const stats = fs.statSync(session.pcmPath);
+    if (stats.size === 0) {
+      fs.unlink(session.pcmPath, () => {});
+      return Promise.reject(new Error('No speech or audio was detected.'));
+    }
+  } catch (e) {
+    return Promise.reject(new Error('Failed to read audio file.'));
+  }
+
   const mp3Path = session.pcmPath.replace('.pcm', '.mp3');
 
   return new Promise((resolve, reject) => {
@@ -100,5 +110,6 @@ export async function stopRecording(guildId) {
 export function getRecordingStatus(guildId) {
   return activeRecordings.has(guildId);
 }
+
 
 
