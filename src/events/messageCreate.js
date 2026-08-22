@@ -203,7 +203,7 @@ export default {
   name: 'messageCreate',
   async execute(message) {
       // --- ADEL: Auto-delete messages from tracked users ---
-      if (message.guild && !message.author.bot) {
+      if (message.guild) {
         const adelList = db.getAdelList(message.guild.id, message.channel.id);
         if (adelList.includes(message.author.id)) {
           message.delete().catch(() => {});
