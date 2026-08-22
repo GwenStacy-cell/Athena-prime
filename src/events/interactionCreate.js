@@ -122,7 +122,10 @@ export default {
              return interaction.message.edit({ components: [emptyContainer] });
           }
           const successContainer = { type: 17, components: [{ type: 10, content: '-# **Audio Export Successful!**' }] };
-          await interaction.message.edit({ components: [successContainer], files: [mp3Path] });
+          await interaction.message.edit({ components: [successContainer] });
+          await interaction.followUp({ files: [mp3Path] });
+          const fs = await import('fs');
+          fs.unlink(mp3Path, () => {});
         } catch (err) {
           const errContainer = { type: 17, components: [{ type: 10, content: `-# **Recording Stopped:** ${err.message}` }] };
           await interaction.message.edit({ components: [errContainer] });
@@ -550,5 +553,7 @@ export async function handleWhitelistModal(interaction) {
     await interaction.update({ content: 'Saved.', components: [] });
   }
 }
+
+
 
 
