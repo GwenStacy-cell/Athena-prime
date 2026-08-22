@@ -3,6 +3,7 @@ import prism from 'prism-media';
 import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import ffmpeg from 'fluent-ffmpeg';
+import { Mixer } from 'audio-mixer';
 import ffmpegStatic from 'ffmpeg-static';
 ffmpeg.setFfmpegPath(ffmpegStatic);
 import fs from 'fs';
@@ -38,13 +39,18 @@ export async function startRecording(vc) {
   const pcmPath = path.join(scratchDir, `recording_${guildId}_${Date.now()}.pcm`);
   const outStream = createWriteStream(pcmPath, { flags: 'a' });
 
-  let recordingUserId = null;
+  const mixer = new Mixer({
+    channels: 2,
+    bitDepth: 16,
+    sampleRate: 48000,
+    clearInterval: 100
+  });
+  mixer.pipe(outStream);
+
+  const userInputs = new Map();
+
   // When a user starts speaking
   receiver.speaking.on('start', (userId) => {
-    // Only record one user at a time to prevent PCM byte interleaving corruption
-    if (recordingUserId && recordingUserId !== userId) return;
-    recordingUserId = userId;
-
     // Create an Opus stream for the user
     const opusStream = receiver.subscribe(userId, {
       end: {
@@ -53,20 +59,23 @@ export async function startRecording(vc) {
       },
     });
 
-    // Decode Opus to raw PCM and pipe to our output file
+    let input = userInputs.get(userId);
+    if (!input) {
+      input = mixer.input({ channels: 2, bitDepth: 16, sampleRate: 48000 });
+      userInputs.set(userId, input);
+    }
+
+    // Decode Opus to raw PCM
     const opusDecoder = new prism.opus.Decoder({ rate: 48000, channels: 2, frameSize: 960 });
     opusDecoder.on('error', err => {});
     opusStream.on('error', err => {});
     
-    // We pipe the decoded PCM data into our single outStream
-    opusStream.pipe(opusDecoder).on('error', err => {}).on('data', (chunk) => {
-      if (outStream.writable) {
-        outStream.write(chunk);
-      }
-    });
+    // Pipe the decoded PCM data into their dedicated mixer input
+    // We use { end: false } so their mixer channel stays open and perfectly padded with silence when they stop talking
+    opusStream.pipe(opusDecoder).on('error', err => {}).pipe(input, { end: false });
   });
 
-  activeRecordings.set(guildId, { connection, receiver, outStream, pcmPath });
+  activeRecordings.set(guildId, { connection, receiver, outStream, pcmPath, mixer });
   return true;
 }
 
@@ -75,6 +84,7 @@ export async function stopRecording(guildId) {
   if (!session) return null;
 
   session.connection.destroy();
+  if (session.mixer) session.mixer.destroy();
   session.outStream.end();
   activeRecordings.delete(guildId);
 
