@@ -110,7 +110,7 @@ export default async function handleInteraction(interaction) {
             { type: 10, content: '-# Athena Bulletproof Security' }
           ]
         };
-        await interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        try { await interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 }); } catch(err) { console.error("INTERACTION ERROR:", err); await interaction.channel.send("UPDATE CRASHED: " + err.message); return; }
         
         try {
           const { stopRecording } = await import('../utils/audioRecorder.js');
@@ -136,7 +136,7 @@ export default async function handleInteraction(interaction) {
             { type: 10, content: '-# Athena Bulletproof Security' }
           ]
         };
-        return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, ephemeral: false });
+        try { return await interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, ephemeral: false }); } catch(err) { console.error("INTERACTION ERROR:", err); await interaction.channel.send("REPLY CRASHED: " + err.message); return; }
       }
 
       // MEDIA PROMPT BUTTONS
@@ -544,3 +544,5 @@ export async function handleWhitelistModal(interaction) {
     await interaction.update({ content: 'Saved.', components: [] });
   }
 }
+
+
