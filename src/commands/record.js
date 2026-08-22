@@ -2,7 +2,7 @@ import { ChannelType, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
-const BLANK_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Transparent.gif';
+const BLANK_IMAGE = 'https://i.imgur.com/1a0tQ5a.png';
 
 export const commands = [
   {
@@ -90,3 +90,4 @@ export const commands = [
     }
   }
 ];
+
