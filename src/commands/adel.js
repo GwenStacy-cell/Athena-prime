@@ -1,6 +1,6 @@
 import db from "../database.js";
 import cv2 from "../cv2.js";
-import { isBotOwnerSync } from "../utils/permissions.js";
+import { isBotOwnerSync } from "../utils/helpers.js";
 
 function isAuthorized(user, guild) {
   if (!user || !guild) return false;
