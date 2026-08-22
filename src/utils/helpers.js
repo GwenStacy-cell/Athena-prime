@@ -171,7 +171,13 @@ export async function logToSecurityChannel(guild, embedObject) {
     }
 
     if (channel) {
-      await channel.send({ embeds: [embedObject] });
+      if (embedObject && embedObject.components) {
+        // It's a CV2 message object
+        await channel.send(embedObject);
+      } else {
+        // It's a legacy EmbedBuilder object
+        await channel.send({ embeds: [embedObject] });
+      }
     }
   } catch (error) {
     console.error('Error logging to security logs channel:', error);
