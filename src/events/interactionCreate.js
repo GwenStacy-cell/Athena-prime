@@ -11,7 +11,9 @@ import db from '../database.js';
 const isBotOwnerSync = (id) => id === '1509084068619489331';
 const TOGGLE_ON = '<:emoji_16:1521464002046328944>';
 
-export default async function handleInteraction(interaction) {
+export default {
+  name: 'interactionCreate',
+  async execute(interaction) {
   try {
     const guild = interaction.guild;
     if (guild) setGuildContext(guild.id);
@@ -276,7 +278,8 @@ export default async function handleInteraction(interaction) {
   } catch (error) {
     console.error('Interaction Error:', error);
   }
-}
+  } // close execute
+}; // close object
 
 async function handleSecurityInteractions(interaction, guild) {
   const customId = interaction.customId;
