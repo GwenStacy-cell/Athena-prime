@@ -1,3 +1,5 @@
+import { checkAndInstallDependencies } from './src/autoInstall.js';
+checkAndInstallDependencies();
 import { Client, GatewayIntentBits, Partials, Collection } from 'discord.js';
 import dotenv from 'dotenv';
 import chalk from 'chalk';
@@ -266,3 +268,4 @@ function handleShutdown(signal) {
 
 process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 process.on('SIGINT', () => handleShutdown('SIGINT'));
+
