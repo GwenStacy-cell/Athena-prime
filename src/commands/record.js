@@ -27,19 +27,19 @@ export const commands = [
             {
               type: 9,
               components: [
-                { type: 10, content: `## **Voice Recording Started**\n\n-# Channel: ?? **${vc.name}** | Initiated By: ${message.author}\n\n-# Live multi-user audio capture is active (Unmuted & Undeafened).\n-# When finished, run \`!record stop\` or click **Stop & Export** below.\n-# Audio recording will be delivered directly via DM (or in this channel).` },
-                {
-                  type: 1,
-                  components: [
-                    { type: 2, custom_id: 'record_stop', label: 'Stop & Export', style: 2 },
-                    { type: 2, custom_id: 'record_status', label: 'Check Status', style: 2 }
-                  ]
-                },
-                { type: 14, divider: true },
-                { type: 10, content: '-# Secure Unbypassable Voice Security' }
+                { type: 10, content: `## **Voice Recording Started**\n\n-# Channel: ?? **${vc.name}** | Initiated By: ${message.author}\n\n-# Live multi-user audio capture is active (Unmuted & Undeafened).\n-# When finished, run \`!record stop\` or click **Stop & Export** below.\n-# Audio recording will be delivered directly via DM (or in this channel).` }
               ],
               accessory: { type: 11, media: { url: BLANK_IMAGE } }
-            }
+            },
+            {
+              type: 1,
+              components: [
+                { type: 2, custom_id: 'record_stop', label: 'Stop & Export', style: 2 },
+                { type: 2, custom_id: 'record_status', label: 'Check Status', style: 2 }
+              ]
+            },
+            { type: 14, divider: true },
+            { type: 10, content: '-# Secure Unbypassable Voice Security' }
           ]
         };
         return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
@@ -54,12 +54,12 @@ export const commands = [
             {
               type: 9,
               components: [
-                { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: ?? **${vcName}**\n\n-# No speech or audio activity was detected during this recording session.` },
-                { type: 14, divider: true },
-                { type: 10, content: '-# Secure Unbypassable Voice Security' }
+                { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: ?? **${vcName}**\n\n-# No speech or audio activity was detected during this recording session.` }
               ],
               accessory: { type: 11, media: { url: BLANK_IMAGE } }
-            }
+            },
+            { type: 14, divider: true },
+            { type: 10, content: '-# Secure Unbypassable Voice Security' }
           ]
         };
         return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
