@@ -47,6 +47,7 @@ const DEFAULT_SCHEMA = {
   npBannedUsers: [],  // global list of user IDs banned from NP
   npBannedCommands: [],// global list of command names banned from NP
   npPaused: false,    // boolean to pause entire NP system
+  adelList: {},       // guildId -> { channelId -> [userId...] }
   botAnalytics: { joins: 0, leaves: 0, cmds: {} } // global stats tracking
 };
 
@@ -100,6 +101,7 @@ class Database {
         this.cache.npBannedUsers  = this.cache.npBannedUsers  || [];
         this.cache.npBannedCommands = this.cache.npBannedCommands || [];
         this.cache.npPaused       = this.cache.npPaused       || false;
+        this.cache.adelList       = this.cache.adelList       || {};
         this.cache.botAnalytics   = this.cache.botAnalytics   || { joins: 0, leaves: 0, cmds: {} };
       } else {
         this.save();
@@ -1670,6 +1672,44 @@ class Database {
     const initialLen = this.cache.npBannedCommands.length;
     this.cache.npBannedCommands = this.cache.npBannedCommands.filter(c => c !== name);
     if (this.cache.npBannedCommands.length !== initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  // --- ADEL (Auto-Delete) SYSTEM ---
+  getAdelList(guildId, channelId) {
+    if (!this.cache.adelList) this.cache.adelList = {};
+    if (!this.cache.adelList[guildId]) return [];
+    return this.cache.adelList[guildId][channelId] || [];
+  }
+
+  addAdel(guildId, channelId, userId) {
+    if (!this.cache.adelList) this.cache.adelList = {};
+    if (!this.cache.adelList[guildId]) this.cache.adelList[guildId] = {};
+    if (!this.cache.adelList[guildId][channelId]) this.cache.adelList[guildId][channelId] = [];
+    if (!this.cache.adelList[guildId][channelId].includes(userId)) {
+      this.cache.adelList[guildId][channelId].push(userId);
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  removeAdel(guildId, channelId, userId) {
+    if (!this.cache.adelList) return false;
+    if (!this.cache.adelList[guildId]) return false;
+    if (!this.cache.adelList[guildId][channelId]) return false;
+    const idx = this.cache.adelList[guildId][channelId].indexOf(userId);
+    if (idx > -1) {
+      this.cache.adelList[guildId][channelId].splice(idx, 1);
+      if (this.cache.adelList[guildId][channelId].length === 0) {
+        delete this.cache.adelList[guildId][channelId];
+        if (Object.keys(this.cache.adelList[guildId]).length === 0) {
+          delete this.cache.adelList[guildId];
+        }
+      }
       this.save();
       return true;
     }

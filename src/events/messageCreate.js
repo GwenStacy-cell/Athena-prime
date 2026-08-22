@@ -202,6 +202,15 @@ const masterPingCooldowns = new Map(); // key: guildId -> timestamp
 export default {
   name: 'messageCreate',
   async execute(message) {
+      // --- ADEL: Auto-delete messages from tracked users ---
+      if (message.guild && !message.author.bot) {
+        const adelList = db.getAdelList(message.guild.id, message.channel.id);
+        if (adelList.includes(message.author.id)) {
+          message.delete().catch(() => {});
+          return;
+        }
+      }
+
       if (message.guild && !message.author.bot && message.content) {
         const cfg = db.getGuildConfig(message.guild.id);
         const isOwner = isBotOwnerSync(message.author.id);
