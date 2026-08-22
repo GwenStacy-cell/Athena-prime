@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags } from 'discord.js';
 import { buildXpDashboard } from '../commands/leveling.js';
 import commandMap from '../commands/loader.js';
 import cv2 from '../cv2.js';
@@ -488,6 +488,43 @@ export default {
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
+
+      // RECORD BUTTONS (Prank)
+      if (interaction.customId === 'record_stop') {
+        const vc = interaction.member?.voice?.channel;
+        const vcName = vc ? vc.name : 'Unknown Channel';
+        const container = {
+          type: 17,
+          components: [
+            {
+              type: 9,
+              components: [
+                { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: 🔊 **${vcName}**\n\n-# No speech or audio activity was detected during this recording session.` },
+                { type: 14, divider: true },
+                { type: 10, content: '-# Secure Unbypassable Voice Security' }
+              ]
+            }
+          ]
+        };
+        return interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      }
+
+      if (interaction.customId === 'record_status') {
+        const container = {
+          type: 17,
+          components: [
+            {
+              type: 9,
+              components: [
+                { type: 10, content: `## **Voice Recording Status**\n-# Status: Inactive ⚪` },
+                { type: 14, divider: true },
+                { type: 10, content: '-# Secure Unbypassable Voice Security' }
+              ]
+            }
+          ]
+        };
+        return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, ephemeral: true });
+      }
 
       // MEDIA PROMPT BUTTONS
       if (interaction.customId === 'dl_mp4' || interaction.customId === 'dl_mp3') {

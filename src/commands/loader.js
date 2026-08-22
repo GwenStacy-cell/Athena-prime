@@ -36,6 +36,7 @@ import { commands as musicCmds } from './music.js';
 import { commands as rateCmds } from './rate.js';
 import { commands as rateLeaderboardCmds } from './rateleaderboard.js';
 import adelCmds from './adel.js';
+import { commands as botstatsCmds } from './botstats.js';
 import { commands as recordCmds } from './record.js';
 import { commands as dateCmds } from './date.js';
 import { commands as topCmds } from './top.js';
@@ -105,7 +106,8 @@ export const allCommands = [
   ...emojiStealerCmds,
   ...setDeleteLogCmds,
   ...rateLeaderboardCmds,
-  ...adelCmds
+  ...adelCmds,
+  ...botstatsCmds
 ];
 
 export const commandMap = new Map();
