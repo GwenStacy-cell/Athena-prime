@@ -33,6 +33,7 @@
     "music-lyrics": "^2.0.2",
     "nekos-best.js": "^6.5.3",
     "node-fetch": "^3.3.2",
+    "prism-media": "^1.3.5",
     "rss-parser": "^3.13.0",
     "shoukaku": "^4.3.0",
     "snapsave-media-downloader": "^2.4.1",

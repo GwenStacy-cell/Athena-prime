@@ -98,26 +98,40 @@ export default async function handleInteraction(interaction) {
     // ==========================================
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
 
-      // RECORD BUTTONS (Prank)
+      // RECORD BUTTONS
       if (interaction.customId === 'record_stop') {
         const vc = interaction.member?.voice?.channel;
         const vcName = vc ? vc.name : 'Unknown Channel';
         const container = {
           type: 17,
           components: [
-            { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: ?? **${vcName}**\n\n-# No speech or audio activity was detected during this recording session.` },
+            { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: 🔊 **${vcName}**\n\n-# Processing and exporting the audio file, please wait...` },
             { type: 14, divider: true },
             { type: 10, content: '-# Athena Bulletproof Security' }
           ]
         };
-        return interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        await interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        
+        try {
+          const { stopRecording } = await import('../utils/audioRecorder.js');
+          const mp3Path = await stopRecording(interaction.guild.id);
+          if (!mp3Path) {
+             return interaction.message.edit({ content: 'No active recording found for this server.' });
+          }
+          await interaction.message.edit({ content: `-# **Audio Export Successful:**`, files: [mp3Path] });
+        } catch (err) {
+          await interaction.message.edit({ content: `-# **Failed to process audio:** ${err.message}` });
+        }
+        return;
       }
 
       if (interaction.customId === 'record_status') {
+        const { getRecordingStatus } = await import('../utils/audioRecorder.js');
+        const isActive = getRecordingStatus(interaction.guild.id);
         const container = {
           type: 17,
           components: [
-            { type: 10, content: `## **Voice Recording Status**\n-# Status: Inactive ?` },
+            { type: 10, content: `## **Voice Recording Status**\n-# Status: ${isActive ? 'Active 🔴' : 'Inactive ⚪'}` },
             { type: 14, divider: true },
             { type: 10, content: '-# Athena Bulletproof Security' }
           ]
