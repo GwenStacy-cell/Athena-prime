@@ -2,8 +2,6 @@ import { ChannelType, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
-const BLANK_IMAGE = 'https://i.imgur.com/1a0tQ5a.png';
-
 export const commands = [
   {
     name: 'record',
@@ -24,13 +22,7 @@ export const commands = [
         const container = {
           type: 17,
           components: [
-            {
-              type: 9,
-              components: [
-                { type: 10, content: `## **Voice Recording Started**\n\n-# Channel: ?? **${vc.name}** | Initiated By: ${message.author}\n\n-# Live multi-user audio capture is active (Unmuted & Undeafened).\n-# When finished, run \`!record stop\` or click **Stop & Export** below.\n-# Audio recording will be delivered directly via DM (or in this channel).` }
-              ],
-              accessory: { type: 11, media: { url: BLANK_IMAGE } }
-            },
+            { type: 10, content: `## **Voice Recording Started**\n\n-# Channel: ?? **${vc.name}** | Initiated By: ${message.author}\n\n-# Live multi-user audio capture is active (Unmuted & Undeafened).\n-# When finished, run \`!record stop\` or click **Stop & Export** below.\n-# Audio recording will be delivered directly via DM (or in this channel).` },
             {
               type: 1,
               components: [
@@ -39,10 +31,10 @@ export const commands = [
               ]
             },
             { type: 14, divider: true },
-            { type: 10, content: '-# Secure Unbypassable Voice Security' }
+            { type: 10, content: '-# Athena Bulletproof Security' }
           ]
         };
-        return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        return message.channel.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
       }
 
       if (sub === 'stop') {
@@ -51,18 +43,12 @@ export const commands = [
         const container = {
           type: 17,
           components: [
-            {
-              type: 9,
-              components: [
-                { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: ?? **${vcName}**\n\n-# No speech or audio activity was detected during this recording session.` }
-              ],
-              accessory: { type: 11, media: { url: BLANK_IMAGE } }
-            },
+            { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: ?? **${vcName}**\n\n-# No speech or audio activity was detected during this recording session.` },
             { type: 14, divider: true },
-            { type: 10, content: '-# Secure Unbypassable Voice Security' }
+            { type: 10, content: '-# Athena Bulletproof Security' }
           ]
         };
-        return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        return message.channel.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
       }
 
       // Default behavior: Setup Voice Logs
@@ -90,4 +76,3 @@ export const commands = [
     }
   }
 ];
-
