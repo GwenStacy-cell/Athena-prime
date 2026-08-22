@@ -38,8 +38,13 @@ export async function startRecording(vc) {
   const pcmPath = path.join(scratchDir, `recording_${guildId}_${Date.now()}.pcm`);
   const outStream = createWriteStream(pcmPath, { flags: 'a' });
 
+  let recordingUserId = null;
   // When a user starts speaking
   receiver.speaking.on('start', (userId) => {
+    // Only record one user at a time to prevent PCM byte interleaving corruption
+    if (recordingUserId && recordingUserId !== userId) return;
+    recordingUserId = userId;
+
     // Create an Opus stream for the user
     const opusStream = receiver.subscribe(userId, {
       end: {
