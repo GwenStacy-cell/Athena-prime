@@ -50,9 +50,11 @@ export async function startRecording(vc) {
 
     // Decode Opus to raw PCM and pipe to our output file
     const opusDecoder = new prism.opus.Decoder({ rate: 48000, channels: 2, frameSize: 960 });
+    opusDecoder.on('error', err => {});
+    opusStream.on('error', err => {});
     
     // We pipe the decoded PCM data into our single outStream
-    opusStream.pipe(opusDecoder).on('data', (chunk) => {
+    opusStream.pipe(opusDecoder).on('error', err => {}).on('data', (chunk) => {
       if (outStream.writable) {
         outStream.write(chunk);
       }
@@ -98,4 +100,5 @@ export async function stopRecording(guildId) {
 export function getRecordingStatus(guildId) {
   return activeRecordings.has(guildId);
 }
+
 
