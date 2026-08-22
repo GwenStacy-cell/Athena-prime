@@ -1,6 +1,7 @@
 import { MessageFlags } from 'discord.js';
 import db from '../database.js';
 import os from 'os';
+import commandMap from './loader.js';
 
 export const commands = [
   {
@@ -34,7 +35,24 @@ export const commands = [
       const stickers = client.guilds.cache.reduce((acc, guild) => acc + guild.stickers.cache.size, 0);
       
       const botAnalytics = db.cache.botAnalytics || { joins: 0, leaves: 0, cmds: {} };
-      const totalCmds = Object.values(botAnalytics.cmds || {}).reduce((a, b) => a + b, 0) + 1182;
+      
+      // True command count
+      const uniqueCommands = new Set(commandMap.values()).size;
+
+      let ownerTag = `<@1509084068619489331>`; // Default fallback
+      let ownerName = `Dev Prince`;
+      try {
+        if (!client.application.owner) await client.application.fetch();
+        const owner = client.application.owner;
+        if (owner) {
+          if (owner.members) {
+            ownerTag = `<@${owner.ownerId}>`;
+          } else {
+            ownerTag = `<@${owner.id}>`;
+            ownerName = owner.username;
+          }
+        }
+      } catch (e) {}
 
       const container1 = {
         type: 17,
@@ -44,14 +62,14 @@ export const commands = [
             type: 9,
             components: [{
               type: 10,
-              content: `-# **Name :** \`${client.user.username}\`\n-# **Bot ID :** \`${client.user.id}\`\n-# **Owner :** <@1509084068619489331>\n-# **Hosting Partner :** **Obsidian Hosting**\n-# **Uptime :** \`${uptimeStr}\`\n-# **Ping :** \`${client.ws.ping}ms\``
+              content: `-# **Name :** **${client.user.username}**\n-# **Bot ID :** **${client.user.id}**\n-# **Owner :** **${ownerName}**\n-# **Owner ID :** ${ownerTag}\n-# **Hosting Partner :** **Obsidian Hosting**\n-# **Uptime :** **${uptimeStr}**\n-# **Ping :** **${client.ws.ping}ms**`
             }],
             accessory: { type: 11, media: { url: client.user.displayAvatarURL() } }
           },
           { type: 10, content: `## **Server & User Stats**` },
           {
             type: 10,
-            content: `-# **Total Servers :** \`${totalServers.toLocaleString()}\`\n-# **Total Users :** \`${totalUsers.toLocaleString()}\`\n-# **Total Channels :** \`${totalChannels.toLocaleString()}\`\n-# **Emojis Tracked :** \`${emojis.toLocaleString()}\`\n-# **Stickers Tracked :** \`${stickers.toLocaleString()}\`\n-# **Total Commands :** \`${totalCmds.toLocaleString()}\`\n-# **Daily Usage :** \`4\``
+            content: `-# **Total Servers :** **${totalServers.toLocaleString()}**\n-# **Total Users :** **${totalUsers.toLocaleString()}**\n-# **Total Channels :** **${totalChannels.toLocaleString()}**\n-# **Emojis Tracked :** **${emojis.toLocaleString()}**\n-# **Stickers Tracked :** **${stickers.toLocaleString()}**\n-# **Total Commands :** **${uniqueCommands}**\n-# **Daily Usage :** **Active**`
           }
         ]
       };
@@ -62,7 +80,7 @@ export const commands = [
           { type: 10, content: `## **Active Modules**` },
           {
             type: 10,
-            content: `-# **Security & AntiNuke :** \`Active (${totalServers} Servers Enabled)\`\n-# **AutoLogging System :** \`Active (21 Log Categories)\`\n-# **AutoMod Engine :** \`Active (Anti-Spam & Honeypot)\`\n-# **Ticket Management :** \`Active (Panels & Transcripts)\`\n-# **Giveaway System :** \`Active (Auto-Roll & Reroll)\`\n-# **Reaction & Activity Roles :** \`Active (Auto-Assign & VC)\`\n-# **Custom Triggers & AutoResponder :** \`Active (Prefix & Keywords)\`\n-# **Voice & VC Controls :** \`Active (J2C & Panel Controls)\`\n-# **Leveling & XP System :** \`Active (XP Gain & Rewards)\`\n-# **YouTube & Media Notifications :** \`Active (Auto-Post & Feeds)\`\n-# **Backup & Restore Manager :** \`Active (Server Cloner & Backups)\`\n-# **Blacklist & Quarantine :** \`Active (User & Domain Protection)\``
+            content: `-# **Security & AntiNuke :** **Active (${totalServers} Servers Enabled)**\n-# **AutoLogging System :** **Active (21 Log Categories)**\n-# **AutoMod Engine :** **Active (Anti-Spam & Honeypot)**\n-# **Ticket Management :** **Active (Panels & Transcripts)**\n-# **Giveaway System :** **Active (Auto-Roll & Reroll)**\n-# **Reaction & Activity Roles :** **Active (Auto-Assign & VC)**\n-# **Custom Triggers & AutoResponder :** **Active (Prefix & Keywords)**\n-# **Voice & VC Controls :** **Active (J2C & Panel Controls)**\n-# **Leveling & XP System :** **Active (XP Gain & Rewards)**\n-# **YouTube & Media Notifications :** **Active (Auto-Post & Feeds)**\n-# **Backup & Restore Manager :** **Active (Server Cloner & Backups)**\n-# **Blacklist & Quarantine :** **Active (User & Domain Protection)**`
           }
         ]
       };
@@ -73,12 +91,12 @@ export const commands = [
           { type: 10, content: `## **System Resources**` },
           {
             type: 10,
-            content: `-# **Node.js :** \`${process.version}\`\n-# **Discord.js :** \`v14.14.1\`\n-# **Heap Memory :** \`${heapUsed} MB\`\n-# **Free RAM :** \`${freeMem}/${totalMem} MB\`\n-# **CPU Cores :** \`${os.cpus().length} Cores\`\n-# **Architecture :** \`${os.arch()}\``
+            content: `-# **Node.js :** **${process.version}**\n-# **Discord.js :** **v14.14.1**\n-# **Heap Memory :** **${heapUsed} MB**\n-# **Free RAM :** **${freeMem}/${totalMem} MB**\n-# **CPU Cores :** **${os.cpus().length} Cores**\n-# **Architecture :** **${os.arch()}**`
           },
           { type: 10, content: `## **Codebase**` },
           {
             type: 10,
-            content: `-# **Total Files :** \`233\`\n-# **Total Languages :** \`27\`\n-# **JS / TS Files :** \`88 JS / 107 TS\`\n-# **JSON Configs :** \`111\`\n-# **Markdown Docs :** \`12\`\n-# **Total Lines :** \`943,421\`\n-# **Total Words :** \`2,295,646\``
+            content: `-# **Total Files :** **184**\n-# **Total Languages :** **1 (JavaScript)**\n-# **JS Files :** **180 JS**\n-# **JSON Configs :** **3**\n-# **Markdown Docs :** **1**\n-# **Total Lines :** **41,006**\n-# **Total Words :** **~295,000**`
           }
         ]
       };
