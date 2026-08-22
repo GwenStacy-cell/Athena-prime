@@ -502,7 +502,8 @@ export default {
                 { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: 🔊 **${vcName}**\n\n-# No speech or audio activity was detected during this recording session.` },
                 { type: 14, divider: true },
                 { type: 10, content: '-# Secure Unbypassable Voice Security' }
-              ]
+              ],
+              accessory: { type: 11, media: { url: 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Transparent.gif' } }
             }
           ]
         };
@@ -519,7 +520,8 @@ export default {
                 { type: 10, content: `## **Voice Recording Status**\n-# Status: Inactive ⚪` },
                 { type: 14, divider: true },
                 { type: 10, content: '-# Secure Unbypassable Voice Security' }
-              ]
+              ],
+              accessory: { type: 11, media: { url: 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Transparent.gif' } }
             }
           ]
         };
@@ -1914,3 +1916,5 @@ export async function handleWhitelistModal(interaction) {
     await interaction.update({ content: 'Saved.', components: [] });
   }
 }
+
+

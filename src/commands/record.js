@@ -2,6 +2,8 @@ import { ChannelType, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
+const BLANK_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Transparent.gif';
+
 export const commands = [
   {
     name: 'record',
@@ -35,7 +37,8 @@ export const commands = [
                 },
                 { type: 14, divider: true },
                 { type: 10, content: '-# Secure Unbypassable Voice Security' }
-              ]
+              ],
+              accessory: { type: 11, media: { url: BLANK_IMAGE } }
             }
           ]
         };
@@ -54,7 +57,8 @@ export const commands = [
                 { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: ?? **${vcName}**\n\n-# No speech or audio activity was detected during this recording session.` },
                 { type: 14, divider: true },
                 { type: 10, content: '-# Secure Unbypassable Voice Security' }
-              ]
+              ],
+              accessory: { type: 11, media: { url: BLANK_IMAGE } }
             }
           ]
         };
