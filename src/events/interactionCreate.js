@@ -5,7 +5,7 @@ import cv2 from '../cv2.js';
 import { setGuildContext } from '../embed.js';
 
 // Import all button handlers dynamically
-import downloader from '../utils/mediaDownloader.js';
+import * as downloader from '../utils/mediaDownloader.js';
 import db from '../database.js';
 
 const isBotOwnerSync = (id) => id === '1509084068619489331';
@@ -157,7 +157,7 @@ export default async function handleInteraction(interaction) {
           if (interaction.customId === 'dl_mp4') {
             success = await downloader.processMediaLink(interaction.client, originalMessage, url);
           } else {
-            success = await downloader.processMediaLink(interaction.client, originalMessage, url, true);
+            success = await downloader.processMp3Link(interaction.client, originalMessage, url);
           }
           
           if (!success) {
