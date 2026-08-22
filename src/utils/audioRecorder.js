@@ -3,6 +3,8 @@ import prism from 'prism-media';
 import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import ffmpeg from 'fluent-ffmpeg';
+import ffmpegStatic from 'ffmpeg-static';
+ffmpeg.setFfmpegPath(ffmpegStatic);
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -96,3 +98,4 @@ export async function stopRecording(guildId) {
 export function getRecordingStatus(guildId) {
   return activeRecordings.has(guildId);
 }
+
