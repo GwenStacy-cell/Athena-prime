@@ -33,6 +33,22 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_user_activity_date ON user_activity(date);
   CREATE INDEX IF NOT EXISTS idx_channel_activity_date ON channel_activity(date);
+
+  CREATE TABLE IF NOT EXISTS user_invites (
+    guild_id TEXT,
+    user_id TEXT,
+    regular INTEGER DEFAULT 0,
+    leaves INTEGER DEFAULT 0,
+    fake INTEGER DEFAULT 0,
+    PRIMARY KEY (guild_id, user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS join_history (
+    guild_id TEXT,
+    joined_user_id TEXT,
+    inviter_id TEXT,
+    PRIMARY KEY (guild_id, joined_user_id)
+  );
 `);
 
 // Prepared statements
