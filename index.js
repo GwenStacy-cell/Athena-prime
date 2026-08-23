@@ -52,14 +52,7 @@ const client = new Client({
 global.client = client; // Make client globally accessible
 
 // Initialize Shoukaku (Lavalink wrapper)
-const Nodes = [
-  {
-    name: 'Athena AWS Premium',
-    url: '54.91.178.110:2333',
-    auth: 'Prince12',
-    secure: false
-  }
-];
+const Nodes = [];
 const shoukaku = new Shoukaku(new Connectors.DiscordJS(client), Nodes);
 shoukaku.on('ready', (name) => {
   console.log(`✅ Lavalink node "${name}" is ready!`);
@@ -269,5 +262,6 @@ function handleShutdown(signal) {
 
 process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 process.on('SIGINT', () => handleShutdown('SIGINT'));
+
 
 
