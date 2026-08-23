@@ -79,6 +79,7 @@ shoukaku.on('debug', (name, info) => {
 global.client.shoukaku = shoukaku;
 
 process.on('unhandledRejection', (error) => {
+  if (error?.message?.includes('Cannot perform IP discovery - socket closed')) return;
   console.error(chalk.red.bold('Unhandled Promise Rejection:'), error);
 });
 
@@ -268,4 +269,5 @@ function handleShutdown(signal) {
 
 process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 process.on('SIGINT', () => handleShutdown('SIGINT'));
+
 
