@@ -3301,12 +3301,12 @@ export async function handleScanServer(guild, page = 0) {
   cv2Components.push({ type: 10, content: `## **SERVER SECURITY SCANNER**` });
   cv2Components.push({ type: 14, divider: true });
   
-  cv2Components.push({ type: 10, content: `# **SECURITY DIAGNOSTICS**\n-# **Total Humans:** \`${allHumans.size}\`\n-# **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)` });
+  cv2Components.push({ type: 10, content: `## **SECURITY DIAGNOSTICS**\n-# **Total Humans:** \`${allHumans.size}\`\n-# **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)` });
   
   const humansToShow = trustedHumans.slice(startIdx, endIdx);
   if (humansToShow.length > 0) {
     cv2Components.push({ type: 14, divider: true });
-    let content = `# **TRUSTED PERSONNEL**\n`;
+    let content = `## **TRUSTED PERSONNEL**\n`;
     humansToShow.forEach(h => {
       content += `-# - **@${h.user.username}** [\`${h.id}\`]\n`;
     });
@@ -3317,7 +3317,7 @@ export async function handleScanServer(guild, page = 0) {
   const whitelistedBotsToShow = whitelistedBots.slice(startIdx, endIdx);
   if (whitelistedBotsToShow.length > 0) {
     cv2Components.push({ type: 14, divider: true });
-    let content = `# **WHITELISTED BOTS**\n`;
+    let content = `## **WHITELISTED BOTS**\n`;
     whitelistedBotsToShow.forEach(b => {
       content += `-# - **@${b.user.username}** [\`${b.id}\`]\n`;
     });
@@ -3328,7 +3328,7 @@ export async function handleScanServer(guild, page = 0) {
   const highRiskHumansToShow = highRiskHumans.slice(startIdx, endIdx);
   if (highRiskHumansToShow.length > 0) {
     cv2Components.push({ type: 14, divider: true });
-    let content = `# **HIGH-RISK PERSONNEL**\n`;
+    let content = `## **HIGH-RISK PERSONNEL**\n`;
     highRiskHumansToShow.forEach(h => {
       content += `-# - **@${h.member.user.username}** [\`${h.member.id}\`] - ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
     });
@@ -3339,7 +3339,7 @@ export async function handleScanServer(guild, page = 0) {
   const unauthorizedBotsToShow = unauthorizedBots.slice(startIdx, endIdx);
   if (unauthorizedBotsToShow.length > 0) {
     cv2Components.push({ type: 14, divider: true });
-    let content = `# **UNAUTHORIZED BOTS**\n`;
+    let content = `## **UNAUTHORIZED BOTS**\n`;
     unauthorizedBotsToShow.forEach(b => {
       const badRoles = getDangerousRoles(b);
       content += `-# - **@${b.user.username}** [\`${b.id}\`] ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
