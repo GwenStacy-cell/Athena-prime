@@ -1,4 +1,5 @@
 import { AuditLogEvent } from 'discord.js';
+import { directStrike } from '../utils/antinuke.js';
 import db from '../database.js';
 import { sendLeaveMessage } from '../commands/welcome.js';
 import { logServerEvent } from '../utils/serverLogger.js';
@@ -10,14 +11,9 @@ export default {
     const guild = member.guild;
     if (!guild) return;
 
-
-    // Send leave message
-    await sendLeaveMessage(member);
-
-    // Send Leave DM
+    // Send leave message and DM concurrently
+    sendLeaveMessage(member).catch(() => null);
     try {
-      // NOTE: DMs to a user who just left the server often fail if they don't share another server with the bot,
-      // but we will try anyway as requested.
       const config = db.getGuildConfig(guild.id);
       const leaveDm = embed.build({
         title: `Goodbye from ${guild.name}!`,
@@ -25,19 +21,28 @@ export default {
         color: config.accentColor || '#2b2d31',
         thumbnail: guild.iconURL({ dynamic: true })
       });
-      await member.send({ embeds: [leaveDm] }).catch(() => null);
-    } catch (err) {}
+      member.send({ embeds: [leaveDm] }).catch(() => null);
+    } catch {}
 
-    // Determine if kicked or left voluntarily
-    await new Promise(r => setTimeout(r, 500));
+    // ⚡ DIRECT STRIKE — detect kicks the instant the gateway fires
+    // No 500ms wait. directStrike fetches the audit log immediately.
+    directStrike(
+      guild,
+      AuditLogEvent.MemberKick,
+      'Member Kick (Mass Kick Attack)',
+      member.id,
+      null // Kicks cannot be auto-reversed
+    ).catch(() => null);
+
+    // Server logging (with small delay only for logging accuracy)
+    await new Promise(r => setTimeout(r, 300));
     const logs = await guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberKick }).catch(() => null);
     const entry = logs?.entries?.first();
 
     let isKick = false;
     let executor = 'Unknown (Native/Other Bot)';
     let reason = 'No reason provided';
-    
-    // Check if the kick entry was created within the last 5 seconds for this specific user
+
     if (entry && entry.target?.id === member.id && Date.now() - entry.createdAt.getTime() < 5000) {
       isKick = true;
       executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
