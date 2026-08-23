@@ -447,5 +447,9 @@ export default {
   getChartData,
   getServerOverviewStats,
   getTopMembers,
-  getTopVoiceMembers
+  getTopVoiceMembers,
+  logInvite,
+  logLeave,
+  getTopInvites,
+  getUserInvites
 };
