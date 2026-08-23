@@ -9,7 +9,7 @@ import { executeQuarantine } from '../commands/security.js';
 // Direct REST DELETE to Discord ban endpoint.
 // Completely bypasses discord.js cache and all internal processing.
 // ==========================================
-async function rawBan(guildId, userId, token, reason = '[ATHENA] Anti-Nuke: Instant elimination') {
+export async function rawBan(guildId, userId, token, reason = '[ATHENA] Anti-Nuke: Instant elimination') {
   try {
     const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/bans/${userId}`, {
       method: 'PUT',
@@ -142,7 +142,7 @@ const recentBans = new Map();
 // ==========================================
 // IS BOT AUTHORIZED
 // ==========================================
-function isBotAuthorized(guild, botId) {
+export function isBotAuthorized(guild, botId) {
   if (botId === guild.members.me?.id) return true;
   if (isBotOwnerSync(botId)) return true;
   if (botId === guild.ownerId) return true;
