@@ -88,6 +88,11 @@ export default {
         return interaction.reply({ content: `Channel renamed to \`${newName}\`.`, ephemeral: true });
       }
       
+      if (interaction.customId.startsWith('enuke_modal_')) {
+        const { handleEnukeModal } = await import('../commands/enuke.js');
+        return handleEnukeModal(interaction);
+      }
+
       // Handle Whitelist limit modal
       if (interaction.customId.startsWith('wlModal_limit_')) {
         await handleWhitelistModal(interaction);
@@ -99,6 +104,12 @@ export default {
     // 3. INTERACTIVE COMPONENT BUTTON CLICKS
     // ==========================================
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
+      // ENUKE BUTTON
+      if (interaction.customId.startsWith('enuke_open_manager_')) {
+        const { handleEnukeButton } = await import('../commands/enuke.js');
+        return handleEnukeButton(interaction);
+      }
+
       // RATE EDIT BUTTONS
       if (interaction.customId.startsWith('rate_edit_')) {
         const action = interaction.customId.replace('rate_edit_', '');
