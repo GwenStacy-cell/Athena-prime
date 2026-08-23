@@ -3228,7 +3228,7 @@ export async function handleScanServer(guild, page = 0) {
   const config = db.getGuildConfig(guild.id);
   const whitelistedIds = config.botWhitelist || [];
   
-  await guild.members.fetch(); // Ensure cache is populated
+  await guild.members.fetch(); 
   const allMembers = guild.members.cache;
   const allBots = allMembers.filter(m => m.user.bot);
   const allHumans = allMembers.filter(m => !m.user.bot);
@@ -3296,87 +3296,88 @@ export async function handleScanServer(guild, page = 0) {
   const startIdx = page * ITEMS_PER_PAGE;
   const endIdx = startIdx + ITEMS_PER_PAGE;
 
-  const DANGER = '<a:Dark4luvontop:1524405543987445861>';
-  const WARNING = '<a:Dark4luvontop:1524405545690202253>';
-  const DOT = '-';
-
-  let desc = `### ${DANGER} SECURITY DIAGNOSTICS\n\n`;
-  desc += `> **Total Humans:** \`${allHumans.size}\`\n`;
-  desc += `> **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n\n`;
-
+  const cv2Components = [];
+  
+  cv2Components.push({ type: 10, content: `## **SERVER SECURITY SCANNER**` });
+  cv2Components.push({ type: 14, divider: true });
+  
+  cv2Components.push({ type: 10, content: `# **SECURITY DIAGNOSTICS**\n-# **Total Humans:** \`${allHumans.size}\`\n-# **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)` });
+  
   const humansToShow = trustedHumans.slice(startIdx, endIdx);
   if (humansToShow.length > 0) {
-    desc += `### <:dark4luvontop:1533860081916182721> TRUSTED PERSONNEL\n`;
+    cv2Components.push({ type: 14, divider: true });
+    let content = `# **TRUSTED PERSONNEL**\n`;
     humansToShow.forEach(h => {
-      desc += `${DOT} **@${h.user.username}** [\`${h.id}\`]\n`;
+      content += `-# - **@${h.user.username}** [\`${h.id}\`]\n`;
     });
-    if (trustedHumans.length > endIdx) desc += `*...and ${trustedHumans.length - endIdx} more.*\n`;
-    desc += `\n`;
+    if (trustedHumans.length > endIdx) content += `-# *...and ${trustedHumans.length - endIdx} more.*\n`;
+    cv2Components.push({ type: 10, content: content.trim() });
   }
 
   const whitelistedBotsToShow = whitelistedBots.slice(startIdx, endIdx);
   if (whitelistedBotsToShow.length > 0) {
-    desc += `### <:dark4luvontop:1533860081916182721> WHITELISTED BOTS\n`;
+    cv2Components.push({ type: 14, divider: true });
+    let content = `# **WHITELISTED BOTS**\n`;
     whitelistedBotsToShow.forEach(b => {
-      desc += `${DOT} **@${b.user.username}** [\`${b.id}\`]\n`;
+      content += `-# - **@${b.user.username}** [\`${b.id}\`]\n`;
     });
-    if (whitelistedBots.length > endIdx) desc += `*...and ${whitelistedBots.length - endIdx} more.*\n`;
-    desc += `\n`;
+    if (whitelistedBots.length > endIdx) content += `-# *...and ${whitelistedBots.length - endIdx} more.*\n`;
+    cv2Components.push({ type: 10, content: content.trim() });
   }
 
   const highRiskHumansToShow = highRiskHumans.slice(startIdx, endIdx);
   if (highRiskHumansToShow.length > 0) {
-    desc += `### ${WARNING} HIGH-RISK PERSONNEL\n`;
+    cv2Components.push({ type: 14, divider: true });
+    let content = `# **HIGH-RISK PERSONNEL**\n`;
     highRiskHumansToShow.forEach(h => {
-      desc += `${DOT} **@${h.member.user.username}** [\`${h.member.id}\`] Ã¢â‚¬â€ ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
+      content += `-# - **@${h.member.user.username}** [\`${h.member.id}\`] - ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
     });
-    if (highRiskHumans.length > endIdx) desc += `*...and ${highRiskHumans.length - endIdx} more.*\n`;
-    desc += `\n`;
+    if (highRiskHumans.length > endIdx) content += `-# *...and ${highRiskHumans.length - endIdx} more.*\n`;
+    cv2Components.push({ type: 10, content: content.trim() });
   }
 
   const unauthorizedBotsToShow = unauthorizedBots.slice(startIdx, endIdx);
   if (unauthorizedBotsToShow.length > 0) {
-    desc += `### ${DANGER} UNAUTHORIZED BOTS\n`;
+    cv2Components.push({ type: 14, divider: true });
+    let content = `# **UNAUTHORIZED BOTS**\n`;
     unauthorizedBotsToShow.forEach(b => {
       const badRoles = getDangerousRoles(b);
-      desc += `${DOT} **@${b.user.username}** [\`${b.id}\`] ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
+      content += `-# - **@${b.user.username}** [\`${b.id}\`] ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
     });
-    if (unauthorizedBots.length > endIdx) desc += `*...and ${unauthorizedBots.length - endIdx} more.*\n`;
-    desc += `\n`;
+    if (unauthorizedBots.length > endIdx) content += `-# *...and ${unauthorizedBots.length - endIdx} more.*\n`;
+    cv2Components.push({ type: 10, content: content.trim() });
   }
 
   if (unauthorizedBots.length === 0 && highRiskHumans.length === 0) {
-     desc += `*Server security is optimal. No unauthorized bots or untrusted high-risk users detected.*\n`;
+     cv2Components.push({ type: 14, divider: true });
+     cv2Components.push({ type: 10, content: `-# *Server security is optimal. No unauthorized bots or untrusted high-risk users detected.*` });
   }
+  
+  cv2Components.push({ type: 14, divider: true });
+  cv2Components.push({ type: 10, content: `-# **Page ${page + 1} of ${totalPages}**` });
 
-  if (desc.length > 4096) {
-    desc = desc.substring(0, 4090) + '...';
-  }
+  const container = {
+    type: 17,
+    components: cv2Components
+  };
 
-  const embedMsg = new EmbedBuilder()
-    .setTitle('SERVER SECURITY SCANNER')
-    .setDescription(desc)
-    .setColor('#ff0000')
-    .setFooter({ text: `Page ${page + 1} of ${totalPages}` })
-    .setTimestamp();
-
-  const components = [];
+  const actionRows = [];
 
   // Pagination buttons
   if (totalPages > 1) {
     const prevBtn = new ButtonBuilder()
       .setCustomId(`scanserver_prev_${page}`)
-      .setEmoji('<:previous:1523766004839088301>')
+      .setLabel('Previous')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(page === 0);
       
     const nextBtn = new ButtonBuilder()
       .setCustomId(`scanserver_next_${page}`)
-      .setEmoji('<:next:1523766065576935475>')
+      .setLabel('Next')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(page === totalPages - 1);
       
-    components.push(new ActionRowBuilder().addComponents(prevBtn, nextBtn));
+    actionRows.push(new ActionRowBuilder().addComponents(prevBtn, nextBtn));
   }
 
   if (unauthorizedBots.length > 0) {
@@ -3385,6 +3386,9 @@ export async function handleScanServer(guild, page = 0) {
       description: b.id,
       value: b.id
     })).slice(0, 25);
+    
+    // Required because we might be returning inside an interaction update
+    const { StringSelectMenuBuilder } = await import('discord.js');
     
     const selectMenu = new StringSelectMenuBuilder()
       .setCustomId(`scanserver_ban_${page}`)
@@ -3396,13 +3400,12 @@ export async function handleScanServer(guild, page = 0) {
       .setLabel('Ban All Unauthorized')
       .setStyle(ButtonStyle.Danger);
       
-    components.push(new ActionRowBuilder().addComponents(selectMenu));
-    components.push(new ActionRowBuilder().addComponents(banAllBtn));
+    actionRows.push(new ActionRowBuilder().addComponents(selectMenu));
+    actionRows.push(new ActionRowBuilder().addComponents(banAllBtn));
   }
   
-  return { embeds: [embedMsg], components: components };
+  return { components: [container, ...actionRows], flags: MessageFlags.IsComponentsV2 };
 }
-
 
 export async function getAntilinkModulePanel(guild) {
   const db = (await import('../database.js')).default;
