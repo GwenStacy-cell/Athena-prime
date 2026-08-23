@@ -40,6 +40,7 @@ import { commands as botstatsCmds } from './botstats.js';
 import { commands as recordCmds } from './record.js';
 import { commands as dateCmds } from './date.js';
 import { commands as topCmds } from './top.js';
+import { commands as invitelbCmds } from './invitelb.js';
 import { commands as stickyCmds } from './sticky.js';
 import { commands as fckCmds } from './fck.js';
 import { commands as afkCmds } from './afk.js';
@@ -100,6 +101,7 @@ export const allCommands = [
   ...recordCmds,
   ...dateCmds,
   ...topCmds,
+  ...invitelbCmds,
   ...stickyCmds,
   ...fckCmds,
   ...afkCmds,
