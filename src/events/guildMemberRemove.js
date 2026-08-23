@@ -1,6 +1,7 @@
 import { AuditLogEvent } from 'discord.js';
 import { directStrike } from '../utils/antinuke.js';
 import db from '../database.js';
+import statsDB from '../statsDB.js';
 import { sendLeaveMessage } from '../commands/welcome.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 import embed from '../embed.js';
@@ -10,6 +11,8 @@ export default {
   async execute(member) {
     const guild = member.guild;
     if (!guild) return;
+
+    statsDB.logLeave(guild.id, member.id);
 
     // Send leave message and DM concurrently
     sendLeaveMessage(member).catch(() => null);

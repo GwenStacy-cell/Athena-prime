@@ -1,4 +1,5 @@
 import db from '../database.js';
+import statsDB from '../statsDB.js';
 import embed from '../embed.js';
 import { executeQuarantine } from '../commands/security.js';
 import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel } from '../utils/helpers.js';
@@ -201,6 +202,10 @@ export default {
           member.client.invites.set(guild.id, new Map(newInvites.map(i => [i.code, i.uses])));
         }
 
+        if (usedInvite?.inviter) {
+          statsDB.logInvite(guild.id, usedInvite.inviter.id, member.id);
+        }
+        
         const inviteChannel = guild.channels.cache.get(config.inviteChannelId);
         if (inviteChannel) {
           const inviter = usedInvite?.inviter;

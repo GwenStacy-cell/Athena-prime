@@ -1,5 +1,6 @@
 import { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
+import statsDB from '../statsDB.js';
 import cv2 from '../cv2.js';
 import ms from 'ms';
 import chalk from 'chalk';
@@ -96,7 +97,19 @@ export const commands = [
           { name: 'duration', description: 'Duration (e.g. 10m, 1h, 1d)', type: 3, required: true },
           { name: 'winners', description: 'Number of winners', type: 4, required: true },
           { name: 'prize', description: 'The prize to win', type: 3, required: true },
-          { name: 'message', description: 'Optional custom message', type: 3, required: false }
+          { name: 'message', description: 'Optional custom message', type: 3, required: false },
+            { 
+              name: 'mode', 
+              description: 'Winner Selection Mode', 
+              type: 3, 
+              required: false,
+              choices: [
+                { name: 'Random (Classic)', value: 'random' },
+                { name: 'Most Messages in Channel', value: 'messages' },
+                { name: 'Most VC Time', value: 'vc' },
+                { name: 'Highest Invites', value: 'invites' }
+              ]
+            }
         ]
       },
       {
