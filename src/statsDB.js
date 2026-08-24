@@ -398,6 +398,20 @@ const _logLeave = db.prepare(`
   UPDATE user_invites SET leaves = leaves + 1 WHERE guild_id = ? AND user_id = ?;
 `);
 
+
+const _syncInvites = db.prepare(`
+  INSERT INTO user_invites (guild_id, user_id, regular)
+  VALUES (?, ?, ?)
+  ON CONFLICT(guild_id, user_id)
+  DO UPDATE SET regular = MAX(regular, excluded.regular);
+`);
+
+export function syncRetroactiveInvites(guildId, inviterId, amount) {
+  try {
+    _syncInvites.run(guildId, inviterId, amount);
+  } catch(e) {}
+}
+
 export function logInvite(guildId, inviterId, joinedUserId) {
   try {
     _logInvite.run(guildId, inviterId);
@@ -451,5 +465,6 @@ export default {
   logInvite,
   logLeave,
   getTopInvites,
-  getUserInvites
+  getUserInvites,
+  syncRetroactiveInvites
 };
