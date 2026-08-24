@@ -828,7 +828,7 @@ export async function generateTopImage(guild, topMsgMembers, topVoiceMembers) {
 }
 
 
-export async function generateInviteTopImage(guild, topInvites) {
+export async function generateInviteTopImage(guild, topInvites, lastSync = null) {
   const ROWS = 10;
   const ROW_H = 46;
   const HEADER_H = 100;
@@ -866,13 +866,31 @@ export async function generateInviteTopImage(guild, topInvites) {
     ctx.fill();
   }
 
+  // Add shadow to title
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 2;
+  
   ctx.fillStyle = C.white;
-  ctx.font = `600 24px ${FONT_BOLD}`;
-  ctx.fillText("Invite Leaderboard", ICON_CX + ICON_R + 15, ICON_CY - 5);
+  ctx.font = `900 28px ${FONT_BOLD}`; // Bolder, slightly larger
+  ctx.fillText("INVITE LEADERBOARD", ICON_CX + ICON_R + 15, ICON_CY - 5);
+  
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
 
   ctx.fillStyle = C.gray;
-  ctx.font = `400 15px ${FONT_NORMAL}`;
-  ctx.fillText(guild.name, ICON_CX + ICON_R + 15, ICON_CY + 18);
+  ctx.font = `400 14px ${FONT_NORMAL}`;
+  
+  let subtitleText = `${guild.name} ? Lifetime`;
+  if (lastSync) {
+    const d = new Date(lastSync);
+    subtitleText = `${guild.name} ? Last Synced: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+  }
+  ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
 
   const Y_START = HEADER_H + SECTION_TITLE_H;
 
@@ -919,9 +937,10 @@ export async function generateInviteTopImage(guild, topInvites) {
 
   // Footer
   ctx.fillStyle = C.muted;
-  ctx.font = `400 12px ${FONT_NORMAL}`;
+  ctx.font = `400 11px ${FONT_NORMAL}`;
   ctx.textAlign = 'center';
-  ctx.fillText("Data powered by Athena Prime Stats Engine", W / 2, H - 15);
+  ctx.fillText("Admins: Run !syncinvites to pull the latest offline active invites from Discord.", W / 2, H - 22);
+  ctx.fillText("Data powered by Athena Prime Stats Engine", W / 2, H - 8);
   ctx.textAlign = 'left';
 
   return canvas.toBuffer('image/png');

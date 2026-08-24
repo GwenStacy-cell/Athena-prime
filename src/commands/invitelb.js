@@ -1,4 +1,5 @@
 import { AttachmentBuilder } from 'discord.js';
+import db from '../database.js';
 import statsDB from '../statsDB.js';
 import { generateInviteTopImage } from '../utils/statCanvas.js';
 import cv2 from '../cv2.js';
@@ -39,7 +40,7 @@ export const commands = [
 
         const topInvites = await resolveMembers(rawInvites);
 
-        const buffer = await generateInviteTopImage(message.guild, topInvites);
+        const cfg = db.getGuildConfig(message.guild.id); const lastSync = cfg.lastInviteSync || null; const buffer = await generateInviteTopImage(message.guild, topInvites, lastSync);
         const attachment = new AttachmentBuilder(buffer, { name: 'top-invites.png' });
 
         await waitMsg.delete().catch(() => null);
@@ -84,7 +85,7 @@ export const commands = [
           statsDB.syncRetroactiveInvites(message.guild.id, inviterId, uses);
         }
         
-        await waitMsg.edit(cv2.success('Sync Complete', `Successfully synced **${inviterMap.size}** users' past invites into the database! You can now view the leaderboard.`));
+        const cfg = db.getGuildConfig(message.guild.id); cfg.lastInviteSync = Date.now(); db.save(); await waitMsg.edit(cv2.success('Sync Complete', `Successfully synced **${inviterMap.size}** users' past invites into the database! You can now view the leaderboard.`));
       } catch (err) {
         console.error(err);
         await waitMsg.edit(cv2.danger('Error', 'Failed to sync invites. Ensure I have the Manage Server permission to read invites.'));
