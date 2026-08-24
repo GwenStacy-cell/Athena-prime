@@ -598,7 +598,7 @@ const helpModules = [
   { id: 'utilities', shortLabel: 'Utility', label: 'Utilities', emoji: '<:utilities:1523747124653723838>', commands: ['`!afk` `[reason]` - Set your AFK status `[public]`', '`/bump` - Set a bump reminder and boost the server `[public]`', '`!avatar` / `!banner` `[@user]` - View a member\'s global/server avatar or banner `[public]`', '`!status` - Real-time security health overview `[public]`', '`!serverinfo` / `!serveroverview` / `!userinfo` `[@user]` - View stats and profile information `[public]`', '`!setmedia` `#channel` / `!unsetmedia` - Bind or unbind the auto-media extractor `[extra owners]`', '`!mp3` `link` - Extract audio from any media link `[public]`', '`!rate` `[url/attachment]` - Post an edit to be rated `[public]`', '`!rateleaderboard` - View top rated edits globally `[public]`', '`!rate` `#channel` - Bind ratings to a specific channel `[extra owners]`', '`!date` `@user` - Go on a beautiful, romantic date with someone `[public]`', '`!ping` / `!time` - Check bot latency and Indian Standard Time (IST) `[public]`', '`!setup` - Quick-bind log channel, quarantine VC and quarantine role `[extra owners]`', '`!dev` - View Lead Architect & Developer details `[public]`'] }
 ];
 
-const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
+const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1541165885664792678/athena____bg_00000-removebg-preview.png?ex=6a8d42d4&is=6a8bf154&hm=840729aa7829fc99408092eb61b8e479588f76d26b72bf2befff992a2bf7186e&';
 
 function buildHelpContainer(client, guildId, moduleId = 'home') {
   const config = db.getGuildConfig(guildId || '0');
@@ -704,7 +704,7 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
   const row1 = new ActionRowBuilder().addComponents(selectMenu);
   const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
 
-  const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1523436364387975298/banner_gif_1-ezgif.com-crop.gif?ex=6a4cc2ed&is=6a4b716d&hm=a2b3e22c3ee7e1a91545669546a5550644eaba3508e179a3c0d38c889515525d&';
+  const HELP_GIF = 'https://cdn.discordapp.com/attachments/1516850846984437801/1541165885664792678/athena____bg_00000-removebg-preview.png?ex=6a8d42d4&is=6a8bf154&hm=840729aa7829fc99408092eb61b8e479588f76d26b72bf2befff992a2bf7186e&';
 
   rawComponents.push({ type: 12, items: [{ media: { url: HELP_GIF } }] });
   rawComponents.push({ type: 14, divider: true });
