@@ -886,13 +886,13 @@ export async function generateInviteTopImage(guild, topInvites, lastSync = null)
   ctx.font = `400 14px ${FONT_NORMAL}`;
   
   const today = new Date();
-  const past10 = new Date(today);
-  past10.setDate(today.getDate() - 10);
+  const past14 = new Date(today);
+  past14.setDate(today.getDate() - 13);
   const dateOptionsStr = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
-  const d1Str = past10.toLocaleDateString('en-IN', dateOptionsStr);
+  const d1Str = past14.toLocaleDateString('en-IN', dateOptionsStr);
   const d2Str = today.toLocaleDateString('en-IN', dateOptionsStr);
 
-  const subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
+  const subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str} (Past 14 Days)`;
   ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
 
   const Y_START = HEADER_H + SECTION_TITLE_H;
@@ -1018,13 +1018,13 @@ export async function generateChatTopImage(guild, topMembers) {
   ctx.font = `400 14px ${FONT_NORMAL}`;
   
   const today = new Date();
-  const past10 = new Date(today);
-  past10.setDate(today.getDate() - 10);
+  const past14 = new Date(today);
+  past14.setDate(today.getDate() - 13);
   const dateOptionsStr = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
-  const d1Str = past10.toLocaleDateString('en-IN', dateOptionsStr);
+  const d1Str = past14.toLocaleDateString('en-IN', dateOptionsStr);
   const d2Str = today.toLocaleDateString('en-IN', dateOptionsStr);
 
-  const subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
+  const subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str} (Past 14 Days)`;
   ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
 
   const Y_START = HEADER_H + SECTION_TITLE_H;
@@ -1149,13 +1149,13 @@ export async function generateVoiceTopImage(guild, topMembers) {
   ctx.font = `400 14px ${FONT_NORMAL}`;
   
   const today = new Date();
-  const past10 = new Date(today);
-  past10.setDate(today.getDate() - 10);
+  const past14 = new Date(today);
+  past14.setDate(today.getDate() - 13);
   const dateOptionsStr = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
-  const d1Str = past10.toLocaleDateString('en-IN', dateOptionsStr);
+  const d1Str = past14.toLocaleDateString('en-IN', dateOptionsStr);
   const d2Str = today.toLocaleDateString('en-IN', dateOptionsStr);
 
-  const subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
+  const subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str} (Past 14 Days)`;
   ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
 
   const Y_START = HEADER_H + SECTION_TITLE_H;
