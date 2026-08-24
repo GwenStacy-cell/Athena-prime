@@ -835,7 +835,7 @@ export async function generateInviteTopImage(guild, topInvites, lastSync = null)
   const SECTION_TITLE_H = 40;
   const BOTTOM_PAD = 30;
   const H = HEADER_H + SECTION_TITLE_H + (Math.min(ROWS, Math.max(topInvites.length, 1)) * ROW_H) + BOTTOM_PAD + 26;
-  const W = 500;
+  const W = 650;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
   const PAD = 18;
@@ -967,7 +967,7 @@ export async function generateChatTopImage(guild, topMembers) {
   const SECTION_TITLE_H = 40;
   const BOTTOM_PAD = 30;
   const H = HEADER_H + SECTION_TITLE_H + (Math.min(ROWS, Math.max(topMembers.length, 1)) * ROW_H) + BOTTOM_PAD;
-  const W = 500;
+  const W = 650;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
   const PAD = 18;
@@ -1098,7 +1098,7 @@ export async function generateVoiceTopImage(guild, topMembers) {
   const SECTION_TITLE_H = 40;
   const BOTTOM_PAD = 30;
   const H = HEADER_H + SECTION_TITLE_H + (Math.min(ROWS, Math.max(topMembers.length, 1)) * ROW_H) + BOTTOM_PAD;
-  const W = 500;
+  const W = 650;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
   const PAD = 18;
