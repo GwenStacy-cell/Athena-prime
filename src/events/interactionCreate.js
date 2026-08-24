@@ -55,6 +55,28 @@ export default {
     // ==========================================
     if (interaction.isModalSubmit()) {
 
+      
+      if (interaction.customId.startsWith('gw_manage_modal_')) {
+        const targetMsgId = interaction.fields.getTextInputValue('message_id');
+        const gwData = db.getGiveaway(targetMsgId);
+        
+        if (!gwData) {
+          return interaction.reply({ content: 'No giveaway found in database with that Message ID.', ephemeral: true });
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle('Manage Giveaway')
+          .setDescription(`Prize: **${gwData.prize}**\nStatus: **${gwData.ended ? 'Ended' : 'Active'}**\nEntries: **${(gwData.participants || []).length}**`)
+          .setColor('#5865F2');
+
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId(`gw_end_${targetMsgId}`).setLabel('End Giveaway').setStyle(ButtonStyle.Danger).setDisabled(gwData.ended),
+          new ButtonBuilder().setCustomId(`gw_reroll_${targetMsgId}`).setLabel('Reroll Winner').setStyle(ButtonStyle.Secondary).setDisabled(!gwData.ended)
+        );
+
+        return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+      }
+
       if (interaction.customId.startsWith('gw_setup_modal_')) {
         const { gwManagers, buildManagerContainer } = await import('../commands/giveaway.js');
         const ms = (await import('ms')).default;
@@ -79,7 +101,7 @@ export default {
         cfg.winners = Math.max(1, winners);
 
         gwManagers.set(managerId, cfg);
-        return interaction.update({ components: [buildManagerContainer(managerId)], flags: 1 << 14 });
+        return interaction.update({ components: [buildManagerContainer(managerId)], flags: 1 << 15 });
       }
 
       if (interaction.customId === 'vc_limit_modal') {
@@ -134,7 +156,7 @@ export default {
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
 
       // GIVEAWAY MANAGER HANDLERS
-      if (interaction.customId.startsWith('gw_mode_') || interaction.customId.startsWith('gw_setup_') || interaction.customId.startsWith('gw_start_') || interaction.customId === 'gw_join') {
+      if (interaction.customId.startsWith('gw_mode_') || interaction.customId.startsWith('gw_setup_') || interaction.customId.startsWith('gw_start_') || interaction.customId.startsWith('gw_manage_') || interaction.customId.startsWith('gw_end_') || interaction.customId.startsWith('gw_reroll_') || interaction.customId === 'gw_join') {
         const { gwManagers, buildManagerContainer } = await import('../commands/giveaway.js');
         const ms = (await import('ms')).default;
         
@@ -156,6 +178,32 @@ export default {
           return;
         }
 
+        if (interaction.customId.startsWith('gw_end_')) {
+          const { endGiveaway } = await import('../commands/giveaway.js');
+          const targetMsgId = interaction.customId.replace('gw_end_', '');
+          const gwData = db.getGiveaway(targetMsgId);
+          if (!gwData || gwData.ended) return interaction.reply({ content: 'Giveaway not found or already ended.', ephemeral: true });
+          
+          await interaction.reply({ content: 'Ending giveaway...', ephemeral: true });
+          await endGiveaway(interaction.client, targetMsgId, gwData);
+          return interaction.editReply({ content: 'Giveaway ended successfully!' });
+        }
+
+        if (interaction.customId.startsWith('gw_reroll_')) {
+          const targetMsgId = interaction.customId.replace('gw_reroll_', '');
+          const gwData = db.getGiveaway(targetMsgId);
+          if (!gwData || !gwData.ended) return interaction.reply({ content: 'Giveaway not found or is still active. End it first!', ephemeral: true });
+          
+          const participants = gwData.participants || [];
+          if (participants.length === 0) return interaction.reply({ content: 'Nobody entered this giveaway.', ephemeral: true });
+          
+          const newWinnerId = participants[Math.floor(Math.random() * participants.length)];
+          const EMOJI_WINNER = '<a:giveaway:1533844904604864603>';
+          
+          // Reply publicly in the channel instead of ephemeral
+          return interaction.channel.send({ content: `Rerolled the giveaway! The new winner is <@${newWinnerId}>! ${EMOJI_WINNER}` });
+        }
+
         const managerId = interaction.customId.split('_').slice(2).join('_');
         const cfg = gwManagers.get(managerId);
 
@@ -167,10 +215,27 @@ export default {
           return interaction.reply({ content: 'You are not the host of this manager.', ephemeral: true });
         }
 
+        
+        if (interaction.customId.startsWith('gw_manage_')) {
+          const modal = new ModalBuilder()
+            .setCustomId(`gw_manage_modal_${managerId}`)
+            .setTitle('Manage Giveaway');
+
+          const msgInput = new TextInputBuilder()
+            .setCustomId('message_id')
+            .setLabel('Giveaway Message ID')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+
+          modal.addComponents(new ActionRowBuilder().addComponents(msgInput));
+          return interaction.showModal(modal);
+        }
+
+        
         if (interaction.isStringSelectMenu() && interaction.customId.startsWith('gw_mode_')) {
           cfg.mode = interaction.values[0];
           gwManagers.set(managerId, cfg);
-          return interaction.update({ components: [buildManagerContainer(managerId)], flags: 1 << 14 });
+          return interaction.update({ components: [buildManagerContainer(managerId)], flags: 1 << 15 });
         }
 
         if (interaction.customId.startsWith('gw_setup_')) {

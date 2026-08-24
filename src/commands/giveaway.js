@@ -65,7 +65,8 @@ export function buildManagerContainer(managerId) {
       type: 1,
       components: [
         { type: 2, style: 1, label: 'Configure Settings', custom_id: `gw_setup_${managerId}`, emoji: { name: '??' } },
-        { type: 2, style: 3, label: 'Start Giveaway', custom_id: `gw_start_${managerId}`, emoji: { name: 'emoji_16', id: '1521464002046328944' } }
+        { type: 2, style: 3, label: 'Start Giveaway', custom_id: `gw_start_${managerId}`, emoji: { name: 'emoji_16', id: '1521464002046328944' } },
+        { type: 2, style: 2, label: 'Manage Active', custom_id: `gw_manage_${managerId}`, emoji: { name: '??' } }
       ]
     }
   ];
@@ -118,7 +119,7 @@ export async function endGiveaway(client, messageId, gwData) {
     const originalEmbed = EmbedBuilder.from(message.embeds[0]);
     originalEmbed.setColor('#2b2d31');
     originalEmbed.setDescription(`**Prize:** ${gwData.prize}\n**Ended:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Hosted By:** <@${gwData.hostId}>\n\n**Winners:** ${winners.length > 0 ? winners.map(id => `<@${id}>`).join(', ') : 'None'}`);
-    originalEmbed.setFooter({ text: `Ended • ${participants.length} Entries` });
+    originalEmbed.setFooter({ text: `Ended ï¿½ ${participants.length} Entries` });
 
     // Disable the button
     const row = ActionRowBuilder.from(message.components[0]);
@@ -174,29 +175,7 @@ export const commands = [
     description: 'Manage server giveaways',
     aliases: ['gw'],
     default_member_permissions: PermissionFlagsBits.Administrator.toString(),
-    options: [
-      {
-        name: 'start',
-        description: 'Open the interactive Giveaway Manager panel',
-        type: 1
-      },
-      {
-        name: 'end',
-        description: 'Prematurely end an active giveaway',
-        type: 1,
-        options: [
-          { name: 'message_id', description: 'The Message ID of the giveaway', type: 3, required: true }
-        ]
-      },
-      {
-        name: 'reroll',
-        description: 'Pick a new winner for a ended giveaway',
-        type: 1,
-        options: [
-          { name: 'message_id', description: 'The Message ID of the giveaway', type: 3, required: true }
-        ]
-      }
-    ],
+    options: [],
     async executePrefix(message, args) {
       if (!message.member.permissions.has('Administrator')) return;
       const managerId = message.id;
@@ -211,57 +190,22 @@ export const commands = [
       });
 
       const components = buildManagerContainer(managerId);
-      await message.reply({ components: [components], flags: 1 << 14 }); // MessageFlags.IsComponentsV2
+      await message.reply({ components: [components], flags: 1 << 15 }); // MessageFlags.IsComponentsV2
     },
     async executeSlash(interaction) {
-      const subcommand = interaction.options.getSubcommand();
+      const managerId = interaction.id;
+      gwManagers.set(managerId, {
+        prize: 'Not Set',
+        duration: 'Not Set',
+        durationMs: 0,
+        winners: 1,
+        mode: 'random',
+        hostId: interaction.user.id,
+        channelId: interaction.channel.id
+      });
 
-      if (subcommand === 'start') {
-        const managerId = interaction.id;
-        gwManagers.set(managerId, {
-          prize: 'Not Set',
-          duration: 'Not Set',
-          durationMs: 0,
-          winners: 1,
-          mode: 'random',
-          hostId: interaction.user.id,
-          channelId: interaction.channel.id
-        });
-
-        const components = buildManagerContainer(managerId);
-        await interaction.reply({ components: [components], flags: 1 << 14 });
-      }
-
-      if (subcommand === 'end') {
-        const messageId = interaction.options.getString('message_id');
-        const gwData = db.getGiveaway(messageId);
-        
-        if (!gwData) {
-          return interaction.reply(cv2.warn('Not Found', 'No active giveaway found with that Message ID in the database.'));
-        }
-
-        await interaction.reply({ content: 'Ending giveaway...' });
-        await endGiveaway(interaction.client, messageId, gwData);
-        await interaction.editReply({ content: 'Giveaway ended!' });
-      }
-
-      if (subcommand === 'reroll') {
-        const messageId = interaction.options.getString('message_id');
-        const gwData = db.getGiveaway(messageId);
-        
-        if (!gwData || !gwData.ended) {
-          return interaction.reply(cv2.warn('Not Found', 'No ended giveaway found with that Message ID in the database. Active giveaways must be ended first.'));
-        }
-
-        const participants = gwData.participants || [];
-        if (participants.length === 0) {
-          return interaction.reply(cv2.warn('Cannot Reroll', 'Nobody entered this giveaway!'));
-        }
-
-        const newWinnerId = participants[Math.floor(Math.random() * participants.length)];
-        
-        await interaction.reply({ content: `Rerolled the giveaway! The new winner is <@${newWinnerId}>! ${EMOJI_WINNER}` });
-      }
+      const components = buildManagerContainer(managerId);
+      await interaction.reply({ components: [components], flags: 1 << 15 });
     }
   }
 ];
