@@ -9,6 +9,70 @@ const EMOJI_HEADER = '<a:emoji_11:1533024044075454464>';
 const EMOJI_JOIN = '<a:emoji_56:1533024028451672257>';
 const EMOJI_WINNER = '<a:giveaway:1533844904604864603>';
 
+// In-memory state for active giveaway managers. Maps interaction/message ID -> config
+export const gwManagers = new Map();
+
+// Helper to generate the CV2 Manager Panel container
+export function buildManagerContainer(managerId) {
+  const cfg = gwManagers.get(managerId);
+  if (!cfg) return null;
+
+  const modeLabels = {
+    'random': 'Random (Classic)',
+    'messages': 'Most Messages (Channel)',
+    'vc': 'Most Voice Chat Time',
+    'invites': 'Highest Invites'
+  };
+
+  let endsText = 'Not Set';
+  if (cfg.durationMs) {
+    const endsAt = Math.floor((Date.now() + cfg.durationMs) / 1000);
+    endsText = `<t:${endsAt}:R> (<t:${endsAt}:f> IST)`;
+  }
+
+  const components = [
+    { type: 10, content: `## ${EMOJI_HEADER} GIVEAWAY MANAGER` },
+    { type: 14, divider: true },
+    { type: 10, content: `-# **Configure your giveaway below. Use the dropdown to select the winner selection mode, and the buttons to set the prize and duration.**` },
+    { type: 14, divider: true },
+    {
+      type: 9,
+      components: [
+        { type: 10, content: `**Prize:** ${cfg.prize}` },
+        { type: 10, content: `**Duration:** ${cfg.duration} (${endsText})` },
+        { type: 10, content: `**Winners:** ${cfg.winners}` },
+        { type: 10, content: `**Mode:** ${modeLabels[cfg.mode]}` }
+      ]
+    },
+    { type: 14, divider: true },
+    {
+      type: 1,
+      components: [
+        {
+          type: 3,
+          custom_id: `gw_mode_${managerId}`,
+          placeholder: 'Select Winner Selection Mode...',
+          options: [
+            { label: 'Random (Classic)', value: 'random', description: 'Picks a completely random winner' },
+            { label: 'Most Messages in Channel', value: 'messages', description: 'Picks the user with the most messages in this channel' },
+            { label: 'Most VC Time', value: 'vc', description: 'Picks the user with the most overall Voice Chat time' },
+            { label: 'Highest Invites', value: 'invites', description: 'Picks the user with the highest net invites' }
+          ]
+        }
+      ]
+    },
+    {
+      type: 1,
+      components: [
+        { type: 2, style: 1, label: 'Configure Settings', custom_id: `gw_setup_${managerId}`, emoji: { name: '??' } },
+        { type: 2, style: 3, label: 'Start Giveaway', custom_id: `gw_start_${managerId}`, emoji: { name: 'emoji_16', id: '1521464002046328944' } }
+      ]
+    }
+  ];
+
+  return { type: 17, components };
+}
+
 export async function endGiveaway(client, messageId, gwData) {
   try {
     const guild = client.guilds.cache.get(gwData.guildId);
@@ -25,15 +89,36 @@ export async function endGiveaway(client, messageId, gwData) {
     let winners = [];
     
     if (participants.length > 0) {
-      const shuffled = [...participants].sort(() => 0.5 - Math.random());
-      winners = shuffled.slice(0, gwData.winnersCount);
+      if (gwData.mode === 'messages') {
+        const stats = participants.map(id => {
+          const s = statsDB.getUserStats(gwData.guildId, id);
+          return { id, score: s.messages };
+        }).sort((a, b) => b.score - a.score);
+        winners = stats.slice(0, gwData.winnersCount).map(x => x.id);
+      } else if (gwData.mode === 'vc') {
+        const stats = participants.map(id => {
+          const s = statsDB.getUserStats(gwData.guildId, id);
+          return { id, score: s.voiceSeconds };
+        }).sort((a, b) => b.score - a.score);
+        winners = stats.slice(0, gwData.winnersCount).map(x => x.id);
+      } else if (gwData.mode === 'invites') {
+        const stats = participants.map(id => {
+          const s = statsDB.getUserInvites(gwData.guildId, id);
+          return { id, score: s.net };
+        }).sort((a, b) => b.score - a.score);
+        winners = stats.slice(0, gwData.winnersCount).map(x => x.id);
+      } else {
+        // Random (default)
+        const shuffled = [...participants].sort(() => 0.5 - Math.random());
+        winners = shuffled.slice(0, gwData.winnersCount);
+      }
     }
 
     // Update the embed
     const originalEmbed = EmbedBuilder.from(message.embeds[0]);
     originalEmbed.setColor('#2b2d31');
     originalEmbed.setDescription(`**Prize:** ${gwData.prize}\n**Ended:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Hosted By:** <@${gwData.hostId}>\n\n**Winners:** ${winners.length > 0 ? winners.map(id => `<@${id}>`).join(', ') : 'None'}`);
-    originalEmbed.setFooter({ text: `Ended â€¢ ${participants.length} Entries` });
+    originalEmbed.setFooter({ text: `Ended • ${participants.length} Entries` });
 
     // Disable the button
     const row = ActionRowBuilder.from(message.components[0]);
@@ -87,30 +172,13 @@ export const commands = [
   {
     name: 'giveaway',
     description: 'Manage server giveaways',
+    aliases: ['gw'],
     default_member_permissions: PermissionFlagsBits.Administrator.toString(),
     options: [
       {
         name: 'start',
-        description: 'Start a new giveaway',
-        type: 1,
-        options: [
-          { name: 'duration', description: 'Duration (e.g. 10m, 1h, 1d)', type: 3, required: true },
-          { name: 'winners', description: 'Number of winners', type: 4, required: true },
-          { name: 'prize', description: 'The prize to win', type: 3, required: true },
-          { name: 'message', description: 'Optional custom message', type: 3, required: false },
-            { 
-              name: 'mode', 
-              description: 'Winner Selection Mode', 
-              type: 3, 
-              required: false,
-              choices: [
-                { name: 'Random (Classic)', value: 'random' },
-                { name: 'Most Messages in Channel', value: 'messages' },
-                { name: 'Most VC Time', value: 'vc' },
-                { name: 'Highest Invites', value: 'invites' }
-              ]
-            }
-        ]
+        description: 'Open the interactive Giveaway Manager panel',
+        type: 1
       },
       {
         name: 'end',
@@ -130,57 +198,38 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      return message.reply(cv2.info('Slash Command Only', 'Please use the `/giveaway` slash command.'));
+      if (!message.member.permissions.has('Administrator')) return;
+      const managerId = message.id;
+      gwManagers.set(managerId, {
+        prize: 'Not Set',
+        duration: 'Not Set',
+        durationMs: 0,
+        winners: 1,
+        mode: 'random',
+        hostId: message.author.id,
+        channelId: message.channel.id
+      });
+
+      const components = buildManagerContainer(managerId);
+      await message.reply({ components: [components], flags: 1 << 14 }); // MessageFlags.IsComponentsV2
     },
     async executeSlash(interaction) {
       const subcommand = interaction.options.getSubcommand();
 
       if (subcommand === 'start') {
-        const durationStr = interaction.options.getString('duration');
-        const winners = interaction.options.getInteger('winners');
-        const prize = interaction.options.getString('prize');
-        const customMessage = interaction.options.getString('message');
-
-        const durationMs = ms(durationStr);
-        if (!durationMs || durationMs < 10000) {
-          return interaction.reply(cv2.warn('Invalid Duration', 'Please provide a valid duration (minimum 10 seconds). Examples: `10m`, `1h`, `2d`.'));
-        }
-
-        const endsAt = Date.now() + durationMs;
-        const endsAtTimestamp = Math.floor(endsAt / 1000);
-
-        const guildConfig = db.getGuildConfig(interaction.guild.id) || {};
-        const accentColor = guildConfig.accentColor || '#5865F2';
-
-        const gwEmbed = new EmbedBuilder()
-          .setDescription(`## ${EMOJI_HEADER} GIVEAWAY ${EMOJI_HEADER}\n\n**Prize:** ${prize}\n**Ends:** <t:${endsAtTimestamp}:R> (<t:${endsAtTimestamp}:f>)\n**Hosted By:** ${interaction.user}\n**Winners:** ${winners}\n\n${customMessage ? `*${customMessage}*\n\n` : ''}Click the button below to enter!`)
-          .setColor(accentColor)
-          .setFooter({ text: '0 Entries' })
-          .setTimestamp(new Date(endsAt));
-
-        const joinButton = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId('gw_join')
-            .setLabel('Join')
-            .setStyle(ButtonStyle.Primary)
-            .setEmoji(EMOJI_JOIN)
-        );
-
-        await interaction.reply({ content: 'Starting giveaway...' });
-
-        const message = await interaction.channel.send({ embeds: [gwEmbed], components: [joinButton] });
-
-        db.saveGiveaway(message.id, {
-          guildId: interaction.guild.id,
-          channelId: interaction.channel.id,
+        const managerId = interaction.id;
+        gwManagers.set(managerId, {
+          prize: 'Not Set',
+          duration: 'Not Set',
+          durationMs: 0,
+          winners: 1,
+          mode: 'random',
           hostId: interaction.user.id,
-          prize: prize,
-          winnersCount: winners,
-          endsAt: endsAt,
-          participants: []
+          channelId: interaction.channel.id
         });
 
-        await interaction.editReply({ content: 'Giveaway started successfully!' });
+        const components = buildManagerContainer(managerId);
+        await interaction.reply({ components: [components], flags: 1 << 14 });
       }
 
       if (subcommand === 'end') {
@@ -198,7 +247,6 @@ export const commands = [
 
       if (subcommand === 'reroll') {
         const messageId = interaction.options.getString('message_id');
-        
         const gwData = db.getGiveaway(messageId);
         
         if (!gwData || !gwData.ended) {
