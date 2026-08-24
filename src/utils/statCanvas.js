@@ -892,15 +892,7 @@ export async function generateInviteTopImage(guild, topInvites, lastSync = null)
   const d1Str = past10.toLocaleDateString('en-IN', dateOptionsStr);
   const d2Str = today.toLocaleDateString('en-IN', dateOptionsStr);
 
-  let subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
-  if (lastSync) {
-    const d = new Date(lastSync);
-    const timeOptions = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute:'2-digit', hour12: true };
-    const dateOptions = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
-    const dateStr = d.toLocaleDateString('en-IN', dateOptions);
-    const timeStr = d.toLocaleTimeString('en-IN', timeOptions);
-    subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str} | Last Synced: ${dateStr} ${timeStr} IST`;
-  }
+  const subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
   ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
 
   const Y_START = HEADER_H + SECTION_TITLE_H;
@@ -1032,15 +1024,7 @@ export async function generateChatTopImage(guild, topMembers) {
   const d1Str = past10.toLocaleDateString('en-IN', dateOptionsStr);
   const d2Str = today.toLocaleDateString('en-IN', dateOptionsStr);
 
-  let subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
-  if (lastSync) {
-    const d = new Date(lastSync);
-    const timeOptions = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute:'2-digit', hour12: true };
-    const dateOptions = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
-    const dateStr = d.toLocaleDateString('en-IN', dateOptions);
-    const timeStr = d.toLocaleTimeString('en-IN', timeOptions);
-    subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str} | Last Synced: ${dateStr} ${timeStr} IST`;
-  }
+  const subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
   ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
 
   const Y_START = HEADER_H + SECTION_TITLE_H;
@@ -1171,15 +1155,7 @@ export async function generateVoiceTopImage(guild, topMembers) {
   const d1Str = past10.toLocaleDateString('en-IN', dateOptionsStr);
   const d2Str = today.toLocaleDateString('en-IN', dateOptionsStr);
 
-  let subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
-  if (lastSync) {
-    const d = new Date(lastSync);
-    const timeOptions = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute:'2-digit', hour12: true };
-    const dateOptions = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
-    const dateStr = d.toLocaleDateString('en-IN', dateOptions);
-    const timeStr = d.toLocaleTimeString('en-IN', timeOptions);
-    subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str} | Last Synced: ${dateStr} ${timeStr} IST`;
-  }
+  const subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
   ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
 
   const Y_START = HEADER_H + SECTION_TITLE_H;
