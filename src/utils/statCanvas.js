@@ -966,3 +966,282 @@ export async function generateInviteTopImage(guild, topInvites, lastSync = null)
 
   return canvas.toBuffer('image/png');
 }
+
+
+export async function generateChatTopImage(guild, topMembers) {
+  const ROWS = 10;
+  const ROW_H = 46;
+  const HEADER_H = 100;
+  const SECTION_TITLE_H = 40;
+  const BOTTOM_PAD = 30;
+  const H = HEADER_H + SECTION_TITLE_H + (Math.min(ROWS, Math.max(topMembers.length, 1)) * ROW_H) + BOTTOM_PAD;
+  const W = 500;
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext('2d');
+  const PAD = 18;
+
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // ---- HEADER ----
+  const ICON_R = 36;
+  const ICON_CX = PAD + ICON_R;
+  const ICON_CY = PAD + ICON_R + 4;
+
+  if (guild.iconURL()) {
+    try {
+      const gIcon = await loadImage(guild.iconURL({ extension: 'png', size: 128 }));
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(ICON_CX, ICON_CY, ICON_R, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(gIcon, ICON_CX - ICON_R, ICON_CY - ICON_R, ICON_R * 2, ICON_R * 2);
+      ctx.restore();
+    } catch(e) {}
+  } else {
+    ctx.fillStyle = C.panel;
+    ctx.beginPath();
+    ctx.arc(ICON_CX, ICON_CY, ICON_R, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Add shadow to title
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 4;
+  
+  ctx.fillStyle = C.white;
+  ctx.font = `900 28px ${FONT_BOLD}`; // Bolder, slightly larger
+  ctx.fillText("INVITE LEADERBOARD", ICON_CX + ICON_R + 15, ICON_CY - 5);
+  
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  ctx.fillStyle = C.gray;
+  ctx.font = `400 14px ${FONT_NORMAL}`;
+  
+  const today = new Date();
+  const past10 = new Date(today);
+  past10.setDate(today.getDate() - 10);
+  const dateOptionsStr = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
+  const d1Str = past10.toLocaleDateString('en-IN', dateOptionsStr);
+  const d2Str = today.toLocaleDateString('en-IN', dateOptionsStr);
+
+  let subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
+  if (lastSync) {
+    const d = new Date(lastSync);
+    const timeOptions = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute:'2-digit', hour12: true };
+    const dateOptions = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
+    const dateStr = d.toLocaleDateString('en-IN', dateOptions);
+    const timeStr = d.toLocaleTimeString('en-IN', timeOptions);
+    subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str} | Last Synced: ${dateStr} ${timeStr} IST`;
+  }
+  ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
+
+  const Y_START = HEADER_H + SECTION_TITLE_H;
+
+  ctx.fillStyle = C.white;
+  ctx.font = `600 16px ${FONT_BOLD}`;
+  ctx.fillText("Top Inviters", PAD, HEADER_H + 20);
+  
+  if (topMembers.length === 0) {
+    ctx.fillStyle = C.gray;
+    ctx.font = `400 14px ${FONT_NORMAL}`;
+    ctx.fillText("No message data found.", PAD, Y_START + 25);
+  } else {
+    for (let i = 0; i < topMembers.length && i < ROWS; i++) {
+      const u = topInvites[i];
+      const y = Y_START + (i * ROW_H);
+
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = C.panel; // Use lighter panel color so it floats
+      ctx.fillRect(PAD, y, W - (PAD * 2), ROW_H - 6);
+      
+      // Reset shadow so it doesn't affect the text and rank badges!
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Rank badge
+      ctx.fillStyle = C.badge;
+      ctx.fillRect(PAD, y, 40, ROW_H - 6);
+      ctx.fillStyle = (i === 0) ? '#F1C40F' : (i === 1) ? '#E67E22' : (i === 2) ? '#95A5A6' : C.white;
+      ctx.font = `600 14px ${FONT_BOLD}`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`#${i + 1}`, PAD + 20, y + 25);
+      ctx.textAlign = 'left';
+
+      // Name
+      ctx.fillStyle = C.white;
+      ctx.font = `500 14px ${FONT_NORMAL}`;
+      ctx.fillText(u.username, PAD + 55, y + 25);
+
+      // Net Score
+      const netText = `${u.total} Messages`;
+      ctx.font = `600 14px ${FONT_BOLD}`;
+      const netW = ctx.measureText(netText).width;
+      
+      const statX = W - PAD - netW - 10;
+      ctx.fillStyle = C.green;
+      ctx.fillText(netText, statX, y + 25);
+    }
+  }
+
+  // Footer
+  ctx.fillStyle = C.muted;
+  ctx.font = `400 11px ${FONT_NORMAL}`;
+  ctx.textAlign = 'center';
+  
+  ctx.fillText("Data powered by Athena Prime Stats Engine", W / 2, H - 12);
+  ctx.textAlign = 'left';
+
+  return canvas.toBuffer('image/png');
+}
+
+export async function generateVoiceTopImage(guild, topMembers) {
+  const ROWS = 10;
+  const ROW_H = 46;
+  const HEADER_H = 100;
+  const SECTION_TITLE_H = 40;
+  const BOTTOM_PAD = 30;
+  const H = HEADER_H + SECTION_TITLE_H + (Math.min(ROWS, Math.max(topMembers.length, 1)) * ROW_H) + BOTTOM_PAD;
+  const W = 500;
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext('2d');
+  const PAD = 18;
+
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // ---- HEADER ----
+  const ICON_R = 36;
+  const ICON_CX = PAD + ICON_R;
+  const ICON_CY = PAD + ICON_R + 4;
+
+  if (guild.iconURL()) {
+    try {
+      const gIcon = await loadImage(guild.iconURL({ extension: 'png', size: 128 }));
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(ICON_CX, ICON_CY, ICON_R, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(gIcon, ICON_CX - ICON_R, ICON_CY - ICON_R, ICON_R * 2, ICON_R * 2);
+      ctx.restore();
+    } catch(e) {}
+  } else {
+    ctx.fillStyle = C.panel;
+    ctx.beginPath();
+    ctx.arc(ICON_CX, ICON_CY, ICON_R, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Add shadow to title
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 4;
+  
+  ctx.fillStyle = C.white;
+  ctx.font = `900 28px ${FONT_BOLD}`; // Bolder, slightly larger
+  ctx.fillText("INVITE LEADERBOARD", ICON_CX + ICON_R + 15, ICON_CY - 5);
+  
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  ctx.fillStyle = C.gray;
+  ctx.font = `400 14px ${FONT_NORMAL}`;
+  
+  const today = new Date();
+  const past10 = new Date(today);
+  past10.setDate(today.getDate() - 10);
+  const dateOptionsStr = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
+  const d1Str = past10.toLocaleDateString('en-IN', dateOptionsStr);
+  const d2Str = today.toLocaleDateString('en-IN', dateOptionsStr);
+
+  let subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
+  if (lastSync) {
+    const d = new Date(lastSync);
+    const timeOptions = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute:'2-digit', hour12: true };
+    const dateOptions = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
+    const dateStr = d.toLocaleDateString('en-IN', dateOptions);
+    const timeStr = d.toLocaleTimeString('en-IN', timeOptions);
+    subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str} | Last Synced: ${dateStr} ${timeStr} IST`;
+  }
+  ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
+
+  const Y_START = HEADER_H + SECTION_TITLE_H;
+
+  ctx.fillStyle = C.white;
+  ctx.font = `600 16px ${FONT_BOLD}`;
+  ctx.fillText("Top Inviters", PAD, HEADER_H + 20);
+  
+  if (topMembers.length === 0) {
+    ctx.fillStyle = C.gray;
+    ctx.font = `400 14px ${FONT_NORMAL}`;
+    ctx.fillText("No voice data found.", PAD, Y_START + 25);
+  } else {
+    for (let i = 0; i < topMembers.length && i < ROWS; i++) {
+      const u = topInvites[i];
+      const y = Y_START + (i * ROW_H);
+
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = C.panel; // Use lighter panel color so it floats
+      ctx.fillRect(PAD, y, W - (PAD * 2), ROW_H - 6);
+      
+      // Reset shadow so it doesn't affect the text and rank badges!
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Rank badge
+      ctx.fillStyle = C.badge;
+      ctx.fillRect(PAD, y, 40, ROW_H - 6);
+      ctx.fillStyle = (i === 0) ? '#F1C40F' : (i === 1) ? '#E67E22' : (i === 2) ? '#95A5A6' : C.white;
+      ctx.font = `600 14px ${FONT_BOLD}`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`#${i + 1}`, PAD + 20, y + 25);
+      ctx.textAlign = 'left';
+
+      // Name
+      ctx.fillStyle = C.white;
+      ctx.font = `500 14px ${FONT_NORMAL}`;
+      ctx.fillText(u.username, PAD + 55, y + 25);
+
+      // Net Score
+      const netText = `${u.total}`;
+      ctx.font = `600 14px ${FONT_BOLD}`;
+      const netW = ctx.measureText(netText).width;
+      
+      const statX = W - PAD - netW - 10;
+      ctx.fillStyle = C.green;
+      ctx.fillText(netText, statX, y + 25);
+    }
+  }
+
+  // Footer
+  ctx.fillStyle = C.muted;
+  ctx.font = `400 11px ${FONT_NORMAL}`;
+  ctx.textAlign = 'center';
+  
+  ctx.fillText("Data powered by Athena Prime Stats Engine", W / 2, H - 12);
+  ctx.textAlign = 'left';
+
+  return canvas.toBuffer('image/png');
+}
