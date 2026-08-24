@@ -780,9 +780,9 @@ export async function generateTopImage(guild, topMsgMembers, topVoiceMembers) {
   // ---- 2-COLUMN GRID ----
   const GRID_Y = SEC_Y + SECTION_TITLE_H;
 
-  const drawRow = (member, rank, typeUnit, colX, rowY) => {
+  const drawRow = (member, rank, displayCount, colX, rowY) => {
     const name   = safeText(member.username) || `User ${rank}`;
-    const count  = formatNumber(member.total) + ` ${typeUnit}`;
+    const count  = displayCount;
 
     drawPanel(ctx, colX, rowY, COL_W, ROW_H - 6, 8, C.panel, true);
 
@@ -806,12 +806,12 @@ export async function generateTopImage(guild, topMsgMembers, topVoiceMembers) {
 
   // Messages (Left)
   for (let i = 0; i < Math.min(topMsgMembers.length, ROWS_PER_COL); i++) {
-    drawRow(topMsgMembers[i], i + 1, 'msgs', PAD, GRID_Y + i * ROW_H);
+    drawRow(topMsgMembers[i], i + 1, formatNumber(topMsgMembers[i].total) + ' msgs', PAD, GRID_Y + i * ROW_H);
   }
 
   // Voice (Right)
   for (let i = 0; i < Math.min(topVoiceMembers.length, ROWS_PER_COL); i++) {
-    drawRow(topVoiceMembers[i], i + 1, 'hours', PAD + COL_W + COL_GAP, GRID_Y + i * ROW_H);
+    drawRow(topVoiceMembers[i], i + 1, formatHours(topVoiceMembers[i].total), PAD + COL_W + COL_GAP, GRID_Y + i * ROW_H);
   }
 
   // Footer

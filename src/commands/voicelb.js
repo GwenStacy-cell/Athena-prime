@@ -31,13 +31,15 @@ export const commands = [
                 || (await message.client.users.fetch(row.user_id).catch(() => null))?.username
                 || `User ${row.user_id.slice(-4)}`;
               // Voice total is in minutes, so we convert it to a formatted string like '12h 30m' or just hours
-              const hours = Math.floor(row.total / 60);
-              const mins = row.total % 60;
+              const totalMins = Math.floor(row.total / 60);
+              const hours = Math.floor(totalMins / 60);
+              const mins = totalMins % 60;
               const formattedTime = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
               return { user_id: row.user_id, username, total: formattedTime };
             } catch {
-              const hours = Math.floor(row.total / 60);
-              const mins = row.total % 60;
+              const totalMins = Math.floor(row.total / 60);
+              const hours = Math.floor(totalMins / 60);
+              const mins = totalMins % 60;
               const formattedTime = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
               return { user_id: row.user_id, username: `User ${row.user_id.slice(-4)}`, total: formattedTime };
             }
