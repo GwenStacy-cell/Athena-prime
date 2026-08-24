@@ -1014,7 +1014,7 @@ export async function generateChatTopImage(guild, topMembers) {
   
   ctx.fillStyle = C.white;
   ctx.font = `900 28px ${FONT_BOLD}`; // Bolder, slightly larger
-  ctx.fillText("INVITE LEADERBOARD", ICON_CX + ICON_R + 15, ICON_CY - 5);
+  ctx.fillText("CHAT LEADERBOARD", ICON_CX + ICON_R + 15, ICON_CY - 5);
   
   // Reset shadow
   ctx.shadowColor = 'transparent';
@@ -1047,7 +1047,7 @@ export async function generateChatTopImage(guild, topMembers) {
 
   ctx.fillStyle = C.white;
   ctx.font = `600 16px ${FONT_BOLD}`;
-  ctx.fillText("Top Inviters", PAD, HEADER_H + 20);
+  ctx.fillText("Top Chatters", PAD, HEADER_H + 20);
   
   if (topMembers.length === 0) {
     ctx.fillStyle = C.gray;
@@ -1055,7 +1055,7 @@ export async function generateChatTopImage(guild, topMembers) {
     ctx.fillText("No message data found.", PAD, Y_START + 25);
   } else {
     for (let i = 0; i < topMembers.length && i < ROWS; i++) {
-      const u = topInvites[i];
+      const u = topMembers[i];
       const y = Y_START + (i * ROW_H);
 
       ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
@@ -1153,7 +1153,7 @@ export async function generateVoiceTopImage(guild, topMembers) {
   
   ctx.fillStyle = C.white;
   ctx.font = `900 28px ${FONT_BOLD}`; // Bolder, slightly larger
-  ctx.fillText("INVITE LEADERBOARD", ICON_CX + ICON_R + 15, ICON_CY - 5);
+  ctx.fillText("VOICE LEADERBOARD", ICON_CX + ICON_R + 15, ICON_CY - 5);
   
   // Reset shadow
   ctx.shadowColor = 'transparent';
@@ -1186,7 +1186,7 @@ export async function generateVoiceTopImage(guild, topMembers) {
 
   ctx.fillStyle = C.white;
   ctx.font = `600 16px ${FONT_BOLD}`;
-  ctx.fillText("Top Inviters", PAD, HEADER_H + 20);
+  ctx.fillText("Top Voice Users", PAD, HEADER_H + 20);
   
   if (topMembers.length === 0) {
     ctx.fillStyle = C.gray;
@@ -1194,7 +1194,7 @@ export async function generateVoiceTopImage(guild, topMembers) {
     ctx.fillText("No voice data found.", PAD, Y_START + 25);
   } else {
     for (let i = 0; i < topMembers.length && i < ROWS; i++) {
-      const u = topInvites[i];
+      const u = topMembers[i];
       const y = Y_START + (i * ROW_H);
 
       ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
