@@ -41,6 +41,8 @@ import { commands as recordCmds } from './record.js';
 import { commands as dateCmds } from './date.js';
 import { commands as topCmds } from './top.js';
 import { commands as invitelbCmds } from './invitelb.js';
+import { commands as chatlbCmds } from './chatlb.js';
+import { commands as voicelbCmds } from './voicelb.js';
 import { commands as stickyCmds } from './sticky.js';
 import { commands as fckCmds } from './fck.js';
 import { commands as afkCmds } from './afk.js';
@@ -102,6 +104,8 @@ export const allCommands = [
   ...dateCmds,
   ...topCmds,
   ...invitelbCmds,
+  ...chatlbCmds,
+  ...voicelbCmds,
   ...stickyCmds,
   ...fckCmds,
   ...afkCmds,
