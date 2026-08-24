@@ -867,10 +867,10 @@ export async function generateInviteTopImage(guild, topInvites, lastSync = null)
   }
 
   // Add shadow to title
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-  ctx.shadowBlur = 4;
-  ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 2;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 4;
   
   ctx.fillStyle = C.white;
   ctx.font = `900 28px ${FONT_BOLD}`; // Bolder, slightly larger
@@ -885,10 +885,14 @@ export async function generateInviteTopImage(guild, topInvites, lastSync = null)
   ctx.fillStyle = C.gray;
   ctx.font = `400 14px ${FONT_NORMAL}`;
   
-  let subtitleText = `${guild.name} ? Lifetime`;
+  let subtitleText = `${guild.name} | Data: All-Time Lifetime Invites`;
   if (lastSync) {
     const d = new Date(lastSync);
-    subtitleText = `${guild.name} ? Last Synced: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+    const timeOptions = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute:'2-digit', hour12: true };
+    const dateOptions = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
+    const dateStr = d.toLocaleDateString('en-IN', dateOptions);
+    const timeStr = d.toLocaleTimeString('en-IN', timeOptions);
+    subtitleText = `${guild.name} | Data: All-Time Lifetime Invites | Last Synced: ${dateStr} ${timeStr} IST`;
   }
   ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
 
@@ -907,8 +911,18 @@ export async function generateInviteTopImage(guild, topInvites, lastSync = null)
       const u = topInvites[i];
       const y = Y_START + (i * ROW_H);
 
-      ctx.fillStyle = C.innerBox;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = C.panel; // Use lighter panel color so it floats
       ctx.fillRect(PAD, y, W - (PAD * 2), ROW_H - 6);
+      
+      // Reset shadow so it doesn't affect the text and rank badges!
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
 
       // Rank badge
       ctx.fillStyle = C.badge;
