@@ -646,11 +646,68 @@ async function handleSecurityInteractions(interaction, guild) {
   const customId = interaction.customId;
   const config = db.getGuildConfig(guild.id);
 
+    if (customId === 'sec_module_manage') {
+      try {
+        const sec = await import('../commands/security.js');
+        const panel = await sec.getAntinukeConfigPanel(guild);
+        return interaction.update(panel);
+      } catch(e) { console.error(e); }
+    }
+
+    if (customId === 'sec_close') {
+      try {
+        return interaction.message.delete();
+      } catch(e) { console.error(e); }
+    }
+
+    if (['toggle_antinuke', 'toggle_spam', 'toggle_invite', 'cycle_punishment', 'sec_status_back', 'save_panel'].includes(customId)) {
+      try {
+        let updated = false;
+        const updateData = {};
+        
+        if (customId === 'toggle_antinuke') {
+          updateData.antiNukeEnabled = !config.antiNukeEnabled;
+          updated = true;
+        }
+        if (customId === 'toggle_spam') {
+          updateData.antiSpamEnabled = !config.antiSpamEnabled;
+          updated = true;
+        }
+        if (customId === 'toggle_invite') {
+          updateData.antiInviteEnabled = (config.antiInviteEnabled === false) ? true : false;
+          updated = true;
+        }
+        if (customId === 'cycle_punishment') {
+          const current = config.antiNukePunishment || 'ban';
+          updateData.antiNukePunishment = current === 'ban' ? 'kick' : current === 'kick' ? 'quarantine' : 'ban';
+          updated = true;
+        }
+        if (customId === 'sec_status_back') {
+           const sec = await import('../commands/security.js');
+           return interaction.update(await sec.getSecurityStatusPanel(guild));
+        }
+        if (customId === 'save_panel') {
+           return interaction.message.delete();
+        }
+
+        if (updated) {
+          const db = (await import('../db.js')).default;
+          db.updateGuildConfig(guild.id, updateData);
+          const sec = await import('../commands/security.js');
+          return interaction.update(await sec.getAntinukeConfigPanel(guild));
+        }
+      } catch (e) { console.error(e); }
+    }
+    
+    if (customId === 'toggle_blacklist_filter') {
+        return interaction.reply({ content: 'Use `!blacklist add <word>` to enable the word filter, or `!blacklist remove <word>` to disable it.', ephemeral: true });
+    }
+
   // Security Overview Navigation
   if (customId === 'sec_back') {
     try {
       const sec = await import('../commands/security.js');
-      const panel = sec.getSecurityOverviewPanel(guild);
+      const panel = await sec.getSecurityStatusPanel(guild);
       return interaction.update(panel);
     } catch(e) { console.error(e); }
   }
