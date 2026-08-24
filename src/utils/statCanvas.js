@@ -885,14 +885,21 @@ export async function generateInviteTopImage(guild, topInvites, lastSync = null)
   ctx.fillStyle = C.gray;
   ctx.font = `400 14px ${FONT_NORMAL}`;
   
-  let subtitleText = `${guild.name} | Data: All-Time Lifetime Invites`;
+  const today = new Date();
+  const past10 = new Date(today);
+  past10.setDate(today.getDate() - 10);
+  const dateOptionsStr = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
+  const d1Str = past10.toLocaleDateString('en-IN', dateOptionsStr);
+  const d2Str = today.toLocaleDateString('en-IN', dateOptionsStr);
+
+  let subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str}`;
   if (lastSync) {
     const d = new Date(lastSync);
     const timeOptions = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute:'2-digit', hour12: true };
     const dateOptions = { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' };
     const dateStr = d.toLocaleDateString('en-IN', dateOptions);
     const timeStr = d.toLocaleTimeString('en-IN', timeOptions);
-    subtitleText = `${guild.name} | Data: All-Time Lifetime Invites | Last Synced: ${dateStr} ${timeStr} IST`;
+    subtitleText = `${guild.name} | Data: ${d1Str} to ${d2Str} | Last Synced: ${dateStr} ${timeStr} IST`;
   }
   ctx.fillText(subtitleText, ICON_CX + ICON_R + 15, ICON_CY + 18);
 
