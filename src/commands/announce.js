@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import cv2 from '../cv2.js';
 import { setGuildContext } from '../embed.js';
 import db from '../database.js';
@@ -84,3 +84,141 @@ export const commands = [
     }
   }
 ];
+
+
+
+export async function handleAnnouncementInteractions(interaction) {
+  if (interaction.isButton()) {
+    const customId = interaction.customId;
+    const embed = EmbedBuilder.from(interaction.message.embeds[0]);
+
+    if (customId === 'ann_edit_text') {
+      const modal = new ModalBuilder()
+        .setCustomId('ann_modal_text')
+        .setTitle('Edit Content');
+      
+      const titleInput = new TextInputBuilder()
+        .setCustomId('ann_title')
+        .setLabel('Title')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+        .setValue(embed.data.title || '');
+        
+      const descInput = new TextInputBuilder()
+        .setCustomId('ann_desc')
+        .setLabel('Description (Content)')
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true)
+        .setValue(embed.data.description || '');
+
+      modal.addComponents(new ActionRowBuilder().addComponents(titleInput), new ActionRowBuilder().addComponents(descInput));
+      return interaction.showModal(modal);
+    }
+
+    if (customId === 'ann_edit_media') {
+      const modal = new ModalBuilder()
+        .setCustomId('ann_modal_media')
+        .setTitle('Edit Media');
+      
+      const imageInput = new TextInputBuilder()
+        .setCustomId('ann_image')
+        .setLabel('Image URL (Large)')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+        .setValue(embed.data.image?.url || '');
+        
+      const thumbInput = new TextInputBuilder()
+        .setCustomId('ann_thumb')
+        .setLabel('Thumbnail URL (Small)')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+        .setValue(embed.data.thumbnail?.url || '');
+
+      modal.addComponents(new ActionRowBuilder().addComponents(imageInput), new ActionRowBuilder().addComponents(thumbInput));
+      return interaction.showModal(modal);
+    }
+
+    if (customId === 'ann_edit_channel') {
+      const modal = new ModalBuilder()
+        .setCustomId('ann_modal_channel')
+        .setTitle('Set Target Channel');
+      
+      const chanInput = new TextInputBuilder()
+        .setCustomId('ann_channel')
+        .setLabel('Channel ID')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+        .setPlaceholder('123456789012345678');
+
+      modal.addComponents(new ActionRowBuilder().addComponents(chanInput));
+      return interaction.showModal(modal);
+    }
+
+    if (customId === 'ann_publish') {
+      const footer = embed.data.footer?.text || '';
+      if (!footer.startsWith('Target Channel: ') || footer.includes('Not Set')) {
+        return interaction.reply({ content: 'You must set a target channel first by clicking **Set Channel**.', ephemeral: true });
+      }
+
+      const channelId = footer.replace('Target Channel: ', '').trim();
+      const targetChannel = interaction.guild.channels.cache.get(channelId);
+      if (!targetChannel) {
+        return interaction.reply({ content: 'Target channel not found. Please set a valid Channel ID.', ephemeral: true });
+      }
+
+      // Prepare final embed
+      const finalEmbed = EmbedBuilder.from(embed);
+      finalEmbed.setAuthor(null);
+      finalEmbed.setFooter(null);
+
+      try {
+        await targetChannel.send({ embeds: [finalEmbed] });
+        
+        // Update original message to show it was published
+        const publishedRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('pub_dummy').setLabel('Published Successfully').setStyle(ButtonStyle.Success).setDisabled(true)
+        );
+        return interaction.update({ embeds: [embed.setFooter({ text: 'Status: Published' })], components: [publishedRow] });
+      } catch (e) {
+        return interaction.reply({ content: 'Failed to send announcement to that channel. Check my permissions!', ephemeral: true });
+      }
+    }
+  }
+
+  if (interaction.isModalSubmit()) {
+    const customId = interaction.customId;
+    const embed = EmbedBuilder.from(interaction.message.embeds[0]);
+
+    if (customId === 'ann_modal_text') {
+      const title = interaction.fields.getTextInputValue('ann_title');
+      const desc = interaction.fields.getTextInputValue('ann_desc');
+      if (title) embed.setTitle(title);
+      else embed.setTitle(null);
+      embed.setDescription(desc);
+      return interaction.update({ embeds: [embed] });
+    }
+
+    if (customId === 'ann_modal_media') {
+      const image = interaction.fields.getTextInputValue('ann_image');
+      const thumb = interaction.fields.getTextInputValue('ann_thumb');
+      
+      if (image && image.startsWith('http')) embed.setImage(image);
+      else embed.setImage(null);
+      
+      if (thumb && thumb.startsWith('http')) embed.setThumbnail(thumb);
+      else embed.setThumbnail(null);
+      
+      return interaction.update({ embeds: [embed] });
+    }
+
+    if (customId === 'ann_modal_channel') {
+      const chan = interaction.fields.getTextInputValue('ann_channel').replace(/[^0-9]/g, '');
+      const target = interaction.guild.channels.cache.get(chan);
+      if (!target) {
+        return interaction.reply({ content: 'Invalid Channel ID or I cannot see that channel.', ephemeral: true });
+      }
+      embed.setFooter({ text: `Target Channel: ${chan}` });
+      return interaction.update({ embeds: [embed] });
+    }
+  }
+}

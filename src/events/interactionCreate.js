@@ -721,7 +721,15 @@ async function handleSecurityInteractions(interaction, guild) {
     } catch(e) { console.error(e); }
   }
 
-  if (customId.startsWith('al_')) {
+  
+    if (customId && customId.startsWith('ann_')) {
+      try {
+        const announce = await import('../commands/announce.js');
+        return announce.handleAnnouncementInteractions(interaction);
+      } catch (e) { console.error(e); }
+    }
+
+    if (customId.startsWith('al_')) {
     let updated = false;
 
     if (customId === 'al_toggle_link') {
