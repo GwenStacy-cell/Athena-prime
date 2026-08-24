@@ -35,15 +35,10 @@ export function buildManagerContainer(managerId) {
     { type: 14, divider: true },
     { type: 10, content: `-# **Configure your giveaway below. Use the dropdown to select the winner selection mode, and the buttons to set the prize and duration.**` },
     { type: 14, divider: true },
-    {
-      type: 9,
-      components: [
-        { type: 10, content: `**Prize:** ${cfg.prize}` },
-        { type: 10, content: `**Duration:** ${cfg.duration} (${endsText})` },
-        { type: 10, content: `**Winners:** ${cfg.winners}` },
-        { type: 10, content: `**Mode:** ${modeLabels[cfg.mode]}` }
-      ]
-    },
+    { type: 10, content: `**Prize:** ${cfg.prize}` },
+    { type: 10, content: `**Duration:** ${cfg.duration} (${endsText})` },
+    { type: 10, content: `**Winners:** ${cfg.winners}` },
+    { type: 10, content: `**Mode:** ${modeLabels[cfg.mode]}` },
     { type: 14, divider: true },
     {
       type: 1,
@@ -64,9 +59,9 @@ export function buildManagerContainer(managerId) {
     {
       type: 1,
       components: [
-        { type: 2, style: 1, label: 'Configure Settings', custom_id: `gw_setup_${managerId}`, emoji: { name: '??' } },
-        { type: 2, style: 3, label: 'Start Giveaway', custom_id: `gw_start_${managerId}`, emoji: { name: 'emoji_16', id: '1521464002046328944' } },
-        { type: 2, style: 2, label: 'Manage Active', custom_id: `gw_manage_${managerId}`, emoji: { name: '??' } }
+        { type: 2, style: 1, label: 'Configure Settings', custom_id: `gw_setup_${managerId}` },
+        { type: 2, style: 3, label: 'Start Giveaway', custom_id: `gw_start_${managerId}` },
+        { type: 2, style: 2, label: 'Manage Active', custom_id: `gw_manage_${managerId}` }
       ]
     }
   ];
