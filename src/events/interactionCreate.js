@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
 import { buildXpDashboard } from '../commands/leveling.js';
 import commandMap from '../commands/loader.js';
 import cv2 from '../cv2.js';
