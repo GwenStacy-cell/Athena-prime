@@ -3526,7 +3526,7 @@ export async function getAntilinkModulePanel(guild) {
       .setMaxValues(10)
   );
 
-  panelContainer.addActionRowComponents(row1, row1b, row2, row3, row4, row5);
+  panelContainer.addActionRowComponents(row1, row2, row3, row4, row5);
 
   return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
