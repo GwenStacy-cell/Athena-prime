@@ -3135,7 +3135,7 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
 }
 
 async function runSecurityEnableSequence(guild, updateMessageFn) {
-    const successEmoji = '<:emoji_16:1521464002046328944>';
+    const successEmoji = '<:emoji_16:1533860111704002665>';
     const loadingEmoji = '<a:loading:1542155051286396938>';
     const warningEmoji = '<a:warning:1540656124313993247>';
     
@@ -3253,8 +3253,8 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
   
 export async function getSecureDashboardPanel(guild) {
     const db = (await import("../database.js")).default;
-    await guild.members.fetch();
-    await guild.roles.fetch();
+    await guild.members.fetch().catch(() => null);
+await guild.roles.fetch();
 
     const dangerousPerms = [
         PermissionFlagsBits.Administrator,
@@ -3322,8 +3322,8 @@ export async function handleScanServer(guild, page = 0) {
   const config = db.getGuildConfig(guild.id);
   const whitelistedIds = config.botWhitelist || [];
   
-  await guild.members.fetch(); 
-  const allMembers = guild.members.cache;
+  await guild.members.fetch().catch(() => null);
+const allMembers = guild.members.cache;
   const allBots = allMembers.filter(m => m.user.bot);
   const allHumans = allMembers.filter(m => !m.user.bot);
   
