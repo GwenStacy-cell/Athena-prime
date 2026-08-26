@@ -134,7 +134,15 @@ export default {
     // ==========================================
     
     if (interaction.isModalSubmit()) {
-      if (interaction.customId === "modal_2fa_setup") {
+      
+      
+      if (interaction.customId === "modal_sec_extra_owner") {
+          const targetId = interaction.fields.getTextInputValue("target_id");
+          const db = (await import("../database.js")).default;
+          db.addExtraOwner(interaction.guild.id, targetId);
+          return interaction.reply({ content: `Successfully added Extra Owner: <@${targetId}>`, ephemeral: true });
+      }
+if (interaction.customId === "modal_2fa_setup") {
         const email = interaction.fields.getTextInputValue("2fa_email");
         if (!email.includes("@")) return interaction.reply({ content: "Invalid email format.", ephemeral: true });
         
@@ -736,20 +744,26 @@ async function handleSecurityInteractions(interaction, guild) {
       } catch(e) { console.error(e); }
     }
 
-    if (customId === "sec_extra_owner") {
-      return interaction.reply({ content: "Please use \`!extraowner add <@user>\` to add Extra Owners.", ephemeral: true });
+            if (customId === "sec_extra_owner") {
+      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
+      const modal = new ModalBuilder().setCustomId("modal_sec_extra_owner").setTitle("Add Extra Owner");
+      const input = new TextInputBuilder().setCustomId("target_id").setLabel("User ID to add").setStyle(TextInputStyle.Short).setRequired(true);
+      modal.addComponents(new ActionRowBuilder().addComponents(input));
+      return interaction.showModal(modal);
     }
-
-    if (customId === "sec_wl_user") {
-      return interaction.reply({ content: "Please use \`!whitelist add <@user>\` to whitelist a user.", ephemeral: true });
-    }
-
-    if (customId === "sec_wl_role") {
-      return interaction.reply({ content: "Role whitelisting is not currently configured in the database. Use \`!whitelist add <@user>\` for user-level whitelisting.", ephemeral: true });
+    
+    if (customId === "sec_wl_user" || customId === "sec_wl_role") {
+      const { getWhitelistOverviewPanel } = await import("../commands/security.js");
+      const panel = await getWhitelistOverviewPanel(interaction.guild);
+      return interaction.reply({ ...panel, ephemeral: true });
     }
 
     if (customId === "sec_2fa_gmail") {
-      return interaction.reply({ content: "Gmail 2FA integration requires connecting to a mailer service. Contact the bot developer to enable this module.", ephemeral: true });
+      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
+      const modal = new ModalBuilder().setCustomId("modal_2fa_setup").setTitle("Configure Gmail 2FA");
+      const emailInput = new TextInputBuilder().setCustomId("2fa_email").setLabel("Your Secure Gmail Address").setStyle(TextInputStyle.Short).setRequired(true).setPlaceholder("admin@gmail.com");
+      modal.addComponents(new ActionRowBuilder().addComponents(emailInput));
+      return interaction.showModal(modal);
     }
 
     if (customId === 'sec_close') {
