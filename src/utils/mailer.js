@@ -2,15 +2,15 @@
 import nodemailer from "nodemailer";
 
 export async function send2FACode(toEmail, code, guildName) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  if (!(process.env.GMAIL_USER || process.env.EMAIL_USER) || !(process.env.GMAIL_PASS || process.env.EMAIL_PASS)) {
     throw new Error("Email credentials are not configured in .env");
   }
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      user: (process.env.GMAIL_USER || process.env.EMAIL_USER),
+      pass: (process.env.GMAIL_PASS || process.env.EMAIL_PASS)
     }
   });
 
@@ -29,7 +29,7 @@ export async function send2FACode(toEmail, code, guildName) {
   `;
 
   const mailOptions = {
-    from: `"Athena Prime Security" <${process.env.EMAIL_USER}>`,
+    from: `"Athena Prime Security" <${(process.env.GMAIL_USER || process.env.EMAIL_USER)}>`,
     to: toEmail,
     subject: `[ACTION REQUIRED] 2FA Code for ${guildName}`,
     html: html
