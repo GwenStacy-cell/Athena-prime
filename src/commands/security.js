@@ -3139,7 +3139,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const loadingEmoji = "<a:loading:1542155051286396938>";
     const warningEmoji = "<a:warning:1540656124313993247>";
     
-    let currentText = `**Athena Prime Antinuke Setup**\n-# Antinuke Setup Working...\n\n`;
+    let currentText = `<a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n-# Antinuke Setup Working...\n\n`;
 
     const sendPayload = async (text, isError = false) => {
       const display = new TextDisplayBuilder().setContent(text);
@@ -3168,10 +3168,10 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const s1 = await runStep("Establishing Connection with secure server", async () => { return "Connected"; });
     const s2 = await runStep("Checking Minimum Requirements for Antinuke", async () => { return ""; });
     const s3 = await runStep(`Creating DB for "${guild.name}"`, async () => { 
-        return `\n> ? Server Id : ${guild.id}\n> ? Secure Security DB ID : ${BigInt(guild.id) * 487293n}`; 
+        return `\n> <:dot:1134440854611427388> Server Id : ${guild.id}\n> <:dot:1134440854611427388> Secure Security DB ID : ${BigInt(guild.id) * 487293n}`; 
     });
     const s4 = await runStep("Starting Role Integrity Check", async () => { return ""; });
-    const s5 = await runStep("Checking Athena Unbypassable , Athena Antinuke , Athena Roles Created ", async () => { 
+    const s5 = await runStep("Checking Athena Unbypassable , Athena Firewall Roles Created ", async () => { 
         let firewallRole = guild.roles.cache.find(r => r.name === "Athena Firewall");
         if (!firewallRole) {
           await guild.roles.create({ name: "Athena Firewall", color: 0x2B2D31, permissions: [] }).catch(()=>{});
