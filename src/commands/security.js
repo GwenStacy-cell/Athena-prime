@@ -1190,9 +1190,7 @@ export const commands = [
           return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        const initDisplay = new TextDisplayBuilder().setContent('# SECURITY SHIELD SEQUENCE\n\n<a:alert1:1533860044154732704> __**INITIALIZING SECURITY PROTOCOLS...**__');
-        const initContainer = new ContainerBuilder().addTextDisplayComponents(initDisplay);
-        const msg = await message.reply({ components: [initContainer], flags: MessageFlags.IsComponentsV2 });
+        const msg = await message.reply({ embeds: [new EmbedBuilder().setColor(0x2B2D31).setDescription('# SECURITY SHIELD SEQUENCE\n\n<a:alert1:1533860044154732704> __**INITIALIZING SECURITY PROTOCOLS...**__')] });
         await runSecurityEnableSequence(message.guild, async (payload) => {
           await msg.edit(payload).catch(() => null);
         });
@@ -1250,9 +1248,7 @@ export const commands = [
           return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        const initDisplay2 = new TextDisplayBuilder().setContent('# SECURITY SHIELD SEQUENCE\n\n<a:alert1:1533860044154732704> __**INITIALIZING SECURITY PROTOCOLS...**__');
-        const initContainer2 = new ContainerBuilder().addTextDisplayComponents(initDisplay2);
-        await interaction.reply({ components: [initContainer2], flags: MessageFlags.IsComponentsV2 });
+        await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x2B2D31).setDescription('# SECURITY SHIELD SEQUENCE\n\n<a:alert1:1533860044154732704> __**INITIALIZING SECURITY PROTOCOLS...**__')] });
         await runSecurityEnableSequence(interaction.guild, async (payload) => {
           await interaction.editReply(payload).catch(() => null);
         });
@@ -3204,14 +3200,14 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 export async function getServerSecurityEnabledPanel() {
     const section1 = { type: 10, content: "-# **SERVER SECURITY ENABLED**\n-# **When server security is enabled these config actions required to from owner/extraowner /whitelist users and Roles**" };
 
-    const section2 = { type: 10, content: "-# <a:warning:1540656124313993247> **`!botwhitelist add <bot id>` - To add bots to server by whitelisted users before that the admin bot comes in either whitelisted to ensure data leaving server owner or extra owner**\n> \n" +
-                     "-# <a:warning:1540656124313993247> **`!whitelist @user` - Whitelist users to have securely immunity for the targeted user for whitelisted actions the targeted user is immune for target events**\n> \n" +
-                     "-# <a:warning:1540656124313993247> **`!whitelist @role` - The Roles can be whitelisted same as users , attempt to get or give whitelisted role to other user by whitelisted user or extra owner will be sent back in error and giver of whitelisted role will be banned**\n> \n" +
-                     "-# <a:warning:1540656124313993247> **`#athenas-dashboard` - A dedicated dashboard channel showing server security status where you can easily configure and toggle Athena's security modules.**\n> \n" +
+    const section2 = { type: 10, content: "-# <a:warning:1540656124313993247> **`!botwhitelist add <bot id>` - To add bots to server by whitelisted users before that the admin bot comes in either whitelisted to ensure data leaving server owner or extra owner**\n\n" +
+                     "-# <a:warning:1540656124313993247> **`!whitelist @user` - Whitelist users to have securely immunity for the targeted user for whitelisted actions the targeted user is immune for target events**\n\n" +
+                     "-# <a:warning:1540656124313993247> **`!whitelist @role` - The Roles can be whitelisted same as users , attempt to get or give whitelisted role to other user by whitelisted user or extra owner will be sent back in error and giver of whitelisted role will be banned**\n\n" +
+                     "-# <a:warning:1540656124313993247> **`#athenas-dashboard` - A dedicated dashboard channel showing server security status where you can easily configure and toggle Athena's security modules.**\n\n" +
                      "-# <a:warning:1540656124313993247> **`#security-logs` - A secure webhook channel created automatically for logging all security actions and artifacts.**" };
 
-    const section3 = { type: 10, content: "-# **Terms of Service (TOS)**\n> \n" +
-                     "-# **Data Privacy Terms: Athena Prime collects strictly minimal server data (guild ID, role IDs, audit log events, and whitelist settings) solely to operate antinuke security. No personal user messages, DMs, or sensitive personal data are recorded, stored, or shared with any third party.**\n> \n" +
+    const section3 = { type: 10, content: "-# **Terms of Service (TOS)**\n\n" +
+                     "-# **Data Privacy Terms: Athena Prime collects strictly minimal server data (guild ID, role IDs, audit log events, and whitelist settings) solely to operate antinuke security. No personal user messages, DMs, or sensitive personal data are recorded, stored, or shared with any third party.**\n\n" +
                      "-# **Non-Exploit Terms: Any attempt to exploit, reverse-engineer, bypass security filters, abuse under-bot privileges, or utilize bot features to disrupt or harm servers is strictly forbidden. Violations result in immediate global blacklisting and permanent loss of security privileges.**" };
 
     const container = {
