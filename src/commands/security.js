@@ -3232,7 +3232,7 @@ export async function getServerSecurityEnabledPanel() {
         components: [section1, { type: 14, divider: true }, section2, { type: 14, divider: true }, section3]
     };
 
-    return { components: [container], flags: 1 << 13 };
+    return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
 async function getSecureDashboardPanel(guild) {
