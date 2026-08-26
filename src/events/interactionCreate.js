@@ -818,7 +818,7 @@ async function handleSecurityInteractions(interaction, guild) {
         }
 
         if (updated) {
-          const db = (await import('../db.js')).default;
+          const db = (await import('../database.js')).default;
           db.updateGuildConfig(guild.id, updateData);
           const sec = await import('../commands/security.js');
           return interaction.update(await sec.getAntinukeConfigPanel(guild));
