@@ -3139,31 +3139,33 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
 }
 
 async function runSecurityEnableSequence(guild, updateMessageFn) {
+    const { EmbedBuilder } = await import("discord.js");
     const successEmoji = "<:emoji_16:1533860111704002665>";
     const loadingEmoji = "<a:loading:1542155051286396938>";
     const warningEmoji = "<a:warning:1540656124313993247>";
     
-    let currentText = `-# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n-# **Antinuke Setup Working...**\n\n`;
+    let currentText = `${loadingEmoji} **Athena Prime Antinuke Setup**\n-# Antinuke Setup Working...\n\n`;
 
-    const sendPayload = async (text, isError = false) => {
-      const display = new TextDisplayBuilder().setContent(text);
-      const container = new ContainerBuilder().addTextDisplayComponents(display);
-      await updateMessageFn({ components: [container], flags: MessageFlags.IsComponentsV2 });
+    const sendPayload = async (text) => {
+      const embed = new EmbedBuilder()
+        .setColor(0x2B2D31)
+        .setDescription(text);
+      await updateMessageFn({ embeds: [embed], components: [], flags: undefined });
     };
 
     // Helper to run a step
     async function runStep(stepName, operation) {
-      const loadingLine = `-# **${loadingEmoji} ${stepName}...**`;
+      const loadingLine = `${loadingEmoji} ${stepName}...`;
       currentText += (currentText.endsWith("\n") ? "" : "\n") + loadingLine;
       await sendPayload(currentText);
 
       try {
         const result = await operation();
-        currentText = currentText.replace(loadingLine, `-# **${successEmoji} ${stepName}...** ` + (result === true ? "" : `-# **${result}**`));
+        currentText = currentText.replace(loadingLine, `${successEmoji} ${stepName}... ` + (result === true ? "" : result));
         await sendPayload(currentText);
         return true;
       } catch (err) {
-        currentText = currentText.replace(loadingLine, `-# **${warningEmoji} ${stepName}... Failed (${err.message})**`);
+        currentText = currentText.replace(loadingLine, `${warningEmoji} ${stepName}... Failed (${err.message})`);
         await sendPayload(currentText);
         return false;
       }
@@ -3172,9 +3174,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const s1 = await runStep("Establishing Connection with Athena's server", async () => { return "Connected"; });
     const s2 = await runStep("Checking Minimum Requirements for Antinuke", async () => { return ""; });
     const s3 = await runStep(`Creating DB for "${guild.name}"`, async () => { 
-        return `
-  ╰› Server Id : ${guild.id}
-  ╰› Athena Security DB ID : ${BigInt(guild.id) * 487293n}`; 
+        return `\n\u00A0\u00A0\u2570\u203A Server Id : ${guild.id}\n\u00A0\u00A0\u2570\u203A Athena Security DB ID : ${BigInt(guild.id) * 487293n}`;
     });
     const s4 = await runStep("Starting Role Integrity Check", async () => { return ""; });
     const s5 = await runStep("Checking Athena Unbypassable , Athena Firewall Roles Created ", async () => { 
@@ -3194,25 +3194,25 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const s9 = await runStep("Setup Success", async () => { return ""; });
     const s10 = await runStep(`${guild.name} is Secured by Athena Prime`, async () => { return ""; });
 
-        const db = (await import("../database.js")).default;
+    const db = (await import("../database.js")).default;
     db.updateGuildConfig(guild.id, { securityEnabled: true, antiNukeEnabled: true });
     
-    currentText += `\n\n-# **| athena prime | athena firewall | athena unbypassable .**\n-# **<@${guild.client.user.id}> is creating its backup role when anyone trying turn off admin , remove role , delete role the <@${guild.client.user.id}> will automatically enable admin , recovery its own role , adding itself making <@${guild.client.user.id}> unbypassable security system**`;
+    currentText += `\n\n| athena prime | athena firewall | athena unbypassable .\n<@${guild.client.user.id}> is creating its backup role when anyone trying turn off admin , remove role , delete role the <@${guild.client.user.id}> will automatically enable admin , recovery its own role , adding itself making <@${guild.client.user.id}> unbypassable security system`;
     await sendPayload(currentText);
 }
 
 export async function getServerSecurityEnabledPanel() {
-    const section1 = { type: 10, content: "> -# **SERVER SECURITY ENABLED**\n> -# **When server security is enabled these config actions required to from owner/extraowner /whitelist users and Roles**" };
+    const section1 = { type: 10, content: "-# **SERVER SECURITY ENABLED**\n-# **When server security is enabled these config actions required to from owner/extraowner /whitelist users and Roles**" };
 
-    const section2 = { type: 10, content: "> -# <a:warning:1540656124313993247> **`!botwhitelist add <bot id>` - To add bots to server by whitelisted users before that the admin bot comes in either whitelisted to ensure data leaving server owner or extra owner**\n> \n" +
-                     "> -# <a:warning:1540656124313993247> **`!whitelist @user` - Whitelist users to have securely immunity for the targeted user for whitelisted actions the targeted user is immune for target events**\n> \n" +
-                     "> -# <a:warning:1540656124313993247> **`!whitelist @role` - The Roles can be whitelisted same as users , attempt to get or give whitelisted role to other user by whitelisted user or extra owner will be sent back in error and giver of whitelisted role will be banned**\n> \n" +
-                     "> -# <a:warning:1540656124313993247> **`#athenas-dashboard` - A dedicated dashboard channel showing server security status where you can easily configure and toggle Athena's security modules.**\n> \n" +
-                     "> -# <a:warning:1540656124313993247> **`#security-logs` - A secure webhook channel created automatically for logging all security actions and artifacts.**" };
+    const section2 = { type: 10, content: "-# <a:warning:1540656124313993247> **`!botwhitelist add <bot id>` - To add bots to server by whitelisted users before that the admin bot comes in either whitelisted to ensure data leaving server owner or extra owner**\n> \n" +
+                     "-# <a:warning:1540656124313993247> **`!whitelist @user` - Whitelist users to have securely immunity for the targeted user for whitelisted actions the targeted user is immune for target events**\n> \n" +
+                     "-# <a:warning:1540656124313993247> **`!whitelist @role` - The Roles can be whitelisted same as users , attempt to get or give whitelisted role to other user by whitelisted user or extra owner will be sent back in error and giver of whitelisted role will be banned**\n> \n" +
+                     "-# <a:warning:1540656124313993247> **`#athenas-dashboard` - A dedicated dashboard channel showing server security status where you can easily configure and toggle Athena's security modules.**\n> \n" +
+                     "-# <a:warning:1540656124313993247> **`#security-logs` - A secure webhook channel created automatically for logging all security actions and artifacts.**" };
 
-    const section3 = { type: 10, content: "> -# **Terms of Service (TOS)**\n> \n" +
-                     "> -# **Data Privacy Terms: Athena Prime collects strictly minimal server data (guild ID, role IDs, audit log events, and whitelist settings) solely to operate antinuke security. No personal user messages, DMs, or sensitive personal data are recorded, stored, or shared with any third party.**\n> \n" +
-                     "> -# **Non-Exploit Terms: Any attempt to exploit, reverse-engineer, bypass security filters, abuse under-bot privileges, or utilize bot features to disrupt or harm servers is strictly forbidden. Violations result in immediate global blacklisting and permanent loss of security privileges.**" };
+    const section3 = { type: 10, content: "-# **Terms of Service (TOS)**\n> \n" +
+                     "-# **Data Privacy Terms: Athena Prime collects strictly minimal server data (guild ID, role IDs, audit log events, and whitelist settings) solely to operate antinuke security. No personal user messages, DMs, or sensitive personal data are recorded, stored, or shared with any third party.**\n> \n" +
+                     "-# **Non-Exploit Terms: Any attempt to exploit, reverse-engineer, bypass security filters, abuse under-bot privileges, or utilize bot features to disrupt or harm servers is strictly forbidden. Violations result in immediate global blacklisting and permanent loss of security privileges.**" };
 
     const container = {
         type: 17,
