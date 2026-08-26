@@ -1212,7 +1212,7 @@ export const commands = [
           
           try {
             const { send2FACode } = await import("../utils/mailer.js");
-            await send2FACode(config.twoFactorEmail, code2fa, message.guild.name);
+            send2FACode(config.twoFactorEmail, code2fa, message.guild.name).catch(e => console.log('SMTP Blocked:', e.message));
           } catch (err) {}
 
           const row = new ActionRowBuilder().addComponents(
@@ -1272,7 +1272,7 @@ export const commands = [
           
           try {
             const { send2FACode } = await import("../utils/mailer.js");
-            await send2FACode(config.twoFactorEmail, code2fa, interaction.guild.name);
+            send2FACode(config.twoFactorEmail, code2fa, interaction.guild.name).catch(e => console.log('SMTP Blocked:', e.message));
           } catch (err) {}
 
           const row = new ActionRowBuilder().addComponents(
@@ -3190,7 +3190,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     await runStep("Establishing Connection with Athena's server", async () => { return "-# Connected"; });
     await runStep("Checking Minimum Requirements for Antinuke", async () => { return ""; });
     await runStep(`Creating DB for "${guild.name}"`, async () => { 
-        return `\n> -# \u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u2570\u203A Server Id : ${guild.id}\n> -# \u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u2570\u203A Athena Security DB ID : ${BigInt(guild.id) * 487293n}`;
+        return `\n> -# \u2003\u2003\u2003\u2003\u2003\u2570\u203A Server Id : ${guild.id}\n> -# \u2003\u2003\u2003\u2003\u2003\u2570\u203A Athena Security DB ID : ${BigInt(guild.id) * 487293n}`;
     });
     await runStep("Starting Role Integrity Check", async () => { return ""; });
     await runStep("Checking Athena Unbypassable , Athena Firewall Roles Created ", async () => { 

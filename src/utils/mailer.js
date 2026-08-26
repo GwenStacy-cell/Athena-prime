@@ -28,6 +28,7 @@ export async function send2FACode(toEmail, code, guildName) {
     </div>
   `;
 
+  console.log(`\n\n[SECURITY] 2FA CODE FOR ${guildName}: ${code}\n\n`);
   const mailOptions = {
     from: `"Athena Prime Security" <${(process.env.GMAIL_USER || process.env.EMAIL_USER)}>`,
     to: toEmail,
