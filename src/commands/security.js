@@ -3173,8 +3173,8 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const s2 = await runStep("Checking Minimum Requirements for Antinuke", async () => { return ""; });
     const s3 = await runStep(`Creating DB for "${guild.name}"`, async () => { 
         return `
-  ↳ Server Id : ${guild.id}
-  ↳ Secure Security DB ID : ${BigInt(guild.id) * 487293n}`; 
+  ╰› Server Id : ${guild.id}
+  ╰› Secure Security DB ID : ${BigInt(guild.id) * 487293n}`; 
     });
     const s4 = await runStep("Starting Role Integrity Check", async () => { return ""; });
     const s5 = await runStep("Checking Athena Unbypassable , Athena Firewall Roles Created ", async () => { 
