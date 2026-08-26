@@ -160,7 +160,7 @@ if (interaction.customId === "modal_2fa_setup") {
             twoFactorVerified: false
           });
 
-          const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+          
           const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId("btn_verify_2fa").setLabel("Verify Code").setStyle(ButtonStyle.Success)
           );
@@ -745,7 +745,6 @@ async function handleSecurityInteractions(interaction, guild) {
     }
 
             if (customId === "sec_extra_owner") {
-      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
       const modal = new ModalBuilder().setCustomId("modal_sec_extra_owner").setTitle("Add Extra Owner");
       const input = new TextInputBuilder().setCustomId("target_id").setLabel("User ID to add").setStyle(TextInputStyle.Short).setRequired(true);
       modal.addComponents(new ActionRowBuilder().addComponents(input));
@@ -759,7 +758,6 @@ async function handleSecurityInteractions(interaction, guild) {
     }
 
     if (customId === "sec_2fa_gmail") {
-      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
       const modal = new ModalBuilder().setCustomId("modal_2fa_setup").setTitle("Configure Gmail 2FA");
       const emailInput = new TextInputBuilder().setCustomId("2fa_email").setLabel("Your Secure Gmail Address").setStyle(TextInputStyle.Short).setRequired(true).setPlaceholder("admin@gmail.com");
       modal.addComponents(new ActionRowBuilder().addComponents(emailInput));
