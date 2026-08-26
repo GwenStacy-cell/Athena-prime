@@ -3279,12 +3279,12 @@ await guild.roles.fetch();
     const config = db.getGuildConfig(guild.id);
     const twoFactorEmail = config.twoFactorEmail || "Not Configured";
 
-    const text = "**List Dangerous Roles:** " + rolesStr + "\n" +
-                 "**List Bots:** " + formatList(allBots) + "\n" +
-                 "**Humans Having Dangerous roles:** " + formatList(humansWithDangerousRoles) + "\n" +
-                 "**Bots Having dangeurs roles:** " + formatList(botsWithDangerousRoles) + "\n" +
-                 "**Production Level Bots:** " + formatList(productionBots) + "\n\n" +
-                 "**2FA Notification Gmail:** `" + twoFactorEmail + "`";
+    const text = "-# **List Dangerous Roles:** " + rolesStr + "\n" +
+                 "-# **List Bots:** " + formatList(allBots) + "\n" +
+                 "-# **Humans Having Dangerous Roles:** " + formatList(humansWithDangerousRoles) + "\n" +
+                 "-# **Bots Having Dangerous Roles:** " + formatList(botsWithDangerousRoles) + "\n" +
+                 "-# **Production Level Bots:** " + formatList(productionBots) + "\n\n" +
+                 "-# **2FA Notification Gmail:** `" + twoFactorEmail + "`";
 
     const display = new TextDisplayBuilder().setContent(text);
     const container = new ContainerBuilder().addTextDisplayComponents(display);
