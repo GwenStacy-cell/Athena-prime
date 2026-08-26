@@ -3194,6 +3194,9 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const s9 = await runStep("Setup Success", async () => { return ""; });
     const s10 = await runStep(`${guild.name} is Secured by Athena Prime`, async () => { return ""; });
 
+        const db = (await import("../database.js")).default;
+    db.updateGuildConfig(guild.id, { securityEnabled: true, antiNukeEnabled: true });
+    
     currentText += `\n\n| athena prime | athena firewall | athena unbypassable .\n<@${guild.client.user.id}> is creating its backup role when anyone trying turn off admin , remove role , delete role the <@${guild.client.user.id}> will automatically enable admin , recovery its own role , adding itself making <@${guild.client.user.id}> unbypassable security system`;
     await sendPayload(currentText);
 }
