@@ -168,6 +168,9 @@ class Database {
         antiLinkEnabled: false,
         antiInviteEnabled: true,
         raidMode: false,
+          twoFactorEmail: null,
+          twoFactorVerified: false,
+          pendingTwoFactorCode: null,
         antiNukeEnabled: true,
         securityEnabled: false,
         antinukeModules: {

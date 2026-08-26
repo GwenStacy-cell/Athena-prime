@@ -1199,56 +1199,29 @@ export const commands = [
         const panel = await getSecureDashboardPanel(message.guild);
         await message.channel.send(panel);
       } else if (disable) {
-        const config = db.getGuildConfig(message.guild.id);
-        if (!config.securityEnabled && !config.antiNukeEnabled) {
-          return message.reply(cv2.warn('Security Inactive', 'Security is already disabled on this server.'));
+          const config = db.getGuildConfig(interaction.guild.id);
+          if (!config.securityEnabled) {
+            return interaction.reply(cv2.warn("Security Inactive", "Security is already disabled on this server."));
+          }
+          
+          if (config.twoFactorVerified && config.twoFactorEmail) {
+            const code2fa = Math.floor(100000 + Math.random() * 900000).toString();
+            db.updateGuildConfig(interaction.guild.id, { pendingTwoFactorCode: code2fa, pendingAction: "disable_all" });
+            
+            try {
+              const { send2FACode } = await import("../utils/mailer.js");
+              await send2FACode(config.twoFactorEmail, code2fa, interaction.guild.name);
+            } catch (err) {}
+
+            const row = new ActionRowBuilder().addComponents(
+              new ButtonBuilder().setCustomId("btn_intercept_2fa").setLabel("Enter 2FA Code").setStyle(ButtonStyle.Danger)
+            );
+            return interaction.reply({ content: "?? **Critical Security Action Blocked** ??\nAn email has been sent to your registered Gmail address. You must verify it to authorize this action.", components: [row], ephemeral: true });
+          }
+
+          const result = await handleSecurityToggleAll(interaction.guild, interaction.member, false);
+          await interaction.reply(result);
         }
-
-        const result = await handleSecurityToggleAll(message.guild, message.member, false);
-        await message.reply(result);
-      }
-    },
-    async executeSlash(interaction) {
-      const allowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId;
-      if (!allowed) {
-        return interaction.reply(cv2.danger('Access Denied', ' Only the **Bot Owner** or **Server Owner** can use this command.'));
-      }
-      const action = interaction.options.getString('action');
-      const enable = action === 'enable_all';
-      const disable = action === 'disable_all';
-      const status = action === 'status';
-
-      if (status) {
-        const panel = await getSecurityStatusPanel(interaction.guild);
-        return interaction.reply(panel);
-      }
-
-      if (enable) {
-        const config = db.getGuildConfig(interaction.guild.id);
-        if (config.securityEnabled) {
-          return interaction.reply(cv2.warn('Security Active', 'Security is already enabled on this server.'));
-        }
-        if (interaction.guild.memberCount < 200 && !isBotOwnerSync(interaction.user.id)) {
-          return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
-        }
-
-        const initDisplay2 = new TextDisplayBuilder().setContent('# SECURITY SHIELD SEQUENCE\n\n<a:alert1:1533860044154732704> __**INITIALIZING SECURITY PROTOCOLS...**__');
-        const initContainer2 = new ContainerBuilder().addTextDisplayComponents(initDisplay2);
-        await interaction.reply({ components: [initContainer2], flags: MessageFlags.IsComponentsV2 });
-        await runSecurityEnableSequence(interaction.guild, async (payload) => {
-          await interaction.editReply(payload).catch(() => null);
-        });
-        const panel = await getSecureDashboardPanel(interaction.guild);
-        await interaction.channel.send(panel);
-      } else if (disable) {
-        const config = db.getGuildConfig(interaction.guild.id);
-        if (!config.securityEnabled) {
-          return interaction.reply(cv2.warn('Security Inactive', 'Security is already disabled on this server.'));
-        }
-
-        const result = await handleSecurityToggleAll(interaction.guild, interaction.member, false);
-        await interaction.reply(result);
-      }
     }
   },
 
@@ -3591,4 +3564,16 @@ export async function getAntilinkModulePanel(guild) {
   panelContainer.addActionRowComponents(row1, row2, row3, row4, row5);
 
   return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function executeInterceptedAction(interaction) {
+  const db = (await import("../database.js")).default;
+  const config = db.getGuildConfig(interaction.guild.id);
+  
+  if (config.pendingAction === "disable_all") {
+      const result = await handleSecurityToggleAll(interaction.guild, interaction.member, false);
+      db.updateGuildConfig(interaction.guild.id, { pendingAction: null });
+      return interaction.reply(result);
+  }
+  return interaction.reply({ content: "No pending action found.", ephemeral: true });
 }
