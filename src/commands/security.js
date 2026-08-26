@@ -3205,7 +3205,7 @@ export async function getServerSecurityEnabledPanel(guild) {
     const avatar = guild ? guild.client.user.displayAvatarURL({ extension: "png" }) : "https://cdn.discordapp.com/embed/avatars/0.png";
     const section1 = { type: 9, components: [{
             type: 10,
-            content: "-# <:emoji_16:1533860111704002665> **SERVER SECURITY ENABLED**\n-# **When server security is enabled these config actions required to from owner/extraowner /whitelist users and Roles**"
+            content: "-# **SERVER SECURITY ENABLED**\n-# **When server security is enabled these config actions required to from owner/extraowner /whitelist users and Roles**"
         }], accessory: { type: 11, media: { url: avatar } } };
 
     const section2 = { type: 9, components: [{
