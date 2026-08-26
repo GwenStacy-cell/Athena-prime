@@ -24,11 +24,11 @@ export default {
     if (interaction.isChatInputCommand()) {
       const command = commandMap.get(interaction.commandName);
       if (!command) {
-        return interaction.reply({ content: 'Command not found.', ephemeral: true });
+        return interaction.reply({ content: 'Command not found.', flags: MessageFlags.Ephemeral });
       }
 
       if (command.ownerOnly && !isBotOwnerSync(interaction.user.id)) {
-        return interaction.reply({ content: 'Only the bot developer can use this command.', ephemeral: true });
+        return interaction.reply({ content: 'Only the bot developer can use this command.', flags: MessageFlags.Ephemeral });
       }
 
       if (command.permissions && command.permissions.length > 0) {
@@ -42,9 +42,9 @@ export default {
       } catch (error) {
         console.error(error);
         if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+          await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
         } else {
-          await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+          await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
         }
       }
       return;
@@ -63,7 +63,7 @@ export default {
         const managerId = interaction.customId.replace('gw_setup_modal_', '');
         const cfg = gwManagers.get(managerId);
         
-        if (!cfg) return interaction.reply({ content: 'Session expired.', ephemeral: true });
+        if (!cfg) return interaction.reply({ content: 'Session expired.', flags: MessageFlags.Ephemeral });
 
         const prize = interaction.fields.getTextInputValue('prize');
         const duration = interaction.fields.getTextInputValue('duration');
@@ -71,7 +71,7 @@ export default {
 
         const durationMs = ms(duration);
         if (!durationMs || durationMs < 10000) {
-          return interaction.reply({ content: 'Invalid duration. Examples: 10m, 1h, 1d.', ephemeral: true });
+          return interaction.reply({ content: 'Invalid duration. Examples: 10m, 1h, 1d.', flags: MessageFlags.Ephemeral });
         }
 
         cfg.prize = prize;
@@ -87,34 +87,34 @@ export default {
         const limitStr = interaction.fields.getTextInputValue('limit_input');
         const limit = parseInt(limitStr, 10);
         if (isNaN(limit) || limit < 0 || limit > 99) {
-          return interaction.reply({ content: 'Invalid limit. Must be a number between 0 and 99.', ephemeral: true });
+          return interaction.reply({ content: 'Invalid limit. Must be a number between 0 and 99.', flags: MessageFlags.Ephemeral });
         }
         
         const vc = interaction.member.voice.channel;
-        if (!vc) return interaction.reply({ content: 'You are not in a voice channel.', ephemeral: true });
+        if (!vc) return interaction.reply({ content: 'You are not in a voice channel.', flags: MessageFlags.Ephemeral });
 
         // Basic check: Is it a custom VC?
         const j2cConfig = db.getGuildConfig(interaction.guild.id).j2c;
         if (!j2cConfig || vc.parentId !== j2cConfig.categoryId) {
-           return interaction.reply({ content: 'You can only manage your own custom voice channel.', ephemeral: true });
+           return interaction.reply({ content: 'You can only manage your own custom voice channel.', flags: MessageFlags.Ephemeral });
         }
 
         await vc.setUserLimit(limit);
-        return interaction.reply({ content: `Channel limit set to ${limit}.`, ephemeral: true });
+        return interaction.reply({ content: `Channel limit set to ${limit}.`, flags: MessageFlags.Ephemeral });
       }
 
       if (interaction.customId === 'vc_name_modal') {
         const newName = interaction.fields.getTextInputValue('name_input');
         const vc = interaction.member.voice.channel;
-        if (!vc) return interaction.reply({ content: 'You are not in a voice channel.', ephemeral: true });
+        if (!vc) return interaction.reply({ content: 'You are not in a voice channel.', flags: MessageFlags.Ephemeral });
 
         const j2cConfig = db.getGuildConfig(interaction.guild.id).j2c;
         if (!j2cConfig || vc.parentId !== j2cConfig.categoryId) {
-           return interaction.reply({ content: 'You can only manage your own custom voice channel.', ephemeral: true });
+           return interaction.reply({ content: 'You can only manage your own custom voice channel.', flags: MessageFlags.Ephemeral });
         }
 
         await vc.setName(newName);
-        return interaction.reply({ content: `Channel renamed to \`${newName}\`.`, ephemeral: true });
+        return interaction.reply({ content: `Channel renamed to \`${newName}\`.`, flags: MessageFlags.Ephemeral });
       }
       
       if (interaction.customId.startsWith('enuke_modal_')) {
@@ -140,15 +140,15 @@ export default {
           const targetId = interaction.fields.getTextInputValue("target_id");
           const db = (await import("../database.js")).default;
           db.addExtraOwner(interaction.guild.id, targetId);
-          return interaction.reply({ content: `Successfully added Extra Owner: <@${targetId}>`, ephemeral: true });
+          return interaction.reply({ content: `Successfully added Extra Owner: <@${targetId}>`, flags: MessageFlags.Ephemeral });
       }
 if (interaction.customId === "modal_2fa_setup") {
         const email = interaction.fields.getTextInputValue("2fa_email");
-        if (!email.includes("@")) return interaction.reply({ content: "Invalid email format.", ephemeral: true });
+        if (!email.includes("@")) return interaction.reply({ content: "Invalid email format.", flags: MessageFlags.Ephemeral });
         
         const code2fa = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
         
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         try {
           const { send2FACode } = await import("../utils/mailer.js");
           await send2FACode(email, code2fa, interaction.guild.name);
@@ -198,9 +198,9 @@ if (interaction.customId === "modal_2fa_setup") {
             pendingTwoFactorCode: null
           });
           
-          return interaction.reply({ content: "? **Gmail 2FA Successfully Configured!** Your server is now heavily protected.", ephemeral: true });
+          return interaction.reply({ content: "? **Gmail 2FA Successfully Configured!** Your server is now heavily protected.", flags: MessageFlags.Ephemeral });
         } else {
-          return interaction.reply({ content: "? Incorrect verification code.", ephemeral: true });
+          return interaction.reply({ content: "? Incorrect verification code.", flags: MessageFlags.Ephemeral });
         }
       }
 
@@ -216,10 +216,10 @@ if (interaction.customId === "modal_2fa_setup") {
            if (sec.executeInterceptedAction) {
              return sec.executeInterceptedAction(interaction);
            } else {
-             return interaction.reply({ content: "? Code verified. You may proceed.", ephemeral: true });
+             return interaction.reply({ content: "? Code verified. You may proceed.", flags: MessageFlags.Ephemeral });
            }
         } else {
-           return interaction.reply({ content: "? Incorrect 2FA code. Action permanently blocked.", ephemeral: true });
+           return interaction.reply({ content: "? Incorrect 2FA code. Action permanently blocked.", flags: MessageFlags.Ephemeral });
         }
       }
     }
@@ -234,7 +234,7 @@ if (interaction.customId === "modal_2fa_setup") {
         if (interaction.customId === 'gw_join') {
           const messageId = interaction.message.id;
           const gwData = db.getGiveaway(messageId);
-          if (!gwData || gwData.ended) return interaction.reply({ content: 'This giveaway is over or invalid!', ephemeral: true });
+          if (!gwData || gwData.ended) return interaction.reply({ content: 'This giveaway is over or invalid!', flags: MessageFlags.Ephemeral });
           
           if (!gwData.participants.includes(interaction.user.id)) {
             gwData.participants.push(interaction.user.id);
@@ -244,7 +244,7 @@ if (interaction.customId === "modal_2fa_setup") {
             originalEmbed.setFooter({ text: `${gwData.participants.length} Entries` });
             await interaction.update({ embeds: [originalEmbed] });
           } else {
-            return interaction.reply({ content: 'You have already entered this giveaway!', ephemeral: true });
+            return interaction.reply({ content: 'You have already entered this giveaway!', flags: MessageFlags.Ephemeral });
           }
           return;
         }
@@ -253,9 +253,9 @@ if (interaction.customId === "modal_2fa_setup") {
           const { endGiveaway } = await import('../commands/giveaway.js');
           const targetMsgId = interaction.customId.replace('gw_end_', '');
           const gwData = db.getGiveaway(targetMsgId);
-          if (!gwData || gwData.ended) return interaction.reply({ content: 'Giveaway not found or already ended.', ephemeral: true });
+          if (!gwData || gwData.ended) return interaction.reply({ content: 'Giveaway not found or already ended.', flags: MessageFlags.Ephemeral });
           
-          await interaction.reply({ content: 'Ending giveaway...', ephemeral: true });
+          await interaction.reply({ content: 'Ending giveaway...', flags: MessageFlags.Ephemeral });
           await endGiveaway(interaction.client, targetMsgId, gwData);
           return interaction.editReply({ content: 'Giveaway ended successfully!' });
         }
@@ -263,10 +263,10 @@ if (interaction.customId === "modal_2fa_setup") {
         if (interaction.customId.startsWith('gw_reroll_')) {
           const targetMsgId = interaction.customId.replace('gw_reroll_', '');
           const gwData = db.getGiveaway(targetMsgId);
-          if (!gwData || !gwData.ended) return interaction.reply({ content: 'Giveaway not found or is still active. End it first!', ephemeral: true });
+          if (!gwData || !gwData.ended) return interaction.reply({ content: 'Giveaway not found or is still active. End it first!', flags: MessageFlags.Ephemeral });
           
           const participants = gwData.participants || [];
-          if (participants.length === 0) return interaction.reply({ content: 'Nobody entered this giveaway.', ephemeral: true });
+          if (participants.length === 0) return interaction.reply({ content: 'Nobody entered this giveaway.', flags: MessageFlags.Ephemeral });
           
           const newWinnerId = participants[Math.floor(Math.random() * participants.length)];
           const EMOJI_WINNER = '<a:giveaway:1533844904604864603>';
@@ -279,11 +279,11 @@ if (interaction.customId === "modal_2fa_setup") {
         const cfg = gwManagers.get(managerId);
 
         if (!cfg) {
-          return interaction.reply({ content: 'This giveaway manager session has expired.', ephemeral: true });
+          return interaction.reply({ content: 'This giveaway manager session has expired.', flags: MessageFlags.Ephemeral });
         }
 
         if (interaction.user.id !== cfg.hostId) {
-          return interaction.reply({ content: 'You are not the host of this manager.', ephemeral: true });
+          return interaction.reply({ content: 'You are not the host of this manager.', flags: MessageFlags.Ephemeral });
         }
 
         
@@ -292,7 +292,7 @@ if (interaction.customId === "modal_2fa_setup") {
           const guildGw = allGw.filter(g => g.guildId === interaction.guild.id);
           
           if (guildGw.length === 0) {
-            return interaction.reply({ content: 'There are no active or ended giveaways stored in this server.', ephemeral: true });
+            return interaction.reply({ content: 'There are no active or ended giveaways stored in this server.', flags: MessageFlags.Ephemeral });
           }
 
           const recentGw = guildGw.slice(-25).reverse();
@@ -312,7 +312,7 @@ if (interaction.customId === "modal_2fa_setup") {
               .addOptions(options)
           );
 
-          return interaction.reply({ content: 'Select a giveaway from the list below:', components: [selectRow], ephemeral: true });
+          return interaction.reply({ content: 'Select a giveaway from the list below:', components: [selectRow], flags: MessageFlags.Ephemeral });
         }
         
         if (interaction.isStringSelectMenu() && interaction.customId === 'gw_manage_select') {
@@ -380,7 +380,7 @@ if (interaction.customId === "modal_2fa_setup") {
 
         if (interaction.customId.startsWith('gw_start_')) {
           if (cfg.prize === 'Not Set' || cfg.durationMs < 10000) {
-            return interaction.reply({ content: 'Please configure the prize and duration first! Minimum duration is 10s.', ephemeral: true });
+            return interaction.reply({ content: 'Please configure the prize and duration first! Minimum duration is 10s.', flags: MessageFlags.Ephemeral });
           }
 
           const endsAt = Date.now() + cfg.durationMs;
@@ -463,7 +463,7 @@ if (interaction.customId === "modal_2fa_setup") {
           }
         } catch (err) {
           console.error(err);
-          return await interaction.reply({ content: 'An error occurred while processing the scanner action.', ephemeral: true }).catch(() => null);
+          return await interaction.reply({ content: 'An error occurred while processing the scanner action.', flags: MessageFlags.Ephemeral }).catch(() => null);
         }
       }
 
@@ -471,21 +471,21 @@ if (interaction.customId === "modal_2fa_setup") {
       if (interaction.customId === 'verify_button') {
         const verifyData = db.getVerification(interaction.guild.id);
         if (!verifyData || !verifyData.roleId) {
-          return await interaction.reply({ content: '-# **Verification system is not properly configured.**', ephemeral: true }).catch(() => null);
+          return await interaction.reply({ content: '-# **Verification system is not properly configured.**', flags: MessageFlags.Ephemeral }).catch(() => null);
         }
         
         try {
           const role = interaction.guild.roles.cache.get(verifyData.roleId);
           if (!role) {
-             return await interaction.reply({ content: '-# **The verification role no longer exists.**', ephemeral: true }).catch(() => null);
+             return await interaction.reply({ content: '-# **The verification role no longer exists.**', flags: MessageFlags.Ephemeral }).catch(() => null);
           }
           if (interaction.member.roles.cache.has(verifyData.roleId)) {
-             return await interaction.reply({ content: '-# **You are already verified.**', ephemeral: true }).catch(() => null);
+             return await interaction.reply({ content: '-# **You are already verified.**', flags: MessageFlags.Ephemeral }).catch(() => null);
           }
           await interaction.member.roles.add(role);
-          return await interaction.reply({ content: '-# <:emoji_16:1521464002046328944> **Identity Authenticated! You have been granted access to the server.**', ephemeral: true }).catch(() => null);
+          return await interaction.reply({ content: '-# <:emoji_16:1521464002046328944> **Identity Authenticated! You have been granted access to the server.**', flags: MessageFlags.Ephemeral }).catch(() => null);
         } catch (err) {
-          return await interaction.reply({ content: '-# **Failed to assign the verification role. Ensure my role is higher than the verification role.**', ephemeral: true }).catch(() => null);
+          return await interaction.reply({ content: '-# **Failed to assign the verification role. Ensure my role is higher than the verification role.**', flags: MessageFlags.Ephemeral }).catch(() => null);
         }
       }
 
@@ -501,17 +501,17 @@ if (interaction.customId === "modal_2fa_setup") {
         const ratingData = db.getEditRating(interaction.message.id);
 
         if (!ratingData) {
-          return interaction.reply({ content: 'This rating session has expired or is invalid.', ephemeral: true }).catch(() => null);
+          return interaction.reply({ content: 'This rating session has expired or is invalid.', flags: MessageFlags.Ephemeral }).catch(() => null);
         }
 
         if (action === 'delete') {
           // Only author or admin can delete
           if (interaction.user.id !== ratingData.authorId && !interaction.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-            return interaction.reply({ content: 'You can only remove your own edits!', ephemeral: true }).catch(() => null);
+            return interaction.reply({ content: 'You can only remove your own edits!', flags: MessageFlags.Ephemeral }).catch(() => null);
           }
           db.deleteEditRating(interaction.message.id);
           await interaction.message.delete().catch(() => null);
-          return interaction.reply({ content: 'Edit rating post removed.', ephemeral: true }).catch(() => null);
+          return interaction.reply({ content: 'Edit rating post removed.', flags: MessageFlags.Ephemeral }).catch(() => null);
         }
 
         const stars = parseInt(action);
@@ -519,7 +519,7 @@ if (interaction.customId === "modal_2fa_setup") {
 
         // Prevent self-rating
         if (interaction.user.id === ratingData.authorId) {
-          return interaction.reply({ content: 'You cannot rate your own edit!', ephemeral: true }).catch(() => null);
+          return interaction.reply({ content: 'You cannot rate your own edit!', flags: MessageFlags.Ephemeral }).catch(() => null);
         }
 
         // Save rating
@@ -597,14 +597,14 @@ if (interaction.customId === "modal_2fa_setup") {
       // MEDIA PROMPT BUTTONS
       if (interaction.customId === 'dl_mp4' || interaction.customId === 'dl_mp3') {
         const originalMessageId = interaction.message.reference ? interaction.message.reference.messageId : null;
-        if (!originalMessageId) return interaction.reply({ content: 'Original message not found.', ephemeral: true });
+        if (!originalMessageId) return interaction.reply({ content: 'Original message not found.', flags: MessageFlags.Ephemeral });
         
         try {
           const originalMessage = await interaction.channel.messages.fetch(originalMessageId);
           const urlMatch = originalMessage.content.match(/(https?:\/\/[^\s]+)/);
           const url = urlMatch ? urlMatch[0] : null;
 
-          if (!url) return interaction.reply({ content: 'Could not extract URL.', ephemeral: true });
+          if (!url) return interaction.reply({ content: 'Could not extract URL.', flags: MessageFlags.Ephemeral });
 
           await interaction.update({ content: `-# **Downloading ${interaction.customId === 'dl_mp4' ? 'MP4' : 'MP3'}...**`, components: [] });
           
@@ -658,7 +658,7 @@ if (interaction.customId === "modal_2fa_setup") {
       // LEVELING BUTTONS
       if (interaction.customId === 'xp_dash') {
         const panel = await buildXpDashboard(interaction.user, interaction.guild);
-        return interaction.reply({ ...panel, ephemeral: true });
+        return interaction.reply({ ...panel, flags: MessageFlags.Ephemeral });
       }
 
       // VOICE CONTROL BUTTONS
@@ -677,19 +677,19 @@ if (interaction.customId === "modal_2fa_setup") {
 
         if (action === 'lock') {
           await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, { Connect: false });
-          return interaction.reply({ content: 'Channel Locked.', ephemeral: true });
+          return interaction.reply({ content: 'Channel Locked.', flags: MessageFlags.Ephemeral });
         }
         if (action === 'unlock') {
           await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, { Connect: null });
-          return interaction.reply({ content: 'Channel Unlocked.', ephemeral: true });
+          return interaction.reply({ content: 'Channel Unlocked.', flags: MessageFlags.Ephemeral });
         }
         if (action === 'hide') {
           await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, { ViewChannel: false });
-          return interaction.reply({ content: 'Channel Hidden.', ephemeral: true });
+          return interaction.reply({ content: 'Channel Hidden.', flags: MessageFlags.Ephemeral });
         }
         if (action === 'unhide') {
           await vc.permissionOverwrites.edit(interaction.guild.roles.everyone, { ViewChannel: null });
-          return interaction.reply({ content: 'Channel Visible.', ephemeral: true });
+          return interaction.reply({ content: 'Channel Visible.', flags: MessageFlags.Ephemeral });
         }
         if (action === 'limit') {
           const modal = new ModalBuilder()
@@ -716,12 +716,12 @@ if (interaction.customId === "modal_2fa_setup") {
           return interaction.showModal(modal);
         }
         if (action === 'info') {
-          return interaction.reply({ content: `**Channel Info**\nName: ${vc.name}\nBitrate: ${vc.bitrate / 1000}kbps\nLimit: ${vc.userLimit === 0 ? 'None' : vc.userLimit}\nConnected: ${vc.members.size}`, ephemeral: true });
+          return interaction.reply({ content: `**Channel Info**\nName: ${vc.name}\nBitrate: ${vc.bitrate / 1000}kbps\nLimit: ${vc.userLimit === 0 ? 'None' : vc.userLimit}\nConnected: ${vc.members.size}`, flags: MessageFlags.Ephemeral });
         }
         if (action === 'claim') {
           const currentOwner = vc.name.split("'s")[0]; 
           // It's a crude check, a real system tracks the owner ID in the DB.
-          return interaction.reply({ content: 'Ownership claiming is not yet fully implemented.', ephemeral: true });
+          return interaction.reply({ content: 'Ownership claiming is not yet fully implemented.', flags: MessageFlags.Ephemeral });
         }
       }
 
@@ -771,7 +771,7 @@ async function handleSecurityInteractions(interaction, guild) {
     if (customId === "sec_wl_user" || customId === "sec_wl_role") {
       const { getWhitelistOverviewPanel } = await import("../commands/security.js");
       const panel = await getWhitelistOverviewPanel(interaction.guild);
-      return interaction.reply({ ...panel, ephemeral: true });
+      return interaction.reply({ ...panel, flags: MessageFlags.Ephemeral });
     }
 
     if (customId === "sec_2fa_gmail") {
@@ -827,7 +827,7 @@ async function handleSecurityInteractions(interaction, guild) {
     }
     
     if (customId === 'toggle_blacklist_filter') {
-        return interaction.reply({ content: 'Use `!blacklist add <word>` to enable the word filter, or `!blacklist remove <word>` to disable it.', ephemeral: true });
+        return interaction.reply({ content: 'Use `!blacklist add <word>` to enable the word filter, or `!blacklist remove <word>` to disable it.', flags: MessageFlags.Ephemeral });
     }
 
   // Security Overview Navigation
@@ -1074,7 +1074,7 @@ export async function handleWhitelistModal(interaction) {
   const limitVal = parseInt(limitStr, 10);
   
   if (isNaN(limitVal) || limitVal < 0) {
-    return interaction.reply({ content: 'Invalid limit. Please enter a valid positive number.', ephemeral: true });
+    return interaction.reply({ content: 'Invalid limit. Please enter a valid positive number.', flags: MessageFlags.Ephemeral });
   }
 
   let wData = db.getWhitelist(interaction.guild.id, targetId, type) || { modules: [], triggerLimit: 0, currentUsage: 0 };

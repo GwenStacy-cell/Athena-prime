@@ -3158,9 +3158,11 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
          components.push(new TextDisplayBuilder().setContent(footerText));
       }
       
-      const container = new ContainerBuilder();
-      components.forEach(c => container.addTextDisplayComponents(c));
-      await updateMessageFn({ components: [container], embeds: [] });
+      const containerJson = {
+        type: 17,
+        components: components.map(c => typeof c.toJSON === 'function' ? c.toJSON() : c)
+      };
+      await updateMessageFn({ components: [containerJson], embeds: [] });
     };
 
     // Helper to run a step
@@ -3173,7 +3175,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
         const result = await operation();
         let finalStr = `> -# **${successEmoji} ${stepName}...** `;
         if (result && typeof result === 'string') {
-             finalStr += `\n> -# **${result}**`;
+             finalStr += result;
         }
         stepResults[stepIndex] = finalStr;
         await sendPayload();
@@ -3185,10 +3187,10 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
       }
     }
 
-    await runStep("Establishing Connection with Athena's server", async () => { return "Connected"; });
+    await runStep("Establishing Connection with Athena's server", async () => { return "-# Connected"; });
     await runStep("Checking Minimum Requirements for Antinuke", async () => { return ""; });
     await runStep(`Creating DB for "${guild.name}"`, async () => { 
-        return `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u2570\u203A Server Id : ${guild.id}\n> -# **\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u2570\u203A Athena Security DB ID : ${BigInt(guild.id) * 487293n}`;
+        return `\n> -# \u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u2570\u203A Server Id : ${guild.id}\n> -# \u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u2570\u203A Athena Security DB ID : ${BigInt(guild.id) * 487293n}`;
     });
     await runStep("Starting Role Integrity Check", async () => { return ""; });
     await runStep("Checking Athena Unbypassable , Athena Firewall Roles Created ", async () => { 
