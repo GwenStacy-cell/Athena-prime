@@ -170,7 +170,24 @@ if (interaction.customId === "modal_2fa_setup") {
         }
       }
       
-      if (interaction.customId === "modal_2fa_verify") {
+              if (interaction.customId === "btn_intercept_2fa") {
+            const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import("discord.js");
+            const modal = new ModalBuilder()
+                .setCustomId("modal_2fa_verify")
+                .setTitle("Two-Factor Authentication");
+            const codeInput = new TextInputBuilder()
+                .setCustomId("2fa_code")
+                .setLabel("Enter the 6-digit code sent to your email")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+                .setMaxLength(6)
+                .setMinLength(6);
+            const row = new ActionRowBuilder().addComponents(codeInput);
+            modal.addComponents(row);
+            return interaction.showModal(modal);
+        }
+
+        if (interaction.customId === "modal_2fa_verify") {
         const inputCode = interaction.fields.getTextInputValue("2fa_code");
         const db = (await import("../database.js")).default;
         const config = db.getGuildConfig(interaction.guild.id);

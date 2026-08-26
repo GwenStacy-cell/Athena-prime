@@ -1278,7 +1278,7 @@ export const commands = [
           const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId("btn_intercept_2fa").setLabel("Enter 2FA Code").setStyle(ButtonStyle.Danger)
           );
-          return interaction.reply({ content: "?? **Critical Security Action Blocked** ??\nAn email has been sent to your registered Gmail address. You must verify it to authorize this action.", components: [row], ephemeral: true });
+          return interaction.reply({ content: "?? **Critical Security Action Blocked** ??\nAn email has been sent to your registered Gmail address. You must verify it to authorize this action.", components: [row], flags: MessageFlags.Ephemeral });
         }
 
         const result = await handleSecurityToggleAll(interaction.guild, interaction.member, false);
@@ -3143,7 +3143,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const loadingEmoji = "<a:loading:1542155051286396938>";
     const warningEmoji = "<a:warning:1540656124313993247>";
     
-    let currentText = `<a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n-# Antinuke Setup Working...\n\n`;
+    let currentText = `-# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n-# **Antinuke Setup Working...**\n\n`;
 
     const sendPayload = async (text, isError = false) => {
       const display = new TextDisplayBuilder().setContent(text);
@@ -3153,17 +3153,17 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 
     // Helper to run a step
     async function runStep(stepName, operation) {
-      const loadingLine = `${loadingEmoji} ${stepName}...`;
+      const loadingLine = `-# **${loadingEmoji} ${stepName}...**`;
       currentText += (currentText.endsWith("\n") ? "" : "\n") + loadingLine;
       await sendPayload(currentText);
 
       try {
         const result = await operation();
-        currentText = currentText.replace(loadingLine, `${successEmoji} ${stepName}... ` + (result === true ? "" : result));
+        currentText = currentText.replace(loadingLine, `-# **${successEmoji} ${stepName}...** ` + (result === true ? "" : `-# **${result}**`));
         await sendPayload(currentText);
         return true;
       } catch (err) {
-        currentText = currentText.replace(loadingLine, `${warningEmoji} ${stepName}... Failed (${err.message})`);
+        currentText = currentText.replace(loadingLine, `-# **${warningEmoji} ${stepName}... Failed (${err.message})**`);
         await sendPayload(currentText);
         return false;
       }
@@ -3180,11 +3180,11 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const s5 = await runStep("Checking Athena Unbypassable , Athena Firewall Roles Created ", async () => { 
         let firewallRole = guild.roles.cache.find(r => r.name === "Athena Firewall");
         if (!firewallRole) {
-          await guild.roles.create({ name: "Athena Firewall", color: 0x2B2D31, permissions: [] }).catch(()=>{});
+          await guild.roles.create({ name: "Athena Firewall", permissions: [] }).catch(()=>{});
         }
         let unbypassableRole = guild.roles.cache.find(r => r.name === "Athena Unbypassable");
         if (!unbypassableRole) {
-          await guild.roles.create({ name: "Athena Unbypassable", color: 0x2B2D31, permissions: [] }).catch(()=>{});
+          await guild.roles.create({ name: "Athena Unbypassable", permissions: [] }).catch(()=>{});
         }
         return ""; 
     });
@@ -3197,7 +3197,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
         const db = (await import("../database.js")).default;
     db.updateGuildConfig(guild.id, { securityEnabled: true, antiNukeEnabled: true });
     
-    currentText += `\n\n| athena prime | athena firewall | athena unbypassable .\n<@${guild.client.user.id}> is creating its backup role when anyone trying turn off admin , remove role , delete role the <@${guild.client.user.id}> will automatically enable admin , recovery its own role , adding itself making <@${guild.client.user.id}> unbypassable security system`;
+    currentText += `\n\n-# **| athena prime | athena firewall | athena unbypassable .**\n-# **<@${guild.client.user.id}> is creating its backup role when anyone trying turn off admin , remove role , delete role the <@${guild.client.user.id}> will automatically enable admin , recovery its own role , adding itself making <@${guild.client.user.id}> unbypassable security system**`;
     await sendPayload(currentText);
 }
 
@@ -3605,5 +3605,5 @@ export async function executeInterceptedAction(interaction) {
       db.updateGuildConfig(interaction.guild.id, { pendingAction: null });
       return interaction.reply(result);
   }
-  return interaction.reply({ content: "No pending action found.", ephemeral: true });
+  return interaction.reply({ content: "No pending action found.", flags: MessageFlags.Ephemeral });
 }

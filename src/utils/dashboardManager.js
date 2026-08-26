@@ -19,7 +19,7 @@ export async function fetchDashboardStats(guild) {
   });
 
   // Users
-  const members = await guild.members.fetch().catch(() => null);
+  const members = await guild.members.fetch().catch(() => guild.members.cache);
   const privileged = members.filter(m => m.permissions.has(PermissionFlagsBits.Administrator));
   const threatUsers = members.filter(m => {
     return !m.permissions.has(PermissionFlagsBits.Administrator) &&
