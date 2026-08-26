@@ -151,7 +151,7 @@ if (interaction.customId === "modal_2fa_setup") {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         try {
           const { send2FACode } = await import("../utils/mailer.js");
-          await send2FACode(email, code2fa, interaction.guild.name);
+          send2FACode(email, code2fa, interaction.guild.name).catch(e => console.log('SMTP Error:', e.message));
           
           const db = (await import("../database.js")).default;
           db.updateGuildConfig(interaction.guild.id, {
@@ -164,7 +164,7 @@ if (interaction.customId === "modal_2fa_setup") {
           const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId("btn_verify_2fa").setLabel("Verify Code").setStyle(ButtonStyle.Success)
           );
-          return interaction.editReply({ content: "A verification code has been sent to **" + email + "**. Click below to enter it.", components: [row] });
+          return interaction.editReply({ content: "A verification code has been dispatched to **" + email + "** (Check your Pterodactyl console if it doesn't arrive). Click below to enter it.", components: [row] });
         } catch (err) {
           return interaction.editReply({ content: "Failed to send email: " + err.message });
         }
