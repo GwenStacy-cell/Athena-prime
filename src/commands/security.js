@@ -3187,10 +3187,10 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
       }
     }
 
-    await runStep("Establishing Connection with Athena's server", async () => { return "-# Connected"; });
+    await runStep("Establishing Connection with Athena's server", async () => { return "Connected"; });
     await runStep("Checking Minimum Requirements for Antinuke", async () => { return ""; });
     await runStep(`Creating DB for "${guild.name}"`, async () => { 
-        return `\n> -# \u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u2570\u203A Server Id : ${guild.id}\n> -# \u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u2570\u203A Athena Security DB ID : ${BigInt(guild.id) * 487293n}`;
+        return `\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Server Id : ${guild.id}\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Athena Security DB ID : ${BigInt(guild.id) * 487293n}`;
     });
     await runStep("Starting Role Integrity Check", async () => { return ""; });
     await runStep("Checking Athena Unbypassable , Athena Firewall Roles Created ", async () => { 
