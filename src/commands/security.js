@@ -1190,7 +1190,9 @@ export const commands = [
           return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        const msg = await message.reply({ embeds: [new EmbedBuilder().setColor(0x2B2D31).setDescription('# SECURITY SHIELD SEQUENCE\n\n<a:alert1:1533860044154732704> __**INITIALIZING SECURITY PROTOCOLS...**__')] });
+        const initDisplay = new TextDisplayBuilder().setContent('> -# **SECURITY SHIELD SEQUENCE**\n> \n> -# <a:alert1:1533860044154732704> **INITIALIZING SECURITY PROTOCOLS...**');
+          const initContainer = new ContainerBuilder().addTextDisplayComponents(initDisplay);
+          const msg = await message.reply({ components: [initContainer], flags: MessageFlags.IsComponentsV2 });
         await runSecurityEnableSequence(message.guild, async (payload) => {
           await msg.edit(payload).catch(() => null);
         });
@@ -1248,7 +1250,9 @@ export const commands = [
           return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
 
-        await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x2B2D31).setDescription('# SECURITY SHIELD SEQUENCE\n\n<a:alert1:1533860044154732704> __**INITIALIZING SECURITY PROTOCOLS...**__')] });
+        const initDisplay2 = new TextDisplayBuilder().setContent('> -# **SECURITY SHIELD SEQUENCE**\n> \n> -# <a:alert1:1533860044154732704> **INITIALIZING SECURITY PROTOCOLS...**');
+          const initContainer2 = new ContainerBuilder().addTextDisplayComponents(initDisplay2);
+          await interaction.reply({ components: [initContainer2], flags: MessageFlags.IsComponentsV2 });
         await runSecurityEnableSequence(interaction.guild, async (payload) => {
           await interaction.editReply(payload).catch(() => null);
         });
@@ -3135,33 +3139,32 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
 }
 
 async function runSecurityEnableSequence(guild, updateMessageFn) {
-    const { EmbedBuilder } = await import("discord.js");
+    const { TextDisplayBuilder, ContainerBuilder, MessageFlags } = await import("discord.js");
     const successEmoji = "<:emoji_16:1533860111704002665>";
     const loadingEmoji = "<a:loading:1542155051286396938>";
     const warningEmoji = "<a:warning:1540656124313993247>";
     
-    let currentText = `${loadingEmoji} **Athena Prime Antinuke Setup**\n-# Antinuke Setup Working...\n\n`;
+    let currentText = `> -# ${loadingEmoji} **Athena Prime Antinuke Setup**\n> -# **Antinuke Setup Working...**\n> \n`;
 
     const sendPayload = async (text) => {
-      const embed = new EmbedBuilder()
-        .setColor(0x2B2D31)
-        .setDescription(text);
-      await updateMessageFn({ embeds: [embed], components: [], flags: undefined });
+      const display = new TextDisplayBuilder().setContent(text);
+      const container = new ContainerBuilder().addTextDisplayComponents(display);
+      await updateMessageFn({ components: [container], embeds: [], flags: MessageFlags.IsComponentsV2 });
     };
 
     // Helper to run a step
     async function runStep(stepName, operation) {
-      const loadingLine = `${loadingEmoji} ${stepName}...`;
+      const loadingLine = `> -# **${loadingEmoji} ${stepName}...**`;
       currentText += (currentText.endsWith("\n") ? "" : "\n") + loadingLine;
       await sendPayload(currentText);
 
       try {
         const result = await operation();
-        currentText = currentText.replace(loadingLine, `${successEmoji} ${stepName}... ` + (result === true ? "" : result));
+        currentText = currentText.replace(loadingLine, `> -# **${successEmoji} ${stepName}...** ` + (result === true ? "" : `**\n> -# **${result}**`));
         await sendPayload(currentText);
         return true;
       } catch (err) {
-        currentText = currentText.replace(loadingLine, `${warningEmoji} ${stepName}... Failed (${err.message})`);
+        currentText = currentText.replace(loadingLine, `> -# **${warningEmoji} ${stepName}... Failed (${err.message})**`);
         await sendPayload(currentText);
         return false;
       }
@@ -3170,7 +3173,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const s1 = await runStep("Establishing Connection with Athena's server", async () => { return "Connected"; });
     const s2 = await runStep("Checking Minimum Requirements for Antinuke", async () => { return ""; });
     const s3 = await runStep(`Creating DB for "${guild.name}"`, async () => { 
-        return `\n\u00A0\u00A0\u2570\u203A Server Id : ${guild.id}\n\u00A0\u00A0\u2570\u203A Athena Security DB ID : ${BigInt(guild.id) * 487293n}`;
+        return `\u00A0\u00A0\u2570\u203A Server Id : ${guild.id}**\n> -# **\u00A0\u00A0\u2570\u203A Athena Security DB ID : ${BigInt(guild.id) * 487293n}`;
     });
     const s4 = await runStep("Starting Role Integrity Check", async () => { return ""; });
     const s5 = await runStep("Checking Athena Unbypassable , Athena Firewall Roles Created ", async () => { 
@@ -3193,7 +3196,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const db = (await import("../database.js")).default;
     db.updateGuildConfig(guild.id, { securityEnabled: true, antiNukeEnabled: true });
     
-    currentText += `\n\n| athena prime | athena firewall | athena unbypassable .\n<@${guild.client.user.id}> is creating its backup role when anyone trying turn off admin , remove role , delete role the <@${guild.client.user.id}> will automatically enable admin , recovery its own role , adding itself making <@${guild.client.user.id}> unbypassable security system`;
+    currentText += `\n> \n> -# **| athena prime | athena firewall | athena unbypassable .**\n> -# **<@${guild.client.user.id}> is creating its backup role when anyone trying turn off admin , remove role , delete role the <@${guild.client.user.id}> will automatically enable admin , recovery its own role , adding itself making <@${guild.client.user.id}> unbypassable security system**`;
     await sendPayload(currentText);
 }
 
