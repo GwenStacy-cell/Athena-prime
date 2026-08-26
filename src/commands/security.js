@@ -1196,6 +1196,8 @@ export const commands = [
         await runSecurityEnableSequence(message.guild, async (payload) => {
           await msg.edit(payload).catch(() => null);
         });
+        const tosPanel = await getServerSecurityEnabledPanel();
+        await message.channel.send(tosPanel);
         const panel = await getSecureDashboardPanel(message.guild);
         await message.channel.send(panel);
       } else if (disable) {
@@ -1254,6 +1256,8 @@ export const commands = [
         await runSecurityEnableSequence(interaction.guild, async (payload) => {
           await interaction.editReply(payload).catch(() => null);
         });
+        const tosPanel = await getServerSecurityEnabledPanel();
+        await interaction.channel.send(tosPanel);
         const panel = await getSecureDashboardPanel(interaction.guild);
         await interaction.channel.send(panel);
       } else if (disable) {
