@@ -654,6 +654,37 @@ async function handleSecurityInteractions(interaction, guild) {
       } catch(e) { console.error(e); }
     }
 
+    
+    if (customId === "sec_close_dash") {
+      try {
+        return interaction.message.delete();
+      } catch(e) {}
+    }
+
+    if (customId === "sec_rescan_dash") {
+      try {
+        const sec = await import("../commands/security.js");
+        const panel = await sec.getSecureDashboardPanel(guild);
+        return interaction.update(panel);
+      } catch(e) { console.error(e); }
+    }
+
+    if (customId === "sec_extra_owner") {
+      return interaction.reply({ content: "Please use \`!extraowner add <@user>\` to add Extra Owners.", ephemeral: true });
+    }
+
+    if (customId === "sec_wl_user") {
+      return interaction.reply({ content: "Please use \`!whitelist add <@user>\` to whitelist a user.", ephemeral: true });
+    }
+
+    if (customId === "sec_wl_role") {
+      return interaction.reply({ content: "Role whitelisting is not currently configured in the database. Use \`!whitelist add <@user>\` for user-level whitelisting.", ephemeral: true });
+    }
+
+    if (customId === "sec_2fa_gmail") {
+      return interaction.reply({ content: "Gmail 2FA integration requires connecting to a mailer service. Contact the bot developer to enable this module.", ephemeral: true });
+    }
+
     if (customId === 'sec_close') {
       try {
         return interaction.message.delete();
