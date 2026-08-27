@@ -75,7 +75,7 @@ export async function startRecording(vc) {
     opusStream.pipe(opusDecoder).on('error', err => {}).pipe(input, { end: false });
   });
 
-  activeRecordings.set(guildId, { connection, receiver, outStream, pcmPath, mixer });
+  activeRecordings.set(guildId, { connection, receiver, outStream, pcmPath, mixer, startTime: Date.now() });
   return true;
 }
 
@@ -112,7 +112,7 @@ export async function stopRecording(guildId) {
       .on('end', () => {
         // Cleanup PCM file
         fs.unlink(session.pcmPath, () => {});
-        resolve(mp3Path);
+        resolve({ mp3Path, startTime: session.startTime, durationMs: Date.now() - session.startTime });
       })
       .on('error', (err) => {
         console.error('FFMPEG Error:', err);
