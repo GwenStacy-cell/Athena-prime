@@ -1045,12 +1045,21 @@ export default {
           );
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
-          const warnEmbed = embed.build({
-            description: `__**Warned Sending Invites |**__ <:dark4luvontop:1533860081916182721>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> ã…¤has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
-            color: '#2b2d31',
-            thumbnail: message.author.displayAvatarURL({ dynamic: true })
-          });
-          await message.channel.send({ embeds: [warnEmbed] }).catch(() => null);
+          const warnPayload = {
+              components: [{
+                type: 17,
+                components: [{
+                  type: 9,
+                  components: [{
+                    type: 10,
+                    content: `**Warned Sending Invites |** <:dark4luvontop:1533860081916182721>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> \u2800\u2800\u2800\u2800╰› has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`
+                  }],
+                  accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
+                }]
+              }],
+              flags: MessageFlags.IsComponentsV2
+            };
+            await message.channel.send(warnPayload).catch(() => null);
         }
         
         return;
@@ -1139,12 +1148,21 @@ export default {
           );
           await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
         } else {
-          const filterWarnEmbed = embed.build({
-            description: `__**Word Filter Triggered |**__ <:dark4luvontop:1533860081916182721>\n> Reason: . ${message.author} , **Posted Blacklisted Word**\n> ã…¤has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`,
-            color: '#2b2d31',
-            thumbnail: message.author.displayAvatarURL({ dynamic: true })
-          });
-          await message.channel.send({ embeds: [filterWarnEmbed] }).catch(() => null);
+          const filterWarnPayload = {
+              components: [{
+                type: 17,
+                components: [{
+                  type: 9,
+                  components: [{
+                    type: 10,
+                    content: `**Word Filter Triggered |** <:dark4luvontop:1533860081916182721>\n> Reason: . ${message.author} , **Posted Blacklisted Word**\n> \u2800\u2800\u2800\u2800╰› has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`
+                  }],
+                  accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
+                }]
+              }],
+              flags: MessageFlags.IsComponentsV2
+            };
+            await message.channel.send(filterWarnPayload).catch(() => null);
         }
         return; // Halt
       }
