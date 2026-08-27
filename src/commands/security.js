@@ -2654,7 +2654,7 @@ async function getServerInfoEmbed(guild) {
 
   const headerSection = {
     type: 9,
-    components: [{ type: 10, content: `## **${guild.name} Ã¢â‚¬â€  Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**` }]
+    components: [{ type: 10, content: `## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**` }]
   };
   if (iconUrl) {
     headerSection.accessory = { type: 11, media: { url: iconUrl } };
@@ -2667,7 +2667,7 @@ async function getServerInfoEmbed(guild) {
     `-# **Created:** ${createdAt}`;
 
   const securityText =
-    `-# **Ã¢â€ â‚¬Ã¢â€ â‚¬ Security Status Ã¢â€ â‚¬Ã¢â€ â‚¬**\n` +
+    `-# **▬▬ Security Status ▬▬**\n` +
     `-# **Anti-Nuke:** ${antiNukeStatus}   **Anti-Spam:** ${antiSpamStatus}\n` +
     `-# **Anti-Invite:** ${antiInviteStatus}   **Anti-Link:** ${antiLinkStatus}\n` +
     `-# **Raid Mode:** ${raidModeStatus}   **Max Warns:** \`${config.maxWarnings}\``;
