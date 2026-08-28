@@ -56,7 +56,7 @@ async function sendRateLeaderboard(context, page) {
     .sort((a, b) => b.averageRating - a.averageRating || b.totalVotes - a.totalVotes);
     
   if (leaderboard.length === 0) {
-    const reply = { embeds: [cv2.info('Rate Leaderboard', 'There are no rated edits yet! Use `!rate` to post an edit.')] };
+    const reply = cv2.info('Rate Leaderboard', 'There are no rated edits yet! Use `!rate` to post an edit.');
     return context.reply ? await context.reply(reply) : await context.update(reply);
   }
   

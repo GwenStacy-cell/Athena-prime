@@ -39,11 +39,11 @@ async function runInteractiveBuilder(message) {
   });
   
   const targetChannelMsg = await awaitReply();
-  if (!targetChannelMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
+  if (!targetChannelMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
   
   const targetChannelId = targetChannelMsg.content.replace(/<#|>/g, '');
   const targetChannel = message.guild.channels.cache.get(targetChannelId);
-  if (!targetChannel) return channel.send({ embeds: [cv2.danger('Invalid Channel', 'Setup cancelled.')] });
+  if (!targetChannel) return channel.send(cv2.danger('Invalid Channel', 'Setup cancelled.'));
 
   // Step 2: Title
   await channel.send({
@@ -51,7 +51,7 @@ async function runInteractiveBuilder(message) {
   });
   
   const titleMsg = await awaitReply();
-  if (!titleMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
+  if (!titleMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
   const title = titleMsg.content;
 
   // Step 2.5: Description
@@ -60,7 +60,7 @@ async function runInteractiveBuilder(message) {
   });
   
   const menuDescMsg = await awaitReply();
-  if (!menuDescMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
+  if (!menuDescMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
   let menuDescription = '';
   if (menuDescMsg.content.trim().toLowerCase() !== 'skip') {
     menuDescription = menuDescMsg.content.trim();
@@ -74,7 +74,7 @@ async function runInteractiveBuilder(message) {
 
   while (true) {
     const entryMsg = await awaitReply();
-    if (!entryMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
+    if (!entryMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
     
     if (entryMsg.content.trim().toLowerCase() === 'done') break;
 
@@ -120,7 +120,7 @@ async function runInteractiveBuilder(message) {
   }
 
   if (mappings.length === 0) {
-    return channel.send({ embeds: [cv2.danger('Cancelled', 'No roles were added. Setup cancelled.')] });
+    return channel.send(cv2.danger('Cancelled', 'No roles were added. Setup cancelled.'));
   }
 
   // Step 4: Image
@@ -129,7 +129,7 @@ async function runInteractiveBuilder(message) {
   });
 
   const imageMsg = await awaitReply();
-  if (!imageMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
+  if (!imageMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
 
   const imgContent = imageMsg.content.trim();
   let imageUrl = null;
@@ -153,7 +153,7 @@ async function runInteractiveBuilder(message) {
   });
 
   const footerMsg = await awaitReply();
-  if (!footerMsg) return channel.send({ embeds: [cv2.danger('Timeout', 'Setup cancelled.')] });
+  if (!footerMsg) return channel.send(cv2.danger('Timeout', 'Setup cancelled.'));
   
   let footerText = undefined;
   const fContent = footerMsg.content.trim();
@@ -223,6 +223,6 @@ async function runInteractiveBuilder(message) {
 
   } catch (err) {
     console.error(err);
-    await channel.send({ embeds: [cv2.danger('Error', 'Failed to post message or add reactions.')] });
+    await channel.send(cv2.danger('Error', 'Failed to post message or add reactions.'));
   }
 }

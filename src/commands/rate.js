@@ -17,11 +17,11 @@ export const commands = [
         
         if (channelMatch || isId) {
           if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-            return message.reply({ embeds: [cv2.danger('Permission Denied', 'You must be a Server Administrator to set the rating channel.')] });
+            return message.reply(cv2.danger('Permission Denied', 'You must be a Server Administrator to set the rating channel.'));
           }
           const channelId = channelMatch ? channelMatch[1] : args[0];
           db.setRateChannel(message.guild.id, channelId);
-          return message.reply({ embeds: [cv2.success('Channel Configured', `The designated edit rating channel is now <#${channelId}>.`)] });
+          return message.reply(cv2.success('Channel Configured', `The designated edit rating channel is now <#${channelId}>.`));
         }
       }
 
