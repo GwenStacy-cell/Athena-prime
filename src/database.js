@@ -11,6 +11,7 @@ if (!fs.existsSync(DB_DIR)) {
 
 const DEFAULT_SCHEMA = {
   guilds: {},        // guildId -> config
+  afk: {},           // userId -> { reason, timestamp }
   warnings: {},      // guildId -> { userId -> [...] }
   quarantines: {},   // guildId -> { userId -> { roles, quarantinedAt, reason, expiresAt } }
   extraOwners: {},   // guildId -> [ userId... ]
@@ -85,6 +86,7 @@ class Database {
         this.cache.reactionRoles  = this.cache.reactionRoles  || {};
         this.cache.serverStats    = this.cache.serverStats    || {};
         this.cache.birthdays      = this.cache.birthdays      || {};
+          this.cache.afk = this.cache.afk || {};
         this.cache.giveaways      = this.cache.giveaways      || {};
         this.cache.newsFeeds      = this.cache.newsFeeds      || {};
         this.cache.verification   = this.cache.verification   || {};
