@@ -21,14 +21,14 @@ async function handleMassRole(context, role, action) {
   }
 
   const isSlash = !!context.commandName;
-  if (isSlash) await context.deferReply();
+  
   
   const actionName = action === 'add' ? 'Add' : action === 'remove' ? 'Remove' : action === 'strip' ? 'Strip' : 'Restore';
   
   const initialReply = cv2.success(`Mass ${actionName} Started`, `Processing \`${role.name}\`...`);
   let statusMessage;
   if (isSlash) {
-    statusMessage = await context.editReply(initialReply);
+    statusMessage = await context.reply({ ...initialReply, fetchReply: true });
   } else {
     statusMessage = await context.reply(initialReply);
   }
@@ -146,12 +146,11 @@ export const commands = [
         return interaction.reply(cv2.danger('Unauthorized', 'You do not have permission to use this command.'));
       }
       
-      await interaction.deferReply();
       const targetUser = interaction.options.getUser('user');
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.editReply(cv2.warn('Command Error', 'User not found.'));
+        return interaction.reply(cv2.warn('Command Error', 'User not found.'));
       }
       
       const roles = [];
@@ -186,7 +185,7 @@ export const commands = [
       if (addedRoles.length > 0) replyDesc += `**Added:** ${addedRoles.join(', ')}\n`;
       if (failedRoles.length > 0) replyDesc += `**Failed:** ${failedRoles.join(', ')}\n`;
       
-      await interaction.editReply(cv2.success('Role Assignment', replyDesc));
+      await interaction.reply(cv2.success('Role Assignment', replyDesc));
     }
   },
   {
@@ -247,12 +246,11 @@ export const commands = [
         return interaction.reply(cv2.danger('Unauthorized', 'You do not have permission.'));
       }
       
-      await interaction.deferReply();
       const targetUser = interaction.options.getUser('user');
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.editReply(cv2.warn('Command Error', 'User not found.'));
+        return interaction.reply(cv2.warn('Command Error', 'User not found.'));
       }
       
       const roles = [];
@@ -287,7 +285,7 @@ export const commands = [
       if (removedRoles.length > 0) replyDesc += `**Removed:** ${removedRoles.join(', ')}\n`;
       if (failedRoles.length > 0) replyDesc += `**Failed:** ${failedRoles.join(', ')}\n`;
       
-      await interaction.editReply(cv2.success('Role Removal', replyDesc));
+      await interaction.reply(cv2.success('Role Removal', replyDesc));
     }
   },
   {
@@ -334,12 +332,11 @@ export const commands = [
         return interaction.reply(cv2.danger('Unauthorized', 'You do not have permission.'));
       }
       
-      await interaction.deferReply();
       const targetUser = interaction.options.getUser('user');
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       
       if (!target) {
-        return interaction.editReply(cv2.warn('Command Error', 'User not found.'));
+        return interaction.reply(cv2.warn('Command Error', 'User not found.'));
       }
       
       const highestBotRole = interaction.guild.members.me.roles.highest.position;
@@ -365,7 +362,7 @@ export const commands = [
         }
       }
       
-      await interaction.editReply(cv2.success('Roles Stripped', `Successfully stripped **${count}** roles from ${target}. Failed to remove **${failedCount}** roles.`));
+      await interaction.reply(cv2.success('Roles Stripped', `Successfully stripped **${count}** roles from ${target}. Failed to remove **${failedCount}** roles.`));
     }
   },
   {
