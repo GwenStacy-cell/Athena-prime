@@ -164,7 +164,8 @@ export const commands = [
       
       let reply;
       try {
-        reply = await interaction.reply({ components: [components], fetchReply: true, flags: MessageFlags.IsComponentsV2 });
+        await interaction.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
+        reply = await interaction.fetchReply();
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
@@ -239,7 +240,8 @@ export const commands = [
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      const sent = await interaction.reply({ content: 'Calculating ping...', fetchReply: true });
+      await interaction.reply({ content: 'Calculating ping...' });
+      const sent = await interaction.fetchReply();
       const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
       const wsMs  = Math.round(interaction.client.ws.ping);
 

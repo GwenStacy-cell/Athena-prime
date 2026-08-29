@@ -28,7 +28,8 @@ async function handleMassRole(context, role, action) {
   const initialReply = cv2.success(`Mass ${actionName} Started`, `Processing \`${role.name}\`...`);
   let statusMessage;
   if (isSlash) {
-    statusMessage = await context.reply({ ...initialReply, fetchReply: true });
+    await context.reply(initialReply);
+    statusMessage = await context.fetchReply();
   } else {
     statusMessage = await context.reply(initialReply);
   }
