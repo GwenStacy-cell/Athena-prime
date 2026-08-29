@@ -54,6 +54,11 @@ export default {
     // 2. MODALS
     // ==========================================
     if (interaction.isModalSubmit()) {
+        if (interaction.customId === 'accent_modal') {
+          const { handleAccentModal } = await import('../commands/accent.js');
+          return handleAccentModal(interaction);
+        }
+
 
       
       if (interaction.customId.startsWith('gw_setup_modal_')) {
@@ -225,6 +230,11 @@ if (interaction.customId === "modal_2fa_setup") {
     }
 
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
+        if (interaction.customId.startsWith('accent_') && !interaction.isModalSubmit()) {
+          const { handleAccentButton } = await import('../commands/accent.js');
+          return handleAccentButton(interaction);
+        }
+
 
       // GIVEAWAY MANAGER HANDLERS
       if (interaction.customId.startsWith('gw_mode_') || interaction.customId.startsWith('gw_setup_') || interaction.customId.startsWith('gw_start_') || interaction.customId.startsWith('gw_manage_') || interaction.customId.startsWith('gw_end_') || interaction.customId.startsWith('gw_reroll_') || interaction.customId === 'gw_join') {
