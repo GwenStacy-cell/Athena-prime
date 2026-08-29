@@ -211,7 +211,11 @@ export const commands = [
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      const sent = await message.reply({ content: 'Calculating ping...' });
+      const { MessageFlags } = await import('discord.js');
+      const sent = await message.reply({ 
+        components: [{ type: 17, components: [{ type: 10, content: '-# **Calculating ping...**' }] }],
+        flags: MessageFlags.IsComponentsV2 
+      });
       const apiMs = sent.createdTimestamp - message.createdTimestamp;
       const wsMs  = Math.round(message.client.ws.ping);
 
@@ -226,12 +230,12 @@ export const commands = [
       const buffer = await generatePingGraph(wsMs, accentHex, message.client.guilds.cache.size);
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
-      const e = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`| <:dark4luvontop:1533860081916182721> ${message.author} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
-        .setImage('attachment://ping_graph.png');
+      const comps = [
+        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> ${message.author} ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+        { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
+      ];
 
-      await sent.edit({ content: '', embeds: [e], files: [attachment] });
+      await sent.edit({ content: '', components: [{ type: 17, components: comps }], files: [attachment], embeds: [] });
     },
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
@@ -240,7 +244,11 @@ export const commands = [
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-      await interaction.reply({ content: 'Calculating ping...' });
+      const { MessageFlags } = await import('discord.js');
+      await interaction.reply({ 
+        components: [{ type: 17, components: [{ type: 10, content: '-# **Calculating ping...**' }] }],
+        flags: MessageFlags.IsComponentsV2 
+      });
       const sent = await interaction.fetchReply();
       const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
       const wsMs  = Math.round(interaction.client.ws.ping);
@@ -256,12 +264,12 @@ export const commands = [
       const buffer = await generatePingGraph(wsMs, accentHex, interaction.client.guilds.cache.size);
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
-      const e = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`| <:dark4luvontop:1533860081916182721> ${interaction.user} **${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
-        .setImage('attachment://ping_graph.png');
+      const comps = [
+        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> ${interaction.user} ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+        { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
+      ];
 
-      await interaction.editReply({ content: '', embeds: [e], files: [attachment] });
+      await interaction.editReply({ content: '', components: [{ type: 17, components: comps }], files: [attachment], embeds: [] });
     }
   },
 
