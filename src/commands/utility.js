@@ -231,7 +231,7 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> [${message.author.username}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
         { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
       ];
 
@@ -266,7 +266,7 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> [${interaction.user.username}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
         { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
       ];
 
