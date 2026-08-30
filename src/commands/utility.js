@@ -389,7 +389,7 @@ export const commands = [
       await this._processSteal(inputs, interaction, interaction.guild);
     },
     async _processSteal(input, context, guild) {
-      const EMOJI_RE = /<(a?):([a-z-Z0-9_]+):(\d+)>/g;
+      const EMOJI_RE = /<(a?):([a-zA-Z0-9_]+):(\d+)>/g;
       const matches  = [...input.matchAll(EMOJI_RE)];
 
       if (!matches.length) {
