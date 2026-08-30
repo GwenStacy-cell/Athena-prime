@@ -381,14 +381,10 @@ export default {
           await message.delete().catch(() => null);
           
           // Channel Warning
-          const scamEmbed = cv2.danger('LOG: MALICIOUS SCAM TEXT DELETED', `**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted fraudulent text/link containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).\n\n**Channel:** <#${message.channel.id}>`);
-            .setTimestamp();
+          const scamEmbed = cv2.danger('Scam Detected', `<a:emoji_35:1533024049926639699> <@${message.author.id}>, your message was flagged as a scam and removed.`);
+          await message.channel.send(scamEmbed).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
           
-          try {
-            const { default: db } = await import('../database.js');
-            const config = db.getGuildConfig(message.guild.id);
-            if (config && config.accentColor) logEmbed.setColor(config.accentColor);
-          } catch(e) {}
+          const logEmbed = cv2.danger('LOG: MALICIOUS SCAM TEXT DELETED', `**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted fraudulent text/link containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).\n\n**Channel:** <#${message.channel.id}>`);
           
           logToSecurityChannel(message.guild, logEmbed);
           
