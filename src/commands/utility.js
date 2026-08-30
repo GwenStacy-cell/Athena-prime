@@ -412,6 +412,7 @@ export const commands = [
           continue;
         }
         
+        const { isBotOwnerSync } = await import('../utils/helpers.js');
         const isOwner = isBotOwnerSync(context.user ? context.user.id : context.author.id);
         if (!isOwner && guild.emojis.cache.some(e => e.name === name)) {
           failed.push(`\`${name}\` - name already in use`);
