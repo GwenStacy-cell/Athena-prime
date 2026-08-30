@@ -2,7 +2,8 @@ import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';
-import { executeQuarantine } from './security.js'; // We will implement security.js next
+import { executeQuarantine } from './security.js';
+import { logServerEvent } from '../utils/serverLogger.js'; // We will implement security.js next
 
 export const commands = [
   // --- MUTEALL COMMAND ---

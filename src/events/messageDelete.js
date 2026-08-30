@@ -5,7 +5,12 @@ import { AuditLogEvent } from 'discord.js';
 export default {
   name: 'messageDelete',
   async execute(message) {
-    if (!message.guild) return;
+if (!message.guild) return;
+
+    if (message.client.ignoredDeletes && message.client.ignoredDeletes.has(message.id)) {
+      message.client.ignoredDeletes.delete(message.id);
+      return; // Suppress individual log because this is being bulk-logged by Purge
+    }
 
     // Check if the deleted message was a reaction role menu
     const rrConfig = db.getReactionRoleMenu(message.id);
