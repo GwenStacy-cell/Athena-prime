@@ -79,7 +79,26 @@ export default {
     const title = isGhostPing ? '<a:st_Ghost:1543537892717105212> **GHOST PING DETECTED**' : '**Message Sniped**';
     const authorMention = message.author ? `<@${message.author.id}>` : 'System';
     
-    let textBody = `-# ${title}\n-# \n-# **Author:** ${authorMention}\n-# **Deleted By:** ${deletedBy}${deletionReason}\n-# **Channel:** <#${message.channel.id}>\n-# \n-# **Message Content:**\n-# ${content}`;
+    let innerComps = [];
+    
+    // Header
+    innerComps.push({ type: 10, content: `-# ${title}` });
+    innerComps.push({ type: 14, divider: true });
+    
+    // Info
+    innerComps.push({ type: 10, content: `-# **Author:** ${authorMention}` });
+    innerComps.push({ type: 10, content: `-# **Deleted By:** ${deletedBy}${deletionReason}` });
+    innerComps.push({ type: 10, content: `-# **Channel:** <#${message.channel.id}>` });
+    
+    innerComps.push({ type: 14, divider: true });
+    
+    // Content
+    innerComps.push({ type: 10, content: `-# **Message Content:**` });
+    // If content has newlines, split them and prefix each with -#
+    const contentLines = content.split('\n');
+    for (const line of contentLines) {
+      innerComps.push({ type: 10, content: `-# ${line}` });
+    }
 
     if (isGhostPing) {
       let pinged = [];
@@ -87,12 +106,18 @@ export default {
       if (hasRoleMentions) pinged.push(...message.mentions.roles.map(r => `<@&${r.id}>`));
       if (hasEveryone) pinged.push('@everyone / @here');
       
-      textBody += `\n-# \n-# **Ghost Pinged:** \n-# ${pinged.join(', ').substring(0, 1024)}`;
+      innerComps.push({ type: 14, divider: true });
+      innerComps.push({ type: 10, content: `-# **Ghost Pinged:**` });
+      innerComps.push({ type: 10, content: `-# ${pinged.join(', ').substring(0, 1024)}` });
     }
+
+    // Footer
+    innerComps.push({ type: 14, divider: true });
+    innerComps.push({ type: 10, content: `-# **Athena Bulletproof Security !!!**` });
 
     let payload = {
       components: [
-        { type: 17, components: [{ type: 10, content: textBody }] }
+        { type: 17, components: innerComps }
       ],
       flags: 32768
     };
