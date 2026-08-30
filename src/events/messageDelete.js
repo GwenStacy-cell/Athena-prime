@@ -41,7 +41,7 @@ if (!message.guild) return;
     const formatUser = (id) => {
       const mem = message.guild.members.cache.get(id);
       const u = message.client.users.cache.get(id);
-      const name = (mem?.displayName || u?.globalName || u?.username || 'Unknown').replace(/[\\[\\]|*~_]/g, '').trim();
+      const name = (mem?.displayName || u?.globalName || u?.username || 'Unknown').replace(/[\x5B\x5D|*~_]/g, '').trim();
       return `[${name}](https://discord.com/users/${id})`;
     };
 
@@ -99,7 +99,7 @@ if (!message.guild) return;
     // Info
     innerComps.push({ type: 10, content: `-# **Author:** ${authorMention}` });
     innerComps.push({ type: 10, content: `-# **Deleted By:** ${deletedBy}${deletionReason}` });
-    let safeChannel = message.channel.name.replace(/[\[\]\|\*~_]/g, '').trim();
+    let safeChannel = message.channel.name.replace(/[\x5B\x5D|*~_]/g, '').trim();
     innerComps.push({ type: 10, content: `-# **Channel:** [# ${safeChannel}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` });
     
     innerComps.push({ type: 14, divider: true });
