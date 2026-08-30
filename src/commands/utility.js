@@ -235,7 +235,7 @@ export const commands = [
         { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
       ];
 
-      await sent.edit({ content: '', components: [{ type: 17, components: comps }], files: [attachment], embeds: [] });
+      await sent.edit({ content: '', components: [{ type: 17, components: comps }], files: [attachment], embeds: [], flags: 16384 });
     },
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
@@ -269,7 +269,7 @@ export const commands = [
         { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
       ];
 
-      await interaction.editReply({ content: '', components: [{ type: 17, components: comps }], files: [attachment], embeds: [] });
+      await interaction.editReply({ content: '', components: [{ type: 17, components: comps }], files: [attachment], embeds: [], flags: 16384 });
     }
   },
 
