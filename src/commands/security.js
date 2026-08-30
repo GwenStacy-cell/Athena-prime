@@ -779,6 +779,12 @@ export const commands = [
       if (!url) {
         return message.reply(cv2.warn('Command Error', `${message.author} Please provide a direct image URL or attach an image.`));
       }
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return message.reply(cv2.warn('Invalid URL', `${message.author} That is not a valid image link! Ensure the link starts with http:// or https://, or upload an image file instead.`));
+      }
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return message.reply(cv2.warn('Invalid URL', `${message.author} That is not a valid image link! Ensure the link starts with http:// or https://, or upload an image file instead.`));
+      }
 
       const responseMsg = await message.reply(cv2.info('Updating Avatar', 'Attempting to configure guild-specific member avatar...'));
 
@@ -790,7 +796,6 @@ export const commands = [
         });
         await responseMsg.edit(cv2.success('Avatar Configured', "Successfully updated the bot's server-specific avatar."));
       } catch (err) {
-        console.error(err);
         await responseMsg.edit(cv2.danger('Update Failed', `Could not update avatar: ${err.message}`));
       }
     },
@@ -815,7 +820,6 @@ export const commands = [
         });
         await interaction.editReply(cv2.success('Avatar Configured', "Successfully updated the bot's server-specific avatar."));
       } catch (err) {
-        console.error(err);
         await interaction.editReply(cv2.danger('Update Failed', `Could not update avatar: ${err.message}`));
       }
     }
@@ -851,6 +855,9 @@ export const commands = [
       if (!url) {
         return message.reply(cv2.warn('Command Error', `${message.author} Please provide a direct image URL or attach an image.`));
       }
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return message.reply(cv2.warn('Invalid URL', `${message.author} That is not a valid image link! Ensure the link starts with http:// or https://, or upload an image file instead.`));
+      }
 
       const responseMsg = await message.reply(cv2.info('Updating Banner', 'Attempting to configure guild-specific member banner...'));
 
@@ -862,7 +869,6 @@ export const commands = [
         });
         await responseMsg.edit(cv2.success('Banner Configured', "Successfully updated the bot's server-specific banner."));
       } catch (err) {
-        console.error(err);
         await responseMsg.edit(cv2.danger('Update Failed', `Could not update banner: ${err.message}`));
       }
     },
@@ -887,7 +893,6 @@ export const commands = [
         });
         await interaction.editReply(cv2.success('Banner Configured', "Successfully updated the bot's server-specific banner."));
       } catch (err) {
-        console.error(err);
         await interaction.editReply(cv2.danger('Update Failed', `Could not update banner: ${err.message}`));
       }
     }
