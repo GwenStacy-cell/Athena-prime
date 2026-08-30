@@ -70,7 +70,13 @@ function buildContainer(title, description, fields, customFooter) {
 
   // Bottom divider
   comps.push(SEP);
-  comps.push({ type: 10, content: customFooter ? `-# **${customFooter}**` : '-# **Athena Bulletproof Security !!!**' });
+    let footerText = customFooter ? customFooter : 'Athena Bulletproof Security !!!';
+  if (footerText === 'success') footerText = 'System Operation Successfully Completed.';
+  else if (footerText === 'warning') footerText = 'Security Protocol Advisory Issued.';
+  else if (footerText === 'danger') footerText = 'Critical Security Protocol Engaged.';
+  else if (footerText === 'error') footerText = 'System Fault Encountered.';
+  
+  comps.push({ type: 10, content: `-# **${footerText}**` });
 
   return { type: 17, components: comps };
 }
