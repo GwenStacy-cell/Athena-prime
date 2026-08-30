@@ -1657,7 +1657,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
         { name: 'Instructions', value: `Your access to the rest of the server has been restricted. Please navigate to <#${quarantineChannel.id}> to resolve this matter.` }
       ]
     );
-    await targetMember.send({ embeds: [dmEmbed] }).catch(() => null);
+    await targetMember.send(dmEmbed).catch(() => null);
 
     // 7. Ping target in quarantine channel and post welcome alert
     const welcomeEmbed = cv2.danger(
@@ -1669,7 +1669,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
         { name: 'Next Steps', value: 'Please wait patiently for a Administrator or Moderator to review your case. Any further spamming or rule violations will result in a permanent ban.' }
       ]
     );
-    await quarantineChannel.send({ content: `${targetMember}`, embeds: [welcomeEmbed] }).catch(() => null);
+    await quarantineChannel.send(Object.assign({ content: `${targetMember}` }, welcomeEmbed)).catch(() => null);
 
     // 8. Log the event to logs channel
     logToSecurityChannel(guild, cv2.log(
@@ -1748,7 +1748,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
         []
       );
     }
-    await targetMember.send({ embeds: [dmEmbed] }).catch(() => null);
+    await targetMember.send(dmEmbed).catch(() => null);
 
     // Log the event
     if (context === 'auto') {

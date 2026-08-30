@@ -381,18 +381,7 @@ export default {
           await message.delete().catch(() => null);
           
           // Channel Warning
-          const scamEmbed = new EmbedBuilder()
-            .setColor('#ff0000') // Pure red
-            .setDescription(`<a:emoji_35:1533024049926639699> <@${message.author.id}>, your message was flagged as a scam and removed.`);
-          await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
-          
-          // Security Channel Log
-          const logEmbed = new EmbedBuilder()
-            .setColor('#2b2d31')
-            .setTitle('LOG: MALICIOUS SCAM TEXT DELETED')
-            .setDescription(`**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted fraudulent text/link containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).`)
-            .addFields([{ name: 'Channel', value: `<#${message.channel.id}>` }])
-            .setFooter({ text: 'Athena Prime Killer' })
+          const scamEmbed = cv2.danger('LOG: MALICIOUS SCAM TEXT DELETED', `**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted fraudulent text/link containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).\n\n**Channel:** <#${message.channel.id}>`);
             .setTimestamp();
           
           try {
@@ -412,7 +401,7 @@ export default {
                 .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                 .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam message in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
                 .setFooter({ text: 'Athena Prime Killer System' });
-              await owner.send({ embeds: [dmEmbed] }).catch(() => null);
+              await owner.send(dmEmbed).catch(() => null);
             }
           } catch (e) {}
         }
@@ -468,7 +457,7 @@ export default {
                const scamEmbed = new EmbedBuilder()
                  .setColor('#ff0000') // Pure red
                  .setDescription(`<a:emoji_35:1533024049926639699> <@${message.author.id}>, your image was flagged as a scam and removed.`);
-               await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
+               await message.channel.send(scamEmbed).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
                
                // 2. Security Channel Log
                const logEmbed = new EmbedBuilder()
@@ -499,7 +488,7 @@ export default {
                      .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                      .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
                      .setFooter({ text: 'Athena Prime Killer System' });
-                   await owner.send({ embeds: [dmEmbed] }).catch(() => null);
+                   await owner.send(dmEmbed).catch(() => null);
                  }
                } catch (e) {
                  // Ignore if owner can't be DMed
@@ -909,7 +898,7 @@ export default {
         // DM the owner
         const ownerUser = await message.client.users.fetch(ownerId).catch(() => null);
         if (ownerUser) {
-          const dmEmbed = embed.info(
+          const dmEmbed = cv2.info(
             'You were tagged!',
             null,
             [
@@ -919,7 +908,7 @@ export default {
               { name: 'Message Link', value: `[Jump to Message](https://discord.com/channels/${guildId}/${message.channel.id}/${message.id})` }
             ]
           );
-          await ownerUser.send({ embeds: [dmEmbed] }).catch(() => null);
+          await ownerUser.send(dmEmbed).catch(() => null);
         }
       } catch (err) {
         console.error('[Owner Mention]', err);
@@ -984,7 +973,7 @@ export default {
                              .setColor(0xFF0000)
                              .setTitle('Timeout Applied')
                              .setDescription(`You have been timed out in **${message.guild.name}** for 5 minutes.\n\n**Reason:** Mass Mention Spam Tagging (${targetName})`);
-                         await message.member.send({ embeds: [dmEmbed] }).catch(() => null);
+                         await message.member.send(dmEmbed).catch(() => null);
 
                          const warnEmbed = cv2.danger(
                              'Timeout Applied',
@@ -1021,7 +1010,7 @@ export default {
         const maxWarnings = dbConfig.maxWarnings || 3;
         const warns = db.addWarning(guildId, userId, message.client.user.id, `Automated AutoMod: Unauthorized Invite Link`);
 
-        logToSecurityChannel(message.guild, embed.log(
+        logToSecurityChannel(message.guild, cv2.log(
           'Invite Link Filtered',
           `Deleted invite promotion from member.`,
           [
@@ -1039,11 +1028,11 @@ export default {
           
           db.clearWarnings(guildId, userId);
 
-          const criticalEmbed = embed.danger(
+          const criticalEmbed = cv2.danger(
             'Invite Quarantine Protocol',
             `**${message.author.tag}** has been automatically **quarantined** for exceeding maximum invite warning thresholds (${warns.length}/${maxWarnings}).\n\n${quarantineRes.message || ''}`
           );
-          await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
+          await message.channel.send(criticalEmbed).catch(() => null);
         } else {
           const warnPayload = {
               components: [{
@@ -1084,7 +1073,7 @@ export default {
           );
           await message.channel.send(warnEmbed).catch(() => null);
 
-          logToSecurityChannel(message.guild, embed.log(
+          logToSecurityChannel(message.guild, cv2.log(
             'Link Filtered',
             `Deleted message containing a URL from member.`,
             [
@@ -1124,7 +1113,7 @@ export default {
         }
         const safeMessage = highlightedMessage.length > 1000 ? highlightedMessage.substring(0, 1000) + '...' : highlightedMessage;
 
-        logToSecurityChannel(message.guild, embed.log(
+        logToSecurityChannel(message.guild, cv2.log(
           'Blacklisted Word Detected',
           `Purged content containing filtered phrase.\n\n**Original Message:**\n> ${safeMessage.replace(/\n/g, '\n> ')}`,
           [
@@ -1142,11 +1131,11 @@ export default {
           
           db.clearWarnings(guildId, userId);
 
-          const criticalEmbed = embed.danger(
+          const criticalEmbed = cv2.danger(
             'Profanity Quarantine Protocol',
             `**${message.author.tag}** has been automatically **quarantined** for exceeding maximum word filter warning thresholds (${warns.length}/${maxWarnings}).\n\n${quarantineRes.message || ''}`
           );
-          await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
+          await message.channel.send(criticalEmbed).catch(() => null);
         } else {
           const filterWarnPayload = {
               components: [{
@@ -1201,7 +1190,7 @@ export default {
             await message.delete().catch(() => null);
           }
 
-          logToSecurityChannel(message.guild, embed.log(
+          logToSecurityChannel(message.guild, cv2.log(
             'Spam Threat Detected',
             `User triggered rate-limits by exceeding message counts.`,
             [
@@ -1218,11 +1207,11 @@ export default {
             
             db.clearWarnings(guildId, userId);
 
-            const criticalEmbed = embed.danger(
+            const criticalEmbed = cv2.danger(
               'Raid Security Lock Triggered',
               `**${message.author.tag}** has been automatically **isolated and quarantined** for severe server spamming.\n\n${quarantineRes.message || ''}`
             );
-            await message.channel.send({ embeds: [criticalEmbed] }).catch(() => null);
+            await message.channel.send(criticalEmbed).catch(() => null);
           } else {
             const spamWarnEmbed = cv2.warn(
               '<:gun:1533859911631376496> Anti-Spam Warning',
@@ -1321,7 +1310,7 @@ export default {
             await enukeCmd.executePrefix(message, enukeArgs);
           } catch (error) {
             console.error('Error executing enuke:', error);
-            await message.reply({ embeds: [embed.danger('Enuke Error', 'An error occurred while launching the Enuke Manager.')] }).catch(() => null);
+            await message.reply(cv2.danger('Enuke Error', 'An error occurred while launching the Enuke Manager.')).catch(() => null);
           }
         }
       }
@@ -1492,17 +1481,17 @@ export default {
       const triggerUsed = usedPrefix === prefix ? prefix : `@${message.client.user.username} `;
       
       if (closest) {
-        const suggestEmbed = embed.warn(
+        const suggestEmbed = cv2.warn(
           'Unknown Command',
           `${message.author}  Command \`${triggerUsed}${commandName}\` not found.\n\n Did you mean: \`${prefix}${closest}\`?\n\nUse \`${prefix}help\` for all commands.`
         );
-        return message.reply({ embeds: [suggestEmbed] }).catch(() => null);
+        return message.reply(suggestEmbed).catch(() => null);
       } else {
-        const notFoundEmbed = embed.warn(
+        const notFoundEmbed = cv2.warn(
           'Unknown Command',
           `${message.author}  Command \`${triggerUsed}${commandName}\` does not exist.\n\nUse \`${prefix}help\` for all available commands.`
         );
-        return message.reply({ embeds: [notFoundEmbed] }).catch(() => null);
+        return message.reply(notFoundEmbed).catch(() => null);
       }
     }
 
@@ -1515,7 +1504,7 @@ export default {
       if (!isBypass) {
         const hasPerms = cmd.permissions.every(perm => message.member.permissions.has(perm));
         if (!hasPerms) {
-          return message.reply({ embeds: [embed.danger('Access Denied', 'ï¸ You do not possess the required permissions to execute this command.')] });
+          return message.reply(cv2.danger('Access Denied', 'ï¸ You do not possess the required permissions to execute this command.'));
         }
       }
     }
@@ -1535,8 +1524,8 @@ export default {
 
     } catch (error) {
       console.error(error);
-      const errEmbed = embed.danger('Execution Error', `An unexpected error occurred while executing this command.\n\n\`\`\`js\n${error.message}\n\`\`\``);
-      await message.reply({ embeds: [errEmbed] }).catch(() => null);
+      const errEmbed = cv2.danger('Execution Error', `An unexpected error occurred while executing this command.\n\n\`\`\`js\n${error.message}\n\`\`\``);
+      await message.reply(errEmbed).catch(() => null);
     }
   }
 };
