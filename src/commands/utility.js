@@ -235,7 +235,8 @@ export const commands = [
       ];
 
       await sent.delete().catch(() => null);
-        await message.reply({ components: [{ type: 17, components: comps }], files: [attachment], flags: 16384 });
+        await message.reply({ components: [{ type: 17, components: comps }], flags: 16384 });
+        await message.channel.send({ files: [attachment] });
     },
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
@@ -269,7 +270,8 @@ export const commands = [
       ];
 
       await interaction.deleteReply().catch(() => null);
-        await interaction.followUp({ components: [{ type: 17, components: comps }], files: [attachment], flags: 16384 });
+        await interaction.followUp({ components: [{ type: 17, components: comps }], flags: 16384 });
+        await interaction.followUp({ files: [attachment] });
     }
   },
 
