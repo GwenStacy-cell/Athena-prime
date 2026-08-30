@@ -1,6 +1,6 @@
 import db from '../database.js';
 import { logServerEvent } from '../utils/serverLogger.js';
-import { AuditLogEvent, MessageFlags } from 'discord.js';
+import { AuditLogEvent } from 'discord.js';
 
 export default {
   name: 'messageDelete',
@@ -94,11 +94,11 @@ export default {
       components: [
         { type: 17, components: [{ type: 10, content: textBody }] }
       ],
-      flags: MessageFlags.IsComponentsV2
+      flags: 32768
     };
 
     if (imageUrl) {
-      payload.components.push({ type: 12, items: [{ media: { url: imageUrl } }] });
+      payload.components[0].components.push({ type: 12, items: [{ media: { url: imageUrl } }] });
     }
 
     logServerEvent(message.guild, 'msgDeletes', payload);
