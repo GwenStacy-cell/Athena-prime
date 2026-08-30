@@ -1050,10 +1050,11 @@ export default {
                 type: 17,
                 components: [{
                   type: 9,
-                  components: [{
-                    type: 10,
-                    content: `**Warned Sending Invites |** <:dark4luvontop:1533860081916182721>\n> Reason: . ${message.author} , **Posted Discord Invite**\n> \u2800\u2800\u2800\u2800╰› has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`
-                  }],
+                    components: [
+                      { type: 10, content: `-# **Warned Sending Invites |** <:cross_red:1533860128015519895>` },
+                      { type: 10, content: `-# Reason: . ${message.author} , **Posted Discord Invite**` },
+                      { type: 10, content: `-# \u21B3 has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,` }
+                    ],
                   accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
                 }]
               }],
@@ -1153,10 +1154,11 @@ export default {
                 type: 17,
                 components: [{
                   type: 9,
-                  components: [{
-                    type: 10,
-                    content: `**Word Filter Triggered |** <:dark4luvontop:1533860081916182721>\n> Reason: . ${message.author} , **Posted Blacklisted Word**\n> \u2800\u2800\u2800\u2800╰› has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`
-                  }],
+                    components: [
+                      { type: 10, content: `-# **Word Filter Triggered |** <:cross_red:1533860128015519895>` },
+                      { type: 10, content: `-# Reason: . ${message.author} , **Posted Blacklisted Word**` },
+                      { type: 10, content: `-# \u21B3 has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,` }
+                    ],
                   accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
                 }]
               }],
