@@ -1647,29 +1647,33 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
 
     // 7. DM target user
     const durationLabel = durationMs ? formatDuration(durationMs) : 'Until manually lifted';
-    const dmEmbed = cv2.danger(
-      'Server Isolation Notice',
-      ` You have been placed under **Quarantine** in **${guild.name}**.`,
-      [
-        { name: 'Reason', value: reason },
-        { name: 'Duration', value: durationLabel, inline: true },
-        { name: 'Assigned By', value: `${moderator.user?.tag || 'Automated System'}`, inline: true },
-        { name: 'Instructions', value: `Your access to the rest of the server has been restricted. Please navigate to <#${quarantineChannel.id}> to resolve this matter.` }
-      ]
-    );
+    const dmEmbed = {
+      components: [{
+        type: 9,
+        components: [{
+          type: 10,
+          content: `-# **Server Isolation Notice |** <:ticks:1533860039213842565>\n> -# Hello ${targetMember.user.username} , **You have been Quarantined in ${guild.name}**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Your access has been restricted. Please navigate to <#${quarantineChannel.id}> to resolve this matter.\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Reason:** ${reason}\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Duration:** ${durationLabel}`
+        }],
+        accessory: { type: 11, media: { url: guild.iconURL({ dynamic: true }) || undefined } }
+      }],
+      flags: MessageFlags.IsComponentsV2
+    };
     await targetMember.send(dmEmbed).catch(() => null);
 
     // 7. Ping target in quarantine channel and post welcome alert
-    const welcomeEmbed = cv2.danger(
-      'You Have Been Quarantined',
-      `Hello ${targetMember}. You have been isolated in this channel due to security policies or staff intervention.`,
-      [
-        { name: 'Target User', value: `${targetMember.user.tag}`, inline: true },
-        { name: 'Reason', value: reason },
-        { name: 'Next Steps', value: 'Please wait patiently for a Administrator or Moderator to review your case. Any further spamming or rule violations will result in a permanent ban.' }
-      ]
-    );
-    await quarantineChannel.send(Object.assign({ content: `${targetMember}` }, welcomeEmbed)).catch(() => null);
+    const welcomeEmbed = {
+      content: `${targetMember}`,
+      components: [{
+        type: 9,
+        components: [{
+          type: 10,
+          content: `-# **You Have Been Quarantined |** <:ticks:1533860039213842565>\n> -# Reason: . ${targetMember} , **Security Isolation Active**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Please wait patiently for an Administrator or Moderator to review your case. Any further spamming or rule violations will result in a permanent ban.\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Reason:** ${reason}`
+        }],
+        accessory: { type: 11, media: { url: targetMember.user.displayAvatarURL({ dynamic: true }) } }
+      }],
+      flags: MessageFlags.IsComponentsV2
+    };
+    await quarantineChannel.send(welcomeEmbed).catch(() => null);
 
     // 8. Log the event to logs channel
     logToSecurityChannel(guild, cv2.log(

@@ -1024,11 +1024,18 @@ export default {
           
           db.clearWarnings(guildId, userId);
 
-          const criticalEmbed = cv2.danger(
-            'Invite Quarantine Protocol',
-            `**${message.author.tag}** has been automatically **quarantined** for exceeding maximum invite warning thresholds (${warns.length}/${maxWarnings}).\n\n${quarantineRes.message || ''}`
-          );
-          await message.channel.send(criticalEmbed).catch(() => null);
+          const criticalEmbed = {
+              components: [{
+                type: 9,
+                components: [{
+                  type: 10,
+                  content: `-# **Invite Quarantine Protocol |** <:ticks:1533860039213842565>\n> -# Reason: . ${message.author} , **Exceeded Invite Warnings**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been automatically **quarantined** for exceeding maximum thresholds (${warns.length}/${maxWarnings}).`
+                }],
+                accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
+              }],
+              flags: MessageFlags.IsComponentsV2
+            };
+            await message.channel.send(criticalEmbed).catch(() => null);
         } else {
           const warnPayload = {
               components: [{
@@ -1127,11 +1134,18 @@ export default {
           
           db.clearWarnings(guildId, userId);
 
-          const criticalEmbed = cv2.danger(
-            'Profanity Quarantine Protocol',
-            `**${message.author.tag}** has been automatically **quarantined** for exceeding maximum word filter warning thresholds (${warns.length}/${maxWarnings}).\n\n${quarantineRes.message || ''}`
-          );
-          await message.channel.send(criticalEmbed).catch(() => null);
+          const criticalEmbed = {
+              components: [{
+                type: 9,
+                components: [{
+                  type: 10,
+                  content: `-# **Profanity Quarantine Protocol |** <:ticks:1533860039213842565>\n> -# Reason: . ${message.author} , **Exceeded Word Filter Warnings**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been automatically **quarantined** for exceeding maximum thresholds (${warns.length}/${maxWarnings}).`
+                }],
+                accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
+              }],
+              flags: MessageFlags.IsComponentsV2
+            };
+            await message.channel.send(criticalEmbed).catch(() => null);
         } else {
           const filterWarnPayload = {
               components: [{
