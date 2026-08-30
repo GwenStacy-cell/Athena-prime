@@ -231,12 +231,12 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> [${message.author.username}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }
+        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> [${message.author.username}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+        { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
       ];
 
       await sent.delete().catch(() => null);
-        await message.reply({ components: [{ type: 17, components: comps }], flags: MessageFlags.IsComponentsV2 });
-        await message.channel.send({ files: [attachment] });
+        await message.reply({ components: [{ type: 17, components: comps }], files: [attachment], flags: MessageFlags.IsComponentsV2 });
     },
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
@@ -266,12 +266,12 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> [${interaction.user.username}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }
+        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> [${interaction.user.username}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+        { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
       ];
 
       await interaction.deleteReply().catch(() => null);
-        await interaction.followUp({ components: [{ type: 17, components: comps }], flags: MessageFlags.IsComponentsV2 });
-        await interaction.followUp({ files: [attachment] });
+        await interaction.followUp({ components: [{ type: 17, components: comps }], files: [attachment], flags: MessageFlags.IsComponentsV2 });
     }
   },
 
