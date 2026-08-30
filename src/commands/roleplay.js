@@ -59,8 +59,8 @@ export const commands = roleplayActions.map(action => ({
     }
 
     const description = target 
-      ? `**${message.author.username}** ${action.verb} **${target.username}**!` 
-      : `**${message.author.username}** ${action.selfVerb}!`;
+      ? `**${message.author.globalName || author.username}** ${action.verb} **${target.globalName || target.username}**!` 
+      : `**${message.author.globalName || author.username}** ${action.selfVerb}!`;
 
     const replyEmbed = cv2.info(null, description, [], message.guild.id).setImage(gifUrl);
     await message.reply({ embeds: [replyEmbed] });
@@ -74,8 +74,8 @@ export const commands = roleplayActions.map(action => ({
     }
 
     const description = target 
-      ? `**${interaction.user.username}** ${action.verb} **${target.username}**!` 
-      : `**${interaction.user.username}** ${action.selfVerb}!`;
+      ? `**${interaction.user.globalName || user.username}** ${action.verb} **${target.globalName || target.username}**!` 
+      : `**${interaction.user.globalName || user.username}** ${action.selfVerb}!`;
 
     const replyEmbed = cv2.info(null, description, [], interaction.guild.id).setImage(gifUrl);
     await interaction.reply({ embeds: [replyEmbed] });

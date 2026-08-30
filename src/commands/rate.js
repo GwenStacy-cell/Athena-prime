@@ -51,7 +51,7 @@ export async function createRateMessage(message, mediaUrl) {
   // Setup Base Embed
   const guildConfig = message.guild ? db.getGuildConfig(message.guild.id) : null;
   const rateEmbed = new EmbedBuilder()
-    .setTitle(`Rate ${message.author.username}'s Edit`)
+    .setTitle(`Rate ${message.author.globalName || author.username}'s Edit`)
     .setDescription(`<a:1z:1517089474369032253> **Current Rating**\n0.0/5 (0 votes)\n\n**User Ratings**\n_No ratings yet_`)
     .setColor(guildConfig?.accentColor || '#2b2d31');
 
@@ -74,7 +74,7 @@ export async function createRateMessage(message, mediaUrl) {
     
     db.createEditRating(sentMessage.id, {
       authorId: message.author.id,
-      authorName: message.author.username,
+      authorName: message.author.globalName || author.username,
       mediaUrl: mediaUrl
     });
 

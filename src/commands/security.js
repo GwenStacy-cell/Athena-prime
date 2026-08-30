@@ -3396,7 +3396,7 @@ const allMembers = guild.members.cache;
     cv2Components.push({ type: 14, divider: true });
     let content = `## **TRUSTED PERSONNEL**\n`;
     humansToShow.forEach(h => {
-      content += `-# - **@${h.user.username}** [\`${h.id}\`]\n`;
+      content += `-# - **@${h.user.globalName || user.username}** [\`${h.id}\`]\n`;
     });
     if (trustedHumans.length > endIdx) content += `-# *...and ${trustedHumans.length - endIdx} more.*\n`;
     cv2Components.push({ type: 10, content: content.trim() });
@@ -3407,7 +3407,7 @@ const allMembers = guild.members.cache;
     cv2Components.push({ type: 14, divider: true });
     let content = `## **WHITELISTED BOTS**\n`;
     whitelistedBotsToShow.forEach(b => {
-      content += `-# - **@${b.user.username}** [\`${b.id}\`]\n`;
+      content += `-# - **@${b.user.globalName || user.username}** [\`${b.id}\`]\n`;
     });
     if (whitelistedBots.length > endIdx) content += `-# *...and ${whitelistedBots.length - endIdx} more.*\n`;
     cv2Components.push({ type: 10, content: content.trim() });
@@ -3418,7 +3418,7 @@ const allMembers = guild.members.cache;
     cv2Components.push({ type: 14, divider: true });
     let content = `## **HIGH-RISK PERSONNEL**\n`;
     highRiskHumansToShow.forEach(h => {
-      content += `-# - **@${h.member.user.username}** [\`${h.member.id}\`] - ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
+      content += `-# - **@${h.member.user.globalName || user.username}** [\`${h.member.id}\`] - ${h.roles.map(r => `<@&${r.id}>`).join(', ')}\n`;
     });
     if (highRiskHumans.length > endIdx) content += `-# *...and ${highRiskHumans.length - endIdx} more.*\n`;
     cv2Components.push({ type: 10, content: content.trim() });
@@ -3430,7 +3430,7 @@ const allMembers = guild.members.cache;
     let content = `## **UNAUTHORIZED BOTS**\n`;
     unauthorizedBotsToShow.forEach(b => {
       const badRoles = getDangerousRoles(b);
-      content += `-# - **@${b.user.username}** [\`${b.id}\`] ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
+      content += `-# - **@${b.user.globalName || user.username}** [\`${b.id}\`] ${badRoles.size > 0 ? `(${badRoles.map(r => `<@&${r.id}>`).join(', ')})` : ''}\n`;
     });
     if (unauthorizedBots.length > endIdx) content += `-# *...and ${unauthorizedBots.length - endIdx} more.*\n`;
     cv2Components.push({ type: 10, content: content.trim() });
@@ -3470,7 +3470,7 @@ const allMembers = guild.members.cache;
 
   if (unauthorizedBots.length > 0) {
     const options = unauthorizedBots.map(b => ({
-      label: b.user.username.substring(0, 100),
+      label: b.user.globalName || user.username.substring(0, 100),
       description: b.id,
       value: b.id
     })).slice(0, 25);
