@@ -38,6 +38,13 @@ if (!message.guild) return;
     let deletedBy = 'Unknown';
     let deletionReason = '';
 
+    const formatUser = (id) => {
+      const mem = message.guild.members.cache.get(id);
+      const u = message.client.users.cache.get(id);
+      const name = mem?.displayName || u?.globalName || u?.username || 'Unknown';
+      return `[${name}](https://discord.com/users/${id})`;
+    };
+
     if (!message.author) {
       deletedBy = 'Unknown (System or Webhook)';
     } else {
@@ -50,27 +57,26 @@ if (!message.guild) return;
           const deleteLog = auditLogs.entries.first();
           if (deleteLog) {
             const { executor, target, createdTimestamp, extra, reason } = deleteLog;
-            // Check if the log is recent (within last 5 seconds) and matches the target and channel
             if (target && target.id === message.author.id && extra.channel.id === message.channel.id && createdTimestamp > (Date.now() - 5000)) {
               if (executor.id === message.client.user.id) {
-                deletedBy = `<@${executor.id}> (Auto-Moderation / Blacklist)`;
+                deletedBy = `${formatUser(executor.id)} (Auto-Moderation / Blacklist)`;
               } else if (executor.bot) {
-                deletedBy = `<@${executor.id}> (Bot)`;
+                deletedBy = `${formatUser(executor.id)} (Bot)`;
               } else {
-                deletedBy = `<@${executor.id}>`;
+                deletedBy = `${formatUser(executor.id)}`;
               }
               if (reason) deletionReason = `\n-# **Reason:** ${reason}`;
             } else {
-              deletedBy = `<@${message.author.id}> (Self-Deleted)`;
+              deletedBy = `${formatUser(message.author.id)} (Self-Deleted)`;
             }
           } else {
-            deletedBy = `<@${message.author.id}> (Self-Deleted)`;
+            deletedBy = `${formatUser(message.author.id)} (Self-Deleted)`;
           }
         } else {
-          deletedBy = `<@${message.author.id}> (Self-Deleted / Missing Audit Perms)`;
+          deletedBy = `${formatUser(message.author.id)} (Self-Deleted / Missing Audit Perms)`;
         }
       } catch (e) {
-        deletedBy = `<@${message.author.id}> (Self-Deleted / Unknown)`;
+        deletedBy = `${formatUser(message.author.id)} (Self-Deleted / Unknown)`;
       }
     }
 
@@ -82,7 +88,7 @@ if (!message.guild) return;
     const isGhostPing = hasUserMentions || hasRoleMentions || hasEveryone;
 
     const title = isGhostPing ? '<a:st_Ghost:1543537892717105212> **GHOST PING DETECTED**' : '**Message Sniped**';
-    const authorMention = message.author ? `<@${message.author.id}>` : 'System';
+    const authorMention = message.author ? formatUser(message.author.id) : 'System';
     
     let innerComps = [];
     
@@ -93,13 +99,12 @@ if (!message.guild) return;
     // Info
     innerComps.push({ type: 10, content: `-# **Author:** ${authorMention}` });
     innerComps.push({ type: 10, content: `-# **Deleted By:** ${deletedBy}${deletionReason}` });
-    innerComps.push({ type: 10, content: `-# **Channel:** <#${message.channel.id}>` });
+    innerComps.push({ type: 10, content: `-# **Channel:** [\#${message.channel.name}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` });
     
     innerComps.push({ type: 14, divider: true });
     
     // Content
     innerComps.push({ type: 10, content: `-# **Message Content:**` });
-    // If content has newlines, split them and prefix each with -#
     const contentLines = content.split('\n');
     for (const line of contentLines) {
       innerComps.push({ type: 10, content: `-# ${line}` });
@@ -107,8 +112,8 @@ if (!message.guild) return;
 
     if (isGhostPing) {
       let pinged = [];
-      if (hasUserMentions) pinged.push(...message.mentions.users.filter(u => u.id !== authorId && !u.bot).map(u => `<@${u.id}>`));
-      if (hasRoleMentions) pinged.push(...message.mentions.roles.map(r => `<@&${r.id}>`));
+      if (hasUserMentions) pinged.push(...message.mentions.users.filter(u => u.id !== authorId && !u.bot).map(u => formatUser(u.id)));
+      if (hasRoleMentions) pinged.push(...message.mentions.roles.map(r => `@${r.name}`));
       if (hasEveryone) pinged.push('@everyone / @here');
       
       innerComps.push({ type: 14, divider: true });
@@ -118,7 +123,7 @@ if (!message.guild) return;
 
     // Footer
     innerComps.push({ type: 14, divider: true });
-    innerComps.push({ type: 10, content: `-# **Athena Bulletproof Security !!!**` });
+    innerComps.push({ type: 10, content: `-# **Athena Diagnostic Logs**` });
 
     let payload = {
       components: [
