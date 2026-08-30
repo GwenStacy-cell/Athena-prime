@@ -1245,7 +1245,8 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     logComps.push({ type: 14, divider: true });
     logComps.push({ type: 10, content: `-# **Action:** Bulk Delete (Purge)` });
     logComps.push({ type: 10, content: `-# **Executed By:** [${moderator.displayName || moderator.user?.username || 'Moderator'}](https://discord.com/users/${moderator.id || moderator})` });
-    logComps.push({ type: 10, content: `-# **Channel:** [${channel.name}](https://discord.com/channels/${guild.id}/${channel.id})` });
+    let safeChannel = channel.name.replace(/[\[\]\|\*~_]/g, '').trim();
+    logComps.push({ type: 10, content: `-# **Channel:** [\# ${safeChannel}](https://discord.com/channels/${guild.id}/${channel.id})` });
     logComps.push({ type: 10, content: `-# **Messages Purged:** ${actualAmount}` });
     
     if (triggerMessage) {
