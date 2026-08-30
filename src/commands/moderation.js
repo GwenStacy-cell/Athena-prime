@@ -1208,16 +1208,25 @@ async function handleDeleteRole(guild, moderator, role) {
 
 async function handlePurge(guild, channel, moderator, amount, triggerMessage = null) {
   try {
-    // Delete the trigger message first if it exists (prefix command)
-    if (triggerMessage) {
-      await triggerMessage.delete().catch(() => null);
-    }
+    if (!guild.client.ignoredDeletes) guild.client.ignoredDeletes = new Set();
 
-    const deleted = await channel.bulkDelete(amount, true);
+    let fetchAmount = amount;
+    if (triggerMessage) fetchAmount += 1;
 
-    const resEmbed = cv2.success('Messages Purged', `Successfully deleted **${deleted.size}** messages from this channel.`, [
+    const messages = await channel.messages.fetch({ limit: fetchAmount });
+    messages.forEach(m => guild.client.ignoredDeletes.add(m.id));
+
+    const deleted = await channel.bulkDelete(messages, true);
+    
+    setTimeout(() => {
+      messages.forEach(m => guild.client.ignoredDeletes.delete(m.id));
+    }, 15000);
+
+    const actualAmount = triggerMessage && deleted.has(triggerMessage.id) ? deleted.size - 1 : deleted.size;
+
+    const resEmbed = cv2.success('Messages Purged', `Successfully deleted **${actualAmount}** messages from this channel.`, [
       { name: 'Requested', value: `\`${amount}\``, inline: true },
-      { name: 'Deleted', value: `\`${deleted.size}\``, inline: true },
+      { name: 'Deleted', value: `\`${actualAmount}\``, inline: true },
       { name: 'Moderator', value: `${moderator}`, inline: true }
     ]);
 
@@ -1225,12 +1234,47 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
       'Messages Purged',
       `Moderator bulk-deleted messages.`,
       [
-        { name: 'Channel', value: `#${channel.name}`, inline: true },
-        { name: 'Count', value: `${deleted.size}`, inline: true },
-        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
-      ],
-      'warning'
+        { name: 'Channel', value: `<#${channel.id}>`, inline: true },
+        { name: 'Count', value: `${actualAmount}`, inline: true },
+        { name: 'Moderator', value: `${moderator.user ? moderator.user.tag : moderator}`, inline: true }
+      ]
     ));
+
+    let logComps = [];
+    logComps.push({ type: 10, content: `-# 🧹 **ADVANCED PURGE LOG**` });
+    logComps.push({ type: 14, divider: true });
+    logComps.push({ type: 10, content: `-# **Action:** Bulk Delete (Purge)` });
+    logComps.push({ type: 10, content: `-# **Executed By:** <@${moderator.id || moderator}>` });
+    logComps.push({ type: 10, content: `-# **Channel:** <#${channel.id}>` });
+    logComps.push({ type: 10, content: `-# **Messages Purged:** ${actualAmount}` });
+    
+    if (triggerMessage) {
+      logComps.push({ type: 10, content: `-# **Trigger Command:** \`${triggerMessage.content}\`` });
+    }
+    
+    logComps.push({ type: 14, divider: true });
+    
+    let userCounts = {};
+    deleted.forEach(m => {
+      if (m.id === triggerMessage?.id) return;
+      const id = m.author ? m.author.id : 'Unknown';
+      userCounts[id] = (userCounts[id] || 0) + 1;
+    });
+    
+    let summaryStr = Object.entries(userCounts).map(([id, count]) => `- <@${id}>: ${count} messages`).join('\n-# ');
+    if (summaryStr) {
+      logComps.push({ type: 10, content: `-# **Affected Users:**\n-# ${summaryStr}` });
+    }
+
+    logComps.push({ type: 14, divider: true });
+    logComps.push({ type: 10, content: `-# **Athena Advanced Log Diagnostics ⏱️**` });
+
+    let payload = {
+      components: [{ type: 17, components: logComps }],
+      flags: 32768
+    };
+
+    logServerEvent(guild, 'msgDeletes', payload);
 
     return resEmbed;
   } catch (error) {
@@ -1238,6 +1282,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     return cv2.danger('Purge Failed', 'Failed to delete messages. Messages older than 14 days cannot be bulk deleted.');
   }
 }
+
 
 async function handleSlowmode(guild, channel, moderator, seconds) {
   try {
