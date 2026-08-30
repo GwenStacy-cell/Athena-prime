@@ -920,6 +920,9 @@ async function handleSecurityInteractions(interaction, guild) {
       db.updateGuildConfig(guild.id, { antiSpamMentionBypassRoles: roleIds });
       updated = true;
     }
+    else if (customId === 'al_save') {
+      return interaction.message.delete().catch(() => null);
+    }
 
     if (updated) {
       try {
