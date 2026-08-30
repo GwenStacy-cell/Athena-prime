@@ -3507,8 +3507,8 @@ export async function getAntilinkModulePanel(guild) {
   const globalInvOn = config.allowInvitesGlobally;
   const spamMentionOn = config.antiSpamMentionEnabled;
 
-  const linkRole = config.linkBypassRole ? `<@&${config.linkBypassRole}>` : 'None';
-  const inviteRole = config.inviteBypassRole ? `<@&${config.inviteBypassRole}>` : 'None';
+  const linkRole = (config.linkBypassRoles && config.linkBypassRoles.length > 0) ? config.linkBypassRoles.map(r => `<@&${r}>`).join(', ') : 'None';
+  const inviteRole = (config.inviteBypassRoles && config.inviteBypassRoles.length > 0) ? config.inviteBypassRoles.map(r => `<@&${r}>`).join(', ') : 'None';
   const inviteChannel = config.inviteAllowedChannel ? `<#${config.inviteAllowedChannel}>` : 'None';
   const spamMentionRoles = config.antiSpamMentionBypassRoles && config.antiSpamMentionBypassRoles.length > 0 
     ? config.antiSpamMentionBypassRoles.map(id => `<@&${id}>`).join(', ') 
@@ -3597,13 +3597,17 @@ export async function getAntilinkModulePanel(guild) {
   const row3 = new ActionRowBuilder().addComponents(
     new RoleSelectMenuBuilder()
       .setCustomId('al_select_link_role')
-      .setPlaceholder('Select Link Bypass Role...')
+      .setPlaceholder('Select Link Bypass Roles...')
+      .setMinValues(0)
+      .setMaxValues(10)
   );
 
   const row4 = new ActionRowBuilder().addComponents(
     new RoleSelectMenuBuilder()
       .setCustomId('al_select_invite_role')
-      .setPlaceholder('Select Invite Bypass Role...')
+      .setPlaceholder('Select Invite Bypass Roles...')
+      .setMinValues(0)
+      .setMaxValues(10)
   );
 
   const row5 = new ActionRowBuilder().addComponents(

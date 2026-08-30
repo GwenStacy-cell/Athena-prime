@@ -1009,7 +1009,7 @@ export default {
     const antiInviteActive = dbConfig.antiInviteEnabled !== undefined ? dbConfig.antiInviteEnabled : config.antiInvite.enabled;
     const isGlobalInviteAllowed = dbConfig.allowInvitesGlobally === true;
     const isInviteAllowedChannel = dbConfig.inviteAllowedChannel === message.channel.id;
-    const hasInviteBypassRole = dbConfig.inviteBypassRole && message.member.roles.cache.has(dbConfig.inviteBypassRole);
+    const hasInviteBypassRole = dbConfig.inviteBypassRoles && dbConfig.inviteBypassRoles.length > 0 && message.member.roles.cache.hasAny(...dbConfig.inviteBypassRoles);
 
     if (!isGlobalInviteAllowed && !isInviteAllowedChannel && !hasInviteBypassRole && !hasAntiInviteImmunity && antiInviteActive && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       const inviteRegex = /(discord\.(gg|io|me|li)\/.+|discord(app)?\.com\/invite\/.+)/gi;
@@ -1069,7 +1069,7 @@ export default {
     // ==========================================
     // 1.5. AUTO-MODERATION: ANTI-LINK
     // ==========================================
-    const hasLinkBypassRole = dbConfig.linkBypassRole && message.member.roles.cache.has(dbConfig.linkBypassRole);
+    const hasLinkBypassRole = dbConfig.linkBypassRoles && dbConfig.linkBypassRoles.length > 0 && message.member.roles.cache.hasAny(...dbConfig.linkBypassRoles);
 
     if (!hasLinkBypassRole && !hasAntiLinkImmunity && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
       if (dbConfig.allowAllLinks !== true) {

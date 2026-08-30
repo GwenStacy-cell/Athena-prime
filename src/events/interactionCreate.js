@@ -908,13 +908,11 @@ async function handleSecurityInteractions(interaction, guild) {
       updated = true;
     }
     else if (customId === 'al_select_link_role') {
-      const roleId = interaction.values[0];
-      db.updateGuildConfig(guild.id, { linkBypassRole: roleId });
+      db.updateGuildConfig(guild.id, { linkBypassRoles: interaction.values });
       updated = true;
     }
     else if (customId === 'al_select_invite_role') {
-      const roleId = interaction.values[0];
-      db.updateGuildConfig(guild.id, { inviteBypassRole: roleId });
+      db.updateGuildConfig(guild.id, { inviteBypassRoles: interaction.values });
       updated = true;
     }
     else if (customId === 'al_select_spam_mention_role') {
