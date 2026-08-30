@@ -318,7 +318,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
     const timestampStr = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' (IST)';
 
     const nukeAnnouncement = cv2.danger(
-      ' SERVER NUKED',
+      ' SERVER NUKED 💥',
       `This server has been nuked by Prince, Prince was Here!!!`,
       [
         { name: 'Channel Name', value: channelName, inline: false },
@@ -349,7 +349,7 @@ async function executeNuke(guild, executor, mode, channelCount, channelName) {
     const timestampStr = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) + ' (IST)';
 
     const nukeAnnouncement = cv2.danger(
-      ' SERVER NUKED',
+      ' SERVER NUKED 💥',
       `This server has been nuked by Prince, Prince was Here !!!`,
       [
         { name: 'Channel Name', value: channelName, inline: false },
