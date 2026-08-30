@@ -231,8 +231,7 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> ${message.author} ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
-        { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
+        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> ${message.author} ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }
       ];
 
       await sent.edit({ content: '', components: [{ type: 17, components: comps }], files: [attachment], embeds: [], flags: 16384 });
@@ -265,8 +264,7 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> ${interaction.user} ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
-        { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
+        { type: 10, content: `-# **| <:dark4luvontop:1533860081916182721> ${interaction.user} ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }
       ];
 
       await interaction.editReply({ content: '', components: [{ type: 17, components: comps }], files: [attachment], embeds: [], flags: 16384 });
