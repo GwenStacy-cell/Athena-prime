@@ -1241,11 +1241,11 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     ));
 
     let logComps = [];
-    logComps.push({ type: 10, content: `-# 🧹 **ADVANCED PURGE LOG**` });
+    logComps.push({ type: 10, content: `-# **Message Sniped via Purge Command**` });
     logComps.push({ type: 14, divider: true });
     logComps.push({ type: 10, content: `-# **Action:** Bulk Delete (Purge)` });
-    logComps.push({ type: 10, content: `-# **Executed By:** <@${moderator.id || moderator}>` });
-    logComps.push({ type: 10, content: `-# **Channel:** <#${channel.id}>` });
+    logComps.push({ type: 10, content: `-# **Executed By:** [${moderator.displayName || moderator.user?.username || 'Moderator'}](https://discord.com/users/${moderator.id || moderator})` });
+    logComps.push({ type: 10, content: `-# **Channel:** [${channel.name}](https://discord.com/channels/${guild.id}/${channel.id})` });
     logComps.push({ type: 10, content: `-# **Messages Purged:** ${actualAmount}` });
     
     if (triggerMessage) {
@@ -1255,19 +1255,29 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     logComps.push({ type: 14, divider: true });
     
     let userCounts = {};
+    let userNames = {};
     deleted.forEach(m => {
       if (m.id === triggerMessage?.id) return;
       const id = m.author ? m.author.id : 'Unknown';
       userCounts[id] = (userCounts[id] || 0) + 1;
+      if (m.author && id !== 'Unknown') {
+        const mem = guild.members.cache.get(id);
+        userNames[id] = mem?.displayName || m.author.globalName || m.author.username;
+      }
     });
     
-    let summaryStr = Object.entries(userCounts).map(([id, count]) => `- <@${id}>: ${count} messages`).join('\n-# ');
+    let summaryStr = Object.entries(userCounts).map(([id, count]) => {
+      if (id === 'Unknown') return `- Unknown: ${count} messages`;
+      return `- [${userNames[id]}](https://discord.com/users/${id}): ${count} messages`;
+    }).join('\n-# ');
+
     if (summaryStr) {
       logComps.push({ type: 10, content: `-# **Affected Users:**\n-# ${summaryStr}` });
     }
 
     logComps.push({ type: 14, divider: true });
-    logComps.push({ type: 10, content: `-# **Athena Advanced Log Diagnostics ⏱️**` });
+    logComps.push({ type: 10, content: `-# **Athena Advanced Server Diagnostics**` });
+
 
     let payload = {
       components: [{ type: 17, components: logComps }],
