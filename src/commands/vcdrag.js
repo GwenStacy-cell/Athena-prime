@@ -32,8 +32,8 @@ export const commands = [
       const target = message.mentions.members.first();
       if (!target) {
         return message.reply({
-          embeds: [cv2.warn('Command Error',
-            `${message.author} Please mention a valid member.\n\n**Usage:** \`!vcdrag <@user> [interval_seconds]\``)]
+          ...cv2.warn('Command Error',
+            `${message.author} Please mention a valid member.\n\n**Usage:** \`!vcdrag <@user> [interval_seconds]\``)
         });
       }
       const intervalSec = parseInt(args[1]) || 2;
@@ -66,8 +66,8 @@ export const commands = [
       const target = message.mentions.members.first();
       if (!target) {
         return message.reply({
-          embeds: [cv2.warn('Command Error',
-            `${message.author} Please mention the member whose drag session you want to stop.\n\n**Usage:** \`!vcdragstop <@user>\``)]
+          ...cv2.warn('Command Error',
+            `${message.author} Please mention the member whose drag session you want to stop.\n\n**Usage:** \`!vcdragstop <@user>\``)
         });
       }
       const result = handleVcDragStop(message.guild, message.member, target);

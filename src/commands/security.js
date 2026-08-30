@@ -136,7 +136,7 @@ export const commands = [
       }
       const reason = remaining.join(' ').trim() || 'No reason provided';
       const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
-      if (result.success) await message.reply(result);
+      if (result.success) await message.reply(result.embed || result);
       else await message.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
     },
     async executeSlash(interaction) {
@@ -149,7 +149,7 @@ export const commands = [
       if (!target) return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found.`));
 
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
-      if (result.success) await interaction.reply(result);
+      if (result.success) await interaction.reply(result.embed || result);
       else await interaction.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
     }
   },
@@ -176,7 +176,7 @@ export const commands = [
       }
       const reason = remaining.join(' ').trim() || 'No reason provided';
       const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
-      if (result.success) await message.reply(result);
+      if (result.success) await message.reply(result.embed || result);
       else await message.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
     },
     async executeSlash(interaction) {
@@ -187,7 +187,7 @@ export const commands = [
       const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!target) return interaction.reply(cv2.warn('Error', 'Member not found.'));
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
-      if (result.success) await interaction.reply(result);
+      if (result.success) await interaction.reply(result.embed || result);
       else await interaction.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
     }
   },
@@ -213,11 +213,11 @@ export const commands = [
       }
 
       const result = await executeUnquarantine(message.guild, target, message.member);
-      if (result.success) {
-        await message.reply(result);
-      } else {
-        await message.reply(cv2.danger('Unquarantine Failed', result.message));
-      }
+        if (result.success) {
+          await message.reply(result.embed);
+        } else {
+          await message.reply(cv2.danger('Unquarantine Failed', result.message));
+        }
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -228,11 +228,11 @@ export const commands = [
       }
 
       const result = await executeUnquarantine(interaction.guild, target, interaction.member);
-      if (result.success) {
-        await interaction.reply(result);
-      } else {
-        await interaction.reply(cv2.danger('Unquarantine Failed', result.message));
-      }
+        if (result.success) {
+          await interaction.reply(result.embed);
+        } else {
+          await interaction.reply(cv2.danger('Unquarantine Failed', result.message));
+        }
     }
   },
 
@@ -259,8 +259,8 @@ export const commands = [
       const action = args[0]?.toLowerCase() === 'end' ? 'end' : 'mode';
       let statusMsg = null;
       const updateProgress = async (embedData) => {
-        if (!statusMsg) statusMsg = await message.reply({ embeds: [embedData] }).catch(() => null);
-        else await statusMsg.edit({ embeds: [embedData] }).catch(() => null);
+        if (!statusMsg) statusMsg = await message.reply(embedData).catch(() => null);
+        else await statusMsg.edit(embedData).catch(() => null);
       };
       const result = await handleEmergency(message.guild, message.member, action, updateProgress);
       if (statusMsg) await statusMsg.edit(result).catch(()=>null);
@@ -271,7 +271,7 @@ export const commands = [
       await interaction.deferReply({ ephemeral: false }).catch(() => null);
       
       const updateProgress = async (embedData) => {
-        await interaction.editReply({ embeds: [embedData] }).catch(() => null);
+        await interaction.editReply(embedData).catch(() => null);
       };
       
       const result = await handleEmergency(interaction.guild, interaction.member, action, updateProgress);
@@ -287,8 +287,8 @@ export const commands = [
     async executePrefix(message, args) {
       let statusMsg = null;
       const updateProgress = async (embedData) => {
-        if (!statusMsg) statusMsg = await message.reply({ embeds: [embedData] }).catch(() => null);
-        else await statusMsg.edit({ embeds: [embedData] }).catch(() => null);
+        if (!statusMsg) statusMsg = await message.reply(embedData).catch(() => null);
+        else await statusMsg.edit(embedData).catch(() => null);
       };
       const result = await handleEmergency(message.guild, message.member, 'end', updateProgress);
       if (statusMsg) await statusMsg.edit(result).catch(()=>null);
@@ -298,7 +298,7 @@ export const commands = [
       await interaction.deferReply({ ephemeral: false }).catch(() => null);
       
       const updateProgress = async (embedData) => {
-        await interaction.editReply({ embeds: [embedData] }).catch(() => null);
+        await interaction.editReply(embedData).catch(() => null);
       };
       
       const result = await handleEmergency(interaction.guild, interaction.member, 'end', updateProgress);
