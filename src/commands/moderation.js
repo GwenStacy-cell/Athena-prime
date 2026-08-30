@@ -1276,7 +1276,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     }
 
     logComps.push({ type: 14, divider: true });
-    logComps.push({ type: 10, content: `-# **Athena Advanced Server Diagnostics**` });
+    logComps.push({ type: 10, content: `-# **Athena Diagnostic Logs**` });
 
 
     let payload = {
