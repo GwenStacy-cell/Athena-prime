@@ -1026,12 +1026,15 @@ export default {
 
           const criticalEmbed = {
               components: [{
-                type: 9,
+                type: 17,
+                components: [{
+                  type: 9,
                   components: [{
                   type: 10,
                   content: `-# **Invite Quarantine Protocol |** <:ticks:1533860039213842565>\n> -# Reason: . ${message.author} , **Exceeded Invite Warnings**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been automatically **quarantined** for exceeding maximum thresholds (${warns.length}/${maxWarnings}).`
                 }],
                 accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
+                  }]
                 }],
                 flags: MessageFlags.IsComponentsV2
             };
@@ -1039,12 +1042,15 @@ export default {
         } else {
           const warnPayload = {
               components: [{
-                type: 9,
-                    components: [{
+                type: 17,
+                components: [{
+                  type: 9,
+                  components: [{
                       type: 10,
                       content: `-# **Warned Sending Invites |** <:cross_red:1533860128015519895>\n> -# Reason: . ${message.author} , **Posted Discord Invite**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`
                     }],
                   accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
+                  }]
                 }],
                 flags: MessageFlags.IsComponentsV2
             };
@@ -1133,12 +1139,15 @@ export default {
 
           const criticalEmbed = {
               components: [{
-                type: 9,
+                type: 17,
+                components: [{
+                  type: 9,
                   components: [{
                   type: 10,
                   content: `-# **Profanity Quarantine Protocol |** <:ticks:1533860039213842565>\n> -# Reason: . ${message.author} , **Exceeded Word Filter Warnings**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been automatically **quarantined** for exceeding maximum thresholds (${warns.length}/${maxWarnings}).`
                 }],
                 accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
+                  }]
                 }],
                 flags: MessageFlags.IsComponentsV2
             };
@@ -1146,12 +1155,15 @@ export default {
         } else {
           const filterWarnPayload = {
               components: [{
-                type: 9,
-                    components: [{
+                type: 17,
+                components: [{
+                  type: 9,
+                  components: [{
                       type: 10,
                       content: `-# **Word Filter Triggered |** <:cross_red:1533860128015519895>\n> -# Reason: . ${message.author} , **Posted Blacklisted Word**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`
                     }],
                   accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
+                  }]
                 }],
                 flags: MessageFlags.IsComponentsV2
             };
