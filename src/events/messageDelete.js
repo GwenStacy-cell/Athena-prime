@@ -1,14 +1,13 @@
 import db from '../database.js';
-import embed from '../embed.js';
 import { logServerEvent } from '../utils/serverLogger.js';
-import { AuditLogEvent } from 'discord.js';
+import { AuditLogEvent, MessageFlags } from 'discord.js';
 
 export default {
   name: 'messageDelete',
   async execute(message) {
     if (!message.guild) return;
 
-    // Check if the deleted message was a reaction role menu, and if so, clean it up from the database
+    // Check if the deleted message was a reaction role menu
     const rrConfig = db.getReactionRoleMenu(message.id);
     if (rrConfig) {
       db.deleteReactionRoleMenu(message.id);
@@ -32,6 +31,7 @@ export default {
     });
 
     let deletedBy = 'Unknown';
+    let deletionReason = '';
 
     if (!message.author) {
       deletedBy = 'Unknown (System or Webhook)';
@@ -44,10 +44,17 @@ export default {
           });
           const deleteLog = auditLogs.entries.first();
           if (deleteLog) {
-            const { executor, target, createdTimestamp, extra } = deleteLog;
-            // Check if the log is recent (within last 5 seconds) and matches the target (author) and channel
+            const { executor, target, createdTimestamp, extra, reason } = deleteLog;
+            // Check if the log is recent (within last 5 seconds) and matches the target and channel
             if (target && target.id === message.author.id && extra.channel.id === message.channel.id && createdTimestamp > (Date.now() - 5000)) {
-              deletedBy = `<@${executor.id}> (Moderator)`;
+              if (executor.id === message.client.user.id) {
+                deletedBy = `<@${executor.id}> (Auto-Moderation / Blacklist)`;
+              } else if (executor.bot) {
+                deletedBy = `<@${executor.id}> (Bot)`;
+              } else {
+                deletedBy = `<@${executor.id}>`;
+              }
+              if (reason) deletionReason = `\n-# **Reason:** ${reason}`;
             } else {
               deletedBy = `<@${message.author.id}> (Self-Deleted)`;
             }
@@ -69,28 +76,31 @@ export default {
     const hasEveryone = message.mentions.everyone;
     const isGhostPing = hasUserMentions || hasRoleMentions || hasEveryone;
 
-    const title = isGhostPing ? '👻 __**GHOST PING DETECTED**__ 🚨' : '🗑️ __**Message Sniped**__';
-    const color = isGhostPing ? '#ff0000' : '#2b2d31'; // Red for Ghost Ping, Dark for normal
+    const title = isGhostPing ? '<a:st_Ghost:1543537892717105212> **GHOST PING DETECTED**' : '**Message Sniped**';
+    const authorMention = message.author ? `<@${message.author.id}>` : 'System';
+    
+    let textBody = `-# ${title}\n-# \n-# **Author:** ${authorMention}\n-# **Deleted By:** ${deletedBy}${deletionReason}\n-# **Channel:** <#${message.channel.id}>\n-# \n-# **Message Content:**\n-# ${content}`;
 
-    const delEmbed = embed.build({
-      description: `${title}\n\n> **Author:** ${message.author ? `<@${authorId}>` : 'System/Webhook'}\n> **Deleted By:** ${deletedBy}\n> **Channel:** ${message.channel}\n> \n> **Message Content:**\n> ${content}`,
-      color: color
-    });
-
-    if (imageUrl) {
-      delEmbed.setImage(imageUrl);
-    }
-
-    // Identify who was ghost pinged if applicable
     if (isGhostPing) {
       let pinged = [];
       if (hasUserMentions) pinged.push(...message.mentions.users.filter(u => u.id !== authorId && !u.bot).map(u => `<@${u.id}>`));
       if (hasRoleMentions) pinged.push(...message.mentions.roles.map(r => `<@&${r.id}>`));
       if (hasEveryone) pinged.push('@everyone / @here');
       
-      delEmbed.addFields({ name: '⚠️ Ghost Pinged:', value: pinged.join(', ').substring(0, 1024) });
+      textBody += `\n-# \n-# **Ghost Pinged:** \n-# ${pinged.join(', ').substring(0, 1024)}`;
     }
 
-    logServerEvent(message.guild, 'msgDeletes', delEmbed);
+    let payload = {
+      components: [
+        { type: 17, components: [{ type: 10, content: textBody }] }
+      ],
+      flags: MessageFlags.IsComponentsV2
+    };
+
+    if (imageUrl) {
+      payload.components.push({ type: 12, items: [{ media: { url: imageUrl } }] });
+    }
+
+    logServerEvent(message.guild, 'msgDeletes', payload);
   }
 };

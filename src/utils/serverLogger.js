@@ -35,7 +35,8 @@ export async function logServerEvent(guild, moduleName, embedData) {
     }
 
     // Send the log
-    await channel.send({ embeds: [embedData] }).catch(err => {
+    let payload = (embedData.components || embedData.content) ? embedData : { embeds: [embedData] };
+    await channel.send(payload).catch(err => {
       console.log(`[ServerLogger] Failed to send embed to ${targetChannelId}:`, err.message);
     });
   } catch (error) {
