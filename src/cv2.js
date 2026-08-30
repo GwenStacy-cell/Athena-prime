@@ -26,7 +26,7 @@ function styleLine(line, addBullet) {
 const SEP = { type: 14, divider: true };
 
 // Build a raw CV2 container JSON with separators
-function buildContainer(title, description, fields) {
+function buildContainer(title, description, fields, customFooter) {
   if (!fields) fields = [];
   var comps = [];
 
@@ -70,29 +70,29 @@ function buildContainer(title, description, fields) {
 
   // Bottom divider
   comps.push(SEP);
-  comps.push({ type: 10, content: '-# **Athena Bulletproof Security !!!**' });
+  comps.push({ type: 10, content: customFooter ? `-# **${customFooter}**` : '-# **Athena Bulletproof Security !!!**' });
 
   return { type: 17, components: comps };
 }
 
-function make(title, desc, fields, eph) {
+function make(title, desc, fields, eph, customFooter) {
   if (!fields) fields = [];
   if (!eph) eph = false;
   var flags = eph ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2;
-  return { components: [buildContainer(title, desc, fields)], flags: flags };
+  return { components: [buildContainer(title, desc, fields, customFooter)], flags: flags };
 }
 
 var _m = function(eph) {
   return {
-    success:  function(t,d,f) { return make(t,d,f,eph); },
-    warn:     function(t,d,f) { return make(t,d,f,eph); },
-    danger:   function(t,d,f) { return make(t,d,f,eph); },
-    error:    function(t,d,f) { return make(t,d,f,eph); },
-    info:     function(t,d,f) { return make(t,d,f,eph); },
-    raid:     function(t,d,f) { return make(t,d,f,eph); },
-    owner:    function(t,d,f) { return make(t,d,f,eph); },
-    security: function(t,d,f) { return make(t,d,f,eph); },
-    log:      function(t,d,f) { return make('Log: ' + t, d, f, eph); },
+    success:  function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    warn:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    danger:   function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    error:    function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    info:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    raid:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    owner:    function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    security: function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    log:      function(t,d,f,ft) { return make('Log: ' + t, d, f, eph, ft); },
   };
 };
 
