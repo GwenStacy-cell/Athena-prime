@@ -100,7 +100,7 @@ if (!message.guild) return;
     innerComps.push({ type: 10, content: `-# **Author:** ${authorMention}` });
     innerComps.push({ type: 10, content: `-# **Deleted By:** ${deletedBy}${deletionReason}` });
     let safeChannel = message.channel.name.replace(/[\x5B\x5D|*~_]/g, '').trim();
-    innerComps.push({ type: 10, content: `-# **Channel:** [# ${safeChannel}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` });
+    innerComps.push({ type: 10, content: `-# **Channel:** [${safeChannel}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` });
     
     innerComps.push({ type: 14, divider: true });
     
