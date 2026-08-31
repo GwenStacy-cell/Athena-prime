@@ -960,7 +960,7 @@ export default {
             const c = new ContainerBuilder();
             const section = new SectionBuilder()
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**Security Quarantine | <:ticks:1533860039213842565>**`))
-                .setAccessory(new ThumbnailBuilder().setURL(message.author.displayAvatarURL({ extension: 'png', size: 128 })));
+                .setThumbnailAccessory(new ThumbnailBuilder().setURL(message.author.displayAvatarURL({ extension: 'png', size: 128 })));
             c.addSectionComponents(section);
             const textContent = `Reason: . ${message.author} , **Maximum Warnings Exceeded**\n        ╰› has been automatically quarantined. ${qRes.message || ''}`;
             c.addTextDisplayComponents(new TextDisplayBuilder().setContent(textContent));
@@ -970,7 +970,7 @@ export default {
             const c = new ContainerBuilder();
             const section = new SectionBuilder()
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${headingStr} | <:ticks:1533860039213842565>**`))
-                .setAccessory(new ThumbnailBuilder().setURL(message.author.displayAvatarURL({ extension: 'png', size: 128 })));
+                .setThumbnailAccessory(new ThumbnailBuilder().setURL(message.author.displayAvatarURL({ extension: 'png', size: 128 })));
             c.addSectionComponents(section);
             const textContent = `Reason: . ${message.author} , ${actionStr}\n        ╰› has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`;
             c.addTextDisplayComponents(new TextDisplayBuilder().setContent(textContent));
