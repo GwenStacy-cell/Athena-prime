@@ -955,13 +955,22 @@ export default {
           if (warns.length >= maxWarnings) {
             const qRes = await executeQuarantine(message.guild, message.member, message.guild.members.me, `Automated: ${headingStr} limit reached`);
             db.clearWarnings(guildId, userId);
-            await message.channel.send(cv2.danger('Security Lock Triggered', `**${message.author.tag}** has been automatically quarantined.\n\n${qRes.message || ''}`)).catch(() => null);
+            
+            const { ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, MessageFlags } = await import('discord.js');
+            const c = new ContainerBuilder();
+            const section = new SectionBuilder()
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**Security Quarantine | <:ticks:1533860039213842565>**`))
+                .setAccessory(new ThumbnailBuilder().setURL(message.author.displayAvatarURL({ extension: 'png', size: 128 })));
+            c.addSectionComponents(section);
+            const textContent = `Reason: . ${message.author} , **Maximum Warnings Exceeded**\n        ╰› has been automatically quarantined. ${qRes.message || ''}`;
+            c.addTextDisplayComponents(new TextDisplayBuilder().setContent(textContent));
+            await message.channel.send({ components: [c], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
           } else {
             const { ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, MessageFlags } = await import('discord.js');
             const c = new ContainerBuilder();
             const section = new SectionBuilder()
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${headingStr} | <:ticks:1533860039213842565>**`))
-                .setAccessory(new ThumbnailBuilder().setMedia(message.author.displayAvatarURL({ extension: 'png', size: 128 })));
+                .setAccessory(new ThumbnailBuilder().setURL(message.author.displayAvatarURL({ extension: 'png', size: 128 })));
             c.addSectionComponents(section);
             const textContent = `Reason: . ${message.author} , ${actionStr}\n        ╰› has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`;
             c.addTextDisplayComponents(new TextDisplayBuilder().setContent(textContent));
