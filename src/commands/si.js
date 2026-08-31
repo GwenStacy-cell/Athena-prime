@@ -77,7 +77,7 @@ export const commands = [
 
         const c1 = buildContainer(
             'Server Information.',
-            `**Name :** \`${guild.name}\`\n**Server ID :** \`${guild.id}\`\n**Owner :** ${owner ? owner.user.toString() : 'Unknown'}\n**Created At :** <t:${Math.floor(guild.createdTimestamp / 1000)}:R>\n**Total Members :** ${guild.memberCount}`,
+            `**Name :** \`${guild.name}\`\n**Server ID :** \`${guild.id}\`\n**Owner :** ${owner ? `[${owner.displayName || owner.user.username}](https://discord.com/users/${owner.id})` : 'Unknown'}\n**Created At :** <t:${Math.floor(guild.createdTimestamp / 1000)}:R>\n**Total Members :** ${guild.memberCount}`,
             guild.iconURL({ dynamic: true, size: 256 })
         );
 
