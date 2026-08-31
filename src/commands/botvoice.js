@@ -2,6 +2,8 @@
 import { isBotOwnerSync } from '../utils/helpers.js';
 import cv2 from '../cv2.js';
 
+const voiceStateMemory = new Map();
+
 export const commands = [
   {
     name: 'botvoice',
@@ -16,7 +18,7 @@ export const commands = [
       const action = args[0]?.toLowerCase();
       const scope = args[1]?.toLowerCase() === 'all' ? 'all' : 'this';
 
-      if (!['mute', 'unmute', 'deafen', 'undeafen', 'music', 'idle', 'active'].includes(action)) {
+      if (!['mute', 'unmute', 'deafen', 'undeafen', 'music', 'idle', 'active', 'save', 'restore'].includes(action)) {
         return message.reply(cv2.info('Bot Voice Control', 
           `**Usage:** \`!botvoice <action> [all]\`\n\n` +
           `**Actions:**\n` +
@@ -27,8 +29,11 @@ export const commands = [
           `> • \`music\` - Unmuted & Deafened (Standard)\n` +
           `> • \`idle\` - Muted & Deafened (Quiet Mode)\n` +
           `> • \`active\` - Unmuted & Undeafened (Recording Mode)\n\n` +
+          `**Memory System (Global Remote):**\n` +
+          `> • \`save\` - Memorizes current mute/deaf states across ALL servers\n` +
+          `> • \`restore\` - Reverts all servers back to their saved states\n\n` +
           `**Scope:**\n` +
-          `> Add \`all\` at the end to apply to EVERY server where the bot is currently in a VC.`
+          `> Add \`all\` at the end of standard commands to apply globally (e.g. \`!botvoice active all\`).`
         ));
       }
 
@@ -42,6 +47,43 @@ export const commands = [
           return false;
         }
       };
+
+      if (action === 'save') {
+        let savedCount = 0;
+        for (const guild of message.client.guilds.cache.values()) {
+          const me = guild.members.me;
+          if (me?.voice?.channel) {
+            voiceStateMemory.set(guild.id, {
+              mute: me.voice.serverMute,
+              deaf: me.voice.serverDeaf
+            });
+            savedCount++;
+          }
+        }
+        return message.reply(cv2.success('Voice States Memorized', 
+          `Successfully saved the exact mute/deaf status of the bot across **${savedCount}** active servers!\n\n` +
+          `You can now safely use \`!botvoice active all\` to globally unmute everything. When you're done, use \`!botvoice restore\` to instantly revert every server back to its original state!`
+        ));
+      }
+
+      if (action === 'restore') {
+        if (voiceStateMemory.size === 0) {
+          return message.reply(cv2.warn('No Memory Found', 'There are no saved voice states in memory. Use `!botvoice save` first.'));
+        }
+        
+        const msg = await message.reply(cv2.log('Restoring States', 'Restoring original voice states globally...'));
+        let restoredCount = 0;
+        
+        for (const [guildId, state] of voiceStateMemory.entries()) {
+           const guild = message.client.guilds.cache.get(guildId);
+           if (guild) {
+             const success = await applyState(guild, state);
+             if (success) restoredCount++;
+           }
+        }
+        voiceStateMemory.clear();
+        return msg.edit(cv2.success('Voice States Restored', `Successfully reverted the bot back to its original mute/deafen status across **${restoredCount}** servers!`));
+      }
 
       const getChanges = (act) => {
         switch (act) {
