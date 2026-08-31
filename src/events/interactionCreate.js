@@ -957,7 +957,9 @@ async function handleSecurityInteractions(interaction, guild) {
         const updateData = { allowAllLinks: newVal };
         if (newVal) updateData.antiLinkEnabled = false;
         db.updateGuildConfig(guild.id, updateData);
-        updated = true;
+        const { getAdvancedConfigPanel } = await import('../commands/security.js');
+        const newPanel = await getAdvancedConfigPanel(guild);
+        return interaction.update(newPanel).catch(() => null);
       }
       else if (customId === 'am_tgl_selfbot') {
         const config = db.getGuildConfig(guildId);
@@ -973,13 +975,13 @@ async function handleSecurityInteractions(interaction, guild) {
         const updateData = { allowInvitesGlobally: newVal };
         if (newVal) updateData.antiInviteEnabled = false;
         db.updateGuildConfig(guild.id, updateData);
-        const { getAutoModPanel } = await import('../commands/security.js');
-        const newPanel = await getAutoModPanel(guild);
+        const { getAdvancedConfigPanel } = await import('../commands/security.js');
+        const newPanel = await getAdvancedConfigPanel(guild);
         return interaction.update(newPanel).catch(() => null);
       }
-      else if (customId === 'am_channel_configs') {
-        const { getChannelConfigPanel } = await import('../commands/security.js');
-        const newPanel = await getChannelConfigPanel(guild);
+      else if (customId === 'am_advanced_configs') {
+        const { getAdvancedConfigPanel } = await import('../commands/security.js');
+        const newPanel = await getAdvancedConfigPanel(guild);
         return interaction.update(newPanel).catch(() => null);
       }
       else if (customId === 'am_back_to_main') {
@@ -1002,8 +1004,7 @@ async function handleSecurityInteractions(interaction, guild) {
       }
       else if (customId === 'am_select_invite_channel') {
         db.updateGuildConfig(guild.id, { inviteAllowedChannel: interaction.values[0] });
-        const { getChannelConfigPanel } = await import('../commands/security.js');
-        return interaction.update(await getChannelConfigPanel(guild)).catch(() => null);
+        updated = true;
       }
       else if (customId === 'am_select_honeypot_channel') {
         const channelId = interaction.values[0];
