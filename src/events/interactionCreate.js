@@ -1031,7 +1031,7 @@ async function handleSecurityInteractions(interaction, guild) {
             targetRoleForBypass = parts[2];
             const bypasses = config.automodBypasses || {};
             const roleBypasses = bypasses[targetRoleForBypass] || [];
-            const filterStr = roleBypasses.length > 0 ? roleBypasses.join(', ') : 'None';
+            const filterStr = roleBypasses.length >= 10 ? 'All Automoderation Events' : (roleBypasses.length > 0 ? roleBypasses.join(', ') : 'None');
             
             await interaction.message.delete().catch(() => null);
             

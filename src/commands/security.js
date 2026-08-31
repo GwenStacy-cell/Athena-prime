@@ -3533,8 +3533,9 @@ export async function getAutoModPanel(guild) {
   } else {
     for (const rId of bypassedRolesKeys) {
       if (bypasses[rId] && bypasses[rId].length > 0) {
-        bypassText += `-# **| <@&${rId}> Bypasses:** ${bypasses[rId].join(', ')}\n`;
-      }
+          const displayStr = bypasses[rId].length >= 10 ? 'All Automoderation Events' : bypasses[rId].join(', ');
+          bypassText += `-# **| <@&${rId}> Bypasses:** ${displayStr}\n`;
+        }
     }
   }
 
