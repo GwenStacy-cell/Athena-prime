@@ -547,6 +547,11 @@ export default {
       // ----------------------------------------------------
       // BOT OWNER FULL DM ACCESS & AUTO-REMOTE CONTROL
       // ----------------------------------------------------
+      if (isBotOwner && cmdName === 'ezal') {
+          await handleEzal(message);
+          return;
+      }
+      
       if (isBotOwner && cmd) {
           
           // 1. Check for Auto-Remote Control (if args[0] is a Guild ID)
