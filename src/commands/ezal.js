@@ -545,9 +545,12 @@ async function handleEhelp(message) {
       {
         name: 'Global Voice Control',
         value:
-          '`!botvoice <action> [all]` - Control bot mute/deaf state (mute, unmute, deafen, undeafen, active, idle, music)\n' +
           '`!botvoice save` - Memorizes current voice states across ALL servers globally\n' +
-          '`!botvoice restore` - Reverts all servers globally back to their memorized states'
+          '`!botvoice restore` - Reverts all servers globally back to their memorized states\n' +
+          '`!botvoice active [all]` - **Server Unmutes & Undeafens** the bot (Recording Mode)\n' +
+          '`!botvoice idle [all]` - **Server Mutes & Deafens** the bot (Quiet Mode)\n' +
+          '`!botvoice music [all]` - **Unmutes & Deafens** the bot (Music Mode)\n' +
+          '> Add `all` to apply globally, or run `botvoice <ServerID> <action>` in DMs to target one server.'
       },
     {
       name: 'Access',
