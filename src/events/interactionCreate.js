@@ -1037,7 +1037,7 @@ async function handleSecurityInteractions(interaction, guild) {
             
             const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = await import('discord.js');
             const c = new ContainerBuilder().addTextDisplayComponents(
-              new TextDisplayBuilder().setContent(`-# > **[${interaction.user.username}](https://discord.com/users/${interaction.user.id})** Has Bypass **${filterStr}** For **@${interaction.guild.roles.cache.get(targetRoleForBypass)?.name || 'Role'}**`)
+              new TextDisplayBuilder().setContent(`-# > **[${interaction.member?.displayName || interaction.user.displayName || interaction.user.username}](https://discord.com/users/${interaction.user.id})** Has Bypass **${filterStr}** For <@&${targetRoleForBypass}>`)
             );
             return interaction.channel.send({ components: [c], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
           } else {
