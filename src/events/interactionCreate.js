@@ -57,9 +57,12 @@ export default {
       if (interaction.customId.startsWith('modal_honeypot_')) {
         const channelId = interaction.customId.replace('modal_honeypot_', '');
         const bannerUrl = interaction.fields.getTextInputValue('banner_url') || null;
+        let timeoutVal = interaction.fields.getTextInputValue('timeout_minutes');
+        let parsedTimeout = parseInt(timeoutVal);
+        if (isNaN(parsedTimeout) || parsedTimeout < 1) parsedTimeout = 15;
         
         const db = (await import('../database.js')).default;
-        db.updateGuildConfig(interaction.guild.id, { honeypotChannelId: channelId });
+        db.updateGuildConfig(interaction.guild.id, { honeypotChannelId: channelId, honeypotTimeoutMinutes: parsedTimeout });
         
         const config = db.getGuildConfig(interaction.guild.id);
         const timeoutMinutes = config.honeypotTimeoutMinutes || 15;
@@ -949,6 +952,20 @@ async function handleSecurityInteractions(interaction, guild) {
         db.updateGuildConfig(guild.id, { fileCheckEnabled: !(config.fileCheckEnabled !== false) });
         updated = true;
       }
+      else if (customId === 'am_tgl_global_links') {
+        const newVal = !config.allowAllLinks;
+        const updateData = { allowAllLinks: newVal };
+        if (newVal) updateData.antiLinkEnabled = false;
+        db.updateGuildConfig(guild.id, updateData);
+        updated = true;
+      }
+      else if (customId === 'am_tgl_global_invites') {
+        const newVal = !config.allowInvitesGlobally;
+        const updateData = { allowInvitesGlobally: newVal };
+        if (newVal) updateData.antiInviteEnabled = false;
+        db.updateGuildConfig(guild.id, updateData);
+        updated = true;
+      }
       else if (customId === 'am_timeout_cycle') {
         const current = config.honeypotTimeoutMinutes || 15;
         let next = 15;
@@ -980,7 +997,14 @@ async function handleSecurityInteractions(interaction, guild) {
           .setRequired(false)
           .setPlaceholder('https://example.com/banner.png');
           
-        modal.addComponents(new ActionRowBuilder().addComponents(bannerInput));
+                const timeoutInput = new TextInputBuilder()
+          .setCustomId('timeout_minutes')
+          .setLabel('Timeout Duration (Minutes)')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(false)
+          .setPlaceholder('15');
+          
+        modal.addComponents(new ActionRowBuilder().addComponents(bannerInput), new ActionRowBuilder().addComponents(timeoutInput));
         return interaction.showModal(modal);
       }
       else if (customId === 'am_select_granular_role') {

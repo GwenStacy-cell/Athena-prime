@@ -3576,6 +3576,8 @@ export async function getAutoModPanel(guild) {
     `-# **| Big Fonts:** ${bigFontsOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Hidden URL Filter:** ${hiddenUrlOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| File Check Filter:** ${fileCheckOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Allow All Links (Global):** ${config.allowAllLinks ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Allow Invites (Global):** ${config.allowInvitesGlobally ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Max Warnings Threshold:** ${config.maxWarnings || 3} (Use \`!maxwarnings <number>\` to modify)\n` +
     `-# **| Honeypot Timeout:** ${honeypotTimeout}m`
   ));
@@ -3606,7 +3608,8 @@ export async function getAutoModPanel(guild) {
     new ButtonBuilder().setCustomId('am_tgl_fonts').setLabel('Big Fonts').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('am_tgl_hiddenurl').setLabel('Hidden URLs').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('am_tgl_filecheck').setLabel('File Check').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('am_timeout_cycle').setLabel(`Honeypot Timeout: ${honeypotTimeout}m`).setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('am_tgl_global_links').setLabel('Allow ALL Links').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('am_tgl_global_invites').setLabel('Global Invites').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('am_save').setLabel('Save').setStyle(ButtonStyle.Success)
   );
 
