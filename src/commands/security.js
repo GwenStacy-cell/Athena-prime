@@ -3648,8 +3648,8 @@ export async function getGranularBypassPanel(guild, roleId) {
 
   const checkBypass = (key) => roleBypasses.includes(key);
 
-  const E_GREEN = '🟢'; 
-  const E_RED = '🔴'; 
+  const E_GREEN = '<:on:1514996865030946847>'; 
+  const E_RED = '<:off:1514996861474177109>'; 
   const E_CLOCK = '⏰'; 
 
   const status = (key) => checkBypass(key) ? `${E_GREEN} **${key}:** Bypassed` : `${E_RED} **${key}:** Enforced`;
@@ -3657,7 +3657,7 @@ export async function getGranularBypassPanel(guild, roleId) {
   const panelContainer = new ContainerBuilder();
 
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
-    `# AutoMod | Granular Bypass Config\n\n` +
+    `# AUTOMOD | PRIVILEGE ESCALATION & BYPASS MATRIX\n\n` +
     `**Target Role:** <@&${roleId}>\n` +
     `-# ${status('Anti Invite')}\n` +
     `-# ${status('Swear Words')}\n` +
@@ -3674,7 +3674,7 @@ export async function getGranularBypassPanel(guild, roleId) {
 
   panelContainer.addSeparatorComponents(new SeparatorBuilder().setDivider(true));
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
-    `-# **Secure Unbypassable Security**`
+    `-# **Athena Bulletproof Security !!!**`
   ));
 
   const row1 = new ActionRowBuilder().addComponents(
@@ -3696,7 +3696,7 @@ export async function getGranularBypassPanel(guild, roleId) {
   const row3 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bp_all_${roleId}`).setLabel('Bypass All').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bp_reset_${roleId}`).setLabel('Reset All').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`bp_back`).setLabel('Back to Overview').setStyle(ButtonStyle.Primary)
+    new ButtonBuilder().setCustomId(`bp_back`).setLabel('Back to Overview').setStyle(ButtonStyle.Secondary)
   );
 
   panelContainer.addActionRowComponents(row1, row2, row3);
