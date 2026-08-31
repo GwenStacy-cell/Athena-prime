@@ -1082,12 +1082,12 @@ export const commands = [
       permissions: [PermissionFlagsBits.Administrator],
       options: [],
       async executePrefix(message) {
-        const panel = await getAntilinkModulePanel(message.guild);
+        const panel = await getAutoModPanel(message.guild);
         await message.reply(panel);
       },
       async executeSlash(interaction) {
         await interaction.deferReply();
-        const panel = await getAntilinkModulePanel(interaction.guild);
+        const panel = await getAutoModPanel(interaction.guild);
         await interaction.editReply(panel);
       }
     },

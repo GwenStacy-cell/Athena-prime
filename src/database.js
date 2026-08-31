@@ -169,6 +169,12 @@ class Database {
         antiSpamMentionBypassRoles: [],
         antiLinkEnabled: false,
         antiInviteEnabled: true,
+        wordFilterEnabled: true,
+        bigFontsEnabled: true,
+        antiFloodEnabled: true,
+        automodBypasses: {},
+        honeypotChannelId: null,
+        honeypotTimeoutMinutes: 15,
         raidMode: false,
           twoFactorEmail: null,
           twoFactorVerified: false,
@@ -281,6 +287,12 @@ class Database {
       if (cfg.antiNukePunishment === undefined) { cfg.antiNukePunishment = 'ban'; updated = true; }
       if (cfg.antiNukeThreshold === undefined) { cfg.antiNukeThreshold = 1; updated = true; }
       if (cfg.antiLinkEnabled === undefined) { cfg.antiLinkEnabled = false; updated = true; }
+        if (cfg.wordFilterEnabled === undefined) { cfg.wordFilterEnabled = true; updated = true; }
+        if (cfg.bigFontsEnabled === undefined) { cfg.bigFontsEnabled = true; updated = true; }
+        if (cfg.antiFloodEnabled === undefined) { cfg.antiFloodEnabled = true; updated = true; }
+        if (cfg.automodBypasses === undefined) { cfg.automodBypasses = {}; updated = true; }
+        if (cfg.honeypotChannelId === undefined) { cfg.honeypotChannelId = null; updated = true; }
+        if (cfg.honeypotTimeoutMinutes === undefined) { cfg.honeypotTimeoutMinutes = 15; updated = true; }
       if (cfg.antiSpamMentionEnabled === undefined) { cfg.antiSpamMentionEnabled = false; updated = true; }
       if (cfg.antiSpamMentionBypassRoles === undefined) { cfg.antiSpamMentionBypassRoles = []; updated = true; }
       if (cfg.antiInviteEnabled === undefined) { cfg.antiInviteEnabled = true; updated = true; }

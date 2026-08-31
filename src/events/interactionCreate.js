@@ -866,75 +866,127 @@ async function handleSecurityInteractions(interaction, guild) {
       } catch (e) { console.error(e); }
     }
 
-    if (customId.startsWith('al_')) {
-    let updated = false;
+    if (customId.startsWith('am_') || customId.startsWith('bp_')) {
+      let updated = false;
+      let targetRoleForBypass = null;
 
-    if (customId === 'al_toggle_link') {
-      const newVal = !config.antiLinkEnabled;
-      const updateData = { antiLinkEnabled: newVal };
-      if (newVal) updateData.allowAllLinks = false; // Turn OFF Allow All if turning ON Anti-Link
-      db.updateGuildConfig(guild.id, updateData);
-      updated = true;
-    }
-    else if (customId === 'al_toggle_invite') {
-      const newVal = !config.antiInviteEnabled;
-      const updateData = { antiInviteEnabled: newVal };
-      if (newVal) updateData.allowInvitesGlobally = false; // Turn OFF Allow Invites if turning ON Anti-Invite
-      db.updateGuildConfig(guild.id, updateData);
-      updated = true;
-    }
-    else if (customId === 'al_toggle_all_links') {
-      const newVal = !config.allowAllLinks;
-      const updateData = { allowAllLinks: newVal };
-      if (newVal) updateData.antiLinkEnabled = false; // Turn OFF Anti-Link if turning ON Allow All
-      db.updateGuildConfig(guild.id, updateData);
-      updated = true;
-    }
-    else if (customId === 'al_toggle_spam_mention') {
-      const newVal = !config.antiSpamMentionEnabled;
-      db.updateGuildConfig(guild.id, { antiSpamMentionEnabled: newVal });
-      updated = true;
-    }
-    else if (customId === 'al_toggle_global_invites') {
-      const newVal = !config.allowInvitesGlobally;
-      const updateData = { allowInvitesGlobally: newVal };
-      if (newVal) updateData.antiInviteEnabled = false; // Turn OFF Anti-Invite if turning ON Allow Invites
-      db.updateGuildConfig(guild.id, updateData);
-      updated = true;
-    }
-    else if (customId === 'al_select_invite_channel') {
-      const channelId = interaction.values[0];
-      db.updateGuildConfig(guild.id, { inviteAllowedChannel: channelId });
-      updated = true;
-    }
-    else if (customId === 'al_select_link_role') {
-      db.updateGuildConfig(guild.id, { linkBypassRoles: interaction.values });
-      updated = true;
-    }
-    else if (customId === 'al_select_invite_role') {
-      db.updateGuildConfig(guild.id, { inviteBypassRoles: interaction.values });
-      updated = true;
-    }
-    else if (customId === 'al_select_spam_mention_role') {
-      const roleIds = interaction.values;
-      db.updateGuildConfig(guild.id, { antiSpamMentionBypassRoles: roleIds });
-      updated = true;
-    }
-    else if (customId === 'al_save') {
-      return interaction.message.delete().catch(() => null);
-    }
-
-    if (updated) {
-      try {
-        const sec = await import('../commands/security.js');
-        const panel = await sec.getAntilinkModulePanel(guild);
-        return interaction.update(panel);
-      } catch (e) {
-        console.error(e);
+      if (customId === 'am_tgl_massmention') {
+        db.updateGuildConfig(guild.id, { antiSpamMentionEnabled: !config.antiSpamMentionEnabled });
+        updated = true;
       }
+      else if (customId === 'am_tgl_flood') {
+        db.updateGuildConfig(guild.id, { antiFloodEnabled: !(config.antiFloodEnabled !== false) });
+        updated = true;
+      }
+      else if (customId === 'am_tgl_link') {
+        const newVal = !config.antiLinkEnabled;
+        const updateData = { antiLinkEnabled: newVal };
+        if (newVal) updateData.allowAllLinks = false;
+        db.updateGuildConfig(guild.id, updateData);
+        updated = true;
+      }
+      else if (customId === 'am_tgl_invite') {
+        const newVal = !config.antiInviteEnabled;
+        const updateData = { antiInviteEnabled: newVal };
+        if (newVal) updateData.allowInvitesGlobally = false;
+        db.updateGuildConfig(guild.id, updateData);
+        updated = true;
+      }
+      else if (customId === 'am_tgl_word') {
+        db.updateGuildConfig(guild.id, { wordFilterEnabled: !(config.wordFilterEnabled !== false) });
+        updated = true;
+      }
+      else if (customId === 'am_tgl_fonts') {
+        db.updateGuildConfig(guild.id, { bigFontsEnabled: !(config.bigFontsEnabled !== false) });
+        updated = true;
+      }
+      else if (customId === 'am_tgl_global_links') {
+        const newVal = !config.allowAllLinks;
+        const updateData = { allowAllLinks: newVal };
+        if (newVal) updateData.antiLinkEnabled = false;
+        db.updateGuildConfig(guild.id, updateData);
+        updated = true;
+      }
+      else if (customId === 'am_tgl_global_invites') {
+        const newVal = !config.allowInvitesGlobally;
+        const updateData = { allowInvitesGlobally: newVal };
+        if (newVal) updateData.antiInviteEnabled = false;
+        db.updateGuildConfig(guild.id, updateData);
+        updated = true;
+      }
+      else if (customId === 'am_timeout_cycle') {
+        const current = config.honeypotTimeoutMinutes || 15;
+        let next = 15;
+        if (current === 15) next = 60;
+        else if (current === 60) next = 1440;
+        else if (current === 1440) next = 5;
+        else next = 15;
+        db.updateGuildConfig(guild.id, { honeypotTimeoutMinutes: next });
+        updated = true;
+      }
+      else if (customId === 'am_save') {
+        return interaction.message.delete().catch(() => null);
+      }
+      else if (customId === 'am_select_invite_channel') {
+        db.updateGuildConfig(guild.id, { inviteAllowedChannel: interaction.values[0] });
+        updated = true;
+      }
+      else if (customId === 'am_select_honeypot_channel') {
+        db.updateGuildConfig(guild.id, { honeypotChannelId: interaction.values[0] });
+        updated = true;
+      }
+      else if (customId === 'am_select_granular_role') {
+        targetRoleForBypass = interaction.values[0];
+        updated = true;
+      }
+      else if (customId.startsWith('bp_')) {
+        const parts = customId.split('_');
+        if (parts[1] === 'back') {
+          updated = true;
+        } else if (parts[1] === 'all') {
+          targetRoleForBypass = parts[2];
+          const bypasses = config.automodBypasses || {};
+          bypasses[targetRoleForBypass] = ['Anti Invite', 'Swear Words', 'URL Filter', 'Spam Filter', 'Mass Mentions', 'Anti Flood', 'Hidden URL Filter', 'Selfbot Detection', 'File Check', 'Big Fonts'];
+          db.updateGuildConfig(guild.id, { automodBypasses: bypasses });
+          updated = true;
+        } else if (parts[1] === 'reset') {
+          targetRoleForBypass = parts[2];
+          const bypasses = config.automodBypasses || {};
+          bypasses[targetRoleForBypass] = [];
+          db.updateGuildConfig(guild.id, { automodBypasses: bypasses });
+          updated = true;
+        } else {
+          const filterName = parts[1];
+          targetRoleForBypass = parts[2];
+          const bypasses = config.automodBypasses || {};
+          if (!bypasses[targetRoleForBypass]) bypasses[targetRoleForBypass] = [];
+          
+          if (bypasses[targetRoleForBypass].includes(filterName)) {
+            bypasses[targetRoleForBypass] = bypasses[targetRoleForBypass].filter(f => f !== filterName);
+          } else {
+            bypasses[targetRoleForBypass].push(filterName);
+          }
+          db.updateGuildConfig(guild.id, { automodBypasses: bypasses });
+          updated = true;
+        }
+      }
+
+      if (updated) {
+        try {
+          const sec = await import('../commands/security.js');
+          let panel;
+          if (targetRoleForBypass) {
+            panel = await sec.getGranularBypassPanel(guild, targetRoleForBypass);
+          } else {
+            panel = await sec.getAutoModPanel(guild);
+          }
+          return interaction.update(panel);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      return;
     }
-    return;
-  }
 
   // Whitelist Logic
   if (customId === 'wl_close') {
