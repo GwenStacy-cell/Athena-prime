@@ -1777,8 +1777,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
       ));
     }
 
-    const { ContainerBuilder, SectionBuilder, TextDisplayBuilder, MessageFlags } = await import('discord.js');
-    const c = new ContainerBuilder();
+        const c = new ContainerBuilder();
     const textContent = `> Successfully restored **${targetMember.user.username}** and recovered their original role structure.\n> \u2800\u2800\u2800\u2800\u2570\u203A User: ${targetMember} • Moderator: ${moderator}`;
     const section = new SectionBuilder()
         .addTextDisplayComponents(

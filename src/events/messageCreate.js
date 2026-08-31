@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, EmbedBuilder, ContainerBuilder, TextDisplayBuilder, MessageFlags , ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ContainerBuilder, TextDisplayBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, SectionBuilder, ThumbnailBuilder } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
 import db from '../database.js';
@@ -956,8 +956,7 @@ export default {
             const qRes = await executeQuarantine(message.guild, message.member, message.guild.members.me, `Automated: ${headingStr} limit reached`);
             db.clearWarnings(guildId, userId);
             
-            const { ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, MessageFlags } = await import('discord.js');
-            const c = new ContainerBuilder();
+                        const c = new ContainerBuilder();
             const textContent = `> Reason: . ${message.author} , **Maximum Warnings Exceeded**\n> \u2800\u2800\u2800\u2800\u2570\u203A has been automatically quarantined. ${qRes.message || ''}`;
             const section = new SectionBuilder()
                 .addTextDisplayComponents(
@@ -968,8 +967,7 @@ export default {
             c.addSectionComponents(section);
             await message.channel.send({ components: [c], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
           } else {
-            const { ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, MessageFlags } = await import('discord.js');
-            const c = new ContainerBuilder();
+                        const c = new ContainerBuilder();
             const textContent = `> Reason: . ${message.author} , **${actionStr}**\n> \u2800\u2800\u2800\u2800\u2570\u203A has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`;
             const section = new SectionBuilder()
                 .addTextDisplayComponents(
