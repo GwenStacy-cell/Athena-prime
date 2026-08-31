@@ -3576,7 +3576,7 @@ export async function getAutoModPanel(guild) {
     `-# **| Big Fonts:** ${bigFontsOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
-    `-# **| Max Warnings Threshold:** ${config.maxWarnings || 3} *(Use \`!maxwarnings <number>\` to modify)*\n` +
+    `-# **| Max Warnings Threshold:** ${config.maxWarnings || 3} (Use \`!maxwarnings <number>\` to modify)\n` +
     `-# **| Honeypot Timeout:** ${honeypotTimeout}m`
   ));
 
