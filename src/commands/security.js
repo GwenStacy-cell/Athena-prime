@@ -1778,13 +1778,8 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     }
 
         const c = new ContainerBuilder();
-    const textContent = `> Successfully restored **${targetMember.user.username}** and recovered their original role structure.\n> \u2800\u2800\u2800\u2800\u2570\u203A User: ${targetMember} • Moderator: ${moderator}`;
-    const section = new SectionBuilder()
-        .addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(`**Quarantine Lifted | <:ticks:1533860039213842565>**`),
-            new TextDisplayBuilder().setContent(textContent)
-        );
-    c.addSectionComponents(section);
+    const textContent = `**Quarantine Lifted | <:ticks:1533860039213842565>**\n> Successfully restored **${targetMember.user.username}** and recovered their original role structure.\n> \u2800\u2800\u2800\u2800\u2570\u203A User: ${targetMember} • Moderator: ${moderator}`;
+    c.addTextDisplayComponents(new TextDisplayBuilder().setContent(textContent));
     
     const responseEmbed = { components: [c], flags: MessageFlags.IsComponentsV2 };
 
