@@ -3517,7 +3517,7 @@ export async function getAutoModPanel(guild) {
   
   const TOGGLE_ON = '<:on:1514996865030946847>';
   const TOGGLE_OFF = '<:off:1514996861474177109>';
-  const DOT = '<:dark4luvontop:1533860081916182721>';
+  const DOT = '•';
   const E_CLOCK = '🕒';
 
   const inviteChannel = config.inviteAllowedChannel ? `<#${config.inviteAllowedChannel}>` : 'None';
