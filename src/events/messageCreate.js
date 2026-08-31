@@ -918,297 +918,33 @@ export default {
     const hasAntiSpamImmunity = db.isWhitelisted(message.guild, userId, 'antispam');
 
       // ==========================================
-      // 0. AUTO-MODERATION: MASS MENTION SPAM
+      // AUTOMATED MODERATION & SECURITY MATRIX
       // ==========================================
-      const spamMentionActive = dbConfig.antiSpamMentionEnabled === true;
-      const spamMentionBypassRoles = dbConfig.antiSpamMentionBypassRoles || [];
-      const hasSpamMentionBypass = spamMentionBypassRoles.length > 0 && message.member.roles.cache.hasAny(...spamMentionBypassRoles);
       const isBotOwner = isBotOwnerSync(message.author.id);
       const isExtraOwner = db.isExtraOwner(message.guild.id, message.author.id);
       const isServerOwner = message.author.id === message.guild.ownerId;
-      const isImmuneToSpam = isBotOwner || isExtraOwner || isServerOwner || hasSpamMentionBypass || hasAntiSpamImmunity;
+      const isAdmin = message.member.permissions.has(PermissionFlagsBits.ManageMessages);
       
-      if (spamMentionActive && !isImmuneToSpam) {
-         const mentions = message.mentions.users;
-         if (mentions.size > 0) {
-             let timeoutTriggered = false;
-             for (const [targetId, user] of mentions) {
-                 if (targetId === message.author.id || user.bot) continue;
-                 
-                 const cacheKey = `${message.guild.id}_${message.author.id}_${targetId}`;
-                 const now = Date.now();
-                 let data = massMentionCache.get(cacheKey) || { count: 0, timestamp: now };
-                 
-                 const regex = new RegExp(`<@!?${targetId}>`, 'g');
-                 const occurrences = (message.content.match(regex) || []).length;
-                 const countToAdd = Math.max(1, occurrences);
-                 
-                 console.log(`[DEBUG MASS MENTION] User: ${message.author.id}, Target: ${targetId}, Occurrences: ${occurrences}, CountToAdd: ${countToAdd}`);
-                 console.log(`[DEBUG MASS MENTION] Content: ${message.content}`);
-                 
-                 // Time window: 15 seconds
-                 if (now - data.timestamp > 15000) {
-                     data.count = countToAdd;
-                 } else {
-                     data.count += countToAdd;
-                 }
-                 data.timestamp = now;
-                 massMentionCache.set(cacheKey, data);
-                 
-                 if (data.count >= 3) {
-                     // Delete the spam message regardless of timeout success
-                     await message.delete().catch(() => null);
-                     
-                     // Trigger timeout
-                     try {
-                         await message.member.timeout(5 * 60 * 1000, 'Mass Mention Spam Tagging');
-                         const targetUser = await message.client.users.fetch(targetId).catch(() => null);
-                         const targetName = targetUser ? targetUser.tag : targetId;
-                         
-                         const dmEmbed = new EmbedBuilder()
-                             .setColor(0xFF0000)
-                             .setTitle('Timeout Applied')
-                             .setDescription(`You have been timed out in **${message.guild.name}** for 5 minutes.\n\n**Reason:** Mass Mention Spam Tagging (${targetName})`);
-                         await message.member.send(dmEmbed).catch(() => null);
-
-                         const warnEmbed = cv2.danger(
-                             'Timeout Applied',
-                             `**${message.author.tag}** has been timed out for 5 minutes for spam tagging **${targetName}**.`
-                         );
-                         await message.channel.send(warnEmbed).catch(() => null);
-                     } catch (e) {
-                         console.log('[Mass Mention Filter] Failed to timeout member. Possibly due to hierarchy or permissions.', e.message || e);
-                     }
-                     massMentionCache.delete(cacheKey);
-                     timeoutTriggered = true;
-                     break; // No need to check other mentions if they just got timed out
-                 }
-             }
-             if (timeoutTriggered) return;
-         }
-      }
-
-    // ==========================================
-    // 1. AUTO-MODERATION: ANTI-INVITE
-    // ==========================================
-    const antiInviteActive = dbConfig.antiInviteEnabled !== undefined ? dbConfig.antiInviteEnabled : config.antiInvite.enabled;
-    const isGlobalInviteAllowed = dbConfig.allowInvitesGlobally === true;
-    const isInviteAllowedChannel = dbConfig.inviteAllowedChannel === message.channel.id;
-    const hasInviteBypassRole = dbConfig.inviteBypassRoles && dbConfig.inviteBypassRoles.length > 0 && message.member.roles.cache.hasAny(...dbConfig.inviteBypassRoles);
-
-    if (!isGlobalInviteAllowed && !isInviteAllowedChannel && !hasInviteBypassRole && !hasAntiInviteImmunity && antiInviteActive && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      const inviteRegex = /(discord\.(gg|io|me|li)\/.+|discord(app)?\.com\/invite\/.+)/gi;
-      if (inviteRegex.test(message.content)) {
-        if (config.antiInvite.deleteInvites) {
-          await message.delete().catch(() => null);
-        }
-
-        const maxWarnings = dbConfig.maxWarnings || 3;
-        const warns = db.addWarning(guildId, userId, message.client.user.id, `Automated AutoMod: Unauthorized Invite Link`);
-
-        logToSecurityChannel(message.guild, cv2.log(
-          'Invite Link Filtered',
-          `Deleted invite promotion from member.`,
-          [
-            { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
-            { name: 'Channel', value: `${message.channel}`, inline: true },
-            { name: 'Warnings Count', value: `\`${warns.length}\` / ${maxWarnings}`, inline: true },
-            { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
-          ],
-          'warning'
-        ));
-
-        if (warns.length >= maxWarnings) {
-          const quarantineReason = `Automated: Warning threshold limit exceeded (${warns.length}/${maxWarnings} Warnings)`;
-          const quarantineRes = await executeQuarantine(message.guild, message.member, message.guild.members.me, quarantineReason);
-          
-          db.clearWarnings(guildId, userId);
-
-          const criticalEmbed = {
-              components: [{
-                type: 17,
-                components: [{
-                  type: 9,
-                  components: [{
-                  type: 10,
-                  content: `-# **Invite Quarantine Protocol |** <:ticks:1533860039213842565>\n> -# Reason: . ${message.author} , **Exceeded Invite Warnings**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been automatically **quarantined** for exceeding maximum thresholds (${warns.length}/${maxWarnings}).`
-                }],
-                accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
-                  }]
-                }],
-                flags: MessageFlags.IsComponentsV2
-            };
-            await message.channel.send(criticalEmbed).catch(() => null);
-        } else {
-          const warnPayload = {
-              components: [{
-                type: 17,
-                components: [{
-                  type: 9,
-                  components: [{
-                      type: 10,
-                      content: `-# **Warned Sending Invites |** <:cross_red:1533860128015519895>\n> -# Reason: . ${message.author} , **Posted Discord Invite**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`
-                    }],
-                  accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
-                  }]
-                }],
-                flags: MessageFlags.IsComponentsV2
-            };
-            await message.channel.send(warnPayload).catch(() => null);
-        }
+      const checkBypass = (filterName, hasImmunity = false) => {
+        if (isBotOwner || isExtraOwner || isServerOwner || isAdmin || hasImmunity) return true;
+        const bypasses = dbConfig.automodBypasses || {};
+        const memberRoles = message.member.roles.cache;
         
-        return;
-      }
-    }
-
-    // ==========================================
-    // 1.5. AUTO-MODERATION: ANTI-LINK
-    // ==========================================
-    const hasLinkBypassRole = dbConfig.linkBypassRoles && dbConfig.linkBypassRoles.length > 0 && message.member.roles.cache.hasAny(...dbConfig.linkBypassRoles);
-
-    if (!hasLinkBypassRole && !hasAntiLinkImmunity && dbConfig.antiLinkEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      if (dbConfig.allowAllLinks !== true) {
-        const linkRegex = /https?:\/\/[^\s]+/gi;
-        const matches = message.content.match(linkRegex);
-        if (matches) {
-          await message.delete().catch(() => null);
-
-          const warnEmbed = cv2.warn(
-            '<:gun:1533859911631376496> Link Deleted',
-            `${message.author}, posting links is not allowed in this server.`
-          );
-          await message.channel.send(warnEmbed).catch(() => null);
-
-          logToSecurityChannel(message.guild, cv2.log(
-            'Link Filtered',
-            `Deleted message containing a URL from member.`,
-            [
-              { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
-              { name: 'Channel', value: `${message.channel}`, inline: true },
-              { name: 'Content Filtered', value: `\`\`\`${message.content}\`\`\`` }
-            ],
-            'warning'
-          ));
-
-          return;
-        }
-      }
-    }
-
-    // ==========================================
-    // 2. AUTO-MODERATION: WORD BLACKLIST FILTER
-    // ==========================================
-    if (!hasAntiSpamImmunity && dbConfig.blacklistWords && dbConfig.blacklistWords.length > 0 && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      const msgLower = message.content.toLowerCase();
-      const matchedWords = dbConfig.blacklistWords.filter(word => {
-        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return new RegExp(`(?:^|\\W)${escapedWord}(?:$|\\W)`, 'i').test(msgLower);
-      });
-      
-      if (matchedWords.length > 0) {
-        await message.delete().catch(() => null);
-
-        const matchedStr = matchedWords.join(', ');
-        const maxWarnings = dbConfig.maxWarnings || 3;
-        const warns = db.addWarning(guildId, userId, message.client.user.id, `Automated AutoMod: Matched blacklisted phrase(s): "${matchedStr}"`);
-
-        let highlightedMessage = message.content;
-        for (const mw of matchedWords) {
-          const escapedMatch = mw.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
-          highlightedMessage = highlightedMessage.replace(new RegExp(`(^|\\W)(${escapedMatch})(?=$|\\W)`, 'gi'), '$1**__$2__**');
-        }
-        const safeMessage = highlightedMessage.length > 1000 ? highlightedMessage.substring(0, 1000) + '...' : highlightedMessage;
-
-        logToSecurityChannel(message.guild, cv2.log(
-          'Blacklisted Word Detected',
-          `Purged content containing filtered phrase.\n\n**Original Message:**\n> ${safeMessage.replace(/\n/g, '\n> ')}`,
-          [
-            { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
-            { name: 'Channel', value: `${message.channel}`, inline: true },
-            { name: 'Matched Word(s)', value: `\`${matchedStr}\``, inline: true },
-            { name: 'Warnings Count', value: `\`${warns.length}\` / ${maxWarnings}` }
-          ],
-          'warning'
-        ));
-
-        if (warns.length >= maxWarnings) {
-          const quarantineReason = `Automated: Warning threshold limit exceeded (${warns.length}/${maxWarnings} Warnings)`;
-          const quarantineRes = await executeQuarantine(message.guild, message.member, message.guild.members.me, quarantineReason);
-          
-          db.clearWarnings(guildId, userId);
-
-          const criticalEmbed = {
-              components: [{
-                type: 17,
-                components: [{
-                  type: 9,
-                  components: [{
-                  type: 10,
-                  content: `-# **Profanity Quarantine Protocol |** <:ticks:1533860039213842565>\n> -# Reason: . ${message.author} , **Exceeded Word Filter Warnings**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been automatically **quarantined** for exceeding maximum thresholds (${warns.length}/${maxWarnings}).`
-                }],
-                accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
-                  }]
-                }],
-                flags: MessageFlags.IsComponentsV2
-            };
-            await message.channel.send(criticalEmbed).catch(() => null);
-        } else {
-          const filterWarnPayload = {
-              components: [{
-                type: 17,
-                components: [{
-                  type: 9,
-                  components: [{
-                      type: 10,
-                      content: `-# **Word Filter Triggered |** <:cross_red:1533860128015519895>\n> -# Reason: . ${message.author} , **Posted Blacklisted Word**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`
-                    }],
-                  accessory: { type: 11, media: { url: message.author.displayAvatarURL({ dynamic: true }) } }
-                  }]
-                }],
-                flags: MessageFlags.IsComponentsV2
-            };
-            await message.channel.send(filterWarnPayload).catch(() => null);
-        }
-        return; // Halt
-      }
-    }
-
-    // ==========================================
-    // 3. AUTO-MODERATION: ANTI-SPAM
-    // ==========================================
-    if (!hasAntiSpamImmunity && config.antiSpam.enabled && dbConfig.antiSpamEnabled && !message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      const now = Date.now();
-      
-      if (!spamCache.has(cacheKey)) {
-        spamCache.set(cacheKey, []);
-      }
-
-      const timestamps = spamCache.get(cacheKey);
-      const cleanTimestamps = timestamps.filter(time => now - time < config.antiSpam.intervalMs);
-      cleanTimestamps.push(now);
-      spamCache.set(cacheKey, cleanTimestamps);
-
-      if (cleanTimestamps.length > config.antiSpam.maxMessages) {
-        const lastCooldown = spamCooldown.get(cacheKey) || 0;
-        
-        if (now - lastCooldown > 5000) {
-          spamCooldown.set(cacheKey, now);
-          spamCache.set(cacheKey, []); // Reset tracker
-
-          const maxWarnings = dbConfig.maxWarnings || 3;
-          const warns = db.addWarning(guildId, userId, message.client.user.id, 'Automated: Excess messages / Spam detection');
-
-          try {
-            const fetched = await message.channel.messages.fetch({ limit: 15 });
-            const userSpam = fetched.filter(m => m.author.id === userId && now - m.createdTimestamp < 4000);
-            await message.channel.bulkDelete(userSpam).catch(() => null);
-          } catch (e) {
-            await message.delete().catch(() => null);
+        for (const [roleId, allowedFilters] of Object.entries(bypasses)) {
+          if (memberRoles.has(roleId) && allowedFilters.includes(filterName)) {
+            return true;
           }
+        }
+        return false;
+      };
 
+      const maxWarnings = dbConfig.maxWarnings || 3;
+      
+      const applyWarning = async (reason, publicAlert, alertTitle) => {
+          const warns = db.addWarning(guildId, userId, message.client.user.id, reason);
           logToSecurityChannel(message.guild, cv2.log(
-            'Spam Threat Detected',
-            `User triggered rate-limits by exceeding message counts.`,
+            alertTitle,
+            reason,
             [
               { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
               { name: 'Channel', value: `${message.channel}`, inline: true },
@@ -1216,32 +952,156 @@ export default {
             ],
             'warning'
           ));
-
           if (warns.length >= maxWarnings) {
-            const quarantineReason = `Automated: Anti-Spam warning limit reached (${warns.length}/${maxWarnings} Warnings)`;
-            const quarantineRes = await executeQuarantine(message.guild, message.member, message.guild.members.me, quarantineReason);
-            
+            const qRes = await executeQuarantine(message.guild, message.member, message.guild.members.me, `Automated: ${alertTitle} limit reached`);
             db.clearWarnings(guildId, userId);
+            await message.channel.send(cv2.danger('Security Lock Triggered', `**${message.author.tag}** has been automatically quarantined.\n\n${qRes.message || ''}`)).catch(() => null);
+          } else if (publicAlert) {
+            await message.channel.send(cv2.warn('<:gun:1533859911631376496> ' + alertTitle, `${message.author}, ${publicAlert}\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`)).catch(() => null);
+          }
+      };
 
-            const criticalEmbed = cv2.danger(
-              'Raid Security Lock Triggered',
-              `**${message.author.tag}** has been automatically **isolated and quarantined** for severe server spamming.\n\n${quarantineRes.message || ''}`
-            );
-            await message.channel.send(criticalEmbed).catch(() => null);
-          } else {
-            const spamWarnEmbed = cv2.warn(
-              '<:gun:1533859911631376496> Anti-Spam Warning',
-              `${message.author}, please slow down. Sending messages too fast is against server security rules.\n\n**Warning Count:** \`${warns.length}\` / ${maxWarnings}`
-            );
-            await message.channel.send(spamWarnEmbed).catch(() => null);
+      // 0. MASS MENTION SPAM
+      if (dbConfig.antiSpamMentionEnabled === true && !checkBypass('Mass Mentions')) {
+         const mentions = message.mentions.users;
+         if (mentions.size > 0) {
+             let timeoutTriggered = false;
+             for (const [targetId, user] of mentions) {
+                 if (targetId === message.author.id || user.bot) continue;
+                 const cacheKey = `${message.guild.id}_${message.author.id}_${targetId}`;
+                 const now = Date.now();
+                 let data = massMentionCache.get(cacheKey) || { count: 0, timestamp: now };
+                 if (now - data.timestamp > 10000) data = { count: 0, timestamp: now };
+                 data.count++;
+                 data.timestamp = now;
+                 massMentionCache.set(cacheKey, data);
+                 
+                 if (data.count >= 3 && !timeoutTriggered) {
+                     timeoutTriggered = true;
+                     await message.delete().catch(() => null);
+                     await message.member.timeout(5 * 60 * 1000, "Automated: Mass Mention Spam Filter").catch(() => null);
+                     await applyWarning(`User spam pinged ${user.tag} multiple times.`, `Mass Mention Filter triggered. You have been timed out for 5 minutes.`, 'Mass Mention Filter');
+                     massMentionCache.delete(cacheKey);
+                     return;
+                 }
+             }
+         }
+      }
+
+      // 1. ANTI-INVITE
+      const isGlobalInviteAllowed = dbConfig.allowInvitesGlobally === true;
+      const isInviteAllowedChannel = dbConfig.inviteAllowedChannel === message.channel.id;
+      
+      if (!isGlobalInviteAllowed && !isInviteAllowedChannel && (dbConfig.antiInviteEnabled || config.antiInvite.enabled) && !checkBypass('Anti Invite', hasAntiInviteImmunity)) {
+        const inviteRegex = /(discord\.(gg|io|me|li)\/|discord(app)?\.com\/invite\/)/gi;
+        if (inviteRegex.test(message.content)) {
+          await message.delete().catch(() => null);
+          await applyWarning(`Deleted invite promotion from member.`, `posting invites is strictly forbidden.`, 'Invite Link Filtered');
+          return;
+        }
+      }
+
+      // 1.5 ANTI-LINK (URL FILTER)
+      if (dbConfig.allowAllLinks !== true && dbConfig.antiLinkEnabled && !checkBypass('URL Filter', hasAntiLinkImmunity)) {
+        const linkRegex = /https?:\/\/[^\s]+/gi;
+        if (linkRegex.test(message.content)) {
+          await message.delete().catch(() => null);
+          await applyWarning(`Deleted message containing a URL.`, `posting links is not allowed.`, 'URL Filtered');
+          return;
+        }
+      }
+
+      // 1.6 HIDDEN URL FILTER
+      if (!checkBypass('Hidden URL Filter')) {
+        const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/gi;
+        let match;
+        while ((match = mdLinkRegex.exec(message.content)) !== null) {
+          const textPart = match[1].toLowerCase();
+          const urlPart = match[2].toLowerCase();
+          if (/(https?:\/\/|[a-z0-9]+\.(com|net|org|gg|io|info))/.test(textPart)) {
+            const textDomainMatch = textPart.match(/([a-z0-9-]+\.[a-z]+)/);
+            if (textDomainMatch && !urlPart.includes(textDomainMatch[1])) {
+               await message.delete().catch(() => null);
+               await applyWarning(`Deceptive/Hidden hyperlink markdown detected.`, `deceptive links are strictly forbidden!`, 'Hidden URL Filter');
+               return;
+            }
           }
         }
-        return;
       }
-    }
 
-    // ==========================================
-    // 3.5. AUTO-RESPONDER TRIGGERS
+      // 1.7 FILE CHECK
+      if (!checkBypass('File Check')) {
+         if (message.attachments.size > 0) {
+            const forbiddenExts = ['.exe', '.bat', '.cmd', '.scr', '.vbs', '.js', '.zip', '.rar', '.tar', '.gz'];
+            for (const [id, attachment] of message.attachments) {
+               const ext = attachment.name.toLowerCase().slice(attachment.name.lastIndexOf('.'));
+               if (forbiddenExts.includes(ext)) {
+                  await message.delete().catch(() => null);
+                  await applyWarning(`Uploaded a forbidden file extension: ${attachment.name}`, `uploading executable or compressed files is blocked for security.`, 'File Check Filter');
+                  return;
+               }
+            }
+         }
+      }
+
+      // 2. WORD BLACKLIST FILTER
+      if (!checkBypass('Swear Words', hasAntiSpamImmunity)) {
+        if (dbConfig.wordFilterEnabled !== false && dbConfig.blacklistWords && dbConfig.blacklistWords.length > 0) {
+          const msgLower = message.content.toLowerCase();
+          const matchedWords = dbConfig.blacklistWords.filter(word => {
+            const escapedWord = word.replace(/[.*+?^$!()|[\]\\]/g, '\\$&');
+            return new RegExp(`(?:^|\\W)${escapedWord}(?:$|\\W)`, 'i').test(msgLower);
+          });
+          if (matchedWords.length > 0) {
+            await message.delete().catch(() => null);
+            await applyWarning(`Matched blacklisted phrase(s): ${matchedWords.join(', ')}`, `please refrain from using blacklisted words.`, 'Word Filter');
+            return;
+          }
+        }
+      }
+      
+      // 2.5 BIG FONTS
+      if (dbConfig.bigFontsEnabled !== false && !checkBypass('Big Fonts')) {
+         const letters = message.content.replace(/[^a-zA-Z]/g, '');
+         if (letters.length > 10) {
+            const upperCount = letters.replace(/[^A-Z]/g, '').length;
+            if (upperCount / letters.length > 0.8) {
+               await message.delete().catch(() => null);
+               await applyWarning(`Excessive uppercase usage (Big Fonts)`, `please turn off caps lock!`, 'Big Fonts Filter');
+               return;
+            }
+         }
+      }
+
+      // 3. ANTI-SPAM & ANTI FLOOD
+      if (config.antiSpam.enabled && (dbConfig.antiSpamEnabled !== false || dbConfig.antiFloodEnabled !== false) && !checkBypass('Spam Filter', hasAntiSpamImmunity) && !checkBypass('Anti Flood', hasAntiSpamImmunity)) {
+        const now = Date.now();
+        if (!spamCache.has(cacheKey)) spamCache.set(cacheKey, []);
+        const timestamps = spamCache.get(cacheKey);
+        const cleanTimestamps = timestamps.filter(time => now - time < config.antiSpam.intervalMs);
+        cleanTimestamps.push(now);
+        spamCache.set(cacheKey, cleanTimestamps);
+  
+        if (cleanTimestamps.length > config.antiSpam.maxMessages) {
+          const lastCooldown = spamCooldown.get(cacheKey) || 0;
+          if (now - lastCooldown > 5000) {
+            spamCooldown.set(cacheKey, now);
+            spamCache.set(cacheKey, []); 
+            try {
+              const fetched = await message.channel.messages.fetch({ limit: 15 });
+              const userSpam = fetched.filter(m => m.author.id === userId && now - m.createdTimestamp < 4000);
+              await message.channel.bulkDelete(userSpam).catch(() => null);
+            } catch (e) {
+              await message.delete().catch(() => null);
+            }
+            await applyWarning(`User triggered rate-limits by exceeding message counts.`, `please slow down. Sending messages too fast is against server security rules.`, 'Spam / Flood Detected');
+          }
+          return;
+        }
+      }
+
+      // ==========================================
+      // 3.5. AUTO-RESPONDER TRIGGERS
     // ==========================================
     // Do not trigger on prefix commands (avoids overlapping logic)
     const prefix = dbConfig.prefix || '!';
