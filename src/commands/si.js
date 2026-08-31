@@ -28,17 +28,14 @@ export const commands = [
         const regular = emojis.size - animated;
         const stickers = guild.stickers.cache.size;
 
-        let emojiSample = emojis.map(e => e.toString()).join(' ');
-        if (emojiSample.length > 300) emojiSample = emojiSample.substring(0, 300) + '...';
+        let emojiArr = emojis.map(e => e.toString());
+        let emojiSample = emojiArr.length > 25 ? emojiArr.slice(0, 25).join(' ') + ' ...' : emojiArr.join(' ');
 
         const boostLevel = guild.premiumTier;
         const boostCount = guild.premiumSubscriptionCount || 0;
         
-        const roles = guild.roles.cache.sort((a, b) => b.position - a.position)
-            .filter(r => r.id !== guild.id)
-            .map(r => r.toString())
-            .join(', ');
-        const roleSample = roles.length > 600 ? roles.substring(0, 600) + '...' : roles;
+        const roleArr = guild.roles.cache.sort((a, b) => b.position - a.position).filter(r => r.id !== guild.id).map(r => r.toString());
+        const roleSample = roleArr.length > 30 ? roleArr.slice(0, 30).join(', ') + ' ...' : roleArr.join(', ');
 
         const features = guild.features.map(f => f.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())).join(', ') || 'No special features.';
 
@@ -108,7 +105,7 @@ export const commands = [
 
         const c7 = buildContainer(
             'Boosts',
-            `**Boost Level :** Level ${boostLevel}\n**Boost count :** ${boostCount}\n**Boosters :** 0` // Discord.js v14 doesn't track boosters directly without fetching members
+            `**Boost Level :** Level ${boostLevel}\n**Boost count :** ${boostCount}\n**Boosters :** 0\n**Booster Role :** ${guild.roles.premiumSubscriberRole ? guild.roles.premiumSubscriberRole.toString() : 'None'}`
         );
 
         const c8 = buildContainer(
