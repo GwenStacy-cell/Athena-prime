@@ -99,7 +99,7 @@ export const commands = [
   // --- QUARANTINE COMMAND ---
   {
     name: 'quarantine',
-    description: 'Isolates a user Ã¢â‚¬â€ strips roles, moves to quarantine VC, DMs them. Default duration: 5m.',
+    description: 'Isolates a user - strips roles, moves to quarantine VC, DMs them. Default duration: 5m.',
     category: 'security',
     permissions: [PermissionFlagsBits.ModerateMembers],
     options: [
@@ -1763,7 +1763,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     if (context === 'auto') {
       logToSecurityChannel(guild, cv2.info(
         'Auto-Unquarantine',
-        `<@${targetMember.id}>'s quarantine duration expired Ã¢â‚¬â€ automatically released.`
+        `<@${targetMember.id}>'s quarantine duration expired - automatically released.`
       ));
     } else {
       logToSecurityChannel(guild, cv2.log(
