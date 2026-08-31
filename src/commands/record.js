@@ -56,8 +56,8 @@ export const commands = [
               {
                 type: 1,
                 components: [
-                  { type: 2, custom_id: 'record_stop', label: 'Stop & Export', style: 2 },
-                  { type: 2, custom_id: 'record_status', label: 'Check Status', style: 2 }
+                  { type: 2, custom_id: 'record_stop_' + targetGuild.id, label: 'Stop & Export', style: 2 },
+                  { type: 2, custom_id: 'record_status_' + targetGuild.id, label: 'Check Status', style: 2 }
                 ]
               },
               { type: 14, divider: true },

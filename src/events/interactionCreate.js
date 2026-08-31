@@ -602,7 +602,9 @@ if (interaction.customId === "modal_2fa_setup") {
 
 
       // RECORD BUTTONS
-      if (interaction.customId === 'record_stop') {
+      if (interaction.customId.startsWith('record_stop')) {
+          const targetGuildId = interaction.customId.split('_')[2] || interaction.guild?.id;
+          if (!targetGuildId) return interaction.reply({ content: 'Cannot determine target server.', ephemeral: true });
         const vc = interaction.member?.voice?.channel;
         const vcName = vc ? vc.name : 'Unknown Channel';
         const container = {
@@ -617,7 +619,7 @@ if (interaction.customId === "modal_2fa_setup") {
         
         try {
           const { stopRecording } = await import('../utils/audioRecorder.js');
-          const result = await stopRecording(interaction.guild.id);
+          const result = await stopRecording(targetGuildId);
             if (!result) {
              const emptyContainer = { type: 17, components: [{ type: 10, content: '-# No active recording found for this server.' }] };
              return interaction.message.edit({ components: [emptyContainer] });
@@ -634,9 +636,11 @@ if (interaction.customId === "modal_2fa_setup") {
         return;
       }
 
-      if (interaction.customId === 'record_status') {
+      if (interaction.customId.startsWith('record_status')) {
+          const targetGuildId = interaction.customId.split('_')[2] || interaction.guild?.id;
+          if (!targetGuildId) return interaction.reply({ content: 'Cannot determine target server.', ephemeral: true });
         const { getRecordingStatus } = await import('../utils/audioRecorder.js');
-        const isActive = getRecordingStatus(interaction.guild.id);
+        const isActive = getRecordingStatus(targetGuildId);
         const container = {
           type: 17,
           components: [
