@@ -3544,7 +3544,7 @@ export async function getAutoModPanel(guild) {
   const panelContainer = new ContainerBuilder();
 
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
-    `# AUTOMATED MODERATION & SECURITY MATRIX\n` +
+    `# AUTOMOD | HEURISTIC FILTERING & SECURITY MATRIX\n` +
     `**Athena Unbypassable !**`
   ));
 
