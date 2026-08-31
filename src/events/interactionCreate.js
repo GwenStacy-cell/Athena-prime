@@ -617,16 +617,16 @@ if (interaction.customId === "modal_2fa_setup") {
         
         try {
           const { stopRecording } = await import('../utils/audioRecorder.js');
-          const mp3Path = await stopRecording(interaction.guild.id);
-          if (!mp3Path) {
+          const result = await stopRecording(interaction.guild.id);
+            if (!result) {
              const emptyContainer = { type: 17, components: [{ type: 10, content: '-# No active recording found for this server.' }] };
              return interaction.message.edit({ components: [emptyContainer] });
           }
           const successContainer = { type: 17, components: [{ type: 10, content: '-# **Audio Export Successful!**' }] };
           await interaction.message.edit({ components: [successContainer] });
-          await interaction.followUp({ files: [mp3Path] });
-          const fs = await import('fs');
-          fs.unlink(mp3Path, () => {});
+          await interaction.followUp({ files: [result.mp3Path] });
+            const fs = await import('fs');
+            fs.unlink(result.mp3Path, () => {});
         } catch (err) {
           const errContainer = { type: 17, components: [{ type: 10, content: `-# **Recording Stopped:** ${err.message}` }] };
           await interaction.message.edit({ components: [errContainer] });
