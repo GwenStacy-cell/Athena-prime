@@ -1,4 +1,4 @@
-﻿import { PermissionFlagsBits } from 'discord.js';
+﻿import { PermissionFlagsBits, MessageFlags } from 'discord.js';
 import db from '../database.js';
 
 export const commands = [
@@ -121,9 +121,9 @@ export const commands = [
         );
 
         // Send first 5
-        await message.reply({ components: [c1, c2, c3, c4, c5], flags: 1 << 14 });
+        await message.reply({ components: [c1, c2, c3, c4, c5], flags: MessageFlags.IsComponentsV2 });
         // Send next 5
-        await message.channel.send({ components: [c6, c7, c8, c9, c10], flags: 1 << 14 });
+        await message.channel.send({ components: [c6, c7, c8, c9, c10], flags: MessageFlags.IsComponentsV2 });
     }
   }
 ];
