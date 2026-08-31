@@ -52,9 +52,17 @@ export const commands = [
                 comps.push({ type: 10, content: `### **${title}**` });
                 comps.push({ type: 14, divider: true });
             }
-            const section = { type: 9, components: [{ type: 10, content: text }] };
-            if (thumb) section.accessory = { type: 11, media: { url: thumb } };
-            comps.push(section);
+            
+            if (thumb) {
+                comps.push({ 
+                    type: 9, 
+                    components: [{ type: 10, content: text }],
+                    accessory: { type: 11, media: { url: thumb } }
+                });
+            } else {
+                const blockquoted = text.split('\n').map(l => '> ' + l).join('\n');
+                comps.push({ type: 10, content: blockquoted });
+            }
 
             if (footer) {
                 comps.push({ type: 14, divider: true });
