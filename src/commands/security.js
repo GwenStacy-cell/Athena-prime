@@ -3698,7 +3698,8 @@ export async function getGranularBypassPanel(guild, roleId) {
   const row3 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`bp_all_${roleId}`).setLabel('Bypass All').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`bp_reset_${roleId}`).setLabel('Reset All').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`bp_back`).setLabel('Back to Overview').setStyle(ButtonStyle.Secondary)
+    new ButtonBuilder().setCustomId(`bp_back`).setLabel('Back to Overview').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`bp_save_${roleId}`).setLabel('Save').setStyle(ButtonStyle.Success)
   );
 
   panelContainer.addActionRowComponents(row1, row2, row3);

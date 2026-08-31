@@ -1022,12 +1022,25 @@ async function handleSecurityInteractions(interaction, guild) {
           db.updateGuildConfig(guild.id, { automodBypasses: bypasses });
           updated = true;
         } else if (parts[1] === 'reset') {
-          targetRoleForBypass = parts[2];
-          const bypasses = config.automodBypasses || {};
-          bypasses[targetRoleForBypass] = [];
-          db.updateGuildConfig(guild.id, { automodBypasses: bypasses });
-          updated = true;
-        } else {
+            targetRoleForBypass = parts[2];
+            const bypasses = config.automodBypasses || {};
+            bypasses[targetRoleForBypass] = [];
+            db.updateGuildConfig(guild.id, { automodBypasses: bypasses });
+            updated = true;
+          } else if (parts[1] === 'save') {
+            targetRoleForBypass = parts[2];
+            const bypasses = config.automodBypasses || {};
+            const roleBypasses = bypasses[targetRoleForBypass] || [];
+            const filterStr = roleBypasses.length > 0 ? roleBypasses.join(', ') : 'None';
+            
+            await interaction.message.delete().catch(() => null);
+            
+            const { ContainerBuilder, TextDisplayBuilder, MessageFlags } = await import('discord.js');
+            const c = new ContainerBuilder().addTextDisplayComponents(
+              new TextDisplayBuilder().setContent(`> ${interaction.user} Has Bypass " ${filterStr} " For <@&${targetRoleForBypass}>`)
+            );
+            return interaction.channel.send({ components: [c], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+          } else {
           const filterName = parts[1];
           targetRoleForBypass = parts[2];
           const bypasses = config.automodBypasses || {};
