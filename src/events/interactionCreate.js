@@ -959,12 +959,33 @@ async function handleSecurityInteractions(interaction, guild) {
         db.updateGuildConfig(guild.id, updateData);
         updated = true;
       }
+      else if (customId === 'am_tgl_selfbot') {
+        const config = db.getGuildConfig(guildId);
+        const current = config.selfbotDetectionEnabled !== false;
+        db.updateGuildConfig(guildId, { selfbotDetectionEnabled: !current });
+        const { getAutoModPanel } = await import('../commands/security.js');
+        const newPanel = await getAutoModPanel(guild);
+        return interaction.update(newPanel).catch(() => null);
+      }
       else if (customId === 'am_tgl_global_invites') {
+        const config = db.getGuildConfig(guildId);
         const newVal = !config.allowInvitesGlobally;
         const updateData = { allowInvitesGlobally: newVal };
         if (newVal) updateData.antiInviteEnabled = false;
         db.updateGuildConfig(guild.id, updateData);
-        updated = true;
+        const { getAutoModPanel } = await import('../commands/security.js');
+        const newPanel = await getAutoModPanel(guild);
+        return interaction.update(newPanel).catch(() => null);
+      }
+      else if (customId === 'am_channel_configs') {
+        const { getChannelConfigPanel } = await import('../commands/security.js');
+        const newPanel = await getChannelConfigPanel(guild);
+        return interaction.update(newPanel).catch(() => null);
+      }
+      else if (customId === 'am_back_to_main') {
+        const { getAutoModPanel } = await import('../commands/security.js');
+        const newPanel = await getAutoModPanel(guild);
+        return interaction.update(newPanel).catch(() => null);
       }
       else if (customId === 'am_timeout_cycle') {
         const current = config.honeypotTimeoutMinutes || 15;
