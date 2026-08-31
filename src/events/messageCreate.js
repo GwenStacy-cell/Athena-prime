@@ -1092,6 +1092,17 @@ export default {
          }
       }
 
+      // 2.7 SELFBOT DETECTION
+      if (dbConfig.selfbotDetectionEnabled !== false && !checkBypass('Selfbot Detection')) {
+         if (!message.author.bot && message.embeds.length > 0) {
+            // Check if any embed is a "rich" embed (which standard users cannot send natively)
+            if (message.embeds.some(e => e.type === 'rich')) {
+               message.delete().catch(() => null);
+               return applyWarning(message, "Selfbot Detection", "Illegal Automated Rich Embed Generation");
+            }
+         }
+      }
+
       // 3. ANTI-SPAM & ANTI FLOOD
       if (config.antiSpam.enabled && (dbConfig.antiSpamEnabled !== false || dbConfig.antiFloodEnabled !== false) && !checkBypass('Spam Filter', hasAntiSpamImmunity) && !checkBypass('Anti Flood', hasAntiSpamImmunity)) {
         const now = Date.now();

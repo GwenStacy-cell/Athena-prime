@@ -3558,6 +3558,7 @@ export async function getAutoModPanel(guild) {
     `-# **${DOT} Phishing & Scams**\n` +
     `-# **${DOT} Anti-Profanity / Blacklisted Words**\n` +
     `-# **${DOT} Big Fonts (Anti Full Caps)**\n` +
+    `-# **${DOT} Selfbot Detection (Rich Embeds)**\n` +
     `-# **${DOT} Escalating Punishments**\n` +
     `-# **${DOT} Max Warnings Count Set**`
   ));
@@ -3572,6 +3573,7 @@ export async function getAutoModPanel(guild) {
     `-# **| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Word Filter:** ${wordFilterOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Big Fonts:** ${bigFontsOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Selfbot Detection:** ${config.selfbotDetectionEnabled !== false ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Hidden URL Filter:** ${hiddenUrlOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| File Check Filter:** ${fileCheckOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Allow All Links (Global):** ${config.allowAllLinks ? TOGGLE_ON : TOGGLE_OFF}\n` +
