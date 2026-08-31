@@ -460,7 +460,7 @@ export default {
                  .setColor('#2b2d31') // Typical aesthetic dark theme accent, or fallback to default
                  .setTitle('LOG: MALICIOUS SCAM IMAGE DELETED')
                  .setDescription(`**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted a fraudulent image containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).`)
-                 .addFields([{ name: 'Channel', value: `[${message.channel.name}](https://discord.com/channels/${guildId}/${message.channel.id})` }])
+                 .addFields([{ name: 'Channel', value: `[${message.channel.name.replace(/[^\p{L}\p{N}\s\-_|]/gu, '').replace(/^[\s\-_|]+/, '').trim() || 'channel'}](https://discord.com/channels/${guildId}/${message.channel.id})` }])
                  .setFooter({ text: 'Athena Prime Killer' })
                  .setTimestamp();
                
@@ -937,7 +937,7 @@ export default {
             [
               { name: 'Tagger', value: `[${message.author.tag}](https://discord.com/users/${userId})`, inline: true },
               { name: 'Server', value: `${message.guild.name}`, inline: true },
-              { name: 'Channel', value: `[${message.channel.name}](https://discord.com/channels/${guildId}/${message.channel.id})`, inline: true },
+              { name: 'Channel', value: `[${message.channel.name.replace(/[^\p{L}\p{N}\s\-_|]/gu, '').replace(/^[\s\-_|]+/, '').trim() || 'channel'}](https://discord.com/channels/${guildId}/${message.channel.id})`, inline: true },
               { name: 'Message Link', value: `[Jump to Message](https://discord.com/channels/${guildId}/${message.channel.id}/${message.id})` }
             ]
           );
