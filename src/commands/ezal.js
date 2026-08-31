@@ -536,12 +536,19 @@ async function handleEhelp(message) {
         '`ezal restoresetup <serverId>` - Dynamically restore JTC, Welcome, Leave, Accent, and Quarantine setups'
     },
     {
-      name: 'Spam Access Control',
-      value:
-        '`ezal spampermit <userId>` — Grant a user spam command access\n' +
-        '`ezal spamrevoke <userId>` — Revoke spam command access\n' +
-        '`ezal spamlist` — List all permitted spammers'
-    },
+        name: 'Spam Access Control',
+        value:
+          '`ezal spampermit <userId>` - Grant a user spam command access\n' +
+          '`ezal spamrevoke <userId>` - Revoke spam command access\n' +
+          '`ezal spamlist` - List all permitted spammers'
+      },
+      {
+        name: 'Global Voice Control',
+        value:
+          '`!botvoice <action> [all]` - Control bot mute/deaf state (mute, unmute, deafen, undeafen, active, idle, music)\n' +
+          '`!botvoice save` - Memorizes current voice states across ALL servers globally\n' +
+          '`!botvoice restore` - Reverts all servers globally back to their memorized states'
+      },
     {
       name: 'Access',
       value:
