@@ -3610,7 +3610,7 @@ export async function getAutoModPanel(guild) {
     new ButtonBuilder().setCustomId('am_tgl_hiddenurl').setLabel('Hidden URLs').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('am_tgl_filecheck').setLabel('File Check').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('am_tgl_selfbot').setLabel('Selfbot Detection').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('am_advanced_configs').setLabel('⚙️ Advanced Settings').setStyle(ButtonStyle.Primary)
+    new ButtonBuilder().setCustomId('am_advanced_configs').setLabel('Link & Invite Toggles').setStyle(ButtonStyle.Secondary)
   );
 
   const row3 = new ActionRowBuilder().addComponents(
@@ -3738,7 +3738,7 @@ export async function getAdvancedConfigPanel(guild) {
       new ButtonBuilder().setCustomId('am_tgl_global_invites').setLabel('Global Invites').setStyle(ButtonStyle.Secondary)
   );
   const row2 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('am_back_to_main').setLabel('Back to Automod').setStyle(ButtonStyle.Primary)
+      new ButtonBuilder().setCustomId('am_back_to_main').setLabel('Back to Automod').setStyle(ButtonStyle.Secondary)
   );
   
   c.addActionRowComponents(row1, row2);
