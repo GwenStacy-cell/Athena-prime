@@ -3521,8 +3521,8 @@ export async function getAutoModPanel(guild) {
   const bigFontsOn = config.bigFontsEnabled !== false;
   const antiFloodOn = config.antiFloodEnabled !== false;
   const spamMentionOn = config.antiSpamMentionEnabled;
-  const allowAllOn = config.allowAllLinks === true;
-  const globalInvOn = config.allowInvitesGlobally === true;
+  const hiddenUrlOn = config.hiddenUrlEnabled !== false;
+  const fileCheckOn = config.fileCheckEnabled !== false;
 
   const honeypotChannel = config.honeypotChannelId ? `<#${config.honeypotChannelId}>` : 'None';
   const honeypotTimeout = config.honeypotTimeoutMinutes || 15;
@@ -3574,8 +3574,8 @@ export async function getAutoModPanel(guild) {
     `-# **| Anti-Invite Engine:** ${antiInviteOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Word Filter:** ${wordFilterOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Big Fonts:** ${bigFontsOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
-    `-# **| Allow All Links (Global):** ${allowAllOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
-    `-# **| Allow Invites (Global):** ${globalInvOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| Hidden URL Filter:** ${hiddenUrlOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
+    `-# **| File Check Filter:** ${fileCheckOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Max Warnings Threshold:** ${config.maxWarnings || 3} (Use \`!maxwarnings <number>\` to modify)\n` +
     `-# **| Honeypot Timeout:** ${honeypotTimeout}m`
   ));
@@ -3604,8 +3604,8 @@ export async function getAutoModPanel(guild) {
 
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('am_tgl_fonts').setLabel('Big Fonts').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('am_tgl_global_links').setLabel('Allow ALL Links').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('am_tgl_global_invites').setLabel('Global Invites').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('am_tgl_hiddenurl').setLabel('Hidden URLs').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('am_tgl_filecheck').setLabel('File Check').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('am_timeout_cycle').setLabel(`Honeypot Timeout: ${honeypotTimeout}m`).setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('am_save').setLabel('Save').setStyle(ButtonStyle.Success)
   );

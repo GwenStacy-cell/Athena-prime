@@ -1012,7 +1012,7 @@ export default {
       }
 
       // 1.6 HIDDEN URL FILTER
-      if (!checkBypass('Hidden URL Filter')) {
+      if (dbConfig.hiddenUrlEnabled !== false && !checkBypass('Hidden URL Filter')) {
         const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/gi;
         let match;
         while ((match = mdLinkRegex.exec(message.content)) !== null) {
@@ -1030,7 +1030,7 @@ export default {
       }
 
       // 1.7 FILE CHECK
-      if (!checkBypass('File Check')) {
+      if (dbConfig.fileCheckEnabled !== false && !checkBypass('File Check')) {
          if (message.attachments.size > 0) {
             const forbiddenExts = ['.exe', '.bat', '.cmd', '.scr', '.vbs', '.js', '.zip', '.rar', '.tar', '.gz'];
             for (const [id, attachment] of message.attachments) {
