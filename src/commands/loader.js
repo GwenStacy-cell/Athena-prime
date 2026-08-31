@@ -1,4 +1,3 @@
-import { commands as remoteCmds } from './remote.js';
 import { commands as botvoiceCmds } from './botvoice.js';
 import { commands as moderationCmds } from './moderation.js';
 import { commands as securityCmds } from './security.js';
@@ -59,7 +58,6 @@ import { commands as renameCmds } from './rename.js';
 import { commands as botgrowthCmds } from './botgrowth.js';
 
 export const allCommands = [
-  ...remoteCmds,
   ...botvoiceCmds,
   ...npCmds,
   ...renameCmds,
