@@ -957,7 +957,7 @@ export default {
             db.clearWarnings(guildId, userId);
             
                         const c = new ContainerBuilder();
-            const textContent = `> Reason: . ${message.author} , **Maximum Warnings Exceeded**\n> \u2800\u2800\u2800\u2800\u2570\u203A has been automatically quarantined. ${qRes.message || ''}`;
+            const textContent = `-# > Reason: . [${message.author.username}](https://discord.com/users/${message.author.id}) , **Maximum Warnings Exceeded**\n-# > \u2800\u2800\u2800\u2800\u2570\u203A has been automatically quarantined. ${qRes.message || ''}`;
             const section = new SectionBuilder()
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(`**Security Quarantine | <:ticks:1533860039213842565>**`),
@@ -968,7 +968,7 @@ export default {
             await message.channel.send({ components: [c], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
           } else {
                         const c = new ContainerBuilder();
-            const textContent = `> Reason: . ${message.author} , **${actionStr}**\n> \u2800\u2800\u2800\u2800\u2570\u203A has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`;
+            const textContent = `-# > Reason: . [${message.author.username}](https://discord.com/users/${message.author.id}) , **${actionStr}**\n-# > \u2800\u2800\u2800\u2800\u2570\u203A has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`;
             const section = new SectionBuilder()
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(`**${headingStr} | <:ticks:1533860039213842565>**`),
