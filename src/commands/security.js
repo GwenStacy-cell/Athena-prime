@@ -3719,3 +3719,36 @@ export async function executeInterceptedAction(interaction) {
   }
   return interaction.reply({ content: "No pending action found.", flags: MessageFlags.Ephemeral });
 }
+
+export async function getChannelConfigPanel(guild) {
+  const db = (await import('../database.js')).default;
+  const config = db.getGuildConfig(guild.id);
+  const inviteChannel = config.inviteAllowedChannel ? `<#${config.inviteAllowedChannel}>` : 'None';
+  const honeypotChannel = config.honeypotChannelId ? `<#${config.honeypotChannelId}>` : 'None';
+  
+  const c = new ContainerBuilder();
+  c.addTextDisplayComponents(new TextDisplayBuilder().setContent(
+    `# AUTOMOD | CHANNEL CONFIGURATIONS\n` +
+    `-# **| Invite Allowed Channel:** ${inviteChannel}\n` +
+    `-# **| Honeypot Trap Channel:** ${honeypotChannel}`
+  ));
+  
+  const row1 = new ActionRowBuilder().addComponents(
+      new ChannelSelectMenuBuilder()
+        .setCustomId('am_select_invite_channel')
+        .setPlaceholder('Select Invite Allowed Channel...')
+        .setChannelTypes(ChannelType.GuildText)
+  );
+  const row2 = new ActionRowBuilder().addComponents(
+      new ChannelSelectMenuBuilder()
+        .setCustomId('am_select_honeypot_channel')
+        .setPlaceholder('Select Honeypot Trap Channel...')
+        .setChannelTypes(ChannelType.GuildText)
+  );
+  const row3 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('am_back_to_main').setLabel('Back to Automod').setStyle(ButtonStyle.Primary)
+  );
+  
+  c.addActionRowComponents(row1, row2, row3);
+  return { components: [c], flags: MessageFlags.IsComponentsV2 };
+}

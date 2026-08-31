@@ -981,7 +981,8 @@ async function handleSecurityInteractions(interaction, guild) {
       }
       else if (customId === 'am_select_invite_channel') {
         db.updateGuildConfig(guild.id, { inviteAllowedChannel: interaction.values[0] });
-        updated = true;
+        const { getChannelConfigPanel } = await import('../commands/security.js');
+        return interaction.update(await getChannelConfigPanel(guild)).catch(() => null);
       }
       else if (customId === 'am_select_honeypot_channel') {
         const channelId = interaction.values[0];
