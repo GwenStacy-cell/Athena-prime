@@ -3507,7 +3507,7 @@ const allMembers = guild.members.cache;
 export async function getAutoModPanel(guild) {
   const db = (await import('../database.js')).default;
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, RoleSelectMenuBuilder, ChannelType, MessageFlags } = await import('discord.js');
-  const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder } = await import('../cv2.js');
+  const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder } = await import('discord.js');
 
   const config = db.getGuildConfig(guild.id);
   
@@ -3640,7 +3640,7 @@ export async function getAutoModPanel(guild) {
 export async function getGranularBypassPanel(guild, roleId) {
   const db = (await import('../database.js')).default;
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = await import('discord.js');
-  const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder } = await import('../cv2.js');
+  const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder } = await import('discord.js');
 
   const config = db.getGuildConfig(guild.id);
   const bypasses = config.automodBypasses || {};

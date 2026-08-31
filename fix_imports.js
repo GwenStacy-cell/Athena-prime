@@ -1,14 +1,9 @@
-import fs from 'fs';
-let code = fs.readFileSync('src/events/interactionCreate.js', 'utf8');
+﻿import fs from "fs";
+let text = fs.readFileSync("src/commands/security.js", "utf8");
 
-code = code.replace(
-  "import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags } from 'discord.js';",
-  "import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';"
+text = text.replace(
+    /const \{ ContainerBuilder, TextDisplayBuilder, SeparatorBuilder \} = await import\('\.\.\/cv2\.js'\);/g,
+    "const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder } = await import('discord.js');"
 );
 
-// We should also make sure gw_manage_select handles safely in the main block.
-// Is gw_manage_select caught in the root condition?
-// interaction.customId.startsWith('gw_manage_') will catch 'gw_manage_select'!
-
-fs.writeFileSync('src/events/interactionCreate.js', code);
-console.log("Fixed imports");
+fs.writeFileSync("src/commands/security.js", text);
