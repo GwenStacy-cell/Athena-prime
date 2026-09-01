@@ -2387,7 +2387,7 @@ export async function getAntinukeConfigPanel(guild) {
 
   const blacklistState = config.blacklistWords && config.blacklistWords.length > 0;
   const spamState = config.antiSpamEnabled;
-  const inviteState = config.antiInviteEnabled !== false;
+  const inviteState = config.antiInviteEnabled === true;
   const nukeState = config.antiNukeEnabled;
 
   const emojiOn = '<:on:1533844867191406672>'; 
