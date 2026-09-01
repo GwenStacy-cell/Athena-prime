@@ -77,6 +77,10 @@ process.on('unhandledRejection', (error) => {
 });
 
 process.on('uncaughtException', (error) => {
+  if (error && error.message && error.message.includes('Unexpected server response: 5')) {
+    // Silence harmless Discord Voice API Cloudflare timeouts
+    return;
+  }
   console.error(chalk.red.bold('Uncaught Exception:'), error);
 });
 
