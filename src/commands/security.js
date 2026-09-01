@@ -2842,11 +2842,12 @@ export async function getSecurityStatusPanel(guild) {
     listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 
-  const headerSection = { type: 10, content: `# SECURITY FIREWALL STATUS\n` +
-          `-# **Global Status:** ${isSecured ? 'God-Tier Firewall ACTIVE' : 'Offline \u2014 Unprotected'}\n` +
-          `-# **Strike Engine:** ${isSecured ? 'Raw API \u2014 ~1-3ms elimination' : 'Disabled'}\n` +
-          `-# **Predictive Layer:** ${isSecured ? 'Online \u2014 Behavioral scanning active' : 'Disabled'}`
-     };
+  const headerSection = { type: 10, content: 
+      "-# **SECURITY FIREWALL STATUS**\n" +
+      "-# Global Status: " + (isSecured ? "**God-Tier Firewall ACTIVE**" : "Offline \u2014 Unprotected") + "\n" +
+      "-# Strike Velocity: " + (isSecured ? "Ludicrously fast \u2014 **1-3ms execution**" : "Disabled") + "\n" +
+      "-# Predictive Layer: " + (isSecured ? "Online \u2014 **Behavioral scanning active**" : "Disabled")
+    };
   
 
   const container = {
