@@ -53,7 +53,13 @@ export default {
     // ==========================================
     // 2. MODALS
     // ==========================================
+    
     if (interaction.isModalSubmit()) {
+      if (interaction.customId.startsWith('welc_modal_') || interaction.customId.startsWith('leav_modal_')) {
+        const { handleWelcomeManagerModal } = await import('../commands/welcome.js');
+        return handleWelcomeManagerModal(interaction);
+      }
+
       if (interaction.customId.startsWith('modal_honeypot_')) {
         const channelId = interaction.customId.replace('modal_honeypot_', '');
         const bannerUrl = interaction.fields.getTextInputValue('banner_url') || null;
@@ -273,7 +279,14 @@ if (interaction.customId === "modal_2fa_setup") {
       }
     }
 
+    
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
+      if (interaction.customId.startsWith('welcmgr_') || interaction.customId.startsWith('leavmgr_')) {
+        const { handleWelcomeManagerButton, handleWelcomeManagerMenu } = await import('../commands/welcome.js');
+        if (interaction.isButton()) return handleWelcomeManagerButton(interaction);
+        if (interaction.isAnySelectMenu()) return handleWelcomeManagerMenu(interaction);
+      }
+
         if (interaction.customId.startsWith('accent_') && !interaction.isModalSubmit()) {
           const { handleAccentButton } = await import('../commands/accent.js');
           return handleAccentButton(interaction);
