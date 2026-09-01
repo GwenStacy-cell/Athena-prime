@@ -515,8 +515,8 @@ async function getStatusEmbed(client, guild) {
   const uptimeMs = Date.now() - (client.bootTimestamp || Date.now());
   const apiMs = Math.round(client.ws.ping);
 
-  const onEmoji = '<:on:1514996865030946847>';
-  const offEmoji = '<:off:1514996861474177109>';
+  const onEmoji = '<:on:1533844867191406672>';
+  const offEmoji = '<:off:1533844858983157851>';
   
   const getStatusText = (isEnabled) => isEnabled ? `${onEmoji} **ENABLED**` : `${offEmoji} **DISABLED**`;
 

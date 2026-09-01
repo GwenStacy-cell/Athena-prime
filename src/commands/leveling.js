@@ -11,7 +11,7 @@ export async function buildXpDashboard(guildId) {
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle, RoleSelectMenuBuilder } = await import('discord.js');
   const system = db.getXpSystem(guildId);
 
-  const ON_EMOJI = '<a:on:1533844867191406672>';
+  const ON_EMOJI = '<:on:1533844867191406672>';
   const OFF_EMOJI = '<:off:1533844858983157851>';
   const statusIcon = system.enabled ? ON_EMOJI : OFF_EMOJI;
 

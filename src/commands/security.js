@@ -21,8 +21,8 @@ import { setupDashboardChannel } from '../utils/dashboardManager.js';
 import { StringSelectMenuBuilder, UserSelectMenuBuilder, RoleSelectMenuBuilder, ChannelSelectMenuBuilder } from 'discord.js';
 
 // Toggle emoji constants Ã¢â‚¬â€ used throughout all security/config embeds
-const TOGGLE_ON  = '<:on:1514996865030946847>';
-const TOGGLE_OFF = '<:off:1514996861474177109>';
+const TOGGLE_ON  = '<:on:1533844867191406672>';
+const TOGGLE_OFF = '<:off:1533844858983157851>';
 
 // ==========================================
 // AUTO-UNQUARANTINE TIMER MAP
@@ -2083,8 +2083,8 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     antiInvite: 'Anti Invite (Danger)'
   };
 
-  const emojiOn = '<:on:1514996865030946847>'; 
-  const emojiOff = '<:off:1514996861474177109>'; 
+  const emojiOn = '<:on:1533844867191406672>'; 
+  const emojiOff = '<:off:1533844858983157851>'; 
   
   const modulesKeys = Object.keys(modLabels);
   
@@ -2119,7 +2119,7 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
       return {
         label: modLabels[k],
         value: k,
-        emoji: isEnabled ? { id: '1514996865030946847' } : { id: '1514996861474177109' }
+        emoji: isEnabled ? { id: '1533844867191406672' } : { id: '1533844858983157851' }
       };
     }).slice(0, 25);
 
@@ -2390,8 +2390,8 @@ export async function getAntinukeConfigPanel(guild) {
   const inviteState = config.antiInviteEnabled !== false;
   const nukeState = config.antiNukeEnabled;
 
-  const emojiOn = '<:on:1514996865030946847>'; 
-  const emojiOff = '<:off:1514996861474177109>'; 
+  const emojiOn = '<:on:1533844867191406672>'; 
+  const emojiOff = '<:off:1533844858983157851>'; 
 
   const description = 
     `# MODULE CONFIGURATION\n` +
@@ -2411,17 +2411,17 @@ export async function getAntinukeConfigPanel(guild) {
     new ButtonBuilder()
       .setCustomId('toggle_antinuke')
       .setLabel(`Anti-Nuke ${nukeState ? 'ON' : 'OFF'}`)
-      .setEmoji(nukeState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
+      .setEmoji(nukeState ? { id: '1533844867191406672' } : { id: '1533844858983157851' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_spam')
       .setLabel(`Anti-Spam ${spamState ? 'ON' : 'OFF'}`)
-      .setEmoji(spamState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
+      .setEmoji(spamState ? { id: '1533844867191406672' } : { id: '1533844858983157851' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('toggle_invite')
       .setLabel(`Anti-Invite ${inviteState ? 'ON' : 'OFF'}`)
-      .setEmoji(inviteState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
+      .setEmoji(inviteState ? { id: '1533844867191406672' } : { id: '1533844858983157851' })
       .setStyle(ButtonStyle.Secondary)
   );
 
@@ -2429,7 +2429,7 @@ export async function getAntinukeConfigPanel(guild) {
     new ButtonBuilder()
       .setCustomId('toggle_blacklist_filter')
       .setLabel(`Word Filter ${blacklistState ? 'ON' : 'OFF'}`)
-      .setEmoji(blacklistState ? { id: '1514996865030946847' } : { id: '1514996861474177109' })
+      .setEmoji(blacklistState ? { id: '1533844867191406672' } : { id: '1533844858983157851' })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('cycle_punishment')
@@ -2480,11 +2480,11 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 
   const resEmbed = enable
     ? cv2.success(
-        '<:on:1514996865030946847> God-Tier Firewall - Fully Operational',
-        `<:on:1514996865030946847> **Firewall Layer:** Raw API Strike Engine Active
-<:on:1514996865030946847> **Predictive Layer:** Behavioral Pattern Detection Online
-<:on:1514996865030946847> **Restoration Layer:** Zero-Latency Channel & Role Recovery
-<:on:1514996865030946847> **Condemned Cache:** Instant nuker skip-to-restoration active
+        '<:on:1533844867191406672> God-Tier Firewall - Fully Operational',
+        `<:on:1533844867191406672> **Firewall Layer:** Raw API Strike Engine Active
+<:on:1533844867191406672> **Predictive Layer:** Behavioral Pattern Detection Online
+<:on:1533844867191406672> **Restoration Layer:** Zero-Latency Channel & Role Recovery
+<:on:1533844867191406672> **Condemned Cache:** Instant nuker skip-to-restoration active
 
 *Athena Prime's firewall now operates at raw HTTP speed. Nuke bots are eliminated in ~1-3 milliseconds via a direct Discord API strike. Predictive quarantine intercepts suspicious admins before they can cause structural damage. Unauthorized channels are instantly deleted, deleted channels are instantly restored.*
 
@@ -2832,8 +2832,8 @@ export async function getSecurityStatusPanel(guild) {
     antiAppCommands: 'Anti App Commands'
   };
 
-  const emojiOn  = '<:on:1514996865030946847>';
-  const emojiOff = '<:off:1514996861474177109>';
+  const emojiOn  = '<:on:1533844867191406672>';
+  const emojiOff = '<:off:1533844858983157851>';
 
   let listText = '';
   for (const k of Object.keys(modLabels)) {
@@ -3515,8 +3515,8 @@ export async function getAutoModPanel(guild) {
   const fileCheckOn = config.fileCheckEnabled !== false;
   const selfbotOn = config.selfbotDetectionEnabled !== false;
   
-  const TOGGLE_ON = '<:on:1514996865030946847>';
-  const TOGGLE_OFF = '<:off:1514996861474177109>';
+  const TOGGLE_ON = '<:on:1533844867191406672>';
+  const TOGGLE_OFF = '<:off:1533844858983157851>';
   const DOT = '•';
   const E_CLOCK = '🕒';
 
@@ -3650,8 +3650,8 @@ export async function getGranularBypassPanel(guild, roleId) {
 
   const checkBypass = (key) => roleBypasses.includes(key);
 
-  const E_GREEN = '<:on:1514996865030946847>'; 
-  const E_RED = '<:off:1514996861474177109>'; 
+  const E_GREEN = '<:on:1533844867191406672>'; 
+  const E_RED = '<:off:1533844858983157851>'; 
   const E_CLOCK = '⏰'; 
 
   const status = (key) => checkBypass(key) ? `${E_GREEN} **${key}:** Bypassed` : `${E_RED} **${key}:** Enforced`;
@@ -3729,8 +3729,8 @@ export async function getAdvancedConfigPanel(guild) {
   const c = new ContainerBuilder();
   c.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `# AUTOMOD | ADVANCED GLOBAL SETTINGS\n` +
-    `-# **| Allow All Links (Global):** ${config.allowAllLinks ? '<:on:1514996865030946847>' : '<:off:1514996861474177109>'}\n` +
-    `-# **| Allow Invites (Global):** ${config.allowInvitesGlobally ? '<:on:1514996865030946847>' : '<:off:1514996861474177109>'}`
+    `-# **| Allow All Links (Global):** ${config.allowAllLinks ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}\n` +
+    `-# **| Allow Invites (Global):** ${config.allowInvitesGlobally ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}`
   ));
   
   const row1 = new ActionRowBuilder().addComponents(

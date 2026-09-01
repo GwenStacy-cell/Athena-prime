@@ -22,14 +22,14 @@ async function handleServerLogs(guild, subcommand, args) {
       const modCfg = sl.modules[mod.id];
       const hasRoute = modCfg.channelId || sl.defaultChannelId;
       const actuallyEnabled = modCfg.enabled && hasRoute;
-      const statusStr = actuallyEnabled ? '<a:on:1533844867191406672> **Enabled**' : '<:off:1533844858983157851> **Disabled**';
+      const statusStr = actuallyEnabled ? '<:on:1533844867191406672> **Enabled**' : '<:off:1533844858983157851> **Disabled**';
       const channelStr = modCfg.channelId ? `<#${modCfg.channelId}>` : (sl.defaultChannelId ? `<#${sl.defaultChannelId}> (Fallback)` : '`None`');
       return { name: mod.name, value: `${statusStr}\nRoute: ${channelStr}`, inline: true };
     });
 
     fields.unshift({
       name: 'Global Settings',
-      value: `Master Switch: ${sl.enabled ? '<a:on:1533844867191406672>' : '<:off:1533844858983157851>'}\nDefault Fallback Channel: ${sl.defaultChannelId ? `<#${sl.defaultChannelId}>` : '`None`'}`
+      value: `Master Switch: ${sl.enabled ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}\nDefault Fallback Channel: ${sl.defaultChannelId ? `<#${sl.defaultChannelId}>` : '`None`'}`
     });
 
     return cv2.info('Server Logs Dashboard', 'Configure advanced server logging. Use `/serverlogs bind` to route events to specific channels.', fields);
