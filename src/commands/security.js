@@ -3224,6 +3224,16 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
         }
         return ""; 
     });
+    await runStep("Setting Up Athena's Dashboard", async () => { 
+        const existing = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
+        const { setupDashboardChannel } = await import("../utils/dashboardManager.js");
+        await setupDashboardChannel(guild, guild.client);
+        if (existing) {
+           return `\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Previous athena's dashboard found !!!`;
+        } else {
+           return `\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Athena's Dashboard created !!!`;
+        }
+    });
     await runStep("Establishing Gmail Connectors", async () => { return ""; });
     await runStep("Ready for connection", async () => { return ""; });
     await runStep("Setup Success", async () => { return ""; });
