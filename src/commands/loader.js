@@ -38,6 +38,7 @@ import { commands as rateCmds } from './rate.js';
 import { commands as rateLeaderboardCmds } from './rateleaderboard.js';
 import adelCmds from './adel.js';
 import { commands as botstatsCmds } from './botstats.js';
+import uploadCmd from './upload.js';
 import { commands as recordCmds } from './record.js';
 import { commands as dateCmds } from './date.js';
 import { commands as topCmds } from './top.js';
@@ -117,7 +118,8 @@ export const allCommands = [
   ...setDeleteLogCmds,
   ...rateLeaderboardCmds,
   ...adelCmds,
-  ...botstatsCmds
+  ...botstatsCmds,
+  uploadCmd
 ];
 
 export const commandMap = new Map();
