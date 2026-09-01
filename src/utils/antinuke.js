@@ -502,8 +502,7 @@ export async function handleAuditLogEntry(guild, entry) {
   let forceBan = false;
 
   switch (action) {
-    // ── BOT ADD — Double ban ──────────────────────────────────────────
-    case AuditLogEvent.BotAdd: {
+    case AuditLogEvent.BotAdd:
       if (!mods.antiBotAdd) return;
       if (!isAuthorized(guild, executor, 'antibot')) {
         if (targetId !== guild.client.user.id) {
@@ -513,10 +512,8 @@ export async function handleAuditLogEntry(guild, entry) {
         forceBan = true;
       } else return;
       break;
-    }
 
-    // ── UNBAN GUARD ───────────────────────────────────────────────────
-    case AuditLogEvent.MemberUnban: {
+    case AuditLogEvent.MemberUnban:
       if (!mods.antiUnban) return;
       const recentBan = recentBans.get(`${guild.id}:${targetId}`);
       if (recentBan) {
@@ -525,41 +522,106 @@ export async function handleAuditLogEntry(guild, entry) {
         forceBan = true;
       } else return;
       break;
-    }
 
-    // ── ROLE PERMISSION ESCALATION ────────────────────────────────────
-    case AuditLogEvent.RoleUpdate: {
-      if (!mods.antiRolePermUpdate && !mods.antiRoleUpdate) return;
-      const permsChange = entry.changes?.find(c => c.key === 'permissions');
-      if (!permsChange) return;
-      const oldPerms = new PermissionsBitField(BigInt(permsChange.old || 0));
-      const newPerms = new PermissionsBitField(BigInt(permsChange.new || 0));
-      if (!DANGEROUS_PERMS.some(p => !oldPerms.has(p) && newPerms.has(p))) return;
-      eventType = 'Role Permission Escalation';
-      forceBan = true;
+    case AuditLogEvent.RoleUpdate:
+      const pChange = entry.changes?.find(c => c.key === 'permissions');
+      const nChange = entry.changes?.find(c => c.key === 'name');
+      const posChange = entry.changes?.find(c => c.key === 'position');
+      
+      if (pChange && (mods.antiRolePermUpdate || mods.antiRoleUpdate)) {
+        const oldPerms = new PermissionsBitField(BigInt(pChange.old || 0));
+        const newPerms = new PermissionsBitField(BigInt(pChange.new || 0));
+        if (DANGEROUS_PERMS.some(p => !oldPerms.has(p) && newPerms.has(p))) {
+          eventType = 'Role Permission Escalation';
+          forceBan = true;
+        }
+      } else if (nChange && mods.antiRoleUpdate) {
+        eventType = 'Role Name Modification';
+      } else if (posChange && mods.antiRoleReorder) {
+        eventType = 'Role Reorder / Hierarchy Tampering';
+      }
       break;
-    }
 
-    // ── UNAUTHORIZED DANGEROUS ROLE GRANT ─────────────────────────────
-    case AuditLogEvent.MemberRoleUpdate: {
+    case AuditLogEvent.MemberRoleUpdate:
       if (!mods.antiMemberRoleUpdate) return;
       const rolesChange = entry.changes?.find(c => c.key === '$add');
-      if (!rolesChange?.new?.length) return;
-      const dangerous = rolesChange.new.some(rObj => {
-        const r = guild.roles.cache.get(rObj.id);
-        return r && hasDangerousPerms(r.permissions);
-      });
-      if (!dangerous) return;
-      eventType = 'Unauthorized Dangerous Role Grant';
-      forceBan = true;
+      if (rolesChange?.new?.length) {
+        const dangerous = rolesChange.new.some(rObj => {
+          const r = guild.roles.cache.get(rObj.id);
+          return r && hasDangerousPerms(r.permissions);
+        });
+        if (dangerous) {
+          eventType = 'Unauthorized Dangerous Role Grant';
+          forceBan = true;
+        }
+      }
       break;
-    }
 
-    // ── SERVER SETTINGS TAMPERING ─────────────────────────────────────
     case AuditLogEvent.GuildUpdate:
       if (!mods.antiServerUpdate) return;
       eventType = 'Server Settings Tampering';
       forceBan = true;
+      break;
+
+    case AuditLogEvent.ChannelUpdate:
+      const cpChange = entry.changes?.find(c => c.key === 'permission_overwrites');
+      const cnChange = entry.changes?.find(c => c.key === 'name');
+      const cposChange = entry.changes?.find(c => c.key === 'position');
+      
+      if (cpChange && (mods.antiChannelPermUpdate || mods.antiChannelUpdate)) {
+        eventType = 'Channel Permission Tampering';
+      } else if (cnChange && (mods.antiChannelNameMod || mods.antiChannelUpdate)) {
+        eventType = 'Channel Name Modification';
+      } else if (cposChange && (mods.antiChannelReorder || mods.antiChannelUpdate)) {
+        eventType = 'Channel Reorder / Tampering';
+      } else if (mods.antiChannelUpdate) {
+        eventType = 'Channel Settings Tampering';
+      }
+      break;
+
+    case AuditLogEvent.EmojiUpdate:
+      if (!mods.antiEmojiUpdate) return;
+      eventType = 'Emoji Modification';
+      break;
+
+    case AuditLogEvent.InviteCreate:
+    case AuditLogEvent.InviteDelete:
+      if (!mods.antiInvite) return;
+      eventType = 'Unauthorized Invite Tampering';
+      break;
+
+    case AuditLogEvent.GuildScheduledEventCreate:
+    case AuditLogEvent.GuildScheduledEventUpdate:
+    case AuditLogEvent.GuildScheduledEventDelete:
+      if (!mods.antiScheduledEvents) return;
+      eventType = 'Scheduled Event Tampering';
+      break;
+
+    case AuditLogEvent.AutoModerationRuleCreate:
+    case AuditLogEvent.AutoModerationRuleUpdate:
+    case AuditLogEvent.AutoModerationRuleDelete:
+      if (!mods.antiAutomodUpdate) return;
+      eventType = 'AutoMod Rule Tampering';
+      forceBan = true;
+      break;
+
+    case AuditLogEvent.IntegrationCreate:
+    case AuditLogEvent.IntegrationUpdate:
+    case AuditLogEvent.IntegrationDelete:
+      if (!mods.antiAppCommands) return;
+      eventType = 'Integration / App Command Tampering';
+      forceBan = true;
+      break;
+
+    // Purge / Mass Ban are typically high velocity triggers. We'll add them here just to catch explicit single events if enabled, though directStrike handles velocity.
+    case AuditLogEvent.MemberKick:
+      if (!mods.antiMemberPurge && !mods.antiKick) return;
+      eventType = 'Unauthorized Kick (Purge Module)';
+      break;
+
+    case AuditLogEvent.MemberBanAdd:
+      if (!mods.antiMassBan && !mods.antiBan) return;
+      eventType = 'Unauthorized Ban (Mass Ban Module)';
       break;
 
     default: return;
