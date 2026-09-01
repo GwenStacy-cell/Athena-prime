@@ -2059,34 +2059,778 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
   }
 
   const modLabels = {
-      antiRoleCreate: 'Anti Role Create [0ms WSS]',
-      antiRoleDelete: 'Anti Role Delete [0ms API]',
-      antiRoleUpdate: 'Anti Role Update [0ms WSS]',
-      antiRolePermUpdate: 'Anti Role Perm Update [0ms WSS]',
-      antiMemberRoleUpdate: 'Anti Member Role Update [0ms WSS]',
-      antiRoleReorder: 'Anti Role Reorder [0ms WSS]',
-      antiChannelCreate: 'Anti Channel Create [0ms API]',
-      antiChannelDelete: 'Anti Channel Delete [0ms API]',
-      antiChannelUpdate: 'Anti Channel Update [0ms WSS]',
-      antiChannelPermUpdate: 'Anti Channel Perm Update [0ms WSS]',
-      antiChannelReorder: 'Anti Channel Reorder [0ms WSS]',
-      antiChannelNameMod: 'Anti Channel Name Mod [0ms WSS]',
-      antiEmojiCreate: 'Anti Emoji Create [0ms API]',
-      antiEmojiDelete: 'Anti Emoji Delete [0ms API]',
-      antiEmojiUpdate: 'Anti Emoji Update [0ms WSS]',
-      antiWebhooks: 'Anti Webhooks [0ms API]',
-      antiBotAdd: 'Anti Bot Add [0ms API]',
-      antiServerUpdate: 'Anti Server Update [0ms WSS]',
-      antiBan: 'Anti Ban [0ms API]',
-      antiKick: 'Anti Kick [0ms API]',
-      antiUnban: 'Anti Unban [0ms WSS]',
-      antiInvite: 'Anti Invite [0ms WSS]',
-      antiScheduledEvents: 'Anti Scheduled Events [0ms WSS]',
-      antiMemberPurge: 'Anti Member Purge [0ms WSS]',
-      antiMassBan: 'Anti Mass Ban [0ms WSS]',
-      antiAutomodUpdate: 'Anti Automod Update [0ms WSS]',
-      antiAppCommands: 'Anti App Commands [0ms WSS]'
-    };
+    antiRoleCreate: 'Anti Role Create [0ms WSS]',
+    antiRoleDelete: 'Anti Role Delete [0ms API]',
+    antiRoleUpdate: 'Anti Role Update [0ms WSS]',
+    antiRolePermUpdate: 'Anti Role Perm Update [0ms WSS]',
+    antiMemberRoleUpdate: 'Anti Member Role Update [0ms WSS]',
+    antiRoleReorder: 'Anti Role Reorder [0ms WSS]',
+    antiChannelCreate: 'Anti Channel Create [0ms API]',
+    antiChannelDelete: 'Anti Channel Delete [0ms API]',
+    antiChannelUpdate: 'Anti Channel Update [0ms WSS]',
+    antiChannelPermUpdate: 'Anti Channel Perm Update [0ms WSS]',
+    antiChannelReorder: 'Anti Channel Reorder [0ms WSS]',
+    antiChannelNameMod: 'Anti Channel Name Mod [0ms WSS]',
+    antiEmojiCreate: 'Anti Emoji Create [0ms API]',
+    antiEmojiDelete: 'Anti Emoji Delete [0ms API]',
+    antiEmojiUpdate: 'Anti Emoji Update [0ms WSS]',
+    antiWebhooks: 'Anti Webhooks [0ms API]',
+    antiBotAdd: 'Anti Bot Add [0ms API]',
+    antiServerUpdate: 'Anti Server Update [0ms WSS]',
+    antiBan: 'Anti Ban [0ms API]',
+    antiKick: 'Anti Kick [0ms API]',
+    antiUnban: 'Anti Unban [0ms WSS]',
+    antiInvite: 'Anti Invite [0ms WSS]'
+  };
+
+  const emojiOn = '<:on:1533844867191406672>'; 
+  const emojiOff = '<:off:1533844858983157851>'; 
+  
+  const modulesKeys = Object.keys(modLabels);
+  
+  let moduleListText = '';
+  
+  for (const k of modulesKeys) {
+    const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
+    moduleListText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
+  }
+
+  const limitText = wData.triggerLimit === 0 ? '0' : wData.triggerLimit;
+  
+  const description = 
+    `# WHITELIST ACCESS\n` +
+    `-# **${targetName}** (${targetId})\n\n` +
+    `-# **Custom Action Limits:** ${limitText}\n` +
+    `-# **Authorized for ${modulesKeys.length} security event categories.**\n\n` +
+    moduleListText;
+
+  const mainDisplay = new TextDisplayBuilder().setContent(description);
+  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+
+  if (view === 'info') {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`wl_manage_${type}_${targetId}`).setLabel('Manage').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_close`).setLabel('Close').setStyle(ButtonStyle.Secondary)
+    );
+    panelContainer.addActionRowComponents(row);
+  } else {
+    const options = modulesKeys.map(k => {
+      const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
+      return {
+        label: modLabels[k],
+        value: k,
+        emoji: isEnabled ? { id: '1533844867191406672' } : { id: '1533844858983157851' }
+      };
+    }).slice(0, 25);
+
+    const row1 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`wl_all_${type}_${targetId}`).setLabel('Whitelist All').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_reset_${type}_${targetId}`).setLabel('Reset All').setStyle(ButtonStyle.Secondary)
+    );
+
+    const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`wl_limit_5_${type}_${targetId}`).setLabel('5 Actions').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_limit_10_${type}_${targetId}`).setLabel('10 Actions').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_limit_15_${type}_${targetId}`).setLabel('15 Actions').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wl_limit_custom_${type}_${targetId}`).setLabel('Custom').setStyle(ButtonStyle.Secondary)
+    );
+
+    const row3 = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`wl_select_${type}_${targetId}`)
+        .setPlaceholder('Select a permissions category...')
+        .setMinValues(1)
+        .setMaxValues(options.length)
+        .addOptions(options)
+    );
+    
+    const row4 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`wl_save_${type}_${targetId}`).setLabel('Save Changes').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`wlo_back`).setLabel('Close').setStyle(ButtonStyle.Secondary)
+    );
+
+    panelContainer.addActionRowComponents(row1, row2, row3, row4);
+  }
+
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function getWhitelistOverviewPanel(guild) {
+  const wlData = db.getAllWhitelists(guild.id);
+  
+  const userIds = Object.keys(wlData.users || {});
+  const roleIds = Object.keys(wlData.roles || {});
+  
+  let usersText = userIds.length > 0 
+    ? userIds.map(id => `| <@${id}>`).slice(0, 10).join('\n') + (userIds.length > 10 ? '\n| ...and more' : '')
+    : '| None';
+    
+  let rolesText = roleIds.length > 0
+    ? roleIds.map(id => `| <@&${id}>`).slice(0, 10).join('\n') + (roleIds.length > 10 ? '\n| ...and more' : '')
+    : '| None';
+
+  const description = 
+    `# WL OVERVIEW\n` +
+    `-# **${guild.name} !**\n\n` +
+    `**Users Whitelisted**\n\n` +
+    `${usersText}\n\n` +
+    `**Roles Whitelisted**\n\n` +
+    `${rolesText}`;
+
+  const mainDisplay = new TextDisplayBuilder().setContent(description);
+  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('wlo_manage_users').setLabel('Manage Users').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('wlo_remove_users').setLabel('Remove User').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('wlo_add_users').setLabel('Add User').setStyle(ButtonStyle.Secondary)
+  );
+  
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('wlo_manage_roles').setLabel('Manage Roles').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('wlo_remove_roles').setLabel('Remove Role').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('wlo_add_roles').setLabel('Add Role').setStyle(ButtonStyle.Secondary)
+  );
+  
+  const row3 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('wl_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
+  );
+
+  panelContainer.addActionRowComponents(row1, row2, row3);
+
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function getWhitelistSelectPanel(guild, type, action) {
+  const isUser = type === 'users';
+  let placeholder = '';
+  let menu = null;
+  
+  const wlData = db.getAllWhitelists(guild.id);
+  const ids = Object.keys(wlData[type] || {});
+
+  if (action === 'add') {
+    placeholder = `Select a ${isUser ? 'user' : 'role'} to add to whitelist`;
+    if (isUser) {
+      menu = new UserSelectMenuBuilder().setCustomId(`wlo_selectadd_${type}`).setPlaceholder(placeholder);
+    } else {
+      menu = new RoleSelectMenuBuilder().setCustomId(`wlo_selectadd_${type}`).setPlaceholder(placeholder);
+    }
+  } else {
+    placeholder = action === 'manage' 
+      ? `Select a ${isUser ? 'user' : 'role'} to manage permissions`
+      : `Select a ${isUser ? 'user' : 'role'} to remove from whitelist`;
+      
+    if (ids.length === 0) {
+      menu = new StringSelectMenuBuilder()
+        .setCustomId('disabled_menu')
+        .setPlaceholder(`No whitelisted ${type} found.`)
+        .setDisabled(true)
+        .addOptions([{ label: 'None', value: 'none' }]);
+    } else {
+      const options = [];
+      for (const id of ids.slice(0, 25)) {
+        if (isUser) {
+          const u = await guild.client.users.fetch(id).catch(()=>null);
+          options.push({ label: u ? u.tag : id, value: id });
+        } else {
+          const r = guild.roles.cache.get(id);
+          options.push({ label: r ? r.name : id, value: id });
+        }
+      }
+      menu = new StringSelectMenuBuilder()
+        .setCustomId(`wlo_select${action}_${type}`)
+        .setPlaceholder(placeholder)
+        .addOptions(options);
+    }
+  }
+
+  const description = `| Select a ${isUser ? 'user' : 'role'} to ${action === 'manage' ? 'manage their whitelist permissions' : (action === 'add' ? 'add to whitelist' : 'remove from whitelist')}`;
+    
+  const mainDisplay = new TextDisplayBuilder().setContent(description);
+  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+  
+  const row1 = new ActionRowBuilder().addComponents(menu);
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('wlo_back').setLabel('Back').setStyle(ButtonStyle.Secondary)
+  );
+
+  panelContainer.addActionRowComponents(row1, row2);
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+}
+
+async function handleBlacklist(guild, moderator, action, phrase) {
+  if (action === 'add') {
+    const success = db.addBlacklistWord(guild.id, phrase);
+    if (success) {
+      logToSecurityChannel(guild, cv2.log('Word Filter Added', `Moderator **${moderator.user.tag}** blacklisted phrase: "${phrase}".`, [], 'warning'));
+      return cv2.success('Word Blacklisted', `Successfully blacklisted term **"${phrase.toLowerCase()}"**. Messages matching this phrase will be deleted.`);
+    } else {
+      return cv2.info('Already Blacklisted', `Term **"${phrase.toLowerCase()}"** is already blacklisted.`);
+    }
+  } else if (action === 'remove') {
+    const success = db.removeBlacklistWord(guild.id, phrase);
+    if (success) {
+      logToSecurityChannel(guild, cv2.log('Word Filter Removed', `Moderator **${moderator.user.tag}** un-blacklisted phrase: "${phrase}".`, [], 'success'));
+      return cv2.success('Word Un-blacklisted', `Successfully removed **"${phrase.toLowerCase()}"** from word blacklist.`);
+    } else {
+      return cv2.warn('Not Blacklisted', `Term **"${phrase.toLowerCase()}"** is not currently blacklisted.`);
+    }
+  } else {
+    const config = db.getGuildConfig(guild.id);
+    const list = config.blacklistWords || [];
+    if (list.length === 0) {
+      return cv2.success('Blacklist Empty', 'There are no active blacklisted words in this server.');
+    }
+    const formattedWords = list.map(w => `- \`${w}\``).join('\n');
+    return cv2.info('Filtered Word Blacklist', `If a non-moderator sends a message matching any of these terms, it will be deleted immediately:\n\n${formattedWords}`);
+  }
+}
+export async function buildAutonickDashboard(guildId) {
+  let cfg = db.getGuildConfig(guildId);
+  if (!cfg.autonick) {
+    cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
+    db.updateGuildConfig(guildId, { autonick: cfg.autonick });
+  }
+
+  const state = cfg.autonick.enabled ? 'ENABLED' : 'DISABLED';
+  const color = cfg.autonick.enabled ? 'success' : 'danger';
+  const layout = cfg.autonick.layout || '{name}';
+  const exampleName = layout.replace('{name}', 'Username');
+  
+  const dashboardEmbed = embed[color]('Autonick Manager', `**Status:** \`${state}\`\n**Current Layout:** \`${layout}\`\n**Example Preview:** \`${exampleName}\`\n\nUse the buttons below to cleanly manage the Auto-nickname settings.`);
+
+  const toggleBtn = new ButtonBuilder()
+    .setCustomId('autonick_toggle')
+    .setLabel(cfg.autonick.enabled ? 'Disable' : 'Enable')
+    .setStyle(cfg.autonick.enabled ? ButtonStyle.Danger : ButtonStyle.Success);
+    
+  const editBtn = new ButtonBuilder()
+    .setCustomId('autonick_edit')
+    .setLabel('Edit Layout')
+    .setStyle(ButtonStyle.Primary);
+    
+  const syncBtn = new ButtonBuilder()
+    .setCustomId('autonick_sync')
+    .setLabel('Sync Members')
+    .setStyle(ButtonStyle.Secondary);
+
+  const restoreBtn = new ButtonBuilder()
+    .setCustomId('autonick_restore')
+    .setLabel('Restore Names')
+    .setStyle(ButtonStyle.Danger);
+
+  const row = new ActionRowBuilder().addComponents(toggleBtn, editBtn, syncBtn);
+  const row2 = new ActionRowBuilder().addComponents(restoreBtn);
+  return { embeds: [dashboardEmbed], components: [row, row2] };
+}
+async function handleConfig(guild, moderator, setting, value) {
+  const updates = {};
+  
+  if (setting === 'maxwarnings') {
+    const num = parseInt(value);
+    if (isNaN(num) || num < 1 || num > 10) {
+      return cv2.warn('Invalid Setting', 'Maximum warnings must be a number between 1 and 10.');
+    }
+    updates.maxWarnings = num;
+    db.updateGuildConfig(guild.id, updates);
+
+    logToSecurityChannel(guild, cv2.log('Config Updated', `Administrator **${moderator.user.tag}** set maxWarnings to **${num}**.`, [], 'success'));
+    return cv2.success('Warnings Limit Updated', 
+      `Exceeding **${num} Warnings** will now result in an automated server quarantine.\n\n` +
+      `**Factors that apply Warnings:**\n` +
+      `- Usage of Blacklisted Words\n` +
+      `- Chat Spam or Mass Mentions (Anti-Spam)\n` +
+      `- Sending External Links (Anti-Link)\n` +
+      `- Sending Discord Invites (Anti-Invite)\n` +
+      `- Manual warnings via the \`/warn\` command\n\n` +
+      `> **Zero-Tolerance Actions:** Critical server damage like deleting/creating channels, roles, emojis, or adding unauthorized bots will completely bypass this warning system and result in an **instant ban**.`
+    );
+  }
+
+  if (value !== 'on' && value !== 'off') {
+    return cv2.warn('Invalid Value', 'Value for toggles must be either `on` or `off` (e.g. `!config antispam off`).');
+  }
+
+  const enabled = value === 'on';
+
+  if (setting === 'antinuke') {
+    updates.antiNukeEnabled = enabled;
+    db.updateGuildConfig(guild.id, updates);
+    const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE (Rapid deletions or bans trigger instant quarantine)` : `${TOGGLE_OFF} DEACTIVATED`;
+    logToSecurityChannel(guild, cv2.log('Config Anti-Nuke Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Nuke to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
+    
+    if (enabled) {
+      setupDashboardChannel(guild, guild.client);
+    }
+    
+    return cv2.success('Anti-Nuke Configured', `Anti-Nuke server protections are now **${modeDesc}**.`);
+  } else if (setting === 'antispam') {
+    updates.antiSpamEnabled = enabled;
+    db.updateGuildConfig(guild.id, updates);
+    const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
+    logToSecurityChannel(guild, cv2.log('Config Anti-Spam Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Spam to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
+    return cv2.success('Anti-Spam Configured', `Automated rate-limit filters are now **${modeDesc}**.`);
+  } else if (setting === 'antiinvite') {
+    updates.antiInviteEnabled = enabled;
+    db.updateGuildConfig(guild.id, updates);
+    const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
+    logToSecurityChannel(guild, cv2.log('Config Anti-Invite Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Invite to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
+    return cv2.success('Anti-Invite Configured', `Discord invite link auto-mod is now **${modeDesc}**.`);
+  }
+
+  return cv2.warn('Config Error', 'Unknown configuration option.');
+}
+
+export async function getAntinukeConfigPanel(guild) {
+  const config = db.getGuildConfig(guild.id);
+
+  const blacklistState = config.blacklistWords && config.blacklistWords.length > 0;
+  const spamState = config.antiSpamEnabled;
+  const inviteState = config.antiInviteEnabled !== false;
+  const nukeState = config.antiNukeEnabled;
+
+  const emojiOn = '<:on:1533844867191406672>'; 
+  const emojiOff = '<:off:1533844858983157851>'; 
+
+  const description = 
+    `# MODULE CONFIGURATION\n` +
+    `-# **Athena Prime - God-Tier Firewall**\n\n` +
+    `> ${nukeState ? emojiOn : emojiOff} Anti-Nuke Firewall\n` +
+    `> ${spamState ? emojiOn : emojiOff} Anti-Spam Filter\n` +
+    `> ${inviteState ? emojiOn : emojiOff} Anti-Invite Blocker\n` +
+    `> ${blacklistState ? emojiOn : emojiOff} Word Filter (${config.blacklistWords ? config.blacklistWords.length : 0} Words)\n` +
+    `> Punishment: \`${config.antiNukePunishment.toUpperCase()}\`\n` +
+    `> Warn Limit: \`${config.maxWarnings}\`\n\n` +
+    `-# Raw API strike engine active - nuke bots eliminated in ~1-3ms`;
+
+  const mainDisplay = new TextDisplayBuilder().setContent(description);
+  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('toggle_antinuke')
+      .setLabel(`Anti-Nuke ${nukeState ? 'ON' : 'OFF'}`)
+      .setEmoji(nukeState ? { id: '1533844867191406672' } : { id: '1533844858983157851' })
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId('toggle_spam')
+      .setLabel(`Anti-Spam ${spamState ? 'ON' : 'OFF'}`)
+      .setEmoji(spamState ? { id: '1533844867191406672' } : { id: '1533844858983157851' })
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId('toggle_invite')
+      .setLabel(`Anti-Invite ${inviteState ? 'ON' : 'OFF'}`)
+      .setEmoji(inviteState ? { id: '1533844867191406672' } : { id: '1533844858983157851' })
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('toggle_blacklist_filter')
+      .setLabel(`Word Filter ${blacklistState ? 'ON' : 'OFF'}`)
+      .setEmoji(blacklistState ? { id: '1533844867191406672' } : { id: '1533844858983157851' })
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId('cycle_punishment')
+      .setLabel(`Punishment: ${config.antiNukePunishment.toUpperCase()}`)
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId('sec_status_back')
+      .setLabel('Back')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId('save_panel')
+      .setLabel('Save & Close')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  panelContainer.addActionRowComponents(row1, row2);
+
+  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function handleAntinukeToggleAll(guild, moderator, enable) {
+  // NOTE: autonick is intentionally NOT touched Ã¢â‚¬â€  it must be enabled manually by server owner
+  const updates = {
+    antiNukeEnabled:   enable,
+    antiSpamEnabled:   enable,
+    antiInviteEnabled: enable,
+    antiLinkEnabled:   enable,
+    antinukeModules:   {}
+  };
+
+  const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands'];
+  for (const key of allKeys) {
+    updates.antinukeModules[key] = enable;
+  }
+
+  db.updateGuildConfig(guild.id, updates);
+
+  if (enable) {
+    const config = db.getGuildConfig(guild.id);
+    if (!config.blacklistWords || config.blacklistWords.length === 0) {
+      db.addBlacklistWord(guild.id, 'hack');
+      db.addBlacklistWord(guild.id, 'nuke');
+      db.addBlacklistWord(guild.id, 'spam');
+    }
+  } else {
+    db.updateGuildConfig(guild.id, { blacklistWords: [] });
+  }
+
+  const resEmbed = enable
+    ? cv2.success(
+        '<:on:1533844867191406672> God-Tier Firewall - Fully Operational',
+        `<:on:1533844867191406672> **Firewall Layer:** Raw API Strike Engine Active
+<:on:1533844867191406672> **Predictive Layer:** Behavioral Pattern Detection Online
+<:on:1533844867191406672> **Restoration Layer:** Zero-Latency Channel & Role Recovery
+<:on:1533844867191406672> **Condemned Cache:** Instant nuker skip-to-restoration active
+
+*Athena Prime's firewall now operates at raw HTTP speed. Nuke bots are eliminated in ~1-3 milliseconds via a direct Discord API strike. Predictive quarantine intercepts suspicious admins before they can cause structural damage. Unauthorized channels are instantly deleted, deleted channels are instantly restored.*
+
+*(Use 'antinuke config' or individual commands to fine-tune modules)*`,
+        [
+          { name: 'Anti-Nuke',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: 'Anti-Spam',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:dark4luvontop:1533860081916182721> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: 'Enforced by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`, inline: true }
+        ]
+      )
+    : cv2.warn(
+        'All Shields Disengaged',
+        `Athena Prime firewall layers have been **DEACTIVATED** server-wide. The server is now unprotected.`,
+        [{ name: 'Lifted by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
+      );
+
+  logToSecurityChannel(guild, cv2.log(
+    'Toggle All Security',
+    `Administrator **${moderator.user.tag}** toggled all shields **${enable ? 'ON' : 'OFF'}**.`,
+    [],
+    enable ? 'success' : 'warning'
+  ));
+
+  return resEmbed;
+}
+
+// ==========================================
+// NEW COMMAND HANDLERS
+// ==========================================
+
+async function handleExtraOwner(guild, moderator, action, targetUser) {
+  if (action === 'add') {
+    if (!targetUser) return cv2.warn('Missing User', 'Please specify a user to add as extra owner.');
+    
+    const success = db.addExtraOwner(guild.id, targetUser.id);
+    if (success) {
+      logToSecurityChannel(guild, cv2.log('Extra Owner Added', `**${moderator.user.tag}** added **${targetUser.tag}** as an Extra Owner.`, [], 'success'));
+      return cv2.owner('Extra Owner Added', `Successfully added **${targetUser.tag}** as an **Extra Owner**.\n\nThey are now:\n- __**Immune**__ to all moderation actions\n- __**Authorized**__ to use all bot commands\n- __**Whitelisted**__ from all auto-mod filters`);
+    } else {
+      return cv2.info('Already Extra Owner', `**${targetUser.tag}** is already registered as an Extra Owner.`);
+    }
+  } else if (action === 'remove') {
+    if (!targetUser) return cv2.warn('Missing User', 'Please specify a user to remove from extra owners.');
+    
+    const success = db.removeExtraOwner(guild.id, targetUser.id);
+    if (success) {
+      logToSecurityChannel(guild, cv2.log('Extra Owner Removed', `**${moderator.user.tag}** removed **${targetUser.tag}** from Extra Owners.`, [], 'warning'));
+      return cv2.success('Extra Owner Removed', `Successfully removed **${targetUser.tag}** from Extra Owners. They no longer have owner-level privileges.`);
+    } else {
+      return cv2.warn('Not Extra Owner', `**${targetUser.tag}** is not currently an Extra Owner.`);
+    }
+  } else {
+    // List
+    const owners = db.getExtraOwners(guild.id);
+    if (owners.length === 0) {
+      return cv2.info('No Extra Owners', `There are no extra owners configured for this server.\n\n**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>`);
+    }
+
+    const formattedList = owners.map(id => `- <@${id}> (ID: \`${id}\`)`).join('\n');
+    return cv2.owner('Extra Owners List', `**Bot Owner:** <@${process.env.OWNER_ID || 'Unknown'}>\n**Server Owner:** <@${guild.ownerId}>\n\n**Extra Owners:**\n${formattedList}`);
+  }
+}
+
+async function handleBotWhitelist(guild, action, botId) {
+  const cleanId = botId ? botId.replace(/[<@&!>]/g, '') : null;
+  
+  if (action === 'add') {
+    if (!cleanId || !/^\d{17,20}$/.test(cleanId)) return cv2.warn('Invalid ID', 'Please provide a valid bot User ID or a Role mention/ID.');
+    db.addBotToWhitelist(guild.id, cleanId);
+    
+    const isRole = guild.roles.cache.has(cleanId);
+    let desc = '';
+    if (isRole) {
+      desc = `Role <@&${cleanId}> has been added to the **Bot Whitelist**.\n\n` +
+             `- Any bot that has this role is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
+             `- They can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
+             `- To revoke a specific bot's immunity, simply remove the <@&${cleanId}> role from them, or use \`!botwhitelist remove <@&${cleanId}>\` to unwhitelist the role entirely.`;
+    } else {
+      desc = `Bot ID <@${cleanId}> (\`${cleanId}\`) has been added to the **Bot Whitelist**.\n\n` +
+             `- This bot is instantly granted **100% full immunity** to all Anti-Nuke protections.\n` +
+             `- It can create/delete channels, manage roles, kick, and ban without triggering the firewall.\n` +
+             `- To revoke this immunity, use \`!botwhitelist remove ${cleanId}\`.`;
+    }
+    
+    return cv2.success('Whitelisted', desc);
+  } else if (action === 'remove') {
+    if (!cleanId) return cv2.warn('Missing ID', 'Please provide the Bot/Role ID to remove.');
+    db.removeBotFromWhitelist(guild.id, cleanId);
+    return cv2.success('Removed', `ID \`${cleanId}\` has been removed from the Bot Whitelist. It no longer has Anti-Nuke immunity.`);
+  } else {
+    const list = db.getBotWhitelist(guild.id);
+    if (list.length === 0) return cv2.info('No Whitelisted Bots/Roles', 'No bots or roles are currently whitelisted.\n\nUse `!botwhitelist add <botId/roleId>` to whitelist a trusted bot or role.');
+    
+    const formatted = await Promise.all(list.map(async id => {
+      const role = guild.roles.cache.get(id);
+      if (role) return `- **Role:** ${role} (\`${id}\`)`;
+      
+      const user = await guild.client.users.fetch(id).catch(() => null);
+      if (user) return `- **Bot:** ${user} (\`${id}\`)`;
+      
+      return `- **Unknown:** \`${id}\``;
+    }));
+    
+    return cv2.info('Whitelisted Bots & Roles', `The following entities have full Anti-Nuke immunity:\n\n${formatted.join('\n')}`);
+  }
+}
+
+async function handleBotBlacklist(action, targetId) {
+  if (action === 'add') {
+    if (!targetId || !/^\d{17,20}$/.test(targetId)) return cv2.warn('Invalid ID', 'Please provide a valid user ID (17-20 digit number).');
+    const success = db.addUserToBotBlacklist(targetId);
+    if (success) {
+      return cv2.success('User Flagged', `User ID \`${targetId}\` has been **flagged**.\nThey are now blacklisted and cannot use any Athena Prime commands globally.`);
+    } else {
+      return cv2.info('Already Flagged', `User ID \`${targetId}\` is already on the bot blacklist.`);
+    }
+  } else if (action === 'remove') {
+    if (!targetId || !/^\d{17,20}$/.test(targetId)) return cv2.warn('Invalid ID', 'Please provide a valid user ID to unflag.');
+    const success = db.removeUserFromBotBlacklist(targetId);
+    if (success) {
+      return cv2.success('User Unflagged', `User ID \`${targetId}\` has been **unflagged** and removed from the global bot blacklist.`);
+    } else {
+      return cv2.warn('Not Flagged', `User ID \`${targetId}\` is not currently flagged.`);
+    }
+  } else {
+    // List
+    const flagged = db.getBotBlacklist();
+    if (flagged.length === 0) {
+      return cv2.info('No Flagged Users', 'There are no users currently flagged on the global bot blacklist.');
+    }
+    const formattedList = flagged.map(id => `- <@${id}> (ID: \`${id}\`)`).join('\n');
+    return cv2.danger('Flagged Users', `These users are globally banned from using the bot:\n\n${formattedList}`);
+  }
+}
+
+async function handleAntiLink(guild, moderator, mode) {
+  const enabled = mode === 'on';
+  db.updateGuildConfig(guild.id, { antiLinkEnabled: enabled });
+
+  const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
+  const resEmbed = cv2.success(
+    'Anti-Link Configured',
+    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <:dark4luvontop:1533860081916182721> Discord Invites\n> <:dark4luvontop:1533860081916182721> NSFW Links\n> <:dark4luvontop:1533860081916182721> Scam/Phishing Links\n> <:dark4luvontop:1533860081916182721> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
+    [{ name: 'Changed by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
+  );
+
+  logToSecurityChannel(guild, cv2.log(
+    'Anti-Link Toggle',
+    `Administrator **${moderator.user.tag}** toggled Anti-Link to **${mode.toUpperCase()}**.`,
+    [],
+    enabled ? 'success' : 'warning'
+  ));
+
+  return resEmbed;
+}
+
+async function getServerInfoEmbed(guild) {
+  const config = db.getGuildConfig(guild.id);
+  const owner = await guild.members.fetch(guild.ownerId).catch(() => null);
+  const ownerTag = owner ? owner.user.tag : 'Unknown';
+  const totalMembers = guild.memberCount;
+  const roleCount = guild.roles.cache.size;
+  const channelCount = guild.channels.cache.size;
+  const boostLevel = guild.premiumTier;
+  const boostCount = guild.premiumSubscriptionCount || 0;
+  const createdAt = `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>`;
+
+  const antiNukeStatus   = config.antiNukeEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const antiSpamStatus   = config.antiSpamEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const antiInviteStatus = (config.antiInviteEnabled !== false) ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
+  const raidModeStatus   = config.raidMode                      ? '<:dark4luvontop:1533860081916182721> ENGAGED' : `${TOGGLE_ON} STANDBY`;
+
+  let iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
+
+  const headerSection = {
+    type: 9,
+    components: [{ type: 10, content: `## **${guild.name} — Server Info**\n-# **Comprehensive server statistics and Athena Prime security overview.**` }]
+  };
+  if (iconUrl) {
+    headerSection.accessory = { type: 11, media: { url: iconUrl } };
+  }
+
+  const statsText =
+    `-# **Owner:** ${ownerTag}\n` +
+    `-# **Members:** **${totalMembers}**   **Roles:** **${roleCount}**   **Channels:** **${channelCount}**\n` +
+    `-# **Boost Level:** Tier ${boostLevel} (${boostCount} boosts)\n` +
+    `-# **Created:** ${createdAt}`;
+
+  const securityText =
+    `-# **▬▬ Security Status ▬▬**\n` +
+    `-# **Anti-Nuke:** ${antiNukeStatus}   **Anti-Spam:** ${antiSpamStatus}\n` +
+    `-# **Anti-Invite:** ${antiInviteStatus}   **Anti-Link:** ${antiLinkStatus}\n` +
+    `-# **Raid Mode:** ${raidModeStatus}   **Max Warns:** \`${config.maxWarnings}\``;
+
+  const container = {
+    type: 17,
+    components: [
+      headerSection,
+      { type: 14, divider: true },
+      { type: 10, content: statsText },
+      { type: 14, divider: true },
+      { type: 10, content: securityText },
+      { type: 14, divider: true },
+      { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
+    ]
+  };
+
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
+}
+
+async function getUserInfoEmbed(guild, member) {
+  const isExtraOwner = db.isExtraOwner(guild.id, member.id);
+  const wlMap = db.getGuildConfig(guild.id).whitelist || {};
+  const isWhitelisted = !!wlMap[member.id];
+  const wlEvents = isWhitelisted ? wlMap[member.id].join(', ') : '';
+  const warnings = db.getWarnings(guild.id, member.id);
+  const isExtra = db.isExtraOwner(guild.id, member.id);
+  const isBotOwn = isBotOwnerSync(member.id);
+  const isServerOwner = member.id === guild.ownerId;
+
+  const roles = member.roles.cache
+    .filter(r => r.id !== guild.id)
+    .sort((a, b) => b.position - a.position)
+    .map(r => `${r}`)
+    .slice(0, 20)
+    .join(', ') || 'None';
+
+  let privileges = [];
+  if (isBotOwn) privileges.push(' **Bot Owner**');
+  if (isServerOwner) privileges.push(' **Server Owner**');
+  if (isExtraOwner) privileges.push(' **Extra Owner**');
+  if (isWhitelisted) privileges.push(` **Whitelisted** (${wlEvents})`);
+  if (privileges.length === 0) privileges.push('Standard Member');
+
+  let avatarUrl = member.user.displayAvatarURL({ dynamic: true, size: 256 });
+
+  const headerSection = {
+    type: 9,
+    components: [{ type: 10, content: `## **User Info Ã¢â‚¬â€  ${member.user.tag}**\n-# **Detailed profile and privilege information.**` }]
+  };
+  if (avatarUrl) {
+    headerSection.accessory = { type: 11, media: { url: avatarUrl } };
+  }
+
+  const statsText =
+    `-# **Username:** ${member.user.tag}   **ID:** \`${member.id}\`\n` +
+    `-# **Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n` +
+    `-# **Joined Server:** <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n` +
+    `-# **Active Warnings:** \`${warnings.length}\`   **Privileges:** ${privileges.join(' | ')}`;
+
+  const rolesText = `-# **Roles [${member.roles.cache.size - 1}]:** ${roles}`;
+
+  const container = {
+    type: 17,
+    components: [
+      headerSection,
+      { type: 14, divider: true },
+      { type: 10, content: statsText },
+      { type: 14, divider: true },
+      { type: 10, content: rolesText },
+      { type: 14, divider: true }
+    ]
+  };
+
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
+}
+
+// ==========================================
+// SECURITY TOGGLE ALL - Bot Owner / Server Owner only
+// Enables/disables ALL security features except autonick
+// ==========================================
+async function handleSecurityToggleAll(guild, moderator, enable) {
+  // We only handle enable=false here now, because enable=true is handled by runSecurityEnableSequence
+  if (!enable) {
+    db.updateGuildConfig(guild.id, {
+      securityEnabled:   false,
+      antiNukeEnabled:   false,
+      antiSpamEnabled:   false,
+      antiInviteEnabled: false,
+      antiLinkEnabled:   false,
+      blacklistWords: []
+    });
+    
+    // Delete roles
+    const rolesToDelete = ['Athena Firewall', 'Athena Unbypassable'];
+    for (const roleName of rolesToDelete) {
+      const r = guild.roles.cache.find(role => role.name === roleName);
+      if (r) await r.delete('Security Disabled').catch(() => null);
+    }
+    
+    // Delete dashboard
+    const dashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
+    if (dashboard) await dashboard.delete('Security Disabled').catch(() => null);
+
+    const textContent =
+      `# ALL SECURITY SHIELDS DISENGAGED\n\n` +
+      `All Athena Prime protective filters and security roles have been **DEACTIVATED** server-wide.\n\n` +
+      `-# Disabled by ${moderator}`;
+
+    logToSecurityChannel(guild, cv2.log(
+      'Security Toggle All',
+      `**${moderator.user.tag}** toggled all security shields **OFF**.`
+    ));
+
+    return { components: [{ type: 17, components: [{ type: 10, content: textContent }, { type: 14, divider: true }, { type: 10, content: "-# **Athena Bulletproof Security !!!**" }] }], flags: MessageFlags.IsComponentsV2 };
+  }
+}
+
+export async function getSecurityStatusPanel(guild) {
+  const config = db.getGuildConfig(guild.id);
+  const isSecured = !!(config.securityEnabled || config.antiNukeEnabled);
+  let botAvatarUrl = guild.client?.user?.displayAvatarURL({ dynamic: true, size: 256 }) || null;
+
+  const modLabels = {
+    antiRoleCreate: 'Anti Role Create [0ms WSS]',
+    antiRoleDelete: 'Anti Role Delete [0ms API]',
+    antiRoleUpdate: 'Anti Role Update [0ms WSS]',
+    antiRolePermUpdate: 'Anti Role Perm Update [0ms WSS]',
+    antiMemberRoleUpdate: 'Anti Member Role Update [0ms WSS]',
+    antiRoleReorder: 'Anti Role Reorder [0ms WSS]',
+    antiChannelCreate: 'Anti Channel Create [0ms API]',
+    antiChannelDelete: 'Anti Channel Delete [0ms API]',
+    antiChannelUpdate: 'Anti Channel Update [0ms WSS]',
+    antiChannelPermUpdate: 'Anti Channel Perm Update [0ms WSS]',
+    antiChannelReorder: 'Anti Channel Reorder [0ms WSS]',
+    antiChannelNameMod: 'Anti Channel Name Mod [0ms WSS]',
+    antiEmojiCreate: 'Anti Emoji Create [0ms API]',
+    antiEmojiDelete: 'Anti Emoji Delete [0ms API]',
+    antiEmojiUpdate: 'Anti Emoji Update [0ms WSS]',
+    antiWebhooks: 'Anti Webhooks [0ms API]',
+    antiBotAdd: 'Anti Bot Add [0ms API]',
+    antiServerUpdate: 'Anti Server Update [0ms WSS]',
+    antiBan: 'Anti Ban [0ms API]',
+    antiKick: 'Anti Kick [0ms API]',
+    antiUnban: 'Anti Unban [0ms WSS]',
+    antiInvite: 'Anti Invite [0ms WSS]',
+    antiScheduledEvents: 'Anti Scheduled Events [0ms WSS]',
+    antiMemberPurge: 'Anti Member Purge [0ms WSS]',
+    antiMassBan: 'Anti Mass Ban [0ms WSS]',
+    antiAutomodUpdate: 'Anti Automod Update [0ms WSS]',
+    antiAppCommands: 'Anti App Commands [0ms WSS]'
+  };
 
   const emojiOn  = '<:on:1533844867191406672>';
   const emojiOff = '<:off:1533844858983157851>';
