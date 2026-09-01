@@ -137,7 +137,7 @@ export const commands = [
       const reason = remaining.join(' ').trim() || 'No reason provided';
       const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
       if (result.success) await message.reply(result.embed || result);
-      else await message.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
+      else await message.reply(result.embed || cv2.danger('<:off:1533844858983157851> Failed', result.message));
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -150,7 +150,7 @@ export const commands = [
 
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
       if (result.success) await interaction.reply(result.embed || result);
-      else await interaction.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
+      else await interaction.reply(result.embed || cv2.danger('<:off:1533844858983157851> Failed', result.message));
     }
   },
 
@@ -177,7 +177,7 @@ export const commands = [
       const reason = remaining.join(' ').trim() || 'No reason provided';
       const result = await executeQuarantine(message.guild, target, message.member, reason, durationMs, message.client);
       if (result.success) await message.reply(result.embed || result);
-      else await message.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
+      else await message.reply(result.embed || cv2.danger('<:off:1533844858983157851> Failed', result.message));
     },
     async executeSlash(interaction) {
       const targetUser = interaction.options.getUser('user');
@@ -188,7 +188,7 @@ export const commands = [
       if (!target) return interaction.reply(cv2.warn('Error', 'Member not found.'));
       const result = await executeQuarantine(interaction.guild, target, interaction.member, reason, durationMs, interaction.client);
       if (result.success) await interaction.reply(result.embed || result);
-      else await interaction.reply(result.embed || cv2.danger('Quarantine Failed', result.message));
+      else await interaction.reply(result.embed || cv2.danger('<:off:1533844858983157851> Failed', result.message));
     }
   },
 
@@ -216,7 +216,7 @@ export const commands = [
         if (result.success) {
           await message.reply(result.embed);
         } else {
-          await message.reply(cv2.danger('Unquarantine Failed', result.message));
+          await message.reply(cv2.danger('<:off:1533844858983157851> Failed', result.message));
         }
     },
     async executeSlash(interaction) {
@@ -231,7 +231,7 @@ export const commands = [
         if (result.success) {
           await interaction.reply(result.embed);
         } else {
-          await interaction.reply(cv2.danger('Unquarantine Failed', result.message));
+          await interaction.reply(cv2.danger('<:off:1533844858983157851> Failed', result.message));
         }
     }
   },
@@ -796,7 +796,7 @@ export const commands = [
         });
         await responseMsg.edit(cv2.success('Avatar Configured', "Successfully updated the bot's server-specific avatar."));
       } catch (err) {
-        await responseMsg.edit(cv2.danger('Update Failed', `Could not update avatar: ${err.message}`));
+        await responseMsg.edit(cv2.danger('<:off:1533844858983157851> Failed', `Could not update avatar: ${err.message}`));
       }
     },
     async executeSlash(interaction) {
@@ -820,7 +820,7 @@ export const commands = [
         });
         await interaction.editReply(cv2.success('Avatar Configured', "Successfully updated the bot's server-specific avatar."));
       } catch (err) {
-        await interaction.editReply(cv2.danger('Update Failed', `Could not update avatar: ${err.message}`));
+        await interaction.editReply(cv2.danger('<:off:1533844858983157851> Failed', `Could not update avatar: ${err.message}`));
       }
     }
   },
@@ -869,7 +869,7 @@ export const commands = [
         });
         await responseMsg.edit(cv2.success('Banner Configured', "Successfully updated the bot's server-specific banner."));
       } catch (err) {
-        await responseMsg.edit(cv2.danger('Update Failed', `Could not update banner: ${err.message}`));
+        await responseMsg.edit(cv2.danger('<:off:1533844858983157851> Failed', `Could not update banner: ${err.message}`));
       }
     },
     async executeSlash(interaction) {
@@ -893,7 +893,7 @@ export const commands = [
         });
         await interaction.editReply(cv2.success('Banner Configured', "Successfully updated the bot's server-specific banner."));
       } catch (err) {
-        await interaction.editReply(cv2.danger('Update Failed', `Could not update banner: ${err.message}`));
+        await interaction.editReply(cv2.danger('<:off:1533844858983157851> Failed', `Could not update banner: ${err.message}`));
       }
     }
   },
@@ -1747,7 +1747,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     if (context === 'raidmode') {
       dmEmbed = cv2.success(
         'Raid Mode Ended',
-        `<:dark4luvontop:1533860081916182721> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
+        `<:ticks:1533860039213842565> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
         []
       );
     } else {
@@ -1984,7 +1984,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const lockEmbed = cv2.danger(
         'Lockdown Activated', 
-        `<:dark4luvontop:1533860081916182721> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
+        `<:ticks:1533860039213842565> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
       );
       logToSecurityChannel(guild, cv2.log('Channel Locked', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
       return lockEmbed;
@@ -1994,14 +1994,14 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const unlockEmbed = cv2.success(
         'Lockdown Deactivated', 
-        `<:dark4luvontop:1533860081916182721> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
+        `<:ticks:1533860039213842565> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
       );
       logToSecurityChannel(guild, cv2.log('Channel Unlocked', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
       return unlockEmbed;
     }
   } catch (error) {
     console.error(error);
-    return cv2.danger('Lockdown Toggle Failed', 'Could not modify permissions for this channel.');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'Could not modify permissions for this channel.');
   }
 }
 
@@ -2496,9 +2496,9 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
         [
           { name: 'Anti-Nuke',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: 'Anti-Spam',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '<:dark4luvontop:1533860081916182721> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '<:dark4luvontop:1533860081916182721> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '<:dark4luvontop:1533860081916182721> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:ticks:1533860039213842565> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:ticks:1533860039213842565> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<:ticks:1533860039213842565> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: 'Enforced by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`, inline: true }
         ]
       )
@@ -2634,7 +2634,7 @@ async function handleAntiLink(guild, moderator, mode) {
   const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
   const resEmbed = cv2.success(
     'Anti-Link Configured',
-    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <:dark4luvontop:1533860081916182721> Discord Invites\n> <:dark4luvontop:1533860081916182721> NSFW Links\n> <:dark4luvontop:1533860081916182721> Scam/Phishing Links\n> <:dark4luvontop:1533860081916182721> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
+    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <:ticks:1533860039213842565> Discord Invites\n> <:ticks:1533860039213842565> NSFW Links\n> <:ticks:1533860039213842565> Scam/Phishing Links\n> <:ticks:1533860039213842565> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
     [{ name: 'Changed by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
   );
 
@@ -2663,7 +2663,7 @@ async function getServerInfoEmbed(guild) {
   const antiSpamStatus   = config.antiSpamEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiInviteStatus = (config.antiInviteEnabled !== false) ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
-  const raidModeStatus   = config.raidMode                      ? '<:dark4luvontop:1533860081916182721> ENGAGED' : `${TOGGLE_ON} STANDBY`;
+  const raidModeStatus   = config.raidMode                      ? '<:ticks:1533860039213842565> ENGAGED' : `${TOGGLE_ON} STANDBY`;
 
   let iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
 
@@ -2882,7 +2882,7 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
   if (action === 'setup') {
     // Create/resolve quarantine role + channel
     const qRole = await getOrCreateQuarantineRole(guild);
-    if (!qRole) return cv2.danger('Setup Failed', 'Could not create or find the Quarantine role. Check bot permissions.');
+    if (!qRole) return cv2.danger('<:off:1533844858983157851> Failed', 'Could not create or find the Quarantine role. Check bot permissions.');
 
     const qChannel = await getOrCreateQuarantineChannel(guild, qRole);
 
@@ -2890,13 +2890,13 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const synced = await syncQuarantinePermissions(guild, qRole, qChannel?.id || null);
 
     const fields = [
-      { name: '<:dark4luvontop:1533860081916182721> Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
-      { name: '<:dark4luvontop:1533860081916182721> Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
-      { name: '<:dark4luvontop:1533860081916182721> Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
+      { name: '<:ticks:1533860039213842565> Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
+      { name: '<:ticks:1533860039213842565> Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
+      { name: '<:ticks:1533860039213842565> Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
     ];
 
     const vc = config.quarantineVcId ? await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
-    if (vc) fields.push({ name: '<:dark4luvontop:1533860081916182721> Quarantine VC', value: `<#${vc.id}>`, inline: true });
+    if (vc) fields.push({ name: '<:ticks:1533860039213842565> Quarantine VC', value: `<#${vc.id}>`, inline: true });
 
     return cv2.success(
         'Quarantine System Fixed ',
@@ -2951,7 +2951,7 @@ async function handleLinksAllow(guild, action, domain) {
   if (action === 'allowall') {
     db.updateGuildConfig(guild.id, { allowAllLinks: true });
     return cv2.success(
-        '<:dark4luvontop:1533860081916182721> All Links Allowed',
+        '<:ticks:1533860039213842565> All Links Allowed',
         'The anti-link filter has been **completely disabled** for this server.\n\nAll users can now post any link freely.\n\nUse `/linksallow disallowall` to re-enable the filter.',
         [{ name: ' Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
       );
@@ -2961,7 +2961,7 @@ async function handleLinksAllow(guild, action, domain) {
     db.updateGuildConfig(guild.id, { allowAllLinks: false, allowedLinks: [] });
     return cv2.warn(
         '<a:AnyaYay:1537513785718476850> Anti-Link Filter Restored',
-        'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> <:dark4luvontop:1533860081916182721> Discord Invites\n> <:dark4luvontop:1533860081916182721> NSFW Links\n> <:dark4luvontop:1533860081916182721> Scam/Phishing Links\n> <:dark4luvontop:1533860081916182721> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
+        'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> <:ticks:1533860039213842565> Discord Invites\n> <:ticks:1533860039213842565> NSFW Links\n> <:ticks:1533860039213842565> Scam/Phishing Links\n> <:ticks:1533860039213842565> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
       );
   }
 
@@ -3003,7 +3003,7 @@ async function handleLinksAllow(guild, action, domain) {
 
   if (allOpen) {
     return cv2.info(
-        '<:dark4luvontop:1533860081916182721> All Links Allowed',
+        '<:ticks:1533860039213842565> All Links Allowed',
         'The anti-link filter is currently **fully disabled - all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
       );
   }
@@ -3073,25 +3073,25 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
     'Mass Quarantine Executed',
     `**${moderator.user.tag}** mass-quarantined all members with role <@&${targetRole.id}>.`,
     [
-      { name: '<:dark4luvontop:1533860081916182721> Role',       value: `<@&${targetRole.id}>`, inline: true },
+      { name: '<:ticks:1533860039213842565> Role',       value: `<@&${targetRole.id}>`, inline: true },
       { name: ' Quarantined', value: `\`${success}\``,       inline: true },
-      { name: ' Failed',      value: `\`${failed}\``,        inline: true },
+      { name: '<:off:1533844858983157851> Failed',      value: `\`${failed}\``,        inline: true },
       { name: ' Skipped',    value: `\`${skipped}\``,       inline: true },
-      { name: '<:dark4luvontop:1533860081916182721> Reason',     value: reason }
+      { name: '<:ticks:1533860039213842565> Reason',     value: reason }
     ],
     'danger'
   ));
 
   return cv2.danger(
-      '<:dark4luvontop:1533860081916182721> Mass Quarantine Complete',
+      '<:ticks:1533860039213842565> Mass Quarantine Complete',
       `All targeted members with <@&${targetRole.id}> have been processed.`,
       [
-        { name: '<:dark4luvontop:1533860081916182721> Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
+        { name: '<:ticks:1533860039213842565> Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
         { name: ' Quarantined',  value: `\`${success}\``,  inline: true },
-        { name: ' Failed',       value: `\`${failed}\``,   inline: true },
+        { name: '<:off:1533844858983157851> Failed',       value: `\`${failed}\``,   inline: true },
         { name: ' Skipped',     value: `\`${skipped}\``,  inline: true },
-        { name: '<:dark4luvontop:1533860081916182721> Reason',       value: reason,             inline: false },
-        { name: '<:dark4luvontop:1533860081916182721> Executed By',  value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
+        { name: '<:ticks:1533860039213842565> Reason',       value: reason,             inline: false },
+        { name: '<:ticks:1533860039213842565> Executed By',  value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
       ]
     );
 }
@@ -3138,18 +3138,18 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
     `**${moderator.user.tag}** released all quarantined members.`,
     [
       { name: ' Released', value: `\`${success}\``, inline: true },
-      { name: ' Failed',   value: `\`${failed}\``,  inline: true }
+      { name: '<:off:1533844858983157851> Failed',   value: `\`${failed}\``,  inline: true }
     ],
     'success'
   ));
 
   return cv2.success(
-      '<:dark4luvontop:1533860081916182721> Mass Unquarantine Complete',
+      '<:ticks:1533860039213842565> Mass Unquarantine Complete',
       `All quarantined members have been processed.`,
       [
         { name: ' Released',     value: `\`${success}\``, inline: true },
-        { name: ' Failed',        value: `\`${failed}\``,  inline: true },
-        { name: '<:dark4luvontop:1533860081916182721> Executed By', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
+        { name: '<:off:1533844858983157851> Failed',        value: `\`${failed}\``,  inline: true },
+        { name: '<:ticks:1533860039213842565> Executed By', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
       ]
     );
 }

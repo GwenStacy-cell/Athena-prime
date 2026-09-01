@@ -508,7 +508,7 @@ export const commands = [
         await channel.send(text);
         await message.delete().catch(() => null);
       } catch (err) {
-        await message.reply(cv2.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)).catch(() => null);
+        await message.reply(cv2.danger('<:off:1533844858983157851> Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)).catch(() => null);
       }
     },
     async executeSlash(interaction) {
@@ -546,7 +546,7 @@ export const commands = [
         await channel.send(text);
         await interaction.reply(cv2.success('Message Dispatched', `Message successfully sent to ${channel}.`));
       } catch (err) {
-        await interaction.reply(cv2.danger('Send Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)).catch(() => null);
+        await interaction.reply(cv2.danger('<:off:1533844858983157851> Failed', `Failed to send message in ${channel}.\n\`${err.message}\``)).catch(() => null);
       }
     }
   },
@@ -856,7 +856,7 @@ export const commands = [
 async function handleMuteAll(guild, moderator) {
   const vc = moderator.voice.channel;
   if (!vc) {
-    return cv2.warn('MuteAll Failed', 'You must be in a **voice channel** to use this command.');
+    return cv2.warn('<:off:1533844858983157851> Failed', 'You must be in a **voice channel** to use this command.');
   }
 
   let mutedCount = 0;
@@ -875,7 +875,7 @@ async function handleMuteAll(guild, moderator) {
 async function handleUnmuteAll(guild, moderator) {
   const vc = moderator.voice.channel;
   if (!vc) {
-    return cv2.warn('UnmuteAll Failed', 'You must be in a **voice channel** to use this command.');
+    return cv2.warn('<:off:1533844858983157851> Failed', 'You must be in a **voice channel** to use this command.');
   }
 
   let unmutedCount = 0;
@@ -917,7 +917,7 @@ export async function handleWarn(guild, moderator, target, reason, force = false
 
   // Response channel embed
   const resEmbed = cv2.buildContainer({
-    description: `__**User Warned |**__ <:dark4luvontop:1533860081916182721>\n> Reason: . ${target} , **${reason}**\n> ã…¤has been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
+    description: `__**User Warned |**__ <:ticks:1533860039213842565>\n> Reason: . ${target} , **${reason}**\n> ã…¤has been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
     color: '#2b2d31',
     thumbnail: target.user.displayAvatarURL({ dynamic: true })
   });
@@ -1038,7 +1038,7 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('Timeout Failed', 'An error occurred while executing the timeout. Ensure my role is higher than the target.');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'An error occurred while executing the timeout. Ensure my role is higher than the target.');
   }
 }
 
@@ -1053,7 +1053,7 @@ async function handleKick(guild, moderator, target, reason) {
   }
 
   if (!target.kickable) {
-    return cv2.danger('Action Failed', `I do not have enough role permissions to kick **${target.user.tag}**.`);
+    return cv2.danger('<:off:1533844858983157851> Failed', `I do not have enough role permissions to kick **${target.user.tag}**.`);
   }
 
   try {
@@ -1085,7 +1085,7 @@ async function handleKick(guild, moderator, target, reason) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('Kick Failed', 'An error occurred while kicking the user.');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'An error occurred while kicking the user.');
   }
 }
 
@@ -1100,7 +1100,7 @@ async function handleBan(guild, moderator, target, reason) {
   }
 
   if (!target.bannable) {
-    return cv2.danger('Action Failed', `I do not have enough role permissions to ban **${target.user.tag}**.`);
+    return cv2.danger('<:off:1533844858983157851> Failed', `I do not have enough role permissions to ban **${target.user.tag}**.`);
   }
 
   try {
@@ -1132,7 +1132,7 @@ async function handleBan(guild, moderator, target, reason) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('Ban Failed', 'An error occurred while banning the user.');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'An error occurred while banning the user.');
   }
 }
 
@@ -1169,13 +1169,13 @@ async function handleCreateRole(guild, moderator, name, color) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('Action Failed', 'Failed to create the role. Ensure my role is high enough and I have Manage Roles permission.');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'Failed to create the role. Ensure my role is high enough and I have Manage Roles permission.');
   }
 }
 
 async function handleDeleteRole(guild, moderator, role) {
   if (role.managed) {
-    return cv2.danger('Delete Failed', 'You cannot delete managed roles (roles tied to bots or integrations).');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'You cannot delete managed roles (roles tied to bots or integrations).');
   }
 
   if (role.position >= moderator.roles.highest.position && moderator.id !== guild.ownerId) {
@@ -1202,7 +1202,7 @@ async function handleDeleteRole(guild, moderator, role) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('Action Failed', 'Failed to delete the role. Ensure my highest role is above the target role.');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'Failed to delete the role. Ensure my highest role is above the target role.');
   }
 }
 
@@ -1291,7 +1291,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('Purge Failed', 'Failed to delete messages. Messages older than 14 days cannot be bulk deleted.');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'Failed to delete messages. Messages older than 14 days cannot be bulk deleted.');
   }
 }
 
@@ -1321,7 +1321,7 @@ async function handleSlowmode(guild, channel, moderator, seconds) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('Slowmode Failed', 'Failed to set slowmode. Ensure I have Manage Channel permissions.');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'Failed to set slowmode. Ensure I have Manage Channel permissions.');
   }
 }
 
@@ -1359,7 +1359,7 @@ async function handleUnban(guild, moderator, userId, reason) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('Unban Failed', 'An error occurred while unbanning the user.');
+    return cv2.danger('<:off:1533844858983157851> Failed', 'An error occurred while unbanning the user.');
   }
 }
 
@@ -1400,7 +1400,7 @@ async function handleBanById(guild, moderator, userId, reason, userObj = null) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('Ban Failed', `Could not ban user \`${userId}\`: ${error.message}`);
+    return cv2.danger('<:off:1533844858983157851> Failed', `Could not ban user \`${userId}\`: ${error.message}`);
   }
 }
 
@@ -1427,7 +1427,7 @@ async function handleUnbanAll(guild, moderator) {
 
     const resEmbed = cv2.success('All Bans Cleared', `Processed **${bans.size}** ban(s).`, [
       { name: '\u2705 Unbanned', value: `\`${unbanned}\``, inline: true },
-      { name: '\u274c Failed', value: `\`${failed}\``, inline: true },
+      { name: '<:off:1533844858983157851> Failed', value: `\`${failed}\``, inline: true },
       { name: 'Executed by', value: `${moderator}`, inline: true }
     ]);
 
@@ -1440,7 +1440,7 @@ async function handleUnbanAll(guild, moderator) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('UnbanAll Failed', `An error occurred: ${error.message}`);
+    return cv2.danger('<:off:1533844858983157851> Failed', `An error occurred: ${error.message}`);
   }
 }
 
@@ -1472,8 +1472,8 @@ async function handleVcAction(guild, moderator, targets, action) {
 
   const actionName = action.charAt(0).toUpperCase() + action.slice(1);
   const embedRes = cv2.success(`${actionName} Complete`, `Processed **${targets.size}** member(s).`, [
-    { name: '<:dark4luvontop:1533860081916182721> Success', value: `\`${successCount}\``, inline: true },
-    { name: 'âŒ Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
+    { name: '<:ticks:1533860039213842565> Success', value: `\`${successCount}\``, inline: true },
+    { name: '<:off:1533844858983157851> Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
   ]);
 
   return embedRes;

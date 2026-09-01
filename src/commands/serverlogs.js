@@ -100,7 +100,7 @@ async function handleServerLogs(guild, subcommand, args) {
 
       return cv2.success('Auto-Setup Complete', `Created category **Athena Logs** and default fallback channel <#${logChannel.id}>. Master switch has been enabled.`);
     } catch (e) {
-      return cv2.warn('Setup Failed', `Could not create channels: ${e.message}`);
+      return cv2.warn('<:off:1533844858983157851> Failed', `Could not create channels: ${e.message}`);
     }
   }
 

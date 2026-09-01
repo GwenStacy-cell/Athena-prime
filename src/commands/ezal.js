@@ -185,7 +185,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       if (!lastError) lastError = `Role '${roleData.name}': ${err.message} (code ${err.code})`;
       // Only abort if we have MANY consecutive failures (don't break on just a few timeouts)
       if (consecutiveFailures >= 10) {
-        rlog(`  <:dark4luvontop:1533860081916182721> 10 consecutive failures - aborting role loop`);
+        rlog(`  <:ticks:1533860039213842565> 10 consecutive failures - aborting role loop`);
         break;
       }
     }
@@ -244,7 +244,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       rlog(`   Category FAILED: '${catData.name}' â†’ ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Category '${catData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures - aborting category loop`);
+        rlog(`  <:ticks:1533860039213842565> 5 consecutive failures - aborting category loop`);
         break;
       }
     }
@@ -289,7 +289,7 @@ async function restoreGuild(guild, backupData, statusCallback, excludeChannelId)
       rlog(`   Channel FAILED: '${chData.name}' â†’ ${err.message} (code ${err.code})`);
       if (!lastError) lastError = `Channel '${chData.name}': ${err.message} (code ${err.code})`;
       if (consecutiveFailures >= 5) {
-        rlog(`  <:dark4luvontop:1533860081916182721> 5 consecutive failures - aborting channel loop`);
+        rlog(`  <:ticks:1533860039213842565> 5 consecutive failures - aborting channel loop`);
         break;
       }
     }
@@ -340,7 +340,7 @@ async function handleBackup(message, args) {
     ));
   } catch (err) {
     console.error('[Backup]', err);
-    await statusMsg.edit(cv2.danger('Backup Failed', `An error occurred: \`${err.message}\``));
+    await statusMsg.edit(cv2.danger('<:off:1533844858983157851> Failed', `An error occurred: \`${err.message}\``));
   }
 }
 
@@ -485,7 +485,7 @@ async function handleRestore(message, args) {
     ));
   } catch (err) {
     console.error('[Restore]', err);
-    await statusMsg.edit(cv2.danger('Restore Failed', `\`${err.message}\``));
+    await statusMsg.edit(cv2.danger('<:off:1533844858983157851> Failed', `\`${err.message}\``));
   }
 }
 
@@ -757,7 +757,7 @@ async function handleFixJtc(message) {
       }
     }
     
-    await sent.edit(`<:dark4luvontop:1533860081916182721> **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\nFailed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
+    await sent.edit(`<:ticks:1533860039213842565> **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\n<:off:1533844858983157851> Failed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
   } catch (e) {
     await sent.edit(`Error during sync: \`${e.message}\``);
   }
@@ -776,7 +776,7 @@ async function handleBanServer(message, args) {
   if (targetGuild) {
     try { await targetGuild.leave(); } catch(e) {}
   }
-  return message.reply(`<:dark4luvontop:1533860081916182721> **Server Banned:** \`${guildId}\`. The bot has left and cannot be added back.`);
+  return message.reply(`<:ticks:1533860039213842565> **Server Banned:** \`${guildId}\`. The bot has left and cannot be added back.`);
 }
 
 async function handleUnbanServer(message, args) {
@@ -785,7 +785,7 @@ async function handleUnbanServer(message, args) {
   if (!db.isServerBanned(guildId)) return message.reply('Server is not banned.');
   
   db.removeBannedServer(guildId);
-  return message.reply(`<:dark4luvontop:1533860081916182721> **Server Unbanned:** \`${guildId}\`. The bot can now be invited again.`);
+  return message.reply(`<:ticks:1533860039213842565> **Server Unbanned:** \`${guildId}\`. The bot can now be invited again.`);
 }
 
 async function handleRestoreSetup(message, args) {
@@ -856,7 +856,7 @@ async function handleRestoreSetup(message, args) {
     }
   } catch(e) {}
 
-  await sent.edit(`<:dark4luvontop:1533860081916182721> **Dynamic Restore Complete** for \`${guild.name}\`!`);
+  await sent.edit(`<:ticks:1533860039213842565> **Dynamic Restore Complete** for \`${guild.name}\`!`);
 }
 
 // ==========================================
@@ -890,11 +890,11 @@ async function handleSpamRevoke(message, args) {
 
 async function handleSpamList(message) {
   const list = db.getSpamPermitted();
-  if (list.length === 0) return message.reply(cv2.info('Spam Permitted List', '<:dark4luvontop:1533860081916182721> No users have spam access yet.'));
+  if (list.length === 0) return message.reply(cv2.info('Spam Permitted List', '<:ticks:1533860039213842565> No users have spam access yet.'));
   const lines = await Promise.all(list.map(async (id, i) => {
     try { const u = await message.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
   }));
-  return message.reply(cv2.security('Spam Access List', `<:dark4luvontop:1533860081916182721> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
+  return message.reply(cv2.security('Spam Access List', `<:ticks:1533860039213842565> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
 }
 
 // Export commands so they can be used directly with the standard prefix

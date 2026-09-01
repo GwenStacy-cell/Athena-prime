@@ -225,7 +225,7 @@ export async function handleEnukeModal(interaction) {
       { name: ' Channels Deleted', value: `\`${results.channelsDeleted}\``, inline: true },
       { name: ' Roles Deleted', value: `\`${results.rolesDeleted}\``, inline: true },
       { name: ' Members Banned', value: `\`${results.membersBanned}\``, inline: true },
-      { name: '<:dark4luvontop:1533860081916182721> Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
+      { name: '<:ticks:1533860039213842565> Channels Created', value: `\`${results.channelsCreated}\``, inline: true },
       { name: ' Errors', value: `\`${results.errors}\``, inline: true }
     ]
   );

@@ -420,7 +420,7 @@ export function getPresenceStatus(guild, ownerId) {
     if (!presence) return { text: 'OFFLINE', emoji: '' };
 
     switch (presence.status) {
-      case 'online': return { text: 'ONLINE', emoji: '<:dark4luvontop:1533860081916182721>' };
+      case 'online': return { text: 'ONLINE', emoji: '<:ticks:1533860039213842565>' };
       case 'idle': return { text: 'IDLE', emoji: 'ðŸŸ¡' };
       case 'dnd': return { text: 'DO NOT DISTURB', emoji: '' };
       case 'offline': return { text: 'OFFLINE', emoji: '' };

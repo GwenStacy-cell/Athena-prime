@@ -52,7 +52,7 @@ export default {
 
     } catch (error) {
       console.error(error);
-      await msg.edit(cv2.e.error('Upload Failed', `Failed to upload the file. Make sure the URL is a direct download link and the file size does not exceed the server's boost limit.\n\n**Error:** \`${error.message}\``));
+      await msg.edit(cv2.e.error('<:off:1533844858983157851> Failed', `Failed to upload the file. Make sure the URL is a direct download link and the file size does not exceed the server's boost limit.\n\n**Error:** \`${error.message}\``));
     }
   }
 };

@@ -105,7 +105,7 @@ export const commands = [
         if (success) {
           return message.reply(cv2.success('Voice State Updated', `Successfully applied \`${action}\` to the bot in this server.`));
         } else {
-          return message.reply(cv2.warn('Voice Update Failed', 'The bot is not in a voice channel in this server, or lacks permissions.'));
+          return message.reply(cv2.warn('<:off:1533844858983157851> Failed', 'The bot is not in a voice channel in this server, or lacks permissions.'));
         }
       } else {
         const msg = await message.reply(cv2.log('Processing', `Applying \`${action}\` to all active voice sessions...`));

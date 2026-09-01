@@ -88,7 +88,7 @@ async function setupInviteTracker(guild, replyChannel, member, interaction = nul
   } catch (err) {
     console.error('Error setting up invite tracker:', err);
     await reply(
-      cv2.danger('Setup Failed', 'I lack permissions to create the channel or modify server settings.')
+      cv2.danger('<:off:1533844858983157851> Failed', 'I lack permissions to create the channel or modify server settings.')
     );
   }
 }

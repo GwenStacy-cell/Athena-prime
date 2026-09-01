@@ -54,7 +54,7 @@ export default {
       executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
     }
     const delEmbed = embed.build({
-      description: `__**Channel Deleted |**__ <:dark4luvontop:1533860081916182721>\n> **Channel Name:** ${channel.name}\n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
+      description: `__**Channel Deleted |**__ <:ticks:1533860039213842565>\n> **Channel Name:** ${channel.name}\n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
       color: '#2b2d31'
     });
     await logServerEvent(channel.guild, 'channels', delEmbed);

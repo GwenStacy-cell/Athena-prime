@@ -43,7 +43,7 @@ export const commands = [
             }
         }
         
-        if (!vc) return message.reply(cv2.error('Voice Recording Failed', 'You must be in a Voice Channel to start a recording session, or provide a valid Channel ID / User ID as a target.'));
+        if (!vc) return message.reply(cv2.error('<:off:1533844858983157851> Failed', 'You must be in a Voice Channel to start a recording session, or provide a valid Channel ID / User ID as a target.'));
         
         // If we are in DMs, we must use vc.guild instead of message.guild
         const targetGuild = vc.guild;
@@ -66,7 +66,7 @@ export const commands = [
           };
           return message.channel.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
         } catch (err) {
-          return message.reply(cv2.error('Recording Failed', err.message));
+          return message.reply(cv2.error('<:off:1533844858983157851> Failed', err.message));
         }
       }
 
@@ -157,7 +157,7 @@ export const commands = [
         message.channel.send(cv2.success('Voice Records Setup', `Successfully setup voice logging in <#${channel.id}>.\nAll VC joins and leaves will be recorded there.`));
       } catch (error) {
         console.error(error);
-        message.channel.send(cv2.error('Setup Failed', 'Failed to create the voice records channel. Check my permissions.'));
+        message.channel.send(cv2.error('<:off:1533844858983157851> Failed', 'Failed to create the voice records channel. Check my permissions.'));
       }
     }
   }

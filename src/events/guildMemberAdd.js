@@ -140,7 +140,7 @@ export default {
       
       const welcomeDm = embed.build({
         title: `Welcome to ${guild.name}!`,
-        description: `Thank you for joining **${guild.name}**! <:dark4luvontop:1533860081916182721>\n\nYou are our **${getOrdinal(guild.memberCount)}** member! We hope you have a great time here. Stay safe!`,
+        description: `Thank you for joining **${guild.name}**! <:ticks:1533860039213842565>\n\nYou are our **${getOrdinal(guild.memberCount)}** member! We hope you have a great time here. Stay safe!`,
         color: config.accentColor || '#2b2d31',
         thumbnail: guild.iconURL({ dynamic: true })
       });
@@ -155,7 +155,7 @@ export default {
     const accountAge = Date.now() - member.user.createdAt.getTime();
     const ageDays = Math.floor(accountAge / (1000 * 60 * 60 * 24));
     const joinEmbed = embed.build({
-      description: `__**Member Joined |**__ <:dark4luvontop:1533860081916182721>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n>  **Account Age:** ${ageDays} days old\n>  **Total Members:** ${guild.memberCount}`,
+      description: `__**Member Joined |**__ <:ticks:1533860039213842565>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n>  **Account Age:** ${ageDays} days old\n>  **Total Members:** ${guild.memberCount}`,
       color: '#2b2d31',
       thumbnail: member.user.displayAvatarURL({ dynamic: true })
     });

@@ -105,7 +105,7 @@ export const commands = [
         const row = buildSpamMoreRow(userId, null, targetUser.id, text, 'user_dm');
         const _r = result.success
           ? cv2.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM with your message **${count}x**.`)
-          : cv2.warn('DM Spam Failed', result.message);
+          : cv2.warn('<:off:1533844858983157851> Failed', result.message);
         if (result.success) _r.components.push(row);
         await message.author.send(_r).catch(() => null);
       } else {
@@ -164,7 +164,7 @@ export const commands = [
         const row = buildSpamMoreRow(userId, null, targetUser.id, text, 'user_dm');
         const _r = result.success
           ? cv2.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM **${count}x**.`)
-          : cv2.warn('DM Spam Failed', result.message);
+          : cv2.warn('<:off:1533844858983157851> Failed', result.message);
         if (result.success) _r.components.push(row);
         await interaction.editReply(_r);
       } else {
@@ -287,21 +287,21 @@ export const commands = [
     async executePrefix(message) {
       if (!(await isBotOwner(message.author))) return;
       const list = db.getSpamPermitted();
-      if (list.length === 0) return message.reply(cv2.info('Spam Permitted List', '<:dark4luvontop:1533860081916182721> No users have spam access yet.'));
+      if (list.length === 0) return message.reply(cv2.info('Spam Permitted List', '<:ticks:1533860039213842565> No users have spam access yet.'));
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await message.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return message.reply(cv2.security('Spam Access List', `<:dark4luvontop:1533860081916182721> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
+      return message.reply(cv2.security('Spam Access List', `<:ticks:1533860039213842565> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
     },
 
     async executeSlash(interaction) {
       if (!(await isBotOwner(interaction.user))) return interaction.reply(cv2.e.danger('Access Denied', 'Bot Owner only.'));
       const list = db.getSpamPermitted();
-      if (list.length === 0) return interaction.reply(cv2.info('Spam Permitted List', '<:dark4luvontop:1533860081916182721> No users have spam access yet.'));
+      if (list.length === 0) return interaction.reply(cv2.info('Spam Permitted List', '<:ticks:1533860039213842565> No users have spam access yet.'));
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await interaction.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return interaction.reply(cv2.security('Spam Access List', `<:dark4luvontop:1533860081916182721> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
+      return interaction.reply(cv2.security('Spam Access List', `<:ticks:1533860039213842565> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
     }
   }
 ];
@@ -357,7 +357,7 @@ export async function handleSpamMoreButton(interaction) {
       const newRow = buildSpamMoreRow(interaction.user.id, null, cacheEntry.targetUserId, cacheEntry.text, 'user_dm');
       const _r = result.success
         ? cv2.success('5 More Sent ', 'Sent 5 more DMs. Press again to send 5 more.')
-        : cv2.warn('DM Failed', result.message);
+        : cv2.warn('<:off:1533844858983157851> Failed', result.message);
       if (result.success) _r.components.push(newRow);
       await interaction.followUp(_r).catch(() => null);
     } else {

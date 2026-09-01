@@ -165,7 +165,7 @@ export const commands = [
           {
             name: 'Delivery',
             value: dmSent
-              ? '<:dark4luvontop:1533860081916182721> Warning DM delivered to target.'
+              ? '<:ticks:1533860039213842565> Warning DM delivered to target.'
               : 'Target DMs are closed. Warning filed internally.',
             inline: false
           },

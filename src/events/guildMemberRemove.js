@@ -20,7 +20,7 @@ export default {
       const config = db.getGuildConfig(guild.id);
       const leaveDm = embed.build({
         title: `Goodbye from ${guild.name}!`,
-        description: `We're sorry to see you go from **${guild.name}**. We will miss you! <:dark4luvontop:1533860081916182721>`,
+        description: `We're sorry to see you go from **${guild.name}**. We will miss you! <:ticks:1533860039213842565>`,
         color: config.accentColor || '#2b2d31',
         thumbnail: guild.iconURL({ dynamic: true })
       });
@@ -54,14 +54,14 @@ export default {
 
     if (isKick) {
       const kickEmbed = embed.build({
-        description: `__**Member Kicked |**__ <:dark4luvontop:1533860081916182721>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
+        description: `__**Member Kicked |**__ <:ticks:1533860039213842565>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
         color: '#2b2d31',
         thumbnail: member.user.displayAvatarURL({ dynamic: true })
       });
       await logServerEvent(guild, 'kicks', kickEmbed);
     } else {
       const leaveEmbed = embed.build({
-        description: `__**Member Left |**__ <:dark4luvontop:1533860081916182721>\n> **User:** ${member.user.tag} (<@${member.user.id}>)`,
+        description: `__**Member Left |**__ <:ticks:1533860039213842565>\n> **User:** ${member.user.tag} (<@${member.user.id}>)`,
         color: '#2b2d31',
         thumbnail: member.user.displayAvatarURL({ dynamic: true })
       });

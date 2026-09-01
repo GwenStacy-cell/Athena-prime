@@ -199,7 +199,7 @@ async function setupMusicChannel(guild, commandChannel, imageUrl, interaction = 
     
   } catch (err) {
     console.error('Setup music error:', err);
-    const failPayload = cv2.danger('Setup Failed', 'Could not create the channel. Please check my permissions.');
+    const failPayload = cv2.danger('<:off:1533844858983157851> Failed', 'Could not create the channel. Please check my permissions.');
     if (interaction) {
       await interaction.editReply(failPayload);
     } else {
