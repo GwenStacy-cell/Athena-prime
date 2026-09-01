@@ -617,7 +617,7 @@ if (interaction.customId === "modal_2fa_setup") {
       // RECORD BUTTONS
       if (interaction.customId.startsWith('record_stop')) {
           const targetGuildId = interaction.customId.split('_')[2] || interaction.guild?.id;
-          if (!targetGuildId) return interaction.reply({ content: 'Cannot determine target server.', ephemeral: true });
+          if (!targetGuildId) return interaction.reply({ content: 'Cannot determine target server.', flags: 64 });
         const vc = interaction.member?.voice?.channel;
         const vcName = vc ? vc.name : 'Unknown Channel';
         const container = {
@@ -651,7 +651,7 @@ if (interaction.customId === "modal_2fa_setup") {
 
       if (interaction.customId.startsWith('record_status')) {
           const targetGuildId = interaction.customId.split('_')[2] || interaction.guild?.id;
-          if (!targetGuildId) return interaction.reply({ content: 'Cannot determine target server.', ephemeral: true });
+          if (!targetGuildId) return interaction.reply({ content: 'Cannot determine target server.', flags: 64 });
         const { getRecordingStatus } = await import('../utils/audioRecorder.js');
         const isActive = getRecordingStatus(targetGuildId);
         const container = {
@@ -979,9 +979,8 @@ async function handleSecurityInteractions(interaction, guild) {
         return interaction.update(newPanel).catch(() => null);
       }
       else if (customId === 'am_tgl_selfbot') {
-        const config = db.getGuildConfig(guildId);
         const current = config.selfbotDetectionEnabled !== false;
-        db.updateGuildConfig(guildId, { selfbotDetectionEnabled: !current });
+        db.updateGuildConfig(guild.id, { selfbotDetectionEnabled: !current });
         const { getAutoModPanel } = await import('../commands/security.js');
         const newPanel = await getAutoModPanel(guild);
         return interaction.update(newPanel).catch(() => null);

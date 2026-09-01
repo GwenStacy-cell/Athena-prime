@@ -157,13 +157,13 @@ export async function handleAnnouncementInteractions(interaction) {
     if (customId === 'ann_publish') {
       const footer = embed.data.footer?.text || '';
       if (!footer.startsWith('Target Channel: ') || footer.includes('Not Set')) {
-        return interaction.reply({ content: 'You must set a target channel first by clicking **Set Channel**.', ephemeral: true });
+        return interaction.reply({ content: 'You must set a target channel first by clicking **Set Channel**.', flags: 64 });
       }
 
       const channelId = footer.replace('Target Channel: ', '').trim();
       const targetChannel = interaction.guild.channels.cache.get(channelId);
       if (!targetChannel) {
-        return interaction.reply({ content: 'Target channel not found. Please set a valid Channel ID.', ephemeral: true });
+        return interaction.reply({ content: 'Target channel not found. Please set a valid Channel ID.', flags: 64 });
       }
 
       // Prepare final embed
@@ -180,7 +180,7 @@ export async function handleAnnouncementInteractions(interaction) {
         );
         return interaction.update({ embeds: [embed.setFooter({ text: 'Status: Published' })], components: [publishedRow] });
       } catch (e) {
-        return interaction.reply({ content: 'Failed to send announcement to that channel. Check my permissions!', ephemeral: true });
+        return interaction.reply({ content: 'Failed to send announcement to that channel. Check my permissions!', flags: 64 });
       }
     }
   }
@@ -215,7 +215,7 @@ export async function handleAnnouncementInteractions(interaction) {
       const chan = interaction.fields.getTextInputValue('ann_channel').replace(/[^0-9]/g, '');
       const target = interaction.guild.channels.cache.get(chan);
       if (!target) {
-        return interaction.reply({ content: 'Invalid Channel ID or I cannot see that channel.', ephemeral: true });
+        return interaction.reply({ content: 'Invalid Channel ID or I cannot see that channel.', flags: 64 });
       }
       embed.setFooter({ text: `Target Channel: ${chan}` });
       return interaction.update({ embeds: [embed] });

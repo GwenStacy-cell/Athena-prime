@@ -111,7 +111,7 @@ export async function scanImageForScam(url) {
     return calculateThreatScore(lowerText) >= 2;
   } catch (error) {
     const msg = String(error);
-    if (!msg.includes('Unsupported image type') && !msg.includes('Image too small') && !msg.includes('Line cannot be recognized')) {
+    if (!msg.includes('Unsupported image type') && !msg.includes('Image too small') && !msg.includes('Line cannot be recognized') && !msg.includes('FetchError') && !msg.includes('ECONNRESET')) {
       console.error('OCR Scanning Error:', error);
     }
     return false;

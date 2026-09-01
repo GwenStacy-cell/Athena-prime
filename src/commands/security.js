@@ -2298,7 +2298,7 @@ export async function buildAutonickDashboard(guildId) {
   const layout = cfg.autonick.layout || '{name}';
   const exampleName = layout.replace('{name}', 'Username');
   
-  const dashboardEmbed = embed[color]('Autonick Manager', `**Status:** \`${state}\`\n**Current Layout:** \`${layout}\`\n**Example Preview:** \`${exampleName}\`\n\nUse the buttons below to cleanly manage the Auto-nickname settings.`);
+  const dashboardEmbed = cv2[color]('Autonick Manager', `**Status:** \`${state}\`\n**Current Layout:** \`${layout}\`\n**Example Preview:** \`${exampleName}\`\n\nUse the buttons below to cleanly manage the Auto-nickname settings.`);
 
   const toggleBtn = new ButtonBuilder()
     .setCustomId('autonick_toggle')

@@ -173,7 +173,7 @@ export async function handleWelcomeManagerMenu(interaction) {
   const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
 
   if (!isServerOwner && !isBotOwner && !isExtraOwner) {
-    return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
+    return interaction.reply({ content: 'You do not have permission to manage this system.', flags: 64 });
   }
   const guildId = interaction.guild.id;
   const isWelcome = interaction.customId.startsWith('welcmgr_');
@@ -200,7 +200,7 @@ export async function handleWelcomeManagerButton(interaction) {
   const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
 
   if (action !== 'test' && !isServerOwner && !isBotOwner && !isExtraOwner) {
-    return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
+    return interaction.reply({ content: 'You do not have permission to manage this system.', flags: 64 });
   }
 
   const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
@@ -319,7 +319,7 @@ export async function handleWelcomeManagerModal(interaction) {
   const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
 
   if (!isServerOwner && !isBotOwner && !isExtraOwner) {
-    return interaction.reply({ content: 'You do not have permission to manage this system.', ephemeral: true });
+    return interaction.reply({ content: 'You do not have permission to manage this system.', flags: 64 });
   }
 
   const guildId = interaction.guild.id;

@@ -120,13 +120,13 @@ export const commands = [
       collector.on('collect', async (i) => {
         // Permission check
         if (i.user.id !== i.guild.ownerId && i.user.id !== botOwnerId) {
-          return i.reply({ content: 'Only the Server Owner and Bot Owner can use this panel.', ephemeral: true });
+          return i.reply({ content: 'Only the Server Owner and Bot Owner can use this panel.', flags: 64 });
         }
 
         // Refresh VC
         const vc = i.member.voice.channel;
         if (!vc) {
-          return i.reply({ content: 'You must be in a voice channel to use these controls!', ephemeral: true });
+          return i.reply({ content: 'You must be in a voice channel to use these controls!', flags: 64 });
         }
 
         const everyoneRole = i.guild.roles.everyone;
@@ -134,23 +134,23 @@ export const commands = [
         try {
           if (i.customId === 'vcp_mute_all') {
             vc.members.forEach(m => { if (m.id !== i.user.id) m.voice.setMute(true).catch(()=>{}); });
-            await i.reply({ content: 'Muted all other members.', ephemeral: true });
+            await i.reply({ content: 'Muted all other members.', flags: 64 });
           } 
           else if (i.customId === 'vcp_unmute_all') {
             vc.members.forEach(m => { m.voice.setMute(false).catch(()=>{}); });
-            await i.reply({ content: 'Unmuted all members.', ephemeral: true });
+            await i.reply({ content: 'Unmuted all members.', flags: 64 });
           }
           else if (i.customId === 'vcp_deafen_all') {
             vc.members.forEach(m => { if (m.id !== i.user.id) m.voice.setDeaf(true).catch(()=>{}); });
-            await i.reply({ content: 'Deafened all other members.', ephemeral: true });
+            await i.reply({ content: 'Deafened all other members.', flags: 64 });
           }
           else if (i.customId === 'vcp_undeafen_all') {
             vc.members.forEach(m => { m.voice.setDeaf(false).catch(()=>{}); });
-            await i.reply({ content: 'Undeafened all members.', ephemeral: true });
+            await i.reply({ content: 'Undeafened all members.', flags: 64 });
           }
           else if (i.customId === 'vcp_kick_all') {
             vc.members.forEach(m => { if (m.id !== i.user.id) m.voice.disconnect().catch(()=>{}); });
-            await i.reply({ content: 'Kicked all other members from VC.', ephemeral: true });
+            await i.reply({ content: 'Kicked all other members from VC.', flags: 64 });
           }
           else if (i.customId === 'vcp_ban_all') {
             vc.members.forEach(m => {
@@ -159,7 +159,7 @@ export const commands = [
                 m.voice.disconnect().catch(()=>{});
               }
             });
-            await i.reply({ content: 'Banned all other members from this VC.', ephemeral: true });
+            await i.reply({ content: 'Banned all other members from this VC.', flags: 64 });
           }
           else if (i.customId === 'vcp_unban_all') {
             const overwrites = vc.permissionOverwrites.cache;
@@ -168,23 +168,23 @@ export const commands = [
                 vc.permissionOverwrites.delete(overwrite.id).catch(()=>{});
               }
             });
-            await i.reply({ content: 'Unbanned all individual members from this VC.', ephemeral: true });
+            await i.reply({ content: 'Unbanned all individual members from this VC.', flags: 64 });
           }
           else if (i.customId === 'vcp_lock') {
             await vc.permissionOverwrites.edit(everyoneRole, { Connect: false });
-            await i.reply({ content: 'Voice channel Locked.', ephemeral: true });
+            await i.reply({ content: 'Voice channel Locked.', flags: 64 });
           }
           else if (i.customId === 'vcp_unlock') {
             await vc.permissionOverwrites.edit(everyoneRole, { Connect: null });
-            await i.reply({ content: 'Voice channel Unlocked.', ephemeral: true });
+            await i.reply({ content: 'Voice channel Unlocked.', flags: 64 });
           }
           else if (i.customId === 'vcp_hide') {
             await vc.permissionOverwrites.edit(everyoneRole, { ViewChannel: false });
-            await i.reply({ content: 'Voice channel Hidden.', ephemeral: true });
+            await i.reply({ content: 'Voice channel Hidden.', flags: 64 });
           }
           else if (i.customId === 'vcp_unhide') {
             await vc.permissionOverwrites.edit(everyoneRole, { ViewChannel: null });
-            await i.reply({ content: 'Voice channel Unhidden.', ephemeral: true });
+            await i.reply({ content: 'Voice channel Unhidden.', flags: 64 });
           }
           else if (['vcp_mute_1', 'vcp_unmute_1', 'vcp_deafen_1', 'vcp_undeafen_1', 'vcp_kick_1', 'vcp_ban_1', 'vcp_unban_1'].includes(i.customId)) {
             const actionMap = {
@@ -202,7 +202,7 @@ export const commands = [
             
             if (i.customId === 'vcp_unban_1') {
               const overwrites = vc.permissionOverwrites.cache.filter(o => o.type === 1 && o.deny.has('Connect'));
-              if (overwrites.size === 0) return i.reply({ content: 'No users are banned from this VC.', ephemeral: true });
+              if (overwrites.size === 0) return i.reply({ content: 'No users are banned from this VC.', flags: 64 });
               
               for (const [id, overwrite] of overwrites) {
                 options.push({ label: `User ID: ${id}`, value: `${i.customId}_${id}` });
@@ -213,7 +213,7 @@ export const commands = [
                   options.push({ label: m.user.tag, value: `${i.customId}_${m.id}` });
                 }
               });
-              if (options.length === 0) return i.reply({ content: 'No other members in VC to target.', ephemeral: true });
+              if (options.length === 0) return i.reply({ content: 'No other members in VC to target.', flags: 64 });
             }
 
             options = options.slice(0, 25);
@@ -225,11 +225,11 @@ export const commands = [
                 .addOptions(options)
             );
 
-            await i.reply({ content: `Please select a user to **${actionName}**:`, components: [selectMenu], ephemeral: true });
+            await i.reply({ content: `Please select a user to **${actionName}**:`, components: [selectMenu], flags: 64 });
           }
         } catch (error) {
           console.error('[VCPanel] Error:', error);
-          if (!i.replied && !i.deferred) await i.reply({ content: 'An error occurred.', ephemeral: true });
+          if (!i.replied && !i.deferred) await i.reply({ content: 'An error occurred.', flags: 64 });
         }
       });
 
@@ -241,11 +241,11 @@ export const commands = [
       selectCollector.on('collect', async (i) => {
         // Permission check for dropdown
         if (i.user.id !== i.guild.ownerId && i.user.id !== botOwnerId) {
-          return i.reply({ content: 'Only the Server Owner and Bot Owner can use this panel.', ephemeral: true });
+          return i.reply({ content: 'Only the Server Owner and Bot Owner can use this panel.', flags: 64 });
         }
 
         const vc = i.member.voice.channel;
-        if (!vc) return i.reply({ content: 'You must be in a voice channel!', ephemeral: true });
+        if (!vc) return i.reply({ content: 'You must be in a voice channel!', flags: 64 });
 
         const actionFull = i.values[0].substring(0, i.values[0].lastIndexOf('_'));
         const targetId = i.values[0].substring(i.values[0].lastIndexOf('_') + 1);
