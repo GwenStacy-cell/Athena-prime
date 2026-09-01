@@ -2455,14 +2455,18 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
   const updates = {
     antiNukeEnabled:   enable,
     antiSpamEnabled:   enable,
-    antiInviteEnabled: enable,
+    antiInviteEnabled: false,
     antiLinkEnabled:   enable,
     antinukeModules:   {}
   };
 
   const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands'];
   for (const key of allKeys) {
-    updates.antinukeModules[key] = enable;
+    if (key === 'antiInvite') {
+      updates.antinukeModules[key] = false;
+    } else {
+      updates.antinukeModules[key] = enable;
+    }
   }
 
   db.updateGuildConfig(guild.id, updates);
@@ -2838,7 +2842,7 @@ export async function getSecurityStatusPanel(guild) {
   let listText = '';
   for (const k of Object.keys(modLabels)) {
     const moduleFlag = config.antinukeModules?.[k];
-    const isEnabled = isSecured && (moduleFlag === undefined ? true : !!moduleFlag);
+    const isEnabled = isSecured && (moduleFlag === undefined ? (k === 'antiInvite' ? false : true) : !!moduleFlag);
     listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 
