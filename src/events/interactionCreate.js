@@ -872,7 +872,7 @@ async function handleSecurityInteractions(interaction, guild) {
           updated = true;
         }
         if (customId === 'toggle_invite') {
-          updateData.antiInviteEnabled = (config.antiInviteEnabled === false) ? true : false;
+          updateData.antiInviteEnabled = (config.antiInviteEnabled === true) ? false : true;
           updated = true;
         }
         if (customId === 'cycle_punishment') {

@@ -2842,7 +2842,12 @@ export async function getSecurityStatusPanel(guild) {
   let listText = '';
   for (const k of Object.keys(modLabels)) {
     const moduleFlag = config.antinukeModules?.[k];
-    const isEnabled = isSecured && (moduleFlag === undefined ? (k === 'antiInvite' ? false : true) : !!moduleFlag);
+      let isEnabled = false;
+      if (k === 'antiInvite') {
+        isEnabled = isSecured && (config.antiInviteEnabled === true);
+      } else {
+        isEnabled = isSecured && (moduleFlag === undefined ? true : !!moduleFlag);
+      }
     listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 

@@ -1048,7 +1048,7 @@ export default {
       const isGlobalInviteAllowed = dbConfig.allowInvitesGlobally === true;
       const isInviteAllowedChannel = dbConfig.inviteAllowedChannel === message.channel.id;
       
-      if (!isGlobalInviteAllowed && !isInviteAllowedChannel && (dbConfig.antiInviteEnabled || config.antiInvite.enabled) && !checkBypass('Anti Invite', hasAntiInviteImmunity)) {
+      if (!isGlobalInviteAllowed && !isInviteAllowedChannel && dbConfig.antiInviteEnabled && !checkBypass('Anti Invite', hasAntiInviteImmunity)) {
         const inviteRegex = /(discord\.(gg|io|me|li)\/|discord(app)?\.com\/invite\/)/gi;
         if (inviteRegex.test(message.content)) {
           await message.delete().catch(() => null);
@@ -1141,7 +1141,7 @@ export default {
       }
 
       // 3. ANTI-SPAM & ANTI FLOOD
-      if (config.antiSpam.enabled && (dbConfig.antiSpamEnabled !== false || dbConfig.antiFloodEnabled !== false) && !checkBypass('Spam Filter', hasAntiSpamImmunity) && !checkBypass('Anti Flood', hasAntiSpamImmunity)) {
+      if ((dbConfig.antiSpamEnabled !== false || dbConfig.antiFloodEnabled !== false) && !checkBypass('Spam Filter', hasAntiSpamImmunity) && !checkBypass('Anti Flood', hasAntiSpamImmunity)) {
         const now = Date.now();
         if (!spamCache.has(cacheKey)) spamCache.set(cacheKey, []);
         const timestamps = spamCache.get(cacheKey);

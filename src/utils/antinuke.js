@@ -585,9 +585,9 @@ export async function handleAuditLogEntry(guild, entry) {
       break;
 
     case AuditLogEvent.InviteCreate:
-    case AuditLogEvent.InviteDelete:
-      if (!mods.antiInvite) return;
-      eventType = 'Unauthorized Invite Tampering';
+      case AuditLogEvent.InviteDelete:
+        if (config.antiInviteEnabled !== true) return;
+        eventType = 'Unauthorized Invite Tampering';
       break;
 
     case AuditLogEvent.GuildScheduledEventCreate:

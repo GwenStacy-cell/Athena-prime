@@ -168,7 +168,7 @@ class Database {
         antiSpamMentionEnabled: false,
         antiSpamMentionBypassRoles: [],
         antiLinkEnabled: false,
-        antiInviteEnabled: true,
+        antiInviteEnabled: false,
         wordFilterEnabled: true,
         bigFontsEnabled: true,
         antiFloodEnabled: true,
@@ -203,7 +203,7 @@ class Database {
           antiBan: true,
           antiKick: true,
           antiUnban: true, // Replaced Invite with Unban in standard
-          antiInvite: true,
+          antiInvite: false,
           antiScheduledEvents: true,
           antiMemberPurge: true,
           antiMassBan: true,
@@ -252,7 +252,7 @@ class Database {
           antiRoleCreate: true, antiRoleDelete: true, antiRoleUpdate: true, antiRolePermUpdate: true, antiMemberRoleUpdate: true, antiRoleReorder: true,
           antiChannelCreate: true, antiChannelDelete: true, antiChannelUpdate: true, antiChannelPermUpdate: true, antiChannelReorder: true, antiChannelNameMod: true,
           antiEmojiCreate: true, antiEmojiDelete: true, antiEmojiUpdate: true, antiWebhooks: true, antiBotAdd: true, antiServerUpdate: true,
-          antiBan: true, antiKick: true, antiUnban: true, antiInvite: true, antiScheduledEvents: true, antiMemberPurge: true,
+          antiBan: true, antiKick: true, antiUnban: true, antiInvite: false, antiScheduledEvents: true, antiMemberPurge: true,
           antiMassBan: true, antiAutomodUpdate: true, antiAppCommands: true
         };
         updated = true;
