@@ -61,7 +61,7 @@ export default {
     if (interaction.isModalSubmit()) {
 
 
-      if (interaction.customId === 'ytstats_bind_modal') {
+      if (interaction.customId === 'ytstats_bind_modal' || interaction.customId === 'ytstats_auto_modal') {
         const { handleYtStatsModal } = await import('../commands/ytstats.js');
         return handleYtStatsModal(interaction);
       }

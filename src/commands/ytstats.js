@@ -18,7 +18,8 @@ export function getYtStatsPanel(guildId, client) {
   }
 
   const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('ytstats_bind').setLabel('Bind YouTube VC').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('ytstats_bind').setLabel('Bind Existing VC').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('ytstats_auto').setLabel('Auto-Setup Channels').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('ytstats_clear').setLabel('Wipe All Configs').setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('ytstats_refresh').setLabel('Force Refresh').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId('ytstats_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
@@ -73,6 +74,21 @@ export async function handleYtStatsButton(interaction) {
     return interaction.update(getYtStatsPanel(interaction.guild.id, interaction.client));
   }
   
+  if (interaction.customId === 'ytstats_auto') {
+    const modal = new ModalBuilder().setCustomId('ytstats_auto_modal').setTitle('Auto-Setup YT Channels');
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('yt_handle')
+          .setLabel('YouTube Handle')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+          .setPlaceholder('@MrBeast')
+      )
+    );
+    return interaction.showModal(modal);
+  }
+
   if (interaction.customId === 'ytstats_bind') {
     const modal = new ModalBuilder().setCustomId('ytstats_bind_modal').setTitle('Bind YouTube Stats VC');
     

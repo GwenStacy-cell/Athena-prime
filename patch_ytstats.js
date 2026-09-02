@@ -1,27 +1,30 @@
 ﻿import fs from "fs";
 let js = fs.readFileSync("src/commands/ytstats.js", "utf8");
 
-const oldLogic = `    // Ensure handle starts with @
-    if (!ytHandle.startsWith('@') && !ytHandle.startsWith('UC')) {
-      ytHandle = '@' + ytHandle;
-    }
-    
-    const config = db.getGuildConfig(interaction.guild.id);`;
+// Add the Auto-Setup button to row1
+js = js.replace(
+  "new ButtonBuilder().setCustomId('ytstats_bind').setLabel('Bind YouTube VC').setStyle(ButtonStyle.Primary),",
+  "new ButtonBuilder().setCustomId('ytstats_bind').setLabel('Bind Existing VC').setStyle(ButtonStyle.Secondary),\n    new ButtonBuilder().setCustomId('ytstats_auto').setLabel('Auto-Setup Channels').setStyle(ButtonStyle.Primary),"
+);
 
-const newLogic = `    // Extract handle if they pasted a full URL
-    if (ytHandle.includes('youtube.com/')) {
-      const parts = ytHandle.split('youtube.com/');
-      ytHandle = parts[1];
-    }
-    // Remove any trailing slashes or queries
-    ytHandle = ytHandle.split('?')[0].replace(/\\/$/, '');
-    
-    // Ensure handle starts with @
-    if (!ytHandle.startsWith('@') && !ytHandle.startsWith('UC')) {
-      ytHandle = '@' + ytHandle;
-    }
-    
-    const config = db.getGuildConfig(interaction.guild.id);`;
+// Add the Auto-Setup modal handler
+const oldModalHandler = `  if (interaction.customId === 'ytstats_bind') {`;
+const newModalHandler = `  if (interaction.customId === 'ytstats_auto') {
+    const modal = new ModalBuilder().setCustomId('ytstats_auto_modal').setTitle('Auto-Setup YT Channels');
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('yt_handle')
+          .setLabel('YouTube Handle')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+          .setPlaceholder('@MrBeast')
+      )
+    );
+    return interaction.showModal(modal);
+  }
 
-js = js.replace(oldLogic, newLogic);
+  if (interaction.customId === 'ytstats_bind') {`;
+js = js.replace(oldModalHandler, newModalHandler);
+
 fs.writeFileSync("src/commands/ytstats.js", js);
