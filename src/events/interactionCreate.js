@@ -55,7 +55,12 @@ export default {
     // 2. MODALS
     // ==========================================
     
+    
     if (interaction.isModalSubmit()) {
+      if (interaction.customId === 'autonick_modal') {
+        const { handleAutonickModal } = await import('../commands/security.js');
+        return handleAutonickModal(interaction);
+      }
       if (interaction.customId.startsWith('welc_modal_') || interaction.customId.startsWith('leav_modal_')) {
         const { handleWelcomeManagerModal } = await import('../commands/welcome.js');
         return handleWelcomeManagerModal(interaction);
@@ -281,7 +286,12 @@ if (interaction.customId === "modal_2fa_setup") {
     }
 
     
+    
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
+      if (interaction.customId.startsWith('autonick_')) {
+        const { handleAutonickButton } = await import('../commands/security.js');
+        return handleAutonickButton(interaction);
+      }
       if (interaction.customId.startsWith('welcmgr_') || interaction.customId.startsWith('leavmgr_')) {
         const { handleWelcomeManagerButton, handleWelcomeManagerMenu } = await import('../commands/welcome.js');
         if (interaction.isButton()) return handleWelcomeManagerButton(interaction);
