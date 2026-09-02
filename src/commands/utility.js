@@ -213,7 +213,7 @@ export const commands = [
 
       const { MessageFlags } = await import('discord.js');
       const sent = await message.reply({ 
-        components: [{ type: 17, components: [{ type: 10, content: '-# **Calculating ping...**' }] }],
+        components: [{ type: 17, components: [{ type: 10, content: `<a:loading:1542155051286396938> **Athena Prime:** \`${["Synchronizing neural network parameters...", "Querying regional database shards...", "Allocating memory buffers for task execution...", "Validating security payload hashes...", "Compiling component view hierarchies...", "Establishing secure websocket handshake...", "Fetching remote assets..."][Math.floor(Math.random() * 7)]}\`` }] }],
         flags: MessageFlags.IsComponentsV2 
       });
       const apiMs = sent.createdTimestamp - message.createdTimestamp;
@@ -247,7 +247,7 @@ export const commands = [
 
       const { MessageFlags } = await import('discord.js');
       await interaction.reply({ 
-        components: [{ type: 17, components: [{ type: 10, content: '-# **Calculating ping...**' }] }],
+        components: [{ type: 17, components: [{ type: 10, content: `<a:loading:1542155051286396938> **Athena Prime:** \`${["Synchronizing neural network parameters...", "Querying regional database shards...", "Allocating memory buffers for task execution...", "Validating security payload hashes...", "Compiling component view hierarchies...", "Establishing secure websocket handshake...", "Fetching remote assets..."][Math.floor(Math.random() * 7)]}\`` }] }],
         flags: MessageFlags.IsComponentsV2 
       });
       const sent = await interaction.fetchReply();
