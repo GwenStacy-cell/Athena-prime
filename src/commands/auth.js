@@ -20,11 +20,11 @@ function buildAuthPayload(guildId) {
         accessory: { type: 11, media: { url: 'https://cdn.discordapp.com/emojis/1525429906102816788.webp?size=128&quality=lossless' } }
       },
       { type: 14, divider: true },
-      { type: 9, components: [{ type: 10, content: `### Admin Tier Roles\n-# **Bound Roles:** ${adminIds}` }] },
+      { type: 10, content: `### Admin Tier Roles\n-# **Bound Roles:** ${adminIds}` },
       { type: 14, divider: true },
-      { type: 9, components: [{ type: 10, content: `### Mod Tier Roles\n-# **Bound Roles:** ${modIds}` }] },
+      { type: 10, content: `### Mod Tier Roles\n-# **Bound Roles:** ${modIds}` },
       { type: 14, divider: true },
-      { type: 9, components: [{ type: 10, content: `### Staff Tier Roles\n-# **Bound Roles:** ${staffIds}` }] }
+      { type: 10, content: `### Staff Tier Roles\n-# **Bound Roles:** ${staffIds}` }
     ]
   };
 
