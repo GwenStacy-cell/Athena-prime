@@ -14,6 +14,7 @@ const TOGGLE_ON = '<:emoji_16:1521464002046328944>';
 export default {
   name: 'interactionCreate',
   async execute(interaction) {
+  if (!interaction.guild) return;
   try {
     const guild = interaction.guild;
     if (guild) setGuildContext(guild.id);
@@ -806,6 +807,7 @@ if (interaction.customId === "modal_2fa_setup") {
 }; // close object
 
 async function handleSecurityInteractions(interaction, guild) {
+  if (!guild) return;
   const customId = interaction.customId;
   const config = db.getGuildConfig(guild.id);
 
