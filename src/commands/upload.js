@@ -17,23 +17,47 @@ export default {
       return message.reply(cv2.e.error('Access Denied', 'You must be a Server Administrator or Owner to use the upload command.'));
     }
 
-    if (args.length < 1) {
-      return message.reply(cv2.e.warn('Invalid Syntax', 'Please provide a direct URL to the file.\n\n**Usage:**\n`!upload <url> [optional_filename.exe]`\n`!upload <url> [optional_filename.exe] | [Optional message content]`'));
+        let targetUrl = null;
+    let targetFilename = null;
+    let contentText = '';
+
+    if (message.reference && message.reference.messageId) {
+      try {
+        const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
+        const attachment = referencedMessage.attachments.first();
+        if (attachment) {
+          targetUrl = attachment.url;
+          targetFilename = attachment.name;
+        }
+      } catch (e) {}
     }
 
-    // Support splitting message content with a pipe |
-    const fullArgs = args.join(' ');
-    let [fileInfo, ...contentParts] = fullArgs.split('|');
-    const contentText = contentParts.join('|').trim();
+    if (!targetUrl) {
+      if (args.length < 1) {
+        return message.reply(cv2.e.warn('Invalid Syntax', `Please provide a direct URL, or **reply** to a message containing a file!\n\n**Usage:**\n\`!upload <url> [optional_filename.exe]\`\n\`!upload [new_filename.exe]\` (While replying to a file)`));
+      }
+      
+      const fullArgs = args.join(' ');
+      let [fileInfo, ...contentParts] = fullArgs.split('|');
+      contentText = contentParts.join('|').trim();
 
-    const infoArgs = fileInfo.trim().split(' ');
-    const url = infoArgs[0];
-    const filename = infoArgs.slice(1).join(' ') || 'downloaded_file';
+      const infoArgs = fileInfo.trim().split(' ');
+      targetUrl = infoArgs[0];
+      targetFilename = infoArgs.slice(1).join(' ') || 'downloaded_file';
+    } else {
+      const fullArgs = args.join(' ');
+      let [fileInfo, ...contentParts] = fullArgs.split('|');
+      contentText = contentParts.join('|').trim();
+      
+      if (fileInfo.trim()) {
+        targetFilename = fileInfo.trim();
+      }
+    }
 
-    const msg = await message.reply(cv2.info('Uploading...', `Fetching \`${filename}\` from the provided URL... This may take a moment depending on the file size.`));
+    const msg = await message.reply(cv2.info('Uploading...', `Fetching \`${targetFilename}\` from the provided URL... This may take a moment depending on the file size.`));
 
     try {
-      const attachment = new AttachmentBuilder(url, { name: filename });
+      const attachment = new AttachmentBuilder(targetUrl, { name: targetFilename });
       
       const payload = { files: [attachment] };
       if (contentText) {
@@ -42,7 +66,7 @@ export default {
 
       await message.channel.send(payload);
       
-      await msg.edit(cv2.success('Upload Complete', `Successfully uploaded **${filename}** to this channel.`));
+      await msg.edit(cv2.success('Upload Complete', `Successfully uploaded **\${targetFilename}** to this channel.`));
       
       // Clean up the status messages
       setTimeout(() => {
