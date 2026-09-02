@@ -1094,7 +1094,7 @@ async function sendCalculator(context) {
 
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
   const cv2 = (await import('../cv2.js')).default;
-  const embed = cv2.info('Athena Prime Calculator', '0');
+  const embed = cv2.info('Athena Prime Calculator', `> # **\` 0 \`**`);
 
   const createRow = (btns) => {
     const row = new ActionRowBuilder();
@@ -1229,7 +1229,7 @@ export async function handleCalculatorButton(interaction) {
 
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
   const cv2 = (await import('../cv2.js')).default;
-  const embed = cv2.info('Athena Prime Calculator', String(eq));
+  const embed = cv2.info('Athena Prime Calculator', `> # **\` ${eq} \`**`);
   
   const createRow = (btns) => {
     const row = new ActionRowBuilder();
