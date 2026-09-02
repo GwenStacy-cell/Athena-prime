@@ -33,7 +33,7 @@ export function getAutoReactPanel(guildId, client) {
         ],
         accessory: {
           type: 11,
-          media: { url: client?.user?.displayAvatarURL({ extension: 'png' }) || 'https://cdn.discordapp.com/embed/avatars/0.png' }
+          media: { url: client?.guilds.cache.get(guildId)?.members.me?.displayAvatarURL({ extension: 'png' }) || client?.user?.displayAvatarURL({ extension: 'png' }) || 'https://cdn.discordapp.com/embed/avatars/0.png' }
         }
       },
       { type: 14, divider: true },
