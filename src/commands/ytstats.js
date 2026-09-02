@@ -124,7 +124,15 @@ export async function handleYtStatsModal(interaction) {
     let ytHandle = interaction.fields.getTextInputValue('yt_handle').trim();
     const format = interaction.fields.getTextInputValue('format').trim();
     
-    // Ensure handle starts with @
+    // Extract handle if they pasted a full URL
+    if (ytHandle.includes('youtube.com/')) {
+      const parts = ytHandle.split('youtube.com/');
+      ytHandle = parts[1];
+    }
+    // Remove any trailing slashes, queries, or leading slashes
+    ytHandle = ytHandle.split('?')[0].replace(/[\/]/g, '').trim();
+    
+    // Ensure handle starts with @ if it's not a UC channel ID
     if (!ytHandle.startsWith('@') && !ytHandle.startsWith('UC')) {
       ytHandle = '@' + ytHandle;
     }
@@ -141,6 +149,11 @@ export async function handleYtStatsModal(interaction) {
     }
     
     db.updateGuildConfig(interaction.guild.id, { ytStats });
+    
+    // Automatically Force Refresh on Save so the user sees it immediately
+    const { forceUpdateYtStats } = await import('../utils/ytStatsEngine.js');
+    forceUpdateYtStats(interaction.guild).catch(() => null);
+
     return interaction.update(getYtStatsPanel(interaction.guild.id, interaction.client));
   }
 }
