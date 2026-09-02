@@ -44,7 +44,7 @@ export function getYtStatsPanel(guildId, client) {
       { type: 14, divider: true },
       {
         type: 10,
-        content: `-# **${TICK} System Documentation:**\n-# \u2022 **How it works:** Athena silently scrapes the YouTube channel in the background to fetch live subscriber counts, avoiding strict Google API Key quotas.\n-# \u2022 **Update Frequency:** To protect your server from being Rate-Limited by Discord (which aggressively bans rapid channel renames), Athena updates the stats exactly once every **10 minutes**.\n-# \u2022 **Format Template:** Use \`{count}\` where you want the number to appear (e.g. \`Subs: {count}\`).`
+        content: `-# **${TICK} System Documentation:**\n-# \u2022 **How it works:** Athena silently scrapes the YouTube channel in the background to fetch live subscriber counts, avoiding strict Google API Key quotas.\n-# \u2022 **Update Frequency:** To protect your server from being Rate-Limited by Discord (which aggressively bans rapid channel renames), Athena updates the stats exactly once every **10 minutes**.\n-# \u2022 **Format Template:** Use \`{subs}\`, \`{videos}\`, and \`{views}\` where you want the numbers to appear (e.g. \`Subs: {subs}\`).\n-# \u2022 **Pro Tip:** If you ever want to change the format of these channels after Auto-Setup creates them, you can just click the **Bind Existing VC** button, paste the ID of the channel it created, and type whatever custom format/text you want. The engine will instantly overwrite the format to your new layout!`
       },
       { type: 14, divider: true },
       {
