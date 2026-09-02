@@ -312,7 +312,8 @@ if (interaction.customId === "modal_2fa_setup") {
 
 
       if (interaction.customId === 'ytstats_refresh') {
-        await interaction.deferReply({ flags: 64 }).catch(() => null);
+        // Use a direct reply to bypass the buggy deferReply prototype
+        await interaction.reply({ content: '-# <a:Loading:1537404628826587207> **Force refreshing YouTube Stats...**', flags: 64 }).catch(() => null);
         const { forceUpdateYtStats } = await import('../utils/ytStatsEngine.js');
         try {
           await forceUpdateYtStats(interaction.guild);

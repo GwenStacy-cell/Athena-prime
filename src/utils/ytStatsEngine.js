@@ -7,7 +7,15 @@ export async function scrapeSubscriberCount(handle) {
     if (!res.ok) return null;
     const text = await res.text();
     
-    // Look for the exact subscriber count JSON block
+    // New YouTube PageHeaderViewModel layout
+    const headerMatch = text.match(/"pageHeaderViewModel"[\s\S]*?"content":"([^"]*?(?:subscribers?|subs))"/i);
+    if (headerMatch) {
+      let raw = headerMatch[1];
+      raw = raw.replace(/ subscribers?/i, '').trim();
+      return raw;
+    }
+    
+    // Legacy accessibility layout
     const match = text.match(/"subscriberCountText":\{"accessibility":\{"accessibilityData":\{"label":"([^"]+?)"\}\},"simpleText":"([^"]+?)"\}/);
     if (match) {
       let raw = match[2];
@@ -15,12 +23,19 @@ export async function scrapeSubscriberCount(handle) {
       return raw;
     }
     
-    const fallbackMatch = text.match(/"subscriberCountText":\{"simpleText":"([^"]+?)"\}/);
-    if (fallbackMatch) {
-      let raw = fallbackMatch[1];
+    // Ultimate Fallback regex
+    const fallback = text.match(/"content":"([^"]*?(?:subscribers?|subs))"/i);
+    if (fallback) {
+      let raw = fallback[1];
       raw = raw.replace(/ subscribers?/i, '').trim();
       return raw;
     }
+
+    const simpleFallback = text.match(/([0-9\\.,kKmM]+)\s+subscribers/i);
+    if (simpleFallback) {
+      return simpleFallback[1].trim();
+    }
+    
     return null;
   } catch (err) {
     console.error(`[YT Stats] Failed to scrape ${handle}:`, err.message);
