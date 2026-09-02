@@ -288,7 +288,13 @@ if (interaction.customId === "modal_2fa_setup") {
 
     
     
+    
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
+      if (interaction.customId.startsWith('calc_')) {
+        const { handleCalculatorButton } = await import('../commands/utility.js');
+        return handleCalculatorButton(interaction);
+      }
+
       if (interaction.customId.startsWith('autonick_')) {
         const { handleAutonickButton } = await import('../commands/security.js');
         return handleAutonickButton(interaction);
