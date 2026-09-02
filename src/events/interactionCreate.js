@@ -14,7 +14,7 @@ const TOGGLE_ON = '<:emoji_16:1521464002046328944>';
 export default {
   name: 'interactionCreate',
   async execute(interaction) {
-  if (!interaction.guild) return;
+  if (!interaction.guild && !(interaction.isButton() && interaction.customId.startsWith('gen_invite_'))) return;
   try {
     const guild = interaction.guild;
     if (guild) setGuildContext(guild.id);
@@ -794,6 +794,28 @@ if (interaction.customId === "modal_2fa_setup") {
           const currentOwner = vc.name.split("'s")[0]; 
           // It's a crude check, a real system tracks the owner ID in the DB.
           return interaction.reply({ content: 'Ownership claiming is not yet fully implemented.', flags: MessageFlags.Ephemeral });
+        }
+      }
+
+      if (interaction.isButton() && interaction.customId.startsWith('gen_invite_')) {
+        const targetGuildId = interaction.customId.split('_')[2];
+        const targetGuild = interaction.client.guilds.cache.get(targetGuildId);
+        if (!targetGuild) {
+          return interaction.reply({ content: 'I am no longer in that server.', flags: 64 });
+        }
+        
+        // Find a suitable channel to create an invite
+        const channel = targetGuild.channels.cache.find(c => c.type === 0 && c.permissionsFor(targetGuild.members.me).has('CreateInstantInvite'));
+        if (!channel) {
+          return interaction.reply({ content: 'I do not have permission to create invites in that server, or there are no text channels.', flags: 64 });
+        }
+        
+        try {
+          const invite = await channel.createInvite({ maxAge: 86400, maxUses: 1 });
+          return interaction.reply({ content: `Here is your invite for **${targetGuild.name}**: ${invite.url}`, flags: 64 });
+        } catch (err) {
+          console.error(err);
+          return interaction.reply({ content: 'Failed to create invite.', flags: 64 });
         }
       }
 
