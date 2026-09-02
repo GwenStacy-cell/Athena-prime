@@ -149,6 +149,26 @@ class Database {
   }
 
   // Guild Configurations
+
+  // ==========================================
+  // AUTH TIERS
+  // ==========================================
+  getAuthRoles(guildId) {
+    const config = this.getGuildConfig(guildId);
+    if (!config.authRoles) {
+      config.authRoles = { admin: [], mod: [], staff: [] };
+      this.save();
+    }
+    return config.authRoles;
+  }
+
+  updateAuthRoles(guildId, tier, roleIds) {
+    const config = this.getGuildConfig(guildId);
+    if (!config.authRoles) config.authRoles = { admin: [], mod: [], staff: [] };
+    config.authRoles[tier] = roleIds;
+    this.save();
+  }
+
   getGuildConfig(guildId) {
     if (!this.cache.guilds[guildId]) {
       this.cache.guilds[guildId] = {

@@ -645,6 +645,24 @@ if (interaction.customId === "modal_2fa_setup") {
         }
       }
 
+
+      // AUTH SELECTORS
+      if (interaction.customId.startsWith('auth_select_')) {
+        const { isServerAdmin } = await import('../utils/helpers.js');
+        if (!isServerAdmin(interaction.member, interaction.guild.id)) {
+          return await interaction.reply({ content: '-# **Access Denied. Only Server Admins can modify Auth Tiers.**', flags: 64 }).catch(()=>null);
+        }
+      
+        const tier = interaction.customId.split('_')[2]; // admin, mod, or staff
+        const selectedRoles = interaction.values; // Array of Role IDs
+        
+        db.updateAuthRoles(interaction.guild.id, tier, selectedRoles);
+        
+        const { buildAuthPayload } = await import('../commands/auth.js');
+        const payload = buildAuthPayload(interaction.guild.id);
+        
+        return await interaction.update(payload).catch(() => null);
+      }
       // ENUKE BUTTON
       if (interaction.customId.startsWith('enuke_open_manager_')) {
         const { handleEnukeButton } = await import('../commands/enuke.js');

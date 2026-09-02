@@ -1,6 +1,33 @@
 import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import db from '../database.js';
 
+// ==========================================
+// ROLE AUTHORIZATION TIERS
+// ==========================================
+export function isServerAdmin(member, guildId) {
+  if (!member) return false;
+  if (isBotOwnerOrServerOwnerStrict(member.id, member.guild)) return true;
+  if (db.isExtraOwner(guildId, member.id)) return true;
+  
+  const authRoles = db.getAuthRoles(guildId);
+  return authRoles.admin.some(roleId => member.roles.cache.has(roleId));
+}
+
+export function isServerMod(member, guildId) {
+  if (isServerAdmin(member, guildId)) return true; // Higher tier inherits lower
+  
+  const authRoles = db.getAuthRoles(guildId);
+  return authRoles.mod.some(roleId => member.roles.cache.has(roleId));
+}
+
+export function isServerStaff(member, guildId) {
+  if (isServerMod(member, guildId)) return true; // Higher tier inherits lower
+  
+  const authRoles = db.getAuthRoles(guildId);
+  return authRoles.staff.some(roleId => member.roles.cache.has(roleId));
+}
+
+
 /**
  * Parses simple duration strings (e.g. 10s, 5m, 2h, 1d) into milliseconds
  */
