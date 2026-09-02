@@ -57,13 +57,16 @@ export function buildWelcomeEmbed(member, cfg) {
   if (cfg.description) e.setDescription(resolve(cfg.description, member, cfg));
   else if (!cfg.title && !cfg.from) e.setDescription(`**Welcome to ${member.guild.name}!**`);
 
-  if (avatarPos === 'thumbnail') e.setThumbnail(userAvatar);
-  if (avatarPos === 'image') e.setImage(userAvatar);
+  if (cfg.thumbnailUrl) {
+    try { e.setThumbnail(resolve(cfg.thumbnailUrl, member, cfg)); } catch(e) {}
+  } else if (avatarPos === 'thumbnail') {
+    e.setThumbnail(userAvatar);
+  }
 
   if (cfg.image) {
-    try {
-      e.setImage(resolve(cfg.image, member, cfg));
-    } catch (err) {}
+    try { e.setImage(resolve(cfg.image, member, cfg)); } catch(e) {}
+  } else if (avatarPos === 'image') {
+    e.setImage(userAvatar);
   }
 
   if (cfg.footer || avatarPos === 'footer') {
