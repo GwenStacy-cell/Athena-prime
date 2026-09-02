@@ -1,0 +1,146 @@
+﻿import { MessageFlags, ActionRowBuilder, RoleSelectMenuBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import db from '../database.js';
+
+const TICK = '<a:black_dot:1544740123403620422>';
+const ARROW = '<a:z_arrow_pink1:1523082728004653138>';
+
+export function getAutoRolePanel(guildId, client) {
+  const config = db.getGuildConfig(guildId) || {};
+  
+  const humanRole = config.autoroleHuman ? `<@&${config.autoroleHuman}>` : '`None`';
+  const botRole = config.autoroleBot ? `<@&${config.autoroleBot}>` : '`None`';
+  
+  const vanityStr = config.vanityString ? `**${config.vanityString}**` : '`None`';
+  const vanityRole = config.vanityRole ? `<@&${config.vanityRole}>` : '`None`';
+
+  const container = {
+    type: 17,
+    components: [
+      {
+        type: 9,
+        components: [
+          {
+            type: 10,
+            content: `> # **AutoRole & Vanity Engine**\n\n-# **Automatically assign roles to new members, and reward users who promote your server vanity.**\n\n-# **${TICK} Use the dropdowns below to configure roles.**`
+          }
+        ],
+        accessory: {
+          type: 11,
+          media: { url: client?.guilds.cache.get(guildId)?.members.me?.displayAvatarURL({ extension: 'png' }) || client?.user?.displayAvatarURL({ extension: 'png' }) || 'https://cdn.discordapp.com/embed/avatars/0.png' }
+        }
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **${TICK} Join Auto-Roles:**\n-# **\u2022 Humans:**  ${ARROW}  ${humanRole}\n-# **\u2022 Bots:**  ${ARROW}  ${botRole}\n\n-# **${TICK} Vanity Status Rewards:**\n-# **\u2022 Target String:**  ${ARROW}  ${vanityStr}\n-# **\u2022 Reward Role:**  ${ARROW}  ${vanityRole}`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **Athena Bulletproof Security !!!**`
+      }
+    ]
+  };
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new RoleSelectMenuBuilder()
+      .setCustomId('autorole_human_select')
+      .setPlaceholder('Select the Human AutoRole...')
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new RoleSelectMenuBuilder()
+      .setCustomId('autorole_bot_select')
+      .setPlaceholder('Select the Bot AutoRole...')
+  );
+  
+  const row3 = new ActionRowBuilder().addComponents(
+    new RoleSelectMenuBuilder()
+      .setCustomId('autorole_vanity_select')
+      .setPlaceholder('Select the Vanity Reward Role...')
+  );
+
+  const row4 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('autorole_set_vanity').setLabel('Set Vanity String').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('autorole_clear').setLabel('Wipe Config').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('autorole_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
+  );
+
+  return { components: [container, row1, row2, row3, row4], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function handleAutoRoleMenu(interaction) {
+  const roleId = interaction.values[0];
+  const guildId = interaction.guild.id;
+  
+  if (interaction.customId === 'autorole_human_select') {
+    db.updateGuildConfig(guildId, { autoroleHuman: roleId });
+  } else if (interaction.customId === 'autorole_bot_select') {
+    db.updateGuildConfig(guildId, { autoroleBot: roleId });
+  } else if (interaction.customId === 'autorole_vanity_select') {
+    db.updateGuildConfig(guildId, { vanityRole: roleId });
+  }
+  
+  return interaction.update(getAutoRolePanel(guildId, interaction.client));
+}
+
+export async function handleAutoRoleButton(interaction) {
+  if (interaction.customId === 'autorole_close') {
+    return interaction.message.delete().catch(() => null);
+  }
+  
+  if (interaction.customId === 'autorole_clear') {
+    db.updateGuildConfig(interaction.guild.id, { 
+      autoroleHuman: null,
+      autoroleBot: null,
+      vanityRole: null,
+      vanityString: null
+    });
+    return interaction.update(getAutoRolePanel(interaction.guild.id, interaction.client));
+  }
+  
+  if (interaction.customId === 'autorole_set_vanity') {
+    const config = db.getGuildConfig(interaction.guild.id) || {};
+    const modal = new ModalBuilder().setCustomId('autorole_vanity_modal').setTitle('Configure Vanity String');
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('vanity_str')
+          .setLabel('Vanity String (e.g. .gg/athena)')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(false)
+          .setPlaceholder('Leave blank to disable')
+          .setValue(config.vanityString || '')
+      )
+    );
+    return interaction.showModal(modal);
+  }
+}
+
+export async function handleAutoRoleModal(interaction) {
+  if (interaction.customId === 'autorole_vanity_modal') {
+    const str = interaction.fields.getTextInputValue('vanity_str') || null;
+    db.updateGuildConfig(interaction.guild.id, { vanityString: str });
+    return interaction.update(getAutoRolePanel(interaction.guild.id, interaction.client));
+  }
+}
+
+export default {
+  name: 'autorole',
+  description: 'Manage AutoRole and Vanity configurations',
+  type: 1, // CHAT_INPUT
+  async executePrefix(message) {
+    const { isExtraOwner, isBotOwnerSync } = await import('../utils/helpers.js');
+    if (message.guild.ownerId !== message.author.id && !isBotOwnerSync(message.author.id) && !isExtraOwner(message.guild.id, message.author.id)) {
+      return message.reply({ content: '-# **You do not have permission to manage this system.**', flags: 64 });
+    }
+    await message.reply(getAutoRolePanel(message.guild.id, message.client));
+  },
+  async executeSlash(interaction) {
+    const { isExtraOwner, isBotOwnerSync } = await import('../utils/helpers.js');
+    if (interaction.guild.ownerId !== interaction.user.id && !isBotOwnerSync(interaction.user.id) && !isExtraOwner(interaction.guild.id, interaction.user.id)) {
+      return interaction.reply({ content: '-# **You do not have permission to manage this system.**', flags: 64 });
+    }
+    await interaction.reply(getAutoRolePanel(interaction.guild.id, interaction.client));
+  }
+};

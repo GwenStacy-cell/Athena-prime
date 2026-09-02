@@ -59,7 +59,13 @@ export default {
     
     
     if (interaction.isModalSubmit()) {
+
+      if (interaction.customId.startsWith('autorole_modal_') || interaction.customId === 'autorole_vanity_modal') {
+        const { handleAutoRoleModal } = await import('../commands/autorole.js');
+        return handleAutoRoleModal(interaction);
+      }
       if (interaction.customId.startsWith('autoreact_modal_')) {
+
         const { handleAutoReactModal } = await import('../commands/autoreact.js');
         return handleAutoReactModal(interaction);
       }
@@ -297,7 +303,14 @@ if (interaction.customId === "modal_2fa_setup") {
     
     
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
+
+      if (interaction.customId.startsWith('autorole_')) {
+        const { handleAutoRoleButton, handleAutoRoleMenu } = await import('../commands/autorole.js');
+        if (interaction.isButton()) return handleAutoRoleButton(interaction);
+        if (interaction.isAnySelectMenu()) return handleAutoRoleMenu(interaction);
+      }
       if (interaction.customId.startsWith('autoreact_')) {
+
         const { handleAutoReactButton, handleAutoReactMenu } = await import('../commands/autoreact.js');
         if (interaction.isButton()) return handleAutoReactButton(interaction);
         if (interaction.isAnySelectMenu()) return handleAutoReactMenu(interaction);

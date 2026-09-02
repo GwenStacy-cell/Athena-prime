@@ -40,6 +40,7 @@ import adelCmds from './adel.js';
 import { commands as botstatsCmds } from './botstats.js';
 import uploadCmd from './upload.js';
 import autoreactCmd from './autoreact.js';
+import autoroleCmd from './autorole.js';
 import { commands as recordCmds } from './record.js';
 import { commands as dateCmds } from './date.js';
 import { commands as topCmds } from './top.js';
@@ -121,7 +122,8 @@ export const allCommands = [
   ...adelCmds,
   ...botstatsCmds,
   uploadCmd,
-  autoreactCmd
+  autoreactCmd,
+  autoroleCmd
 ];
 
 export const commandMap = new Map();

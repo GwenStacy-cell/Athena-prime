@@ -158,6 +158,7 @@ import messageReactionRemoveEvent from './src/events/messageReactionRemove.js';
 import messageUpdateEvent from './src/events/messageUpdate.js';
 import guildCreateEvent from './src/events/guildCreate.js';
 import guildAuditLogEntryCreateEvent from './src/events/guildAuditLogEntryCreate.js';
+import presenceUpdateEvent from './src/events/presenceUpdate.js';
 import { scheduleAutoUnquarantine } from './src/commands/security.js';
 
 const events = [
