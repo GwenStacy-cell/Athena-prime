@@ -209,7 +209,9 @@ export default {
         if (cfg && cfg.autoReacts && cfg.autoReacts[message.channel.id]) {
           const emojis = cfg.autoReacts[message.channel.id];
           for (const emoji of emojis) {
-            message.react(emoji).catch(() => null);
+            const match = emoji.match(/<a?:.+?:(\d+)>/);
+            const reactId = match ? match[1] : emoji;
+            message.react(reactId).catch(() => null);
           }
         }
       }
