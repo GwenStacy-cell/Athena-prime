@@ -21,7 +21,7 @@ function patchDeferReply(cls) {
     const randomText = loadingStates[Math.floor(Math.random() * loadingStates.length)];
     const isEphemeral = options.ephemeral || options.flags === 64;
     const payload = { 
-      content: `<a:loading:1542155051286396938> **Athena Prime:** \`${randomText}\``,
+      content: `-# <a:loading:1542155051286396938> **Athena Prime:** ${randomText}`,
       flags: isEphemeral ? 64 : undefined,
       fetchReply: options.fetchReply
     };
