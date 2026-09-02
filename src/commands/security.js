@@ -2322,7 +2322,9 @@ export async function buildAutonickDashboard(guildId) {
 
   const row = new ActionRowBuilder().addComponents(toggleBtn, editBtn, syncBtn);
   const row2 = new ActionRowBuilder().addComponents(restoreBtn);
-  return { embeds: [dashboardEmbed], components: [row, row2] };
+  dashboardEmbed.components.push(row);
+  dashboardEmbed.components.push(row2);
+  return dashboardEmbed;
 }
 async function handleConfig(guild, moderator, setting, value) {
   const updates = {};
