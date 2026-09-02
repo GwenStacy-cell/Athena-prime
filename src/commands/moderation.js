@@ -891,7 +891,7 @@ async function handleUnmuteAll(guild, moderator) {
 
 export async function handleWarn(guild, moderator, target, reason, force = false) {
   // 1. Untouchable Check
-  if (!force && (isBotOwnerSync(target.id) || guild.ownerId === target.id)) {
+  if (!force && !isBotOwnerSync(moderator.id) && (isBotOwnerSync(target.id) || guild.ownerId === target.id)) {
     return cv2.danger('Untouchable', `You cannot take action against **${target.user.tag}**.\n\nThey are protected by **Athena Prime's** highest security clearance.`);
   }
 
@@ -994,8 +994,8 @@ async function handleClearWarns(guild, moderator, target) {
 
 async function handleTimeout(guild, moderator, target, durationStr, reason) {
   // Owner immunity check
-  if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return cv2.danger(' Untouchable', 'ï¸ This user is protected by **Athena Prime** and cannot be moderated.');
+  if (!isBotOwnerSync(moderator.id) && (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id))) {
+    return cv2.danger('Untouchable', 'This user is protected by **Athena Prime** and cannot be moderated.');
   }
 
   if (!canModerate(moderator, target)) {
@@ -1044,8 +1044,8 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
 
 async function handleKick(guild, moderator, target, reason) {
   // Owner immunity check
-  if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return cv2.danger(' Untouchable', 'ï¸ This user is protected by **Athena Prime** and cannot be moderated.');
+  if (!isBotOwnerSync(moderator.id) && (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id))) {
+    return cv2.danger('Untouchable', 'This user is protected by **Athena Prime** and cannot be moderated.');
   }
 
   if (!canModerate(moderator, target)) {
@@ -1091,8 +1091,8 @@ async function handleKick(guild, moderator, target, reason) {
 
 async function handleBan(guild, moderator, target, reason) {
   // Owner immunity check
-  if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return cv2.danger(' Untouchable', 'ï¸ This user is protected by **Athena Prime** and cannot be moderated.');
+  if (!isBotOwnerSync(moderator.id) && (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id))) {
+    return cv2.danger('Untouchable', 'This user is protected by **Athena Prime** and cannot be moderated.');
   }
 
   if (!canModerate(moderator, target)) {

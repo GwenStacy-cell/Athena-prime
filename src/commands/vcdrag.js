@@ -227,11 +227,8 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
   // — Permission & safety checks ——————————————————————————
 
   // Bot owner & extra owners are immune
-  if (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id)) {
-    return cv2.danger(
-        ' Untouchable',
-        ` **${target.user.tag}** is protected by Athena Prime and cannot be dragged.`
-      );
+  if (!isBotOwnerSync(moderator.id) && (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id))) {
+    return cv2.danger('Untouchable', `**${target.user.tag}** is protected by Athena Prime and cannot be dragged.`);
   }
 
   // Move Protected users are immune

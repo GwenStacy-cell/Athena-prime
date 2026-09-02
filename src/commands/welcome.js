@@ -257,7 +257,7 @@ export async function handleWelcomeManagerButton(interaction) {
   }
 
   if (action === 'test') {
-    if (!cfg.channelId) return interaction.reply(cv2.e.warn('Channel Not Set', 'Please select a channel first.'));
+    if (!cfg.channelId) return interaction.reply(cv2.warn('Channel Not Set', 'Please select a channel first.'));
     
     await interaction.deferReply();
     
