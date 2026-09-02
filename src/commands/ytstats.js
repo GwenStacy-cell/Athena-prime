@@ -167,12 +167,20 @@ export async function handleYtStatsModal(interaction) {
         permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionFlagsBits.Connect] }]
       });
 
+      const viewsChannel = await interaction.guild.channels.create({
+        name: '👀 Views: Loading...',
+        type: ChannelType.GuildVoice,
+        parent: category.id,
+        permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionFlagsBits.Connect] }]
+      });
+
       const db = (await import('../database.js')).default;
       const config = db.getGuildConfig(interaction.guild.id);
       const ytStats = config.ytStats || [];
       
       ytStats.push({ channelId: subsChannel.id, handle: ytHandle, format: '🔴 Subs: {subs}' });
       ytStats.push({ channelId: vidsChannel.id, handle: ytHandle, format: '🎬 Videos: {videos}' });
+      ytStats.push({ channelId: viewsChannel.id, handle: ytHandle, format: '👀 Views: {views}' });
       
       db.updateGuildConfig(interaction.guild.id, { ytStats });
       

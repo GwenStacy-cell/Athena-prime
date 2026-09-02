@@ -1,44 +1,78 @@
 ﻿import db from '../database.js';
+import { resolveYouTubeChannelId } from './youtubeNotifier.js';
 
 export async function scrapeYouTubeMetrics(handle) {
+  const result = { subs: null, videos: null, views: null };
+  const url = handle.startsWith('UC') ? `https://www.youtube.com/channel/${handle}` : `https://www.youtube.com/${handle}`;
+  
+  const formatNum = (num) => {
+    if (!num) return null;
+    const n = parseInt(num, 10);
+    if (isNaN(n)) return num; // Already formatted by HTML scraper
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return n.toString();
+  };
+
   try {
-    const url = handle.startsWith('UC') ? `https://www.youtube.com/channel/${handle}` : `https://www.youtube.com/${handle}`;
+    // 1. Try Mixerno API for exact metrics (including Views)
+    const channelId = await resolveYouTubeChannelId(url);
+    if (channelId) {
+      const apiRes = await fetch(`https://mixerno.space/api/youtube-channel-counter/user/${channelId}`);
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        if (data && data.counts) {
+           const s = data.counts.find(c => c.value === 'subscribers')?.count;
+           const vid = data.counts.find(c => c.value === 'videos')?.count;
+           const v = data.counts.find(c => c.value === 'views')?.count;
+           
+           if (s) result.subs = formatNum(s);
+           if (vid) result.videos = vid.toString();
+           if (v) result.views = formatNum(v);
+           
+           if (result.subs && result.views) return result;
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`[YT Stats] Mixerno API failed for ${handle}:`, err.message);
+  }
+
+  // 2. Fallback to HTML Scraping (Will not get Total Views)
+  try {
     const res = await fetch(url, { headers: { 'Accept-Language': 'en-US,en;q=0.9' }});
-    if (!res.ok) return { subs: null, videos: null };
+    if (!res.ok) return result;
     const text = await res.text();
     
-    let subs = null;
-    let videos = null;
-    
-    // Extract Videos
-    const vidsMatch = text.match(/"content":"([^"]*?\s+videos)"/i) || text.match(/([0-9\\.,kKmM]+)\s+videos/i);
-    if (vidsMatch) {
-      videos = vidsMatch[1].replace(/ videos?/i, '').trim();
+    if (!result.videos) {
+      const vidsMatch = text.match(/"content":"([^"]*?\s+videos)"/i) || text.match(/([0-9\\.,kKmM]+)\s+videos/i);
+      if (vidsMatch) result.videos = vidsMatch[1].replace(/ videos?/i, '').trim();
     }
     
-    // Extract Subs
-    const headerMatch = text.match(/"pageHeaderViewModel"[\s\S]*?"content":"([^"]*?(?:subscribers?|subs))"/i);
-    if (headerMatch) subs = headerMatch[1].replace(/ subscribers?/i, '').trim();
-    
-    if (!subs) {
-      const match = text.match(/"subscriberCountText":\{"accessibility":\{"accessibilityData":\{"label":"([^"]+?)"\}\},"simpleText":"([^"]+?)"\}/);
-      if (match) subs = match[2].replace(/ subscribers?/i, '').trim();
-    }
-    
-    if (!subs) {
-      const fallback = text.match(/"content":"([^"]*?(?:subscribers?|subs))"/i);
-      if (fallback) subs = fallback[1].replace(/ subscribers?/i, '').trim();
-    }
+    if (!result.subs) {
+      const headerMatch = text.match(/"pageHeaderViewModel"[\s\S]*?"content":"([^"]*?(?:subscribers?|subs))"/i);
+      if (headerMatch) result.subs = headerMatch[1].replace(/ subscribers?/i, '').trim();
+      
+      if (!result.subs) {
+        const match = text.match(/"subscriberCountText":\{"accessibility":\{"accessibilityData":\{"label":"([^"]+?)"\}\},"simpleText":"([^"]+?)"\}/);
+        if (match) result.subs = match[2].replace(/ subscribers?/i, '').trim();
+      }
+      
+      if (!result.subs) {
+        const fallback = text.match(/"content":"([^"]*?(?:subscribers?|subs))"/i);
+        if (fallback) result.subs = fallback[1].replace(/ subscribers?/i, '').trim();
+      }
 
-    if (!subs) {
-      const simpleFallback = text.match(/([0-9\\.,kKmM]+)\s+subscribers/i);
-      if (simpleFallback) subs = simpleFallback[1].trim();
+      if (!result.subs) {
+        const simpleFallback = text.match(/([0-9\\.,kKmM]+)\s+subscribers/i);
+        if (simpleFallback) result.subs = simpleFallback[1].trim();
+      }
     }
     
-    return { subs, videos };
+    return result;
   } catch (err) {
-    console.error(`[YT Stats] Failed to scrape ${handle}:`, err.message);
-    return { subs: null, videos: null };
+    console.error(`[YT Stats] HTML Scraper failed for ${handle}:`, err.message);
+    return result;
   }
 }
 
@@ -46,7 +80,6 @@ export async function forceUpdateYtStats(guild) {
   const config = db.getGuildConfig(guild.id);
   if (!config || !config.ytStats || config.ytStats.length === 0) return;
   
-  // Group by handle to avoid fetching the same URL multiple times
   const uniqueHandles = [...new Set(config.ytStats.map(s => s.handle))];
   const cachedMetrics = {};
   
@@ -68,8 +101,12 @@ export async function forceUpdateYtStats(guild) {
     if (metrics.videos) {
       newName = newName.replace('{videos}', metrics.videos);
     }
+    if (metrics.views) {
+      newName = newName.replace('{views}', metrics.views);
+    }
     
-    if (channel.name !== newName && !newName.includes('{count}') && !newName.includes('{subs}') && !newName.includes('{videos}')) {
+    // Safety check to ensure we don't rename if a metric failed to scrape
+    if (channel.name !== newName && !newName.includes('{count}') && !newName.includes('{subs}') && !newName.includes('{videos}') && !newName.includes('{views}')) {
       await channel.setName(newName).catch(() => null);
     }
   }
