@@ -262,6 +262,8 @@ client.login(token).catch(err => {
 });
 
 // Restore auto-unquarantine timers after bot is ready
+import { startYtStatsEngine } from './src/utils/ytStatsEngine.js';
+
 client.once('ready', async () => {
   const all = db.getAllQuarantinedUsers();
   let restored = 0;

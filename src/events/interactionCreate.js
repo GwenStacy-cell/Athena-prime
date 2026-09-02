@@ -60,7 +60,13 @@ export default {
     
     if (interaction.isModalSubmit()) {
 
+
+      if (interaction.customId === 'ytstats_bind_modal') {
+        const { handleYtStatsModal } = await import('../commands/ytstats.js');
+        return handleYtStatsModal(interaction);
+      }
       if (interaction.customId.startsWith('autorole_modal_') || interaction.customId === 'autorole_vanity_modal') {
+
         const { handleAutoRoleModal } = await import('../commands/autorole.js');
         return handleAutoRoleModal(interaction);
       }
@@ -304,7 +310,13 @@ if (interaction.customId === "modal_2fa_setup") {
     
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
 
+
+      if (interaction.customId.startsWith('ytstats_')) {
+        const { handleYtStatsButton } = await import('../commands/ytstats.js');
+        if (interaction.isButton()) return handleYtStatsButton(interaction);
+      }
       if (interaction.customId.startsWith('autorole_')) {
+
         const { handleAutoRoleButton, handleAutoRoleMenu } = await import('../commands/autorole.js');
         if (interaction.isButton()) return handleAutoRoleButton(interaction);
         if (interaction.isAnySelectMenu()) return handleAutoRoleMenu(interaction);

@@ -41,6 +41,7 @@ import { commands as botstatsCmds } from './botstats.js';
 import uploadCmd from './upload.js';
 import autoreactCmd from './autoreact.js';
 import autoroleCmd from './autorole.js';
+import ytstatsCmd from './ytstats.js';
 import { commands as recordCmds } from './record.js';
 import { commands as dateCmds } from './date.js';
 import { commands as topCmds } from './top.js';
@@ -123,7 +124,8 @@ export const allCommands = [
   ...botstatsCmds,
   uploadCmd,
   autoreactCmd,
-  autoroleCmd
+  autoroleCmd,
+  ytstatsCmd
 ];
 
 export const commandMap = new Map();

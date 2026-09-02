@@ -15,6 +15,8 @@ import { startMusicCleanupJob } from '../jobs/musicCleanupJob.js';
 import { formatServerStatChannelName } from '../commands/serverstats.js';
 import { initWebSub } from '../utils/websub.js';
 
+import { startYtStatsEngine } from '../utils/ytStatsEngine.js';
+
 export default {
   name: 'clientReady',
   once: true,
