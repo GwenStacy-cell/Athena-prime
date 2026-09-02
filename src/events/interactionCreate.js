@@ -15,7 +15,8 @@ export default {
   name: 'interactionCreate',
   async execute(interaction) {
   if (!interaction.guild && !(interaction.isButton() && interaction.customId.startsWith('gen_invite_'))) return;
-  try {
+
+    try {
     const guild = interaction.guild;
     if (guild) setGuildContext(guild.id);
     
