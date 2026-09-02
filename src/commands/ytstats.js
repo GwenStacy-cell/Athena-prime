@@ -44,7 +44,7 @@ export function getYtStatsPanel(guildId, client) {
       { type: 14, divider: true },
       {
         type: 10,
-        content: `-# **${TICK} System Documentation:**\n-# \u2022 **How it works:** Athena silently scrapes the YouTube channel in the background to fetch live subscriber counts, avoiding strict Google API Key quotas.\n-# \u2022 **Update Frequency:** To protect your server from being Rate-Limited by Discord (which aggressively bans rapid channel renames), Athena updates the stats exactly once every **10 minutes**.\n-# \u2022 **Format Template:** Use \`{count}\` where you want the number to appear (e.g. \`\uD83D\uDD34 Subs: {count}\`).`
+        content: `-# **${TICK} System Documentation:**\n-# \u2022 **How it works:** Athena silently scrapes the YouTube channel in the background to fetch live subscriber counts, avoiding strict Google API Key quotas.\n-# \u2022 **Update Frequency:** To protect your server from being Rate-Limited by Discord (which aggressively bans rapid channel renames), Athena updates the stats exactly once every **10 minutes**.\n-# \u2022 **Format Template:** Use \`{count}\` where you want the number to appear (e.g. \`Subs: {count}\`).`
       },
       { type: 14, divider: true },
       {
@@ -154,21 +154,21 @@ export async function handleYtStatsModal(interaction) {
       });
 
       const subsChannel = await interaction.guild.channels.create({
-        name: '🔴 Subs: Loading...',
+        name: 'Subs: Loading...',
         type: ChannelType.GuildVoice,
         parent: category.id,
         permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionFlagsBits.Connect] }]
       });
 
       const vidsChannel = await interaction.guild.channels.create({
-        name: '🎬 Videos: Loading...',
+        name: 'Videos: Loading...',
         type: ChannelType.GuildVoice,
         parent: category.id,
         permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionFlagsBits.Connect] }]
       });
 
       const viewsChannel = await interaction.guild.channels.create({
-        name: '👀 Views: Loading...',
+        name: 'Views: Loading...',
         type: ChannelType.GuildVoice,
         parent: category.id,
         permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionFlagsBits.Connect] }]
@@ -178,9 +178,9 @@ export async function handleYtStatsModal(interaction) {
       const config = db.getGuildConfig(interaction.guild.id);
       const ytStats = config.ytStats || [];
       
-      ytStats.push({ channelId: subsChannel.id, handle: ytHandle, format: '🔴 Subs: {subs}' });
-      ytStats.push({ channelId: vidsChannel.id, handle: ytHandle, format: '🎬 Videos: {videos}' });
-      ytStats.push({ channelId: viewsChannel.id, handle: ytHandle, format: '👀 Views: {views}' });
+      ytStats.push({ channelId: subsChannel.id, handle: ytHandle, format: 'Subs: {subs}' });
+      ytStats.push({ channelId: vidsChannel.id, handle: ytHandle, format: 'Videos: {videos}' });
+      ytStats.push({ channelId: viewsChannel.id, handle: ytHandle, format: 'Views: {views}' });
       
       db.updateGuildConfig(interaction.guild.id, { ytStats });
       
