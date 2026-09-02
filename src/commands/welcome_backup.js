@@ -7,18 +7,12 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 // ============================================================
 // PLACEHOLDER RESOLVER
 // ============================================================
-function resolve(text, member, cfg = {}) {
+function resolve(text, member) {
   if (!text) return '';
   const guild = member.guild;
-    let userFormat = `<@${member.id}>`;
-  if (cfg.nameFormat === 'user_link') {
-    userFormat = `[${member.user.username}](https://discord.com/users/${member.id})`;
-  } else if (cfg.nameFormat === 'nick_link') {
-    userFormat = `[${member.displayName}](https://discord.com/users/${member.id})`;
-  }
   return text
-    .replace(/{user}/gi, userFormat)
-    .replace(/{usermention}/gi, userFormat)
+    .replace(/{user}/gi, `<@${member.id}>`)
+    .replace(/{usermention}/gi, `<@${member.id}>`)
     .replace(/{username}/gi, member.user.username)
     .replace(/{displayname}/gi, member.displayName)
     .replace(/{server}/gi, guild.name)
@@ -40,37 +34,38 @@ export function buildWelcomeEmbed(member, cfg) {
     e.setColor(0x5865F2);
   }
 
-  const userAvatar = member.user.displayAvatarURL({ dynamic: true, size: 256 });
-  const avatarPos = cfg.avatarPos || 'thumbnail';
-
-  if (cfg.from || avatarPos === 'author') {
+  if (cfg.from) {
     try {
       e.setAuthor({
-        name: (cfg.from ? resolve(cfg.from, member, cfg) : resolve('{user}', member, cfg)).replace(/<@!?\d+>/g, member.user.username),
-        iconURL: (avatarPos === 'author') ? userAvatar : (cfg.fromIcon ? resolve(cfg.fromIcon, member, cfg) : member.guild.iconURL({ dynamic: true }) || undefined)
+        name: resolve(cfg.from, member),
+        iconURL: cfg.fromIcon ? resolve(cfg.fromIcon, member) : member.guild.iconURL({ dynamic: true }) || undefined
       });
     } catch (err) {}
   }
 
-  if (cfg.title) e.setTitle(resolve(cfg.title, member, cfg));
+  if (cfg.title) e.setTitle(resolve(cfg.title, member));
 
-  if (cfg.description) e.setDescription(resolve(cfg.description, member, cfg));
+  if (cfg.description) e.setDescription(resolve(cfg.description, member));
   else if (!cfg.title && !cfg.from) e.setDescription(`**Welcome to ${member.guild.name}!**`);
 
-  if (avatarPos === 'thumbnail') e.setThumbnail(userAvatar);
-  if (avatarPos === 'image') e.setImage(userAvatar);
-
-  if (cfg.image) {
+  if (cfg.thumbnail !== false) {
     try {
-      e.setImage(resolve(cfg.image, member, cfg));
+      const thumbUrl = cfg.thumbnailUrl ? resolve(cfg.thumbnailUrl, member) : member.user.displayAvatarURL({ dynamic: true, size: 256 });
+      e.setThumbnail(thumbUrl);
     } catch (err) {}
   }
 
-  if (cfg.footer || avatarPos === 'footer') {
+  if (cfg.image) {
+    try {
+      e.setImage(resolve(cfg.image, member));
+    } catch (err) {}
+  }
+
+  if (cfg.footer) {
     try {
       e.setFooter({
-        text: cfg.footer ? resolve(cfg.footer, member, cfg) : 'Welcome!',
-        iconURL: (avatarPos === 'footer') ? userAvatar : undefined
+        text: resolve(cfg.footer, member),
+        iconURL: cfg.footerIcon ? resolve(cfg.footerIcon, member) : undefined
       });
     } catch (err) {}
   }
@@ -88,7 +83,7 @@ export async function sendWelcomeMessage(member) {
   if (!cfg?.enabled || !cfg?.channelId) return;
   const channel = member.guild.channels.cache.get(cfg.channelId);
   if (!channel) return;
-  const content = cfg.message ? resolve(cfg.message, member, cfg) : undefined;
+  const content = cfg.message ? resolve(cfg.message, member) : undefined;
   const embedObj = buildWelcomeEmbed(member, cfg);
   const payload = {};
   if (content) payload.content = content;
@@ -102,7 +97,7 @@ export async function sendLeaveMessage(member) {
   if (!cfg?.enabled || !cfg?.channelId) return;
   const channel = member.guild.channels.cache.get(cfg.channelId);
   if (!channel) return;
-  const content = cfg.message ? resolve(cfg.message, member, cfg) : undefined;
+  const content = cfg.message ? resolve(cfg.message, member) : undefined;
   const embedObj = buildWelcomeEmbed(member, cfg);
   const payload = {};
   if (content) payload.content = content;
@@ -133,8 +128,7 @@ function getManagerPanel(guildId, type) {
     `<:ticks:1533860039213842565> **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
     `<:ticks:1533860039213842565> **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
     `<:ticks:1533860039213842565> **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    ` <:ticks:1533860039213842565> **Name Format:** ${cfg.nameFormat === 'user_link' ? 'Username Link' : cfg.nameFormat === 'nick_link' ? 'Nickname Link' : 'Tag (@user)'}\n` +
-      ` <:ticks:1533860039213842565> **Avatar Location:** ${cfg.avatarPos === 'author' ? 'Author (Top Left)' : cfg.avatarPos === 'footer' ? 'Footer (Bottom)' : cfg.avatarPos === 'image' ? 'Large Image (Bottom)' : cfg.avatarPos === 'off' ? 'Hidden' : 'Thumbnail (Top Right)'}\n` +
+    ` **Thumbnail (Avatar):** ${cfg.thumbnail !== false ? ' On' : ' Off'}\n` +
     ` **Timestamp:** ${cfg.timestamp !== false ? ' On' : ' Off'}`
   );
 
@@ -156,13 +150,12 @@ function getManagerPanel(guildId, type) {
     new ButtonBuilder().setCustomId(`${prefix}color`).setLabel('Color').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}image`).setLabel('Image').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}footer`).setLabel('Footer').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`${prefix}cycle_avatar`).setLabel('Avatar Location').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`${prefix}toggle_avatar`).setLabel('Toggle Avatar').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId(`${prefix}toggle_time`).setLabel('Toggle Time').setStyle(ButtonStyle.Success)
   );
 
   const row3 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`${prefix}status`).setLabel(cfg.enabled ? 'Disable System' : 'Enable System').setStyle(cfg.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
-      new ButtonBuilder().setCustomId(`${prefix}cycle_name`).setLabel('Name Format').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}test`).setLabel('Test Message').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`${prefix}reset`).setLabel('Reset All').setStyle(ButtonStyle.Danger)
   );
@@ -227,19 +220,8 @@ export async function handleWelcomeManagerButton(interaction) {
     return interaction.update(getManagerPanel(guildId, typeStr));
   }
   
-  if (action === 'cycle_avatar') {
-    const sequence = ['thumbnail', 'author', 'footer', 'image', 'off'];
-    const current = cfg.avatarPos || 'thumbnail';
-    const next = sequence[(sequence.indexOf(current) + 1) % sequence.length];
-    setConfig(guildId, { ...cfg, avatarPos: next });
-    return interaction.update(getManagerPanel(guildId, typeStr));
-  }
-  
-  if (action === 'cycle_name') {
-    const sequence = ['tag', 'user_link', 'nick_link'];
-    const current = cfg.nameFormat || 'tag';
-    const next = sequence[(sequence.indexOf(current) + 1) % sequence.length];
-    setConfig(guildId, { ...cfg, nameFormat: next });
+  if (action === 'toggle_avatar') {
+    setConfig(guildId, { ...cfg, thumbnail: !(cfg.thumbnail !== false) });
     return interaction.update(getManagerPanel(guildId, typeStr));
   }
 
@@ -258,7 +240,7 @@ export async function handleWelcomeManagerButton(interaction) {
     
     await interaction.deferReply();
     
-    const content = cfg.message ? resolve(cfg.message, interaction.member, cfg) : undefined;
+    const content = cfg.message ? resolve(cfg.message, interaction.member) : undefined;
     const testEmbed = buildWelcomeEmbed(interaction.member, cfg);
     const payload = { embeds: [] };
     if (content) payload.content = `**[Preview]** ${content}`;
