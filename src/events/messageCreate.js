@@ -202,7 +202,20 @@ const masterPingCooldowns = new Map(); // key: guildId -> timestamp
 export default {
   name: 'messageCreate',
   async execute(message) {
+      
+      // --- AUTO-REACT ---
+      if (message.guild && !message.author.bot) {
+        const cfg = db.getGuildConfig(message.guild.id);
+        if (cfg && cfg.autoReacts && cfg.autoReacts[message.channel.id]) {
+          const emojis = cfg.autoReacts[message.channel.id];
+          for (const emoji of emojis) {
+            message.react(emoji).catch(() => null);
+          }
+        }
+      }
+
       // --- ADEL: Auto-delete messages from tracked users ---
+
       if (message.guild) {
         const adelList = db.getAdelList(message.guild.id, message.channel.id);
         if (adelList.includes(message.author.id)) {

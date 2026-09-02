@@ -1,0 +1,145 @@
+﻿import { MessageFlags, ActionRowBuilder, ChannelSelectMenuBuilder, ChannelType, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import db from '../database.js';
+
+const TICK = '<:emoji_16:1521464002046328944>';
+const ARROW = '<a:z_arrow_pink1:1523082728004653138>';
+
+export function getAutoReactPanel(guildId) {
+  const config = db.getGuildConfig(guildId) || {};
+  const reacts = config.autoReacts || {};
+
+  let rulesText = '';
+  const channelIds = Object.keys(reacts);
+  if (channelIds.length === 0) {
+    rulesText = `-# **${ARROW} No active auto-react channels.**`;
+  } else {
+    for (const cid of channelIds) {
+      if (reacts[cid].length === 0) continue;
+      rulesText += `-# **\u2022 <#${cid}>**  ${ARROW}  **${reacts[cid].join(' ')}**\n`;
+    }
+    if (!rulesText) rulesText = `-# **${ARROW} No active auto-react channels.**`;
+  }
+
+  const container = {
+    type: 17,
+    components: [
+      {
+        type: 9,
+        components: [
+          {
+            type: 10,
+            content: `> # **\` Auto-React Engine \`**\n\n-# **Automatically add emoji reactions to messages in specific channels.**\n\n-# **${TICK} Select a channel below to configure reactions!**`
+          }
+        ],
+        accessory: {
+          type: 11,
+          media: { url: 'https://cdn.discordapp.com/attachments/1534869224277807175/1542472732325978234/ATHENA-8-27-2026.png' }
+        }
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **${TICK} Current Configurations:**\n${rulesText}`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **Athena Bulletproof Security !!!**`
+      }
+    ]
+  };
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new ChannelSelectMenuBuilder()
+      .setCustomId('autoreact_channel')
+      .setPlaceholder('Select a channel to manage reactions...')
+      .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('autoreact_clear').setLabel('Clear All').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('autoreact_close').setLabel('Close Panel').setStyle(ButtonStyle.Secondary)
+  );
+
+  return { components: [container, row1, row2], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function handleAutoReactMenu(interaction) {
+  if (interaction.customId === 'autoreact_channel') {
+    const cid = interaction.values[0];
+    const modal = new ModalBuilder().setCustomId(`autoreact_modal_${cid}`).setTitle('Manage Channel Reactions');
+    
+    const config = db.getGuildConfig(interaction.guild.id);
+    const reacts = config.autoReacts || {};
+    const current = reacts[cid] ? reacts[cid].join(' ') : '';
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('emojis')
+          .setLabel('Emojis (separated by space)')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(false)
+          .setPlaceholder('e.g. \uD83D\uDC4D \uD83D\uDC4E <:custom:id>')
+          .setValue(current)
+      )
+    );
+
+    return interaction.showModal(modal);
+  }
+}
+
+export async function handleAutoReactButton(interaction) {
+  if (interaction.customId === 'autoreact_close') {
+    return interaction.message.delete().catch(() => null);
+  }
+  if (interaction.customId === 'autoreact_clear') {
+    db.updateGuildConfig(interaction.guild.id, { autoReacts: {} });
+    return interaction.update(getAutoReactPanel(interaction.guild.id));
+  }
+}
+
+export async function handleAutoReactModal(interaction) {
+  const cid = interaction.customId.replace('autoreact_modal_', '');
+  const emojiStr = interaction.fields.getTextInputValue('emojis') || '';
+  
+  // Extract all valid emojis
+  const rawEmojis = emojiStr.split(/\s+/).filter(e => e.length > 0);
+  
+  const parsedEmojis = rawEmojis.map(e => {
+    const match = e.match(/<a?:.+?:(\d+)>/);
+    return match ? match[1] : e;
+  });
+
+  const config = db.getGuildConfig(interaction.guild.id);
+  const reacts = config.autoReacts || {};
+  
+  if (parsedEmojis.length === 0) {
+    delete reacts[cid];
+  } else {
+    reacts[cid] = parsedEmojis;
+  }
+  
+  db.updateGuildConfig(interaction.guild.id, { autoReacts: reacts });
+  return interaction.update(getAutoReactPanel(interaction.guild.id));
+}
+
+export default {
+  name: 'autoreact',
+  description: 'Manage Auto-React configurations',
+  type: 1, // CHAT_INPUT
+  async executePrefix(message) {
+    const { isExtraOwner, isBotOwnerSync } = await import('../utils/helpers.js');
+    if (message.guild.ownerId !== message.author.id && !isBotOwnerSync(message.author.id) && !isExtraOwner(message.guild.id, message.author.id)) {
+      return message.reply({ content: '-# **You do not have permission to manage this system.**', flags: 64 });
+    }
+    await message.reply(getAutoReactPanel(message.guild.id));
+  },
+  async executeSlash(interaction) {
+    const { isExtraOwner, isBotOwnerSync } = await import('../utils/helpers.js');
+    if (interaction.guild.ownerId !== interaction.user.id && !isBotOwnerSync(interaction.user.id) && !isExtraOwner(interaction.guild.id, interaction.user.id)) {
+      return interaction.reply({ content: '-# **You do not have permission to manage this system.**', flags: 64 });
+    }
+    await interaction.reply(getAutoReactPanel(interaction.guild.id));
+  }
+};

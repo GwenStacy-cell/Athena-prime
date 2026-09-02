@@ -57,7 +57,13 @@ export default {
     // ==========================================
     
     
+    
     if (interaction.isModalSubmit()) {
+      if (interaction.customId.startsWith('autoreact_modal_')) {
+        const { handleAutoReactModal } = await import('../commands/autoreact.js');
+        return handleAutoReactModal(interaction);
+      }
+
       if (interaction.customId === 'autonick_modal') {
         const { handleAutonickModal } = await import('../commands/security.js');
         return handleAutonickModal(interaction);
@@ -289,7 +295,14 @@ if (interaction.customId === "modal_2fa_setup") {
     
     
     
+    
     if (interaction.isButton() || interaction.isAnySelectMenu()) {
+      if (interaction.customId.startsWith('autoreact_')) {
+        const { handleAutoReactButton, handleAutoReactMenu } = await import('../commands/autoreact.js');
+        if (interaction.isButton()) return handleAutoReactButton(interaction);
+        if (interaction.isAnySelectMenu()) return handleAutoReactMenu(interaction);
+      }
+
       if (interaction.customId.startsWith('calc_')) {
         const { handleCalculatorButton } = await import('../commands/utility.js');
         return handleCalculatorButton(interaction);
