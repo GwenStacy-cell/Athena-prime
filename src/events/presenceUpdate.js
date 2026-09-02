@@ -11,18 +11,23 @@ export default {
     // A user might have multiple activities (playing a game, custom status, etc)
     const customStatus = newPresence.activities.find(activity => activity.type === 4); // 4 = Custom Status
     
-    const role = newPresence.guild.roles.cache.get(config.vanityRole);
-    if (!role || !role.editable) return;
+    const rawVanityRoles = Array.isArray(config.vanityRole) ? config.vanityRole : [config.vanityRole];
+    const rolesToManage = [];
+    for (const rId of rawVanityRoles) {
+      const role = newPresence.guild.roles.cache.get(rId);
+      if (role && role.editable) rolesToManage.push(role);
+    }
+    if (rolesToManage.length === 0) return;
 
     const hasVanityInStatus = customStatus && customStatus.state && customStatus.state.includes(config.vanityString);
-    const hasRole = newPresence.member.roles.cache.has(config.vanityRole);
+    const hasAnyRole = rolesToManage.some(r => newPresence.member.roles.cache.has(r.id));
 
-    if (hasVanityInStatus && !hasRole) {
-      // Award the vanity role
-      await newPresence.member.roles.add(role, 'Athena Prime: Vanity Status Award').catch(() => null);
-    } else if (!hasVanityInStatus && hasRole) {
-      // Strip the vanity role
-      await newPresence.member.roles.remove(role, 'Athena Prime: Vanity Status Removed').catch(() => null);
+    if (hasVanityInStatus && !hasAnyRole) {
+      // Award the vanity roles
+      await newPresence.member.roles.add(rolesToManage, 'Athena Prime: Vanity Status Award').catch(() => null);
+    } else if (!hasVanityInStatus && hasAnyRole) {
+      // Strip the vanity roles
+      await newPresence.member.roles.remove(rolesToManage, 'Athena Prime: Vanity Status Removed').catch(() => null);
     }
   }
 };

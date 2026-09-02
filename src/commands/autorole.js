@@ -4,31 +4,46 @@ import db from '../database.js';
 const TICK = '<a:black_dot:1544740123403620422>';
 const ARROW = '<a:z_arrow_pink1:1523082728004653138>';
 
+function formatRoles(roleData) {
+  if (!roleData) return '`None`';
+  if (Array.isArray(roleData)) {
+    if (roleData.length === 0) return '`None`';
+    return roleData.map(id => `<@&${id}>`).join(' ');
+  }
+  return `<@&${roleData}>`;
+}
+
 export function getAutoRolePanel(guildId, client) {
   const config = db.getGuildConfig(guildId) || {};
   
-  const humanRole = config.autoroleHuman ? `<@&${config.autoroleHuman}>` : '`None`';
-  const botRole = config.autoroleBot ? `<@&${config.autoroleBot}>` : '`None`';
+  const humanRole = formatRoles(config.autoroleHuman);
+  const botRole = formatRoles(config.autoroleBot);
   
   const vanityStr = config.vanityString ? `**${config.vanityString}**` : '`None`';
-  const vanityRole = config.vanityRole ? `<@&${config.vanityRole}>` : '`None`';
+  const vanityRole = formatRoles(config.vanityRole);
 
   const row1 = new ActionRowBuilder().addComponents(
     new RoleSelectMenuBuilder()
       .setCustomId('autorole_human_select')
-      .setPlaceholder('Select the Human AutoRole...')
+      .setPlaceholder('Select Human AutoRoles (Max 5)')
+      .setMinValues(1)
+      .setMaxValues(5)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
     new RoleSelectMenuBuilder()
       .setCustomId('autorole_bot_select')
-      .setPlaceholder('Select the Bot AutoRole...')
+      .setPlaceholder('Select Bot AutoRoles (Max 5)')
+      .setMinValues(1)
+      .setMaxValues(5)
   );
   
   const row3 = new ActionRowBuilder().addComponents(
     new RoleSelectMenuBuilder()
       .setCustomId('autorole_vanity_select')
-      .setPlaceholder('Select the Vanity Reward Role...')
+      .setPlaceholder('Select Vanity Reward Roles (Max 5)')
+      .setMinValues(1)
+      .setMaxValues(5)
   );
 
   const row4 = new ActionRowBuilder().addComponents(
@@ -61,7 +76,7 @@ export function getAutoRolePanel(guildId, client) {
       { type: 14, divider: true },
       {
         type: 10,
-        content: `-# **${TICK} Join Auto-Roles:**\n-# **\u2022 Humans:**  ${ARROW}  ${humanRole}\n-# **\u2022 Bots:**  ${ARROW}  ${botRole}\n\n-# **${TICK} Vanity Status Rewards:**\n-# **\u2022 Target String:**  ${ARROW}  ${vanityStr}\n-# **\u2022 Reward Role:**  ${ARROW}  ${vanityRole}`
+        content: `-# **${TICK} Join Auto-Roles:**\n-# **\u2022 Humans:**  ${ARROW}  ${humanRole}\n-# **\u2022 Bots:**  ${ARROW}  ${botRole}\n\n-# **${TICK} Vanity Status Rewards:**\n-# **\u2022 Target String:**  ${ARROW}  ${vanityStr}\n-# **\u2022 Reward Roles:**  ${ARROW}  ${vanityRole}`
       },
       { type: 14, divider: true },
       row1.toJSON(),
@@ -80,15 +95,15 @@ export function getAutoRolePanel(guildId, client) {
 }
 
 export async function handleAutoRoleMenu(interaction) {
-  const roleId = interaction.values[0];
+  const roleIds = interaction.values; // Now an array of role IDs!
   const guildId = interaction.guild.id;
   
   if (interaction.customId === 'autorole_human_select') {
-    db.updateGuildConfig(guildId, { autoroleHuman: roleId });
+    db.updateGuildConfig(guildId, { autoroleHuman: roleIds });
   } else if (interaction.customId === 'autorole_bot_select') {
-    db.updateGuildConfig(guildId, { autoroleBot: roleId });
+    db.updateGuildConfig(guildId, { autoroleBot: roleIds });
   } else if (interaction.customId === 'autorole_vanity_select') {
-    db.updateGuildConfig(guildId, { vanityRole: roleId });
+    db.updateGuildConfig(guildId, { vanityRole: roleIds });
   }
   
   return interaction.update(getAutoRolePanel(guildId, interaction.client));
