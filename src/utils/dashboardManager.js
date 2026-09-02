@@ -256,7 +256,7 @@ export async function setupDashboardChannel(guild, client) {
     
     // Ensure existing channels have the correct permissions (visible to everyone)
     try {
-      await targetChannel.permissionOverwrites.edit(guild.roles.everyone.id, {
+      await targetChannel.permissionOverwrites.edit(guild.id, {
         ViewChannel: true,
         SendMessages: false,
         AddReactions: false
@@ -283,7 +283,7 @@ export async function setupDashboardChannel(guild, client) {
       type: ChannelType.GuildText,
       permissionOverwrites: [
         {
-          id: guild.roles.everyone.id,
+          id: guild.id,
           allow: [PermissionFlagsBits.ViewChannel],
           deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.AddReactions]
         },

@@ -107,8 +107,8 @@ export async function handleYtStatsButton(interaction) {
   }
 
   if (interaction.customId === 'ytstats_refresh') {
+    await interaction.deferReply({ flags: 64 }).catch(() => null);
     const { forceUpdateYtStats } = await import('../utils/ytStatsEngine.js');
-    await interaction.deferReply({ ephemeral: true });
     try {
       await forceUpdateYtStats(interaction.guild);
       await interaction.editReply({ content: 'Forced refresh complete! Note: If the name did not change, Discord may be rate-limiting the channel.' });
