@@ -85,7 +85,9 @@ export async function fetchDashboardStats(guild) {
       }
     }
   } catch (err) {
-    console.error('Failed to fetch audit logs for dashboard:', err);
+    if (err && err.code !== 'UND_ERR_CONNECT_TIMEOUT' && !err.message?.includes('Connect Timeout')) {
+      console.error('Failed to fetch audit logs for dashboard:', err);
+    }
   }
 
   return {
@@ -180,7 +182,9 @@ export async function updateDashboardMessage(guild, client) {
         if (err.message.includes('10008')) {
           console.log(`[Dashboard Sync] Old messages not found in ${guild.id}. (msgIds: ${msgIds.join(', ')}). Error: ${err.message}. Reposting dashboard...`);
         } else {
-          console.error(`[Dashboard Sync] Failed to edit messages in ${guild.id}:`, err.message);
+          if (err && !err.message?.includes('ECONNRESET') && !err.message?.includes('Connect Timeout') && err.code !== 'ECONNRESET') {
+            console.error(`[Dashboard Sync] Failed to edit messages in ${guild.id}:`, err.message);
+          }
           return; // Stop here, don't delete and repost!
         }
       }

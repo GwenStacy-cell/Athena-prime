@@ -77,9 +77,18 @@ process.on('unhandledRejection', (error) => {
 });
 
 process.on('uncaughtException', (error) => {
-  if (error && error.message && error.message.includes('Unexpected server response: 5')) {
-    // Silence harmless Discord Voice API Cloudflare timeouts
-    return;
+  if (error) {
+    const msg = error.message || '';
+    const code = error.code || '';
+    if (msg.includes('Unexpected server response: 5') || 
+        msg.includes('Opening handshake has timed out') || 
+        msg.includes('ECONNRESET') || 
+        msg.includes('EPROTO') ||
+        code === 'ECONNRESET' ||
+        code === 'EPROTO' ||
+        code === 'UND_ERR_CONNECT_TIMEOUT') {
+      return;
+    }
   }
   console.error(chalk.red.bold('Uncaught Exception:'), error);
 });
