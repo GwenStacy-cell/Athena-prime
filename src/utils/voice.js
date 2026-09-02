@@ -94,8 +94,8 @@ export async function updateBotVcStatus(channel) {
   const emojis = [
     '<a:a_fheartSpinWhite:1533844790314143955>',
     '<a:ArrowHeart:1544688958196158525>',
-    '<a:emoji_114:1516523064492425318>',
-    '<a:81509ripyourheartout:1516523054283493576>',
+    '<a:emoji_114:1533844815756787752>',
+    '<a:bubu_sigh:1525429906102816788>',
     '<a:thunder:1533844816557768764>',
     '<a:🦇:1451690277126275267>',
     '<a:nt:1445649701809684552>',
