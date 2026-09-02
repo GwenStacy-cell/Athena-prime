@@ -20,6 +20,18 @@ export function getAutoReactPanel(guildId, client) {
     if (!rulesText) rulesText = `-# **${ARROW} No active auto-react channels.**`;
   }
 
+  const row1 = new ActionRowBuilder().addComponents(
+    new ChannelSelectMenuBuilder()
+      .setCustomId('autoreact_channel')
+      .setPlaceholder('Select a channel to manage reactions...')
+      .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('autoreact_clear').setLabel('Clear All').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('autoreact_close').setLabel('Close Panel').setStyle(ButtonStyle.Secondary)
+  );
+
   const container = {
     type: 17,
     components: [
@@ -39,8 +51,16 @@ export function getAutoReactPanel(guildId, client) {
       { type: 14, divider: true },
       {
         type: 10,
+        content: `-# **${TICK} System Documentation:**\n-# \u2022 **How it works:** Whenever any user sends a message in a configured channel, Athena will instantly react to their message with the emojis you set.\n-# \u2022 **Multiple Emojis:** You can add as many emojis as you want. Just separate them with a space!\n-# \u2022 **Use Cases:** Perfect for #art channels (auto upvote/downvote), #suggestions, or welcome lobbies.`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
         content: `-# **${TICK} Current Configurations:**\n${rulesText}`
       },
+      { type: 14, divider: true },
+      row1.toJSON(),
+      row2.toJSON(),
       { type: 14, divider: true },
       {
         type: 10,
@@ -49,19 +69,7 @@ export function getAutoReactPanel(guildId, client) {
     ]
   };
 
-  const row1 = new ActionRowBuilder().addComponents(
-    new ChannelSelectMenuBuilder()
-      .setCustomId('autoreact_channel')
-      .setPlaceholder('Select a channel to manage reactions...')
-      .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
-  );
-
-  const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('autoreact_clear').setLabel('Clear All').setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId('autoreact_close').setLabel('Close Panel').setStyle(ButtonStyle.Secondary)
-  );
-
-  return { components: [container, row1, row2], flags: MessageFlags.IsComponentsV2 };
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function handleAutoReactMenu(interaction) {

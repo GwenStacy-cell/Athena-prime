@@ -13,35 +13,6 @@ export function getAutoRolePanel(guildId, client) {
   const vanityStr = config.vanityString ? `**${config.vanityString}**` : '`None`';
   const vanityRole = config.vanityRole ? `<@&${config.vanityRole}>` : '`None`';
 
-  const container = {
-    type: 17,
-    components: [
-      {
-        type: 9,
-        components: [
-          {
-            type: 10,
-            content: `> # **AutoRole & Vanity Engine**\n\n-# **Automatically assign roles to new members, and reward users who promote your server vanity.**\n\n-# **${TICK} Use the dropdowns below to configure roles.**`
-          }
-        ],
-        accessory: {
-          type: 11,
-          media: { url: client?.guilds.cache.get(guildId)?.members.me?.displayAvatarURL({ extension: 'png' }) || client?.user?.displayAvatarURL({ extension: 'png' }) || 'https://cdn.discordapp.com/embed/avatars/0.png' }
-        }
-      },
-      { type: 14, divider: true },
-      {
-        type: 10,
-        content: `-# **${TICK} Join Auto-Roles:**\n-# **\u2022 Humans:**  ${ARROW}  ${humanRole}\n-# **\u2022 Bots:**  ${ARROW}  ${botRole}\n\n-# **${TICK} Vanity Status Rewards:**\n-# **\u2022 Target String:**  ${ARROW}  ${vanityStr}\n-# **\u2022 Reward Role:**  ${ARROW}  ${vanityRole}`
-      },
-      { type: 14, divider: true },
-      {
-        type: 10,
-        content: `-# **Athena Bulletproof Security !!!**`
-      }
-    ]
-  };
-
   const row1 = new ActionRowBuilder().addComponents(
     new RoleSelectMenuBuilder()
       .setCustomId('autorole_human_select')
@@ -66,7 +37,46 @@ export function getAutoRolePanel(guildId, client) {
     new ButtonBuilder().setCustomId('autorole_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
   );
 
-  return { components: [container, row1, row2, row3, row4], flags: MessageFlags.IsComponentsV2 };
+  const container = {
+    type: 17,
+    components: [
+      {
+        type: 9,
+        components: [
+          {
+            type: 10,
+            content: `> # **AutoRole & Vanity Engine**\n\n-# **Automatically assign roles to new members, and reward users who promote your server vanity.**\n\n-# **${TICK} Use the dropdowns below to configure roles.**`
+          }
+        ],
+        accessory: {
+          type: 11,
+          media: { url: client?.guilds.cache.get(guildId)?.members.me?.displayAvatarURL({ extension: 'png' }) || client?.user?.displayAvatarURL({ extension: 'png' }) || 'https://cdn.discordapp.com/embed/avatars/0.png' }
+        }
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **${TICK} System Documentation:**\n-# \u2022 **Human AutoRole:** Assigned instantly to real users when they join the server.\n-# \u2022 **Bot AutoRole:** Assigned instantly to integration bots when they are invited.\n-# \u2022 **Vanity String:** A custom text (like \`.gg/server\`) you want members to put in their Discord status.\n-# \u2022 **Vanity Reward:** The special role granted to members while they have the string in their status (automatically removed if they delete it).`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **${TICK} Join Auto-Roles:**\n-# **\u2022 Humans:**  ${ARROW}  ${humanRole}\n-# **\u2022 Bots:**  ${ARROW}  ${botRole}\n\n-# **${TICK} Vanity Status Rewards:**\n-# **\u2022 Target String:**  ${ARROW}  ${vanityStr}\n-# **\u2022 Reward Role:**  ${ARROW}  ${vanityRole}`
+      },
+      { type: 14, divider: true },
+      row1.toJSON(),
+      row2.toJSON(),
+      row3.toJSON(),
+      row4.toJSON(),
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **Athena Bulletproof Security !!!**`
+      }
+    ]
+  };
+
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function handleAutoRoleMenu(interaction) {
