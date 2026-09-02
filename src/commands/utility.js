@@ -1136,7 +1136,7 @@ async function sendCalculator(context) {
       { id: '2', label: '2', style: ButtonStyle.Secondary },
       { id: '3', label: '3', style: ButtonStyle.Secondary },
       { id: 'add', label: '+', style: ButtonStyle.Primary },
-      { id: 'empty', label: ' ', style: ButtonStyle.Secondary }
+      { id: 'empty', label: '\u200B', style: ButtonStyle.Secondary }
     ]),
     createRow([
       { id: 'dot', label: '.', style: ButtonStyle.Secondary },
@@ -1271,7 +1271,7 @@ export async function handleCalculatorButton(interaction) {
       { id: '2', label: '2', style: ButtonStyle.Secondary },
       { id: '3', label: '3', style: ButtonStyle.Secondary },
       { id: 'add', label: '+', style: ButtonStyle.Primary },
-      { id: 'empty', label: ' ', style: ButtonStyle.Secondary }
+      { id: 'empty', label: '\u200B', style: ButtonStyle.Secondary }
     ]),
     createRow([
       { id: 'dot', label: '.', style: ButtonStyle.Secondary },
