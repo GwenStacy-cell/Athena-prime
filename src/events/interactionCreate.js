@@ -59,6 +59,28 @@ export default {
     
     
     if (interaction.isModalSubmit()) {
+      if (interaction.customId === 'verify_math_modal' || interaction.customId === 'verify_captcha_modal') {
+        const answer = interaction.customId === 'verify_math_modal' 
+          ? interaction.fields.getTextInputValue('math_answer') 
+          : interaction.fields.getTextInputValue('captcha_answer');
+          
+        const { validateAnswer } = await import('../utils/captchaEngine.js');
+        const isValid = validateAnswer(interaction.guild.id, interaction.user.id, answer);
+        
+        if (!isValid) {
+          return await interaction.reply({ content: '-# **Authentication Failed.** Incorrect answer or the challenge expired.', flags: 64 }).catch(()=>null);
+        }
+        
+        const verifyData = db.getVerification(interaction.guild.id);
+        if (verifyData && verifyData.roleId) {
+          try {
+             await interaction.member.roles.add(verifyData.roleId);
+             return await interaction.reply({ content: '-# <:emoji_16:1521464002046328944> **Identity Authenticated! You have been granted access to the server.**', flags: 64 }).catch(()=>null);
+          } catch(e) {
+             return await interaction.reply({ content: '-# **Failed to assign the verification role.**', flags: 64 }).catch(()=>null);
+          }
+        }
+      }
 
 
       if (interaction.customId === 'ytstats_bind_modal' || interaction.customId === 'ytstats_auto_modal') {

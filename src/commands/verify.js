@@ -83,7 +83,8 @@ export const commands = [
         db.updateVerification(guildId, {
           roleId: role.id,
           messageId: msg.id,
-          channelId: interaction.channel.id
+          channelId: interaction.channel.id,
+          mode
         });
 
         const promptPayload = {
