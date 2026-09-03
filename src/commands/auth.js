@@ -39,7 +39,7 @@ function buildAuthPayload(guildId) {
       {
         type: 9,
         components: [
-          { type: 10, content: `## Role Authorization Tiers\n\n-# **Admin Tier:** Bypasses \`isAuthorized()\`, granting full root access to the entire bot, including module setups and security dashboard configuration.\n-# **Mod Tier:** Grants access to intermediate moderation commands.\n-# **Staff Tier:** Grants access to basic moderation commands.` }
+          { type: 10, content: `## Role Authorization Tiers\n\n-# **Admin Tier:** Bypasses \`isAuthorized()\`, granting full root access to the entire bot, including module setups and security dashboard configuration.\n-# **Mod Tier:** Grants access to intermediate moderation commands.\n-# **Staff Tier:** Grants access to basic moderation commands.\n\n-# <:emoji_16:1521464002046328944> **Tip:** Users can run \`!tier\` to check their clearance level.` }
         ],
         accessory: { type: 11, media: { url: 'https://cdn.discordapp.com/emojis/1525429906102816788.webp?size=128&quality=lossless' } }
       },
