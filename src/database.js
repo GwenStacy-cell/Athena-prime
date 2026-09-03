@@ -1785,6 +1785,19 @@ class Database {
     this.save();
   }
   // --- TTS SYSTEM ---
+  getAutoTtsVc(guildId) {
+    if (!this.cache.tts) this.cache.tts = { users: {}, autoTts: {}, autoVc: {} };
+    if (!this.cache.tts.autoVc) this.cache.tts.autoVc = {};
+    return this.cache.tts.autoVc[guildId] || null;
+  }
+
+  setAutoTtsVc(guildId, vcId) {
+    if (!this.cache.tts) this.cache.tts = { users: {}, autoTts: {}, autoVc: {} };
+    if (!this.cache.tts.autoVc) this.cache.tts.autoVc = {};
+    this.cache.tts.autoVc[guildId] = vcId;
+    this.save();
+  }
+
   getTtsPrefs(userId) {
     if (!this.cache.tts) this.cache.tts = { users: {}, autoTts: {} };
     if (!this.cache.tts.users[userId]) {

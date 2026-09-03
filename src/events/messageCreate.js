@@ -1428,7 +1428,12 @@ export default {
     // --- AUTO TTS SYSTEM ---
     if (!usedPrefix && !message.author.bot) {
       const autoTtsUsers = db.getAutoTtsUsers(message.guild.id);
-      if (autoTtsUsers.includes(message.author.id)) {
+      const autoTtsVc = db.getAutoTtsVc(message.guild.id);
+      
+      const isAutoUser = autoTtsUsers.includes(message.author.id);
+      const isAutoVc = autoTtsVc && message.member?.voice?.channelId === autoTtsVc;
+
+      if (isAutoUser || isAutoVc) {
         import('../commands/tts.js').then(module => {
           module.queueTtsMessage(message.member, message.content).catch(() => null);
         });
