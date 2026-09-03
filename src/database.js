@@ -98,6 +98,7 @@ class Database {
         this.cache.rateChannels   = this.cache.rateChannels   || {};
         this.cache.massRoles      = this.cache.massRoles      || {};
         this.cache.npManagers     = this.cache.npManagers     || [];
+        this.cache.tts            = this.cache.tts            || { users: {}, autoTts: {} };
         this.cache.npUsers        = this.cache.npUsers        || {};
         this.cache.npServers      = this.cache.npServers      || {};
         this.cache.npBannedUsers  = this.cache.npBannedUsers  || [];
@@ -1783,7 +1784,43 @@ class Database {
     config.ignoredCategories = categories;
     this.save();
   }
-}
+  // --- TTS SYSTEM ---
+  getTtsPrefs(userId) {
+    if (!this.cache.tts) this.cache.tts = { users: {}, autoTts: {} };
+    if (!this.cache.tts.users[userId]) {
+      this.cache.tts.users[userId] = { lang: 'en' };
+    }
+    return this.cache.tts.users[userId];
+  }
 
+  updateTtsPrefs(userId, prefs) {
+    if (!this.cache.tts) this.cache.tts = { users: {}, autoTts: {} };
+    this.cache.tts.users[userId] = { ...this.getTtsPrefs(userId), ...prefs };
+    this.save();
+  }
+
+  getAutoTtsUsers(guildId) {
+    if (!this.cache.tts) this.cache.tts = { users: {}, autoTts: {} };
+    if (!this.cache.tts.autoTts[guildId]) {
+      this.cache.tts.autoTts[guildId] = [];
+    }
+    return this.cache.tts.autoTts[guildId];
+  }
+
+  addAutoTtsUser(guildId, userId) {
+    const list = this.getAutoTtsUsers(guildId);
+    if (!list.includes(userId)) {
+      list.push(userId);
+      this.save();
+    }
+  }
+
+  removeAutoTtsUser(guildId, userId) {
+    let list = this.getAutoTtsUsers(guildId);
+    this.cache.tts.autoTts[guildId] = list.filter(id => id !== userId);
+    this.save();
+  }
+
+}
 const dbInstance = new Database();
 export default dbInstance;
