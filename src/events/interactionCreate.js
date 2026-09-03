@@ -95,7 +95,7 @@ export default {
       
       const embed = interaction.message.components[0].toJSON();
       
-      embed.components.push({ type: 10, content: `### Result: ${action === 'accept' ? '<:emoji_16:1521464002046328944> Accepted' : '<:cross_red:1533860128015519895> Denied'} by <@${interaction.user.id}>` });
+      embed.components.push({ type: 10, content: `### Result: ${action === 'accept' ? '<a:emoji_106:1533844832395595838> Accepted' : '<:cross_red:1533860128015519895> Denied'} by <@${interaction.user.id}>` });
       embed.components.push({ type: 10, content: `**Reason:** ${reason}` });
       
       await interaction.update({ components: [embed], flags: MessageFlags.IsComponentsV2 }).catch(console.error);
@@ -103,7 +103,7 @@ export default {
       // Async DM task so it doesn't block interaction timeout
       interaction.guild.members.fetch(targetId).then(target => {
         if (target) {
-          const emoji = action === 'accept' ? '<:emoji_16:1521464002046328944>' : '<:cross_red:1533860128015519895>';
+          const emoji = action === 'accept' ? '<a:emoji_106:1533844832395595838>' : '<:cross_red:1533860128015519895>';
           const title = `${emoji} Application ${action === 'accept' ? 'Accepted' : 'Denied'}`;
           target.send(cv2[action === 'accept' ? 'success' : 'danger'](title, `**Server:** ${interaction.guild.name}\n**Reason:** ${reason}`)).catch(() => null);
         }
