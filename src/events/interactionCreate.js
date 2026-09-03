@@ -90,7 +90,7 @@ export default {
         
         embed.components.push({ type: 14, divider: true });
 
-        const { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+        const { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = await import('discord.js');
         const btnAccept = new ButtonBuilder().setCustomId(`btn_app_review_accept_${interaction.user.id}`).setLabel('Accept').setStyle(ButtonStyle.Success);
         const btnDeny = new ButtonBuilder().setCustomId(`btn_app_review_deny_${interaction.user.id}`).setLabel('Deny').setStyle(ButtonStyle.Danger);
         const row = new ActionRowBuilder().addComponents(btnAccept, btnDeny);
@@ -107,7 +107,7 @@ export default {
       const targetId = parts[4];
       const reason = interaction.fields.getTextInputValue('review_reason');
       
-      const { MessageFlags } = require('discord.js');
+      const { MessageFlags } = await import('discord.js');
       const embed = interaction.message.components[0].toJSON();
       
       // Remove buttons
@@ -1229,7 +1229,7 @@ async function handleSecurityInteractions(interaction, guild) {
       }
       else if (customId === 'am_select_honeypot_channel') {
         const channelId = interaction.values[0];
-        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+        import('discord.js').then(({ ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder }) => {
         const modal = new ModalBuilder()
           .setCustomId(`modal_honeypot_${channelId}`)
           .setTitle('Honeypot Trap Setup');
@@ -1250,6 +1250,7 @@ async function handleSecurityInteractions(interaction, guild) {
           
         modal.addComponents(new ActionRowBuilder().addComponents(bannerInput), new ActionRowBuilder().addComponents(timeoutInput));
         return interaction.showModal(modal);
+        });
       }
       else if (customId === 'am_select_granular_role') {
         targetRoleForBypass = interaction.values[0];
@@ -1363,11 +1364,11 @@ async function handleSecurityInteractions(interaction, guild) {
     
     if (interaction.isButton()) {
     if (interaction.customId === 'btn_app_apply') {
-      import('../database.js').then(db => {
+      import('../database.js').then(async db => {
         const config = db.default.getAppConfig(interaction.guild.id);
         if (!config.questions || config.questions.length === 0) return interaction.reply({ content: 'There are no questions configured for this application.', ephemeral: true });
         
-        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+        const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
         const modal = new ModalBuilder().setCustomId('modal_app_submit').setTitle('Staff Application');
         
         config.questions.forEach((q, i) => {
@@ -1385,7 +1386,7 @@ async function handleSecurityInteractions(interaction, guild) {
     }
 
     if (interaction.customId.startsWith('btn_app_review_')) {
-      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+      import('discord.js').then(({ ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder }) => {
       const action = interaction.customId.split('_')[3]; // 'accept' or 'deny'
       const targetId = interaction.customId.split('_')[4];
       
@@ -1393,6 +1394,7 @@ async function handleSecurityInteractions(interaction, guild) {
       const input = new TextInputBuilder().setCustomId('review_reason').setLabel('Reason (sent to user)').setStyle(TextInputStyle.Paragraph).setRequired(true);
       modal.addComponents(new ActionRowBuilder().addComponents(input));
       interaction.showModal(modal).catch(console.error);
+      });
       return;
     }
 
