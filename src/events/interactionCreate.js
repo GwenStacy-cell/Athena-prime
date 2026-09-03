@@ -59,6 +59,11 @@ export default {
     
     
     if (interaction.isModalSubmit()) {
+    if (interaction.customId === 'modal_quote_id' || interaction.customId === 'modal_quote_custom') {
+      import('../commands/quote.js').then(m => m.handleQuoteModals(interaction)).catch(console.error);
+      return;
+    }
+
       if (interaction.customId === 'verify_math_modal' || interaction.customId === 'verify_captcha_modal') {
         const answer = interaction.customId === 'verify_math_modal' 
           ? interaction.fields.getTextInputValue('math_answer') 

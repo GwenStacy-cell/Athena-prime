@@ -63,6 +63,7 @@ import { commands as vcpanelCmds } from './vcpanel.js';
 import { commands as npCmds } from './np.js';
 import { commands as ignoreCmds } from './ignore.js';
 import { commands as ttsCmds } from './tts.js';
+import { commands as quoteCmds } from './quote.js';
 import { commands as renameCmds } from './rename.js';
 import { commands as botgrowthCmds } from './botgrowth.js';
 
@@ -73,6 +74,7 @@ export const allCommands = [
   ...npCmds,
   ...ignoreCmds,
   ...ttsCmds,
+  ...quoteCmds,
   ...renameCmds,
   ...botgrowthCmds,
   ...youtubeCmds,
