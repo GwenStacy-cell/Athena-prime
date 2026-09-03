@@ -8,7 +8,7 @@ function patchDeferReply(cls) {
   if (!cls || !cls.prototype || !cls.prototype.deferReply) return;
   const originalDefer = cls.prototype.deferReply;
   cls.prototype.deferReply = async function(options = {}) {
-    this.deferred = true; // mimic internal state
+    
     const loadingStates = [
       "Synchronizing neural network parameters...",
       "Querying regional database shards...",

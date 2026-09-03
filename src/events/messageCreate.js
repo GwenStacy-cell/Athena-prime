@@ -397,7 +397,7 @@ export default {
           
           // Channel Warning
           const scamEmbed = cv2.danger('Scam Detected', `<a:emoji_35:1533024049926639699> <@${message.author.id}>, your message was flagged as a scam and removed.`);
-          await message.channel.send(scamEmbed).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
+          await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
           
           const logEmbed = cv2.danger('LOG: MALICIOUS SCAM TEXT DELETED', `**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted fraudulent text/link containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).\n\n**Channel:** <#${message.channel.id}>`);
           
@@ -412,7 +412,7 @@ export default {
                 .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                 .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam message in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
                 .setFooter({ text: 'Athena Prime Killer System' });
-              await owner.send(dmEmbed).catch(() => null);
+              await owner.send({ embeds: [dmEmbed] }).catch(() => null);
             }
           } catch (e) {}
         }
