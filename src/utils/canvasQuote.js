@@ -1,112 +1,108 @@
-﻿import { createCanvas, loadImage, registerFont } from 'canvas';
-import { AttachmentBuilder } from 'discord.js';
+﻿import { createCanvas, loadImage } from 'canvas';
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   const words = text.split(' ');
   let line = '';
-  let lines = 0;
   
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' ';
-    const metrics = ctx.measureText(testLine);
-    const testWidth = metrics.width;
-    
-    if (testWidth > maxWidth && n > 0) {
-      ctx.fillText(line, x, y);
-      line = words[n] + ' ';
-      y += lineHeight;
-      lines++;
-    } else {
-      line = testLine;
-    }
-  }
-  ctx.fillText(line, x, y);
-  lines++;
-  return lines * lineHeight;
-}
-
-function calculateTextHeight(ctx, text, maxWidth, lineHeight) {
-  const words = text.split(' ');
-  let line = '';
-  let lines = 0;
-  
+  // Calculate total height first to center it vertically
+  let lines = [];
   for (let n = 0; n < words.length; n++) {
     const testLine = line + words[n] + ' ';
     const metrics = ctx.measureText(testLine);
     if (metrics.width > maxWidth && n > 0) {
+      lines.push(line);
       line = words[n] + ' ';
-      lines++;
     } else {
       line = testLine;
     }
   }
-  lines++;
-  return lines * lineHeight;
+  lines.push(line);
+  
+  // Draw the lines
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillText(lines[i].trim(), x, y + (i * lineHeight));
+  }
+  return lines.length * lineHeight;
 }
 
-export async function generateQuoteBuffer(username, avatarUrl, text, timestampStr, theme = 'dark', roleColor = '#FFFFFF') {
-  const maxWidth = 800;
-  const padding = 30;
-  const avatarSize = 60;
-  const textX = padding * 2 + avatarSize;
-  const textY = padding + 40;
-  const maxTextWidth = maxWidth - textX - padding;
-  
-  // Create a temporary canvas just to measure text
-  const tempCanvas = createCanvas(maxWidth, 100);
-  const tempCtx = tempCanvas.getContext('2d');
-  tempCtx.font = '24px sans-serif';
-  
-  const textHeight = calculateTextHeight(tempCtx, text, maxTextWidth, 32);
-  const totalHeight = Math.max(120, padding * 2 + 25 + textHeight);
-  
-  const canvas = createCanvas(maxWidth, totalHeight);
+export async function generateQuoteBuffer(username, avatarUrl, text, timestampStr, theme = 'dark', roleColor = '#FFFFFF', realUsername = '') {
+  const width = 1200;
+  const height = 630;
+  const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
   
-  // Background
-  if (theme === 'dark') {
-    ctx.fillStyle = '#313338';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  } else if (theme === 'light') {
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  } else if (theme === 'transparent') {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-  
-  // Load and draw avatar
+  // 1. Draw the user's avatar as the background
   try {
-    const avatar = await loadImage(avatarUrl.replace('.webp', '.png').replace('.gif', '.png') + '?size=128');
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(padding + avatarSize / 2, padding + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
-    ctx.closePath();
-    ctx.clip();
-    ctx.drawImage(avatar, padding, padding, avatarSize, avatarSize);
-    ctx.restore();
+    const bgImage = await loadImage(avatarUrl.replace('.webp', '.png').replace('.gif', '.png') + '?size=1024');
+    
+    // Calculate aspect ratio to cover the entire canvas
+    const scale = Math.max(width / bgImage.width, height / bgImage.height);
+    const drawWidth = bgImage.width * scale;
+    const drawHeight = bgImage.height * scale;
+    const drawX = (width - drawWidth) / 2;
+    const drawY = (height - drawHeight) / 2;
+    
+    // Draw background
+    ctx.drawImage(bgImage, drawX, drawY, drawWidth, drawHeight);
+    
+    // Darken and grayscale overlay to make it look aesthetic
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; // Heavy black tint
+    ctx.fillRect(0, 0, width, height);
+    
+    // Optional: If you want true grayscale, you can manipulate pixels, 
+    // but a heavy black semi-transparent overlay usually gives the exact same aesthetic vibe.
   } catch (err) {
-    // Fallback if avatar fails to load
-    ctx.fillStyle = '#5865F2';
-    ctx.beginPath();
-    ctx.arc(padding + avatarSize / 2, padding + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2, true);
-    ctx.fill();
+    // Fallback black background if avatar fails
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(0, 0, width, height);
   }
   
-  // Username
-  ctx.font = 'bold 26px sans-serif';
-  ctx.fillStyle = (roleColor && roleColor !== '#000000') ? roleColor : (theme === 'light' ? '#000000' : '#FFFFFF');
-  ctx.fillText(username, textX, padding + 22);
+  // 2. Draw the Quote Text
+  const maxTextWidth = 700;
+  const textStartX = 400; // Push text to the right side
   
-  // Timestamp
-  const usernameWidth = ctx.measureText(username).width;
-  ctx.font = '18px sans-serif';
-  ctx.fillStyle = theme === 'light' ? '#5c5e66' : '#949ba4';
-  ctx.fillText(timestampStr, textX + usernameWidth + 15, padding + 22);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'italic 48px sans-serif';
+  ctx.textAlign = 'center';
   
-  // Text
-  ctx.font = '24px sans-serif';
-  ctx.fillStyle = theme === 'light' ? '#060607' : '#dbdee1';
-  wrapText(ctx, text, textX, textY, maxTextWidth, 32);
+  // Measure text height to center it vertically
+  // Rough estimate of height
+  const words = `"${text}"`.split(' ');
+  let testLine = '';
+  let lineCount = 1;
+  for (let n = 0; n < words.length; n++) {
+    const test = testLine + words[n] + ' ';
+    if (ctx.measureText(test).width > maxTextWidth && n > 0) {
+      lineCount++;
+      testLine = words[n] + ' ';
+    } else {
+      testLine = test;
+    }
+  }
+  
+  const lineHeight = 60;
+  const totalTextHeight = lineCount * lineHeight;
+  // Center vertically based on text height + author block
+  const startY = (height - totalTextHeight) / 2 - 40; 
+  
+  const textBottomY = startY + wrapText(ctx, `"${text}"`, textStartX + (maxTextWidth/2), startY, maxTextWidth, lineHeight);
+  
+  // 3. Draw the Author
+  ctx.font = 'bold 32px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`- ${username}`, textStartX + (maxTextWidth/2), textBottomY + 50);
+  
+  if (realUsername) {
+    ctx.font = '24px sans-serif';
+    ctx.fillStyle = '#AAAAAA';
+    ctx.fillText(`@${realUsername}`, textStartX + (maxTextWidth/2), textBottomY + 90);
+  }
+  
+  // 4. Draw the Watermark
+  ctx.font = '20px sans-serif';
+  ctx.fillStyle = '#777777';
+  ctx.textAlign = 'right';
+  ctx.fillText('Generated by Athena', width - 20, height - 20);
   
   return canvas.toBuffer('image/png');
 }

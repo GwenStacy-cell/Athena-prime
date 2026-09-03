@@ -232,7 +232,8 @@ export default {
               message.content || ' ',
               formatDiscordTimestamp(Date.now()),
               'dark',
-              message.member ? message.member.displayHexColor : '#FFFFFF'
+              message.member ? message.member.displayHexColor : '#FFFFFF',
+              message.author.username
             );
             
             const { AttachmentBuilder } = await import('discord.js');

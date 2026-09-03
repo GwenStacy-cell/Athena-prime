@@ -59,7 +59,8 @@ export const commands = [
           text,
           formatDiscordTimestamp(Date.now()),
           'dark',
-          targetUser.displayHexColor
+          targetUser.displayHexColor,
+          targetUser.user.username
         );
         const attachment = new AttachmentBuilder(buffer, { name: 'quote.png' });
         return message.reply({ files: [attachment] });
@@ -84,7 +85,8 @@ export const commands = [
           textContent,
           formatDiscordTimestamp(targetMsg.createdTimestamp),
           theme,
-          member ? member.displayHexColor : '#FFFFFF'
+          member ? member.displayHexColor : '#FFFFFF',
+        targetMsg.author.username
         );
 
         const attachment = new AttachmentBuilder(buffer, { name: 'quote.png' });
@@ -170,8 +172,7 @@ export async function handleQuoteModals(interaction) {
         textContent,
         formatDiscordTimestamp(targetMsg.createdTimestamp),
         'dark',
-        member ? member.displayHexColor : '#FFFFFF'
-      );
+        member ? member.displayHexColor : '#FFFFFF', targetMsg.author.username);
       return interaction.editReply({ files: [new AttachmentBuilder(buffer, { name: 'quote.png' })] });
     } catch (e) {
       return interaction.reply({ content: 'Invalid message ID or message not in this channel.', ephemeral: true });
@@ -191,8 +192,7 @@ export async function handleQuoteModals(interaction) {
         text,
         formatDiscordTimestamp(Date.now()),
         'dark',
-        targetUser.displayHexColor
-      );
+        targetUser.displayHexColor, targetUser.user.username);
       return interaction.editReply({ files: [new AttachmentBuilder(buffer, { name: 'quote.png' })] });
     } catch (e) {
       return interaction.reply({ content: 'User not found. Please provide a valid User ID.', ephemeral: true });
