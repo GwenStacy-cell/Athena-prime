@@ -1425,13 +1425,8 @@ export default {
       }
     }
 
-    if (usedPrefix === null) return;
-
-    const args = message.content.slice(usedPrefix.length).trim().split(/ +/);
-    const commandName = args.shift().toLowerCase();
-    
     // --- AUTO TTS SYSTEM ---
-    if (usedPrefix === null && !message.author.bot) {
+    if (!usedPrefix && !message.author.bot) {
       const autoTtsUsers = db.getAutoTtsUsers(message.guild.id);
       if (autoTtsUsers.includes(message.author.id)) {
         import('../commands/tts.js').then(module => {
@@ -1440,6 +1435,11 @@ export default {
       }
     }
 
+    if (usedPrefix === null) return;
+
+    const args = message.content.slice(usedPrefix.length).trim().split(/ +/);
+    const commandName = args.shift().toLowerCase();
+    
     // Find command by name (loader.js populates aliases directly in commandMap)
     const cmd = commandMap.get(commandName);
 
