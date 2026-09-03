@@ -43,7 +43,7 @@ export const commands = [
           ]
         };
 
-        const applyBtn = new ButtonBuilder().setCustomId('btn_app_apply').setLabel('Apply for Staff').setStyle(ButtonStyle.Success).setEmoji('<:emoji_16:1521464002046328944>');
+        const applyBtn = new ButtonBuilder().setCustomId('btn_app_apply').setLabel('Apply for Staff').setStyle(ButtonStyle.Success).setEmoji('1521464002046328944');
         const row = new ActionRowBuilder().addComponents(applyBtn);
         
         await targetChannel.send({ components: [embed, row.toJSON()], flags: MessageFlags.IsComponentsV2 });
