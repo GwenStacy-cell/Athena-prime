@@ -1834,6 +1834,24 @@ class Database {
     this.save();
   }
 
+  // --- APP BUILDER SYSTEM ---
+  getAppConfig(guildId) {
+    if (!this.cache.apps) this.cache.apps = {};
+    if (!this.cache.apps[guildId]) {
+      this.cache.apps[guildId] = {
+        logChannel: null,
+        questions: ["Why do you want to be staff?", "What is your timezone?", "Do you have prior experience?"]
+      };
+    }
+    return this.cache.apps[guildId];
+  }
+
+  updateAppConfig(guildId, data) {
+    const config = this.getAppConfig(guildId);
+    this.cache.apps[guildId] = { ...config, ...data };
+    this.save();
+  }
+
 }
 const dbInstance = new Database();
 export default dbInstance;
