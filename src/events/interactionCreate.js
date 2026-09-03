@@ -103,9 +103,13 @@ export default {
       // Async DM task so it doesn't block interaction timeout
       interaction.guild.members.fetch(targetId).then(target => {
         if (target) {
-          target.send(cv2[action === 'accept' ? 'success' : 'danger'](`Application ${action === 'accept' ? 'Accepted' : 'Denied'}`, `**Server:** ${interaction.guild.name}\n**Reason:** ${reason}`)).catch(() => null);
+          const dmEmbed = new EmbedBuilder()
+            .setTitle(`Application ${action === 'accept' ? 'Accepted' : 'Denied'}`)
+            .setDescription(`**Server:** ${interaction.guild.name}\n\n**Reason:** ${reason}`)
+            .setColor(action === 'accept' ? '#43b581' : '#f04747');
+          target.send({ embeds: [dmEmbed] }).catch(err => console.error('Failed to DM applicant:', err));
         }
-      }).catch(()=>{});
+      }).catch(err => console.error('Failed to fetch applicant for DM:', err));
       return;
     }
   }
