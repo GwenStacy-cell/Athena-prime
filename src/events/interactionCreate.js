@@ -53,11 +53,13 @@ export default {
 
   if (interaction.isModalSubmit()) {
     if (interaction.customId === 'modal_app_submit') {
+      await interaction.deferReply({ ephemeral: true }).catch(()=>{});
+      
       const config = db.getAppConfig(interaction.guild.id);
-      if (!config.logChannel) return interaction.reply({ content: 'Application log channel is not configured!', ephemeral: true }).catch(()=>{});
+      if (!config.logChannel) return interaction.editReply({ content: 'Application log channel is not configured!' }).catch(()=>{});
       
       const logChannel = interaction.guild.channels.cache.get(config.logChannel);
-      if (!logChannel) return interaction.reply({ content: 'Application log channel not found!', ephemeral: true }).catch(()=>{});
+      if (!logChannel) return interaction.editReply({ content: 'Application log channel not found!' }).catch(()=>{});
 
       const embed = {
         type: 17,
@@ -82,7 +84,7 @@ export default {
       const row = new ActionRowBuilder().addComponents(btnAccept, btnDeny);
 
       await logChannel.send({ components: [embed, row.toJSON()], flags: MessageFlags.IsComponentsV2 }).catch(()=>{});
-      return interaction.reply({ content: 'Your application has been submitted successfully!', ephemeral: true }).catch(()=>{});
+      return interaction.editReply({ content: 'Your application has been submitted successfully!' }).catch(()=>{});
     }
 
     if (interaction.customId.startsWith('modal_app_review_')) {
@@ -93,19 +95,18 @@ export default {
       
       const embed = interaction.message.components[0].toJSON();
       
-      await interaction.message.edit({ components: [embed] }).catch(()=>{});
-      
-      embed.components.push({ type: 10, content: `### Result: ${action === 'accept' ? '✅ Accepted' : '❌ Denied'} by <@${interaction.user.id}>` });
+      embed.components.push({ type: 10, content: `### Result: ${action === 'accept' ? '<:emoji_16:1521464002046328944> Accepted' : '<:cross_red:1533860128015519895> Denied'} by <@${interaction.user.id}>` });
       embed.components.push({ type: 10, content: `**Reason:** ${reason}` });
       
-      await interaction.message.edit({ components: [embed, interaction.message.components[1]?.toJSON()].filter(Boolean), flags: MessageFlags.IsComponentsV2 }).catch(()=>{});
+      await interaction.update({ components: [embed], flags: MessageFlags.IsComponentsV2 }).catch(console.error);
 
-      try {
-        const target = await interaction.guild.members.fetch(targetId);
-        target.send(cv2[action === 'accept' ? 'success' : 'danger'](`Application ${action === 'accept' ? 'Accepted' : 'Denied'}`, `**Server:** ${interaction.guild.name}\n**Reason:** ${reason}`)).catch(() => null);
-      } catch(e) {}
-      
-      return interaction.reply({ content: `Application ${action}ed successfully.`, ephemeral: true }).catch(()=>{});
+      // Async DM task so it doesn't block interaction timeout
+      interaction.guild.members.fetch(targetId).then(target => {
+        if (target) {
+          target.send(cv2[action === 'accept' ? 'success' : 'danger'](`Application ${action === 'accept' ? 'Accepted' : 'Denied'}`, `**Server:** ${interaction.guild.name}\n**Reason:** ${reason}`)).catch(() => null);
+        }
+      }).catch(()=>{});
+      return;
     }
   }
 
