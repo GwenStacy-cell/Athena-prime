@@ -19,22 +19,22 @@ export const commands = [
       const isExtra = isExtraOwner(guild.id, member.id);
 
       if (isOwner) {
-        highestTier = '<:ticks:1533860039213842565> **Bot Developer (Omnipotent)**';
+        highestTier = '<:tickred:1533860144822358178> **Bot Developer (Omnipotent)**';
         color = 'success';
       } else if (isServerOwner) {
-        highestTier = '<:ticks:1533860039213842565> **Server Owner (Root Access)**';
+        highestTier = '<:tickred:1533860144822358178> **Server Owner (Root Access)**';
         color = 'success';
       } else if (isExtra) {
-        highestTier = '<:ticks:1533860039213842565> **Extra Owner (Root Access)**';
+        highestTier = '<:tickred:1533860144822358178> **Extra Owner (Root Access)**';
         color = 'success';
       } else if (isServerAdmin(member, guild.id)) {
-        highestTier = '<:ticks:1533860039213842565> **Admin Tier (Root Access)**';
+        highestTier = '<:tickred:1533860144822358178> **Admin Tier (Root Access)**';
         color = 'success';
       } else if (isServerMod(member, guild.id)) {
-        highestTier = '<:emoji_16:1521464002046328944> **Mod Tier (Intermediate Access)**';
+        highestTier = '<:tickred:1533860144822358178> **Mod Tier (Intermediate Access)**';
         color = 'warn';
       } else if (isServerStaff(member, guild.id)) {
-        highestTier = '<:emoji_16:1521464002046328944> **Staff Tier (Basic Access)**';
+        highestTier = '<:tickred:1533860144822358178> **Staff Tier (Basic Access)**';
         color = 'warn';
       }
 

@@ -1,26 +1,11 @@
 ﻿import fs from "fs";
-import path from "path";
 
-function walk(dir) {
-  let results = [];
-  const list = fs.readdirSync(dir);
-  list.forEach((file) => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-    if (stat && stat.isDirectory()) {
-      results = results.concat(walk(filePath));
-    } else if (file.endsWith('.js')) {
-      results.push(filePath);
-    }
-  });
-  return results;
-}
+let jsAuth = fs.readFileSync("src/commands/auth.js", "utf8");
+jsAuth = jsAuth.replace(/<:emoji_16:1521464002046328944>/g, "<:tickred:1533860144822358178>");
+fs.writeFileSync("src/commands/auth.js", jsAuth);
 
-const files = walk('src');
-for (const file of files) {
-  let content = fs.readFileSync(file, 'utf8');
-  if (content.includes('1533860081916182721')) {
-    content = content.replace(/<:dark4luvontop:1533860081916182721>/g, '<:ticks:1533860039213842565>');
-    fs.writeFileSync(file, content);
-  }
-}
+let jsTier = fs.readFileSync("src/commands/tier.js", "utf8");
+jsTier = jsTier.replace(/<:ticks:1533860039213842565>/g, "<:tickred:1533860144822358178>");
+jsTier = jsTier.replace(/<:emoji_16:1521464002046328944>/g, "<:tickred:1533860144822358178>");
+fs.writeFileSync("src/commands/tier.js", jsTier);
+
