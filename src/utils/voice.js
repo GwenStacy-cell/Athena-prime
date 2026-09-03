@@ -97,7 +97,7 @@ export async function updateBotVcStatus(channel) {
     '<a:emoji_114:1533844815756787752>',
     '<a:bubu_sigh:1525429906102816788>',
     '<a:thunder:1533844816557768764>',
-    '<a:🦇:1451690277126275267>',
+    '<a:Beloved_chidharha:1544998293153779722>',
     '<a:nt:1445649701809684552>',
     '<a:MMMilkDance:1538515109146660956>'
   ];
