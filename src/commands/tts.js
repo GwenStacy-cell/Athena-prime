@@ -116,7 +116,7 @@ export const commands = [
     options: [],
     async executePrefix(message, args) {
       if (args.length === 0) {
-        return message.reply(cv2.warn('TTS System Usage', `\`!tts <message>\` - Speak in voice channel\n\`!tts stop\` - Stop current speech\n\`!tts lang <code|name>\` - Set your default language\n\`!tts auto @user\` - Enable auto-TTS for a user\n\`!tts unauto @user\` - Disable auto-TTS`));
+        return message.reply(cv2.warn('TTS System Usage', `\`!tts <message>\` - Speak in voice channel\n\`!tts stop\` - Stop current speech\n\`!tts lang <language>\` - Set language (e.g. \`english\`, \`uk\`, \`au\`, \`es\`, \`ja\`)\n\`!tts auto [@user]\` - Lock a user to Auto-TTS\n\`!tts unauto [@user]\` - Disable Auto-TTS\n\`!tts autovc\` - Toggle global Auto-TTS for your VC`));
       }
 
       const subcommand = args[0]?.toLowerCase();
