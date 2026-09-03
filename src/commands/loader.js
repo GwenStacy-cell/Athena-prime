@@ -61,6 +61,7 @@ import { commands as youtubeCmds } from './youtube.js';
 import { commands as snipeCmds } from './snipe.js';
 import { commands as vcpanelCmds } from './vcpanel.js';
 import { commands as npCmds } from './np.js';
+import { commands as ignoreCmds } from './ignore.js';
 import { commands as renameCmds } from './rename.js';
 import { commands as botgrowthCmds } from './botgrowth.js';
 
@@ -69,6 +70,7 @@ export const allCommands = [
   ...authCmds,
   ...tierCmds,
   ...npCmds,
+  ...ignoreCmds,
   ...renameCmds,
   ...botgrowthCmds,
   ...youtubeCmds,
