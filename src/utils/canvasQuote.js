@@ -1,28 +1,47 @@
 ﻿import { createCanvas, loadImage } from 'canvas';
 
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-  const words = text.split(' ');
-  let line = '';
+// Helper to strip standard emojis so they don't render as tofu boxes in node-canvas
+function stripEmojis(str) {
+  return str.replace(/[\u{1F600}-\u{1F64F}]/gu, '')
+            .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
+            .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
+            .replace(/[\u{1F700}-\u{1F77F}]/gu, '')
+            .replace(/[\u{1F780}-\u{1F7FF}]/gu, '')
+            .replace(/[\u{1F800}-\u{1F8FF}]/gu, '')
+            .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')
+            .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '')
+            .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '')
+            .replace(/[\u{2600}-\u{26FF}]/gu, '')
+            .replace(/[\u{2700}-\u{27BF}]/gu, '')
+            .replace(/<a?:[a-zA-Z0-9_]+:\d+>/g, '') // Also strip discord custom emojis just in case
+            .trim();
+}
+
+function calculateLines(ctx, text, maxWidth) {
+  const paragraphs = text.split('\n');
+  const allLines = [];
   
-  // Calculate total height first to center it vertically
-  let lines = [];
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' ';
-    const metrics = ctx.measureText(testLine);
-    if (metrics.width > maxWidth && n > 0) {
-      lines.push(line);
-      line = words[n] + ' ';
-    } else {
-      line = testLine;
+  for (const paragraph of paragraphs) {
+    if (!paragraph.trim()) {
+      allLines.push('');
+      continue;
     }
+    const words = paragraph.split(' ');
+    let currentLine = '';
+    
+    for (let n = 0; n < words.length; n++) {
+      const testLine = currentLine + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0) {
+        allLines.push(currentLine.trim());
+        currentLine = words[n] + ' ';
+      } else {
+        currentLine = testLine;
+      }
+    }
+    allLines.push(currentLine.trim());
   }
-  lines.push(line);
-  
-  // Draw the lines
-  for (let i = 0; i < lines.length; i++) {
-    ctx.fillText(lines[i].trim(), x, y + (i * lineHeight));
-  }
-  return lines.length * lineHeight;
+  return allLines;
 }
 
 export async function generateQuoteBuffer(username, avatarUrl, text, timestampStr, theme = 'dark', roleColor = '#FFFFFF', realUsername = '') {
@@ -31,28 +50,24 @@ export async function generateQuoteBuffer(username, avatarUrl, text, timestampSt
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
   
+  const cleanUsername = stripEmojis(username);
+  const cleanText = stripEmojis(`"${text}"`);
+  const cleanRealUsername = realUsername ? stripEmojis(realUsername) : '';
+  
   // 1. Draw the user's avatar as the background
   try {
     const bgImage = await loadImage(avatarUrl.replace('.webp', '.png').replace('.gif', '.png') + '?size=1024');
-    
-    // Calculate aspect ratio to cover the entire canvas
     const scale = Math.max(width / bgImage.width, height / bgImage.height);
     const drawWidth = bgImage.width * scale;
     const drawHeight = bgImage.height * scale;
     const drawX = (width - drawWidth) / 2;
     const drawY = (height - drawHeight) / 2;
     
-    // Draw background
     ctx.drawImage(bgImage, drawX, drawY, drawWidth, drawHeight);
     
-    // Darken and grayscale overlay to make it look aesthetic
     ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; // Heavy black tint
     ctx.fillRect(0, 0, width, height);
-    
-    // Optional: If you want true grayscale, you can manipulate pixels, 
-    // but a heavy black semi-transparent overlay usually gives the exact same aesthetic vibe.
   } catch (err) {
-    // Fallback black background if avatar fails
     ctx.fillStyle = '#111111';
     ctx.fillRect(0, 0, width, height);
   }
@@ -65,37 +80,30 @@ export async function generateQuoteBuffer(username, avatarUrl, text, timestampSt
   ctx.font = 'italic 48px sans-serif';
   ctx.textAlign = 'center';
   
-  // Measure text height to center it vertically
-  // Rough estimate of height
-  const words = `"${text}"`.split(' ');
-  let testLine = '';
-  let lineCount = 1;
-  for (let n = 0; n < words.length; n++) {
-    const test = testLine + words[n] + ' ';
-    if (ctx.measureText(test).width > maxTextWidth && n > 0) {
-      lineCount++;
-      testLine = words[n] + ' ';
-    } else {
-      testLine = test;
+  const lines = calculateLines(ctx, cleanText, maxTextWidth);
+  const lineHeight = 60;
+  const totalTextHeight = lines.length * lineHeight;
+  
+  const startY = (height - totalTextHeight) / 2 - 40; 
+  
+  // Draw the lines
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i]) {
+      ctx.fillText(lines[i], textStartX + (maxTextWidth/2), startY + (i * lineHeight));
     }
   }
   
-  const lineHeight = 60;
-  const totalTextHeight = lineCount * lineHeight;
-  // Center vertically based on text height + author block
-  const startY = (height - totalTextHeight) / 2 - 40; 
-  
-  const textBottomY = startY + wrapText(ctx, `"${text}"`, textStartX + (maxTextWidth/2), startY, maxTextWidth, lineHeight);
+  const textBottomY = startY + (lines.length * lineHeight);
   
   // 3. Draw the Author
   ctx.font = 'bold 32px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`- ${username}`, textStartX + (maxTextWidth/2), textBottomY + 50);
+  ctx.fillText(`- ${cleanUsername}`, textStartX + (maxTextWidth/2), textBottomY + 50);
   
-  if (realUsername) {
+  if (cleanRealUsername) {
     ctx.font = '24px sans-serif';
     ctx.fillStyle = '#AAAAAA';
-    ctx.fillText(`@${realUsername}`, textStartX + (maxTextWidth/2), textBottomY + 90);
+    ctx.fillText(`@${cleanRealUsername}`, textStartX + (maxTextWidth/2), textBottomY + 90);
   }
   
   // 4. Draw the Watermark
