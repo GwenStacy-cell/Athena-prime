@@ -1458,10 +1458,15 @@ export default {
       if (npUser || npServer) {
         // Attempt to match the first word as a command
         const firstWord = message.content.trim().split(/ +/)[0].toLowerCase();
-        if (commandMap.has(firstWord)) {
+        
+        const gConfig = db.getGuildConfig(message.guild.id);
+        const cAliases = gConfig?.customCommands || {};
+        
+        if (commandMap.has(firstWord) || cAliases[firstWord]) {
+          const actualCmd = cAliases[firstWord] || firstWord;
           const bannedCmds = db.getNpBannedCommands();
-          if (!bannedCmds.includes(firstWord)) {
-            usedPrefix = ''; // No prefix used, bypass successful
+          if (!bannedCmds.includes(actualCmd)) {
+            usedPrefix = '';
             isNpBypass = true;
           }
         }
