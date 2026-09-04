@@ -38,7 +38,7 @@ async function playNext(guildId) {
     if (!response.ok) throw new Error(`Google API returned ${response.status}`);
     
     // We need to buffer the response for Discord.js voice to read it reliably
-    const buffer = await response.buffer();
+    const buffer = Buffer.from(await response.arrayBuffer());
     
     // Convert buffer to Readable stream using a simple trick
     const { Readable } = await import('stream');

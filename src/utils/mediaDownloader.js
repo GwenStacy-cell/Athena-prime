@@ -12,7 +12,7 @@ async function downloadYtDlp() {
   if (!fs.existsSync(ytdlpPath)) {
     console.log('[Media] Downloading yt-dlp binary...');
     const res = await fetch('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp');
-    const buffer = await res.buffer();
+    const buffer = Buffer.from(await res.arrayBuffer());
     fs.writeFileSync(ytdlpPath, buffer);
     fs.chmodSync(ytdlpPath, 0o755);
   }
@@ -83,7 +83,7 @@ export async function processMediaLink(client, message, url) {
       fs.unlinkSync(localFile); // Cleanup
     } else if (directUrl) {
       const videoRes = await fetch(directUrl);
-      buffer = await videoRes.buffer();
+      buffer = Buffer.from(await videoRes.arrayBuffer());
     } else {
       return false; // Failed to extract
     }
