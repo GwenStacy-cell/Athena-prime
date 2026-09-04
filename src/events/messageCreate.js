@@ -1486,7 +1486,13 @@ export default {
     if (usedPrefix === null) return;
 
     const args = message.content.slice(usedPrefix.length).trim().split(/ +/);
-    const commandName = args.shift().toLowerCase();
+    let commandName = args.shift().toLowerCase();
+    
+    const guildConfig = db.getGuildConfig(message.guild.id);
+    const ccmds = guildConfig?.customCommands || {};
+    if (ccmds[commandName]) {
+      commandName = ccmds[commandName];
+    }
     
     // Find command by name (loader.js populates aliases directly in commandMap)
     const cmd = commandMap.get(commandName);
