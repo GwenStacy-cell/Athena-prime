@@ -607,7 +607,7 @@ export async function handleEzal(message) {
 }
 
 // Export handleBackup so messageCreate can call it for server owners
-export { handleBackup };
+export { handleBackup, generateBackupId, serializeGuild, restoreGuild };
 
 // ==========================================
 // ROLE MANAGEMENT
