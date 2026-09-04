@@ -207,8 +207,10 @@ export default {
       const cfg = db.getGuildConfig(message.guild.id);
       if (cfg && cfg.quoteChannelId === message.channel.id) {
         // Intercept message immediately
-        try {
-          message.delete().catch(() => null);
+          try {
+            if (!message.client.ignoredDeletes) message.client.ignoredDeletes = new Set();
+            message.client.ignoredDeletes.add(message.id);
+            message.delete().catch(() => null);
           const loadingMsg = await message.channel.send("<a:loading:1542155051286396938> **Forging aesthetic quote...**");
           
           import('../utils/canvasQuote.js').then(async (canvasQuote) => {
