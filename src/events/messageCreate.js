@@ -511,7 +511,7 @@ export default {
                const scamEmbed = new EmbedBuilder()
                  .setColor('#ff0000') // Pure red
                  .setDescription(`<a:emoji_35:1533024049926639699> <@${message.author.id}>, your image was flagged as a scam and removed.`);
-               await message.channel.send(scamEmbed).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
+               await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
                
                // 2. Security Channel Log
                const logEmbed = new EmbedBuilder()
@@ -542,7 +542,7 @@ export default {
                      .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                      .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
                      .setFooter({ text: 'Athena Prime Killer System' });
-                   await owner.send(dmEmbed).catch(() => null);
+                   await owner.send({ embeds: [dmEmbed] }).catch(() => null);
                  }
                } catch (e) {
                  // Ignore if owner can't be DMed
