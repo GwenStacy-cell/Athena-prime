@@ -53,7 +53,7 @@ export const commands = [
         if (keys.length === 0) return message.reply(cv2.info('Custom Commands', 'No custom command shortcuts have been set for this server.'));
         
         const fields = keys.map(k => ({ name: `!${k}`, value: `Executes \`!${ccmds[k]}\``, inline: true }));
-        return message.reply({ components: [cv2.buildContainer('Custom Command Shortcuts', 'Configured aliases for this server:', fields)], flags: 16384 });
+        return message.reply(cv2.info('Custom Command Shortcuts', 'Configured aliases for this server:', fields));
       }
     }
   }
