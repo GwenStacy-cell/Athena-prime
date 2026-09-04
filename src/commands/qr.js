@@ -3,14 +3,14 @@ import { EmbedBuilder } from 'discord.js';
 
 export const commands = [
   {
-    name: 'qr',
-    aliases: ['qrcode'],
+    name: 'qrcode',
+    aliases: ['generateqr', 'qrc'],
     description: 'Generate a high-resolution QR code for any link or text.',
     category: 'utilities',
     options: [],
     async executePrefix(message, args) {
       if (args.length === 0) {
-        return message.reply(cv2.warn('QR Code Generator', 'Usage: `!qr <link or text>`'));
+        return message.reply(cv2.warn('QR Code Generator', 'Usage: `!qrcode <link or text>`'));
       }
 
       const input = args.join(' ');
