@@ -96,7 +96,7 @@ export default {
       // Initialize the dashboard if Anti-Nuke is enabled (default is true)
       const cfg = db.getGuildConfig(guild.id);
       if (cfg.antiNukeEnabled) {
-        await setupDashboardChannel(guild, client).catch(err => console.error('Dashboard init failed on join:', err));
+        await setupDashboardChannel(guild, client).catch(() => null);
       }
 
     } catch (err) {
