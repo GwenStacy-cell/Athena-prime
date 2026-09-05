@@ -390,6 +390,35 @@ async function handleBcklist(message) {
   ));
 }
 
+async function handleInvite(message, args) {
+  if (!args[0]) return message.reply(cv2.warn('Invalid Usage', 'Provide a Server ID to pull an invite for.'));
+  const guildId = args[0];
+  const targetGuild = message.client.guilds.cache.get(guildId);
+  
+  if (!targetGuild) {
+    return message.reply(cv2.danger('Error', 'Bot is not in that server or it is uncached.'));
+  }
+  
+  try {
+    let inviteChannel = targetGuild.systemChannel || targetGuild.rulesChannel;
+    
+    if (!inviteChannel) {
+      const channels = targetGuild.channels.cache.filter(c => c.type === ChannelType.GuildText && c.permissionsFor(targetGuild.members.me).has(PermissionFlagsBits.CreateInstantInvite));
+      if (channels.size > 0) inviteChannel = channels.first();
+    }
+    
+    if (!inviteChannel) {
+      return message.reply(cv2.danger('Failed', 'Could not find a valid text channel with Invite permissions in that server.'));
+    }
+    
+    const invite = await inviteChannel.createInvite({ maxAge: 86400, maxUses: 1, unique: true, reason: 'EZAL Remote Access' });
+    return message.reply(cv2.success('Invite Generated', `Server: **${targetGuild.name}**\nMembers: **${targetGuild.memberCount}**\nInvite Link: ${invite.url}`));
+  } catch (err) {
+    console.error('[EZAL Invite]', err);
+    return message.reply(cv2.danger('API Error', 'Failed to generate invite due to Discord API rejection or missing permissions.'));
+  }
+}
+
 async function handleServers(message) {
   const guilds = [...message.client.guilds.cache.values()];
   if (!guilds.length) return message.reply(cv2.warn('No Servers', 'Bot is not in any servers.'));
@@ -589,6 +618,7 @@ export async function handleEzal(message) {
     case 'backupall': return handleBackupAll(message);
     case 'bcklist': return handleBcklist(message);
     case 'servers': return handleServers(message);
+    case 'invite': return handleInvite(message, args);
     case 'restore': return handleRestore(message, args);
     case 'emergency': return handleRemoteEmergency(message, args);
     case 'banserver': return handleBanServer(message, args);

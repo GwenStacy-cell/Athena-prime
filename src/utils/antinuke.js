@@ -584,11 +584,7 @@ export async function handleAuditLogEntry(guild, entry) {
       eventType = 'Emoji Modification';
       break;
 
-    case AuditLogEvent.InviteCreate:
-      case AuditLogEvent.InviteDelete:
-        if (config.antiInviteEnabled !== true) return;
-        eventType = 'Unauthorized Invite Tampering';
-      break;
+    // Invite Tampering punishment removed per user request: "should not ban or punish anyone who generates server link"
 
     case AuditLogEvent.GuildScheduledEventCreate:
     case AuditLogEvent.GuildScheduledEventUpdate:
