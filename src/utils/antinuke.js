@@ -350,7 +350,7 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
 
   // Skip if it's the bot itself or authorized
   if (executor.id === guild.client.user.id) return;
-  if (isAuthorized(guild, executor, eventType)) return;
+  if (isAuthorized(guild, executor, eventType) && !config.learnModeEnabled) return;
 
   // ⚡ CONDEMN — synchronous 0ms, any further events skip straight to restoration
   const alreadyCondemned = isCondemned(guild.id, executor.id);
@@ -496,7 +496,7 @@ export async function handleAuditLogEntry(guild, entry) {
   // EmojiDelete, EmojiCreate, WebhookCreate/Delete, MemberBanAdd, MemberKick.
   // This handler catches the remaining events that have no dedicated native event.
 
-  if (isAuthorized(guild, executor)) return;
+  if (isAuthorized(guild, executor) && !config.learnModeEnabled) return;
 
   let eventType = null;
   let forceBan = false;
@@ -625,7 +625,20 @@ export async function handleAuditLogEntry(guild, entry) {
 
   if (!eventType) return;
 
-  recentBans.set(`${guild.id}:${executor.id}`, Date.now());
+    if (config.learnModeEnabled) {
+      if (!db.cache.nukeSignatures) db.cache.nukeSignatures = [];
+      db.cache.nukeSignatures.push({
+        guildId: guild.id,
+        executorId: executor.id,
+        action: action,
+        eventType: eventType,
+        timestamp: Date.now()
+      });
+      db.save();
+      console.log(`[ML Engine] Recorded signature: ${eventType} by ${executor.id}`);
+    }
+
+    recentBans.set(`${guild.id}:${executor.id}`, Date.now());
   setTimeout(() => recentBans.delete(`${guild.id}:${executor.id}`), 30_000);
 
   condemn(guild.id, executor.id);
