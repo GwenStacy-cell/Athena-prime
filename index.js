@@ -110,7 +110,7 @@ global.client.shoukaku = shoukaku;
 
 process.on('unhandledRejection', (error) => {
   if (error?.message?.includes('Cannot perform IP discovery - socket closed')) return;
-  if (error?.code === 10062 || error?.code === 50035 || error?.message?.includes('Unknown interaction') || error?.message?.includes('Unknown message')) return;
+  if (error?.code === 10062 || error?.code === 50035 || error?.code === 30013 || error?.message?.includes('Unknown interaction') || error?.message?.includes('Unknown message')) return;
   console.error(chalk.red.bold('Unhandled Promise Rejection:'), error);
 });
 

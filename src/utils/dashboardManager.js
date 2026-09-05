@@ -297,6 +297,10 @@ export async function setupDashboardChannel(guild, client) {
     db.setDashboardInfo(guild.id, channel.id, []);
     await updateDashboardMessage(guild, client);
   } catch (err) {
-    console.error('Failed to create dashboard channel:', err); throw err;
+    if (err.code === 30013 || err.code === 50013) {
+      console.log(`[Dashboard] Skipped creating dashboard in ${guild.name} (${err.code === 30013 ? '500 Channel Limit Reached' : 'Missing Permissions'})`);
+    } else {
+      console.error('Failed to create dashboard channel:', err);
+    }
   }
 }
