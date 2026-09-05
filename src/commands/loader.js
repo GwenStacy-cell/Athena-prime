@@ -68,6 +68,7 @@ import { commands as ignoreCmds } from './ignore.js';
 import { commands as ttsCmds } from './tts.js';
 import { commands as quoteCmds } from './quote.js';
 import { commands as appCmds } from './app.js';
+import { commands as learnCmds } from './learn.js';
 import { commands as renameCmds } from './rename.js';
 import { commands as botgrowthCmds } from './botgrowth.js';
 
@@ -83,6 +84,7 @@ export const allCommands = [
   ...ttsCmds,
   ...quoteCmds,
   ...appCmds,
+  ...learnCmds,
   ...renameCmds,
   ...botgrowthCmds,
   ...youtubeCmds,
