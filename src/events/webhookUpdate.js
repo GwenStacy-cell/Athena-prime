@@ -1,5 +1,5 @@
 export default {
-  name: 'webhookUpdate',
+  name: 'webhooksUpdate',
   async execute(channel) {
     if (!channel.guild) return;
     // handled by guildAuditLogEntryCreate

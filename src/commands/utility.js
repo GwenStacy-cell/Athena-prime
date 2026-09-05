@@ -1153,7 +1153,7 @@ async function sendCalculator(context) {
 
   embed.components.push(...rows);
 
-  const payload = { ...embed, fetchReply: true };
+  const payload = { ...embed, withResponse: true };
   let msg;
   
   if (isInteraction) {

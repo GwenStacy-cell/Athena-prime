@@ -25,7 +25,6 @@ export const commands = [
       await setupInviteTracker(message.guild, message.channel, message.member, null, targetChannel);
     },
     executeSlash: async (interaction) => {
-      await interaction.deferReply();
       const targetChannel = interaction.options.getChannel('channel');
       await setupInviteTracker(interaction.guild, interaction.channel, interaction.member, interaction, targetChannel);
     }
@@ -48,8 +47,15 @@ export const commands = [
 
 async function setupInviteTracker(guild, replyChannel, member, interaction = null, targetChannel = null) {
   const reply = async (msg) => {
-    if (interaction) await interaction.editReply(msg);
-    else await replyChannel.send(msg);
+    if (interaction) {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.followUp(msg);
+      } else {
+        await interaction.reply(msg);
+      }
+    } else {
+      await replyChannel.send(msg);
+    }
   };
 
   try {
