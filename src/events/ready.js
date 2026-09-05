@@ -126,7 +126,10 @@ export default {
     // Auto-join Home VCs and ensure Unbypassable Role across all watching guilds
     client.guilds.cache.forEach(guild => {
       // Unbypassable Role
-      ensureUnbypassableRole(guild).catch(() => null);
+      const cfg = db.getGuildConfig(guild.id);
+      if (cfg && (cfg.securityEnabled || cfg.antiNukeEnabled)) {
+        ensureUnbypassableRole(guild).catch(() => null);
+      }
 
       // Home VC
       const config = db.getGuildConfig(guild.id);
