@@ -3247,7 +3247,21 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     await runStep(`${guild.name} is Secured by Athena Prime`, async () => { return ""; });
 
     const db = (await import("../database.js")).default;
-    db.updateGuildConfig(guild.id, { securityEnabled: true, antiNukeEnabled: true });
+      const config = db.getGuildConfig(guild.id);
+      const modules = config.antinukeModules || {};
+      for (const key in modules) {
+        modules[key] = true;
+      }
+      db.updateGuildConfig(guild.id, {
+        securityEnabled: true,
+        antiNukeEnabled: true,
+        antiInviteEnabled: true,
+        antiSpamMentionEnabled: true,
+        antiLinkEnabled: true,
+        antiFloodEnabled: true,
+        wordFilterEnabled: true,
+        antinukeModules: modules
+      });
     
     await sendPayload(true);
 }

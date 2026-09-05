@@ -200,7 +200,7 @@ class Database {
           twoFactorEmail: null,
           twoFactorVerified: false,
           pendingTwoFactorCode: null,
-        antiNukeEnabled: true,
+        antiNukeEnabled: false,
         securityEnabled: false,
         antinukeModules: {
           antiRoleCreate: true,
@@ -266,7 +266,7 @@ class Database {
       const cfg = this.cache.guilds[guildId];
       let updated = false;
 
-      if (cfg.antiNukeEnabled === undefined) { cfg.antiNukeEnabled = true; updated = true; }
+      if (cfg.antiNukeEnabled === undefined) { cfg.antiNukeEnabled = false; updated = true; }
       if (cfg.securityEnabled === undefined) { cfg.securityEnabled = false; updated = true; }
       if (cfg.antinukeModules === undefined) {
         cfg.antinukeModules = {

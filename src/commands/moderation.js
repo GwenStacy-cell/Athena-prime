@@ -753,8 +753,9 @@ export const commands = [
         return interaction.reply(cv2.danger('Access Denied', `${interaction.user} ï¸ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
       }
       await interaction.deferReply();
-      const result = await handleUnbanAll(interaction.guild, interaction.member);
-      await interaction.editReply(result);
+        const result = await handleUnbanAll(interaction.guild, interaction.member);
+        await interaction.deleteReply().catch(() => null);
+        await interaction.channel.send(result);
     }
   },
 
