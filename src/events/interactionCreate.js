@@ -1039,7 +1039,7 @@ if (interaction.customId === "modal_2fa_setup") {
     }
 
   } catch (error) {
-    console.error('Interaction Error:', error);
+    if (error.code !== 10062 && !error.message?.includes('Unknown interaction')) console.error('Interaction Error:', error);
   }
   } // close execute
 }; // close object

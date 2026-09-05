@@ -110,6 +110,7 @@ global.client.shoukaku = shoukaku;
 
 process.on('unhandledRejection', (error) => {
   if (error?.message?.includes('Cannot perform IP discovery - socket closed')) return;
+  if (error?.code === 10062 || error?.code === 50035 || error?.message?.includes('Unknown interaction') || error?.message?.includes('Unknown message')) return;
   console.error(chalk.red.bold('Unhandled Promise Rejection:'), error);
 });
 
@@ -123,7 +124,11 @@ process.on('uncaughtException', (error) => {
         msg.includes('EPROTO') ||
         code === 'ECONNRESET' ||
         code === 'EPROTO' ||
-        code === 'UND_ERR_CONNECT_TIMEOUT') {
+        code === 'UND_ERR_CONNECT_TIMEOUT' ||
+        code === 10062 ||
+        code === 50035 ||
+        msg.includes('Unknown interaction') ||
+        msg.includes('Unknown message')) {
       return;
     }
   }

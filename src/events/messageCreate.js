@@ -284,7 +284,7 @@ export default {
                   new ButtonBuilder().setCustomId('dl_mp4').setLabel('Download MP4').setStyle(ButtonStyle.Primary),
                   new ButtonBuilder().setCustomId('dl_mp3').setLabel('Extract MP3').setStyle(ButtonStyle.Success)
                 );
-                await message.reply({ content: '-# **Media Link Detected!** Choose your format:', components: [row] });
+                await message.reply({ content: '-# **Media Link Detected!** Choose your format:', components: [row] }).catch(() => null);
                 return;
               }
             }
@@ -1570,7 +1570,7 @@ export default {
       db.save();
 
     } catch (error) {
-      console.error(error);
+      if (error.code !== 10008 && error.code !== 50035 && !error.message?.includes('Unknown message')) console.error(error);
       const errEmbed = cv2.danger('Execution Error', `An unexpected error occurred while executing this command.\n\n\`\`\`js\n${error.message}\n\`\`\``);
       await message.reply(errEmbed).catch(() => null);
     }
