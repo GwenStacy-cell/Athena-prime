@@ -721,8 +721,7 @@ function buildHelpContainer(client, guildId, moduleId = 'home') {
     selectMenu.addOptions([
       {
         label: mod.label,
-        value: mod.id,
-        emoji: mod.emoji
+          value: mod.id
       }
     ]);
   }

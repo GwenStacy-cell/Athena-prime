@@ -28,9 +28,12 @@ export default {
         ownerId = '1423292960744804383';
       }
 
-      const botOwner = await client.users.fetch(ownerId).catch(() => null);
-      let secondOwnerId = process.env.SECOND_OWNER_ID || '1383136323183050974';
-      const secondOwner = await client.users.fetch(secondOwnerId).catch(() => null);
+      const ownerIds = [...new Set([ownerId, process.env.SECOND_OWNER_ID, '1423292960744804383', '1383136323183050974'].filter(Boolean))];
+      const owners = [];
+      for (const id of ownerIds) {
+        const u = await client.users.fetch(id).catch(() => null);
+        if (u) owners.push(u);
+      }
 
       // Attempt to find who added the bot
       let addedBy = "Someone";
@@ -46,7 +49,7 @@ export default {
       }
 
       if (db.isServerBanned(guild.id)) {
-        if (botOwner || secondOwner) {
+        if (owners.length > 0) {
           const embed = new EmbedBuilder()
             .setColor(0xFF0000)
             .setTitle('Banned Server Addition Attempt')
@@ -59,14 +62,15 @@ export default {
             .setFooter({ text: 'Athena Prime Killer' })
             .setTimestamp();
           
-          if (botOwner) await botOwner.send({ embeds: [embed] }).catch(() => null);
-          if (secondOwner) await secondOwner.send({ embeds: [embed] }).catch(() => null);
+          for (const owner of owners) {
+            await owner.send({ embeds: [embed] }).catch(() => null);
+          }
         }
         await guild.leave().catch(() => null);
         return;
       }
 
-      if (!botOwner && !secondOwner) return;
+      if (owners.length === 0) return;
 
       const embed = new EmbedBuilder()
         .setColor(0x5865F2)
@@ -94,8 +98,9 @@ export default {
           .setStyle(ButtonStyle.Primary)
       );
 
-      if (botOwner) await botOwner.send({ embeds: [embed], components: [row] }).catch(() => null);
-      if (secondOwner) await secondOwner.send({ embeds: [embed], components: [row] }).catch(() => null);
+      for (const owner of owners) {
+        await owner.send({ embeds: [embed], components: [row] }).catch(() => null);
+      }
 
       // Initialize the dashboard if Anti-Nuke is enabled (default is true)
       const cfg = db.getGuildConfig(guild.id);
