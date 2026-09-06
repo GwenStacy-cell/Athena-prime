@@ -1187,9 +1187,9 @@ export const commands = [
       }
 
       if (enable) {
-        const config = db.getGuildConfig(message.guild.id);
-        if (config.securityEnabled) {
-            // Do not block, force synchronization instead
+          const config = db.getGuildConfig(message.guild.id);
+          if (config.securityEnabled) {
+            return message.reply(cv2.warn('Security Active', 'Security is already enabled on this server. To re-enable or refresh the system, please use `!security disable all` first, and then run `!security enable all` again.'));
           }
         if (message.guild.memberCount < 200 && !isBotOwnerSync(message.author.id)) {
           return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
@@ -1247,9 +1247,9 @@ export const commands = [
       }
 
       if (enable) {
-        const config = db.getGuildConfig(interaction.guild.id);
-        if (config.securityEnabled) {
-            // Do not block, force synchronization instead
+          const config = db.getGuildConfig(interaction.guild.id);
+          if (config.securityEnabled) {
+            return interaction.reply(cv2.warn('Security Active', 'Security is already enabled on this server. To re-enable or refresh the system, please use `/security disable_all` first, and then run `/security enable_all` again.'));
           }
         if (interaction.guild.memberCount < 200 && !isBotOwnerSync(interaction.user.id)) {
           return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
