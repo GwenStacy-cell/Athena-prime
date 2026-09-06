@@ -1189,8 +1189,8 @@ export const commands = [
       if (enable) {
         const config = db.getGuildConfig(message.guild.id);
         if (config.securityEnabled) {
-          return message.reply(cv2.warn('Security Active', 'Security is already enabled on this server.'));
-        }
+            // Do not block, force synchronization instead
+          }
         if (message.guild.memberCount < 200 && !isBotOwnerSync(message.author.id)) {
           return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
@@ -1249,8 +1249,8 @@ export const commands = [
       if (enable) {
         const config = db.getGuildConfig(interaction.guild.id);
         if (config.securityEnabled) {
-          return interaction.reply(cv2.warn('Security Active', 'Security is already enabled on this server.'));
-        }
+            // Do not block, force synchronization instead
+          }
         if (interaction.guild.memberCount < 200 && !isBotOwnerSync(interaction.user.id)) {
           return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
         }
@@ -3249,8 +3249,9 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
     const db = (await import("../database.js")).default;
       const config = db.getGuildConfig(guild.id);
       const modules = config.antinukeModules || {};
-      for (const key in modules) {
-        modules[key] = true;
+      const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands'];
+      for (const k of allKeys) {
+        modules[k] = true;
       }
       db.updateGuildConfig(guild.id, {
         securityEnabled: true,
