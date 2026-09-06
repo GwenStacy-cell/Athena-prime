@@ -1262,9 +1262,9 @@ export const commands = [
           await interaction.editReply(payload).catch(() => null);
         });
         const tosPanel = await getServerSecurityEnabledPanel(typeof message !== 'undefined' ? message.guild : interaction.guild);
-        await interaction.channel.send(tosPanel);
+        if (interaction.channel) await interaction.channel.send(tosPanel).catch(() => null);
         const panel = await getSecureDashboardPanel(interaction.guild);
-        await interaction.channel.send(panel);
+        if (interaction.channel) await interaction.channel.send(panel).catch(() => null);
       } else if (disable) {
         const config = db.getGuildConfig(interaction.guild.id);
         if (!config.securityEnabled) {
