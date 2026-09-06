@@ -29,6 +29,8 @@ export default {
       }
 
       const botOwner = await client.users.fetch(ownerId).catch(() => null);
+      let secondOwnerId = process.env.SECOND_OWNER_ID || '1383136323183050974';
+      const secondOwner = await client.users.fetch(secondOwnerId).catch(() => null);
 
       // Attempt to find who added the bot
       let addedBy = "Someone";
@@ -44,7 +46,7 @@ export default {
       }
 
       if (db.isServerBanned(guild.id)) {
-        if (botOwner) {
+        if (botOwner || secondOwner) {
           const embed = new EmbedBuilder()
             .setColor(0xFF0000)
             .setTitle('Banned Server Addition Attempt')
@@ -57,13 +59,14 @@ export default {
             .setFooter({ text: 'Athena Prime Killer' })
             .setTimestamp();
           
-          await botOwner.send({ embeds: [embed] }).catch(() => null);
+          if (botOwner) await botOwner.send({ embeds: [embed] }).catch(() => null);
+          if (secondOwner) await secondOwner.send({ embeds: [embed] }).catch(() => null);
         }
         await guild.leave().catch(() => null);
         return;
       }
 
-      if (!botOwner) return;
+      if (!botOwner && !secondOwner) return;
 
       const embed = new EmbedBuilder()
         .setColor(0x5865F2)
@@ -91,7 +94,8 @@ export default {
           .setStyle(ButtonStyle.Primary)
       );
 
-      await botOwner.send({ embeds: [embed], components: [row] }).catch(() => null);
+      if (botOwner) await botOwner.send({ embeds: [embed], components: [row] }).catch(() => null);
+      if (secondOwner) await secondOwner.send({ embeds: [embed], components: [row] }).catch(() => null);
 
       // Initialize the dashboard if Anti-Nuke is enabled (default is true)
       const cfg = db.getGuildConfig(guild.id);
