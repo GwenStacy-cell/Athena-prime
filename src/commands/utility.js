@@ -20,136 +20,66 @@ export const commands = [
     aliases: ['calc', 'math'],
     category: 'utility',
     permissions: [],
-    async executePrefix(message) {
-      await sendCalculator(message);
-    },
-    async executeSlash(interaction) {
-      await sendCalculator(interaction);
-    }
-  },
-
-
-    // --- MP3 EXTRACTOR COMMAND ---
-    {
-      name: 'mp3',
-      description: 'Extract audio from any video link (YouTube, TikTok, Twitter, etc)',
-      type: 1,
-      options: [
-        { name: 'link', description: 'The video link to extract audio from', type: 3, required: true }
-      ],
-      async executePrefix(message, args) {
-        if (!args[0]) return message.reply(cv2.error('MISSING ARGUMENT', 'Please provide a valid video link.'));
-        await processMp3Link(message.client, message, args[0]);
-      },
-      async executeSlash(interaction) {
-        const link = interaction.options.getString('link');
-        // Acknowledge interaction since downloading can take time
-        await interaction.deferReply();
-        // Since processMp3Link replies to 'message', we create a mock message
-        const mockMessage = {
-          client: interaction.client,
-          author: interaction.user,
-          channel: { sendTyping: async () => {} },
-          reply: async (data) => await interaction.editReply(data)
-        };
-        await processMp3Link(interaction.client, mockMessage, link);
-      }
-    },
-
-
-    // --- SET MEDIA CHANNEL COMMAND ---
-    {
-      name: 'setmedia',
-      description: 'Bind the Auto Media Downloader to a specific channel',
-      type: 1,
-      options: [
-        { name: 'channel', description: 'The channel to monitor for media links', type: 7, required: true }
-      ],
-      async executePrefix(message, args) {
-        if (!(await isAuthorized(message.author, message.guild))) return message.reply(cv2.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
-        const channelMention = message.mentions.channels.first();
-        if (!channelMention) return message.reply(cv2.error('INVALID TARGET', 'Please mention a valid text channel to bind the extraction module.'));
-        db.updateGuildConfig(message.guild.id, { mediaChannelId: channelMention.id });
-          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\nIf Discord rejects a video due to file size, Athena will offer to compress it to a smaller version.\nDiscord\'s upload limit depends on your server\'s boost level.';
-          db.setStickyMessage(message.guild.id, channelMention.id, stickyText);
-        
-        return message.reply(cv2.success(
-          'MEDIA DOWNLOADER BOUND',
-          `The Auto-Media Downloader is now monitoring <#${channelMention ? channelMention.id : channel.id}>.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.\nNote: Files are strictly limited to under 25MB to comply with Discord's attachment size limits.`
-        ));
-      },
-      async executeSlash(interaction) {
-        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply(cv2.e.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
-        const channel = interaction.options.getChannel('channel');
-        db.updateGuildConfig(interaction.guild.id, { mediaChannelId: channel.id });
-          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\nIf Discord rejects a video due to file size, Athena will offer to compress it to a smaller version.\nDiscord\'s upload limit depends on your server\'s boost level.';
-          db.setStickyMessage(interaction.guild.id, channel.id, stickyText);
-        
-        return interaction.reply(cv2.success(
-          'MEDIA DOWNLOADER BOUND',
-          `The Auto-Media Downloader is now monitoring <#${channel.id}>.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.\nNote: Files are strictly limited to under 25MB to comply with Discord's attachment size limits.`
-        ));
-      }
-    },
-
-    // --- UNSET MEDIA CHANNEL COMMAND ---
-    {
-      name: 'unsetmedia',
-      description: 'Unbind and disable the Auto Media Downloader',
-      type: 1,
-      options: [],
-      async executePrefix(message, args) {
-        if (!(await isAuthorized(message.author, message.guild))) return message.reply(cv2.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
-        const cfg = db.getGuildConfig(message.guild.id);
-          if (cfg && cfg.mediaChannelId) {
-            const stickyData = db.getStickyMessage(message.guild.id, cfg.mediaChannelId);
-            if (stickyData && stickyData.lastMessageId) {
-              const ch = message.guild.channels.cache.get(cfg.mediaChannelId);
-              if (ch) ch.messages.delete(stickyData.lastMessageId).catch(() => null);
-            }
-            db.removeStickyMessage(message.guild.id, cfg.mediaChannelId);
+    async executePrefix(message, args) {
+        let reply;
+        try {
+          if (args && args.length > 0) {
+              const cmdName = args[0].toLowerCase();
+              const { default: commandMap } = await import('./loader.js');
+              let targetCmd = commandMap.get(cmdName);
+              
+              if (!targetCmd) {
+                  return message.reply({ content: `-! ⚠️ **Command Not Found:** ` + cmdName });
+              }
+              
+              const { TextDisplayBuilder, MessageFlags } = await import('discord.js');
+              
+              let permsText = "Public / Everyone";
+              if (targetCmd.permissions && targetCmd.permissions.length > 0) {
+                  if (targetCmd.permissions.includes(8n)) permsText = "Administrator";
+                  else if (targetCmd.permissions.includes(32n)) permsText = "Manage Server";
+                  else if (targetCmd.permissions.includes(1099511627776n)) permsText = "Moderate Members";
+                  else permsText = "Elevated Permissions";
+              }
+              
+              let catStr = targetCmd.category ? targetCmd.category.charAt(0).toUpperCase() + targetCmd.category.slice(1) : "General";
+              if (targetCmd.name === "qr" || targetCmd.name === "fck" || targetCmd.name === "np") {
+                  catStr = "@Bot Commands (Direct @Bot Mention Commands)";
+              }
+              
+              const db = (await import('../database.js')).default;
+              const config = db.getGuildConfig(message.guild.id);
+              const prefix = config?.prefix || '!';
+              
+              let usageText = `${prefix}${targetCmd.name}`;
+              if (targetCmd.name === "qr" || targetCmd.name === "fck" || targetCmd.name === "np") {
+                  usageText = `@bot ${targetCmd.name}`;
+              }
+              
+              const display1 = new TextDisplayBuilder().setContent(`# Command Name: \`${targetCmd.name}\`\n\n> -# **Command usage:** \`${usageText}\`\n> -# **Command Permissions:** \`${permsText}\``);
+              const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${targetCmd.description || "No description provided."}`);
+              const display3 = new TextDisplayBuilder().setContent(`-# **Category:** ${catStr}`);
+              
+              const container = {
+                  type: 17,
+                  components: [
+                      display1,
+                      { type: 14, divider: true },
+                      display2,
+                      { type: 14, divider: true },
+                      display3
+                  ]
+              };
+              
+              return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
           }
-          db.updateGuildConfig(message.guild.id, { mediaChannelId: null });
-        
-        return message.reply(cv2.success(
-          'MEDIA DOWNLOADER DISABLED',
-          'The Auto-Media Downloader has been completely unbound and disabled for this server.'
-        ));
-      },
-      async executeSlash(interaction) {
-        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply(cv2.e.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
-        const cfg = db.getGuildConfig(interaction.guild.id);
-          if (cfg && cfg.mediaChannelId) {
-            const stickyData = db.getStickyMessage(interaction.guild.id, cfg.mediaChannelId);
-            if (stickyData && stickyData.lastMessageId) {
-              const ch = interaction.guild.channels.cache.get(cfg.mediaChannelId);
-              if (ch) ch.messages.delete(stickyData.lastMessageId).catch(() => null);
-            }
-            db.removeStickyMessage(interaction.guild.id, cfg.mediaChannelId);
-          }
-          db.updateGuildConfig(interaction.guild.id, { mediaChannelId: null });
-        
-        return interaction.reply(cv2.success(
-          'MEDIA DOWNLOADER DISABLED',
-          'The Auto-Media Downloader has been completely unbound and disabled for this server.'
-        ));
-      }
-    },
 
-  // --- HELP COMMAND ---
-  {
-    name: 'help',
-    description: 'Show Athena Prime command menu',
-    type: 1,
-    async executePrefix(message) {
-      let reply;
-      try {
-        const components = buildHelpContainer(message.client, message.guild?.id, 'home');
-        reply = await message.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
-      } catch (e) {
-        return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
-      }
-      const collector = reply.createMessageComponentCollector({ idle: 60000 });
+          const components = buildHelpContainer(message.client, message.guild?.id, 'home');
+          reply = await message.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
+        } catch (e) {
+          return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
+        }
+        const collector = reply.createMessageComponentCollector({ idle: 60000 });
       
       let currentIdx = -1;
 
