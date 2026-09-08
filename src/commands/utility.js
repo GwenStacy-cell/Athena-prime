@@ -566,193 +566,188 @@ async function getStatusEmbed(client, guild) {
 }
 
 const helpModules = [
-  { id: 'security', shortLabel: 'Security', label: 'Security & Firewall', emoji: '<:security_and_firewall:1523672289500069940>', commands: ['`!security` **enable all** / **disable all** — Toggle all shields `[extra owners]`', '`!scanserver` — Scan and manage unauthorized bots `[extra owners]`', '`!lockapps` / `!unlockapps` — Manage slash commands server-wide `[extra owners]`', '`!antinuke` **config** — Open the interactive configuration panel `[extra owners]`', '`!config` **antinuke** / **antispam** / **antiinvite** / **antibot** / **maxwarnings** `on|off` `[extra owners]`', '`!raidmode` **on** / **off** — Auto-quarantine every new join during a raid `[extra owners]`', '`!emergency` **mode** / **end** — Strip dangerous permissions and hide channels `[extra owners]`', 'You MUST whitelist friendly bots (`!botwhitelist add <ID>`). Unwhitelisted bots will be instantly banned.'] },
-  { id: 'np', shortLabel: 'No-Prefix', label: 'No-Prefix (NP) Bypass', emoji: '<:whitelist_and_permissions:1523678393269223564>', commands: ['`!np add user` `@user|id` `[duration]` - Grant No-Prefix bypass `[bot owner/np manager]`', '`!np add server` `id` `[duration]` - Grant No-Prefix to entire server `[bot owner/np manager]`', '`!np reset user` `id` - Revoke user No-Prefix bypass `[bot owner/np manager]`', '`!np reset server` `id` - Revoke server No-Prefix bypass `[bot owner/np manager]`', '`!np guide` - View full No-Prefix system guide `[np manager]`'] },
-    { id: 'whitelist', shortLabel: 'Whitelist', label: 'Whitelist & Permissions', emoji: '<:whitelist_and_permissions:1523678393269223564>', commands: ['`!whitelist` - Open the Global Whitelist Manager Dashboard `[extra owners]`', '`!auth` - Configure the Role Authorization Tiers Dashboard `[server owner]`', '`!tier` - Check your authorization clearance level `[public]`', '`!whitelist` `@user|@role` - Open the direct access panel for a user/role `[extra owners]`', '`!botwhitelist` **add** / **remove** `botId|@role` - Grant/revoke Anti-Nuke immunity `[server owner]`', '`!botwhitelist list` - View all currently immune bots and roles `[server owner]`', '`!userblacklist` **add** / **remove** / **list** `@user` - Blacklist a user from the bot `[extra owners]`', '`!extraowner` **add** / **remove** / **list** `@user` - Grant full bot access `[server owner]`'] },
-  { id: 'links', shortLabel: 'Filters', label: 'Link & Invite Filters', emoji: '<:link_invite_threads:1523770849197428837>', commands: ['`!antilink` - Open the Interactive Anti-Link & Invite Dashboard `[extra owners]`', '`!linksallow` **add** / **remove** / **list** `domain` - Whitelist specific domains `[extra owners]`', '`!blacklist` **add** / **remove** / **list** `phrase` - Auto-delete matching phrases `[extra owners]`'] },
-  { id: 'quarantine', shortLabel: 'Quarantine', label: 'Quarantine & Isolation', emoji: '<:quarantine_and_isolation:1523717608455667893>', commands: ['`!quarantine` `@user` `[duration]` `[reason]` - Strip roles and isolate (alias: `!qr`) `[extra owners]`', '`!unquarantine` `@user` - Restore roles and release from isolation `[extra owners]`', '`!massquarantine` `@role` - Quarantine all members of a role at once `[extra owners]`', '`!massunquarantine` - Release all currently quarantined members `[extra owners]`', '`!qrmanager` **setup** / **setrole** / **setchannel** / **setvc** / **status** `[extra owners]`', '`!lockdown` **on** / **off** - Restrict channel to moderators only `[extra owners]`'] },
-  { id: 'moderation', shortLabel: 'Moderation', label: 'Moderation & Threads', emoji: '<:moderation_and_threads:1523770550638346380>', commands: ['`ur` `@user` `new_name` - Renames a user in the server `[extra owners]`', '`!snipe` - Recover the most recently deleted message in the channel `[extra owners]`', '`!warn` `@user` `reason` - Issue a warning (auto-quarantine at threshold) `[extra owners]`', '`!warnings` / `!clearwarns` `@user` - View or wipe warning history `[extra owners]`', '`/maxwarnings` `amount` - Set the maximum warning threshold `[extra owners]`', '`!timeout` `@user` `dur` - Timeout a member (e.g. `5m` `1h` `1d`) `[extra owners]`', '`!kick` / `!ban` / `!unban` / `!unbanall` - Standard moderation actions `[extra owners]`', '`!addrole` / `!removerole` `@user` `@roles...` - Safely assign/remove multiple roles `[extra owners]`', '`!striproles` `@user` - Instantly strip all roles from a member `[extra owners]`', '`!massaddrole` / `!massremoverole` `@role` - Safely add/remove a role to/from everyone `[extra owners]`', '`!massstrip` / `!massrestore` `@role` - Mass strip a role and restore it back later `[extra owners]`', '`!sync` / `!syncall` - Sync channel permissions with category `[extra owners]`', '`!purge` `1-100` - Bulk-delete messages from current channel `[extra owners]`', '`!slowmode` `seconds` - Set channel slowmode (0 = off) `[extra owners]`', '`!createchannel` / `!deletechannel` - Create or delete a text channel `[extra owners]`', '`!createrole` / `!deleterole` - Create or delete a role `[extra owners]`', '`!hide` / `!unhide` `[channel]` - Instantly hide or unhide a text/voice channel from @everyone `[extra owners]`', '`!createthread` / `!archivethread` / `!deletethread` - Thread management `[extra owners]`', '`!ignore` **channel / category** - Block commands `[admin tier]`', '`!ignoreall` / `!unignoreall` - Mass command lock `[admin tier]`'] },
-  { id: 'music', shortLabel: 'Music', label: 'Music Player', emoji: '<:music_player:1523770740476739809>', commands: ['`/setupmusic` `[image_url]` - Create the Compact Music Player channel `[extra owners]`', '`/play` `query` - Play a song in your voice channel via URL or search `[public]`', 'Use the dedicated Music Console channel to control playback (Play, Pause, Skip, Queue, Stop).'] },
-  { id: 'messaging', shortLabel: 'Messaging', label: 'Announcements & Messaging', emoji: '<:announcement_and_message:1523721769205235842>', commands: ['`!say` `#channel` `message` - Send an anonymous bot message `[extra owners]`', '`!announce` `#channel` `title | message` - Post a styled announcement embed `[extra owners]`', '`!modmode` **on** / **off** - Restrict all channels to moderators instantly `[extra owners]`', '`!sticky` **set / footer / remove** - Manage channel sticky messages `[extra owners]`'] },
-  { id: 'voice', shortLabel: 'Voice', label: 'Voice & Join-to-Create', emoji: '<:voice_join_to_create:1523770607706308658>', commands: [
-    '`!vcpanel` - Interactive Server Owner Voice Control Panel (Mute, Deafen, Ban, Lock) `[server owner]`',
-    '`!theatermode` **on/off** - Activates Movie Mode (Server mutes/deafens the entire VC) `[extra owners]`', 
-    '`!vclock` / `!vcunlock` - Deny or restore Connect permissions for @everyone in your VC `[extra owners]`', 
-    '`!mute` / `!unmute` / `!deafen` / `!undeafen` - VC member state control `[extra owners]`', 
-    '`!muteall` / `!unmuteall` / `!deafenall` / `!undeafenall` - Mass VC state control `[extra owners]`', 
-    '`!vcstatus` **on/off** - Toggle the dynamic VC live status text `[extra owners]`', 
-    '',
-    '`!moveprotect` **add/remove/list** `@user` - Prevent admins from moving protected users `[server owner]`', 
-    '`!vcprotect` **add/remove/list** `@user` - Prevent admins from muting/deafening protected users `[server owner]`', 
-    '',
-    '`!massmove` `dest` / `!massdc` - Move or disconnect everyone in a VC `[extra owners]`', 
-    '`!vcdrag` `@user` `[interval]` - Drag a user endlessly through VCs (default: 2s) `[extra owners]`', 
-    '`!vcdragstop` `@user` - Stop the drag session for a specific user `[extra owners]`', 
-    '`!vcdraglist` - View all currently active drag sessions `[extra owners]`', 
-    '',
-    '`!jtcsetup` `#voicechannel` - Designate the JTC creator channel `[extra owners]`', 
-    '`!jtcdisable` - Remove the JTC system from this server `[extra owners]`', 
-    '`!vc` - Manage your personal JTC channel (rename, limit, privacy...) `[public]`', 
-    '',
-    '`!vcpanel` - Interactive Server Owner Voice Control Panel (Mute, Deafen, Ban, Lock) `[server owner]`',
-    '`!theatermode` **on/off** - Activates Movie Mode (Server mutes/deafens the entire VC) `[extra owners]`', 
-    '`!vclock` / `!vcunlock` - Deny or restore Connect permissions for @everyone in your VC `[extra owners]`', 
-    '`!mute` / `!unmute` / `!deafen` / `!undeafen` - VC member state control `[extra owners]`', 
-    '`!muteall` / `!unmuteall` / `!deafenall` / `!undeafenall` - Mass VC state control `[extra owners]`', 
-    '`!vcstatus` **on/off** - Toggle the dynamic VC live status text `[extra owners]`', 
-    '',
-    '`!moveprotect` **add/remove/list** `@user` - Prevent admins from moving protected users `[server owner]`', 
-    '`!vcprotect` **add/remove/list** `@user` - Prevent admins from muting/deafening protected users `[server owner]`', 
-    '',
-    '`!massmove` `dest` / `!massdc` - Move or disconnect everyone in a VC `[extra owners]`', 
-    '`!vcdrag` `@user` `[interval]` - Drag a user endlessly through VCs (default: 2s) `[extra owners]`', 
-    '`!vcdragstop` `@user` - Stop the drag session for a specific user `[extra owners]`', 
-    '`!vcdraglist` - View all currently active drag sessions `[extra owners]`', 
-    '',
-    '`!jtcsetup` `#voicechannel` - Designate the JTC creator channel `[extra owners]`', 
-    '`!jtcdisable` - Remove the JTC system from this server `[extra owners]`', 
-    '`!vc` - Manage your personal JTC channel (rename, limit, privacy...) `[public]`', 
-    '',
-    '`!sethomevc` `[channel]` - Set bot\'s Home VC (auto-rejoin if moved) `[extra owners]`', 
-    '`!unsethomevc` - Clear Home VC and disconnect the bot `[extra owners]`'
-  ] },
-  { id: 'tts', shortLabel: 'TTS', label: 'Text to Speech System', emoji: '<:voice_join_to_create:1523770607706308658>', commands: ['`!tts` `<message>` / **stop** - Speak in VC `[public]`', '`!tts` **lang** `<code|name>` - Set language (e.g., `english`, `uk`, `au`, `es`, `ja`) `[public]`', '`!tts` **auto** / **unauto** `[@user]` - Lock user to Auto-TTS `[public/admin]`', '`!tts` **autovc** - Toggle global Auto-TTS for your current VC `[admin]`'] },
-    { id: 'welcome', shortLabel: 'Welcome', label: 'Welcome & Leave', emoji: '<:welcome_and_leave:1523727386967933071>', commands: ['`!welcome` - Open the Welcome message manager `[extra owners]`', '`!leave` - Open the Leave message manager `[extra owners]`', '`/autorole-config` **add/remove/clear** - Manage roles auto-assigned to new members `[extra owners]`', 'Supports `{user}` `{server}` `{count}` placeholders in custom embeds'] },
-  { id: 'verification', shortLabel: 'Tickets', label: 'Verification & Tickets', emoji: '<:verification_and_ticket:1523770653528817835>', commands: ['**Zero-Trust Verification Gateway**', '`/verify setup` `@role_or_id` - Deploy the interactive verification panel `[extra owners]`', '  - **Auto-Config:** Automatically strips `View Channels` from `@everyone` and Discord Onboarding roles.', '  - **Manual Mode:** Deploy the panel and manage permissions manually.', '  - **Fallback Input:** If the Discord role picker glitches, you can simply paste a Role ID directly.', '`/verify disable` - Disable the gateway and restore global permissions `[extra owners]`', '', '**Default Ticket System**', '`!ticket setup` `#category` `@role` - Deploy a simple, single-button ticket system `[extra owners]`', '', '**Custom Ticket Panel**', '`!ticketpanel` - Spawns the Interactive Ticket Manager with the following options:', '• **Target Channel Dropdown**: Select the channel to deploy the panel to. Automatically deletes the old panel.', '• **Closing Roles Dropdown**: Restrict who can close tickets. Leave empty for default behavior (anyone).', '• **Edit Title & Desc**: Changes the main text of the Ticket Panel.', '• **Edit Media & Placeholder**: Attach images and change the dropdown placeholder.', '• **Add Option**: Adds a new selectable reason to the dropdown menu.', '  - **Internal Value**: The secret code word for the bot (no spaces, bot use only).', '  - **Display Label**: The bold text the user actually clicks on.', '  - **Description**: The smaller gray text under the label.', '  - **Emoji**: An optional Emoji ID or standard emoji.', '• **Clear Options**: Instantly deletes ALL dropdown options.', '• **Test Panel**: Shows a temporary, invisible-to-others preview of your panel.', '• **Deploy Panel**: Drops the final customized Ticket Panel into the selected target channel.', '• **Save & Close**: Deletes the Interactive Manager message.'] },
-  { id: 'engagement', shortLabel: 'Tracking', label: 'Engagement & Tracking', emoji: '<:engagement_and_tracking:1523729377961967788>', commands: ['**Server Logging System**', '`!serverlogs` - Open the Advanced Modular Server Logging dashboard `[extra owners]`', '`!serverlogs` **autosetup** - Instantly builds an "Athena Logs" category and #server-logs channel as a fallback.', '`!serverlogs` **bind** `<module>` `<channel>` - Route specific events (like bans or kicks) into custom channels.', '`!serverlogs` **toggle** `<module>` - Enable or disable tracking for specific modules.', '`!setdeletelog` `#channel` - Quick shortcut to log deleted messages to a specific channel `[extra owners]`', '', '**YouTube Notifier**', '`!youtube` **add** `<url>` `<#channel>` `[message]` - Add a new YouTube upload tracker `[extra owners]`', '`!youtube` **remove** `<url>` - Remove a YouTube tracker `[extra owners]`', '`!youtube` **list** - View all active YouTube trackers `[extra owners]`', '', '**Available Modules:**', '`bans`, `kicks`, `leaves`, `joins`, `msgDeletes`, `msgEdits`, `channels`, `roles`', '', '**Examples:**', '`!serverlogs bind bans #ban-jail` - Routes all ban logs to a specific channel.', '`!serverlogs toggle msgDeletes` - Turns off message deletion logs entirely.', '', '**Statistics & Invites**', '`!serverstats` **setup** / **disable** / **config** - Create & configure live Member Count VCs `[extra owners]`', '`!rrsetup` - Launch the interactive Reaction Role Menu builder `[extra owners]`', '`!rrdisable` - Wipe all Reaction Role configurations from the server `[extra owners]`', '`!invitesetup` `#channel` - Enable the Advanced Invite Tracker to log who invites who `[extra owners]`', '`!invitelb` - View the image-based Top Invites Leaderboard `[public]`', '`!syncinvites` - Retroactively sync past Discord invites into the database `[extra owners]`', '`!invitedisable` - Disable Invite Tracking `[extra owners]`', '`!record` **start / stop** - Start or stop a live VC audio recording `[extra owners]`'] },
-  { id: 'autoresponder', shortLabel: 'Triggers', label: 'Auto-Responder', emoji: '<:auto_responder:1523770799603847179>', commands: ['`!trigger` **create** `match | response` - Add a custom keyword trigger `[extra owners]`', '`!trigger` **remove** `match` - Delete a trigger `[extra owners]`', '`!trigger` **list** - View all active triggers in this server `[extra owners]`'] },
-  { id: 'news', shortLabel: 'News Feed', label: 'News Feed', emoji: '<:news:1523770698416259172>', commands: ['`/news setup` `#channel` `[@role]` - Setup the automated news feed `[extra owners]`', '`/news add` `[preset]` `[url]` - Add a news source (e.g. BBC, CNN) `[extra owners]`', '`/news remove` `url` - Remove a news source `[extra owners]`', '`/news list` - View all active subscriptions `[extra owners]`'] },
-  { id: 'customization', shortLabel: 'Config', label: 'Customization', emoji: '<:customisation:1523754350160384195>', commands: ['`!prefix` `new_prefix` - Set a custom prefix for the server `[server owner]`', '`!accent` - Set the embed accent color (10 pure presets + custom hex) `[extra owners]`', '`!autonick` **on/off** / **sync** / **layout** `[format]` - Auto-format nicknames `[extra owners]`', '`!setguildavatar` / `!setguildbanner` - Set bot\'s custom per-server avatar/banner `[extra owners]`', '`/steal` `:emoji: ...` - Steal multiple emojis into your server `[extra owners]`', '`!stealemoji` - Cross-server Emoji Stealer `[bot/server owner]`'] },
-  { id: 'leveling', shortLabel: 'Leveling', label: 'Leveling & XP Engine', emoji: '<:leveling_and_xp:1523743634866966719>', commands: ['`/xpsetup` - Launch the Interactive XP Control Panel (Milestones & Multipliers) `[extra owners]`', '`/rank` `[@user]` - View a graphic of your current level, XP, and progress `[public]`', '`/leaderboard` - View the server\'s top active members sorted by XP `[public]`'] },
-  { id: 'stats', shortLabel: 'Stats', label: 'Message Statistics', emoji: '<:message_statistics:1523744734902878329>', commands: ['`/setstatschannel` `#channel` - Restrict stats usage to a specific channel `[extra owners]`', '`!me` or `!stats me` - View your personal server message statistics `[public]`', '`!u` or `!stats user` `@user` - View message stats for a specific user `[public]`', '`!server` - View a graphical overview of server statistics `[public]`', '`!top` - View the combined server leaderboard `[public]`', '`!chatlb` - View the image-based Top Chatters Leaderboard `[public]`', '`!voicelb` - View the image-based Top Voice Activity Leaderboard `[public]`', '`!bi` / `!botstats` - View global Athena internal statistics `[bot owner]`', '`!ytstats` - Build dynamic Voice Channels tracking YouTube Subs `[extra owners]`'] },
-  { id: 'birthdays', shortLabel: 'Giveaways', label: 'Birthdays & Giveaways', emoji: '<:birthday_and_giveaway:1523746133523038369>', commands: ['`!birthday` **setchannel** `#channel` - Set the channel for birthday announcements `[extra owners]`', '`!birthday` **set** / **remove** `@user` - Manage member birthdays `[extra owners]`', '`!birthday` **list** - List all birthdays in the server `[extra owners]`', '`!testbirthday` - Send a test birthday announcement `[extra owners]`', '`/giveaway start` (Random, Top Chat, VC Time, Invites) / `end` / `reroll` - Interactive button giveaway management `[extra owners]`'] },
-  { id: 'utilities', shortLabel: 'Utility', label: 'Utilities', emoji: '<:utilities:1523747124653723838>', commands: ['`!afk` `[reason]` - Set your AFK status `[public]`', '`/bump` - Set a bump reminder and boost the server `[public]`', '`!avatar` / `!banner` `[@user]` - View a member\'s global/server avatar or banner `[public]`', '`!status` - Real-time security health overview `[public]`', '`!serverinfo` / `!serveroverview` / `!userinfo` `[@user]` - View stats and profile information `[public]`', '`!setmedia` `#channel` / `!unsetmedia` - Bind or unbind the auto-media extractor `[extra owners]`', '`!mp3` `link` - Extract audio from any media link `[public]`', '`!rate` `[url/attachment]` - Post an edit to be rated `[public]`', '`!rateleaderboard` - View top rated edits globally `[public]`', '`!rate` `#channel` - Bind ratings to a specific channel `[extra owners]`', '`!date` `@user` - Go on a beautiful, romantic date with someone `[public]`', '`!ping` / `!time` - Check bot latency and Indian Standard Time (IST) `[public]`', '`!setup` - Quick-bind log channel, quarantine VC and quarantine role `[extra owners]`', '`!dev` - View Lead Architect & Developer details `[public]`', '`!calc` / `!calculator` - Launch an interactive CV2 calculator `[public]`', '`!upload` `"name.exe"` - Upload an executable file safely bypassing discord blocks `[public]`', '`!quote` `<msg_id|@user>` `[theme]` - Generate an aesthetic canvas quote `[public]`', '`!quotemaker` - Interactive canvas quote generator `[public]`', '`!quote setchannel` `#channel` - Bind a dedicated Auto-Quote channel `[admin]`'] }
+  { id: 'security', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Security', label: 'Security & Firewall', emoji: 'security', commands: ['**Anti-Nuke Systems**', '`!security enable all` - Activate the God-Tier Firewall.', '`!security disable all` - Disable all security shields.', '`!ss` or `!security status` - View the live Security Firewall Status panel.', '`!antinuke config` - Interactive panel to toggle specific modules.'] },
+  { id: 'filters', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Filters', label: 'Automod Filters', emoji: 'filters', commands: ['**Auto-Moderation**', '`!automod config` - Open the interactive Automod configuration dashboard.', '`!automod advanced` - Global link & invite toggles.', '`!automod bypass add @role` - Grant granular bypasses for specific modules.', '`!automod bypass list` - View all bypassed roles.', '`!wordfilter` - Manage the banned word list.'] },
+  { id: 'quarantine', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Quarantine', label: 'Quarantine System', emoji: 'quarantine', commands: ['**Threat Containment**', '`!qrmanager setup` - Configure Quarantine role, VC, and channel.', '`!quarantine @user [reason]` - Isolate a user instantly.', '`!unquarantine @user` - Lift quarantine status.'] },
+  { id: 'whitelist', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Whitelist', label: 'Whitelist & Access', emoji: 'whitelist', commands: ['**Access Control**', '`!whitelist @user` - Grant immunity from Anti-Nuke.', '`!whitelist @role` - Whitelist a role from being punished.', '`!botwhitelist add <id>` - Allow specific bots to join the server.', '`!extraowner add @user` - Grant co-owner privileges.'] },
+  { id: 'verification', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Verify', label: 'Verification Gate', emoji: 'verification', commands: ['**Server Verification**', '`!verify setup` - Initialize the Captcha Verification system.', '`!verify config` - Change verification difficulty and role.'] },
+  
+  { id: 'moderation', category: 'SERVER ADMINISTRATION', shortLabel: 'Moderation', label: 'Moderation Tools', emoji: 'moderation', commands: ['**Server Moderation**', '`!ban / !kick / !mute / !warn` - Standard moderation tools.', '`!purge <amount>` - Clear messages in bulk.', '`!lock / !unlock` - Lockdown a channel.', '`!nuke` - Recreate a channel from scratch.'] },
+  { id: 'tracking', category: 'SERVER ADMINISTRATION', shortLabel: 'Tracking', label: 'Engagement & Tracking', emoji: 'tracking', commands: ['**Logs & Tracking**', '`!serverlogs autosetup` - Setup the Advanced Logging system.', '`!invitesetup #channel` - Advanced Invite Tracker.', '`!record start` - Live VC audio recording.'] },
+  { id: 'config', category: 'SERVER ADMINISTRATION', shortLabel: 'Config', label: 'Customization & Roles', emoji: 'config', commands: ['**Server Config**', '`!prefix <new>` - Change bot prefix.', '`!accent` - Modify embed colors.', '`!autonick on` - Standardize member nicknames.'] },
+  { id: 'welcome', category: 'SERVER ADMINISTRATION', shortLabel: 'Welcome', label: 'Welcome System', emoji: 'welcome', commands: ['**Welcome & Leave**', '`!welcome setup` - Build interactive welcome messages.', '`!autorole add @role` - Automatically assign roles on join.'] },
+  { id: 'noprefix', category: 'SERVER ADMINISTRATION', shortLabel: 'No-Prefix', label: 'No-Prefix Management', emoji: 'noprefix', commands: ['**Global Access**', '`!noprefix add @user` - Allow user to execute commands without a prefix.', '`!noprefix list` - View all no-prefix users.'] },
+  
+  { id: 'leveling', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Leveling', label: 'Leveling Engine', emoji: 'leveling', commands: ['**XP System**', '`!xpsetup` - Launch the interactive XP control panel.', '`!rank [@user]` - View level and progress graphic.', '`!leaderboard` - View top active members.'] },
+  { id: 'stats', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Stats', label: 'Statistics', emoji: 'stats', commands: ['**Server Stats**', '`!me` - View your personal message stats.', '`!top` - Combined server leaderboard.', '`!server` - Graphical server statistics overview.'] },
+  { id: 'giveaways', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Giveaways', label: 'Birthdays & Giveaways', emoji: 'giveaways', commands: ['**Giveaways**', '`!giveaway start` - Launch an interactive giveaway.', '`!birthday set @user` - Register a birthday.'] },
+  { id: 'triggers', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Triggers', label: 'Auto-Responder', emoji: 'triggers', commands: ['**Custom Triggers**', '`!trigger create <match> | <resp>` - Create an auto-response.', '`!trigger list` - View active triggers.'] },
+  { id: 'autoreact', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Auto-React', label: 'Auto-Reactions', emoji: 'autoreact', commands: ['**Reactions**', '`!autoreact add <word> <emoji>` - Automatically react to keywords.', '`!autoreact list` - View active reactions.'] },
+  { id: 'actions', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Roleplay', label: 'Roleplay Actions', emoji: 'actions', commands: ['**Social Actions**', '`!hug / !kiss / !slap / !pat` - Interact with other users.', '`!date @user` - Go on a romantic date.'] },
+  
+  { id: 'voice', category: 'VOICE & MEDIA', shortLabel: 'Voice', label: 'Voice Management', emoji: 'voice', commands: ['**VC Tools**', '`!vcsetup` - Setup Join-to-Create (JTC) voice channels.', '`!vclist` - View all active JTC channels.'] },
+  { id: 'music', category: 'VOICE & MEDIA', shortLabel: 'Music', label: 'Music Player', emoji: 'music', commands: ['**Audio Playback**', '`!play <song>` - Play music in your voice channel.', '`!skip / !stop / !queue` - Manage the music queue.'] },
+  { id: 'tts', category: 'VOICE & MEDIA', shortLabel: 'TTS', label: 'Text-to-Speech', emoji: 'tts', commands: ['**TTS Engine**', '`!tts <message>` - Speak text in the voice channel.', '`!tts config` - Change TTS voice and speed.'] },
+  { id: 'messaging', category: 'VOICE & MEDIA', shortLabel: 'Messaging', label: 'Announcements', emoji: 'messaging', commands: ['**Global Messaging**', '`!announce #channel <msg>` - Send official announcements.', '`!sticky add <msg>` - Create sticky messages.'] },
+  
+  { id: 'utilities', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Utility', label: 'General Utilities', emoji: 'utility', commands: ['**Tools**', '`!afk [reason]` - Set AFK status.', '`!ping / !time` - Check bot latency.', '`!calculator` - Interactive math calculator.'] },
+  { id: 'customcmds', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Custom Cmds', label: 'Custom Commands', emoji: 'customcmds', commands: ['**Server Commands**', '`!ccmd add <name> <response>` - Create a custom server command.', '`!ccmd list` - View all custom commands.'] },
+  { id: 'tickets', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tickets', label: 'Support Tickets', emoji: 'tickets', commands: ['**Ticket System**', '`!ticket` - Launch the Ticket Panel Builder.', '`!close` - Close an active ticket thread.'] },
+  { id: 'newsfeed', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'News', label: 'News Feed', emoji: 'newsfeed', commands: ['**RSS & News**', '`!news setup #channel` - Setup automated news feeds.', '`!news add <source>` - Subscribe to BBC, CNN, etc.'] }
 ];
 
 const HELP_GIF = 'https://cdn.discordapp.com/attachments/1534869224277807175/1542472732325978234/ATHENA-8-27-2026.png?ex=6a915b2d&is=6a9009ad&hm=0f55bae0c0bec27649bc03e6d6be23ad16f2eb9337efdb8b5793b2d74cad89ff&';
 
-function buildHelpContainer(client, guildId, moduleId = 'home') {
-  const config = db.getGuildConfig(guildId || '0');
-  const prefix = config?.prefix || '!';
-  const botId = client?.user?.id || '1347071663182676059';
-
-  let rawComponents = [];
-
-  if (moduleId === 'home') {
-    let topText = `# Hey !!! , I am <@${botId}> ,\n\n`;
-    topText += `> <a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
-    topText += `> <a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
-    topText += `> <a:z_arrow_pink1:1523082728004653138> **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**`;
-
-    rawComponents.push({ type: 10, content: topText });
-    rawComponents.push({ type: 14, divider: true });
-
-    let grid = '';
-    for (let i = 0; i < helpModules.length; i++) {
-      const mod = helpModules[i];
-      const col = i % 3;
-      let label = mod.shortLabel || mod.label;
-      let targetLength = 10; 
-      let spaces = targetLength - label.length;
-      let padding = '\u00A0'.repeat(spaces > 0 ? spaces : 0);
-      let displayLabel = label.replace(/ /g, '\u00A0');
-      grid += `${mod.emoji} **\` ${displayLabel}${padding} \`** `;
-      if (col === 2) grid += '\n'; 
-    }
+function buildHelpContainer(client, guildId, moduleId) {
+    const config = db.getGuildConfig(guildId);
+    const prefix = config?.prefix || '!';
+    const botId = client?.user?.id || '1347071663182676059';
     
-    rawComponents.push({ type: 10, content: grid.trim() });
-    rawComponents.push({ type: 14, divider: true });
-
-  } else {
-    const mod = helpModules.find(m => m.id === moduleId);
-    if (mod) {
-      let currentChunk = `# ${mod.emoji} ${mod.label.toUpperCase()}`;
-      
-      for (const cmd of mod.commands) {
-        if (cmd === '') {
-          if (currentChunk.trim().length > 0) {
-            rawComponents.push({ type: 10, content: currentChunk.trim() });
-          }
-          rawComponents.push({ type: 14, divider: true });
-          currentChunk = '';
-          continue;
-        }
-        
-        let formatted = cmd.replace(/!/g, prefix);
-        let line = '';
-        if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('-¢ ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
-          line = formatted;
-        } else {
-          line = `> **${formatted}**`;
-        }
-
-        if (currentChunk.length + line.length + 4 > 1900) {
-          if (currentChunk.trim().length > 0) {
-            rawComponents.push({ type: 10, content: currentChunk.trim() });
-          }
-          currentChunk = line;
-        } else {
-          currentChunk += (currentChunk ? '\n\n' : '') + line;
-        }
-      }
-
-      if (currentChunk.trim().length > 0) {
-        rawComponents.push({ type: 10, content: currentChunk.trim() });
-      }
-
+    const getEmoji = (name, fallback) => {
+      const e = client.emojis.cache.find(emoji => emoji.name === name);
+      return e ? `<:${e.name}:${e.id}>` : fallback;
+    };
+  
+    let rawComponents = [];
+  
+    if (moduleId === 'home') {
+      let topText = `# Hey !!! , I am <@${botId}> ,\n\n`;
+      topText += `> <a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
+      topText += `> <a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
+      topText += `> <a:z_arrow_pink1:1523082728004653138> **Hint : To Know more use " Tag the Bot and Type Guide for details and usage "**`;
+  
+      rawComponents.push({ type: 10, content: topText });
       rawComponents.push({ type: 14, divider: true });
+  
+      const categories = [
+        { name: 'SECURITY & ACCESS CONTROL', icon: '🛡️', catName: 'SECURITY & ACCESS CONTROL' },
+        { name: 'SERVER ADMINISTRATION', icon: '🛠️', catName: 'SERVER ADMINISTRATION' },
+        { name: 'COMMUNITY & ENGAGEMENT', icon: '💬', catName: 'COMMUNITY & ENGAGEMENT' },
+        { name: 'VOICE & MEDIA', icon: '🎤', catName: 'VOICE & MEDIA' },
+        { name: 'UTILITIES & INTEGRATIONS', icon: '⚙️', catName: 'UTILITIES & INTEGRATIONS' }
+      ];
+
+      const bullet = getEmoji('black_dot', '•');
+      
+      let grid = '';
+      for (const cat of categories) {
+         grid += `### ${cat.icon} ${cat.name}\n`;
+         const mods = helpModules.filter(m => m.category === cat.catName);
+         
+         // To make it look compact, we can do 2 or 3 per row, or just a clean list
+         let rowStr = '';
+         for (let i = 0; i < mods.length; i++) {
+            const m = mods[i];
+            const e = getEmoji(m.emoji, '▶️');
+            
+            // Format: bullet emoji **Label**
+            rowStr += `> ${bullet} ${e} **${m.shortLabel}**`;
+            
+            // Add spacing between columns if putting 2 per line, or just newline
+            if (i % 2 === 1 || i === mods.length - 1) {
+                grid += rowStr + '\n';
+                rowStr = '';
+            } else {
+                rowStr += ' ⠀⠀ '; // Braille spaces for padding
+            }
+         }
+         grid += '\n';
+      }
+      
+      rawComponents.push({ type: 10, content: grid.trim() });
+      rawComponents.push({ type: 14, divider: true });
+  
+    } else {
+      const mod = helpModules.find(m => m.id === moduleId);
+      if (mod) {
+        const e = getEmoji(mod.emoji, '▶️');
+        let currentChunk = `# ${e} ${mod.label.toUpperCase()}`;
+        
+        for (const cmd of mod.commands) {
+          if (cmd === '') {
+            if (currentChunk.trim().length > 0) {
+              rawComponents.push({ type: 10, content: currentChunk.trim() });
+            }
+            rawComponents.push({ type: 14, divider: true });
+            currentChunk = '';
+            continue;
+          }
+          
+          let formatted = cmd.replace(/!/g, prefix);
+          let line = '';
+          if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('-A ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
+            line = formatted;
+          } else {
+            line = `> **${formatted}**`;
+          }
+  
+          if (currentChunk.length + line.length + 4 > 1900) {
+            if (currentChunk.trim().length > 0) {
+              rawComponents.push({ type: 10, content: currentChunk.trim() });
+            }
+            currentChunk = line;
+          } else {
+            currentChunk += (currentChunk ? '\n\n' : '') + line;
+          }
+        }
+  
+        if (currentChunk.trim().length > 0) {
+          rawComponents.push({ type: 10, content: currentChunk.trim() });
+        }
+  
+        rawComponents.push({ type: 14, divider: true });
+      }
     }
-  }
-
-  const selectMenu = new StringSelectMenuBuilder()
-    .setCustomId('help_module_select')
-    .setPlaceholder('Click to view modules');
-
-  selectMenu.addOptions([
-    {
-      label: 'Home Menu',
-      description: 'Return to the main help menu',
-      value: 'home',
-      emoji: '<:home:1523765738655973589>'
-    }
-  ]);
-
-  for (const mod of helpModules) {
+  
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId('help_module_select')
+      .setPlaceholder('Click to view modules');
+  
+    const homeEmoji = getEmoji('home', '🏠');
     selectMenu.addOptions([
       {
-        label: mod.label,
-          value: mod.id
+        label: 'Home Menu',
+        description: 'Return to the main help menu',
+        value: 'home'
+        // cannot easily set dynamic emoji obj here if it's a string, so we skip emoji on home if it's custom string, or parse it
       }
     ]);
-  }
-
-  const btnPrev = new ButtonBuilder().setCustomId('help_prev').setEmoji('<:previous:1523766004839088301>').setStyle(ButtonStyle.Secondary);
-  const btnNext = new ButtonBuilder().setCustomId('help_next').setEmoji('<:next:1523766065576935475>').setStyle(ButtonStyle.Secondary);
-  const btnRefresh = new ButtonBuilder().setCustomId('help_home').setEmoji('<:home:1523765738655973589>').setStyle(ButtonStyle.Secondary);
-  const btnDelete = new ButtonBuilder().setCustomId('help_delete').setEmoji('<:delete:1523766340752642109>').setStyle(ButtonStyle.Danger);
-
-  const row1 = new ActionRowBuilder().addComponents(selectMenu);
-  const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
-
-  const HELP_GIF = 'https://cdn.discordapp.com/attachments/1534869224277807175/1542472732325978234/ATHENA-8-27-2026.png?ex=6a915b2d&is=6a9009ad&hm=0f55bae0c0bec27649bc03e6d6be23ad16f2eb9337efdb8b5793b2d74cad89ff&';
-
-  rawComponents.push({ type: 12, items: [{ media: { url: HELP_GIF } }] });
-  rawComponents.push({ type: 14, divider: true });
-  rawComponents.push(row1.toJSON());
-  rawComponents.push({ type: 14, divider: true });
-  rawComponents.push(row2.toJSON());
-  rawComponents.push({ type: 14, divider: true });
-  rawComponents.push({ type: 10, content: '-# **Athena Prime Unbypassable Security !!**' });
-
-  // Raw Container JSON - no accent_color so it renders borderless like VC panel
-  const rawContainer = {
-    type: 17,
-    components: rawComponents
-  };
-
-  return rawContainer;
+  
+    // We can only fit 25 options. 1 Home + 24 Modules = 25 exactly!
+    for (const mod of helpModules) {
+      selectMenu.addOptions([
+        {
+          label: mod.label,
+          value: mod.id
+        }
+      ]);
+    }
+  
+    const btnPrev = new ButtonBuilder().setCustomId('help_prev').setEmoji('1523766004839088301').setStyle(ButtonStyle.Secondary);
+    const btnNext = new ButtonBuilder().setCustomId('help_next').setEmoji('1523766065576935475').setStyle(ButtonStyle.Secondary);
+    const btnRefresh = new ButtonBuilder().setCustomId('help_home').setEmoji('1523765738655973589').setStyle(ButtonStyle.Secondary);
+    const btnDelete = new ButtonBuilder().setCustomId('help_delete').setEmoji('1523766340752642109').setStyle(ButtonStyle.Danger);
+  
+    const row1 = new ActionRowBuilder().addComponents(selectMenu);
+    const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
+  
+    const HELP_GIF = 'https://cdn.discordapp.com/attachments/1534869224277807175/1542472732325978234/ATHENA-8-27-2026.png?ex=6a915b2d&is=6a9009ad&hm=0f55bae0c0bec27649bc03e6d6be23ad16f2eb9337efdb8b5793b2d74cad89ff&';
+  
+    rawComponents.push({ type: 12, items: [{ media: { url: HELP_GIF } }] });
+    rawComponents.push({ type: 14, divider: true });
+    rawComponents.push(row1.toJSON());
+    rawComponents.push({ type: 14, divider: true });
+    rawComponents.push(row2.toJSON());
+    rawComponents.push({ type: 14, divider: true });
+    rawComponents.push({ type: 10, content: '-# **Athena Prime Unbypassable Security !!**' });
+  
+    const rawContainer = {
+      type: 17,
+      components: rawComponents
+    };
+  
+    return rawContainer;
 }
-
 
 async function handleSetup(guild, channel, role, voiceChannel) {
   const updates = {};
