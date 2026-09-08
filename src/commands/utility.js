@@ -570,15 +570,20 @@ function buildHelpContainer(client, guildId, moduleId) {
             const m = mods[i];
             const e = getEmoji(m.emoji, '▶️');
             
-            // Format: bullet emoji **Label**
-            rowStr += `> ${bullet} ${e} **${m.shortLabel}**`;
+            if (i % 2 === 0) {
+                // First column starts the blockquote line
+                rowStr += `> ${bullet} ${e} **${m.shortLabel}**`;
+            } else {
+                // Second column just appends to the same line
+                rowStr += `${bullet} ${e} **${m.shortLabel}**`;
+            }
             
-            // Add spacing between columns if putting 2 per line, or just newline
             if (i % 2 === 1 || i === mods.length - 1) {
                 grid += rowStr + '\n';
                 rowStr = '';
             } else {
-                rowStr += ' ⠀⠀ '; // Braille spaces for padding
+                // Adjust padding for alignment (using braille spaces)
+                rowStr += ' \u2800\u2800 ';
             }
          }
          grid += '\n';
