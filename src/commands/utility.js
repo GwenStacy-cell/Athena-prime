@@ -20,6 +20,127 @@ export const commands = [
     aliases: ['calc', 'math'],
     category: 'utility',
     permissions: [],
+    async executePrefix(message) {
+      await sendCalculator(message);
+    },
+    async executeSlash(interaction) {
+      await sendCalculator(interaction);
+    }
+  },
+
+
+    // --- MP3 EXTRACTOR COMMAND ---
+    {
+      name: 'mp3',
+      description: 'Extract audio from any video link (YouTube, TikTok, Twitter, etc)',
+      type: 1,
+      options: [
+        { name: 'link', description: 'The video link to extract audio from', type: 3, required: true }
+      ],
+      async executePrefix(message, args) {
+        if (!args[0]) return message.reply(cv2.error('MISSING ARGUMENT', 'Please provide a valid video link.'));
+        await processMp3Link(message.client, message, args[0]);
+      },
+      async executeSlash(interaction) {
+        const link = interaction.options.getString('link');
+        // Acknowledge interaction since downloading can take time
+        await interaction.deferReply();
+        // Since processMp3Link replies to 'message', we create a mock message
+        const mockMessage = {
+          client: interaction.client,
+          author: interaction.user,
+          channel: { sendTyping: async () => {} },
+          reply: async (data) => await interaction.editReply(data)
+        };
+        await processMp3Link(interaction.client, mockMessage, link);
+      }
+    },
+
+
+    // --- SET MEDIA CHANNEL COMMAND ---
+    {
+      name: 'setmedia',
+      description: 'Bind the Auto Media Downloader to a specific channel',
+      type: 1,
+      options: [
+        { name: 'channel', description: 'The channel to monitor for media links', type: 7, required: true }
+      ],
+      async executePrefix(message, args) {
+        if (!(await isAuthorized(message.author, message.guild))) return message.reply(cv2.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
+        const channelMention = message.mentions.channels.first();
+        if (!channelMention) return message.reply(cv2.error('INVALID TARGET', 'Please mention a valid text channel to bind the extraction module.'));
+        db.updateGuildConfig(message.guild.id, { mediaChannelId: channelMention.id });
+          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\nIf Discord rejects a video due to file size, Athena will offer to compress it to a smaller version.\nDiscord\'s upload limit depends on your server\'s boost level.';
+          db.setStickyMessage(message.guild.id, channelMention.id, stickyText);
+        
+        return message.reply(cv2.success(
+          'MEDIA DOWNLOADER BOUND',
+          `The Auto-Media Downloader is now monitoring <#${channelMention ? channelMention.id : channel.id}>.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.\nNote: Files are strictly limited to under 25MB to comply with Discord's attachment size limits.`
+        ));
+      },
+      async executeSlash(interaction) {
+        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply(cv2.e.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
+        const channel = interaction.options.getChannel('channel');
+        db.updateGuildConfig(interaction.guild.id, { mediaChannelId: channel.id });
+          const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\nIf Discord rejects a video due to file size, Athena will offer to compress it to a smaller version.\nDiscord\'s upload limit depends on your server\'s boost level.';
+          db.setStickyMessage(interaction.guild.id, channel.id, stickyText);
+        
+        return interaction.reply(cv2.success(
+          'MEDIA DOWNLOADER BOUND',
+          `The Auto-Media Downloader is now monitoring <#${channel.id}>.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links in that channel to interactively extract the raw MP4 video or convert it to MP3 audio.\nNote: Files are strictly limited to under 25MB to comply with Discord's attachment size limits.`
+        ));
+      }
+    },
+
+    // --- UNSET MEDIA CHANNEL COMMAND ---
+    {
+      name: 'unsetmedia',
+      description: 'Unbind and disable the Auto Media Downloader',
+      type: 1,
+      options: [],
+      async executePrefix(message, args) {
+        if (!(await isAuthorized(message.author, message.guild))) return message.reply(cv2.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
+        const cfg = db.getGuildConfig(message.guild.id);
+          if (cfg && cfg.mediaChannelId) {
+            const stickyData = db.getStickyMessage(message.guild.id, cfg.mediaChannelId);
+            if (stickyData && stickyData.lastMessageId) {
+              const ch = message.guild.channels.cache.get(cfg.mediaChannelId);
+              if (ch) ch.messages.delete(stickyData.lastMessageId).catch(() => null);
+            }
+            db.removeStickyMessage(message.guild.id, cfg.mediaChannelId);
+          }
+          db.updateGuildConfig(message.guild.id, { mediaChannelId: null });
+        
+        return message.reply(cv2.success(
+          'MEDIA DOWNLOADER DISABLED',
+          'The Auto-Media Downloader has been completely unbound and disabled for this server.'
+        ));
+      },
+      async executeSlash(interaction) {
+        if (!(await isAuthorized(interaction.user, interaction.guild))) return interaction.reply(cv2.e.error('UNAUTHORIZED ACCESS', 'You lack the required permissions to modify the system core routing.'));
+        const cfg = db.getGuildConfig(interaction.guild.id);
+          if (cfg && cfg.mediaChannelId) {
+            const stickyData = db.getStickyMessage(interaction.guild.id, cfg.mediaChannelId);
+            if (stickyData && stickyData.lastMessageId) {
+              const ch = interaction.guild.channels.cache.get(cfg.mediaChannelId);
+              if (ch) ch.messages.delete(stickyData.lastMessageId).catch(() => null);
+            }
+            db.removeStickyMessage(interaction.guild.id, cfg.mediaChannelId);
+          }
+          db.updateGuildConfig(interaction.guild.id, { mediaChannelId: null });
+        
+        return interaction.reply(cv2.success(
+          'MEDIA DOWNLOADER DISABLED',
+          'The Auto-Media Downloader has been completely unbound and disabled for this server.'
+        ));
+      }
+    },
+
+  // --- HELP COMMAND ---
+  {
+    name: 'help',
+    description: 'Show Athena Prime command menu',
+    type: 1,
     async executePrefix(message, args) {
         let reply;
         try {
@@ -570,6 +691,8 @@ function buildHelpContainer(client, guildId, moduleId) {
             const m = mods[i];
             const e = getEmoji(m.emoji, '▶️');
             
+            // Format: bullet emoji **Label**
+            
             if (i % 2 === 0) {
                 // First column starts the blockquote line
                 rowStr += `> ${bullet} ${e} **${m.shortLabel}**`;
@@ -582,9 +705,10 @@ function buildHelpContainer(client, guildId, moduleId) {
                 grid += rowStr + '\n';
                 rowStr = '';
             } else {
-                // Adjust padding for alignment (using braille spaces)
+                // Adjust padding for alignment
                 rowStr += ' \u2800\u2800 ';
             }
+
          }
          grid += '\n';
       }
