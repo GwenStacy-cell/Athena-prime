@@ -605,7 +605,7 @@ function buildHelpContainer(client, guildId, moduleId) {
     
     const getEmoji = (name, fallback) => {
       const e = client.emojis.cache.find(emoji => emoji.name === name);
-      return e ? `<:${e.name}:${e.id}>` : fallback;
+      return e ? `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>` : fallback;
     };
   
     let rawComponents = [];
@@ -620,18 +620,18 @@ function buildHelpContainer(client, guildId, moduleId) {
       rawComponents.push({ type: 14, divider: true });
   
       const categories = [
-        { name: 'SECURITY & ACCESS CONTROL', icon: '🛡️', catName: 'SECURITY & ACCESS CONTROL' },
-        { name: 'SERVER ADMINISTRATION', icon: '🛠️', catName: 'SERVER ADMINISTRATION' },
-        { name: 'COMMUNITY & ENGAGEMENT', icon: '💬', catName: 'COMMUNITY & ENGAGEMENT' },
-        { name: 'VOICE & MEDIA', icon: '🎤', catName: 'VOICE & MEDIA' },
-        { name: 'UTILITIES & INTEGRATIONS', icon: '⚙️', catName: 'UTILITIES & INTEGRATIONS' }
+        { name: 'SECURITY & ACCESS CONTROL', icon: '', catName: 'SECURITY & ACCESS CONTROL' },
+        { name: 'SERVER ADMINISTRATION', icon: '', catName: 'SERVER ADMINISTRATION' },
+        { name: 'COMMUNITY & ENGAGEMENT', icon: '', catName: 'COMMUNITY & ENGAGEMENT' },
+        { name: 'VOICE & MEDIA', icon: '', catName: 'VOICE & MEDIA' },
+        { name: 'UTILITIES & INTEGRATIONS', icon: '', catName: 'UTILITIES & INTEGRATIONS' }
       ];
 
       const bullet = getEmoji('black_dot', '•');
       
       let grid = '';
       for (const cat of categories) {
-         grid += `### ${cat.icon} ${cat.name}\n`;
+         grid += `### ${cat.name}\n`;
          const mods = helpModules.filter(m => m.category === cat.catName);
          
          // To make it look compact, we can do 2 or 3 per row, or just a clean list
