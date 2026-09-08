@@ -1198,9 +1198,7 @@ export const commands = [
         const initDisplay = new TextDisplayBuilder().setContent('> -# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n> -# **Antinuke Setup Working...**');
           const initContainer = new ContainerBuilder().addTextDisplayComponents(initDisplay);
           const msg = await message.reply({ components: [initContainer], flags: MessageFlags.IsComponentsV2 });
-        await runSecurityEnableSequence(message.guild, async (payload) => {
-          await msg.edit(payload).catch(() => null);
-        });
+        const success = await runSecurityEnableSequence(message.guild, async (payload) => { await msg.edit(payload).catch(() => null); }); if (!success) return;
         const tosPanel = await getServerSecurityEnabledPanel(typeof message !== 'undefined' ? message.guild : interaction.guild);
         await message.channel.send(tosPanel);
         const panel = await getSecureDashboardPanel(message.guild);
@@ -1258,9 +1256,7 @@ export const commands = [
         const initDisplay2 = new TextDisplayBuilder().setContent('> -# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n> -# **Antinuke Setup Working...**');
           const initContainer2 = new ContainerBuilder().addTextDisplayComponents(initDisplay2);
           await interaction.reply({ components: [initContainer2], flags: MessageFlags.IsComponentsV2 });
-        await runSecurityEnableSequence(interaction.guild, async (payload) => {
-          await interaction.editReply(payload).catch(() => null);
-        });
+        const success = await runSecurityEnableSequence(interaction.guild, async (payload) => { await interaction.editReply(payload).catch(() => null); }); if (!success) return;
         const tosPanel = await getServerSecurityEnabledPanel(typeof message !== 'undefined' ? message.guild : interaction.guild);
         if (interaction.channel) await interaction.channel.send(tosPanel).catch(() => null);
         const panel = await getSecureDashboardPanel(interaction.guild);
@@ -3244,10 +3240,19 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
              
              await new Promise(r => setTimeout(r, 2000));
              const rolesFresh = await guild.roles.fetch(undefined, { force: true });
-             const checkFW = rolesFresh.some(r => r.name === "Athena Firewall");
-             const checkUNB = rolesFresh.some(r => r.name === "Athena Unbypassable");
-             if (!checkFW || !checkUNB) {
+             const existFW = rolesFresh.some(r => r.name === "Athena Firewall");
+             const existUNB = rolesFresh.some(r => r.name === "Athena Unbypassable");
+             
+             if (!existFW || !existUNB) {
                  throw new Error("Roles deleted by another bot!");
+             }
+             
+             const meFresh = await guild.members.fetch({ user: guild.client.user.id, force: true });
+             const hasFWNew = meFresh.roles.cache.some(r => r.name === "Athena Firewall");
+             const hasUNBNew = meFresh.roles.cache.some(r => r.name === "Athena Unbypassable");
+             
+             if (!hasFWNew || !hasUNBNew) {
+                 throw new Error("Secondary roles found! Please place Athena's role above them in Server Settings so she can assign them.");
              }
           }
           return ""; 
