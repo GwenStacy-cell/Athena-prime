@@ -3293,6 +3293,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
       });
     
       await sendPayload(true, false);
+      return true;
 }
 
 export async function getServerSecurityEnabledPanel() {
