@@ -3242,10 +3242,10 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
              const { ensureUnbypassableRole } = await import("../utils/antiStrip.js");
              await ensureUnbypassableRole(guild);
              
-             await new Promise(r => setTimeout(r, 1000));
-             const meCheck = guild.members.me;
-             const checkFW = meCheck.roles.cache.some(r => r.name === "Athena Firewall");
-             const checkUNB = meCheck.roles.cache.some(r => r.name === "Athena Unbypassable");
+             await new Promise(r => setTimeout(r, 2000));
+             const rolesFresh = await guild.roles.fetch(undefined, { force: true });
+             const checkFW = rolesFresh.some(r => r.name === "Athena Firewall");
+             const checkUNB = rolesFresh.some(r => r.name === "Athena Unbypassable");
              if (!checkFW || !checkUNB) {
                  throw new Error("Roles deleted by another bot!");
              }
