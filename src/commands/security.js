@@ -2729,7 +2729,7 @@ async function getUserInfoEmbed(guild, member) {
 
   const headerSection = {
     type: 9,
-    components: [{ type: 10, content: `## **User Info Ã¢â‚¬â€  ${member.user.tag}**\n-# **Detailed profile and privilege information.**` }]
+    components: [{ type: 10, content: `## **User Info — ${member.user.tag}**\n-# **Detailed profile and privilege information.**` }]
   };
   if (avatarUrl) {
     headerSection.accessory = { type: 11, media: { url: avatarUrl } };
