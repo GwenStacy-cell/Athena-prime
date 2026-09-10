@@ -8,7 +8,7 @@ import { setGuildContext } from '../embed.js';
 import * as downloader from '../utils/mediaDownloader.js';
 import db from '../database.js';
 
-const isBotOwnerSync = (id) => id === '1509084068619489331';
+import { isBotOwnerSync } from '../utils/helpers.js';
 const TOGGLE_ON = '<:emoji_16:1521464002046328944>';
 
 export default {
@@ -21,8 +21,7 @@ export default {
 
     // --- VC PANEL BUTTONS ---
     if (interaction.customId.startsWith('vcp_')) {
-      const botOwnerId = '1509084068619489331';
-      if (interaction.user.id !== interaction.guild.ownerId && interaction.user.id !== botOwnerId) {
+      if (interaction.user.id !== interaction.guild.ownerId && !isBotOwnerSync(interaction.user.id)) {
         return interaction.reply({ content: 'Only the Server Owner and Bot Owner can use this panel.', flags: 64 }).catch(()=>{});
       }
 
