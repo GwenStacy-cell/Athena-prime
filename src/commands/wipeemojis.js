@@ -16,8 +16,8 @@ export const commands = [
         return message.reply(cv2.warn('No Emojis', 'There are no custom emojis to delete in this server.'));
       }
 
-      const confirmBtn = new ButtonBuilder().setCustomId('confirm_wipe_emojis').setLabel('CONFIRM WIPE').setStyle(ButtonStyle.Danger);
-      const cancelBtn = new ButtonBuilder().setCustomId('cancel_wipe_emojis').setLabel('Cancel').setStyle(ButtonStyle.Secondary);
+      const confirmBtn = new ButtonBuilder().setCustomId('confirm_wipe_emojis').setLabel('CONFIRM WIPE').setStyle(ButtonStyle.Danger).setEmoji('1523766340752642109');
+      const cancelBtn = new ButtonBuilder().setCustomId('cancel_wipe_emojis').setLabel('Cancel').setStyle(ButtonStyle.Secondary).setEmoji('1533860128015519895');
       const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
       const msg = await message.reply({ 
