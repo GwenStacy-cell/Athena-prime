@@ -10,6 +10,8 @@ import {
   MessageFlags
 } from 'discord.js';
 
+import { isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';
+
 export const commands = [
   {
     name: 'vcpanel',
@@ -17,9 +19,8 @@ export const commands = [
     category: 'moderation',
     async executePrefix(message, args) {
       // 1. Permission Check (Guild Owner or Bot Owner only)
-      const botOwnerId = process.env.OWNER_ID;
-      if (message.author.id !== message.guild.ownerId && message.author.id !== botOwnerId) {
-        return; // Ignore completely if not authorized
+      if (message.author.id !== message.guild.ownerId && !isBotOwnerSync(message.author.id) && !isExtraOwner(message.guild.id, message.author.id)) {
+        return message.reply({ content: 'Only the Server Owner, Bot Owner, and Extra Owners can use this panel.' }).catch(()=>{});
       }
 
       // 2. VC Check
