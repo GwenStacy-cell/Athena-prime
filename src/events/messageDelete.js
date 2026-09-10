@@ -135,7 +135,8 @@ if (!message.guild) return;
     };
 
     if (imageUrl) {
-      payload.components[0].components.push({ type: 12, items: [{ media: { url: imageUrl } }] });
+      innerComps.push({ type: 14, divider: true });
+      innerComps.push({ type: 10, content: `-# **Attachment:** [View Original File](${imageUrl})` });
     }
 
     logServerEvent(message.guild, 'msgDeletes', payload);

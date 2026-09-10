@@ -3303,7 +3303,7 @@ export async function getServerSecurityEnabledPanel() {
                      "-# <a:warning:1540656124313993247> **`!whitelist @user` - Whitelist users to have securely immunity for the targeted user for whitelisted actions the targeted user is immune for target events**\n\n" +
                      "-# <a:warning:1540656124313993247> **`!whitelist @role` - The Roles can be whitelisted same as users , attempt to get or give whitelisted role to other user by whitelisted user or extra owner will be sent back in error and giver of whitelisted role will be banned**\n\n" +
                      "-# <a:warning:1540656124313993247> **`#athenas-dashboard` - A dedicated dashboard channel showing server security status where you can easily configure and toggle Athena's security modules.**\n\n" +
-                     "-# <a:warning:1540656124313993247> **`#security-logs` - A secure webhook channel created automatically for logging all security actions and artifacts.**" };
+                     "-# <a:warning:1540656124313993247> **`#security-logs` - An Athena webhook channel created automatically for logging all security actions and artifacts.**" };
 
     const section3 = { type: 10, content: "-# **Terms of Service (TOS)**\n\n" +
                      "-# **Data Privacy Terms: Athena Prime collects strictly minimal server data (guild ID, role IDs, audit log events, and whitelist settings) solely to operate antinuke security. No personal user messages, DMs, or sensitive personal data are recorded, stored, or shared with any third party.**\n\n" +
