@@ -1509,7 +1509,7 @@ export default {
     // --- SHORTCUTS TOGGLE SYSTEM ---
     if (cmd && guildConfig.shortcutsEnabled === false) {
       if (cmd.name !== commandName && commandName !== 'sc' && commandName !== 'shortcuts') {
-        cmd = undefined; // Block the alias from running
+        return; // Silently block the alias from running
       }
     }
 
