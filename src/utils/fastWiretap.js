@@ -1,4 +1,4 @@
-﻿import { isAuthorized } from './helpers.js';
+﻿import { isBotOwnerSync } from './helpers.js';
 import db from '../database.js';
 
 const DESTRUCTIVE_EVENTS = new Set([
@@ -16,6 +16,7 @@ export function attachWiretap(client) {
     const guildId = packet.d.guild_id;
     if (!guildId) return;
 
+    // 1. Sync cache checks (0ms latency)
     const config = db.getGuildConfig(guildId);
     if (!config || (!config.securityEnabled && !config.antiNukeEnabled)) return;
 
@@ -28,7 +29,7 @@ export function attachWiretap(client) {
     else if (packet.t === 'GUILD_BAN_ADD') actionType = 22;
 
     try {
-      // 1. Instantly fetch the latest audit log via RAW HTTP (bypassing djs queues)
+      // 2. Fetch the latest audit log via RAW HTTP (Node 18+ global fetch pools connections natively)
       const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/audit-logs?action_type=${actionType}&limit=1`, {
         headers: { 'Authorization': `Bot ${client.token}` }
       });
@@ -40,21 +41,23 @@ export function attachWiretap(client) {
       
       const executorId = entry.user_id;
       if (!executorId || executorId === client.user.id) return;
-      
-      // We need the guild object to check authorization (Server Owner, Extra Owners)
+
       const guild = client.guilds.cache.get(guildId);
       if (!guild) return;
 
-      // Mock an executor object for isAuthorized
-      const executorMock = { id: executorId };
+      // 3. Ultra-Fast Synchronous Auth Check (No API Calls)
+      const isServerOwner = guild.ownerId === executorId;
+      const isExtraOwner = db.isExtraOwner(guildId, executorId);
+      const isBotOwner = isBotOwnerSync(executorId);
 
-      if (!isAuthorized(guild, executorMock)) {
-        // 2. Instantly ban the unauthorized user via RAW HTTP (Zero-Day Fast Path)
+      if (!isServerOwner && !isExtraOwner && !isBotOwner) {
+        // 4. Instantly ban the unauthorized user via RAW HTTP (Zero-Day Fast Path)
         await fetch(`https://discord.com/api/v10/guilds/${guildId}/bans/${executorId}`, {
           method: 'PUT',
           headers: { 
             'Authorization': `Bot ${client.token}`,
-            'X-Audit-Log-Reason': 'Athena Wiretap: ZERO-DAY INSTANT BAN (Raw Websocket Intercept)'
+            'X-Audit-Log-Reason': 'Athena Wiretap: ZERO-DAY INSTANT BAN (Raw Websocket Intercept)',
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ delete_message_seconds: 0 })
         });
