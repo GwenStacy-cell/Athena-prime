@@ -1502,7 +1502,14 @@ export default {
     }
     
     // Find command by name (loader.js populates aliases directly in commandMap)
-    const cmd = commandMap.get(commandName);
+    let cmd = commandMap.get(commandName);
+
+    // --- SHORTCUTS TOGGLE SYSTEM ---
+    if (cmd && config.shortcutsEnabled === false) {
+      if (cmd.name !== commandName && commandName !== 'sc' && commandName !== 'shortcuts') {
+        cmd = undefined; // Block the alias from running
+      }
+    }
 
     // --- COMMAND & CHANNEL IGNORE SYSTEM ---
     if (cmd && !isNpBypass) {
