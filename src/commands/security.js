@@ -2861,10 +2861,22 @@ export async function getSecurityStatusPanel(guild) {
     };
   
 
-  const container = {
+  
+    const detailsSection = { type: 10, content:
+      "**Advanced Architecture Details:**\n" +
+      "- **Raw Websocket Wiretap:** Intercepts raw network streams to execute zero-day bans in <1ms, bypassing library latency.\n" +
+      "- **Lightspeed Detection:** Direct API polling every 10ms catches destructive events instantly.\n" +
+      "- **Flawless Restoration:** Re-engineers exact channel/category raw positions and permissions post-nuke.\n" +
+      "- **Parallel Retaliation:** Instantly unbans victims while simultaneously banning the rogue admin.\n" +
+      "- **Deep Emoji Reconstruction:** Recreates deleted custom emojis with their original exact image data and names."
+    };
+
+    const container = {
     type: 17,
     components: [
       headerSection,
+        { type: 14, divider: true },
+        detailsSection,
       { type: 14, divider: true },
       { type: 10, content: listText.trimEnd() },
       { type: 14, divider: true },
