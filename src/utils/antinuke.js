@@ -341,7 +341,7 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
       executor = found.executor;
       entry = found;
     } else {
-      await new Promise(r => setTimeout(r, 30));
+      await new Promise(r => setTimeout(r, 10));
     }
     attempts++;
   }

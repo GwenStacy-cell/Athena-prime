@@ -1,4 +1,4 @@
-import { AuditLogEvent } from 'discord.js';
+﻿import { AuditLogEvent } from 'discord.js';
 import { cacheDeletedItem, directStrike, deletedCache, queuedRestorations, restoredCategories } from '../utils/antinuke.js';
 import db from '../database.js';
 import embed from '../embed.js';
@@ -10,11 +10,8 @@ export default {
     if (!channel.guild) return;
     if (db.isModModeActive(channel.guild.id)) return;
 
-    // ⚡ Cache IMMEDIATELY before any async — restoration depends on this
     cacheDeletedItem(channel.id, channel);
 
-    // ⚡ DIRECT STRIKE — fires instantly from native gateway event
-    // No audit log dispatch delay. We fetch the audit log ourselves immediately.
     directStrike(
       channel.guild,
       AuditLogEvent.ChannelDelete,
@@ -31,13 +28,15 @@ export default {
           const overwrites = cachedCh.permissionOverwrites.cache.map(o => ({
             id: o.id, type: o.type, allow: o.allow.bitfield, deny: o.deny.bitfield
           }));
-          await channel.guild.channels.create({
+          const newCh = await channel.guild.channels.create({
             name: cachedCh.name, type: cachedCh.type, topic: cachedCh.topic || null,
-            parent: parentId || null, position: cachedCh.position || 0,
+            parent: parentId || null, position: cachedCh.rawPosition,
             permissionOverwrites: overwrites,
             reason: 'Athena Anti-Nuke: Restored deleted channel'
           });
-          if (isCategory) restoredCategories.set(channel.id, channel.id);
+          // Explicitly set position again to guarantee it doesn't change relative position
+          await newCh.setPosition(cachedCh.rawPosition, { reason: 'Athena Anti-Nuke: Fixing channel position' }).catch(()=>{});
+          if (isCategory) restoredCategories.set(channel.id, newCh.id);
         } catch (e) {
           try {
             await channel.guild.channels.create({ name: channel.name, type: channel.type, reason: 'Athena Anti-Nuke: Restored without parent' });
@@ -46,7 +45,6 @@ export default {
       }
     ).catch(() => null);
 
-    // Server logging (independent of antinuke)
     const logs = await channel.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.ChannelDelete }).catch(() => null);
     const entry = logs?.entries?.first();
     let executor = 'Unknown';
