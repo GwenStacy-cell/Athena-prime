@@ -322,6 +322,8 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
     [AuditLogEvent.MemberBanAdd]:      mods.antiBan,
     [AuditLogEvent.MemberKick]:        mods.antiKick,
     [AuditLogEvent.BotAdd]:            mods.antiBotAdd,
+      [1]: mods.antiServerUpdate, // GuildUpdate
+      [11]: mods.antiRoleUpdate, // RoleUpdate
   };
   if (moduleMap[auditType] === false) return;
 

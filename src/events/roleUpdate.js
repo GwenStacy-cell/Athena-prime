@@ -1,3 +1,27 @@
+
+    // 3. Hierarchy Enforcement (The "Shield Wall")
+    if (config.securityEnabled || (config.antiNukeEnabled && config.antinukeModules?.antiRoleUpdate)) {
+      const highestBotRole = newRole.guild.members.me.roles.highest;
+      
+      // If someone dragged a normal role equal to or above Athena's highest role
+      if (newRole.position > oldRole.position && newRole.position >= highestBotRole.position && newRole.id !== highestBotRole.id) {
+        
+        // Immediately revert the hierarchy
+        try {
+          await newRole.setPosition(oldRole.position, { reason: 'Athena Anti-Nuke: Hierarchy Shield Wall' });
+        } catch (e) {}
+
+        // Ban the offender
+        const { directStrike } = await import('../utils/antinuke.js');
+        directStrike(
+          newRole.guild,
+          11 /* AuditLogEvent.RoleUpdate */,
+          'Hierarchy Shield Wall Breach',
+          newRole.id,
+          async () => `Role **${newRole.name}** was forced back to position ${oldRole.position} to protect the Shield Wall.`
+        ).catch(() => null);
+      }
+    }
 import { AuditLogEvent, PermissionFlagsBits } from 'discord.js';
 
 import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
