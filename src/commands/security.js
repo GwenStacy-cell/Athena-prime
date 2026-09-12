@@ -99,6 +99,7 @@ export const commands = [
   // --- QUARANTINE COMMAND ---
   {
     name: 'quarantine',
+    aliases: ['qr', 'q', 'isolate'],
     description: 'Isolates a user - strips roles, moves to quarantine VC, DMs them. Default duration: 5m.',
     category: 'security',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -195,6 +196,7 @@ export const commands = [
   // --- UNQUARANTINE COMMAND ---
   {
     name: 'unquarantine',
+    aliases: ['unq', 'lift'],
     description: 'Restores a quarantined user to their original roles and lifts isolation.',
     category: 'security',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -239,6 +241,7 @@ export const commands = [
   // --- EMERGENCY COMMANDS ---
   {
     name: 'emergency',
+    aliases: ['em', 'panic'],
     slashHidden: true,
     description: 'Toggle Emergency Mode to strip permissions and hide channels.',
     category: 'security',
@@ -309,6 +312,7 @@ export const commands = [
   // --- LOCKDOWN COMMAND ---
   {
     name: 'lockdown',
+    aliases: ['ld', 'lock'],
     slashHidden: true,
     description: 'Toggles text channel lockdown (on/off) preventing anyone from sending messages.',
     category: 'security',
@@ -340,6 +344,7 @@ export const commands = [
   // --- RAIDMODE COMMAND ---
   {
     name: 'raidmode',
+    aliases: ['raid', 'rm'],
     slashHidden: true,
     description: 'Toggles raid protection (locks joining members by auto-quarantining them instantly).',
     category: 'security',
@@ -456,6 +461,7 @@ export const commands = [
   // --- BLACKLIST COMMAND ---
   {
     name: 'blacklist',
+    aliases: ['bl', 'wordfilter', 'wf'],
     description: 'Manages word filter blacklists. Messages matching these terms are deleted and warned.',
     category: 'security',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -521,6 +527,7 @@ export const commands = [
   // --- CONFIG COMMAND ---
   {
     name: 'config',
+    aliases: ['cfg', 'settings'],
     description: 'Dynamically adjusts system parameters, warning ceilings, and security toggles.',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
@@ -598,6 +605,7 @@ export const commands = [
   // --- ANTINUKE COMMAND ---
   {
     name: 'antinuke',
+    aliases: ['an', 'anti-nuke'],
     description: 'Configures the Anti-Nuke protections panel with buttons.',
     category: 'security',
     permissions: [],
@@ -1147,7 +1155,7 @@ export const commands = [
   // --- SECURITY COMMAND --- Enable/Disable ALL shields at once
   {
     name: 'security',
-    aliases: ['ss'],
+    aliases: ['ss', 'sec', 'shield'],
     description: 'Enables or disables ALL Athena Prime security features at once. (Bot Owner / Server Owner only)',
     category: 'security',
     permissions: [],
@@ -1356,6 +1364,7 @@ export const commands = [
   // --- MASSQUARANTINE COMMAND ---
   {
     name: 'massquarantine',
+    aliases: ['mq', 'massq'],
     description: 'Quarantine ALL members who have a specific role at once. (Admin only)',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
@@ -1395,6 +1404,7 @@ export const commands = [
   // --- MASSUNQUARANTINE COMMAND ---
   {
     name: 'massunquarantine',
+    aliases: ['muq', 'massunq'],
     description: 'Release ALL currently quarantined members in this server at once. (Admin only)',
     category: 'security',
     permissions: [PermissionFlagsBits.Administrator],
@@ -1414,6 +1424,7 @@ export const commands = [
   // --- SCAN SERVER COMMAND ---
   {
     name: 'scanserver',
+    aliases: ['scan', 'bots'],
     slashHidden: true,
     description: 'Scan the server for unauthorized bots and manage them.',
     category: 'security',

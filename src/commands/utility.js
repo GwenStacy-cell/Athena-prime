@@ -268,6 +268,7 @@ export const commands = [
   // --- PING COMMAND ---
   {
     name: 'ping',
+    aliases: ['p', 'latency'],
     description: 'Checks the bot and gateway latency.',
     category: 'utility',
     permissions: [],

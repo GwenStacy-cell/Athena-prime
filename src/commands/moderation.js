@@ -43,6 +43,7 @@ export const commands = [
   // --- MUTE COMMAND ---
   {
     name: 'mute',
+    aliases: ['m', 'silence'],
     description: 'Server-mutes one or more members in voice channels.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.MuteMembers],
@@ -167,6 +168,7 @@ export const commands = [
   // --- WARN COMMAND ---
   {
     name: 'warn',
+    aliases: ['w'],
     description: 'Issues a formal warning to a user and logs it.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -211,6 +213,7 @@ export const commands = [
   // --- WARNINGS COMMAND ---
   {
     name: 'warnings',
+    aliases: ['warns', 'infractions'],
     description: 'Shows active warnings for a member.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -243,6 +246,7 @@ export const commands = [
   // --- CLEARWARNS COMMAND ---
   {
     name: 'clearwarns',
+    aliases: ['cw', 'delwarns'],
     description: 'Clears all active warnings for a member.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -278,6 +282,7 @@ export const commands = [
   // --- TIMEOUT COMMAND ---
   {
     name: 'timeout',
+    aliases: ['to'],
     description: 'Places a member on timeout (native Discord mute).',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -334,6 +339,7 @@ export const commands = [
   // --- KICK COMMAND ---
   {
     name: 'kick',
+    aliases: ['k'],
     description: 'Kicks a member from the server.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.KickMembers],
@@ -377,6 +383,7 @@ export const commands = [
   // --- BAN COMMAND ---
   {
     name: 'ban',
+    aliases: ['b'],
     description: 'Permanently bans a member from the server.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.BanMembers],
@@ -625,6 +632,7 @@ export const commands = [
   // --- PURGE COMMAND ---
   {
     name: 'purge',
+    aliases: ['clear', 'clean', 'c'],
     description: 'Bulk deletes a specified number of messages from the channel (1-100).',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageMessages],
