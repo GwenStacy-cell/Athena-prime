@@ -1081,7 +1081,11 @@ export const commands = [
       category: 'security',
       permissions: [PermissionFlagsBits.Administrator],
       options: [],
-      async executePrefix(message) {
+      async executePrefix(message, args) {
+        if (args && args[0] && args[0].toLowerCase() === 'advanced') {
+          const panel = await getAdvancedConfigPanel(message.guild);
+          return message.reply(panel);
+        }
         const panel = await getAutoModPanel(message.guild);
         await message.reply(panel);
       },
