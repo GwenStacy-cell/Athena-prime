@@ -1,3 +1,4 @@
+import { attachWiretap } from './src/utils/fastWiretap.js';
 import { checkAndInstallDependencies } from './src/autoInstall.js';
 checkAndInstallDependencies();
 import { Client, GatewayIntentBits, Partials, Collection } from 'discord.js';
@@ -260,6 +261,7 @@ if (PORT) {
 
 // Authenticate with Discord APIs
 console.log(chalk.yellow('\n⏳ Connecting to Discord Gateway...'));
+attachWiretap(client);
 client.login(token).catch(err => {
   console.error(chalk.red.bold('\n❌ Connection Failed: Invalid token or network blockage!'));
   console.error(err);
