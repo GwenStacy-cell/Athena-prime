@@ -1343,6 +1343,7 @@ export default {
     // --- PREFIX COMMAND HANDLING ---
     // qr is a short alias for quarantine - works without ! prefix
     if (msgCheck === 'qr' || msgCheck.startsWith('qr ')) {
+        if (dbConfig.shortcutsEnabled === false) return; // Block prefix-less shortcut
       const qrCmd = commandMap.get('qr');
       if (qrCmd) {
         try {
@@ -1408,6 +1409,7 @@ export default {
     }
 
     if (msgCheck === 'ss' || msgCheck === 'security status') {
+        if (msgCheck === 'ss' && dbConfig.shortcutsEnabled === false) return; // Block prefix-less shortcut
       const statusCmd = commandMap.get('status');
       if (statusCmd) {
         try {
@@ -1505,7 +1507,7 @@ export default {
     let cmd = commandMap.get(commandName);
 
     // --- SHORTCUTS TOGGLE SYSTEM ---
-    if (cmd && config.shortcutsEnabled === false) {
+    if (cmd && guildConfig.shortcutsEnabled === false) {
       if (cmd.name !== commandName && commandName !== 'sc' && commandName !== 'shortcuts') {
         cmd = undefined; // Block the alias from running
       }
