@@ -1,3 +1,4 @@
+import { commands as shortcutsCmds } from './shortcuts.js';
 import { commands as botvoiceCmds } from './botvoice.js';
 import { commands as authCmds } from './auth.js';
 import { commands as tierCmds } from './tier.js';
@@ -144,6 +145,7 @@ export const allCommands = [
   ...rateLeaderboardCmds,
   ...adelCmds,
   ...botstatsCmds,
+  ...shortcutsCmds,
   uploadCmd,
   autoreactCmd,
   autoroleCmd,
