@@ -734,7 +734,7 @@ function buildHelpContainer(client, guildId, moduleId) {
           
           let formatted = cmd.replace(/!/g, prefix);
           let line = '';
-          if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('-A ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
+          if ((formatted.startsWith('**') && formatted.endsWith('**')) || formatted.startsWith('-A ') || formatted.startsWith('-# ') || formatted.startsWith('  - ') || formatted.startsWith('`bans`,')) {
             line = formatted;
           } else {
             line = `> **${formatted}**`;
