@@ -61,6 +61,7 @@ export async function scanImageForScam(url) {
     // Convert any image format (WebP/JPEG) to a standard PNG using Canvas
     // so Tesseract doesn't crash on unsupported pixel buffers.
     const img = await loadImage(buffer);
+    if (img.width < 50 || img.height < 50) return false;
     const canvas = createCanvas(img.width, img.height);
     const ctx = canvas.getContext('2d');
     
@@ -127,6 +128,7 @@ export async function getRawOCRText(url) {
     if (!res.ok) return 'Fetch failed';
     const buffer = await res.arrayBuffer().then(buf => Buffer.from(buf));
     const img = await loadImage(buffer);
+    if (img.width < 50 || img.height < 50) return 'Error: Image too small for OCR';
     const canvas = createCanvas(img.width, img.height);
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#ffffff';

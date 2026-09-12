@@ -231,8 +231,8 @@ export const commands = [
       
       let reply;
       try {
-        await interaction.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
-        reply = await interaction.fetchReply();
+        reply = await interaction.reply({ components: [components], flags: MessageFlags.IsComponentsV2, withResponse: true });
+        
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
       }
@@ -317,7 +317,7 @@ export const commands = [
         components: [{ type: 17, components: [{ type: 10, content: `-# <a:loading:1542155051286396938> **Athena Prime:** ${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}` }] }],
         flags: MessageFlags.IsComponentsV2 
       });
-      const sent = await interaction.fetchReply();
+      
       const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
       const wsMs  = Math.round(interaction.client.ws.ping);
 
@@ -665,7 +665,7 @@ function buildHelpContainer(client, guildId, moduleId) {
       let topText = `# Hey !!! , I am <@${botId}> ,\n\n`;
       topText += `> <a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
       topText += `> <a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
-      topText += `> <a:z_arrow_pink1:1523082728004653138> **Hint: For a detailed guide and instruction on any specific command, type `${prefix}help <command>` !**`;
+      topText += `> <a:z_arrow_pink1:1523082728004653138> **Hint: For a detailed guide and instruction on any specific command, type \`${prefix}help <command>\` !**`;
   
       rawComponents.push({ type: 10, content: topText });
       rawComponents.push({ type: 14, divider: true });
