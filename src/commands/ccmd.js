@@ -11,6 +11,9 @@ export const commands = [
     category: 'utilities',
     options: [],
     async executePrefix(message, args) {
+    const e = message.client.emojis.cache.find(emoji => emoji.name === 'customcmds');
+    const customcmdsEmoji = e ? `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>` : '<:config:1533844853048209489>';
+
       const config = db.getGuildConfig(message.guild.id);
       const managers = config.ccmdManagers || [];
       const isManager = message.member.permissions.has('Administrator') || managers.includes(message.author.id) || ['1509084068619489331'].includes(message.author.id) || message.author.id === message.guild.ownerId;
@@ -65,7 +68,7 @@ export const commands = [
         const container = {
             type: 17,
             components: [
-                { type: 10, content: `# <:customcmds:1523743516088209489> Ccmd\n\n> -# **Granted custom command access to <@${target.id}> .**` }
+                { type: 10, content: `# ${customcmdsEmoji} Ccmd\n\n> -# **Granted custom command access to <@${target.id}> .**` }
             ]
         };
         return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
@@ -83,7 +86,7 @@ export const commands = [
         return message.reply(cv2.success('Access Revoked', `<@${target.id}> no longer has access to custom commands.`));
       }
       else if (action === 'access') {
-        let text = `# <:customcmds:1523743516088209489> Custom Commands | Granted Access List\n\n`;
+        let text = `# ${customcmdsEmoji} Custom Commands | Granted Access List\n\n`;
         if (managers.length === 0) {
             text += `> -# **No users have been granted special access.**`;
         } else {
@@ -105,7 +108,7 @@ export const commands = [
       else if (action === 'list') {
         const keys = Object.keys(ccmds);
         
-        let text = `# <:customcmds:1523743516088209489> Custom Commands | Server Shortcuts\n\n`;
+        let text = `# ${customcmdsEmoji} Custom Commands | Server Shortcuts\n\n`;
         text += `> -# **Server:** ${message.guild.name} ( \`${message.guild.id}\` ) | **Total:** \`${keys.length}\` Shortcuts\n> \n`;
         
         if (keys.length === 0) {
