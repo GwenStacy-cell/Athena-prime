@@ -16,6 +16,48 @@ export default {
       }
     }
 
+    // ==========================================
+    // STARBOARD SYSTEM
+    // ==========================================
+    if (reaction.emoji.name === '⭐') {
+      const config = db.getGuildConfig(reaction.message.guildId);
+      if (config && config.starboardChannelId) {
+        const starboardChannel = reaction.message.guild.channels.cache.get(config.starboardChannelId);
+        if (starboardChannel) {
+          const threshold = config.starboardThreshold || 3;
+          if (reaction.count >= threshold) {
+            if (!reaction.client.starboardMessages) reaction.client.starboardMessages = new Set();
+            if (!reaction.client.starboardMessages.has(reaction.message.id)) {
+              reaction.client.starboardMessages.add(reaction.message.id);
+              
+              const starEmbed = {
+                color: 0xffac33,
+                author: {
+                  name: reaction.message.author.tag,
+                  icon_url: reaction.message.author.displayAvatarURL()
+                },
+                description: reaction.message.content + `\n\n[**Jump to message**](${reaction.message.url})`,
+                timestamp: new Date().toISOString(),
+                footer: { text: `⭐ ${reaction.count} | ID: ${reaction.message.id}` }
+              };
+              
+              if (reaction.message.attachments.size > 0) {
+                const img = reaction.message.attachments.first();
+                if (img.contentType && img.contentType.startsWith('image/')) {
+                  starEmbed.image = { url: img.url };
+                }
+              }
+              
+              starboardChannel.send({
+                content: `⭐ **${reaction.count}** <#${reaction.message.channelId}>`,
+                embeds: [starEmbed]
+              }).catch(() => null);
+            }
+          }
+        }
+      }
+    }
+
     const menu = db.getReactionRoleMenu(reaction.message.id);
     if (!menu) return;
 

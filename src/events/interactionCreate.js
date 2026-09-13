@@ -15,6 +15,14 @@ export default {
   name: 'interactionCreate',
   async execute(interaction) {
 
+    // --- SUGGESTION BUTTONS ---
+    if (interaction.isButton() && interaction.customId.startsWith('sug_')) {
+      import('../commands/community.js').then(m => {
+        if (m.handleSuggestionButtons) m.handleSuggestionButtons(interaction).catch(()=>{});
+      }).catch(()=>{});
+      return;
+    }
+
     // --- VC PANEL DROPDOWNS ---
     if (interaction.isStringSelectMenu() && interaction.customId === 'vcp_select') {
       const i = interaction;

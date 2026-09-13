@@ -28,6 +28,7 @@ import { commands as verifyCmds } from './verify.js';
 import { commands as ccmdCmds } from './ccmd.js';
 import { commands as qrCmds } from './qr.js';
 import { commands as backupCmds } from './backup.js';
+import { commands as communityCmds } from './community.js';
 import { commands as ticketCmds } from './ticket.js';
 import { commands as ticketPanelCmds } from './ticketpanel.js';
 import { commands as levelingCmds } from './leveling.js';
@@ -78,6 +79,7 @@ export const allCommands = [
   ...ccmdCmds,
   ...qrCmds,
   ...backupCmds,
+  ...communityCmds,
   ...botvoiceCmds,
   ...authCmds,
   ...tierCmds,
