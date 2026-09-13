@@ -321,6 +321,7 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
     [AuditLogEvent.WebhookDelete]:     mods.antiWebhooks,
     [AuditLogEvent.MemberBanAdd]:      mods.antiBan,
     [AuditLogEvent.MemberKick]:        mods.antiKick,
+      [AuditLogEvent.MemberPrune]:       mods.antiMemberPurge,
     [AuditLogEvent.BotAdd]:            mods.antiBotAdd,
       [1]: mods.antiServerUpdate, // GuildUpdate
       [11]: mods.antiRoleUpdate, // RoleUpdate
@@ -617,7 +618,13 @@ export async function handleAuditLogEntry(guild, entry) {
       eventType = 'Unauthorized Kick (Purge Module)';
       break;
 
-    case AuditLogEvent.MemberBanAdd:
+    case AuditLogEvent.MemberPrune:
+        if (!mods.antiMemberPurge) return;
+        eventType = 'Unauthorized Member Purge';
+        forceBan = true;
+        break;
+
+      case AuditLogEvent.MemberBanAdd:
       if (!mods.antiMassBan && !mods.antiBan) return;
       eventType = 'Unauthorized Ban (Mass Ban Module)';
       break;
@@ -663,15 +670,60 @@ export async function handleAuditLogEntry(guild, entry) {
     }
 
     if (action === AuditLogEvent.RoleUpdate) {
-      const permsChange = entry.changes?.find(c => c.key === 'permissions');
-      if (permsChange) {
         const r = guild.roles.cache.get(targetId);
         if (r) {
-          await r.setPermissions(BigInt(permsChange.old || 0), 'Athena Anti-Nuke: Reverted permission escalation').catch(() => null);
-          rollbackResult = ` Role **${r.name}** permissions reverted`;
+          const edits = {};
+          for (const change of entry.changes || []) {
+             if (change.key === 'permissions') edits.permissions = BigInt(change.old || 0);
+             if (change.key === 'name') edits.name = change.old;
+             if (change.key === 'color') edits.color = change.old;
+             if (change.key === 'hoist') edits.hoist = change.old;
+             if (change.key === 'mentionable') edits.mentionable = change.old;
+          }
+          if (Object.keys(edits).length > 0) {
+            await r.edit(edits, 'Athena Anti-Nuke: Reverted unauthorized role modifications').catch(() => null);
+            rollbackResult = ` Reverted modifications for role **${r.name}**`;
+          }
         }
       }
-    }
+
+      if (action === AuditLogEvent.ChannelUpdate) {
+        const ch = guild.channels.cache.get(targetId);
+        if (ch) {
+          const edits = {};
+          let permissionOverwrites = null;
+          for (const change of entry.changes || []) {
+             if (change.key === 'name') edits.name = change.old;
+             if (change.key === 'topic') edits.topic = change.old;
+             if (change.key === 'rate_limit_per_user') edits.rateLimitPerUser = change.old;
+             if (change.key === 'nsfw') edits.nsfw = change.old;
+             if (change.key === 'position') edits.position = change.old;
+             if (change.key === 'permission_overwrites') permissionOverwrites = change.old;
+          }
+          if (Object.keys(edits).length > 0) {
+             await ch.edit(edits, 'Athena Anti-Nuke: Reverted unauthorized channel modifications').catch(() => null);
+             rollbackResult = ` Reverted settings for <#${targetId}>`;
+          }
+          if (permissionOverwrites) {
+             const mapped = permissionOverwrites.map(o => ({
+               id: o.id, type: o.type, allow: BigInt(o.allow || 0), deny: BigInt(o.deny || 0)
+             }));
+             await ch.permissionOverwrites.set(mapped, 'Athena Anti-Nuke: Reverted permission tampering').catch(() => null);
+             rollbackResult = ` Reverted permissions for <#${targetId}>`;
+          }
+        }
+      }
+
+      if (action === AuditLogEvent.EmojiUpdate) {
+        const em = guild.emojis.cache.get(targetId);
+        if (em) {
+           const nameChange = entry.changes?.find(c => c.key === 'name');
+           if (nameChange && nameChange.old) {
+              await em.edit({ name: nameChange.old }, 'Athena Anti-Nuke: Reverted emoji rename').catch(() => null);
+              rollbackResult = ` Reverted emoji rename for ${em.name}`;
+           }
+        }
+      }
 
     if (action === AuditLogEvent.GuildUpdate) {
       const rollbacks = [];
