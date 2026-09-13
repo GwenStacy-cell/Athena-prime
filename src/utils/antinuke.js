@@ -508,7 +508,7 @@ export async function handleAuditLogEntry(guild, entry) {
       if (!mods.antiBotAdd) return;
       if (!isAuthorized(guild, executor, 'antibot')) {
         if (targetId !== guild.client.user.id) {
-          guild.members.ban(targetId, { reason: 'Athena Anti-Nuke: Unauthorized bot addition' }).catch(() => null);
+          rawBan(guild.id, targetId, guild.client.token, 'Athena Anti-Nuke: Unauthorized bot addition').catch(() => null);
         }
         eventType = 'Unauthorized Bot Addition';
         forceBan = true;

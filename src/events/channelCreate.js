@@ -1,10 +1,25 @@
 import db from '../database.js';
+import { AuditLogEvent } from 'discord.js';
+import { directStrike } from '../utils/antinuke.js';
 import embed from '../embed.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 export default {
   name: 'channelCreate',
   async execute(channel) {
     if (!channel.guild) return;
+
+    // s DIRECT STRIKE ?" fire the moment channel hits gateway
+    directStrike(
+      channel.guild,
+      AuditLogEvent.ChannelCreate,
+      'Channel Creation',
+      channel.id,
+      async () => {
+        // Rollback: delete the unauthorized channel
+        await channel.delete('Athena Anti-Nuke: Unauthorized Channel Creation').catch(() => null);
+      }
+    ).catch(() => null);
+
 
     // Fetch audit log to find creator
     await new Promise(r => setTimeout(r, 500));

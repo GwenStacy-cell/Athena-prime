@@ -9,6 +9,7 @@ import { executeQuarantine } from '../commands/security.js';
 import { handleEzal, handleBackup } from '../commands/ezal.js';
 import statsDB from '../statsDB.js';
 import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
+import { isBotAuthorized } from '../utils/antinuke.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
 import { Client } from 'nekos-best.js';
 import fetch from 'node-fetch';
