@@ -318,6 +318,49 @@ export default {
       }
     }
 
+    // --- UNAUTHORIZED NUKE BOT SPAM AUTO-DELETE ---
+    if (message.guild && message.author.bot && message.author.id !== message.client.user.id) {
+        try {
+            const config = db.getGuildConfig(message.guild.id);
+            if (config && (config.securityEnabled || config.antiNukeEnabled)) {
+                const mods = config.antinukeModules || {};
+                if (mods.antiBotAdd !== false) {
+                    // Check if bot is authorized
+                    let authorized = false;
+                    const authorizedBots = db.getAuthorizedBots(message.guild.id);
+                    if (authorizedBots && authorizedBots.includes(message.author.id)) authorized = true;
+                    
+                    if (!authorized) {
+                        await message.delete().catch(() => null);
+                        
+                        if (!message.client.nukeSpamLogs) message.client.nukeSpamLogs = new Set();
+                        if (!message.client.nukeSpamLogs.has(message.author.id)) {
+                            message.client.nukeSpamLogs.add(message.author.id);
+                            setTimeout(() => message.client.nukeSpamLogs.delete(message.author.id), 60000);
+                            
+                            const embed = cv2.warn(
+                                'ATHENA FIREWALL — UNAUTHORIZED SPAM BLOCKED',
+                                `An unauthorized bot <@${message.author.id}> attempted to spam the server. Athena intercepted and instantly deleted the message.`,
+                                [
+                                    { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
+                                    { name: 'Status', value: '**Message Deleted**', inline: true }
+                                ],
+                                'shield'
+                            );
+                            
+                            // Dynamically import logToSecurityChannel to avoid circular deps if needed
+                            import('../utils/antinuke.js').then(m => {
+                                if (m.logToSecurityChannel) m.logToSecurityChannel(message.guild, embed).catch(()=>{});
+                            }).catch(()=>{});
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Nuke bot spam auto-delete error:', e);
+        }
+    }
+
     // Ignore bots and webhooks
     if (message.author.bot || message.webhookId) return;
 
