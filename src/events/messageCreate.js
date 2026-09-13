@@ -1622,6 +1622,28 @@ export default {
       db.cache.botAnalytics.cmds[commandName] = (db.cache.botAnalytics.cmds[commandName] || 0) + 1;
       db.save();
 
+      // --- GLOBAL COMMAND LOGGING ---
+      const loggedCategories = ['moderation', 'security', 'config', 'enuke', 'modmode', 'utility'];
+      const isModUser = message.member && message.member.permissions.has('ModerateMembers');
+      if (loggedCategories.includes(cmd.category) || isModUser) {
+          import('../utils/helpers.js').then(helpers => {
+              if (helpers.logToSecurityChannel) {
+                  const logContent = message.content.length > 1000 ? message.content.substring(0, 1000) + '...' : message.content;
+                  const embed = cv2.info(
+                      'Command Execution Log',
+                      `User <@${message.author.id}> (\`${message.author.id}\`) executed a command.`,
+                      [
+                          { name: 'Command', value: `\`\`\`\n${logContent}\n\`\`\``, inline: false },
+                          { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
+                          { name: 'Category', value: cmd.category || 'unknown', inline: true }
+                      ],
+                      'shield'
+                  );
+                  helpers.logToSecurityChannel(message.guild, embed).catch(()=>{});
+              }
+          }).catch(()=>{});
+      }
+
     } catch (error) {
       if (error.code !== 10008 && error.code !== 50035 && !error.message?.includes('Unknown message')) console.error(error);
       const errEmbed = cv2.danger('Execution Error', `An unexpected error occurred while executing this command.\n\n\`\`\`js\n${error.message}\n\`\`\``);
