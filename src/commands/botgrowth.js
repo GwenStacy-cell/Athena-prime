@@ -1,61 +1,95 @@
-import { EmbedBuilder, PermissionFlagsBits } from 'discord.js';
-
+﻿import { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, InteractionType } from 'discord.js';
 import db from '../database.js';
 
 export const commands = [
   {
     name: 'bjoins',
-    aliases: ['bjoin', 'botjoins'],
-    description: 'View recent bot join statistics.',
+    aliases: ['bjoin', 'botjoins', 'bleaves', 'bleave', 'botleaves', 'bservers', 'bsummary'],
+    description: 'Interactive Bot Growth Manager.',
     category: 'utilities',
     permissions: [],
     async executePrefix(message, args) {
+      const client = message.client;
       const stats = db.cache.botAnalytics || { joins: 0, leaves: 0, cmds: {} };
       const cfg = db.getGuildConfig(message.guild?.id || '0');
       const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
 
-      const e = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`<a:AnyaYay:1537513785718476850> **Bot Joins:** ${stats.joins} Servers Joined`);
+      // Ensure lists exist
+      if (!stats.recentJoins) stats.recentJoins = [];
+      if (!stats.recentLeaves) stats.recentLeaves = [];
 
-      await message.reply({ embeds: [e] });
-    }
-  },
-  {
-    name: 'bleaves',
-    aliases: ['bleave', 'botleaves'],
-    description: 'View recent bot leave statistics.',
-    category: 'utilities',
-    permissions: [],
-    async executePrefix(message, args) {
-      const stats = db.cache.botAnalytics || { joins: 0, leaves: 0, cmds: {} };
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
+      const generateEmbed = (type) => {
+        const e = new EmbedBuilder().setColor(accentInt);
+        
+        if (type === 'current') {
+            const servers = [...client.guilds.cache.values()].sort((a,b) => b.memberCount - a.memberCount).slice(0, 15);
+            let desc = '<:emoji_16:1521464002046328944> **Top 15 Live Servers (by Member Count):**\n\n';
+            servers.forEach((g, i) => {
+                desc += `**${i+1}.** ${g.name} (\`${g.id}\`) - 👤 ${g.memberCount}\n`;
+            });
+            desc += `\n**Total Servers:** ${client.guilds.cache.size} | **Total Users:** ${client.guilds.cache.reduce((acc, g) => acc + g.memberCount, 0)}`;
+            e.setDescription(desc);
+        }
+        else if (type === 'joins') {
+            let desc = '<a:AnyaYay:1537513785718476850> **Recent Joins (Last 20):**\n\n';
+            if (stats.recentJoins.length === 0) desc += '*No recent joins recorded.*\n';
+            stats.recentJoins.forEach((g, i) => {
+                desc += `**${i+1}.** ${g.name} (\`${g.id}\`) - 👤 ${g.memberCount || '?'} | By: ${g.addedBy || 'Unknown'}\n`;
+            });
+            e.setDescription(desc);
+        }
+        else if (type === 'leaves') {
+            let desc = '<:emoji_16:1521464002046328944> **Recent Leaves (Last 20):**\n\n';
+            if (stats.recentLeaves.length === 0) desc += '*No recent leaves recorded.*\n';
+            stats.recentLeaves.forEach((g, i) => {
+                desc += `**${i+1}.** ${g.name} (\`${g.id}\`)\n`;
+            });
+            e.setDescription(desc);
+        }
+        return e;
+      };
 
-      const e = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`⚠️ **Bot Leaves:** ${stats.leaves} Servers Left`);
+      const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId('growth_select')
+        .setPlaceholder('Select a list to view...')
+        .addOptions(
+          { label: 'Current Live Servers', value: 'current', emoji: '🌐' },
+          { label: 'Recent Joins', value: 'joins', emoji: '📥' },
+          { label: 'Recent Leaves', value: 'leaves', emoji: '📤' }
+        );
 
-      await message.reply({ embeds: [e] });
-    }
-  },
-  {
-    name: 'bsummary',
-    aliases: ['bgrowth', 'bjoinssummary'],
-    description: 'View bot join and growth summary.',
-    category: 'utilities',
-    permissions: [],
-    async executePrefix(message, args) {
-      const stats = db.cache.botAnalytics || { joins: 0, leaves: 0, cmds: {} };
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
-      const net = stats.joins - stats.leaves;
+      const banBtn = new ButtonBuilder()
+        .setCustomId('ban_server_btn')
+        .setLabel('Ban a Server')
+        .setStyle(ButtonStyle.Danger)
+        .setEmoji('🔨');
 
-      const e = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`<:emoji_25:1515041866796503180> **Growth Summary:**\n> Joins: ${stats.joins}\n> Leaves: ${stats.leaves}\n> Net Growth: ${net > 0 ? '+' : ''}${net}`);
+      const row1 = new ActionRowBuilder().addComponents(selectMenu);
+      const row2 = new ActionRowBuilder().addComponents(banBtn);
 
-      await message.reply({ embeds: [e] });
+      const msg = await message.reply({ embeds: [generateEmbed('current')], components: [row1, row2] });
+
+      const collector = msg.createMessageComponentCollector({ filter: i => i.user.id === message.author.id, time: 120000 });
+
+      collector.on('collect', async i => {
+          if (i.isStringSelectMenu()) {
+              await i.update({ embeds: [generateEmbed(i.values[0])] });
+          } else if (i.isButton()) {
+              const modal = new ModalBuilder()
+                .setCustomId('ban_server_modal')
+                .setTitle('Ban Server');
+              
+              const serverIdInput = new TextInputBuilder()
+                .setCustomId('server_id')
+                .setLabel('Server ID to Ban:')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+                .setPlaceholder('e.g. 123456789012345678');
+                
+              modal.addComponents(new ActionRowBuilder().addComponents(serverIdInput));
+              await i.showModal(modal);
+          }
+      });
     }
   },
   {
@@ -86,29 +120,6 @@ export const commands = [
       const e = new EmbedBuilder()
         .setColor(accentInt)
         .setDescription(`<a:AnyaYay:1537513785718476850> **Top 10 Executed Commands:**\n\n${lines.join('\n')}\n\n**Total Commands Executed:** ${total}`);
-
-      await message.reply({ embeds: [e] });
-    }
-  },
-  {
-    name: 'bservers',
-    aliases: ['bmem', 'bping'],
-    description: 'View active bot servers, memory & latency.',
-    category: 'utilities',
-    permissions: [],
-    async executePrefix(message, args) {
-      const client = message.client;
-      const serverCount = client.guilds.cache.size;
-      const memberCount = client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
-      const ping = Math.round(client.ws.ping);
-      const memUsage = process.memoryUsage().heapUsed / 1024 / 1024;
-
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentInt = cfg.accentColor ? parseInt(cfg.accentColor.replace('#', ''), 16) : 0x2b2d31;
-
-      const e = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`<:emoji_25:1515041866796503180> **Live Bot Metrics:**\n> **Servers:** ${serverCount}\n> **Users:** ${memberCount}\n> **Latency:** ${ping}ms\n> **RAM Usage:** ${Math.round(memUsage)} MB`);
 
       await message.reply({ embeds: [e] });
     }
