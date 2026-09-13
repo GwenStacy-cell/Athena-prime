@@ -679,6 +679,7 @@ export async function handleAuditLogEntry(guild, entry) {
              if (change.key === 'color') edits.color = change.old;
              if (change.key === 'hoist') edits.hoist = change.old;
              if (change.key === 'mentionable') edits.mentionable = change.old;
+             if (change.key === 'position') edits.position = change.old;
           }
           if (Object.keys(edits).length > 0) {
             await r.edit(edits, 'Athena Anti-Nuke: Reverted unauthorized role modifications').catch(() => null);
