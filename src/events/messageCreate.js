@@ -327,8 +327,10 @@ export default {
                 if (mods.antiBotAdd !== false) {
                     // Check if bot is authorized
                     let authorized = false;
-                    const authorizedBots = db.getAuthorizedBots(message.guild.id);
-                    if (authorizedBots && authorizedBots.includes(message.author.id)) authorized = true;
+                    try {
+                        const m = await import('../utils/antinuke.js');
+                        if (m.isBotAuthorized) authorized = m.isBotAuthorized(message.guild, message.author.id);
+                    } catch(e) {}
                     
                     if (!authorized) {
                         await message.delete().catch(() => null);
