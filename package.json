@@ -42,7 +42,8 @@
     "shoukaku": "^4.3.0",
     "snapsave-media-downloader": "^2.4.1",
     "tesseract.js": "^7.0.0",
-    "@discordjs/opus": "^0.10.0"
+    "@discordjs/opus": "^0.10.0",
+    "chess.js": "^1.4.0"
   },
   "devDependencies": {
     "jimp": "^1.6.1",
