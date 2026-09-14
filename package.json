@@ -10,7 +10,6 @@
     "deploy": "node deploy-commands.js"
   },
   "dependencies": {
-    "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.19.2",
     "@fontsource/inter": "^5.2.8",
     "@mrnima/instagram-downloader": "^1.0.0",
@@ -21,7 +20,6 @@
     "canvas": "^3.2.3",
     "chalk": "^5.3.0",
     "cheerio": "^1.2.0",
-    "chess.js": "^1.4.0",
     "cron": "^4.4.0",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
@@ -43,7 +41,8 @@
     "rss-parser": "^3.13.0",
     "shoukaku": "^4.3.0",
     "snapsave-media-downloader": "^2.4.1",
-    "tesseract.js": "^7.0.0"
+    "tesseract.js": "^7.0.0",
+    "@discordjs/opus": "^0.10.0"
   },
   "devDependencies": {
     "jimp": "^1.6.1",
