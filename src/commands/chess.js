@@ -1,4 +1,4 @@
-﻿import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { Chess } from 'chess.js';
 import cv2 from '../cv2.js';
 
@@ -191,28 +191,18 @@ export async function handleChessMove(message) {
 }
 
 export async function handleChessThemeSelect(interaction) {
-    const theme = interaction.values[0];
+    await interaction.deferUpdate().catch(()=>{});
     
-    // Send preview!
+    const theme = interaction.values[0];
     const fen = new Chess().fen();
     const encodedFen = encodeURIComponent(fen);
     const imageUrl = `https://www.chess.com/dynboard?fen=${encodedFen}&board=${theme}&piece=neo&size=3`;
     
-    const container = {
-        type: 17,
-        components: [
-            { type: 10, content: `## **Theme Preview: ${theme}**` },
-            { type: 14, divider: true },
-            { type: 11, media: { url: imageUrl } }
-        ]
-    };
-    
-    // Keep dropdown, add apply button
     const rowSelect = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
             .setCustomId('chess_theme_select')
             .setPlaceholder(`Previewing: ${theme}`)
-            .addOptions(THEMES)
+            .addOptions(THEMES.slice(0, 20))
     );
     
     const rowButton = new ActionRowBuilder().addComponents(
@@ -222,36 +212,53 @@ export async function handleChessThemeSelect(interaction) {
             .setStyle(ButtonStyle.Secondary)
     );
     
-    await interaction.update({
+    const container = {
+        type: 17,
+        components: [
+            { type: 10, content: `## **Theme Preview: ${theme}**` },
+            { type: 14, divider: true },
+            { type: 11, media: { url: imageUrl } },
+            { type: 14, divider: true },
+            rowSelect.toJSON(),
+            rowButton.toJSON()
+        ]
+    };
+        
+    await interaction.editReply({
         content: '',
-        components: [container, rowSelect.toJSON(), rowButton.toJSON()],
+        components: [container],
+        embeds: [],
         flags: MessageFlags.IsComponentsV2
     }).catch(async (e) => {
-        // Fallback if CV2 container with media fails
-        const embed = { image: { url: imageUrl }, color: 0x2b2d31 };
-        await interaction.message.edit({
-            content: `-# **Previewing: ${theme}**`,
+        // Absolute worst case fallback if Discord rejects Type 11 media
+        const embed = new EmbedBuilder()
+            .setTitle(`Theme Preview: ${theme}`)
+            .setImage(imageUrl)
+            .setColor(0x2b2d31);
+        await interaction.editReply({
             embeds: [embed],
-            components: [rowSelect, rowButton]
+            components: [rowSelect, rowButton],
+            flags: 0
         }).catch(()=>null);
     });
 }
 
 export async function handleChessThemeApply(interaction) {
+    await interaction.deferUpdate().catch(()=>{});
+    
     const theme = interaction.customId.replace('chess_theme_apply_', '');
     interaction.client.globalChessTheme = theme;
     
     if (interaction.client.chessGames && interaction.client.chessGames.has(interaction.user.id)) {
         const game = interaction.client.chessGames.get(interaction.user.id);
         game.theme = theme;
-        // Don't clutter chat with preview update if in-game, just delete preview and re-render game
         await interaction.message.delete().catch(()=>null);
         if (game.lastMessage) game.lastMessage.delete().catch(()=>null);
         await renderBoard(interaction.channel, game, game.chess.isGameOver());
         const confirmMsg = await interaction.channel.send(`-# **Theme updated seamlessly in your active game!**`).catch(()=>null);
         if (confirmMsg) setTimeout(() => confirmMsg.delete().catch(()=>null), 4000);
     } else {
-        await interaction.update({ 
+        await interaction.editReply({ 
             content: `-# **Theme successfully applied! Future games will use the ${theme} aesthetic.**`, 
             components: [], 
             embeds: [],
