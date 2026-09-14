@@ -1,4 +1,4 @@
-﻿import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, MessageFlags, EmbedBuilder } from 'discord.js';
+import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, MessageFlags, EmbedBuilder } from 'discord.js';
 import { Chess } from 'chess.js';
 import cv2 from '../cv2.js';
 
@@ -237,12 +237,20 @@ export async function handleChessThemeSelect(interaction) {
         .setImage(imageUrl + '&ext=.png')
         .setColor(0x2b2d31);
         
-    await interaction.editReply({
-        content: '',
-        embeds: [embed],
-        components: [rowSelect, rowButton],
-        flags: 0
-    }).catch(()=>null);
+    if (interaction.message.flags.has(MessageFlags.IsComponentsV2)) {
+        await interaction.message.delete().catch(()=>null);
+        await interaction.channel.send({
+            embeds: [embed],
+            components: [rowSelect, rowButton]
+        }).catch(()=>null);
+    } else {
+        await interaction.editReply({
+            content: '',
+            embeds: [embed],
+            components: [rowSelect, rowButton],
+            flags: 0
+        }).catch(()=>null);
+    }
 }
 
 export async function handleChessThemeApply(interaction) {
