@@ -782,7 +782,7 @@ function buildHelpContainer(client, guildId, moduleId) {
     ]);
   
     // We can only fit 25 options. 1 Home + 24 Modules = 25 exactly!
-    for (const mod of helpModules) {
+    for (const mod of helpModules.slice(0, 24)) {
       selectMenu.addOptions([
         {
           label: mod.label,
