@@ -1,4 +1,4 @@
-﻿import { MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import db from '../database.js';
 
 const TICK = '<a:black_dot:1544740123403620422>';
@@ -19,7 +19,7 @@ export function getYtStatsPanel(guildId, client) {
 
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('ytstats_bind').setLabel('Bind Existing VC').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('ytstats_auto').setLabel('Auto-Setup Channels').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('ytstats_auto').setLabel('Add YouTube Channel').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('ytstats_clear').setLabel('Wipe All Configs').setStyle(ButtonStyle.Danger),
     new ButtonBuilder().setCustomId('ytstats_refresh').setLabel('Force Refresh').setStyle(ButtonStyle.Success),
     new ButtonBuilder().setCustomId('ytstats_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
@@ -70,12 +70,32 @@ export async function handleYtStatsButton(interaction) {
   }
   
   if (interaction.customId === 'ytstats_clear') {
+    await interaction.deferUpdate();
+    const config = db.getGuildConfig(interaction.guild.id) || {};
+    const ytStats = config.ytStats || [];
+    
+    const categoriesToDelete = new Set();
+    for (const stat of ytStats) {
+      const channel = interaction.guild.channels.cache.get(stat.channelId);
+      if (channel) {
+        if (channel.parentId) categoriesToDelete.add(channel.parentId);
+        await channel.delete().catch(() => null);
+      }
+    }
+    
+    for (const catId of categoriesToDelete) {
+      const category = interaction.guild.channels.cache.get(catId);
+      if (category && category.name.includes('▶')) {
+        await category.delete().catch(() => null);
+      }
+    }
+    
     db.updateGuildConfig(interaction.guild.id, { ytStats: [] });
-    return interaction.update(getYtStatsPanel(interaction.guild.id, interaction.client));
+    return interaction.editReply(getYtStatsPanel(interaction.guild.id, interaction.client));
   }
   
   if (interaction.customId === 'ytstats_auto') {
-    const modal = new ModalBuilder().setCustomId('ytstats_auto_modal').setTitle('Auto-Setup YT Channels');
+    const modal = new ModalBuilder().setCustomId('ytstats_auto_modal').setTitle('Add YouTube Channel');
     modal.addComponents(
       new ActionRowBuilder().addComponents(
         new TextInputBuilder()
