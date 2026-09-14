@@ -1,10 +1,16 @@
 ﻿import fs from "fs";
 let js = fs.readFileSync("src/commands/loader.js", "utf8");
 
-const importCode = "import uploadCmd from './upload.js';\nimport autoreactCmd from './autoreact.js';";
-js = js.replace("import uploadCmd from './upload.js';", importCode);
+// Add import
+const importStr = "import { commands as shortcutsCmds } from './shortcuts.js';\n";
+if (!js.includes(importStr)) {
+    js = importStr + js;
+}
 
-const arrayCode = "  uploadCmd,\n  autoreactCmd\n];";
-js = js.replace("  uploadCmd\n];", arrayCode);
+// Add to allCommands array
+if (!js.includes("...shortcutsCmds,")) {
+    js = js.replace("uploadCmd,", "...shortcutsCmds,\n  uploadCmd,");
+}
 
 fs.writeFileSync("src/commands/loader.js", js);
+console.log("Updated loader.js");

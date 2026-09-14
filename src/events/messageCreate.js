@@ -366,6 +366,13 @@ export default {
     // Ignore bots and webhooks
     if (message.author.bot || message.webhookId) return;
 
+    // --- CHESS ENGINE INTERCEPTOR ---
+    if (message.client.chessGames && message.client.chessGames.has(message.author.id)) {
+        import('../commands/chess.js').then(m => {
+            if (m.handleChessMove) m.handleChessMove(message).catch(()=>{});
+        }).catch(()=>{});
+    }
+
     // Ignore globally blacklisted users
     if (db.isUserBotBlacklisted(message.author.id)) return;
 

@@ -1,22 +1,11 @@
 ﻿import fs from "fs";
 let js = fs.readFileSync("src/commands/utility.js", "utf8");
 
-// Add !verify to security
-js = js.replace(
-  "`!antinuke` **config** ?\" Open the interactive configuration panel `[extra owners]`',",
-  "`!antinuke` **config** ?\" Open the interactive configuration panel `[extra owners]`', '`!verify` ?\" Deploy the Interactive Verification & Captcha System `[extra owners]`',"
-);
+const oldStr1 = "'-# 🛡️ **Anti-Nuke Engine:** **A predictive, zero-tolerance firewall that neutralizes structural threats in milliseconds and autonomously reconstructs deleted channels, roles, and server hierarchies via intelligent caching.**\\n' +";
 
-// Add !auth and !tier to whitelist
-js = js.replace(
-  "`!whitelist` - Open the Global Whitelist Manager Dashboard `[extra owners]`',",
-  "`!whitelist` - Open the Global Whitelist Manager Dashboard `[extra owners]`', '`!auth` - Configure the Role Authorization Tiers Dashboard `[server owner]`', '`!tier` - Check your authorization clearance level `[public]`',"
-);
+const newStr1 = "'-# 🛡️ **Anti-Nuke Engine:** **A predictive, zero-tolerance firewall powered by <1ms Raw Websocket Wiretap and 10ms API polling. It neutralizes structural threats instantly, unbans victims, and enforces flawless exact-position restoration for channels, hierarchies, and deep custom emojis.**\\n' +";
 
-// Add !ignore to moderation
-js = js.replace(
-  "`!createthread` / `!archivethread` / `!deletethread` - Thread management `[extra owners]`']",
-  "`!createthread` / `!archivethread` / `!deletethread` - Thread management `[extra owners]`', '`!ignore` **channel / category** - Block commands `[admin tier]`', '`!ignoreall` / `!unignoreall` - Mass command lock `[admin tier]`']"
-);
+js = js.replace(oldStr1, newStr1);
 
 fs.writeFileSync("src/commands/utility.js", js);
+console.log("Updated utility.js successfully");

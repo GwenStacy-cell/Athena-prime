@@ -2,9 +2,9 @@
 
 let js = fs.readFileSync("src/commands/utility.js", "utf8");
 
-// Extract the helpModules array
 const startIdx = js.indexOf("const helpModules = [");
-const endIdx = js.indexOf("  ];\n  \n  const HELP_GIF") + 4;
+const newsfeedIdx = js.indexOf("newsfeed", startIdx);
+const endIdx = js.indexOf("];", newsfeedIdx) + 2;
 
 const newHelpModules = `const helpModules = [
     { id: 'antinuke', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Anti-Nuke', label: 'Anti-Nuke Engine', emoji: 'antinuke', commands: [
@@ -259,7 +259,7 @@ const newHelpModules = `const helpModules = [
       "\`!setup\` - Quick-bind logs, qr VC, qr role \`[extra owners]\`",
       "\`!dev\` - View Developer details \`[public]\`",
       "\`!calc / !calculator\` - Interactive calculator \`[public]\`",
-      "\`!upload \"name.exe\"\` - Upload executable file safely \`[public]\`",
+      "\`!upload \\\"name.exe\\\"\` - Upload executable file safely \`[public]\`",
       "\`!quote <msg_id>\` - Canvas quote \`[public]\`",
       "\`!quotemaker\` - Quote generator \`[public]\`",
       "\`!quote setchannel\` - Auto-quote channel \`[admin]\`",
@@ -311,7 +311,6 @@ const newHelpModules = `const helpModules = [
     ] }
   ];`;
 
-const newJs = js.substring(0, startIdx) + newHelpModules + js.substring(endIdx - 2); // 2 spaces before ];
-
+const newJs = js.substring(0, startIdx) + newHelpModules + js.substring(endIdx);
 fs.writeFileSync("src/commands/utility.js", newJs);
-console.log("Updated helpModules heavily!");
+console.log("Safely updated helpModules with immense detail!");
