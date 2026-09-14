@@ -212,11 +212,16 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
         const owner = guild.members.cache.get(guild.ownerId)
           ?? await guild.members.fetch(guild.ownerId).catch(() => null);
         if (owner) {
+          const isFailure = punishResult.startsWith('Total failure') || punishResult.startsWith('Hierarchy blocked');
+          const desc = isFailure 
+            ? `<:emoji_16:1521464002046328944> **URGENT:** A hostile action was detected on **${guild.name}**, but **COULD NOT BE NEUTRALIZED** because the attacker's role is higher than mine in the Discord Server Settings!\n\n**Please intervene immediately and move my role higher!**`
+            : `A hostile action was detected, neutralized, and reversed on **${guild.name}** in milliseconds.`;
+          
           await owner.send(cv2.danger(
-            'CRITICAL: Athena Firewall Engaged',
-            `A hostile action was detected, neutralized, and reversed on **${guild.name}** in milliseconds.`,
+            isFailure ? 'CRITICAL: Athena Firewall Bypassed' : 'CRITICAL: Athena Firewall Engaged',
+            desc,
             [
-              { name: 'Eliminated',  value: `**${executor.tag}** (\`${executor.id}\`)` },
+              { name: 'Attacker',    value: `**${executor.tag}** (\`${executor.id}\`)` },
               { name: 'Attack Type', value: `\`${eventType}\`` },
               { name: 'Verdict',     value: `**${punishResult}**` },
               { name: 'Rollback',    value: `${rollbackResult}` }
@@ -280,12 +285,14 @@ async function punish(guild, executor, eventType, config, forceBan = true) {
         }
       }
 
-      // DM fire-and-forget
-      guild.members.fetch(executor.id).then(m => {
-        m?.send(cv2.danger('Eliminated — Athena Prime Firewall',
-          `You have been permanently banned from **${guild.name}**.\n\n**Violation:** ${eventType}\n\n*Athena Prime detected and neutralized your attack in milliseconds.*`
-        )).catch(() => null);
-      }).catch(() => null);
+      // DM fire-and-forget (ONLY if actually punished)
+      if (!result.startsWith('Total failure') && !result.startsWith('Hierarchy blocked')) {
+        guild.members.fetch(executor.id).then(m => {
+          m?.send(cv2.danger('Eliminated — Athena Prime Firewall',
+            `You have been permanently banned from **${guild.name}**.\n\n**Violation:** ${eventType}\n\n*Athena Prime detected and neutralized your attack in milliseconds.*`
+          )).catch(() => null);
+        }).catch(() => null);
+      }
 
     } else if (punishment === 'kick') {
       const executorMember = await guild.members.fetch(executor.id).catch(() => null);
