@@ -1,18 +1,20 @@
-import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags, EmbedBuilder } from 'discord.js';
+﻿import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags, EmbedBuilder } from 'discord.js';
 import { Chess } from 'chess.js';
 import cv2 from '../cv2.js';
 
 const THEMES = [
-    { label: 'Brown Classic', value: 'brown' },
-    { label: 'Blue Modern', value: 'blue' },
-    { label: 'Green Board', value: 'green' },
-    { label: 'Purple Dark', value: 'purple' },
-    { label: 'Wood Texture', value: 'wood' },
-    { label: 'Maple Texture', value: 'maple' },
-    { label: 'Blue Alt', value: 'blue3' },
-    { label: 'Canvas Fabric', value: 'canvas' },
-    { label: 'Metal Steel', value: 'metal' },
-    { label: 'Pink Aesthetic', value: 'pink' }
+    { label: 'Tournament Green', value: 'tournament' },
+    { label: 'Walnut Wood', value: 'walnut' },
+    { label: 'Glass Board', value: 'glass' },
+    { label: 'Burled Wood', value: 'burled_wood' },
+    { label: 'Icy Sea', value: 'icy_sea' },
+    { label: 'Bases', value: 'bases' },
+    { label: '8-Bit Retro', value: '8_bit' },
+    { label: 'Marble Texture', value: 'marble' },
+    { label: 'Sky Blue', value: 'sky' },
+    { label: 'Stone Texture', value: 'stone' },
+    { label: 'Classic Brown', value: 'brown' },
+    { label: 'Classic Green', value: 'green' }
 ];
 
 export const commands = [
@@ -23,11 +25,21 @@ export const commands = [
     permissions: [],
     async executePrefix(message, args) {
       if (!args[0]) {
-        return message.reply(cv2.info('Athena Chess', 'Usage:\n`!chess ai` - Play against Cloud Stockfish\n`!chess @user` - Play against a friend\n`!chess stop` - End current game'));
+        return message.reply(cv2.info('Athena Chess', 'Usage:\n`!chess ai` - Play against Cloud Stockfish\n`!chess @user` - Play against a friend\n`!chess theme` - Change board style\n`!chess stop` - End current game'));
       }
       
       const client = message.client;
       if (!client.chessGames) client.chessGames = new Map();
+      
+      if (args[0].toLowerCase() === 'theme' || args[0].toLowerCase() === 'themes') {
+        const row = new ActionRowBuilder().addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('chess_theme')
+                .setPlaceholder('Select a Chessboard Theme...')
+                .addOptions(THEMES.slice(0, 10)) // Discord limits to 25, 10 is fine
+        );
+        return message.reply({ content: '-# **Select your preferred Chessboard aesthetic (applies globally):**', components: [row] });
+      }
       
       if (args[0].toLowerCase() === 'stop' || args[0].toLowerCase() === 'resign') {
         const game = client.chessGames.get(message.author.id);
@@ -47,7 +59,7 @@ export const commands = [
       const targetUser = message.mentions.users.first();
       
       if (!isAI && !targetUser) {
-         return message.reply(cv2.info('Athena Chess', 'Usage:\n`!chess ai` - Play against Stockfish\n`!chess @user` - Play against a friend'));
+         return message.reply(cv2.info('Athena Chess', 'Usage:\n`!chess ai` - Play against Stockfish\n`!chess @user` - Play against a friend\n`!chess theme` - Change board style'));
       }
       
       if (targetUser && targetUser.id === message.author.id) {
@@ -59,12 +71,12 @@ export const commands = [
       }
       
       const newGame = {
-         id: message.author.id, // Game ID
+         id: message.author.id,
          chess: new Chess(),
          playerWhite: message.author.id,
          playerBlack: isAI ? 'ai' : targetUser.id,
          channelId: message.channel.id,
-         theme: 'brown',
+         theme: client.globalChessTheme || 'tournament',
          lastMessage: null,
          lastMoveText: null
       };
@@ -131,7 +143,7 @@ export async function handleChessMove(message) {
     await renderBoard(message.channel, game);
     
     if (game.playerBlack === 'ai' && game.chess.turn() === 'b') {
-        const aiMessage = await message.channel.send("<a:loading:1542155051286396938> `-# **Athena's Cloud Stockfish is calculating...**`");
+        const aiMessage = await message.channel.send(`-# <a:loading:1542155051286396938> **Athena's Cloud Stockfish is calculating...**`);
         
         try {
             const fen = encodeURIComponent(game.chess.fen());
@@ -167,24 +179,23 @@ export async function handleChessMove(message) {
 
 export async function handleChessThemeMenu(interaction) {
     const theme = interaction.values[0];
-    const client = interaction.client;
+    interaction.client.globalChessTheme = theme;
     
-    if (!client.chessGames || !client.chessGames.has(interaction.user.id)) {
-        return interaction.reply({ content: 'You are not in an active chess game!', flags: MessageFlags.Ephemeral });
+    if (interaction.client.chessGames && interaction.client.chessGames.has(interaction.user.id)) {
+        const game = interaction.client.chessGames.get(interaction.user.id);
+        game.theme = theme;
+        await interaction.update({ content: `-# **Applied ${theme} theme to your current game!**`, components: [] });
+        if (game.lastMessage) game.lastMessage.delete().catch(()=>null);
+        await renderBoard(interaction.channel, game, game.chess.isGameOver());
+    } else {
+        await interaction.update({ content: `-# **Set global chess theme to ${theme}! Future games will use this aesthetic.**`, components: [] });
     }
-    
-    const game = client.chessGames.get(interaction.user.id);
-    game.theme = theme;
-    
-    await interaction.update({ content: `-# **Applying ${theme} theme...**`, components: [] });
-    if (game.lastMessage) game.lastMessage.delete().catch(()=>null);
-    await renderBoard(interaction.channel, game, game.chess.isGameOver());
 }
 
 async function renderBoard(channel, game, isGameOver = false) {
     const fen = game.chess.fen();
     const encodedFen = encodeURIComponent(fen);
-    const imageUrl = `https://lichess1.org/export/fen.gif?fen=${encodedFen}&theme=${game.theme}&piece=cburnett`;
+    const imageUrl = `https://www.chess.com/dynboard?fen=${encodedFen}&board=${game.theme}&piece=neo&size=3`;
     
     let statusText = '';
     if (isGameOver) {
@@ -200,59 +211,15 @@ async function renderBoard(channel, game, isGameOver = false) {
         statusText = `${game.lastMoveText}\n\n${statusText}`;
     }
     
-    const components = [
-        {
-            type: 17, // Container
-            components: [
-                {
-                    type: 9, // Section
-                    components: [{ type: 10, content: '**Athena Grandmaster Chess**' }],
-                    accessory: {
-                        type: 11, // Thumbnail
-                        media: { url: 'https://i.imgur.com/kSXY8bC.png' } // A nice chess knight icon
-                    }
-                },
-                { type: 14, divider: true },
-                {
-                    type: 10, // Text
-                    content: statusText
-                },
-                {
-                    type: 11, // Image block inside container (if CV2 supports it, else we use standard image accessory)
-                    media: { url: imageUrl }
-                },
-                { type: 14, divider: true },
-                {
-                    type: 10,
-                    content: `-# Powered by Cloud Stockfish & Lichess API`
-                }
-            ]
-        }
-    ];
-    
-    // Wait, CV2 type 11 accessory in type 17 container isn't a massive banner image. 
-    // CV2 handles large images via Message options `files` or `embeds`.
-    // Since we want borderless CV2, maybe we just use standard `cv2` rendering but attach an embed with JUST the image.
-    // Or we can use a TextDisplayBuilder with the image URL which Discord auto-embeds natively!
-    // But Discord native auto-embeds have a side color border.
-    
     const embed = new EmbedBuilder()
         .setTitle('Athena Grandmaster Chess')
         .setDescription(statusText)
         .setImage(imageUrl)
         .setColor(0x2b2d31)
-        .setFooter({ text: 'Powered by Cloud Stockfish & Lichess API' });
-    
-    const row = new ActionRowBuilder().addComponents(
-        new StringSelectMenuBuilder()
-            .setCustomId('chess_theme')
-            .setPlaceholder('Change Chessboard Theme...')
-            .addOptions(THEMES)
-    );
+        .setFooter({ text: 'Powered by Cloud Stockfish & Chess.com API' });
     
     const msg = await channel.send({ 
-        embeds: [embed], 
-        components: [row]
+        embeds: [embed]
     }).catch(e => {
         console.error('[Chess] Failed to send board:', e);
         return null;
