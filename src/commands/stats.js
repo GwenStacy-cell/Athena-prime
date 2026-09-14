@@ -66,8 +66,15 @@ export const commands = [
         const buffer = await generateStatCard(targetUser, targetMember, userStats, serverRanks, topChannels, chartData, interaction.guild);
         const attachment = new AttachmentBuilder(buffer, { name: 'statbot-card.png' });
         
-        const c = cv2.buildContainer(null, null, []);
-        await interaction.editReply({ components: [c], files: [attachment], flags: 32768 });
+        const dbConfig = db.getGuildConfig(interaction.guild.id);
+        const embedColor = dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31;
+        
+        const { EmbedBuilder } = await import('discord.js');
+        const embed = new EmbedBuilder()
+          .setColor(embedColor)
+          .setImage('attachment://statbot-card.png');
+
+        await interaction.editReply({ embeds: [embed], files: [attachment] });
       } catch (err) {
         console.error('Failed to generate stat card:', err);
         await interaction.editReply(cv2.danger('Error', 'Failed to generate statistics card. Please try again later.'));

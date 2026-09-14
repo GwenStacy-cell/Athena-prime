@@ -1,7 +1,8 @@
-import { AttachmentBuilder } from 'discord.js';
+import { AttachmentBuilder, EmbedBuilder } from 'discord.js';
 import statsDB from '../statsDB.js';
 import { generateServerOverviewImage } from '../utils/statCanvas.js';
 import cv2 from '../cv2.js';
+import db from '../database.js';
 
 export const commands = [
   {
@@ -18,8 +19,13 @@ export const commands = [
         const buffer = await generateServerOverviewImage(message.guild, stats);
         const attachment = new AttachmentBuilder(buffer, { name: 'server-overview.png' });
         
-        const c = cv2.buildContainer(null, null, []);
-        await message.channel.send({ components: [c], files: [attachment], flags: 32768 });
+        const dbConfig = db.getGuildConfig(message.guild.id);
+        const embedColor = dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31;
+        const embed = new EmbedBuilder()
+          .setColor(embedColor)
+          .setImage('attachment://server-overview.png');
+
+        await message.channel.send({ embeds: [embed], files: [attachment] });
         await waitMsg.delete().catch(() => null);
       } catch (e) {
         console.error('Server overview error:', e);
@@ -34,8 +40,13 @@ export const commands = [
         const buffer = await generateServerOverviewImage(interaction.guild, stats);
         const attachment = new AttachmentBuilder(buffer, { name: 'server-overview.png' });
         
-        const c = cv2.buildContainer(null, null, []);
-        await interaction.editReply({ components: [c], files: [attachment], flags: 32768 });
+        const dbConfig = db.getGuildConfig(interaction.guild.id);
+        const embedColor = dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31;
+        const embed = new EmbedBuilder()
+          .setColor(embedColor)
+          .setImage('attachment://server-overview.png');
+
+        await interaction.editReply({ embeds: [embed], files: [attachment] });
       } catch (e) {
         console.error('Server overview error:', e);
         await interaction.editReply(cv2.error('Error', 'Failed to generate server overview dashboard.'));
