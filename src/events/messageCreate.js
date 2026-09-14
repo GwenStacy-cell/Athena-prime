@@ -419,8 +419,10 @@ export default {
     // STICKY MESSAGE LOGIC
     // ==========================================
     if (message.guild) {
+      const guildId = message.guild.id;
+      const channelId = message.channel.id;
       setTimeout(() => {
-        const stickyData = db.getStickyMessage(message.guild.id, message.channel.id);
+        const stickyData = db.getStickyMessage(guildId, channelId);
         if (stickyData) {
           const COOLDOWN = 1000; // 1 second
           const now = Date.now();

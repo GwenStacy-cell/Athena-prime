@@ -231,7 +231,8 @@ export const commands = [
       
       let reply;
       try {
-        reply = await interaction.reply({ components: [components], flags: MessageFlags.IsComponentsV2, withResponse: true });
+        await interaction.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
+        reply = await interaction.fetchReply();
         
       } catch (e) {
         return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);

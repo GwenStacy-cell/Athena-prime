@@ -267,7 +267,7 @@ export const commands = [
       };
       const result = await handleEmergency(message.guild, message.member, action, updateProgress);
       if (statusMsg) await statusMsg.edit(result).catch(()=>null);
-      else await message.reply(result);
+      else await message.reply(result).catch(() => null);
     },
     async executeSlash(interaction) {
       const action = interaction.options.getString('action');
@@ -1239,7 +1239,7 @@ export const commands = [
           const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId("btn_intercept_2fa").setLabel("Enter 2FA Code").setStyle(ButtonStyle.Danger)
           );
-          return message.reply({ content: "?? **Critical Security Action Blocked** ??\nAn email has been sent to your registered Gmail address. You must verify it to authorize this action.", components: [row] });
+          return message.reply({ content: "?? **Critical Security Action Blocked** ??\nAn email has been sent to your registered Gmail address. You must verify it to authorize this action.", components: [row] }).catch(() => null);
         }
 
         const result = await handleSecurityToggleAll(message.guild, message.member, false);
