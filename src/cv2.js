@@ -83,7 +83,10 @@ function buildContainer(title, description, fields, customFooter) {
       'log': 'Secure Audit Log Entry Processed.',
       'moderation': 'Administrative Moderation Action Executed.',
       'security': 'Athena Core Security System Active.',
-      'owner': 'Executive Override Command Authorized.'
+      'owner': 'Executive Override Command Authorized.',
+      'engagement': 'Community Engagement and Interaction Module Active.',
+      'utility': 'System Utility and Diagnostic Tools Deployed.',
+      'configuration': 'System Core Configuration and Settings Modified.'
   };
 
   if (footers[footerText]) footerText = footers[footerText];

@@ -1646,7 +1646,7 @@ export default {
                           { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
                           { name: 'Category', value: cmd.category || 'unknown', inline: true }
                       ],
-                      'shield'
+                      cmd.category || 'log'
                   );
                   helpers.logToSecurityChannel(message.guild, embed).catch(()=>{});
               }
