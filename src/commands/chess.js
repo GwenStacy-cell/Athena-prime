@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } from 'discord.js';
+import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags, EmbedBuilder } from 'discord.js';
 import { Chess } from 'chess.js';
 import cv2 from '../cv2.js';
 
@@ -236,10 +236,12 @@ async function renderBoard(channel, game, isGameOver = false) {
     // Or we can use a TextDisplayBuilder with the image URL which Discord auto-embeds natively!
     // But Discord native auto-embeds have a side color border.
     
-    const embed = {
-        image: { url: imageUrl },
-        color: 0x2b2d31 // matches background exactly to appear borderless
-    };
+    const embed = new EmbedBuilder()
+        .setTitle('Athena Grandmaster Chess')
+        .setDescription(statusText)
+        .setImage(imageUrl)
+        .setColor(0x2b2d31)
+        .setFooter({ text: 'Powered by Cloud Stockfish & Lichess API' });
     
     const row = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
@@ -248,20 +250,9 @@ async function renderBoard(channel, game, isGameOver = false) {
             .addOptions(THEMES)
     );
     
-    const container = {
-        type: 17,
-        components: [
-            { type: 10, content: '## **Athena Grandmaster Chess**' },
-            { type: 14, divider: true },
-            { type: 10, content: statusText },
-            row.toJSON()
-        ]
-    };
-    
     const msg = await channel.send({ 
-        components: [container], 
         embeds: [embed], 
-        flags: MessageFlags.IsComponentsV2 
+        components: [row]
     }).catch(e => {
         console.error('[Chess] Failed to send board:', e);
         return null;
