@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, MessageFlags, EmbedBuilder } from 'discord.js';
+﻿import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, MessageFlags, EmbedBuilder } from 'discord.js';
 import { Chess } from 'chess.js';
 import cv2 from '../cv2.js';
 
@@ -44,9 +44,24 @@ export const commands = [
             new StringSelectMenuBuilder()
                 .setCustomId('chess_theme_select')
                 .setPlaceholder('Select a Chessboard Theme...')
-                .addOptions(THEMES)
+                .addOptions(THEMES.slice(0, 20))
         );
-        return message.reply({ content: '-# **Select your preferred Chessboard aesthetic:**', components: [row] });
+        
+        const container = {
+            type: 17,
+            components: [
+                { type: 10, content: '## **Athena Theme Configuration**' },
+                { type: 14, divider: true },
+                { type: 10, content: '-# **Please select your preferred chessboard aesthetic from the dropdown below.**' }
+            ]
+        };
+        
+        return message.reply({ 
+            components: [container, row.toJSON()], 
+            flags: MessageFlags.IsComponentsV2 
+        }).catch(async (e) => {
+            await message.reply({ content: '-# **Select your preferred Chessboard aesthetic:**', components: [row] }).catch(()=>null);
+        });
       }
       
       if (args[0].toLowerCase() === 'stop' || args[0].toLowerCase() === 'resign') {
@@ -116,7 +131,6 @@ function tryMove(game, moveStr) {
 export async function handleChessMove(message) {
     if (message.author.bot) return;
     
-    // Ignore explicit bot commands so they don't clash
     if (message.content.startsWith('!') || message.content.startsWith('?')) return;
     
     const client = message.client;
@@ -129,14 +143,17 @@ export async function handleChessMove(message) {
     if (isWhiteTurn && message.author.id !== game.playerWhite) return;
     if (!isWhiteTurn && message.author.id !== game.playerBlack) return;
     
-    const moveStr = message.content.trim().split(' ')[0];
-    if (!moveStr || moveStr.length < 2) return;
+    const moveStrRaw = message.content.trim().split(' ')[0];
+    if (!moveStrRaw || moveStrRaw.length < 2) return;
+    
+    const moveStrLower = moveStrRaw.toLowerCase();
+    if (moveStrLower === 'chess') return;
     
     const userRole = isWhiteTurn ? 'White' : 'Black';
-    const moveResult = tryMove(game, moveStr);
+    const moveResult = tryMove(game, moveStrRaw);
     
     if (!moveResult) {
-        const tempMsg = await message.reply(`-# **Illegal Move:** \`${moveStr}\``).catch(()=>null);
+        const tempMsg = await message.reply(`-# **Illegal Move:** \`${moveStrRaw}\``).catch(()=>null);
         if (tempMsg) setTimeout(() => tempMsg.delete().catch(()=>null), 4000);
         message.delete().catch(()=>null);
         return;
@@ -212,27 +229,27 @@ export async function handleChessThemeSelect(interaction) {
             .setStyle(ButtonStyle.Secondary)
     );
     
-    // Attempt 1: ActionRows outside Container (Standard CV2 syntax)
     const containerOuter = {
         type: 17,
         components: [
             { type: 10, content: `## **Theme Preview: ${theme}**` },
-            { type: 14, divider: true }
+            { type: 14, divider: true },
+            { type: 11, media: { url: imageUrl + '&ext=.png' } }
         ]
     };
         
     await interaction.editReply({
         content: '',
         components: [containerOuter, rowSelect.toJSON(), rowButton.toJSON()],
-        files: [{ attachment: imageUrl, name: 'preview.gif' }],
         embeds: [],
         flags: MessageFlags.IsComponentsV2
     }).catch(async (e) => {
-        // Attempt 2: ActionRows inside Container
         const containerInner = {
             type: 17,
             components: [
                 { type: 10, content: `## **Theme Preview: ${theme}**` },
+                { type: 14, divider: true },
+                { type: 11, media: { url: imageUrl + '&ext=.png' } },
                 { type: 14, divider: true },
                 rowSelect.toJSON(),
                 rowButton.toJSON()
@@ -241,7 +258,6 @@ export async function handleChessThemeSelect(interaction) {
         await interaction.editReply({
             content: '',
             components: [containerInner],
-            files: [{ attachment: imageUrl, name: 'preview.gif' }],
             embeds: [],
             flags: MessageFlags.IsComponentsV2
         }).catch(()=>null);
@@ -299,13 +315,14 @@ async function renderBoard(channel, game, isGameOver = false) {
             { type: 14, divider: true },
             { type: 10, content: statusText },
             { type: 14, divider: true },
+            { type: 11, media: { url: imageUrl + '&ext=.png' } },
+            { type: 14, divider: true },
             { type: 10, content: '-# Powered by Cloud Stockfish & Chess.com API' }
         ]
     };
     
     let msg = await channel.send({ 
         components: [container],
-        files: [{ attachment: imageUrl, name: 'board.gif' }],
         flags: MessageFlags.IsComponentsV2 
     }).catch(async (e) => {
         console.error('[Chess] Failed to send CV2 board:', e);
