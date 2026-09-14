@@ -75,6 +75,11 @@ export async function handleYtStatsButton(interaction) {
     const ytStats = config.ytStats || [];
     
     const categoriesToDelete = new Set();
+    
+    // Fetch all channels aggressively so we don't miss any that are uncached
+    await interaction.guild.channels.fetch().catch(() => null);
+
+    // 1. Delete channels known to DB
     for (const stat of ytStats) {
       const channel = interaction.guild.channels.cache.get(stat.channelId);
       if (channel) {
@@ -83,9 +88,22 @@ export async function handleYtStatsButton(interaction) {
       }
     }
     
+    // 2. Aggressive sweeper for orphaned categories created by ytstats_auto
+    interaction.guild.channels.cache.forEach(c => {
+       if (c.type === 4 && (c.name.startsWith('▶') || c.name.includes('▶'))) {
+          categoriesToDelete.add(c.id);
+       }
+    });
+
+    // 3. Nuke categories and their orphaned children
     for (const catId of categoriesToDelete) {
       const category = interaction.guild.channels.cache.get(catId);
-      if (category && category.name.includes('▶')) {
+      if (category) {
+        // Delete all children inside it first
+        const children = interaction.guild.channels.cache.filter(c => c.parentId === category.id);
+        for (const [id, child] of children) {
+           await child.delete().catch(() => null);
+        }
         await category.delete().catch(() => null);
       }
     }
