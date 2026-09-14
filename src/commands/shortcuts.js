@@ -1,4 +1,4 @@
-﻿import cv2 from '../cv2.js';
+import cv2 from '../cv2.js';
 import db from '../database.js';
 import { PermissionFlagsBits, MessageFlags } from 'discord.js';
 
@@ -56,7 +56,7 @@ export const commands = [
       `> \`!c\` or \`!clear\` ➔ \`!purge\`\n\n` +
       `**[ UTILITIES ]**\n` +
       `> \`!p\` ➔ \`!ping\`\n` +
-      `> \`!av\` or \`!pfp\` ➔ \`!avatar\`\n` +
+      `> \`!av\`, \`!pfp\`, or \`!icon\` ➔ \`!avatar\`\n` +
       `> \`!brb\` ➔ \`!afk\`\n\n` +
       `- Use \`!shortcuts enable\` or \`!shortcuts disable\` to toggle these aliases globally for your server.`;
       
@@ -68,3 +68,4 @@ export const commands = [
     }
   }
 ];
+
