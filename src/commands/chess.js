@@ -213,7 +213,7 @@ export async function handleChessThemeSelect(interaction) {
     const theme = interaction.values[0];
     const fen = new Chess().fen();
     const encodedFen = encodeURIComponent(fen);
-    const imageUrl = `https://www.chess.com/dynboard?fen=${encodedFen}&board=${theme}&piece=neo&size=3`;
+    const imageUrl = `https://www.chess.com/dynboard?fen=${encodedFen}&board=${theme}&piece=neo&size=3&coordinates=inside`;
     
     const rowSelect = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
@@ -281,7 +281,7 @@ export async function handleChessThemeApply(interaction) {
 async function renderBoard(channel, game, isGameOver = false) {
     const fen = game.chess.fen();
     const encodedFen = encodeURIComponent(fen);
-    const imageUrl = `https://www.chess.com/dynboard?fen=${encodedFen}&board=${game.theme}&piece=neo&size=3`;
+    const imageUrl = `https://www.chess.com/dynboard?fen=${encodedFen}&board=${game.theme}&piece=neo&size=3&coordinates=inside`;
     
     let statusText = '';
     if (isGameOver) {
