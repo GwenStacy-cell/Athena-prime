@@ -1199,6 +1199,12 @@ export const commands = [
       }
 
       if (enable) {
+          const maxPos = Math.max(...message.guild.roles.cache.map(r => r.position));
+          const botPos = message.guild.members.me.roles.highest.position;
+          if (botPos < maxPos - 2) {
+            return message.reply(cv2.danger('Insufficient Role Hierarchy', 'To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Please move my role higher in the server settings and try again.'));
+          }
+
           const config = db.getGuildConfig(message.guild.id);
           if (config.securityEnabled) {
             return message.reply(cv2.warn('Security Active', 'Security is already enabled on this server. To re-enable or refresh the system, please use `!security disable all` first, and then run `!security enable all` again.'));
@@ -1257,6 +1263,12 @@ export const commands = [
       }
 
       if (enable) {
+          const maxPos = Math.max(...interaction.guild.roles.cache.map(r => r.position));
+          const botPos = interaction.guild.members.me.roles.highest.position;
+          if (botPos < maxPos - 2) {
+            return interaction.reply(cv2.danger('Insufficient Role Hierarchy', 'To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Please move my role higher in the server settings and try again.'));
+          }
+
           const config = db.getGuildConfig(interaction.guild.id);
           if (config.securityEnabled) {
             return interaction.reply(cv2.warn('Security Active', 'Security is already enabled on this server. To re-enable or refresh the system, please use `/security disable_all` first, and then run `/security enable_all` again.'));
@@ -3906,3 +3918,4 @@ export async function handleAutonickModal(interaction) {
   db.updateGuildConfig(guildId, { autonick: cfg.autonick });
   return interaction.update(await buildAutonickDashboard(guildId));
 }
+
