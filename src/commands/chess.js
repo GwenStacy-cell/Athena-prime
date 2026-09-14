@@ -229,39 +229,20 @@ export async function handleChessThemeSelect(interaction) {
             .setStyle(ButtonStyle.Secondary)
     );
     
-    const containerOuter = {
-        type: 17,
-        components: [
-            { type: 10, content: `## **Theme Preview: ${theme}**` },
-            { type: 14, divider: true },
-            { type: 11, media: { url: imageUrl + '&ext=.png' } }
-        ]
-    };
+    // Discord API explicitly rejects Type 11 (Media) inside Type 17 (Container).
+    // The only way to send a large image while keeping the dark borderless aesthetic
+    // is a standard embed colored 0x2b2d31, which perfectly blends into Discord's background.
+    const embed = new EmbedBuilder()
+        .setTitle(`Theme Preview: ${theme}`)
+        .setImage(imageUrl + '&ext=.png')
+        .setColor(0x2b2d31);
         
     await interaction.editReply({
         content: '',
-        components: [containerOuter, rowSelect.toJSON(), rowButton.toJSON()],
-        embeds: [],
-        flags: MessageFlags.IsComponentsV2
-    }).catch(async (e) => {
-        const containerInner = {
-            type: 17,
-            components: [
-                { type: 10, content: `## **Theme Preview: ${theme}**` },
-                { type: 14, divider: true },
-                { type: 11, media: { url: imageUrl + '&ext=.png' } },
-                { type: 14, divider: true },
-                rowSelect.toJSON(),
-                rowButton.toJSON()
-            ]
-        };
-        await interaction.editReply({
-            content: '',
-            components: [containerInner],
-            embeds: [],
-            flags: MessageFlags.IsComponentsV2
-        }).catch(()=>null);
-    });
+        embeds: [embed],
+        components: [rowSelect, rowButton],
+        flags: 0
+    }).catch(()=>null);
 }
 
 export async function handleChessThemeApply(interaction) {
@@ -308,24 +289,18 @@ async function renderBoard(channel, game, isGameOver = false) {
         statusText = `${game.lastMoveText}\n\n${statusText}`;
     }
     
-    const container = {
-        type: 17,
-        components: [
-            { type: 10, content: '## **Athena Grandmaster Chess**' },
-            { type: 14, divider: true },
-            { type: 10, content: statusText },
-            { type: 14, divider: true },
-            { type: 11, media: { url: imageUrl + '&ext=.png' } },
-            { type: 14, divider: true },
-            { type: 10, content: '-# Powered by Cloud Stockfish & Chess.com API' }
-        ]
-    };
+    const embed = new EmbedBuilder()
+        .setTitle('Athena Grandmaster Chess')
+        .setDescription(statusText)
+        .setImage(imageUrl + '&ext=.png')
+        .setColor(0x2b2d31)
+        .setFooter({ text: 'Powered by Cloud Stockfish & Chess.com API' });
     
     let msg = await channel.send({ 
-        components: [container],
-        flags: MessageFlags.IsComponentsV2 
+        embeds: [embed],
+        flags: 0 
     }).catch(async (e) => {
-        console.error('[Chess] Failed to send CV2 board:', e);
+        console.error('[Chess] Failed to send board embed:', e);
         return null;
     });
     
