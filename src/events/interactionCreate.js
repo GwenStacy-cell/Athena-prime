@@ -23,6 +23,14 @@ export default {
       return;
     }
 
+    // --- CHESS THEME DROPDOWN ---
+    if (interaction.isStringSelectMenu() && interaction.customId === 'chess_theme') {
+      import('../commands/chess.js').then(m => {
+        if (m.handleChessThemeMenu) m.handleChessThemeMenu(interaction).catch(()=>{});
+      }).catch(()=>{});
+      return;
+    }
+
     // --- VC PANEL DROPDOWNS ---
     if (interaction.isStringSelectMenu() && interaction.customId === 'vcp_select') {
       const i = interaction;
