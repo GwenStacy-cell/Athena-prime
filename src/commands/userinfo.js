@@ -4,6 +4,7 @@ import cv2 from '../cv2.js';
 export const commands = [
   {
     name: 'avatar',
+    aliases: ['av', 'pfp', 'icon'],
     slashHidden: true,
     description: 'Displays the global and server avatar of a user.',
     category: 'utility',
