@@ -251,10 +251,7 @@ async function renderBoard(channel, game, isGameOver = false) {
     const container = {
         type: 17,
         components: [
-            {
-                type: 9,
-                components: [{ type: 10, content: '**Athena Grandmaster Chess**' }],
-            },
+            { type: 10, content: '## **Athena Grandmaster Chess**' },
             { type: 14, divider: true },
             { type: 10, content: statusText },
             row.toJSON()
