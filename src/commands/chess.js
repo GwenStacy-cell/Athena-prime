@@ -1,4 +1,4 @@
-﻿import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } from 'discord.js';
+import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } from 'discord.js';
 import { Chess } from 'chess.js';
 import cv2 from '../cv2.js';
 
@@ -256,15 +256,19 @@ async function renderBoard(channel, game, isGameOver = false) {
                 components: [{ type: 10, content: '**Athena Grandmaster Chess**' }],
             },
             { type: 14, divider: true },
-            { type: 10, content: statusText }
+            { type: 10, content: statusText },
+            row.toJSON()
         ]
     };
     
     const msg = await channel.send({ 
-        components: [container, row], 
+        components: [container], 
         embeds: [embed], 
         flags: MessageFlags.IsComponentsV2 
-    }).catch(()=>null);
+    }).catch(e => {
+        console.error('[Chess] Failed to send board:', e);
+        return null;
+    });
     
     game.lastMessage = msg;
 }

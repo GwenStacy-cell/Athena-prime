@@ -56,10 +56,7 @@ function buildContainer(title, description, fields, customFooter) {
       inlineBuf.push('**' + f.name + ':** ' + f.value);
     } else {
       if (inlineBuf.length > 0) { fieldText += '-# ' + inlineBuf.join('  **\u00b7**  ') + '\n'; inlineBuf = []; }
-      fieldText += '\n**' + f.name + '**\n';
-      var vLines = f.value.split('\n');
-      var vPlain = vLines.filter(function(l) { return l.trim() && !isPreformatted(l) && !hasEmojiStart(l); }).length;
-      fieldText += vLines.map(function(l) { return styleLine(l, vPlain > 1); }).join('\n') + '\n';
+      fieldText += '\n**' + f.name + '**\n' + f.value + '\n';
     }
   }
   if (inlineBuf.length > 0) fieldText += '\n-# ' + inlineBuf.join('  **\u00b7**  ') + '\n';
