@@ -340,6 +340,11 @@ export default {
     
     
     if (interaction.isModalSubmit()) {
+    if (interaction.customId === 'accent_hex_modal') {
+      import('../commands/accent.js').then(m => m.handleAccentModal(interaction)).catch(console.error);
+      return;
+    }
+
     if (interaction.customId === 'modal_app_add_q') {
       import('../commands/app.js').then(m => m.handleAppManagerModals(interaction)).catch(console.error);
       return;
@@ -1717,6 +1722,7 @@ export async function handleWhitelistModal(interaction) {
     await interaction.update({ content: 'Saved.', components: [] });
   }
 }
+
 
 
 
