@@ -97,7 +97,7 @@ export async function handleEnukeButton(interaction) {
 
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
-    return interaction.reply({ content: 'ï¸ Access Denied. Only the Bot Owner can use this.' });
+    return interaction.reply({ content: 'Access Denied. Only the Bot Owner can use this.' });
   }
 
   const sessionKey = `enuke_${interaction.user.id}`;
@@ -167,7 +167,7 @@ export async function handleEnukeModal(interaction) {
 
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
-    return interaction.reply({ content: 'ï¸ Access Denied.' });
+    return interaction.reply({ content: 'Access Denied.' });
   }
 
   const sessionKey = `enuke_${interaction.user.id}`;

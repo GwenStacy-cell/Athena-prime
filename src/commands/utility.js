@@ -535,8 +535,9 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      if (message.author.id !== process.env.OWNER_ID && message.author.id !== message.guild.ownerId) {
-        return message.reply(cv2.danger('Access Denied', 'ï¸ Only the **Bot Owner** or **Server Owner** can use this command.'));
+      const { isBotOwnerOrServerOwnerStrict } = await import('../utils/helpers.js');
+      if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild)) {
+        return message.reply(cv2.danger('Access Denied', 'Only the **Bot Owner** or **Server Owner** can use this command.'));
       }
       
       const newPrefix = args.join(' ');
@@ -548,8 +549,9 @@ export const commands = [
       await message.reply(cv2.success('Prefix Updated', `The bot's prefix has been successfully updated to \`${newPrefix}\``));
     },
     async executeSlash(interaction) {
-      if (interaction.user.id !== process.env.OWNER_ID && interaction.user.id !== interaction.guild.ownerId) {
-        return interaction.reply(cv2.danger('Access Denied', 'ï¸ Only the **Bot Owner** or **Server Owner** can use this command.'));
+      const { isBotOwnerOrServerOwnerStrict } = await import('../utils/helpers.js');
+      if (!isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild)) {
+        return interaction.reply(cv2.danger('Access Denied', 'Only the **Bot Owner** or **Server Owner** can use this command.'));
       }
 
       const newPrefix = interaction.options.getString('new_prefix');

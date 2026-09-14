@@ -1613,7 +1613,7 @@ export default {
       if (!isBypass) {
         const hasPerms = cmd.permissions.every(perm => message.member.permissions.has(perm));
         if (!hasPerms) {
-          return message.reply(cv2.danger('Access Denied', 'ï¸ You do not possess the required permissions to execute this command.'));
+          return message.reply(cv2.danger('Access Denied', 'You do not possess the required permissions to execute this command.'));
         }
       }
     }

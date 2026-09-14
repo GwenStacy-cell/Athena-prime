@@ -747,7 +747,7 @@ export const commands = [
                       message.author.id === message.guild.ownerId ||
                       isExtraOwner(message.guild.id, message.author.id);
       if (!allowed) {
-        return message.reply(cv2.danger('Access Denied', `${message.author} ï¸ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
+        return message.reply(cv2.danger('Access Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
       }
       const sentMsg = await message.reply(cv2.info('Processing...', 'Fetching ban list and removing bans, please wait.'));
       const result = await handleUnbanAll(message.guild, message.member);
@@ -758,7 +758,7 @@ export const commands = [
                       interaction.user.id === interaction.guild.ownerId ||
                       isExtraOwner(interaction.guild.id, interaction.user.id);
       if (!allowed) {
-        return interaction.reply(cv2.danger('Access Denied', `${interaction.user} ï¸ Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
+        return interaction.reply(cv2.danger('Access Denied', `${interaction.user} Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
       }
       await interaction.deferReply();
         const result = await handleUnbanAll(interaction.guild, interaction.member);
@@ -1378,7 +1378,7 @@ async function handleUnban(guild, moderator, userId, reason) {
 async function handleBanById(guild, moderator, userId, reason, userObj = null) {
   // Protection check
   if (isBotOwnerSync(userId) || isExtraOwner(guild.id, userId)) {
-    return cv2.danger(' Untouchable', 'ï¸ This user is protected by **Athena Prime** and cannot be banned.');
+    return cv2.danger(' Untouchable', 'This user is protected by **Athena Prime** and cannot be banned.');
   }
 
   if (!isBotOwnerSync(moderator.id) && !moderator.permissions.has(PermissionFlagsBits.BanMembers)) {

@@ -182,7 +182,7 @@ export async function logToSecurityChannel(guild, embedObject) {
         channel = await guild.channels.create({
           name: 'security-logs',
           type: ChannelType.GuildText,
-          topic: 'ï¸ Automated security audits and moderation records - Athena Prime',
+          topic: 'Automated security audits and moderation records - Athena Prime',
           permissionOverwrites: [
             {
               id: guild.roles.everyone.id,
