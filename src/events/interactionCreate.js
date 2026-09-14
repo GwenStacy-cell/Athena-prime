@@ -24,9 +24,15 @@ export default {
     }
 
     // --- CHESS THEME DROPDOWN ---
-    if (interaction.isStringSelectMenu() && interaction.customId === 'chess_theme') {
+    if (interaction.isStringSelectMenu() && interaction.customId === 'chess_theme_select') {
       import('../commands/chess.js').then(m => {
-        if (m.handleChessThemeMenu) m.handleChessThemeMenu(interaction).catch(()=>{});
+        if (m.handleChessThemeSelect) m.handleChessThemeSelect(interaction).catch(()=>{});
+      }).catch(()=>{});
+      return;
+    }
+    if (interaction.isButton() && interaction.customId.startsWith('chess_theme_apply_')) {
+      import('../commands/chess.js').then(m => {
+        if (m.handleChessThemeApply) m.handleChessThemeApply(interaction).catch(()=>{});
       }).catch(()=>{});
       return;
     }

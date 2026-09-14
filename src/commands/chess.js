@@ -1,4 +1,4 @@
-﻿import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags, EmbedBuilder } from 'discord.js';
+﻿import { PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { Chess } from 'chess.js';
 import cv2 from '../cv2.js';
 
@@ -14,7 +14,15 @@ const THEMES = [
     { label: 'Sky Blue', value: 'sky' },
     { label: 'Stone Texture', value: 'stone' },
     { label: 'Classic Brown', value: 'brown' },
-    { label: 'Classic Green', value: 'green' }
+    { label: 'Classic Green', value: 'green' },
+    { label: 'Parchment', value: 'parchment' },
+    { label: 'Lolz (Meme)', value: 'lolz' },
+    { label: 'Graffiti', value: 'graffiti' },
+    { label: 'Neon', value: 'neon' },
+    { label: 'Dark Wood', value: 'dark' },
+    { label: 'Nature', value: 'nature' },
+    { label: 'Ocean', value: 'ocean' },
+    { label: 'Newspaper', value: 'newspaper' }
 ];
 
 export const commands = [
@@ -34,11 +42,11 @@ export const commands = [
       if (args[0].toLowerCase() === 'theme' || args[0].toLowerCase() === 'themes') {
         const row = new ActionRowBuilder().addComponents(
             new StringSelectMenuBuilder()
-                .setCustomId('chess_theme')
+                .setCustomId('chess_theme_select')
                 .setPlaceholder('Select a Chessboard Theme...')
-                .addOptions(THEMES.slice(0, 10)) // Discord limits to 25, 10 is fine
+                .addOptions(THEMES)
         );
-        return message.reply({ content: '-# **Select your preferred Chessboard aesthetic (applies globally):**', components: [row] });
+        return message.reply({ content: '-# **Select your preferred Chessboard aesthetic:**', components: [row] });
       }
       
       if (args[0].toLowerCase() === 'stop' || args[0].toLowerCase() === 'resign') {
@@ -107,6 +115,10 @@ function tryMove(game, moveStr) {
 
 export async function handleChessMove(message) {
     if (message.author.bot) return;
+    
+    // Ignore explicit bot commands so they don't clash
+    if (message.content.startsWith('!') || message.content.startsWith('?')) return;
+    
     const client = message.client;
     if (!client.chessGames || !client.chessGames.has(message.author.id)) return;
     
@@ -118,8 +130,9 @@ export async function handleChessMove(message) {
     if (!isWhiteTurn && message.author.id !== game.playerBlack) return;
     
     const moveStr = message.content.trim().split(' ')[0];
-    const userRole = isWhiteTurn ? 'White' : 'Black';
+    if (!moveStr || moveStr.length < 2) return;
     
+    const userRole = isWhiteTurn ? 'White' : 'Black';
     const moveResult = tryMove(game, moveStr);
     
     if (!moveResult) {
@@ -177,18 +190,73 @@ export async function handleChessMove(message) {
     }
 }
 
-export async function handleChessThemeMenu(interaction) {
+export async function handleChessThemeSelect(interaction) {
     const theme = interaction.values[0];
+    
+    // Send preview!
+    const fen = new Chess().fen();
+    const encodedFen = encodeURIComponent(fen);
+    const imageUrl = `https://www.chess.com/dynboard?fen=${encodedFen}&board=${theme}&piece=neo&size=3`;
+    
+    const container = {
+        type: 17,
+        components: [
+            { type: 10, content: `## **Theme Preview: ${theme}**` },
+            { type: 14, divider: true },
+            { type: 11, media: { url: imageUrl } }
+        ]
+    };
+    
+    // Keep dropdown, add apply button
+    const rowSelect = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+            .setCustomId('chess_theme_select')
+            .setPlaceholder(`Previewing: ${theme}`)
+            .addOptions(THEMES)
+    );
+    
+    const rowButton = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`chess_theme_apply_${theme}`)
+            .setLabel('Apply Theme')
+            .setStyle(ButtonStyle.Secondary)
+    );
+    
+    await interaction.update({
+        content: '',
+        components: [container, rowSelect.toJSON(), rowButton.toJSON()],
+        flags: MessageFlags.IsComponentsV2
+    }).catch(async (e) => {
+        // Fallback if CV2 container with media fails
+        const embed = { image: { url: imageUrl }, color: 0x2b2d31 };
+        await interaction.message.edit({
+            content: `-# **Previewing: ${theme}**`,
+            embeds: [embed],
+            components: [rowSelect, rowButton]
+        }).catch(()=>null);
+    });
+}
+
+export async function handleChessThemeApply(interaction) {
+    const theme = interaction.customId.replace('chess_theme_apply_', '');
     interaction.client.globalChessTheme = theme;
     
     if (interaction.client.chessGames && interaction.client.chessGames.has(interaction.user.id)) {
         const game = interaction.client.chessGames.get(interaction.user.id);
         game.theme = theme;
-        await interaction.update({ content: `-# **Applied ${theme} theme to your current game!**`, components: [] });
+        // Don't clutter chat with preview update if in-game, just delete preview and re-render game
+        await interaction.message.delete().catch(()=>null);
         if (game.lastMessage) game.lastMessage.delete().catch(()=>null);
         await renderBoard(interaction.channel, game, game.chess.isGameOver());
+        const confirmMsg = await interaction.channel.send(`-# **Theme updated seamlessly in your active game!**`).catch(()=>null);
+        if (confirmMsg) setTimeout(() => confirmMsg.delete().catch(()=>null), 4000);
     } else {
-        await interaction.update({ content: `-# **Set global chess theme to ${theme}! Future games will use this aesthetic.**`, components: [] });
+        await interaction.update({ 
+            content: `-# **Theme successfully applied! Future games will use the ${theme} aesthetic.**`, 
+            components: [], 
+            embeds: [],
+            flags: 0 
+        }).catch(()=>null);
     }
 }
 
@@ -211,18 +279,31 @@ async function renderBoard(channel, game, isGameOver = false) {
         statusText = `${game.lastMoveText}\n\n${statusText}`;
     }
     
-    const embed = new EmbedBuilder()
-        .setTitle('Athena Grandmaster Chess')
-        .setDescription(statusText)
-        .setImage(imageUrl)
-        .setColor(0x2b2d31)
-        .setFooter({ text: 'Powered by Cloud Stockfish & Chess.com API' });
+    // CV2 Container True Borderless!
+    const container = {
+        type: 17,
+        components: [
+            { type: 10, content: '## **Athena Grandmaster Chess**' },
+            { type: 14, divider: true },
+            { type: 10, content: statusText },
+            { type: 11, media: { url: imageUrl } },
+            { type: 14, divider: true },
+            { type: 10, content: '-# Powered by Cloud Stockfish & Chess.com API' }
+        ]
+    };
     
-    const msg = await channel.send({ 
-        embeds: [embed]
-    }).catch(e => {
-        console.error('[Chess] Failed to send board:', e);
-        return null;
+    let msg = await channel.send({ 
+        components: [container],
+        flags: MessageFlags.IsComponentsV2 
+    }).catch(async (e) => {
+        // Fallback to borderless embed if CV2 image type 11 fails
+        const embed = new EmbedBuilder()
+            .setTitle('Athena Grandmaster Chess')
+            .setDescription(statusText)
+            .setImage(imageUrl)
+            .setColor(0x2b2d31)
+            .setFooter({ text: 'Powered by Cloud Stockfish & Chess.com API' });
+        return await channel.send({ embeds: [embed] }).catch(()=>null);
     });
     
     game.lastMessage = msg;
