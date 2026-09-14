@@ -212,33 +212,38 @@ export async function handleChessThemeSelect(interaction) {
             .setStyle(ButtonStyle.Secondary)
     );
     
-    const container = {
+    // Attempt 1: ActionRows outside Container (Standard CV2 syntax)
+    const containerOuter = {
         type: 17,
         components: [
             { type: 10, content: `## **Theme Preview: ${theme}**` },
-            { type: 14, divider: true },
-            { type: 11, media: { url: imageUrl } },
-            { type: 14, divider: true },
-            rowSelect.toJSON(),
-            rowButton.toJSON()
+            { type: 14, divider: true }
         ]
     };
         
     await interaction.editReply({
         content: '',
-        components: [container],
+        components: [containerOuter, rowSelect.toJSON(), rowButton.toJSON()],
+        files: [{ attachment: imageUrl, name: 'preview.gif' }],
         embeds: [],
         flags: MessageFlags.IsComponentsV2
     }).catch(async (e) => {
-        // Absolute worst case fallback if Discord rejects Type 11 media
-        const embed = new EmbedBuilder()
-            .setTitle(`Theme Preview: ${theme}`)
-            .setImage(imageUrl)
-            .setColor(0x2b2d31);
+        // Attempt 2: ActionRows inside Container
+        const containerInner = {
+            type: 17,
+            components: [
+                { type: 10, content: `## **Theme Preview: ${theme}**` },
+                { type: 14, divider: true },
+                rowSelect.toJSON(),
+                rowButton.toJSON()
+            ]
+        };
         await interaction.editReply({
-            embeds: [embed],
-            components: [rowSelect, rowButton],
-            flags: 0
+            content: '',
+            components: [containerInner],
+            files: [{ attachment: imageUrl, name: 'preview.gif' }],
+            embeds: [],
+            flags: MessageFlags.IsComponentsV2
         }).catch(()=>null);
     });
 }
@@ -262,6 +267,7 @@ export async function handleChessThemeApply(interaction) {
             content: `-# **Theme successfully applied! Future games will use the ${theme} aesthetic.**`, 
             components: [], 
             embeds: [],
+            files: [],
             flags: 0 
         }).catch(()=>null);
     }
@@ -286,14 +292,12 @@ async function renderBoard(channel, game, isGameOver = false) {
         statusText = `${game.lastMoveText}\n\n${statusText}`;
     }
     
-    // CV2 Container True Borderless!
     const container = {
         type: 17,
         components: [
             { type: 10, content: '## **Athena Grandmaster Chess**' },
             { type: 14, divider: true },
             { type: 10, content: statusText },
-            { type: 11, media: { url: imageUrl } },
             { type: 14, divider: true },
             { type: 10, content: '-# Powered by Cloud Stockfish & Chess.com API' }
         ]
@@ -301,17 +305,12 @@ async function renderBoard(channel, game, isGameOver = false) {
     
     let msg = await channel.send({ 
         components: [container],
+        files: [{ attachment: imageUrl, name: 'board.gif' }],
         flags: MessageFlags.IsComponentsV2 
     }).catch(async (e) => {
-        // Fallback to borderless embed if CV2 image type 11 fails
-        const embed = new EmbedBuilder()
-            .setTitle('Athena Grandmaster Chess')
-            .setDescription(statusText)
-            .setImage(imageUrl)
-            .setColor(0x2b2d31)
-            .setFooter({ text: 'Powered by Cloud Stockfish & Chess.com API' });
-        return await channel.send({ embeds: [embed] }).catch(()=>null);
+        console.error('[Chess] Failed to send CV2 board:', e);
+        return null;
     });
     
-    game.lastMessage = msg;
+    if (msg) game.lastMessage = msg;
 }
