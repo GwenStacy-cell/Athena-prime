@@ -1157,7 +1157,7 @@ async function handleCreateRole(guild, moderator, name, color) {
 
   try {
     const role = await guild.roles.create({ name,
-      colors: { primaryColor: roleColor || undefined },
+      color: roleColor || undefined,
       reason: `Created by ${moderator.user.tag}` });
 
     const resEmbed = cv2.success('Role Created', `Successfully created server role **${role.name}**.`, [
