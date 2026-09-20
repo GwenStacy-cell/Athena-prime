@@ -2108,8 +2108,8 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     antiInvite: 'Anti Invite'
   };
 
-  const emojiOn = '<:on:1533844858983157851>'; // GREEN 
-  const emojiOff = '<:off:1533844867191406672>'; // RED 
+  const emojiOn = '<:on:1533844867191406672>'; 
+  const emojiOff = '<:off:1533844858983157851>'; 
   
   const modulesKeys = Object.keys(modLabels);
   
@@ -2417,8 +2417,8 @@ export async function getAntinukeConfigPanel(guild) {
   const inviteState = config.antiInviteEnabled === true;
   const nukeState = config.antiNukeEnabled;
 
-  const emojiOn = '<:on:1533844858983157851>'; // GREEN 
-  const emojiOff = '<:off:1533844867191406672>'; // RED 
+  const emojiOn = '<:on:1533844867191406672>'; 
+  const emojiOff = '<:off:1533844858983157851>'; 
 
   const description = 
     `# MODULE CONFIGURATION\n` +
@@ -2863,24 +2863,24 @@ export async function getSecurityStatusPanel(guild) {
     antiAppCommands: 'Anti App Commands'
   };
 
-  const emojiOn  = '<:on:1533844858983157851>'; // GREEN
-  const emojiOff = '<:off:1533844867191406672>'; // RED
+  const emojiOn  = '<:on:1533844867191406672>';
+  const emojiOff = '<:off:1533844858983157851>';
 
   let listText = '';
-    if (isSecured) {
-      for (const k of Object.keys(modLabels)) {
-        const moduleFlag = config.antinukeModules?.[k];
-          let isEnabled = false;
-          if (k === 'antiInvite') {
-            isEnabled = isSecured && (config.antiInviteEnabled === true);
-          } else {
-            isEnabled = isSecured && (moduleFlag === undefined ? true : !!moduleFlag);
-          }
-        listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
-      }
+  for (const k of Object.keys(modLabels)) {
+    const moduleFlag = config.antinukeModules?.[k];
+    let isEnabled = false;
+    if (k === 'antiInvite') {
+      isEnabled = isSecured && (config.antiInviteEnabled === true);
     } else {
-      listText = "> -# <a:warning:1540656124313993247> **Security is currently DISABLED on this server.**\n> -# **Modules cannot be viewed or configured until `!security enable all` is executed.**";
+      isEnabled = isSecured && (moduleFlag === undefined ? true : !!moduleFlag);
     }
+    listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
+  }
+
+  if (!isSecured) {
+    listText += "\n> -# <a:warning:1540656124313993247> **Security is currently DISABLED on this server.**\n> -# **Modules cannot be viewed or configured until `!security enable all` is executed.**";
+  }
 
   const headerSection = { type: 10, content: 
       "# SECURITY FIREWALL STATUS\n" +
