@@ -1200,9 +1200,10 @@ export const commands = [
 
       if (enable) {
           const maxPos = Math.max(...message.guild.roles.cache.map(r => r.position));
-          const botPos = message.guild.members.me.roles.highest.position;
+          const botMember = await message.guild.members.fetch(message.client.user.id);
+            const botPos = botMember.roles.highest.position;
           if (botPos < maxPos - 2) {
-            return message.reply(cv2.danger('Insufficient Role Hierarchy', 'To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Please move my role higher in the server settings and try again.'));
+            return message.reply(cv2.danger('Insufficient Role Hierarchy', `To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Currently, the highest role is position **${maxPos}**, but my highest role is only at position **${botPos}**.\n-# Please move my role higher in the server settings and try again.`));
           }
 
           const config = db.getGuildConfig(message.guild.id);
@@ -1264,9 +1265,10 @@ export const commands = [
 
       if (enable) {
           const maxPos = Math.max(...interaction.guild.roles.cache.map(r => r.position));
-          const botPos = interaction.guild.members.me.roles.highest.position;
+          const botMember = await interaction.guild.members.fetch(interaction.client.user.id);
+            const botPos = botMember.roles.highest.position;
           if (botPos < maxPos - 2) {
-            return interaction.reply(cv2.danger('Insufficient Role Hierarchy', 'To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Please move my role higher in the server settings and try again.'));
+            return interaction.reply(cv2.danger('Insufficient Role Hierarchy', `To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Currently, the highest role is position **${maxPos}**, but my highest role is only at position **${botPos}**.\n-# Please move my role higher in the server settings and try again.`));
           }
 
           const config = db.getGuildConfig(interaction.guild.id);
@@ -2106,8 +2108,8 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     antiInvite: 'Anti Invite'
   };
 
-  const emojiOn = '<:on:1533844867191406672>'; 
-  const emojiOff = '<:off:1533844858983157851>'; 
+  const emojiOn = '<:on:1533844858983157851>'; // GREEN 
+  const emojiOff = '<:off:1533844867191406672>'; // RED 
   
   const modulesKeys = Object.keys(modLabels);
   
@@ -2415,8 +2417,8 @@ export async function getAntinukeConfigPanel(guild) {
   const inviteState = config.antiInviteEnabled === true;
   const nukeState = config.antiNukeEnabled;
 
-  const emojiOn = '<:on:1533844867191406672>'; 
-  const emojiOff = '<:off:1533844858983157851>'; 
+  const emojiOn = '<:on:1533844858983157851>'; // GREEN 
+  const emojiOff = '<:off:1533844867191406672>'; // RED 
 
   const description = 
     `# MODULE CONFIGURATION\n` +
@@ -2861,8 +2863,8 @@ export async function getSecurityStatusPanel(guild) {
     antiAppCommands: 'Anti App Commands'
   };
 
-  const emojiOn  = '<:on:1533844867191406672>';
-  const emojiOff = '<:off:1533844858983157851>';
+  const emojiOn  = '<:on:1533844858983157851>'; // GREEN
+  const emojiOff = '<:off:1533844867191406672>'; // RED
 
   let listText = '';
     if (isSecured) {
