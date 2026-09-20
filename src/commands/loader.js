@@ -75,6 +75,7 @@ import { commands as appCmds } from './app.js';
 import { commands as learnCmds } from './learn.js';
 import { commands as renameCmds } from './rename.js';
 import { commands as botgrowthCmds } from './botgrowth.js';
+import { commands as buildserverCmds } from './buildserver.js';
 
 export const allCommands = [
   ...ccmdCmds,
@@ -93,6 +94,7 @@ export const allCommands = [
   ...learnCmds,
   ...renameCmds,
   ...botgrowthCmds,
+  ...buildserverCmds,
   ...youtubeCmds,
   ...snipeCmds,
   ...vcpanelCmds,
