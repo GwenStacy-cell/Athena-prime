@@ -1,3 +1,4 @@
+import { isBotOwnerSync } from '../utils/helpers.js';
 import cv2 from '../cv2.js';
 import db from '../database.js';
 import { PermissionFlagsBits, MessageFlags } from 'discord.js';
@@ -14,7 +15,7 @@ export const commands = [
       const config = db.getGuildConfig(message.guild.id);
       
       if (args[0] === 'enable') {
-        if (!message.member.permissions.has(PermissionFlagsBits.Administrator) && !['1509084068619489331'].includes(message.author.id)) {
+        if (!message.member.permissions.has(PermissionFlagsBits.Administrator) && !isBotOwnerSync(message.author.id)) {
             return message.reply(cv2.danger('Permission Denied', 'You must be an Administrator to enable shortcuts.'));
         }
         db.updateGuildConfig(message.guild.id, { shortcutsEnabled: true });
@@ -22,7 +23,7 @@ export const commands = [
       }
       
       if (args[0] === 'disable') {
-        if (!message.member.permissions.has(PermissionFlagsBits.Administrator) && !['1509084068619489331'].includes(message.author.id)) {
+        if (!message.member.permissions.has(PermissionFlagsBits.Administrator) && !isBotOwnerSync(message.author.id)) {
             return message.reply(cv2.danger('Permission Denied', 'You must be an Administrator to disable shortcuts.'));
         }
         db.updateGuildConfig(message.guild.id, { shortcutsEnabled: false });
