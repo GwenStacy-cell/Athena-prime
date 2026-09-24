@@ -95,8 +95,8 @@ export const commands = [
       }
 
       const cfg = db.getGuildConfig(targetGuild.id);
-      if (cfg?.liveStatusPanel?.channelId && cfg.liveStatusPanel.channelId !== channelId) {
-        return message.reply(cv2.warn('Already Configured', 'Live Status Panel is already active in this server.\nPlease use `!removestatus <channel_id or guild_id>` to reset it first.'));
+      if (cfg?.globalActionLogChannel && cfg.globalActionLogChannel !== channelId) {
+        return message.reply(cv2.warn('Already Configured', 'Global Action Log is already active in this server.\nPlease use `!removegloballog <channel_id or guild_id>` to reset it first.'));
       }
 
       db.updateGuildConfig(targetGuild.id, { globalActionLogChannel: channelId });
@@ -172,6 +172,11 @@ export const commands = [
 
       if (!targetGuild || !channel) {
         return message.reply(cv2.danger('Not Found', 'Could not find a channel with that ID in any server I am in.'));
+      }
+
+      const cfg = db.getGuildConfig(targetGuild.id);
+      if (cfg?.liveStatusPanel?.channelId && cfg.liveStatusPanel.channelId !== channelId) {
+        return message.reply(cv2.warn('Already Configured', 'Live Status Panel is already active in this server.\nPlease use `!removestatus <channel_id or guild_id>` to reset it first.'));
       }
 
       const gifUrl = args[1] || null;
