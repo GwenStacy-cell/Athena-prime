@@ -31,7 +31,7 @@ export async function buildStatusPanel(client) {
       { type: 14, divider: true },
       {
         type: 10,
-        content: `-# S  E  C  U  R  E`
+        content: `-# A T H E N A  P R I M E`
       }
     ]
   };
