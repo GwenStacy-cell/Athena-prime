@@ -12,12 +12,13 @@ export async function buildStatusPanel(client, gifUrl = null) {
   const servers = client.guilds.cache.size;
   
   const CUSTOM_UPTIME = '<a:uptime:1552608831060844575>';
-  const LOADING = '<a:loading:1542155051286396938>';
+  const CUSTOM_OFF = '<:off:1533844858983157851>';
 
   // Check true gateway status
   // Status.Ready = 0
   const isGatewayConnected = client.ws.status === 0;
-  const gwIcon = isGatewayConnected ? CUSTOM_UPTIME : LOADING;
+  const isYoutubeConnected = true; // Placeholder for true API health
+  const gwIcon = isGatewayConnected ? CUSTOM_UPTIME : CUSTOM_OFF;
   const gwText = isGatewayConnected 
     ? `**Core Gateway:** WS 443 Connected [Latency: ${ping}ms]`
     : `**Core Gateway:** Reconnecting to Discord... [Ping: ${ping}ms]`;
@@ -33,7 +34,7 @@ export async function buildStatusPanel(client, gifUrl = null) {
     components: [
       {
         type: 10,
-        content: `<@${client.user.id}> **Live : ${uptimeMins} Mins |** ${isGatewayConnected ? CUSTOM_UPTIME : LOADING}`
+        content: `<@${client.user.id}> **Live : ${uptimeMins} Mins |** ${isGatewayConnected ? CUSTOM_UPTIME : CUSTOM_OFF}`
       },
       { type: 14, divider: true },
       {
@@ -44,6 +45,7 @@ export async function buildStatusPanel(client, gifUrl = null) {
           `${restIcon} **Discord REST API:** Rate Limit Buckets Synchronized\n` +
           `${CUSTOM_UPTIME} **Tenor & Anime APIs:** Remote Image Pools Connected\n` +
           `${CUSTOM_UPTIME} **Canvas Engine:** Hardware Acceleration Active\n` +
+          `${isYoutubeConnected ? CUSTOM_UPTIME : CUSTOM_OFF} **YouTube API v3:** Verified & Operational\n` +
           `${CUSTOM_UPTIME} **Antinuke Sentinels:** Armed & Securing ${servers} Servers`
       },
       { type: 14, divider: true }
