@@ -271,7 +271,7 @@ export const commands = [
     },
     async executeSlash(interaction) {
       const action = interaction.options.getString('action');
-      await interaction.deferReply({ ephemeral: false }).catch(() => null);
+      await interaction.reply(cv2.info('Processing', 'Please wait...'));
       
       const updateProgress = async (embedData) => {
         await cv2.edit(interaction, embedData).catch(() => null);
@@ -298,7 +298,7 @@ export const commands = [
       else await message.reply(result);
     },
     async executeSlash(interaction) {
-      await interaction.deferReply({ ephemeral: false }).catch(() => null);
+      await interaction.reply(cv2.info('Processing', 'Please wait...'));
       
       const updateProgress = async (embedData) => {
         await cv2.edit(interaction, embedData).catch(() => null);
@@ -818,7 +818,7 @@ export const commands = [
         return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`));
       }
 
-      await interaction.deferReply();
+      await interaction.reply(cv2.info('Configuring', 'Updating bot banner...'));
 
       try {
         const { buffer, contentType } = await getImageBuffer(url);
@@ -891,7 +891,7 @@ export const commands = [
         return interaction.reply(cv2.warn('Command Error', `${interaction.user} Please provide a direct image URL or attach an image.`));
       }
 
-      await interaction.deferReply();
+      await interaction.reply(cv2.info('Processing', 'Please wait...'));
 
       try {
         const { buffer, contentType } = await getImageBuffer(url);
@@ -1098,7 +1098,7 @@ export const commands = [
         await message.reply(panel);
       },
       async executeSlash(interaction) {
-        await interaction.deferReply();
+        await interaction.reply(cv2.info('Processing', 'Please wait...'));
         const panel = await getAutoModPanel(interaction.guild);
         await cv2.edit(interaction, panel);
       }
@@ -1366,7 +1366,7 @@ export const commands = [
       await message.reply(result);
     },
     async executeSlash(interaction) {
-      await interaction.deferReply();
+      await interaction.reply(cv2.info('Processing', 'Please wait...'));
       const action = interaction.options.getString('action');
       const role = interaction.options.getRole('role');
       const channel = interaction.options.getChannel('channel');
@@ -1407,7 +1407,7 @@ export const commands = [
       await cv2.edit(statusMsg, result);
     },
     async executeSlash(interaction) {
-      await interaction.deferReply();
+      await interaction.reply(cv2.info('Processing', 'Please wait...'));
       const role = interaction.options.getRole('role');
       const reason = interaction.options.getString('reason') || 'Mass quarantine by administrator';
       const result = await handleMassQuarantine(interaction.guild, interaction.member, role, reason);
@@ -1429,7 +1429,7 @@ export const commands = [
       await cv2.edit(statusMsg, result);
     },
     async executeSlash(interaction) {
-      await interaction.deferReply();
+      await interaction.reply(cv2.info('Processing', 'Please wait...'));
       const result = await handleMassUnquarantine(interaction.guild, interaction.member, interaction.client);
       await cv2.edit(interaction, result);
     }
@@ -3877,7 +3877,7 @@ export async function handleAutonickButton(interaction) {
   }
 
   if (customId === 'autonick_sync') {
-    await interaction.deferReply({ flags: 64 });
+    await interaction.reply({ ...cv2.info('Processing', 'Please wait...'), flags: 64 });
     let count = 0;
     try {
       const members = await interaction.guild.members.fetch();
@@ -3894,7 +3894,7 @@ export async function handleAutonickButton(interaction) {
   }
 
   if (customId === 'autonick_restore') {
-    await interaction.deferReply({ flags: 64 });
+    await interaction.reply({ ...cv2.info('Processing', 'Please wait...'), flags: 64 });
     let count = 0;
     try {
       const members = await interaction.guild.members.fetch();

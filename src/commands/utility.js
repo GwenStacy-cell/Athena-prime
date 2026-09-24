@@ -315,12 +315,14 @@ export const commands = [
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
       const { MessageFlags } = await import('discord.js');
-      await interaction.reply({ 
-        components: [{ type: 17, components: [{ type: 10, content: `-# <a:loading:1542155051286396938> **Athena Prime:** ${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}` }] }],
-        flags: MessageFlags.IsComponentsV2 
+      const replyResponse = await interaction.reply({ 
+        components: [{ type: 17, components: [{ type: 10, content: `-### <a:loading:1542155051286396938> **Athena Prime:** ${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}` }] }],
+        flags: MessageFlags.IsComponentsV2,
+        withResponse: true
       });
       
-      const apiMs = sent.createdTimestamp - interaction.createdTimestamp;
+      const sentMessage = replyResponse?.resource?.message || replyResponse;
+      const apiMs = (sentMessage?.createdTimestamp || Date.now()) - interaction.createdTimestamp;
       const wsMs  = Math.round(interaction.client.ws.ping);
 
       const dbStart = Date.now();
