@@ -5,7 +5,7 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 
 // ─── Live Status Panel helpers ───────────────────────────────────────────────
 
-export async function buildStatusPanel(client) {
+export async function buildStatusPanel(client, gifUrl = null) {
   const { MessageFlags } = await import('discord.js');
   const uptimeMins = Math.floor((client.uptime || 0) / 60000);
   const ping = client.ws.ping;
@@ -35,6 +35,10 @@ export async function buildStatusPanel(client) {
       }
     ]
   };
+
+  if (gifUrl) {
+    card.components.push({ type: 11, media: { url: gifUrl } });
+  }
 
   return { components: [card], flags: MessageFlags.IsComponentsV2 };
 }
@@ -82,19 +86,21 @@ export const commands = [
       if (!isBotOwnerSync(message.author.id)) return;
 
       const channelId = args[0];
-      if (!channelId) return message.reply(cv2.warn('Usage', '`!setstatus <channel_id>`'));
+      if (!channelId) return message.reply(cv2.warn('Usage', '`!setstatus <channel_id> [gif_url]`'));
 
       const channel = message.guild.channels.cache.get(channelId);
       if (!channel) return message.reply(cv2.danger('Not Found', 'Could not find a channel with that ID in this server.'));
 
+      const gifUrl = args[1] || null;
+
       // Build and send the initial status panel
-      const panel = await buildStatusPanel(message.client);
+      const panel = await buildStatusPanel(message.client, gifUrl);
       const sent = await channel.send(panel).catch(() => null);
       if (!sent) return message.reply(cv2.danger('Error', 'Could not send a message to that channel. Check my permissions.'));
 
       // Save to guild config
       db.updateGuildConfig(message.guild.id, {
-        liveStatusPanel: { channelId: channel.id, messageId: sent.id }
+        liveStatusPanel: { channelId: channel.id, messageId: sent.id, gifUrl }
       });
 
       return message.reply(cv2.success('Live Status Panel Set', `The status panel is now live in <#${channelId}>. It auto-updates every 60 seconds.`));
