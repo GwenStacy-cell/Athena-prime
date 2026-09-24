@@ -6,7 +6,7 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 // ─── Live Status Panel helpers ───────────────────────────────────────────────
 
 export async function buildStatusPanel(client, gifUrl = null) {
-  const { MessageFlags, Status } = await import('discord.js');
+  const { MessageFlags } = await import('discord.js');
   const uptimeMins = Math.floor((client.uptime || 0) / 60000);
   const ping = client.ws.ping;
   const servers = client.guilds.cache.size;
@@ -96,7 +96,7 @@ export const commands = [
       }
 
       db.updateGuildConfig(targetGuild.id, { globalActionLogChannel: channelId });
-      await message.reply(cv2.success('Global Action Log Set', `Cross-server ban/kick/quarantine cards will now be posted in <#${channelId}> in **${targetGuild.name}**.\nDropping a sample preview card now...`));
+      await message.reply(cv2.success('Global Action Log Set', `Set! Events will now post in <#${channelId}> (**${targetGuild.name}**). Sending a sample preview to that channel now.`));
 
       // Drop a sample preview card so you can see exactly how real events will look
       try {
@@ -125,14 +125,20 @@ export const commands = [
     async executePrefix(message, args) {
       if (!isBotOwnerSync(message.author.id)) return;
 
-      const guildId = args[0] || (message.guild ? message.guild.id : null);
-      if (!guildId) return message.reply(cv2.warn('Usage', '`!removegloballog <guild_id>`'));
+      const idArg = args[0] || (message.guild ? message.guild.id : null);
+      if (!idArg) return message.reply(cv2.warn('Usage', '`!removegloballog <channel_id or guild_id>`'));
 
-      const guild = message.client.guilds.cache.get(guildId);
-      if (!guild) return message.reply(cv2.danger('Not Found', 'Bot is not in that guild.'));
+      // Try to resolve as guild_id first, then as channel_id
+      let targetGuild = message.client.guilds.cache.get(idArg);
+      if (!targetGuild) {
+        for (const g of message.client.guilds.cache.values()) {
+          if (g.channels.cache.has(idArg)) { targetGuild = g; break; }
+        }
+      }
+      if (!targetGuild) return message.reply(cv2.danger('Not Found', 'Could not resolve that ID to any server I am in.'));
 
-      db.updateGuildConfig(guildId, { globalActionLogChannel: null });
-      return message.reply(cv2.success('Removed', `Global action log channel cleared for **${guild.name}**.`));
+      db.updateGuildConfig(targetGuild.id, { globalActionLogChannel: null });
+      return message.reply(cv2.success('Removed', `Global action log cleared for **${targetGuild.name}**.`));
     }
   },
 
@@ -174,7 +180,7 @@ export const commands = [
         liveStatusPanel: { channelId: channel.id, messageId: sent.id, gifUrl }
       });
 
-      return message.reply(cv2.success('Live Status Panel Set', `The status panel is now live in <#${channelId}> in **${targetGuild.name}**. It auto-updates every 60 seconds.`));
+      return message.reply(cv2.success('Live Status Panel Set', `The status panel is now live in <#${channelId}> in **${targetGuild.name}**. Auto-updates every 60 seconds.`));
     }
   },
 
@@ -186,11 +192,16 @@ export const commands = [
     async executePrefix(message, args) {
       if (!isBotOwnerSync(message.author.id)) return;
 
-      const guildId = args[0] || (message.guild ? message.guild.id : null);
-      if (!guildId) return message.reply(cv2.warn('Usage', '`!removestatus <guild_id>`'));
+      const idArg = args[0] || (message.guild ? message.guild.id : null);
+      if (!idArg) return message.reply(cv2.warn('Usage', '`!removestatus <channel_id or guild_id>`'));
 
-      const guild = message.client.guilds.cache.get(guildId);
-      if (!guild) return message.reply(cv2.danger('Not Found', 'Bot is not in that guild.'));
+      let guild = message.client.guilds.cache.get(idArg);
+      if (!guild) {
+        for (const g of message.client.guilds.cache.values()) {
+          if (g.channels.cache.has(idArg)) { guild = g; break; }
+        }
+      }
+      if (!guild) return message.reply(cv2.danger('Not Found', 'Could not resolve that ID to any server I am in.'));
 
       const cfg = db.getGuildConfig(guildId);
       if (cfg?.liveStatusPanel) {
