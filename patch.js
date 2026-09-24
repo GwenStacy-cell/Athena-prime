@@ -1,4 +1,43 @@
-﻿import fs from 'fs';
-let js = fs.readFileSync('src/events/messageCreate.js', 'utf8');
-js = js.replace(/[\t ]*\/\/ Ignore bots and webhooks\r?\n[\t ]*if \(message\.author\.bot \|\| message\.webhookId\) return;/,     // --- UNAUTHORIZED NUKE BOT SPAM AUTO-DELETE ---\n    if (message.guild && message.author.bot && message.author.id !== message.client.user.id) {\n        try {\n            const config = db.getGuildConfig(message.guild.id);\n            if (config && (config.securityEnabled || config.antiNukeEnabled)) {\n                const mods = config.antinukeModules || {};\n                if (mods.antiBotAdd !== false) {\n                    if (!isBotAuthorized(message.guild, message.author.id)) {\n                        await message.delete().catch(() => null);\n                        if (!message.client.nukeSpamLogs) message.client.nukeSpamLogs = new Set();\n                        if (!message.client.nukeSpamLogs.has(message.author.id)) {\n                            message.client.nukeSpamLogs.add(message.author.id);\n                            setTimeout(() => message.client.nukeSpamLogs.delete(message.author.id), 60000);\n                            const embed = cv2.warn('ATHENA FIREWALL — UNAUTHORIZED SPAM BLOCKED', 'An unauthorized bot <@' + message.author.id + '> attempted to spam the server. Athena intercepted and instantly deleted the message.', [{ name: 'Channel', value: '<#' + message.channel.id + '>', inline: true }, { name: 'Status', value: '**Message Deleted**', inline: true }], 'shield');\n                            logToSecurityChannel(message.guild, embed).catch(()=>{});\n                        }\n                    }\n                }\n            }\n        } catch (e) { console.error(e); }\n    }\n\n    // Ignore bots and webhooks\n    if (message.author.bot || message.webhookId) return;);
-fs.writeFileSync('src/events/messageCreate.js', js);
+const fs = require('fs');
+let code = fs.readFileSync('src/utils/antinuke.js', 'utf8');
+
+const ownerOld = `
+            await owner.send(cv2.danger(
+              'CRITICAL: Athena Firewall Engaged',
+              \`A hostile action was detected, neutralized, and reversed on **${guild.name}** in milliseconds.\`
+`;
+
+const ownerNew = `
+            await owner.send(cv2.danger(
+              (punishResult.startsWith('Total failure') || punishResult.startsWith('Hierarchy blocked')) ? 'CRITICAL: Athena Firewall Bypassed' : 'CRITICAL: Athena Firewall Engaged',
+              (punishResult.startsWith('Total failure') || punishResult.startsWith('Hierarchy blocked'))
+                ? \`<:émoji×_16:1521464002046328944> **URGENT:** A hostile action was detected on **${guild.name}**, but **COULD NOT BE NEUTRALIZED** because the attacker's role is higher than mine in the Discord Server Settings!\n\n**Please intervene immediately and move my role higher!**`
+                : \`A hostile action was detected, neutralized, and reversed on **${guild.name}** in milliseconds.\`
+`�;
+
+code = code.replace(ownerOld.trim(), ownerNew.trim());
+
+const attackerOld = `
+        // DM fire-and-forget
+        guild.members.fetch(executor.id).then(m => {
+          m?.send(cv2.danger('Eliminated — Athena Prime Firewall',
+            \`You have been permanently banned from **${guild.name}**.\n\n**Violation:** ${eventType}\n\n*Athena Prime detected and neutralized your attack in milliseconds.*`
+          )).then()=>null).catch(() => null);
+        }).catch(() => null);
+`
+
+const attackerNew = `
+        // DM fire-and-forget (ONLY if actually punishED)
+        if (!result.startsWith('Total failure') && !result.startsWith('Hierarchy blocked')) {
+          guild.members.fetch(executor.id).then(m => {
+            m?.send(cv2.danger('Eliminated — Athena Prime Firewall',
+              \`You have been permanently banned from **${guild.name}**.\n\n**Violation:** ${eventType}\n\n*Athena Prime detected and neutralized your attack in milliseconds.*`
+            )).then()=>null).catch(() => null);
+          }).catch(() => null);
+        }
+`
+
+code = code.replace(attackerOld.trim(), attackerNew.trim());
+
+fs.writeFileSync('src/utils/antinuke.js', code);
+console.log('Patched successfully.');

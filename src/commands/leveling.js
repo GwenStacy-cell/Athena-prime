@@ -8,15 +8,15 @@ const TROPHY = '<a:trophy:1533859922599481577>';
 const COIN = '<a:Boost2:1533859928949784776>';
 
 export async function buildXpDashboard(guildId) {
-  const { ActionRowBuilder, ButtonBuilder, ButtonStyle, RoleSelectMenuBuilder } = await import('discord.js');
+  const { ActionRowBuilder, RoleSelectMenuBuilder, MessageFlags } = await import('discord.js');
   const system = db.getXpSystem(guildId);
 
-  const ON_EMOJI = '<:on:1533844867191406672>';
-  const OFF_EMOJI = '<:off:1533844858983157851>';
-  const statusIcon = system.enabled ? ON_EMOJI : OFF_EMOJI;
+  const ON  = '<:on:1533844867191406672>';
+  const OFF = '<:off:1533844858983157851>';
+  const statusIcon = system.enabled ? ON : OFF;
 
   let rewardsText = 'None';
-  if (Object.keys(system.roleRewards).length > 0) {
+  if (Object.keys(system.roleRewards || {}).length > 0) {
     rewardsText = Object.entries(system.roleRewards)
       .sort((a, b) => Number(a[0]) - Number(b[0]))
       .map(([level, roleId]) => `**Level ${level}**: <@&${roleId}>`)
@@ -24,47 +24,62 @@ export async function buildXpDashboard(guildId) {
   }
 
   let multipliersText = 'None';
-  if (Object.keys(system.multipliers).length > 0) {
+  if (Object.keys(system.multipliers || {}).length > 0) {
     multipliersText = Object.entries(system.multipliers)
       .map(([roleId, mult]) => `<@&${roleId}> (**${mult}x**)`)
       .join('\n');
   }
 
-  const payload = cv2.info(
-    'XP Manager',
-    `Welcome to the Interactive XP Control Panel.\n\n**Status**: ${statusIcon}\n**Announce Channel**: ${system.announceChannelId ? `<#${system.announceChannelId}>` : 'Not Set'}\n**Command Channel**: ${system.cmdChannelId ? `<#${system.cmdChannelId}>` : 'Not Set'}`,
-    [
-      { name: 'Role Rewards (Auto-Milestones)', value: rewardsText, inline: true },
-      { name: 'XP Multipliers (1.5x Auto-Boost)', value: multipliersText, inline: true }
+  const container = {
+    type: 17,
+    components: [
+      {
+        type: 10,
+        content:
+          `## XP Manager\n` +
+          `Welcome to the Interactive XP Control Panel.\n\n` +
+          `**Status**: ${statusIcon}\n` +
+          `**Announce Channel**: ${system.announceChannelId ? `<#${system.announceChannelId}>` : 'Not Set'}\n` +
+          `**Command Channel**: ${system.cmdChannelId ? `<#${system.cmdChannelId}>` : 'Not Set'}`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# Role Rewards (Auto-Milestones): ${rewardsText} \u2022 XP Multipliers (1.5x Auto-Boost): ${multipliersText}`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# Athena Bulletproof Security System \u2022 V1.0.0`
+      },
+      {
+        type: 1,
+        components: [
+          { type: 2, custom_id: 'xp_toggle',       label: system.enabled ? 'Disable System' : 'Enable System', style: system.enabled ? 4 : 3 },
+          { type: 2, custom_id: 'xp_set_announce', label: 'Announce Ch (ID)', style: 1 },
+          { type: 2, custom_id: 'xp_set_cmd',      label: 'Command Ch (ID)',  style: 1 },
+          { type: 2, custom_id: 'xp_clear',        label: 'Clear Setup',      style: 4 },
+          { type: 2, custom_id: 'xp_save',         label: 'Save Setup',       style: 3 }
+        ]
+      }
     ]
-  );
+  };
 
-  const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('xp_toggle').setLabel(system.enabled ? 'Disable System' : 'Enable System').setStyle(system.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
-    new ButtonBuilder().setCustomId('xp_set_announce').setLabel('Announce Ch (ID)').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId('xp_set_cmd').setLabel('Command Ch (ID)').setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId('xp_clear').setLabel('Clear Setup').setStyle(ButtonStyle.Danger),
-    new ButtonBuilder().setCustomId('xp_save').setLabel('Save Setup').setStyle(ButtonStyle.Success)
-  );
-
-  const row2 = new ActionRowBuilder().addComponents(
+  const selectRow1 = new ActionRowBuilder().addComponents(
     new RoleSelectMenuBuilder()
       .setCustomId('xp_add_reward')
-      .setPlaceholder('Select roles to automatically add as Level Rewards')
-      .setMinValues(1)
-      .setMaxValues(10)
+      .setPlaceholder('Select roles to automatically add as Level Reward')
+      .setMinValues(1).setMaxValues(10)
   );
 
-  const row3 = new ActionRowBuilder().addComponents(
+  const selectRow2 = new ActionRowBuilder().addComponents(
     new RoleSelectMenuBuilder()
       .setCustomId('xp_add_multiplier')
       .setPlaceholder('Select roles to automatically grant a 1.5x XP Boost')
-      .setMinValues(1)
-      .setMaxValues(10)
+      .setMinValues(1).setMaxValues(10)
   );
 
-  payload.components.push(row1, row2, row3);
-  return payload;
+  return { components: [container, selectRow1, selectRow2], flags: MessageFlags.IsComponentsV2 };
 }
 
 export const commands = [

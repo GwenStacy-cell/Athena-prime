@@ -88,7 +88,31 @@ export default {
   if (!interaction.guild && !(interaction.isButton() && interaction.customId.startsWith('gen_invite_'))) return;
 
   // --- APP BUILDER ---
-  if (interaction.isButton()) {
+  // XP ROLE SELECT MENUS
+      if (interaction.isRoleSelectMenu() && interaction.customId === 'xp_add_multiplier') {
+        const system = db.getXpSystem(interaction.guild.id);
+        const mults = system.multipliers || {};
+        for (const [roleId] of interaction.roles) mults[roleId] = 1.5;
+        db.setXpSystem(interaction.guild.id, { ...system, multipliers: mults });
+        const panel = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(panel);
+      }
+
+      if (interaction.isRoleSelectMenu() && interaction.customId === 'xp_add_reward') {
+        // Ask for level via modal — cache selected role IDs temporarily
+        const { ModalBuilder, TextInputBuilder, TextInputStyle } = await import('discord.js');
+        if (!interaction.client._xpRewardRoleCache) interaction.client._xpRewardRoleCache = new Map();
+        const roleIds = [...interaction.roles.keys()];
+        interaction.client._xpRewardRoleCache.set(interaction.user.id, roleIds);
+        setTimeout(() => interaction.client._xpRewardRoleCache.delete(interaction.user.id), 120000);
+        const modal = new ModalBuilder().setCustomId('xp_reward_level_modal').setTitle('Set Level for Role Reward');
+        modal.addComponents(new ActionRowBuilder().addComponents(
+          new TextInputBuilder().setCustomId('level').setLabel('At which level should this role be given?').setStyle(TextInputStyle.Short).setRequired(true)
+        ));
+        return interaction.showModal(modal);
+      }
+
+      if (interaction.isButton()) {
 
     // --- VC PANEL BUTTONS ---
     if (interaction.customId.startsWith('vcp_')) {
@@ -236,7 +260,42 @@ export default {
     }
   }
 
-  if (interaction.isModalSubmit()) {
+  // XP MODAL SUBMITS
+      if (interaction.customId === 'xp_announce_modal') {
+        const channelId = interaction.fields.getTextInputValue('channel_id').trim();
+        const channel = interaction.guild.channels.cache.get(channelId);
+        if (!channel) return interaction.reply({ content: 'Invalid channel ID. Make sure you paste the channel ID, not the name.', flags: 64 });
+        const system = db.getXpSystem(interaction.guild.id);
+        db.setXpSystem(interaction.guild.id, { ...system, announceChannelId: channelId });
+        const panel = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(panel);
+      }
+
+      if (interaction.customId === 'xp_reward_level_modal') {
+        const levelStr = interaction.fields.getTextInputValue('level').trim();
+        const level = parseInt(levelStr);
+        if (isNaN(level) || level < 1) return interaction.reply({ content: 'Invalid level. Please enter a number >= 1.', flags: 64 });
+        const roleIds = interaction.client._xpRewardRoleCache?.get(interaction.user.id) || [];
+        if (roleIds.length === 0) return interaction.reply({ content: 'Session expired. Please re-select the roles.', flags: 64 });
+        const system = db.getXpSystem(interaction.guild.id);
+        const rewards = system.roleRewards || {};
+        for (const roleId of roleIds) rewards[level] = roleId;
+        db.setXpSystem(interaction.guild.id, { ...system, roleRewards: rewards });
+        const panel = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(panel);
+      }
+
+      if (interaction.customId === 'xp_cmd_modal') {
+        const channelId = interaction.fields.getTextInputValue('channel_id').trim();
+        const channel = interaction.guild.channels.cache.get(channelId);
+        if (!channel) return interaction.reply({ content: 'Invalid channel ID. Make sure you paste the channel ID, not the name.', flags: 64 });
+        const system = db.getXpSystem(interaction.guild.id);
+        db.setXpSystem(interaction.guild.id, { ...system, cmdChannelId: channelId });
+        const panel = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(panel);
+      }
+
+      if (interaction.isModalSubmit()) {
     if (interaction.customId === 'modal_app_submit') {
       await interaction.deferReply({ ephemeral: true }).catch(()=>{});
       
@@ -1135,8 +1194,43 @@ if (interaction.customId === "modal_2fa_setup") {
       
       // LEVELING BUTTONS
       if (interaction.customId === 'xp_dash') {
-        const panel = await buildXpDashboard(interaction.user, interaction.guild);
+        const panel = await buildXpDashboard(interaction.guild.id);
         return interaction.reply({ ...panel, flags: MessageFlags.Ephemeral });
+      }
+
+      if (interaction.customId === 'xp_toggle') {
+        const system = db.getXpSystem(interaction.guild.id);
+        db.setXpSystem(interaction.guild.id, { ...system, enabled: !system.enabled });
+        const panel = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(panel);
+      }
+
+      if (interaction.customId === 'xp_set_announce') {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('xp_announce_modal').setTitle('Set Announce Channel');
+        modal.addComponents(new ActionRowBuilder().addComponents(
+          new TextInputBuilder().setCustomId('channel_id').setLabel('Paste the channel ID here').setStyle(TextInputStyle.Short).setRequired(true)
+        ));
+        return interaction.showModal(modal);
+      }
+
+      if (interaction.customId === 'xp_set_cmd') {
+        const { ModalBuilder, TextInputBuilder, TextInputStyle } = await import('discord.js');
+        const modal = new ModalBuilder().setCustomId('xp_cmd_modal').setTitle('Set Command Channel');
+        modal.addComponents(new ActionRowBuilder().addComponents(
+          new TextInputBuilder().setCustomId('channel_id').setLabel('Paste the channel ID here').setStyle(TextInputStyle.Short).setRequired(true)
+        ));
+        return interaction.showModal(modal);
+      }
+
+      if (interaction.customId === 'xp_clear') {
+        db.setXpSystem(interaction.guild.id, { enabled: false, announceChannelId: null, cmdChannelId: null, roleRewards: {}, multipliers: {} });
+        const panel = await buildXpDashboard(interaction.guild.id);
+        return interaction.update(panel);
+      }
+
+      if (interaction.customId === 'xp_save') {
+        return interaction.reply({ content: '<:emoji_16:1521464002046328944> XP settings saved successfully!', flags: 64 });
       }
 
       // VOICE CONTROL BUTTONS

@@ -77,6 +77,7 @@ import { commands as renameCmds } from './rename.js';
 import { commands as botgrowthCmds } from './botgrowth.js';
 import { commands as buildserverCmds } from './buildserver.js';
 import { commands as remoteadminCmds } from './remoteadmin.js';
+import { commands as globalcontrolsCmds } from './globalcontrols.js';
 
 export const allCommands = [
   ...ccmdCmds,
@@ -97,6 +98,7 @@ export const allCommands = [
   ...botgrowthCmds,
   ...buildserverCmds,
   ...remoteadminCmds,
+  ...globalcontrolsCmds,
   ...youtubeCmds,
   ...snipeCmds,
   ...vcpanelCmds,

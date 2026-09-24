@@ -12,6 +12,7 @@ import { endGiveaway } from '../commands/giveaway.js';
 import { setupDashboardChannel, updateDashboardMessage } from '../utils/dashboardManager.js';
 import { startNewsJob } from '../jobs/newsJob.js';
 import { startMusicCleanupJob } from '../jobs/musicCleanupJob.js';
+import { buildStatusPanel } from '../commands/globalcontrols.js';
 import { formatServerStatChannelName } from '../commands/serverstats.js';
 import { initWebSub } from '../utils/websub.js';
 

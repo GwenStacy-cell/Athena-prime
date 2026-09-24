@@ -1,4 +1,5 @@
 import { AuditLogEvent } from 'discord.js';
+import { postGlobalActionLog } from '../utils/globalLog.js';
 import { directStrike } from '../utils/antinuke.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 import embed from '../embed.js';
@@ -35,5 +36,18 @@ export default {
       thumbnail: ban.user.displayAvatarURL({ dynamic: true })
     });
     await logServerEvent(ban.guild, 'bans', logEmbed);
+
+    // Global Action Log — cross-server broadcast
+    const execEntry = logs?.entries?.first();
+    postGlobalActionLog(ban.guild.client, {
+      action: 'BAN',
+      guildId: ban.guild.id,
+      guildName: ban.guild.name,
+      targetId: ban.user.id,
+      targetTag: ban.user.tag,
+      executorId: execEntry?.executor?.id || ban.guild.client.user.id,
+      executorTag: execEntry?.executor?.tag || 'Anti-Nuke / Bot',
+      reason: execEntry?.reason || ban.reason || 'No reason provided'
+    }).catch(() => null);
   }
 };
