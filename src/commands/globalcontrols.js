@@ -57,13 +57,26 @@ export const commands = [
       const channelId = args[0];
       if (!channelId) return message.reply(cv2.warn('Usage', '`!setgloballog <channel_id>`'));
 
-      const channel = message.guild.channels.cache.get(channelId);
-      if (!channel) return message.reply(cv2.danger('Not Found', 'Could not find a channel with that ID in this server.'));
+      let targetGuild = message.guild;
+      let channel = targetGuild ? targetGuild.channels.cache.get(channelId) : null;
 
-      db.updateGuildConfig(message.guild.id, { globalActionLogChannel: channelId });
-      return message.reply(cv2.success('Global Action Log Set', `Cross-server ban/kick/quarantine cards will now be posted in <#${channelId}>.`));
-    }
-  },
+      if (!channel) {
+        for (const g of message.client.guilds.cache.values()) {
+          if (g.channels.cache.has(channelId)) {
+            targetGuild = g;
+            channel = g.channels.cache.get(channelId);
+            break;
+          }
+        }
+      }
+
+      if (!targetGuild || !channel) {
+        return message.reply(cv2.danger('Not Found', 'Could not find a channel with that ID in any server I am in.'));
+      }
+
+      db.updateGuildConfig(targetGuild.id, { globalActionLogChannel: channelId });
+      return message.reply(cv2.success('Global Action Log Set', `Cross-server ban/kick/quarantine cards will now be posted in <#${channelId}> in **${targetGuild.name}**.`));
+    }  },
 
   {
     name: 'removegloballog',
@@ -88,24 +101,35 @@ export const commands = [
       const channelId = args[0];
       if (!channelId) return message.reply(cv2.warn('Usage', '`!setstatus <channel_id> [gif_url]`'));
 
-      const channel = message.guild.channels.cache.get(channelId);
-      if (!channel) return message.reply(cv2.danger('Not Found', 'Could not find a channel with that ID in this server.'));
+      let targetGuild = message.guild;
+      let channel = targetGuild ? targetGuild.channels.cache.get(channelId) : null;
+
+      if (!channel) {
+        for (const g of message.client.guilds.cache.values()) {
+          if (g.channels.cache.has(channelId)) {
+            targetGuild = g;
+            channel = g.channels.cache.get(channelId);
+            break;
+          }
+        }
+      }
+
+      if (!targetGuild || !channel) {
+        return message.reply(cv2.danger('Not Found', 'Could not find a channel with that ID in any server I am in.'));
+      }
 
       const gifUrl = args[1] || null;
 
-      // Build and send the initial status panel
       const panel = await buildStatusPanel(message.client, gifUrl);
       const sent = await channel.send(panel).catch(() => null);
       if (!sent) return message.reply(cv2.danger('Error', 'Could not send a message to that channel. Check my permissions.'));
 
-      // Save to guild config
-      db.updateGuildConfig(message.guild.id, {
+      db.updateGuildConfig(targetGuild.id, {
         liveStatusPanel: { channelId: channel.id, messageId: sent.id, gifUrl }
       });
 
-      return message.reply(cv2.success('Live Status Panel Set', `The status panel is now live in <#${channelId}>. It auto-updates every 60 seconds.`));
-    }
-  },
+      return message.reply(cv2.success('Live Status Panel Set', `The status panel is now live in <#${channelId}> in **${targetGuild.name}**. It auto-updates every 60 seconds.`));
+    }  },
 
   {
     name: 'removestatus',
