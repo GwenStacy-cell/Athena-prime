@@ -37,19 +37,14 @@ export async function buildStatusPanel(client, gifUrl = null) {
       },
       { type: 14, divider: true },
       {
-        type: 9, 
-        components: [
-          {
-            type: 10,
-            content:
-              `${gwIcon} ${gwText}\n` +
-              `${sqlIcon} **SQLite Database:** WAL Mode [Integrity: 100%]\n` +
-              `${restIcon} **Discord REST API:** Rate Limit Buckets Synchronized\n` +
-              `${CUSTOM_UPTIME} **Tenor & Anime APIs:** Remote Image Pools Connected\n` +
-              `${CUSTOM_UPTIME} **Canvas Engine:** Hardware Acceleration Active\n` +
-              `${CUSTOM_UPTIME} **Antinuke Sentinels:** Armed & Securing ${servers} Servers`
-          }
-        ]
+        type: 10,
+        content:
+          `${gwIcon} ${gwText}\n` +
+          `${sqlIcon} **SQLite Database:** WAL Mode [Integrity: 100%]\n` +
+          `${restIcon} **Discord REST API:** Rate Limit Buckets Synchronized\n` +
+          `${CUSTOM_UPTIME} **Tenor & Anime APIs:** Remote Image Pools Connected\n` +
+          `${CUSTOM_UPTIME} **Canvas Engine:** Hardware Acceleration Active\n` +
+          `${CUSTOM_UPTIME} **Antinuke Sentinels:** Armed & Securing ${servers} Servers`
       },
       { type: 14, divider: true }
     ]
@@ -95,6 +90,11 @@ export const commands = [
         return message.reply(cv2.danger('Not Found', 'Could not find a channel with that ID in any server I am in.'));
       }
 
+      const cfg = db.getGuildConfig(targetGuild.id);
+      if (cfg?.liveStatusPanel?.channelId && cfg.liveStatusPanel.channelId !== channelId) {
+        return message.reply(cv2.warn('Already Configured', 'Live Status Panel is already active in this server.\nPlease use `!removestatus <channel_id or guild_id>` to reset it first.'));
+      }
+
       db.updateGuildConfig(targetGuild.id, { globalActionLogChannel: channelId });
       await message.reply(cv2.success('Global Action Log Set', `Set! Events will now post in <#${channelId}> (**${targetGuild.name}**). Sending a sample preview to that channel now.`));
 
@@ -113,7 +113,7 @@ export const commands = [
           reason: `Global Action Log successfully configured for **${targetGuild.name}**! Real ban/kick/quarantine events will appear exactly like this.`,
           _isSample: true
         });
-      } catch (e) { /* silently ignore — sample is cosmetic */ }
+      } catch (e) { console.error("Sample preview failed:", e); }
     }
   },
 
@@ -173,7 +173,8 @@ export const commands = [
       const gifUrl = args[1] || null;
 
       const panel = await buildStatusPanel(message.client, gifUrl);
-      const sent = await channel.send(panel).catch(() => null);
+      const sent = await channel.send(panel).catch(err => { console.error("setstatus error:", err); return err; });
+      if (sent instanceof Error) return message.reply(cv2.danger('Error', 'Failed to send panel: ' + sent.message));
       if (!sent) return message.reply(cv2.danger('Error', 'Could not send a message to that channel. Check my permissions.'));
 
       db.updateGuildConfig(targetGuild.id, {
