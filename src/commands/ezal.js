@@ -326,7 +326,7 @@ async function handleBackup(message, args) {
     const backupId  = generateBackupId();
     db.saveBackup(backupId, data);
 
-    await statusMsg.edit(cv2.success(
+    await cv2.edit(statusMsg, cv2.success(
       'Backup Complete',
       `Server **${targetGuild.name}** has been backed up successfully.`,
       [
@@ -341,7 +341,7 @@ async function handleBackup(message, args) {
     ));
   } catch (err) {
     console.error('[Backup]', err);
-    await statusMsg.edit(cv2.danger('<:off:1533844858983157851> Failed', `An error occurred: \`${err.message}\``));
+    await cv2.edit(statusMsg, cv2.danger('<:off:1533844858983157851> Failed', `An error occurred: \`${err.message}\``));
   }
 }
 
@@ -368,12 +368,12 @@ async function handleBackupAll(message) {
 
     // Update status every 5 servers to prevent rate limiting on edits
     if (statusMsg && (i + 1) % 5 === 0) {
-      await statusMsg.edit(cv2.info('Mass Backup In Progress', `Backing up **${guilds.length}** servers...\n\n**Progress:** ${i + 1} / ${guilds.length} Servers\n**Success:** ${successCount} | **Failed:** ${failCount}`)).catch(() => null);
+      await cv2.edit(statusMsg, cv2.info('Mass Backup In Progress', `Backing up **${guilds.length}** servers...\n\n**Progress:** ${i + 1} / ${guilds.length} Servers\n**Success:** ${successCount} | **Failed:** ${failCount}`)).catch(() => null);
     }
   }
 
   if (statusMsg) {
-    await statusMsg.edit(cv2.success('Mass Backup Complete', `Successfully backed up all servers.\n\n**Total Servers:** ${guilds.length}\n**Success:** ${successCount}\n**Failed:** ${failCount}`)).catch(() => null);
+    await cv2.edit(statusMsg, cv2.success('Mass Backup Complete', `Successfully backed up all servers.\n\n**Total Servers:** ${guilds.length}\n**Success:** ${successCount}\n**Failed:** ${failCount}`)).catch(() => null);
   }
 }
 
@@ -480,7 +480,7 @@ async function handleRestore(message, args) {
   const collected = await message.channel.awaitMessages({ filter, max: 1, time: 15000 }).catch(() => null);
 
   if (!collected?.size) {
-    return confirmMsg.edit(cv2.info('Cancelled', 'Restore aborted - no confirmation received.'));
+    return cv2.edit(confirmMsg, cv2.info('Cancelled', 'Restore aborted - no confirmation received.'));
   }
 
   collected.first()?.delete().catch(() => null);
@@ -499,12 +499,12 @@ async function handleRestore(message, args) {
   const statusMsg = await message.channel.send(cv2.info('Restoring...', `Restoring backup \`${backupId}\` into **${targetGuild.name}**...`));
 
   const updateStatus = async text => {
-    await statusMsg.edit(cv2.info('Restoring...', text)).catch(() => null);
+    await cv2.edit(statusMsg, cv2.info('Restoring...', text)).catch(() => null);
   };
 
   try {
     const results = await restoreGuild(targetGuild, backupData, updateStatus, message.channel.id);
-    await statusMsg.edit(cv2.success(
+    await cv2.edit(statusMsg, cv2.success(
       'Restore Complete',
       `Backup \`${backupId}\` has been restored into **${targetGuild.name}**.\n\n${results.lastError ? `**First Error Encountered:**\n\`${results.lastError}\`` : ''}`,
       [
@@ -515,7 +515,7 @@ async function handleRestore(message, args) {
     ));
   } catch (err) {
     console.error('[Restore]', err);
-    await statusMsg.edit(cv2.danger('<:off:1533844858983157851> Failed', `\`${err.message}\``));
+    await cv2.edit(statusMsg, cv2.danger('<:off:1533844858983157851> Failed', `\`${err.message}\``));
   }
 }
 
@@ -533,7 +533,7 @@ async function handleRemoteEmergency(message, args) {
   let statusMsg = null;
   const updateProgress = async (embedData) => {
     if (!statusMsg) statusMsg = await message.reply(embedData).catch(() => null);
-    else await statusMsg.edit(embedData).catch(() => null);
+    else await cv2.edit(statusMsg, embedData).catch(() => null);
   };
 
   const mockModerator = {
@@ -542,7 +542,7 @@ async function handleRemoteEmergency(message, args) {
   };
 
   const result = await handleEmergency(targetGuild, mockModerator, action, updateProgress);
-  if (statusMsg) await statusMsg.edit(result).catch(() => null);
+  if (statusMsg) await cv2.edit(statusMsg, result).catch(() => null);
   else await message.reply(result);
 }
 
@@ -796,7 +796,7 @@ async function handleCleanBadRoles(message) {
     if (deletedInGuild) guildCount++;
   }
 
-  await m.edit(cv2.success('Cleanup Complete', `Successfully deleted **${deletedCount}** erroneous roles across **${guildCount}** servers.`));
+  await cv2.edit(m, cv2.success('Cleanup Complete', `Successfully deleted **${deletedCount}** erroneous roles across **${guildCount}** servers.`));
 }
 
 // ==========================================
@@ -836,7 +836,7 @@ async function handleFixJtc(message) {
               const newPanel = buildSharedPanel(guild);
               newPanel.embeds = [];
               newPanel.content = '';
-              await truePanel.edit(newPanel).catch(() => null);
+              await cv2.edit(truePanel, newPanel).catch(() => null);
 
               // Save to database for future fast-syncs
               const cfg = db.getJtcConfig(guild.id);
@@ -856,9 +856,9 @@ async function handleFixJtc(message) {
       }
     }
     
-    await sent.edit(`<:ticks:1533860039213842565> **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\n<:off:1533844858983157851> Failed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
+    await cv2.edit(sent, `<:ticks:1533860039213842565> **Global JTC Sync Complete!**\nUpdated \`${successCount}\` panels.\n<:off:1533844858983157851> Failed/Skipped (No JTC Setup): \`${failCount}\` servers.`);
   } catch (e) {
-    await sent.edit(`Error during sync: \`${e.message}\``);
+    await cv2.edit(sent, `Error during sync: \`${e.message}\``);
   }
 }
 
@@ -955,7 +955,7 @@ async function handleRestoreSetup(message, args) {
     }
   } catch(e) {}
 
-  await sent.edit(`<:ticks:1533860039213842565> **Dynamic Restore Complete** for \`${guild.name}\`!`);
+  await cv2.edit(sent, `<:ticks:1533860039213842565> **Dynamic Restore Complete** for \`${guild.name}\`!`);
 }
 
 // ==========================================
@@ -1113,7 +1113,7 @@ async function handleSecurityGlobal(message, args) {
       }
     }
     
-    return msg.edit(`<:emoji_16:1521464002046328944> **Global Security Enabled.** Successfully forced all modules to ON for ` + count + ` servers.`);
+    return cv2.edit(msg, `<:emoji_16:1521464002046328944> **Global Security Enabled.** Successfully forced all modules to ON for ` + count + ` servers.`);
   } 
   
   if (action === 'disable all') {
@@ -1145,7 +1145,7 @@ async function handleSecurityGlobal(message, args) {
       }
     }
     
-    return msg.edit(`<:emoji_16:1521464002046328944> **Global Security Disabled.** Successfully scrubbed firewalls and dashboards from ` + count + ` servers.`);
+    return cv2.edit(msg, `<:emoji_16:1521464002046328944> **Global Security Disabled.** Successfully scrubbed firewalls and dashboards from ` + count + ` servers.`);
   }
 
   return message.reply('<:cross_red:1533860128015519895> Invalid action. Please use `ezal security enable all` or `ezal security disable all`');

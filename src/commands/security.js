@@ -263,10 +263,10 @@ export const commands = [
       let statusMsg = null;
       const updateProgress = async (embedData) => {
         if (!statusMsg) statusMsg = await message.reply(embedData).catch(() => null);
-        else await statusMsg.edit(embedData).catch(() => null);
+        else await cv2.edit(statusMsg, embedData).catch(() => null);
       };
       const result = await handleEmergency(message.guild, message.member, action, updateProgress);
-      if (statusMsg) await statusMsg.edit(result).catch(()=>null);
+      if (statusMsg) await cv2.edit(statusMsg, result).catch(()=>null);
       else await message.reply(result).catch(() => null);
     },
     async executeSlash(interaction) {
@@ -274,11 +274,11 @@ export const commands = [
       await interaction.deferReply({ ephemeral: false }).catch(() => null);
       
       const updateProgress = async (embedData) => {
-        await interaction.editReply(embedData).catch(() => null);
+        await cv2.edit(interaction, embedData).catch(() => null);
       };
       
       const result = await handleEmergency(interaction.guild, interaction.member, action, updateProgress);
-      await interaction.editReply(result).catch(() => null);
+      await cv2.edit(interaction, result).catch(() => null);
     }
   },
   {
@@ -291,21 +291,21 @@ export const commands = [
       let statusMsg = null;
       const updateProgress = async (embedData) => {
         if (!statusMsg) statusMsg = await message.reply(embedData).catch(() => null);
-        else await statusMsg.edit(embedData).catch(() => null);
+        else await cv2.edit(statusMsg, embedData).catch(() => null);
       };
       const result = await handleEmergency(message.guild, message.member, 'end', updateProgress);
-      if (statusMsg) await statusMsg.edit(result).catch(()=>null);
+      if (statusMsg) await cv2.edit(statusMsg, result).catch(()=>null);
       else await message.reply(result);
     },
     async executeSlash(interaction) {
       await interaction.deferReply({ ephemeral: false }).catch(() => null);
       
       const updateProgress = async (embedData) => {
-        await interaction.editReply(embedData).catch(() => null);
+        await cv2.edit(interaction, embedData).catch(() => null);
       };
       
       const result = await handleEmergency(interaction.guild, interaction.member, 'end', updateProgress);
-      await interaction.editReply(result).catch(() => null);
+      await cv2.edit(interaction, result).catch(() => null);
     }
   },
 
@@ -826,9 +826,9 @@ export const commands = [
         await interaction.client.rest.patch(`/guilds/${interaction.guild.id}/members/@me`, {
           body: { avatar: dataUri }
         });
-        await interaction.editReply(cv2.success('Avatar Configured', "Successfully updated the bot's server-specific avatar."));
+        await cv2.edit(interaction, cv2.success('Avatar Configured', "Successfully updated the bot's server-specific avatar."));
       } catch (err) {
-        await interaction.editReply(cv2.danger('<:off:1533844858983157851> Failed', `Could not update avatar: ${err.message}`));
+        await cv2.edit(interaction, cv2.danger('<:off:1533844858983157851> Failed', `Could not update avatar: ${err.message}`));
       }
     }
   },
@@ -899,9 +899,9 @@ export const commands = [
         await interaction.client.rest.patch(`/guilds/${interaction.guild.id}/members/@me`, {
           body: { banner: dataUri }
         });
-        await interaction.editReply(cv2.success('Banner Configured', "Successfully updated the bot's server-specific banner."));
+        await cv2.edit(interaction, cv2.success('Banner Configured', "Successfully updated the bot's server-specific banner."));
       } catch (err) {
-        await interaction.editReply(cv2.danger('<:off:1533844858983157851> Failed', `Could not update banner: ${err.message}`));
+        await cv2.edit(interaction, cv2.danger('<:off:1533844858983157851> Failed', `Could not update banner: ${err.message}`));
       }
     }
   },
@@ -1100,7 +1100,7 @@ export const commands = [
       async executeSlash(interaction) {
         await interaction.deferReply();
         const panel = await getAutoModPanel(interaction.guild);
-        await interaction.editReply(panel);
+        await cv2.edit(interaction, panel);
       }
     },
 
@@ -1217,7 +1217,7 @@ export const commands = [
         const initDisplay = new TextDisplayBuilder().setContent('> -# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n> -# **Antinuke Setup Working...**');
           const initContainer = new ContainerBuilder().addTextDisplayComponents(initDisplay);
           const msg = await message.reply({ components: [initContainer], flags: MessageFlags.IsComponentsV2 });
-        const success = await runSecurityEnableSequence(message.guild, async (payload) => { await msg.edit(payload).catch(() => null); }); if (!success) return;
+        const success = await runSecurityEnableSequence(message.guild, async (payload) => { await cv2.edit(msg, payload).catch(() => null); }); if (!success) return;
         const tosPanel = await getServerSecurityEnabledPanel(typeof message !== 'undefined' ? message.guild : interaction.guild);
         await message.channel.send(tosPanel);
         const panel = await getSecureDashboardPanel(message.guild);
@@ -1282,7 +1282,7 @@ export const commands = [
         const initDisplay2 = new TextDisplayBuilder().setContent('> -# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n> -# **Antinuke Setup Working...**');
           const initContainer2 = new ContainerBuilder().addTextDisplayComponents(initDisplay2);
           await interaction.reply({ components: [initContainer2], flags: MessageFlags.IsComponentsV2 });
-        const success = await runSecurityEnableSequence(interaction.guild, async (payload) => { await interaction.editReply(payload).catch(() => null); }); if (!success) return;
+        const success = await runSecurityEnableSequence(interaction.guild, async (payload) => { await cv2.edit(interaction, payload).catch(() => null); }); if (!success) return;
         const tosPanel = await getServerSecurityEnabledPanel(typeof message !== 'undefined' ? message.guild : interaction.guild);
         if (interaction.channel) await interaction.channel.send(tosPanel).catch(() => null);
         const panel = await getSecureDashboardPanel(interaction.guild);
@@ -1371,7 +1371,7 @@ export const commands = [
       const role = interaction.options.getRole('role');
       const channel = interaction.options.getChannel('channel');
       const result = await handleQrManager(interaction.guild, interaction.member, action, role, channel);
-      await interaction.editReply(result);
+      await cv2.edit(interaction, result);
     }
   },
 
@@ -1404,14 +1404,14 @@ export const commands = [
       const reason = args.slice(1).join(' ').trim() || 'Mass quarantine by administrator';
       const statusMsg = await message.reply(cv2.info('Mass Quarantine Started', ` Quarantining all members with role <@&${role.id}>...`));
       const result = await handleMassQuarantine(message.guild, message.member, role, reason);
-      await statusMsg.edit(result);
+      await cv2.edit(statusMsg, result);
     },
     async executeSlash(interaction) {
       await interaction.deferReply();
       const role = interaction.options.getRole('role');
       const reason = interaction.options.getString('reason') || 'Mass quarantine by administrator';
       const result = await handleMassQuarantine(interaction.guild, interaction.member, role, reason);
-      await interaction.editReply(result);
+      await cv2.edit(interaction, result);
     }
   },
 
@@ -1426,12 +1426,12 @@ export const commands = [
     async executePrefix(message) {
       const statusMsg = await message.reply(cv2.info('Mass Unquarantine Started', ' Releasing all quarantined members...'));
       const result = await handleMassUnquarantine(message.guild, message.member, message.client);
-      await statusMsg.edit(result);
+      await cv2.edit(statusMsg, result);
     },
     async executeSlash(interaction) {
       await interaction.deferReply();
       const result = await handleMassUnquarantine(interaction.guild, interaction.member, interaction.client);
-      await interaction.editReply(result);
+      await cv2.edit(interaction, result);
     }
   },
 
@@ -1482,9 +1482,9 @@ export const commands = [
       }
       
       if (allow) {
-        await statusMsg.edit(cv2.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`));
+        await cv2.edit(statusMsg, cv2.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`));
       } else {
-        await statusMsg.edit(cv2.success('Apps Locked', `Successfully locked application commands in ${successCount} channels for @everyone.`));
+        await cv2.edit(statusMsg, cv2.success('Apps Locked', `Successfully locked application commands in ${successCount} channels for @everyone.`));
       }
     }
   },
@@ -1513,7 +1513,7 @@ export const commands = [
         } catch(e) {}
       }
       
-      await statusMsg.edit(cv2.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`));
+      await cv2.edit(statusMsg, cv2.success('Apps Unlocked', `Successfully unlocked application commands in ${successCount} channels for @everyone.`));
     }
   }
 
@@ -3890,7 +3890,7 @@ export async function handleAutonickButton(interaction) {
         }
       }
     } catch(e) {}
-    return interaction.editReply({ content: `Successfully synced nicknames for **${count}** members.` });
+    return cv2.edit(interaction, { content: `Successfully synced nicknames for **${count}** members.` });
   }
 
   if (customId === 'autonick_restore') {
@@ -3906,7 +3906,7 @@ export async function handleAutonickButton(interaction) {
         }
       }
     } catch(e) {}
-    return interaction.editReply({ content: `Successfully restored original names for **${count}** members.` });
+    return cv2.edit(interaction, { content: `Successfully restored original names for **${count}** members.` });
   }
 }
 

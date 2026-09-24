@@ -121,6 +121,15 @@ export var cv2 = Object.assign(_m(false), {
   },
   buildContainer: buildContainer,
   make:           make,
+  edit: async function(ctx, payload) {
+    if (typeof payload === 'string') payload = { content: payload };
+    if (ctx.editReply) {
+      return ctx.client.rest.patch(`/webhooks/${ctx.client.user.id}/${ctx.token}/messages/@original`, { body: payload });
+    } else if (ctx.edit) {
+      return ctx.client.rest.patch(`/channels/${ctx.channel.id}/messages/${ctx.id}`, { body: payload });
+    }
+  },
 });
 
 export default cv2;
+// Safely edit a message or interaction reply with CV2 payload to bypass discord.js injecting content: null
