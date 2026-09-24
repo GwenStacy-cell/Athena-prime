@@ -51,7 +51,11 @@ export async function buildStatusPanel(client, gifUrl = null) {
   };
 
   if (gifUrl) {
-    card.components.push({ type: 11, media: { url: gifUrl } });
+    card.components.push({
+      type: 9,
+      components: [{ type: 10, content: `-# A T H E N A  P R I M E` }],
+      accessory: { type: 11, media: { url: gifUrl } }
+    });
   } else {
     card.components.push({ type: 10, content: `-# A T H E N A  P R I M E` });
   }
