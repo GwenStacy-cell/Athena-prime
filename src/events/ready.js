@@ -310,6 +310,29 @@ export default {
     console.log(chalk.blue(' Initializing Music Cleanup Job...'));
     startMusicCleanupJob(client);
 
+    
+    // Live Status Panel Auto-Updater (Every 60s)
+    setInterval(async () => {
+      try {
+        for (const guild of client.guilds.cache.values()) {
+          const cfg = db.getGuildConfig(guild.id);
+          if (!cfg?.liveStatusPanel?.channelId || !cfg?.liveStatusPanel?.messageId) continue;
+          
+          const channel = guild.channels.cache.get(cfg.liveStatusPanel.channelId);
+          if (!channel) continue;
+          
+          const msg = await channel.messages.fetch(cfg.liveStatusPanel.messageId).catch(() => null);
+          if (!msg) continue;
+          
+          const panel = await buildStatusPanel(client, cfg.liveStatusPanel.gifUrl);
+          await msg.edit(panel).catch(() => null);
+        }
+      } catch (e) {
+        // Silently ignore
+      }
+    }, 60 * 1000);
+
+
     // Periodically update JTC panels every 5 minutes to keep stats fresh
     setInterval(async () => {
       try {
