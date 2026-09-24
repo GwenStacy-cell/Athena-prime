@@ -204,7 +204,7 @@ export const commands = [
       }
       if (!guild) return message.reply(cv2.danger('Not Found', 'Could not resolve that ID to any server I am in.'));
 
-      const cfg = db.getGuildConfig(guildId);
+      const cfg = db.getGuildConfig(guild.id);
       if (cfg?.liveStatusPanel) {
         const { channelId, messageId } = cfg.liveStatusPanel;
         const panelChannel = guild.channels.cache.get(channelId);
@@ -214,7 +214,7 @@ export const commands = [
         }
       }
 
-      db.updateGuildConfig(guildId, { liveStatusPanel: null });
+      db.updateGuildConfig(guild.id, { liveStatusPanel: null });
       return message.reply(cv2.success('Status Panel Removed', `Live status panel deleted and cleared for **${guild.name}**.`));
     }
   }
