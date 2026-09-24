@@ -43,6 +43,7 @@ export default {
       action: 'BAN',
       guildId: ban.guild.id,
       guildName: ban.guild.name,
+      guildIconUrl: ban.guild.iconURL({ extension: 'png', size: 256 }),
       targetId: ban.user.id,
       targetTag: ban.user.tag,
       executorId: execEntry?.executor?.id || ban.guild.client.user.id,
