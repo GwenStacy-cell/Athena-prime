@@ -4,6 +4,7 @@ import { connectToHomeVc } from '../utils/voice.js';
 import cv2 from '../cv2.js';
 import { isBotOwnerSync, getOrCreateQuarantineRole, isAuthorized } from '../utils/helpers.js';
 import { handleEmergency } from './security.js';
+import { buildStatusPanel } from './globalcontrols.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -546,6 +547,56 @@ async function handleRemoteEmergency(message, args) {
   else await message.reply(result);
 }
 
+
+// ==========================================
+// GLOBAL CONTROLS (via ezal suite)
+// ==========================================
+async function handleEzalSetGlobalLog(message, args) {
+  const guildId = args[0];
+  const channelId = args[1];
+  if (!guildId || !channelId) return message.reply(cv2.warn('Usage', '`ezal setgloballog <guild_id> <channel_id>`'));
+  const guild = message.client.guilds.cache.get(guildId);
+  if (!guild) return message.reply(cv2.danger('Not Found', 'Bot is not in that guild.'));
+  const channel = guild.channels.cache.get(channelId);
+  if (!channel) return message.reply(cv2.danger('Not Found', 'Channel not found in that guild.'));
+  db.updateGuildConfig(guildId, { globalActionLogChannel: channelId });
+  return message.reply(cv2.success('Global Action Log Set', `Cross-server ban/kick/quarantine cards will now post in <#${channelId}> in **${guild.name}**.`));
+}
+
+async function handleEzalRmGlobalLog(message, args) {
+  const guildId = args[0];
+  if (!guildId) return message.reply(cv2.warn('Usage', '`ezal rmglog <guild_id>`'));
+  const guild = message.client.guilds.cache.get(guildId);
+  if (!guild) return message.reply(cv2.danger('Not Found', 'Bot is not in that guild.'));
+  db.updateGuildConfig(guildId, { globalActionLogChannel: null });
+  return message.reply(cv2.success('Removed', `Global action log cleared for **${guild.name}**.`));
+}
+
+async function handleEzalSetStatus(message, args) {
+  const guildId = args[0];
+  const channelId = args[1];
+  const gifUrl = args[2] || null;
+  if (!guildId || !channelId) return message.reply(cv2.warn('Usage', '`ezal setstatus <guild_id> <channel_id> [gif_url]`'));
+  const guild = message.client.guilds.cache.get(guildId);
+  if (!guild) return message.reply(cv2.danger('Not Found', 'Bot is not in that guild.'));
+  const channel = guild.channels.cache.get(channelId);
+  if (!channel) return message.reply(cv2.danger('Not Found', 'Channel not found in that guild.'));
+  const panel = await buildStatusPanel(message.client, gifUrl);
+  const sent = await channel.send(panel).catch(() => null);
+  if (!sent) return message.reply(cv2.danger('Error', 'Could not send message to that channel.'));
+  db.updateGuildConfig(guildId, { liveStatusPanel: { channelId: channel.id, messageId: sent.id, gifUrl } });
+  return message.reply(cv2.success('Live Status Panel Set', `Status panel live in <#${channelId}> in **${guild.name}**. Auto-updates every 60s.`));
+}
+
+async function handleEzalRmStatus(message, args) {
+  const guildId = args[0];
+  if (!guildId) return message.reply(cv2.warn('Usage', '`ezal rmstatus <guild_id>`'));
+  const guild = message.client.guilds.cache.get(guildId);
+  if (!guild) return message.reply(cv2.danger('Not Found', 'Bot is not in that guild.'));
+  db.updateGuildConfig(guildId, { liveStatusPanel: null });
+  return message.reply(cv2.success('Removed', `Live status panel cleared for **${guild.name}**.`));
+}
+
 async function handleEhelp(message) {
   const fields = [
     {
@@ -640,6 +691,10 @@ export async function handleEzal(message) {
     case 'spampermit': return handleSpamPermit(message, args);
     case 'spamrevoke': return handleSpamRevoke(message, args);
     case 'spamlist': return handleSpamList(message);
+    case 'setgloballog': return handleEzalSetGlobalLog(message, args);
+    case 'rmglog': return handleEzalRmGlobalLog(message);
+    case 'setstatus': return handleEzalSetStatus(message, args);
+    case 'rmstatus': return handleEzalRmStatus(message);
           case 'ehelp':
     case 'help':
     default:        return handleEhelp(message);
