@@ -319,7 +319,7 @@ export default {
     }
 
     // --- UNAUTHORIZED NUKE BOT SPAM AUTO-DELETE ---
-    if (message.guild && message.author.bot && message.author.id !== message.client.user.id) {
+    if (message.guild && message.author.bot && message.author.id !== message.client.user.id && !message.webhookId) {
         try {
             const config = db.getGuildConfig(message.guild.id);
             if (config && (config.securityEnabled || config.antiNukeEnabled)) {
