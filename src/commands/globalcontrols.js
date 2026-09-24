@@ -96,18 +96,43 @@ export const commands = [
       }
 
       db.updateGuildConfig(targetGuild.id, { globalActionLogChannel: channelId });
-      return message.reply(cv2.success('Global Action Log Set', `Cross-server ban/kick/quarantine cards will now be posted in <#${channelId}> in **${targetGuild.name}**.`));
-    }  },
+      await message.reply(cv2.success('Global Action Log Set', `Cross-server ban/kick/quarantine cards will now be posted in <#${channelId}> in **${targetGuild.name}**.\nDropping a sample preview card now...`));
+
+      // Drop a sample preview card so you can see exactly how real events will look
+      try {
+        const { postGlobalActionLog } = await import('../utils/globalLog.js');
+        await postGlobalActionLog(message.client, {
+          action: 'BAN',
+          guildId: targetGuild.id,
+          guildName: targetGuild.name,
+          guildIconUrl: targetGuild.iconURL({ extension: 'png', size: 256 }),
+          targetId: message.client.user.id,
+          targetTag: message.client.user.tag,
+          executorId: message.client.user.id,
+          executorTag: 'Athena Prime (Anti-Nuke / Bot)',
+          reason: `Global Action Log successfully configured for **${targetGuild.name}**! Real ban/kick/quarantine events will appear exactly like this.`,
+          _isSample: true
+        });
+      } catch (e) { /* silently ignore — sample is cosmetic */ }
+    }
+  },
 
   {
     name: 'removegloballog',
     description: 'Remove the global action log channel [Bot Owner]',
     category: 'config',
     aliases: ['rmglog'],
-    async executePrefix(message) {
+    async executePrefix(message, args) {
       if (!isBotOwnerSync(message.author.id)) return;
-      db.updateGuildConfig(message.guild.id, { globalActionLogChannel: null });
-      return message.reply(cv2.success('Removed', 'Global action log channel has been cleared.'));
+
+      const guildId = args[0] || (message.guild ? message.guild.id : null);
+      if (!guildId) return message.reply(cv2.warn('Usage', '`!removegloballog <guild_id>`'));
+
+      const guild = message.client.guilds.cache.get(guildId);
+      if (!guild) return message.reply(cv2.danger('Not Found', 'Bot is not in that guild.'));
+
+      db.updateGuildConfig(guildId, { globalActionLogChannel: null });
+      return message.reply(cv2.success('Removed', `Global action log channel cleared for **${guild.name}**.`));
     }
   },
 
@@ -150,17 +175,35 @@ export const commands = [
       });
 
       return message.reply(cv2.success('Live Status Panel Set', `The status panel is now live in <#${channelId}> in **${targetGuild.name}**. It auto-updates every 60 seconds.`));
-    }  },
+    }
+  },
 
   {
     name: 'removestatus',
     description: 'Remove the live status panel [Bot Owner]',
     category: 'config',
     aliases: ['rmstatus'],
-    async executePrefix(message) {
+    async executePrefix(message, args) {
       if (!isBotOwnerSync(message.author.id)) return;
-      db.updateGuildConfig(message.guild.id, { liveStatusPanel: null });
-      return message.reply(cv2.success('Removed', 'Live status panel has been cleared.'));
+
+      const guildId = args[0] || (message.guild ? message.guild.id : null);
+      if (!guildId) return message.reply(cv2.warn('Usage', '`!removestatus <guild_id>`'));
+
+      const guild = message.client.guilds.cache.get(guildId);
+      if (!guild) return message.reply(cv2.danger('Not Found', 'Bot is not in that guild.'));
+
+      const cfg = db.getGuildConfig(guildId);
+      if (cfg?.liveStatusPanel) {
+        const { channelId, messageId } = cfg.liveStatusPanel;
+        const panelChannel = guild.channels.cache.get(channelId);
+        if (panelChannel && messageId) {
+          const panelMsg = await panelChannel.messages.fetch(messageId).catch(() => null);
+          if (panelMsg) await panelMsg.delete().catch(() => null);
+        }
+      }
+
+      db.updateGuildConfig(guildId, { liveStatusPanel: null });
+      return message.reply(cv2.success('Status Panel Removed', `Live status panel deleted and cleared for **${guild.name}**.`));
     }
   }
 ];
