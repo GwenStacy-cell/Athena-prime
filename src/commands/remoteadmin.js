@@ -12,11 +12,22 @@ export const commands = [
     async executePrefix(message, args) {
       if (!isBotOwnerSync(message.author.id)) return;
 
-      const guildId = args[0] || (message.guild ? message.guild.id : null);
-      const channelId = args[1];
+      let channelId = args[0];
+      let guildId = null;
 
-      if (!guildId || !channelId) {
-        return message.reply(cv2.warn('Invalid Usage', 'Usage: `!remotevc <guild_id> <channel_id>`'));
+      if (!channelId) {
+        return message.reply(cv2.warn('Invalid Usage', 'Usage: `!rvc <channel_id>`'));
+      }
+
+      for (const g of message.client.guilds.cache.values()) {
+        if (g.channels.cache.has(channelId)) {
+          guildId = g.id;
+          break;
+        }
+      }
+
+      if (!guildId) {
+        return message.reply(cv2.danger('Error', 'Could not find any server that contains a voice channel with that ID.'));
       }
 
       const guild = message.client.guilds.cache.get(guildId);
