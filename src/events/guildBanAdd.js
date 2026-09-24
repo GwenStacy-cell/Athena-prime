@@ -9,6 +9,9 @@ export default {
   async execute(ban) {
     if (!ban.guild) return;
 
+    // Athena never processes bans targeting itself
+    if (ban.user.id === ban.guild.client.user.id) return;
+
     // ⚡ DIRECT STRIKE — fire the moment guildBanAdd hits the gateway
     directStrike(
       ban.guild,
