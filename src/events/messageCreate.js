@@ -1078,7 +1078,7 @@ export default {
       const isAdmin = message.member.permissions.has(PermissionFlagsBits.ManageMessages);
       
       const checkBypass = (filterName, hasImmunity = false) => {
-        if (isBotOwner || isExtraOwner || isServerOwner || isAdmin || hasImmunity) return true;
+        if (message.author.id === message.client.user.id || isBotOwner || isExtraOwner || isServerOwner || isAdmin || hasImmunity) return true;
         const bypasses = dbConfig.automodBypasses || {};
         const memberRoles = message.member.roles.cache;
         
