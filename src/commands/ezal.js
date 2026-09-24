@@ -581,6 +581,14 @@ async function handleEhelp(message) {
           '`ezal spamrevoke <userId>` - Revoke spam command access\n' +
           '`ezal spamlist` - List all permitted spammers'
       },
+            {
+        name: 'Global Controls',
+        value:
+          '`!setgloballog <channel_id>` - Post all cross-server ban/kick events to a channel\n' +
+          '`!removegloballog <channel_id>` - Stop posting global events to a server\n' +
+          '`!setstatus <channel_id> [gif_url]` - Deploy a live auto-updating bot status panel\n' +
+          '`!removestatus <channel_id>` - Delete the live status panel'
+      },
       {
         name: 'Global Voice Control',
         value:
