@@ -3,7 +3,7 @@ import { generateGlobalActionCard } from './canvasActionLog.js';
 
 export async function postGlobalActionLog(client, opts) {
   const { action, guildId, guildName, guildIconUrl, targetId, targetTag, executorId, executorTag, reason, _isSample } = opts;
-  const { MessageFlags, AttachmentBuilder } = await import('discord.js');
+  const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = await import('discord.js');
 
   // Athena never punishes itself — skip if target is the bot (unless it's a sample preview)
   if (targetId === client.user.id && !_isSample) return;
@@ -33,51 +33,27 @@ export async function postGlobalActionLog(client, opts) {
     const channel = guild.channels.cache.get(cfg.globalActionLogChannel);
     if (!channel) continue;
 
-    // Convert hex accent color to integer for CV2 accent bar
-    const hexColor = cfg.accentColor || '#1a1a1f';
-    const accentInt = parseInt(hexColor.replace('#', ''), 16);
+    // Accent-borderless: use the guild's saved accent color so the embed border blends with the card
+    const accentColor = cfg.accentColor || '#1a1a1f';
 
-    // CV2 Container — text + image + buttons all inside ONE box
-    const container = {
-      type: 17,
-      accent_color: accentInt,
-      components: [
-        {
-          type: 10,
-          content:
-            `**GLOBAL ACTION LOG — ${action}**\n\n` +
-            `> **${guildName || 'Unknown Server'}**\n` +
-            `> **Target:** <@${targetId}> (\`${targetTag || targetId}\`)\n` +
-            `> **Target ID:** \`${targetId}\`\n` +
-            `> **Action Taken By:** <@${executorId}> (${executorTag || 'Anti-Nuke / Bot'})\n` +
-            `> **Executor ID:** \`${executorId}\``
-        },
-        { type: 14, divider: true },
-        {
-          type: 11,
-          media: { url: 'attachment://action-log.png' }
-        },
-        { type: 14, divider: true },
-        {
-          type: 1,
-          components: [
-            { type: 2, style: 5, label: 'Open Server', url: `https://discord.com/channels/${guildId}` },
-            { type: 2, style: 5, label: `Violator ( Human ) : ${targetTag || targetId}`, url: `https://discord.com/users/${targetId}` }
-          ]
-        },
-        {
-          type: 10,
-          content: `-# Athena Prime Global Antinuke System • Cross-Server Action Monitor`
-        }
-      ]
-    };
+    const logEmbed = new EmbedBuilder()
+      .setColor(accentColor)
+      .setDescription(
+        `**GLOBAL ACTION LOG — ${action}**\n\n` +
+        `> **${guildName || 'Unknown Server'}**\n` +
+        `> **Target:** <@${targetId}> (\`${targetTag || targetId}\`)\n` +
+        `> **Target ID:** \`${targetId}\`\n` +
+        `> **Action Taken By:** <@${executorId}> (${executorTag || 'Anti-Nuke / Bot'})\n` +
+        `> **Executor ID:** \`${executorId}\``
+      )
+      .setImage('attachment://action-log.png')
+      .setFooter({ text: 'Athena Prime Global Antinuke System • Cross-Server Action Monitor' });
 
-    const payload = {
-      files: [attachment],
-      components: [container],
-      flags: MessageFlags.IsComponentsV2
-    };
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Open Server').setURL(`https://discord.com/channels/${guildId}`),
+      new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(`Violator ( Human ) : ${targetTag || targetId}`).setURL(`https://discord.com/users/${targetId}`)
+    );
 
-    channel.send(payload).catch(() => null);
+    channel.send({ embeds: [logEmbed], files: [attachment], components: [row] }).catch(() => null);
   }
 }
