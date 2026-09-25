@@ -1150,7 +1150,7 @@ export const activeCalculators = new Map();
 async function sendCalculator(context) {
   const isInteraction = !!context.isCommand;
   if (isInteraction) {
-    await context.deferReply();
+    await context.reply({ components: [{ type: 17, components: [{ type: 10, content: '-# Loading calculator...' }] }], flags: 32768 });
   }
 
   const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
@@ -1212,11 +1212,13 @@ async function sendCalculator(context) {
 
   embed.components.push(...rows);
 
-  const payload = { ...embed, withResponse: true };
+  const payload = embed;
   let msg;
   
   if (isInteraction) {
-    msg = await context.editReply(payload);
+    // Raw REST edit to avoid discord.js injecting legacy content: null
+    await context.client.rest.patch(`/webhooks/${context.client.user.id}/${context.token}/messages/@original`, { body: { components: payload.components, flags: payload.flags } }).catch(() => null);
+    msg = await context.fetchReply().catch(() => null);
   } else {
     msg = await context.reply(payload);
   }

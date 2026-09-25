@@ -123,10 +123,17 @@ export var cv2 = Object.assign(_m(false), {
   make:           make,
   edit: async function(ctx, payload) {
     if (typeof payload === 'string') payload = { content: payload };
+    // Strip all legacy discord.js fields that are injected as undefined/null
+    // and cause DiscordAPIError[50035] when IS_COMPONENTS_V2 flag is set
+    const isCV2 = payload.flags != null && (payload.flags & 32768);
+    let body = payload;
+    if (isCV2) {
+      body = { components: payload.components, flags: payload.flags };
+    }
     if (ctx.editReply) {
-      return ctx.client.rest.patch(`/webhooks/${ctx.client.user.id}/${ctx.token}/messages/@original`, { body: payload });
+      return ctx.client.rest.patch(`/webhooks/${ctx.client.user.id}/${ctx.token}/messages/@original`, { body });
     } else if (ctx.edit) {
-      return ctx.client.rest.patch(`/channels/${ctx.channel.id}/messages/${ctx.id}`, { body: payload });
+      return ctx.client.rest.patch(`/channels/${ctx.channel.id}/messages/${ctx.id}`, { body });
     }
   },
 });
