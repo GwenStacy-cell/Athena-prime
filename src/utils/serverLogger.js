@@ -26,13 +26,16 @@ export async function logServerEvent(guild, moduleName, embedData) {
     // Ensure we can access the channel
     const channel = await guild.channels.fetch(targetChannelId).catch(() => null);
     if (!channel) {
-      console.log(`[ServerLogger] Channel ${targetChannelId} for module ${moduleName} not found.`);
+      if (moduleConfig.channelId === targetChannelId) {
+        moduleConfig.channelId = null;
+        db.updateGuildConfig(guild.id, { serverLogs });
+      } else if (serverLogs.defaultChannelId === targetChannelId) {
+        serverLogs.defaultChannelId = null;
+        db.updateGuildConfig(guild.id, { serverLogs });
+      }
       return;
     }
-    if (!channel.isTextBased()) {
-      console.log(`[ServerLogger] Channel ${targetChannelId} is not a valid text-based channel.`);
-      return;
-    }
+    if (!channel.isTextBased()) return;
 
     // Send the log
     let payload = (embedData.components || embedData.content) ? embedData : { embeds: [embedData] };

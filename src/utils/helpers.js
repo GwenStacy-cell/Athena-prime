@@ -198,12 +198,17 @@ export async function logToSecurityChannel(guild, embedObject) {
     }
 
     if (channel) {
-      if (embedObject && embedObject.components) {
-        // It's a CV2 message object
-        await channel.send(embedObject);
-      } else {
-        // It's a legacy EmbedBuilder object
-        await channel.send({ embeds: [embedObject] });
+      try {
+        if (embedObject && embedObject.components) {
+          await channel.send(embedObject);
+        } else {
+          await channel.send({ embeds: [embedObject] });
+        }
+      } catch (err) {
+        if (err.code === 10003) {
+          // Channel was deleted, remove from config
+          db.updateGuildConfig(guild.id, { logChannel: null });
+        }
       }
     }
   } catch (error) {

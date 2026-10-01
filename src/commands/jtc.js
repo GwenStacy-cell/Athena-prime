@@ -631,7 +631,7 @@ export const commands = [
       if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(interaction.user.id)) {
         return interaction.reply(cv2.warn('Unauthorized', 'You need Manage Server permissions to use this.'));
       }
-      await interaction.deferReply();
+      await interaction.reply(cv2.info('Processing', 'Configuring JTC System...'));
       const guild = interaction.guild;
 
       let lobbyChannel = interaction.options.getChannel('channel');
@@ -639,7 +639,7 @@ export const commands = [
       if (!lobbyChannel && lobbyIdStr) lobbyChannel = await guild.channels.fetch(lobbyIdStr.trim().replace(/\D/g, '')).catch(()=>null);
       
       if (!lobbyChannel && lobbyIdStr) {
-         return interaction.editReply(cv2.warn('Invalid ID', 'Could not find the specified lobby channel.'));
+         return cv2.edit(interaction, cv2.warn('Invalid ID', 'Could not find the specified lobby channel.'));
       }
 
       let category = interaction.options.getChannel('category');
@@ -679,7 +679,7 @@ export const commands = [
         db.setJtcConfig(guild.id, lobbyChannel.id, categoryId, panelChannelId);
       }
 
-      await interaction.editReply(cv2.success('JTC System Activated ðŸš€', [
+      await cv2.edit(interaction, cv2.success('JTC System Activated ðŸš€', [
           `**Lobby Channel:** ${lobbyChannel}`,
           `**Category:** ${categoryId ? `<#${categoryId}>` : 'Same as lobby'}`,
           `**Panel Channel:** ${panelChannelId ? `<#${panelChannelId}>` : 'VC Text Chat (default)'}`,
@@ -737,7 +737,7 @@ export const commands = [
       if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(interaction.user.id)) {
         return interaction.reply(cv2.warn('Unauthorized', 'You need Manage Server permissions to use this.'));
       }
-      await interaction.deferReply();
+      await interaction.reply(cv2.info('Processing', 'Configuring JTC System...'));
       const guild = interaction.guild;
 
       let lobbyChannel = interaction.options.getChannel('channel');
@@ -745,7 +745,7 @@ export const commands = [
       if (!lobbyChannel && lobbyIdStr) lobbyChannel = await guild.channels.fetch(lobbyIdStr.trim().replace(/\D/g, '')).catch(()=>null);
       
       if (!lobbyChannel && lobbyIdStr) {
-         return interaction.editReply(cv2.warn('Invalid ID', 'Could not find the specified lobby channel.'));
+         return cv2.edit(interaction, cv2.warn('Invalid ID', 'Could not find the specified lobby channel.'));
       }
 
       if (!lobbyChannel) {
@@ -756,7 +756,7 @@ export const commands = [
 
       db.setSecondaryJtcConfig(guild.id, lobbyChannel.id);
 
-      await interaction.editReply(cv2.success('Secondary JTC System Activated ðŸš€', [
+      await cv2.edit(interaction, cv2.success('Secondary JTC System Activated ðŸš€', [
           `**Secondary Lobby:** ${lobbyChannel}`,
           '',
           'When someone joins this lobby, a voice channel will be created automatically, just like the primary lobby.'
