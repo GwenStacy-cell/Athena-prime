@@ -743,8 +743,16 @@ if (interaction.customId === "modal_2fa_setup") {
           return interaction.update(buildCreateRolePanel(state));
         }
 
-        if (id.startsWith('cr_page_')) {
-          state.page = parseInt(id.replace('cr_page_', '')) || 0;
+        if (id === 'cr_prev') {
+          const totalPages = Math.ceil(25 / 15);
+          state.page = state.page === 0 ? totalPages - 1 : state.page - 1;
+          createRoleStates.set(userId, state);
+          return interaction.update(buildCreateRolePanel(state));
+        }
+
+        if (id === 'cr_next') {
+          const totalPages = Math.ceil(25 / 15);
+          state.page = state.page >= totalPages - 1 ? 0 : state.page + 1;
           createRoleStates.set(userId, state);
           return interaction.update(buildCreateRolePanel(state));
         }

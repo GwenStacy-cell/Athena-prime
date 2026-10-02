@@ -158,8 +158,8 @@ export function buildCreateRolePanel(state) {
         { type: 2, style: 1, custom_id: 'cr_setname', label: 'Set Name' },
         { type: 2, style: 1, custom_id: 'cr_setcolor', label: 'Set Color' },
         { type: 2, style: 1, custom_id: 'cr_setposition', label: 'Set Position' },
-        { type: 2, style: 2, custom_id: `cr_page_${page === 0 ? totalPages - 1 : page - 1}`, label: '← Prev' },
-        { type: 2, style: 2, custom_id: `cr_page_${page >= totalPages - 1 ? 0 : page + 1}`, label: 'Next →' },
+        { type: 2, style: 2, custom_id: 'cr_prev', label: '← Prev' },
+        { type: 2, style: 2, custom_id: 'cr_next', label: 'Next →' },
       ]},
       { type: 1, components: [
         { type: 2, style: 4, custom_id: 'cr_alloff', label: 'Clear All Perms' },
