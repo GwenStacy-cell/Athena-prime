@@ -1216,17 +1216,29 @@ if (interaction.customId === "modal_2fa_setup") {
         const totalStars = votes.reduce((acc, v) => acc + v.stars, 0);
         const avgRating = (totalStars / totalVotes).toFixed(1);
 
-        // Get last 5 ratings for the list
+        // Get last 5 ratings — repeated stars per vote
+        const STAR_EMOJI = '<:1z:1517089474369032253>';
         const latestRatings = Object.entries(updatedData.votes)
           .reverse()
           .slice(0, 5)
-          .map(([id, v]) => `**${v.name}** - ${v.stars} <:1z:1517089474369032253>`)
+          .map(([id, v]) => `**${v.name}:** ${STAR_EMOJI.repeat(v.stars)}`)
           .join('\n');
 
-        const embed = EmbedBuilder.from(interaction.message.embeds[0])
-          .setDescription(`<a:1z:1517089474369032253> **Current Rating**\n${avgRating}/5 (${totalVotes} votes)\n\n**User Ratings**\n${latestRatings || '_No ratings yet_'}`);
+        // Rebuild as CV2 accent panel
+        const guildCfg = db.getGuildConfig(interaction.guild.id);
+        const accentColor = guildCfg?.accentColor || null;
+        const { buildRateContainer } = await import('../commands/rate.js');
+        const updatedPanel = buildRateContainer(
+          updatedData.authorName,
+          updatedData.authorId,
+          avgRating,
+          totalVotes,
+          latestRatings || '_No ratings yet_',
+          updatedData.mediaUrl,
+          accentColor
+        );
 
-        await interaction.update({ embeds: [embed] }).catch(() => null);
+        await interaction.update(updatedPanel).catch(() => null);
         return;
       }
 

@@ -1,7 +1,54 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits, EmbedBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } from 'discord.js';
 import cv2 from '../cv2.js';
 import db from '../database.js';
 
+const STAR = '<:1z:1517089474369032253>';
+
+function makeStars(n) {
+  return STAR.repeat(n);
+}
+
+function buildRateContainer(authorName, authorId, avgRating, totalVotes, latestRatings, mediaUrl, accentColor) {
+  const accent = accentColor ? parseInt(accentColor.replace('#', ''), 16) : 0x2b2d31;
+  
+  const container = {
+    type: 17,
+    accent_color: accent,
+    components: [
+      {
+        type: 9,
+        components: [{ type: 10, content: `**${authorName}'s Edit**\n-# Rate this edit using the buttons below` }],
+        accessory: { type: 11, media: { url: `https://cdn.discordapp.com/avatars/${authorId}/placeholder.png` } }
+      },
+      { type: 14, divider: true },
+      { type: 11, media: { url: mediaUrl } },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `${STAR} **Current Rating**\n**${avgRating}/5** (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${latestRatings || '_No ratings yet_'}`
+      },
+      { type: 14, divider: true },
+      {
+        type: 1,
+        components: [
+          { type: 2, custom_id: 'rate_edit_1', label: '1', emoji: { id: '1517089474369032253' }, style: 2 },
+          { type: 2, custom_id: 'rate_edit_2', label: '2', emoji: { id: '1517089474369032253' }, style: 2 },
+          { type: 2, custom_id: 'rate_edit_3', label: '3', emoji: { id: '1517089474369032253' }, style: 2 },
+          { type: 2, custom_id: 'rate_edit_4', label: '4', emoji: { id: '1517089474369032253' }, style: 2 },
+          { type: 2, custom_id: 'rate_edit_5', label: '5', emoji: { id: '1517089474369032253' }, style: 2 },
+        ]
+      },
+      {
+        type: 1,
+        components: [
+          { type: 2, custom_id: 'rate_edit_delete', label: 'Remove', style: 4 }
+        ]
+      }
+    ]
+  };
+
+  return { components: [container], flags: 32768 };
+}
 
 export const commands = [
   {
@@ -14,7 +61,7 @@ export const commands = [
       if (args.length > 0) {
         const channelMatch = args[0].match(/<#(\d+)>/);
         const isId = /^\d{17,19}$/.test(args[0]);
-        
+
         if (channelMatch || isId) {
           if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
             return message.reply(cv2.danger('Permission Denied', 'You must be a Server Administrator to set the rating channel.'));
@@ -48,38 +95,25 @@ export const commands = [
 ];
 
 export async function createRateMessage(message, mediaUrl) {
-  // Setup Base Embed
   const guildConfig = message.guild ? db.getGuildConfig(message.guild.id) : null;
-  const rateEmbed = new EmbedBuilder()
-    .setTitle(`Rate ${message.author.globalName || author.username}'s Edit`)
-    .setDescription(`<a:1z:1517089474369032253> **Current Rating**\n0.0/5 (0 votes)\n\n**User Ratings**\n_No ratings yet_`)
-    .setColor(guildConfig?.accentColor || '#2b2d31');
+  const authorName = message.author.globalName || message.author.username;
+  const authorId = message.author.id;
+  const accentColor = guildConfig?.accentColor || null;
 
-  const starEmoji = { id: '1517089474369032253' };
-
-  const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('rate_edit_1').setLabel('1').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('rate_edit_2').setLabel('2').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('rate_edit_3').setLabel('3').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('rate_edit_4').setLabel('4').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('rate_edit_5').setLabel('5').setEmoji(starEmoji).setStyle(ButtonStyle.Secondary)
-  );
-
-  const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('rate_edit_delete').setLabel('Remove').setStyle(ButtonStyle.Danger)
-  );
+  const payload = buildRateContainer(authorName, authorId, '0.0', 0, null, mediaUrl, accentColor);
 
   try {
-    const sentMessage = await message.reply({ embeds: [rateEmbed], components: [row1, row2] });
-    
+    const sentMessage = await message.reply(payload);
+
     db.createEditRating(sentMessage.id, {
       authorId: message.author.id,
-      authorName: message.author.globalName || author.username,
+      authorName: authorName,
       mediaUrl: mediaUrl
     });
-
   } catch (err) {
     console.error('Failed to post edit rating:', err);
     message.reply('An error occurred while posting your edit.').catch(() => null);
   }
 }
+
+export { buildRateContainer, makeStars };
