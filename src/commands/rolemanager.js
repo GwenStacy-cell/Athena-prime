@@ -88,6 +88,90 @@ async function handleMassRole(context, role, action) {
   }
 }
 
+
+
+// ==========================================
+// CREATEROLE INTERACTIVE PANEL
+// ==========================================
+
+const ALL_PERMISSIONS = [
+  ['Administrator', 'Administrator'],
+  ['ManageGuild', 'Manage Server'],
+  ['ManageRoles', 'Manage Roles'],
+  ['ManageChannels', 'Manage Channels'],
+  ['KickMembers', 'Kick Members'],
+  ['BanMembers', 'Ban Members'],
+  ['MuteMembers', 'Mute Members'],
+  ['DeafenMembers', 'Deafen Members'],
+  ['MoveMembers', 'Move Members'],
+  ['ManageMessages', 'Manage Messages'],
+  ['ManageNicknames', 'Manage Nicknames'],
+  ['ManageWebhooks', 'Manage Webhooks'],
+  ['ManageEmojisAndStickers', 'Manage Emojis'],
+  ['ViewAuditLog', 'View Audit Log'],
+  ['MentionEveryone', 'Mention Everyone'],
+  ['SendMessages', 'Send Messages'],
+  ['ReadMessageHistory', 'Read History'],
+  ['EmbedLinks', 'Embed Links'],
+  ['AttachFiles', 'Attach Files'],
+  ['UseExternalEmojis', 'External Emojis'],
+  ['AddReactions', 'Add Reactions'],
+  ['Connect', 'Connect VC'],
+  ['Speak', 'Speak VC'],
+  ['Stream', 'Stream'],
+  ['UseApplicationCommands', 'Use Slash Cmds'],
+];
+
+const PERM_PAGE_SIZE = 15;
+export const createRoleStates = new Map();
+
+export function buildCreateRolePanel(state) {
+  const { name, color, perms, page, position } = state;
+  const totalPages = Math.ceil(ALL_PERMISSIONS.length / PERM_PAGE_SIZE);
+  const start = page * PERM_PAGE_SIZE;
+  const pagePerms = ALL_PERMISSIONS.slice(start, start + PERM_PAGE_SIZE);
+
+  const permLines = pagePerms.map(([key, label]) =>
+    `${perms.includes(key) ? '<:emoji_16:1521464002046328944>' : '<:off:1533844858983157851>'} **${label}**`
+  ).join('\n');
+
+  const makeButtons = (slice) => slice.map(([key, label]) => ({
+    type: 2, style: perms.includes(key) ? 3 : 2,
+    custom_id: `cr_perm_${key}`, label: label.substring(0, 25)
+  }));
+
+  const rows = [];
+  for (let i = 0; i < pagePerms.length; i += 5) {
+    rows.push({ type: 1, components: makeButtons(pagePerms.slice(i, i + 5)) });
+  }
+
+  const container = {
+    type: 17,
+    components: [
+      { type: 10, content: `## Create Role — Builder\n**Name:** ${name || '_Not set_'} | **Color:** ${color || '_None_'} | **Position:** ${position != null ? `#${position}` : '_Bottom_'}` },
+      { type: 14, divider: true },
+      { type: 10, content: `### Permissions — Page ${page + 1}/${totalPages}\n${permLines}` },
+      { type: 14, divider: true },
+      ...rows,
+      { type: 14, divider: true },
+      { type: 1, components: [
+        { type: 2, style: 1, custom_id: 'cr_setname', label: 'Set Name' },
+        { type: 2, style: 1, custom_id: 'cr_setcolor', label: 'Set Color' },
+        { type: 2, style: 1, custom_id: 'cr_setposition', label: 'Set Position' },
+        { type: 2, style: 2, custom_id: `cr_page_${page === 0 ? totalPages - 1 : page - 1}`, label: '← Prev' },
+        { type: 2, style: 2, custom_id: `cr_page_${page >= totalPages - 1 ? 0 : page + 1}`, label: 'Next →' },
+      ]},
+      { type: 1, components: [
+        { type: 2, style: 4, custom_id: 'cr_alloff', label: 'Clear All Perms' },
+        { type: 2, style: 3, custom_id: 'cr_allon', label: 'Grant All Perms' },
+        { type: 2, style: 3, custom_id: 'cr_confirm', label: 'Create Role' },
+      ]},
+      { type: 10, content: `-# Athena Bulletproof Security System · V1.0.0` }
+    ]
+  };
+  return { components: [container], flags: 32768 };
+}
+
 export const commands = [
   {
     name: 'addrole',
@@ -461,5 +545,68 @@ export const commands = [
       const role = interaction.options.getRole('role');
       await handleMassRole(interaction, role, 'restore');
     }
+  },
+
+  {
+    name: 'createrole',
+    slashHidden: true,
+    description: 'Create a role with custom permissions, color, and position interactively.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.ManageRoles],
+    async executePrefix(message) {
+      if (!(await isAuthorized(message.author, message.guild))) return;
+      const state = { name: '', color: null, perms: [], page: 0, position: null, guildId: message.guild.id };
+      createRoleStates.set(message.author.id, state);
+      const panel = buildCreateRolePanel(state);
+      await message.reply(panel);
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply(cv2.danger('Unauthorized', 'You do not have permission.'));
+      }
+      const state = { name: '', color: null, perms: [], page: 0, position: null, guildId: interaction.guild.id };
+      createRoleStates.set(interaction.user.id, state);
+      const panel = buildCreateRolePanel(state);
+      await interaction.reply(panel);
+    }
+  },
+  {
+    name: 'rolecolor',
+    aliases: ['rcolor', 'rolecolour'],
+    slashHidden: true,
+    description: 'Change the color of any role.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.ManageRoles],
+    async executePrefix(message, args) {
+      if (!(await isAuthorized(message.author, message.guild))) return;
+      const roleIdOrMention = args[0]?.replace(/<@&|>/g, '');
+      const hex = args[1];
+      if (!roleIdOrMention || !hex) {
+        return message.reply(cv2.warn('Usage', '**Usage:** `!rolecolor <@role or roleId> <#hexcolor>`\n**Example:** `!rolecolor 123456789 #FF5733`'));
+      }
+      const role = message.guild.roles.cache.get(roleIdOrMention) || message.mentions.roles.first();
+      if (!role) return message.reply(cv2.danger('Not Found', 'Could not find that role in this server.'));
+      const hexClean = hex.startsWith('#') ? hex : '#' + hex;
+      if (!/^#[0-9A-Fa-f]{6}$/.test(hexClean)) {
+        return message.reply(cv2.warn('Invalid Color', 'Please provide a valid hex color. Example: `#FF5733`'));
+      }
+      await role.setColor(hexClean, `Color changed by ${message.author.tag}`).catch(() => null);
+      await message.reply(cv2.success('Role Color Changed', `Successfully changed **${role.name}**'s color to \`${hexClean}\`.`));
+    },
+    async executeSlash(interaction) {
+      if (!(await isAuthorized(interaction.user, interaction.guild))) {
+        return interaction.reply(cv2.danger('Unauthorized', 'You do not have permission.'));
+      }
+      const role = interaction.options.getRole('role');
+      const hex = interaction.options.getString('color');
+      if (!role) return interaction.reply(cv2.warn('Not Found', 'Could not find that role.'));
+      const hexClean = hex.startsWith('#') ? hex : '#' + hex;
+      if (!/^#[0-9A-Fa-f]{6}$/.test(hexClean)) {
+        return interaction.reply(cv2.warn('Invalid Color', 'Please provide a valid hex color. Example: `#FF5733`'));
+      }
+      await role.setColor(hexClean, `Color changed by ${interaction.user.tag}`).catch(() => null);
+      await interaction.reply(cv2.success('Role Color Changed', `Successfully changed **${role.name}**\'s color to \`${hexClean}\`.`));
+    }
   }
+
 ];

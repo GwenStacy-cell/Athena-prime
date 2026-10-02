@@ -2,6 +2,7 @@ import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, Text
 import { buildXpDashboard } from '../commands/leveling.js';
 import commandMap from '../commands/loader.js';
 import cv2 from '../cv2.js';
+import { createRoleStates, buildCreateRolePanel } from '../commands/rolemanager.js';
 import { setGuildContext } from '../embed.js';
 
 // Import all button handlers dynamically
@@ -718,6 +719,156 @@ if (interaction.customId === "modal_2fa_setup") {
         const { handleAutoReactButton, handleAutoReactMenu } = await import('../commands/autoreact.js');
         if (interaction.isButton()) return handleAutoReactButton(interaction);
         if (interaction.isAnySelectMenu()) return handleAutoReactMenu(interaction);
+      }
+
+
+      // ==========================================
+      // CREATEROLE INTERACTIVE HANDLERS
+      // ==========================================
+      if (interaction.isButton() && (interaction.customId.startsWith('cr_') && interaction.customId !== 'cr_confirm')) {
+        const userId = interaction.user.id;
+        const state = createRoleStates.get(userId);
+        if (!state) return interaction.reply({ content: 'This session expired. Run `!createrole` again.', flags: 64 });
+
+        const id = interaction.customId;
+
+        if (id.startsWith('cr_perm_')) {
+          const permKey = id.replace('cr_perm_', '');
+          if (state.perms.includes(permKey)) {
+            state.perms = state.perms.filter(p => p !== permKey);
+          } else {
+            state.perms.push(permKey);
+          }
+          createRoleStates.set(userId, state);
+          return interaction.update(buildCreateRolePanel(state));
+        }
+
+        if (id.startsWith('cr_page_')) {
+          state.page = parseInt(id.replace('cr_page_', '')) || 0;
+          createRoleStates.set(userId, state);
+          return interaction.update(buildCreateRolePanel(state));
+        }
+
+        if (id === 'cr_allon') {
+          const { PermissionFlagsBits: PF } = await import('discord.js');
+          state.perms = Object.keys(PF).filter(k => PF[k] !== undefined && typeof PF[k] === 'bigint').map(k => k);
+          createRoleStates.set(userId, state);
+          return interaction.update(buildCreateRolePanel(state));
+        }
+
+        if (id === 'cr_alloff') {
+          state.perms = [];
+          createRoleStates.set(userId, state);
+          return interaction.update(buildCreateRolePanel(state));
+        }
+
+        if (id === 'cr_setname') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+          const modal = new ModalBuilder().setCustomId('cr_modal_name').setTitle('Set Role Name');
+          modal.addComponents(new ActionRowBuilder().addComponents(
+            new TextInputBuilder().setCustomId('role_name').setLabel('Role Name').setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(100)
+          ));
+          return interaction.showModal(modal);
+        }
+
+        if (id === 'cr_setcolor') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+          const modal = new ModalBuilder().setCustomId('cr_modal_color').setTitle('Set Role Color');
+          modal.addComponents(new ActionRowBuilder().addComponents(
+            new TextInputBuilder().setCustomId('role_color').setLabel('Hex Color (e.g. #FF5733)').setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(7).setPlaceholder('#FF5733')
+          ));
+          return interaction.showModal(modal);
+        }
+
+        if (id === 'cr_setposition') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+          const modal = new ModalBuilder().setCustomId('cr_modal_position').setTitle('Set Role Position');
+          modal.addComponents(new ActionRowBuilder().addComponents(
+            new TextInputBuilder().setCustomId('role_position').setLabel('Position number (1 = bottom, higher = top)').setStyle(TextInputStyle.Short).setRequired(true).setMaxLength(4).setPlaceholder('1')
+          ));
+          return interaction.showModal(modal);
+        }
+      }
+
+      // CREATEROLE - CONFIRM
+      if (interaction.isButton() && interaction.customId === 'cr_confirm') {
+        const userId = interaction.user.id;
+        const state = createRoleStates.get(userId);
+        if (!state) return interaction.reply({ content: 'Session expired. Run `!createrole` again.', flags: 64 });
+        if (!state.name) return interaction.reply({ content: 'Please set a role name first!', flags: 64 });
+
+        const { PermissionsBitField } = await import('discord.js');
+        const permBits = new PermissionsBitField();
+        for (const perm of state.perms) {
+          try { permBits.add(PermissionsBitField.Flags[perm]); } catch(e) {}
+        }
+
+        const roleData = {
+          name: state.name,
+          permissions: permBits,
+          reason: `Created by ${interaction.user.tag} via !createrole`
+        };
+        if (state.color) roleData.color = state.color;
+
+        const newRole = await interaction.guild.roles.create(roleData).catch(err => {
+          interaction.reply({ content: `Failed to create role: ${err.message}`, flags: 64 });
+          return null;
+        });
+        if (!newRole) return;
+
+        if (state.position != null && state.position > 0) {
+          const myHighest = interaction.guild.members.me.roles.highest.position;
+          const safePos = Math.min(state.position, myHighest - 1);
+          await newRole.setPosition(safePos).catch(() => null);
+        }
+
+        createRoleStates.delete(userId);
+
+        const summary = cv2.success('Role Created', [
+          `**Name:** ${newRole.name}`,
+          `**Color:** ${state.color || 'None'}`,
+          `**Permissions:** ${state.perms.length} permission(s) granted`,
+          `**Position:** ${newRole.position}`,
+          `**Role:** ${newRole}`
+        ].join('\n'));
+        return interaction.update(summary);
+      }
+
+      // CREATEROLE MODALS
+      if (interaction.isModalSubmit() && interaction.customId === 'cr_modal_name') {
+        const userId = interaction.user.id;
+        const state = createRoleStates.get(userId);
+        if (!state) return interaction.reply({ content: 'Session expired.', flags: 64 });
+        state.name = interaction.fields.getTextInputValue('role_name').trim();
+        createRoleStates.set(userId, state);
+        return interaction.update(buildCreateRolePanel(state));
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId === 'cr_modal_color') {
+        const userId = interaction.user.id;
+        const state = createRoleStates.get(userId);
+        if (!state) return interaction.reply({ content: 'Session expired.', flags: 64 });
+        let hex = interaction.fields.getTextInputValue('role_color').trim();
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+          return interaction.reply({ content: 'Invalid hex color! Use format #FF5733', flags: 64 });
+        }
+        state.color = hex;
+        createRoleStates.set(userId, state);
+        return interaction.update(buildCreateRolePanel(state));
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId === 'cr_modal_position') {
+        const userId = interaction.user.id;
+        const state = createRoleStates.get(userId);
+        if (!state) return interaction.reply({ content: 'Session expired.', flags: 64 });
+        const pos = parseInt(interaction.fields.getTextInputValue('role_position').trim());
+        if (isNaN(pos) || pos < 1) {
+          return interaction.reply({ content: 'Invalid position! Must be a number ≥ 1', flags: 64 });
+        }
+        state.position = pos;
+        createRoleStates.set(userId, state);
+        return interaction.update(buildCreateRolePanel(state));
       }
 
       if (interaction.customId.startsWith('calc_')) {
