@@ -1,4 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } from 'discord.js';
+import { MessageFlags } from 'discord.js';
 import cv2 from '../cv2.js';
 import db from '../database.js';
 
@@ -8,20 +9,26 @@ function makeStars(n) {
   return STAR.repeat(n);
 }
 
-function buildRateContainer(authorName, authorId, avgRating, totalVotes, latestRatings, mediaUrl, accentColor) {
-  const accent = accentColor ? parseInt(accentColor.replace('#', ''), 16) : 0x2b2d31;
-  
+export function buildRateContainer(authorName, authorId, avgRating, totalVotes, latestRatings, mediaUrl, accentColor) {
+  // Parse accent color to integer — same way cv2 does it
+  const accentInt = accentColor
+    ? parseInt(accentColor.replace('#', ''), 16)
+    : 0x5865F2;
+
   const container = {
     type: 17,
-    accent_color: accent,
+    accent_color: accentInt,
+    spoiler: false,
     components: [
       {
-        type: 9,
-        components: [{ type: 10, content: `**${authorName}'s Edit**\n-# Rate this edit using the buttons below` }],
-        accessory: { type: 11, media: { url: `https://cdn.discordapp.com/avatars/${authorId}/placeholder.png` } }
+        type: 10,
+        content: `## **${authorName}'s Edit**`
       },
       { type: 14, divider: true },
-      { type: 11, media: { url: mediaUrl } },
+      {
+        type: 11,
+        media: { url: mediaUrl }
+      },
       { type: 14, divider: true },
       {
         type: 10,
@@ -43,11 +50,13 @@ function buildRateContainer(authorName, authorId, avgRating, totalVotes, latestR
         components: [
           { type: 2, custom_id: 'rate_edit_delete', label: 'Remove', style: 4 }
         ]
-      }
+      },
+      { type: 14, divider: true },
+      { type: 10, content: `-# **Athena Bulletproof Security System · V1.0.0**` }
     ]
   };
 
-  return { components: [container], flags: 32768 };
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
 export const commands = [
@@ -116,4 +125,4 @@ export async function createRateMessage(message, mediaUrl) {
   }
 }
 
-export { buildRateContainer, makeStars };
+export { makeStars };
