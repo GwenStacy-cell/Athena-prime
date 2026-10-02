@@ -26,8 +26,8 @@ export function buildRateContainer(authorName, authorId, avgRating, totalVotes, 
       },
       { type: 14, divider: true },
       {
-        type: 11,
-        media: { url: mediaUrl }
+        type: 12,
+        items: [{ media: { url: mediaUrl } }]
       },
       { type: 14, divider: true },
       {
