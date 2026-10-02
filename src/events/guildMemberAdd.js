@@ -217,10 +217,16 @@ export default {
           const createdTime = usedInvite?.createdTimestamp ? `<t:${Math.floor(usedInvite.createdTimestamp / 1000)}:F>` : 'N/A';
           const bullet = '<a:61589pinkglock:1451707353450676265>';
           
+          const memberDisplayName = member.nickname || member.user.displayName || member.user.username;
+          const inviterDisplayName = inviter ? (inviter.displayName || inviter.username) : null;
+          const inviterLine = inviter
+            ? `${inviterDisplayName}\n[${inviter.id}](https://discord.com/users/${inviter.id})`
+            : 'Unknown / Vanity URL / Temp Invite';
+
           const inviteEmbed = {
             color: config.accentColor ? parseInt(config.accentColor.replace('#', ''), 16) : 0x2b2d31,
             author: { name: 'MEMBER JOINED', icon_url: member.user.displayAvatarURL({ dynamic: true }) },
-            description: `${bullet} **User Joined:** ${member} (\`${member.id}\`)\n${bullet} **Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n\n**INVITE DETAILS**\n${bullet} **Creator:** ${inviterText}\n${bullet} **Invite Code:** \`${codeText}\`\n${bullet} **Total Uses:** ${usesText} / ${maxUses}\n${bullet} **Duration:** ${maxAge}\n${bullet} **Created At:** ${createdTime}`,
+            description: `${bullet} **User Joined:** ${memberDisplayName}\n[${member.id}](https://discord.com/users/${member.id})\n${bullet} **Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n\n**INVITE DETAILS**\n${bullet} **Creator:** ${inviterLine}\n${bullet} **Invite Code:** \`${codeText}\`\n${bullet} **Total Uses:** ${usesText} / ${maxUses}\n${bullet} **Duration:** ${maxAge}\n${bullet} **Created At:** ${createdTime}`,
             timestamp: new Date().toISOString(),
             thumbnail: { url: member.user.displayAvatarURL({ dynamic: true, size: 256 }) },
             footer: { text: `Total Members: ${guild.memberCount}`, icon_url: guild.iconURL({ dynamic: true }) }
