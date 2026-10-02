@@ -3204,7 +3204,7 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
 
 async function runSecurityEnableSequence(guild, updateMessageFn) {
       const { TextDisplayBuilder, ContainerBuilder } = await import("discord.js");
-      const successEmoji = "<:emoji_16:1533860111704002665>";
+      const successEmoji = "<a:failed:1536214150532501515>";
       const loadingEmoji = "<a:loading:1542155051286396938>";
       const warningEmoji = "<a:warning:1540656124313993247>";
       

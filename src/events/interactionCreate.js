@@ -297,6 +297,42 @@ export default {
       }
 
       if (interaction.isModalSubmit()) {
+      // CREATEROLE MODALS
+      if (interaction.isModalSubmit() && interaction.customId === 'cr_modal_name') {
+        const userId = interaction.user.id;
+        const state = createRoleStates.get(userId);
+        if (!state) return interaction.reply({ content: 'Session expired.', flags: 64 });
+        state.name = interaction.fields.getTextInputValue('role_name').trim();
+        createRoleStates.set(userId, state);
+        return interaction.update(buildCreateRolePanel(state));
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId === 'cr_modal_color') {
+        const userId = interaction.user.id;
+        const state = createRoleStates.get(userId);
+        if (!state) return interaction.reply({ content: 'Session expired.', flags: 64 });
+        let hex = interaction.fields.getTextInputValue('role_color').trim();
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+          return interaction.reply({ content: 'Invalid hex color! Use format #FF5733', flags: 64 });
+        }
+        state.color = hex;
+        createRoleStates.set(userId, state);
+        return interaction.update(buildCreateRolePanel(state));
+      }
+
+      if (interaction.isModalSubmit() && interaction.customId === 'cr_modal_position') {
+        const userId = interaction.user.id;
+        const state = createRoleStates.get(userId);
+        if (!state) return interaction.reply({ content: 'Session expired.', flags: 64 });
+        const pos = parseInt(interaction.fields.getTextInputValue('role_position').trim());
+        if (isNaN(pos) || pos < 1) {
+          return interaction.reply({ content: 'Invalid position! Must be a number ≥ 1', flags: 64 });
+        }
+        state.position = pos;
+        createRoleStates.set(userId, state);
+        return interaction.update(buildCreateRolePanel(state));
+      }
     if (interaction.customId === 'modal_app_submit') {
       await interaction.deferReply({ ephemeral: true }).catch(()=>{});
       
@@ -842,42 +878,7 @@ if (interaction.customId === "modal_2fa_setup") {
         return interaction.update(summary);
       }
 
-      // CREATEROLE MODALS
-      if (interaction.isModalSubmit() && interaction.customId === 'cr_modal_name') {
-        const userId = interaction.user.id;
-        const state = createRoleStates.get(userId);
-        if (!state) return interaction.reply({ content: 'Session expired.', flags: 64 });
-        state.name = interaction.fields.getTextInputValue('role_name').trim();
-        createRoleStates.set(userId, state);
-        return interaction.update(buildCreateRolePanel(state));
-      }
 
-      if (interaction.isModalSubmit() && interaction.customId === 'cr_modal_color') {
-        const userId = interaction.user.id;
-        const state = createRoleStates.get(userId);
-        if (!state) return interaction.reply({ content: 'Session expired.', flags: 64 });
-        let hex = interaction.fields.getTextInputValue('role_color').trim();
-        if (!hex.startsWith('#')) hex = '#' + hex;
-        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-          return interaction.reply({ content: 'Invalid hex color! Use format #FF5733', flags: 64 });
-        }
-        state.color = hex;
-        createRoleStates.set(userId, state);
-        return interaction.update(buildCreateRolePanel(state));
-      }
-
-      if (interaction.isModalSubmit() && interaction.customId === 'cr_modal_position') {
-        const userId = interaction.user.id;
-        const state = createRoleStates.get(userId);
-        if (!state) return interaction.reply({ content: 'Session expired.', flags: 64 });
-        const pos = parseInt(interaction.fields.getTextInputValue('role_position').trim());
-        if (isNaN(pos) || pos < 1) {
-          return interaction.reply({ content: 'Invalid position! Must be a number ≥ 1', flags: 64 });
-        }
-        state.position = pos;
-        createRoleStates.set(userId, state);
-        return interaction.update(buildCreateRolePanel(state));
-      }
 
       if (interaction.customId.startsWith('calc_')) {
         const { handleCalculatorButton } = await import('../commands/utility.js');
