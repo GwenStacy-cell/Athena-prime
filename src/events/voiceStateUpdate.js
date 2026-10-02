@@ -400,7 +400,7 @@ export default {
     // ==========================================
     const jtcConfig = db.getJtcConfig(guild.id);
 
-    if (jtcConfig && (newState.channelId === jtcConfig.lobbyChannelId || (jtcConfig.secondaryLobbyChannelId && newState.channelId === jtcConfig.secondaryLobbyChannelId))) {
+    if (jtcConfig && oldState.channelId !== newState.channelId && (newState.channelId === jtcConfig.lobbyChannelId || (jtcConfig.secondaryLobbyChannelId && newState.channelId === jtcConfig.secondaryLobbyChannelId))) {
       const member = newState.member;
       if (!member) return;
 
@@ -436,11 +436,21 @@ export default {
           reason: `JTC: Created by ${member.user.tag}`
         });
 
-        // Move the member into their new channel
-        await member.voice.setChannel(tempChannel).catch(() => null);
-
-        // Register in database
+        // Register in database first so cleanup logic knows it's a JTC room
         db.addJtcChannel(tempChannel.id, member.id, guild.id);
+
+        // Move the member into their new channel
+        const moved = await member.voice.setChannel(tempChannel).catch(() => null);
+
+        // Ghost channel sweeper: If they didn't move, or left instantly, purge it
+        setTimeout(async () => {
+          const freshChannel = await guild.channels.fetch(tempChannel.id).catch(()=>null);
+          if (freshChannel && freshChannel.members.size === 0) {
+            db.removeJtcChannel(tempChannel.id);
+            await freshChannel.delete('JTC: User failed to move or instantly left').catch(()=>null);
+            console.log(`[JTC] Purged ghost room for ${member.user.tag}`);
+          }
+        }, 2500);
 
         const vcPanel = buildControlPanel(tempChannel, member);
 
