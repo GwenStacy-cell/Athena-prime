@@ -132,7 +132,7 @@ export function buildCreateRolePanel(state) {
   const pagePerms = ALL_PERMISSIONS.slice(start, start + PERM_PAGE_SIZE);
 
   const permLines = pagePerms.map(([key, label]) =>
-    `${perms.includes(key) ? '<:emoji_16:1521464002046328944>' : '<:off:1533844858983157851>'} **${label}**`
+    `${perms.includes(key) ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'} **${label}**`
   ).join('\n');
 
   const makeButtons = (slice) => slice.map(([key, label]) => ({
