@@ -1226,20 +1226,20 @@ if (interaction.customId === "modal_2fa_setup") {
         const avgRating = (totalStars / totalVotes).toFixed(1);
 
         // Get last 5 ratings — repeated stars per vote
-        const STAR_EMOJI = '<:1z:1517089474369032253>';
+        const STAR_EMOJI = '⭐';
         const latestRatings = Object.entries(updatedData.votes)
           .reverse()
           .slice(0, 5)
           .map(([id, v]) => `**${v.name}:** ${STAR_EMOJI.repeat(v.stars)}`)
           .join('\n');
 
-        // Rebuild as CV2 accent panel
+        // Rebuild as standard Embed
         const guildCfg = db.getGuildConfig(interaction.guild.id);
         const accentColor = guildCfg?.accentColor || null;
-        const { buildRateContainer } = await import('../commands/rate.js');
-        const updatedPanel = buildRateContainer(
+        const { buildRateEmbed, makeRateComponents } = await import('../commands/rate.js');
+        
+        const updatedEmbed = buildRateEmbed(
           updatedData.authorName,
-          updatedData.authorId,
           avgRating,
           totalVotes,
           latestRatings || '_No ratings yet_',
@@ -1247,7 +1247,7 @@ if (interaction.customId === "modal_2fa_setup") {
           accentColor
         );
 
-        await interaction.update(updatedPanel).catch(() => null);
+        await interaction.update({ embeds: [updatedEmbed], components: makeRateComponents() }).catch(() => null);
         return;
       }
 
