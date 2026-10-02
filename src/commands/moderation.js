@@ -13,9 +13,42 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.MuteMembers],
     options: [],
-    async executePrefix(message) {
-      const result = await handleMuteAll(message.guild, message.member);
-      await message.reply(result);
+    async executePrefix(message, args) {
+      if (!args.length) {
+        return message.reply(cv2.warn('Command Error', `${message.author} Please mention the roles or provide their IDs.\n\n**Usage:** \`!deleterole <@role1> <@role2> ...\``));
+      }
+      
+      const inputString = args.join(' ');
+      let targets = inputString.includes(',') ? inputString.split(',').map(s => s.trim()).filter(Boolean) : inputString.split(/\s+/).filter(Boolean);
+      
+      if (!inputString.includes(',') && targets.length > 1 && !inputString.includes('<@&')) {
+         const exactMatch = message.guild.roles.cache.find(r => r.name.toLowerCase() === inputString.toLowerCase());
+         if (exactMatch) targets = [inputString];
+      }
+      
+      let deletedCount = 0;
+      let failedCount = 0;
+      
+      for (const search of targets) {
+        const roleId = search.replace(/<@&|>/g, '');
+        let role = message.guild.roles.cache.get(roleId) || 
+                   message.guild.roles.cache.find(r => r.name.toLowerCase() === search.toLowerCase());
+                   
+        if (role) {
+           const result = await handleDeleteRole(message.guild, message.member, role);
+           if (JSON.stringify(result).includes('Successfully deleted')) deletedCount++;
+           else failedCount++;
+        } else {
+           failedCount++;
+        }
+      }
+      
+      if (deletedCount === 0) {
+        return message.reply(cv2.danger('Error', 'Could not delete any of the specified roles. Check permissions and hierarchy.'));
+      }
+      
+      const msg = `Successfully deleted **${deletedCount}** role(s).` + (failedCount > 0 ? `\nFailed to delete **${failedCount}**.` : '');
+      await message.reply(cv2.success('Roles Deleted', msg)).catch(() => null);
     },
     async executeSlash(interaction) {
       const result = await handleMuteAll(interaction.guild, interaction.member);

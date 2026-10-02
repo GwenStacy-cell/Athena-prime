@@ -10,55 +10,41 @@ export const createChannelCmd = {
   async executePrefix(message, args) {
     if (!await isAuthorized(message.author, message.guild)) return;
     
-    if (!args[0]) {
-      return message.reply(cv2.error('Missing Argument', 'Please provide a name for the channel.\n**Usage:** `!createchannel <name>`'));
+    if (!args.length) {
+      return message.reply(cv2.error('Missing Argument', 'Please mention one or more channels, provide their IDs, or names separated by commas.\n**Usage:** `!deletechannel #channel1, 1234567890`'));
     }
 
-    const name = args.join('-');
-    const channel = await message.guild.channels.create({ 
-      name, 
-      type: ChannelType.GuildText,
-      reason: `Created via !createchannel by ${message.author.tag}`
-    }).catch(() => null);
-
-    if (!channel) return message.reply(cv2.error('Error', 'Failed to create channel.'));
+    const inputString = args.join(' ');
+    let targets = inputString.includes(',') ? inputString.split(',').map(s => s.trim()).filter(Boolean) : inputString.split(/\s+/).filter(Boolean);
     
-    await message.reply(cv2.success('Channel Created', `Successfully created <#${channel.id}>.`));
-  }
-};
-
-export const deleteChannelCmd = {
-  name: 'deletechannel',
-  description: 'Deletes a channel by mention, ID, or name',
-  slashHidden: true, // prefix only
-  async executeSlash() {},
-  async executePrefix(message, args) {
-    if (!await isAuthorized(message.author, message.guild)) return;
-    
-    if (!args[0]) {
-      return message.reply(cv2.error('Missing Argument', 'Please mention a channel, provide its ID, or its exact name.\n**Usage:** `!deletechannel #channel`'));
-    }
-
-    let targetChannel = message.mentions.channels.first();
-    
-    if (!targetChannel) {
-      const search = args.join(' ').toLowerCase();
-      targetChannel = message.guild.channels.cache.get(args[0]) || 
-                      message.guild.channels.cache.find(c => c.name.toLowerCase() === search.replace(/^#/, ''));
+    if (!inputString.includes(',') && targets.length > 1 && !inputString.includes('<#')) {
+      const exactMatch = message.guild.channels.cache.find(c => c.name.toLowerCase() === inputString.toLowerCase().replace(/^#/, ''));
+      if (exactMatch) targets = [inputString];
     }
     
-    if (!targetChannel) {
-      return message.reply(cv2.error('Not Found', 'Could not find that channel in this server.'));
+    let deletedCount = 0;
+    let failedCount = 0;
+    
+    for (const search of targets) {
+      const channelId = search.replace(/<#|>/g, '');
+      let targetChannel = message.guild.channels.cache.get(channelId) || 
+                          message.guild.channels.cache.find(c => c.name.toLowerCase() === search.toLowerCase().replace(/^#/, ''));
+      
+      if (targetChannel) {
+        const deleted = await targetChannel.delete(`Deleted via !deletechannel by ${message.author.tag}`).catch(() => null);
+        if (deleted) deletedCount++;
+        else failedCount++;
+      } else {
+        failedCount++;
+      }
     }
     
-    const name = targetChannel.name;
-    const deleted = await targetChannel.delete(`Deleted via !deletechannel by ${message.author.tag}`).catch(() => null);
-    
-    if (!deleted) {
-      return message.reply(cv2.error('Error', 'Failed to delete channel. Check my permissions or hierarchy.'));
+    if (deletedCount === 0) {
+      return message.reply(cv2.error('Error', 'Could not delete any of the specified channels. Check IDs, names, or permissions.'));
     }
 
-    await message.reply(cv2.success('Channel Deleted', `Successfully deleted **#${name}**.`));
+    const msg = `Successfully deleted **${deletedCount}** channel(s).` + (failedCount > 0 ? `\nFailed to delete **${failedCount}**.` : '');
+    await message.reply(cv2.success('Channels Deleted', msg)).catch(() => null);
   }
 };
 
