@@ -2,7 +2,7 @@ import { PermissionFlagsBits, MessageFlags } from 'discord.js';
 import cv2 from '../cv2.js';
 import db from '../database.js';
 
-const STAR = '<:1z:1517089474369032253>';
+const STAR = '⭐';
 
 export function buildRateContainer(authorName, avgRating, totalVotes, latestRatings, mediaUrl) {
   const components = [
