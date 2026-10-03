@@ -1226,28 +1226,24 @@ if (interaction.customId === "modal_2fa_setup") {
         const avgRating = (totalStars / totalVotes).toFixed(1);
 
         // Get last 5 ratings — repeated stars per vote
-        const STAR_EMOJI = '⭐';
+        const STAR_EMOJI = '<:1z:1517089474369032253>';
         const latestRatings = Object.entries(updatedData.votes)
           .reverse()
           .slice(0, 5)
           .map(([id, v]) => `**${v.name}:** ${STAR_EMOJI.repeat(v.stars)}`)
           .join('\n');
 
-        // Rebuild as standard Embed
-        const guildCfg = db.getGuildConfig(interaction.guild.id);
-        const accentColor = guildCfg?.accentColor || null;
-        const { buildRateEmbed, makeRateComponents } = await import('../commands/rate.js');
-        
-        const updatedEmbed = buildRateEmbed(
+        // Rebuild as borderless CV2 panel
+        const { buildRateContainer } = await import('../commands/rate.js');
+        const updatedPanel = buildRateContainer(
           updatedData.authorName,
           avgRating,
           totalVotes,
           latestRatings || '_No ratings yet_',
-          updatedData.mediaUrl,
-          accentColor
+          updatedData.mediaUrl
         );
 
-        await interaction.update({ embeds: [updatedEmbed], components: makeRateComponents() }).catch(() => null);
+        await interaction.update(updatedPanel).catch(() => null);
         return;
       }
 

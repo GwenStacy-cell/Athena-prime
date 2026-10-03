@@ -1,38 +1,43 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits, EmbedBuilder } from 'discord.js';
+import { PermissionFlagsBits, MessageFlags } from 'discord.js';
 import cv2 from '../cv2.js';
 import db from '../database.js';
 
-const STAR = '⭐'; // Standard star emoji based on user's screenshot
+const STAR = '<:1z:1517089474369032253>';
 
-export function buildRateEmbed(authorName, avgRating, totalVotes, latestRatings, mediaUrl, accentColor) {
-  const embed = new EmbedBuilder()
-    .setTitle(`RATE ${authorName.toUpperCase()}'S EDIT`)
-    .setDescription(`${STAR} **Current Rating**\n${avgRating}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${latestRatings || '_No ratings yet_'}`)
-    .setColor('#2b2d31')
-    .setFooter({ text: 'Athena Prime Killer' })
-    .setTimestamp();
-    
-  if (mediaUrl) {
-    embed.setImage(mediaUrl);
-  }
-  
-  return embed;
-}
+export function buildRateContainer(authorName, avgRating, totalVotes, latestRatings, mediaUrl) {
+  const components = [
+    { type: 10, content: `## RATE ${authorName.toUpperCase()}'S EDIT` },
+    { type: 14, divider: true },
+    {
+      type: 10,
+      content: `${STAR} **Current Rating**\n**${avgRating}/5** (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${latestRatings || '_No ratings yet_'}`
+    },
+    { type: 14, divider: true },
+    {
+      type: 1,
+      components: [
+        { type: 2, custom_id: 'rate_edit_1', label: '1', emoji: { id: '1517089474369032253' }, style: 2 },
+        { type: 2, custom_id: 'rate_edit_2', label: '2', emoji: { id: '1517089474369032253' }, style: 2 },
+        { type: 2, custom_id: 'rate_edit_3', label: '3', emoji: { id: '1517089474369032253' }, style: 2 },
+        { type: 2, custom_id: 'rate_edit_4', label: '4', emoji: { id: '1517089474369032253' }, style: 2 },
+        { type: 2, custom_id: 'rate_edit_5', label: '5', emoji: { id: '1517089474369032253' }, style: 2 },
+      ]
+    },
+    {
+      type: 1,
+      components: [
+        { type: 2, custom_id: 'rate_edit_delete', label: 'Remove', style: 4 }
+      ]
+    },
+    { type: 14, divider: true },
+    { type: 10, content: `-# **Athena Bulletproof Security System · V1.0.0**` }
+  ];
 
-export function makeRateComponents() {
-  const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('rate_edit_1').setLabel('1').setEmoji('⭐').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('rate_edit_2').setLabel('2').setEmoji('⭐').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('rate_edit_3').setLabel('3').setEmoji('⭐').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('rate_edit_4').setLabel('4').setEmoji('⭐').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('rate_edit_5').setLabel('5').setEmoji('⭐').setStyle(ButtonStyle.Secondary)
-  );
-
-  const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('rate_edit_delete').setLabel('Remove').setStyle(ButtonStyle.Danger)
-  );
-  
-  return [row1, row2];
+  // Append image as a link button if available (safest way — no CV2 image type issues)
+  return {
+    components: [{ type: 17, components }],
+    flags: MessageFlags.IsComponentsV2
+  };
 }
 
 export const commands = [
@@ -80,21 +85,23 @@ export const commands = [
 ];
 
 export async function createRateMessage(message, mediaUrl) {
-  const guildConfig = message.guild ? db.getGuildConfig(message.guild.id) : null;
   const authorName = message.author.globalName || message.author.username;
-  const accentColor = guildConfig?.accentColor || null;
 
-  const embed = buildRateEmbed(authorName, '0.0', 0, null, mediaUrl, accentColor);
-  const components = makeRateComponents();
+  const panel = buildRateContainer(authorName, '0.0', 0, null, mediaUrl);
 
+  // Send the CV2 panel, then forward the image as a follow-up so it renders large
   try {
-    const sentMessage = await message.reply({ embeds: [embed], components });
+    const sentMessage = await message.reply(panel);
 
     db.createEditRating(sentMessage.id, {
       authorId: message.author.id,
       authorName: authorName,
       mediaUrl: mediaUrl
     });
+
+    // Send the edit image as a separate message so it displays full-size below the panel
+    await message.channel.send({ content: mediaUrl }).catch(() => null);
+
   } catch (err) {
     console.error('Failed to post edit rating:', err);
     message.reply('An error occurred while posting your edit.').catch(() => null);
