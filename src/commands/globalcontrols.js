@@ -6,13 +6,11 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 // ─── Live Status Panel helpers ───────────────────────────────────────────────
 
 export async function buildStatusPanel(client, gifUrl = null) {
-  const { EmbedBuilder } = await import('discord.js');
-  const uptimeHours = Math.floor((client.uptime || 0) / 3600000);
-  const uptimeMins = Math.floor(((client.uptime || 0) % 3600000) / 60000);
-  const timeString = uptimeHours > 0 ? `${uptimeHours} Hours ${uptimeMins} Mins` : `${uptimeMins} Mins`;
+  const { MessageFlags } = await import('discord.js');
   
   const ping = client.ws.ping;
   const servers = client.guilds.cache.size;
+  const startTs = Math.floor((Date.now() - (client.uptime || 0)) / 1000);
   
   const CUSTOM_UPTIME = '<a:uptime:1552608831060844575>';
   const CUSTOM_OFF = '<:off:1533844858983157851>';
@@ -21,26 +19,38 @@ export async function buildStatusPanel(client, gifUrl = null) {
   const isYoutubeConnected = true; 
   const gwIcon = isGatewayConnected ? CUSTOM_UPTIME : CUSTOM_OFF;
 
-  const desc = 
-    `<@${client.user.id}> **Live : ${timeString} |** ${isGatewayConnected ? CUSTOM_UPTIME : CUSTOM_OFF}\n\n` +
-    `${gwIcon} **Core Gateway:** WS 443 Connected [Latency: ${ping}ms]\n` +
-    `${CUSTOM_UPTIME} **SQLite Database:** WAL Mode [Integrity: 100%]\n` +
-    `${CUSTOM_UPTIME} **Discord REST API:** Rate Limit Buckets Synchronized\n` +
-    `${CUSTOM_UPTIME} **Tenor & Anime APIs:** Remote Image Pools Connected\n` +
-    `${CUSTOM_UPTIME} **Canvas Engine:** Hardware Acceleration Active\n` +
-    `${isYoutubeConnected ? CUSTOM_UPTIME : CUSTOM_OFF} **YouTube API v3:** Verified & Operational\n` +
-    `${CUSTOM_UPTIME} **Antinuke Sentinels:** Armed & Securing ${servers} Servers\n` +
-    `\n***`;
+  // Fully borderless CV2 container (no accent_color)
+  const card = {
+    type: 17,
+    components: [
+      {
+        type: 10,
+        content: `<@${client.user.id}> **Live :** <t:${startTs}:R> **|** ${isGatewayConnected ? CUSTOM_UPTIME : CUSTOM_OFF}`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          `${gwIcon} **Core Gateway:** WS 443 Connected [Latency: ${ping}ms]\n` +
+          `${CUSTOM_UPTIME} **SQLite Database:** WAL Mode [Integrity: 100%]\n` +
+          `${CUSTOM_UPTIME} **Discord REST API:** Rate Limit Buckets Synchronized\n` +
+          `${CUSTOM_UPTIME} **Tenor & Anime APIs:** Remote Image Pools Connected\n` +
+          `${CUSTOM_UPTIME} **Canvas Engine:** Hardware Acceleration Active\n` +
+          `${isYoutubeConnected ? CUSTOM_UPTIME : CUSTOM_OFF} **YouTube API v3:** Verified & Operational\n` +
+          `${CUSTOM_UPTIME} **Antinuke Sentinels:** Armed & Securing ${servers} Servers`
+      },
+      { type: 14, divider: true }
+    ]
+  };
 
-  const embed = new EmbedBuilder()
-    .setColor('#4f545c') // Dark grey stripe like Secure
-    .setDescription(desc);
-
+  const payload = { components: [card], flags: MessageFlags.IsComponentsV2 };
+  
+  // To support a large GIF in CV2 without shrinking it to a thumbnail, we attach it as a file.
   if (gifUrl) {
-    embed.setImage(gifUrl);
+    payload.files = [{ attachment: gifUrl, name: 'secure.gif' }];
   }
 
-  return { embeds: [embed] };
+  return payload;
 }
 
 // ─── Commands ─────────────────────────────────────────────────────────────────
