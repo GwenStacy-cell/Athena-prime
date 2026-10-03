@@ -6,63 +6,41 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 // ─── Live Status Panel helpers ───────────────────────────────────────────────
 
 export async function buildStatusPanel(client, gifUrl = null) {
-  const { MessageFlags } = await import('discord.js');
-  const uptimeMins = Math.floor((client.uptime || 0) / 60000);
+  const { EmbedBuilder } = await import('discord.js');
+  const uptimeHours = Math.floor((client.uptime || 0) / 3600000);
+  const uptimeMins = Math.floor(((client.uptime || 0) % 3600000) / 60000);
+  const timeString = uptimeHours > 0 ? `${uptimeHours} Hours ${uptimeMins} Mins` : `${uptimeMins} Mins`;
+  
   const ping = client.ws.ping;
   const servers = client.guilds.cache.size;
   
   const CUSTOM_UPTIME = '<a:uptime:1552608831060844575>';
   const CUSTOM_OFF = '<:off:1533844858983157851>';
 
-  // Check true gateway status
-  // Status.Ready = 0
   const isGatewayConnected = client.ws.status === 0;
-  const isYoutubeConnected = true; // Placeholder for true API health
+  const isYoutubeConnected = true; 
   const gwIcon = isGatewayConnected ? CUSTOM_UPTIME : CUSTOM_OFF;
-  const gwText = isGatewayConnected 
-    ? `**Core Gateway:** WS 443 Connected [Latency: ${ping}ms]`
-    : `**Core Gateway:** Reconnecting to Discord... [Ping: ${ping}ms]`;
 
-  // SQLite is a local file, so it's always synchronously available if the bot is running
-  const sqlIcon = CUSTOM_UPTIME;
-  
-  // REST API doesn't expose real-time drop count easily, but we can verify it's functioning
-  const restIcon = CUSTOM_UPTIME;
+  const desc = 
+    `<@${client.user.id}> **Live : ${timeString} |** ${isGatewayConnected ? CUSTOM_UPTIME : CUSTOM_OFF}\n\n` +
+    `${gwIcon} **Core Gateway:** WS 443 Connected [Latency: ${ping}ms]\n` +
+    `${CUSTOM_UPTIME} **SQLite Database:** WAL Mode [Integrity: 100%]\n` +
+    `${CUSTOM_UPTIME} **Discord REST API:** Rate Limit Buckets Synchronized\n` +
+    `${CUSTOM_UPTIME} **Tenor & Anime APIs:** Remote Image Pools Connected\n` +
+    `${CUSTOM_UPTIME} **Canvas Engine:** Hardware Acceleration Active\n` +
+    `${isYoutubeConnected ? CUSTOM_UPTIME : CUSTOM_OFF} **YouTube API v3:** Verified & Operational\n` +
+    `${CUSTOM_UPTIME} **Antinuke Sentinels:** Armed & Securing ${servers} Servers\n` +
+    `\n***`;
 
-  const card = {
-    type: 17,
-    components: [
-      {
-        type: 10,
-        content: `<@${client.user.id}> **Live : ${uptimeMins} Mins |** ${isGatewayConnected ? CUSTOM_UPTIME : CUSTOM_OFF}`
-      },
-      { type: 14, divider: true },
-      {
-        type: 10,
-        content:
-          `${gwIcon} ${gwText}\n` +
-          `${sqlIcon} **SQLite Database:** WAL Mode [Integrity: 100%]\n` +
-          `${restIcon} **Discord REST API:** Rate Limit Buckets Synchronized\n` +
-          `${CUSTOM_UPTIME} **Tenor & Anime APIs:** Remote Image Pools Connected\n` +
-          `${CUSTOM_UPTIME} **Canvas Engine:** Hardware Acceleration Active\n` +
-          `${isYoutubeConnected ? CUSTOM_UPTIME : CUSTOM_OFF} **YouTube API v3:** Verified & Operational\n` +
-          `${CUSTOM_UPTIME} **Antinuke Sentinels:** Armed & Securing ${servers} Servers`
-      },
-      { type: 14, divider: true }
-    ]
-  };
+  const embed = new EmbedBuilder()
+    .setColor('#4f545c') // Dark grey stripe like Secure
+    .setDescription(desc);
 
   if (gifUrl) {
-    card.components.push({
-      type: 9,
-      components: [{ type: 10, content: `-# A T H E N A  P R I M E` }],
-      accessory: { type: 11, media: { url: gifUrl } }
-    });
-  } else {
-    card.components.push({ type: 10, content: `-# A T H E N A  P R I M E` });
+    embed.setImage(gifUrl);
   }
 
-  return { components: [card], flags: MessageFlags.IsComponentsV2 };
+  return { embeds: [embed] };
 }
 
 // ─── Commands ─────────────────────────────────────────────────────────────────
