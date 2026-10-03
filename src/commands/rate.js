@@ -8,7 +8,7 @@ export function buildRateEmbed(authorName, avgRating, totalVotes, latestRatings,
   const embed = new EmbedBuilder()
     .setTitle(`RATE ${authorName.toUpperCase()}'S EDIT`)
     .setDescription(`${STAR} **Current Rating**\n${avgRating}/5 (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n\n**User Ratings**\n${latestRatings || '_No ratings yet_'}`)
-    .setColor(accentColor || '#2b2d31')
+    .setColor('#2b2d31')
     .setFooter({ text: 'Athena Prime Killer' })
     .setTimestamp();
     
