@@ -866,7 +866,7 @@ const helpModules = [
     "`!vcstatus on/off` - Toggle live VC status text `[extra owners]`",
     "`!moveprotect / !vcprotect add/remove/list @user` - Prevent admins from moving/muting protected users `[server owner]`",
     "`!massmove dest / !massdc` - Move/disconnect everyone `[extra owners]`",
-    "`!botvoice` - Force bot to join/stay in VC `[admin]`",
+    "`!botvoice` - Force bot to join/stay in VC `[admin]`", "`!autovcstatus on/off/add/remove/list` - Manage random aesthetic VC statuses `[admin]`",
     "`!vcdrag / !vcdragstop` - Drag users to your VC `[extra owners]`",
     "`!jtcsetup / !secondaryjtc / !jtcdisable` - Advanced JTC `[extra owners]`",
     "`!vcdraglist` - View all currently active VC drag sessions `[extra owners]`",

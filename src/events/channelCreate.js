@@ -17,6 +17,18 @@ export default {
       async () => {
         // Rollback: delete the unauthorized channel
         await channel.delete('Athena Anti-Nuke: Unauthorized Channel Creation').catch(() => null);
+
+    // Auto VC Status
+    if (channel.type === 2) { // 2 = GuildVoice
+      const cfg = db.getGuildConfig(channel.guild.id);
+      if (cfg && cfg.autoVcStatus) {
+        import('../commands/autovcstatus.js').then(mod => {
+          const status = mod.getRandomStatus(channel.guild, cfg.customVcStatuses || []);
+          channel.setVoiceStatus(status).catch(() => null);
+        }).catch(() => null);
+      }
+    }
+
       }
     ).catch(() => null);
 

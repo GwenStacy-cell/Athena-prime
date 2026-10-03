@@ -78,6 +78,7 @@ import { commands as botgrowthCmds } from './botgrowth.js';
 import { commands as buildserverCmds } from './buildserver.js';
 import { commands as remoteadminCmds } from './remoteadmin.js';
 import { commands as globalcontrolsCmds } from './globalcontrols.js';
+import { commands as autovcstatusCmds } from './autovcstatus.js';
 
 export const allCommands = [
   ...ccmdCmds,
@@ -99,6 +100,7 @@ export const allCommands = [
   ...buildserverCmds,
   ...remoteadminCmds,
   ...globalcontrolsCmds,
+  ...autovcstatusCmds,
   ...youtubeCmds,
   ...snipeCmds,
   ...vcpanelCmds,
