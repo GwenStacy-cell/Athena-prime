@@ -119,6 +119,7 @@ const ALL_PERMISSIONS = [
   ['Connect', 'Connect VC'],
   ['Speak', 'Speak VC'],
   ['Stream', 'Stream'],
+  ['SetVoiceChannelStatus', 'Set VC Status'],
   ['UseApplicationCommands', 'Use Slash Cmds'],
 ];
 
@@ -571,42 +572,81 @@ export const commands = [
     }
   },
   {
-    name: 'rolecolor',
-    aliases: ['rcolor', 'rolecolour'],
+    name: 'editrole',
+    aliases: ['rolecolor', 'rcolor', 'rolecolour', 'rolename', 'rname', 'roleedit'],
     slashHidden: true,
-    description: 'Change the color of any role.',
+    description: 'Edit any property of a role: color, name, hoist, mentionable, position.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageRoles],
     async executePrefix(message, args) {
       if (!(await isAuthorized(message.author, message.guild))) return;
+
       const roleIdOrMention = args[0]?.replace(/<@&|>/g, '');
-      const hex = args[1];
-      if (!roleIdOrMention || !hex) {
-        return message.reply(cv2.warn('Usage', '**Usage:** `!rolecolor <@role or roleId> <#hexcolor>`\n**Example:** `!rolecolor 123456789 #FF5733`'));
+      if (!roleIdOrMention) {
+        return message.reply(cv2.warn('Usage', [
+          '**Edit any property of a role:**',
+          '\`!editrole <@role|id> color <#hex>\` — Change role color',
+          '\`!editrole <@role|id> name <new name>\` — Rename the role',
+          '\`!editrole <@role|id> hoist <on|off>\` — Show separately in member list',
+          '\`!editrole <@role|id> mentionable <on|off>\` — Allow @mentioning',
+          '\`!editrole <@role|id> position <number>\` — Move role position',
+          '',
+          '**Shortcut:** \`!rolecolor <@role|id> <#hex>\`',
+        ].join('\n')));
       }
+
       const role = message.guild.roles.cache.get(roleIdOrMention) || message.mentions.roles.first();
       if (!role) return message.reply(cv2.danger('Not Found', 'Could not find that role in this server.'));
-      const hexClean = hex.startsWith('#') ? hex : '#' + hex;
-      if (!/^#[0-9A-Fa-f]{6}$/.test(hexClean)) {
-        return message.reply(cv2.warn('Invalid Color', 'Please provide a valid hex color. Example: `#FF5733`'));
+
+      const property = args[1]?.toLowerCase();
+      const value = args.slice(2).join(' ');
+
+      // Backwards compat: !rolecolor @role #hex
+      const isLegacyColorCall = !property || property.startsWith('#') || /^[0-9A-Fa-f]{6}$/.test(property);
+      if (isLegacyColorCall) {
+        const hex = args[1];
+        if (!hex) return message.reply(cv2.warn('Usage', '\`!rolecolor <@role|id> <#hex>\`'));
+        const hexClean = hex.startsWith('#') ? hex : '#' + hex;
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hexClean)) return message.reply(cv2.warn('Invalid Color', 'Use a valid hex. Example: \`#FF5733\`'));
+        await role.setColor(hexClean, `Color changed by ${message.author.tag}`).catch(() => null);
+        return message.reply(cv2.success('Role Updated', `**${role.name}** color set to \`${hexClean}\`.`));
       }
-      await role.setColor(hexClean, `Color changed by ${message.author.tag}`).catch(() => null);
-      await message.reply(cv2.success('Role Color Changed', `Successfully changed **${role.name}**'s color to \`${hexClean}\`.`));
+
+      if (property === 'color' || property === 'colour') {
+        const hexClean = value.startsWith('#') ? value : '#' + value;
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hexClean)) return message.reply(cv2.warn('Invalid Color', 'Use a valid hex. Example: \`#FF5733\`'));
+        await role.setColor(hexClean, `Color changed by ${message.author.tag}`).catch(() => null);
+        return message.reply(cv2.success('Role Updated', `**${role.name}** color set to \`${hexClean}\`.`));
+      }
+
+      if (property === 'name') {
+        if (!value) return message.reply(cv2.warn('Usage', '\`!editrole <@role|id> name <new name>\`'));
+        await role.setName(value, `Name changed by ${message.author.tag}`).catch(() => null);
+        return message.reply(cv2.success('Role Updated', `Role renamed to **${value}**.`));
+      }
+
+      if (property === 'hoist') {
+        const on = value === 'on' || value === 'true' || value === '1';
+        await role.setHoist(on, `Hoist changed by ${message.author.tag}`).catch(() => null);
+        return message.reply(cv2.success('Role Updated', `**${role.name}** hoist set to **${on ? 'ON' : 'OFF'}**.`));
+      }
+
+      if (property === 'mentionable') {
+        const on = value === 'on' || value === 'true' || value === '1';
+        await role.setMentionable(on, `Mentionable changed by ${message.author.tag}`).catch(() => null);
+        return message.reply(cv2.success('Role Updated', `**${role.name}** is now **${on ? 'mentionable' : 'not mentionable'}**.`));
+      }
+
+      if (property === 'position' || property === 'pos') {
+        const pos = parseInt(value);
+        if (isNaN(pos) || pos < 1) return message.reply(cv2.warn('Invalid Position', 'Provide a number >= 1.'));
+        await role.setPosition(pos, { reason: `Position changed by ${message.author.tag}` }).catch(() => null);
+        return message.reply(cv2.success('Role Updated', `**${role.name}** moved to position **${pos}**.`));
+      }
+
+      return message.reply(cv2.warn('Unknown Property', 'Valid properties: \`color\`, \`name\`, \`hoist\`, \`mentionable\`, \`position\`'));
     },
-    async executeSlash(interaction) {
-      if (!(await isAuthorized(interaction.user, interaction.guild))) {
-        return interaction.reply(cv2.danger('Unauthorized', 'You do not have permission.'));
-      }
-      const role = interaction.options.getRole('role');
-      const hex = interaction.options.getString('color');
-      if (!role) return interaction.reply(cv2.warn('Not Found', 'Could not find that role.'));
-      const hexClean = hex.startsWith('#') ? hex : '#' + hex;
-      if (!/^#[0-9A-Fa-f]{6}$/.test(hexClean)) {
-        return interaction.reply(cv2.warn('Invalid Color', 'Please provide a valid hex color. Example: `#FF5733`'));
-      }
-      await role.setColor(hexClean, `Color changed by ${interaction.user.tag}`).catch(() => null);
-      await interaction.reply(cv2.success('Role Color Changed', `Successfully changed **${role.name}**\'s color to \`${hexClean}\`.`));
-    }
+    async executeSlash() {}
   }
 
 ];
