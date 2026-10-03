@@ -200,7 +200,7 @@ export const commands = [
     name: 'removestatus',
     description: 'Remove the live status panel [Bot Owner]',
     category: 'config',
-    aliases: ['rmstatus'],
+    aliases: ['rmstatus', 'unsetstatus', 'unSetstatus', 'deletestatus'],
     async executePrefix(message, args) {
       if (!isBotOwnerSync(message.author.id)) return;
 
