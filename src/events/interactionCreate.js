@@ -1363,7 +1363,7 @@ if (interaction.customId === "modal_2fa_setup") {
       // LEVELING BUTTONS
       if (interaction.customId === 'xp_dash') {
         const panel = await buildXpDashboard(interaction.guild.id);
-        return interaction.reply({ ...panel, flags: MessageFlags.Ephemeral });
+        return interaction.reply({ ...panel, flags: (panel.flags ?? MessageFlags.IsComponentsV2) | MessageFlags.Ephemeral });
       }
 
       if (interaction.customId === 'xp_toggle') {

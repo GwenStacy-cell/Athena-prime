@@ -39,7 +39,11 @@ export const commands = [
       ],
       async executePrefix(message, args) {
         if (!args[0]) return message.reply(cv2.error('MISSING ARGUMENT', 'Please provide a valid video link.'));
-        await processMp3Link(message.client, message, args[0]);
+        const url = args[0];
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          return message.reply(cv2.warn('Invalid URL', `\`${url}\` is not a valid link.\n-# Provide a direct link e.g. a YouTube, TikTok, or Twitter URL.`));
+        }
+        await processMp3Link(message.client, message, url);
       },
       async executeSlash(interaction) {
         const link = interaction.options.getString('link');
