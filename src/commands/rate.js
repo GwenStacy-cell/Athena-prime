@@ -2,7 +2,7 @@ import { PermissionFlagsBits, MessageFlags } from 'discord.js';
 import cv2 from '../cv2.js';
 import db from '../database.js';
 
-const STAR = '⭐';
+const STAR = '<a:1z:1517089474369032253>';
 
 export function buildRateContainer(authorName, avgRating, totalVotes, latestRatings, mediaUrl) {
   const components = [
@@ -16,11 +16,11 @@ export function buildRateContainer(authorName, avgRating, totalVotes, latestRati
     {
       type: 1,
       components: [
-        { type: 2, custom_id: 'rate_edit_1', label: '1', emoji: { id: '1517089474369032253' }, style: 2 },
-        { type: 2, custom_id: 'rate_edit_2', label: '2', emoji: { id: '1517089474369032253' }, style: 2 },
-        { type: 2, custom_id: 'rate_edit_3', label: '3', emoji: { id: '1517089474369032253' }, style: 2 },
-        { type: 2, custom_id: 'rate_edit_4', label: '4', emoji: { id: '1517089474369032253' }, style: 2 },
-        { type: 2, custom_id: 'rate_edit_5', label: '5', emoji: { id: '1517089474369032253' }, style: 2 },
+        { type: 2, custom_id: 'rate_edit_1', label: '1', emoji: { id: '1517089474369032253', animated: true, name: '1z' }, style: 2 },
+        { type: 2, custom_id: 'rate_edit_2', label: '2', emoji: { id: '1517089474369032253', animated: true, name: '1z' }, style: 2 },
+        { type: 2, custom_id: 'rate_edit_3', label: '3', emoji: { id: '1517089474369032253', animated: true, name: '1z' }, style: 2 },
+        { type: 2, custom_id: 'rate_edit_4', label: '4', emoji: { id: '1517089474369032253', animated: true, name: '1z' }, style: 2 },
+        { type: 2, custom_id: 'rate_edit_5', label: '5', emoji: { id: '1517089474369032253', animated: true, name: '1z' }, style: 2 },
       ]
     },
     {

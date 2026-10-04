@@ -1226,7 +1226,7 @@ if (interaction.customId === "modal_2fa_setup") {
         const avgRating = (totalStars / totalVotes).toFixed(1);
 
         // Get last 5 ratings — repeated stars per vote
-        const STAR_EMOJI = '<:1z:1517089474369032253>';
+        const STAR_EMOJI = '<a:1z:1517089474369032253>';
         const latestRatings = Object.entries(updatedData.votes)
           .reverse()
           .slice(0, 5)
