@@ -1022,7 +1022,7 @@ function buildHelpContainer(client, guildId, moduleId) {
         { name: 'UTILITIES & INTEGRATIONS', icon: '', catName: 'UTILITIES & INTEGRATIONS' }
       ];
 
-      const bullet = getEmoji('black_dot', '•');
+      const bullet = getEmoji('black_dot', '<:emoji_16:1521464002046328944>');
       
       let grid = '';
       for (const cat of categories) {
@@ -1033,7 +1033,7 @@ function buildHelpContainer(client, guildId, moduleId) {
          let rowStr = '';
          for (let i = 0; i < mods.length; i++) {
             const m = mods[i];
-            const e = getEmoji(m.emoji, '▶️');
+            const e = getEmoji(m.emoji, '<:emoji_16:1521464002046328944>');
             
             // Format: bullet emoji **Label**
             
@@ -1063,7 +1063,7 @@ function buildHelpContainer(client, guildId, moduleId) {
     } else {
       const mod = helpModules.find(m => m.id === moduleId);
       if (mod) {
-        const e = getEmoji(mod.emoji, '▶️');
+        const e = getEmoji(mod.emoji, '<:emoji_16:1521464002046328944>');
         let currentChunk = `# ${e} ${mod.label.toUpperCase()}`;
         
         for (const cmd of mod.commands) {
@@ -1106,7 +1106,7 @@ function buildHelpContainer(client, guildId, moduleId) {
       .setCustomId('help_module_select')
       .setPlaceholder('Click to view modules');
   
-    const homeEmoji = getEmoji('home', '🏠');
+    const homeEmoji = getEmoji('home', '<:on:1533844867191406672>');
     selectMenu.addOptions([
       {
         label: 'Home Menu',
