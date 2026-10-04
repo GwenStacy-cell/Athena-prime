@@ -3,15 +3,15 @@ import cv2 from '../cv2.js';
 import db from '../database.js';
 
 const DEFAULT_STATUSES = [
-  "🌙 quiet corner under the moon",
-  "🌸 Stay awhile, stay cozy",
-  "🦋 Within {guild}'s dreamy garden",
-  "☁️ lost in the clouds",
-  "✨ making memories",
-  "🎧 vibing to the rhythm",
-  "☕ late night thoughts",
-  "🤍 safe space",
-  "🦢 Chasing Cherry blossom dreams"
+  "<:emoji_16:1521464002046328944> **Quiet corner under the moon**",
+  "<:on:1533844867191406672> **Stay awhile, stay cozy**",
+  "<:emoji_16:1521464002046328944> **Within {guild}'s dreamy garden**",
+  "<:on:1533844867191406672> **Lost in the clouds**",
+  "<:emoji_16:1521464002046328944> **Making memories**",
+  "<:on:1533844867191406672> **Vibing to the rhythm**",
+  "<:emoji_16:1521464002046328944> **Late night thoughts**",
+  "<:on:1533844867191406672> **Safe space**",
+  "<:emoji_16:1521464002046328944> **Chasing cherry blossom dreams**"
 ];
 
 function getRandomStatus(guild, customStatuses) {
@@ -36,7 +36,7 @@ export const commands = [
         return message.reply(cv2.warn('Auto VC Status', [
           '**Usage:**',
           '`!autovcstatus on` - Enable and shuffle all VCs',
-          '`!autovcstatus off` - Disable auto statuses',
+          '`!autovcstatus off` - Disable and clear all VC statuses',
           '`!autovcstatus shuffle` - Manually reshuffle all VCs',
           '`!autovcstatus add <status>` - Add a custom status (supports custom emojis)',
           '`!autovcstatus remove <index>` - Remove a custom status',
@@ -47,20 +47,33 @@ export const commands = [
       }
 
       const customStatuses = cfg.customVcStatuses || [];
+      const pool = (customStatuses && customStatuses.length > 0) ? customStatuses : DEFAULT_STATUSES;
 
-      if (action === 'on') {
-        db.updateGuildConfig(guildId, { autoVcStatus: true });
+      if (action === 'on' || action === 'shuffle') {
+        if (action === 'on') db.updateGuildConfig(guildId, { autoVcStatus: true });
+        if (action === 'shuffle' && !cfg.autoVcStatus) return message.reply(cv2.warn('Disabled', 'Enable the feature first with `!autovcstatus on`.'));
         
-        const m = await message.reply(cv2.success('Enabled', 'Auto VC Status enabled! Sweeping voice channels now...'));
+        const m = await message.reply(cv2.success(action === 'on' ? 'Enabled' : 'Shuffling', 'Sweeping voice channels now...'));
         
         // Sweep all VCs
         await message.guild.channels.fetch();
         const vcs = message.guild.channels.cache.filter(c => c.type === ChannelType.GuildVoice);
+        const homeVcId = cfg.homeVcId; // Protect home VC
+        
+        // Shuffle pool so VCs get unique statuses
+        const shuffledPool = [...pool].sort(() => Math.random() - 0.5);
+        let index = 0;
         let updated = 0;
         
         for (const vc of vcs.values()) {
+          // Protect home VC and any VC explicitly named "home"
+          if (vc.id === homeVcId || vc.name.toLowerCase().includes('home')) continue;
+          
           try {
-            const newStatus = getRandomStatus(message.guild, customStatuses);
+            const rawStatus = shuffledPool[index % shuffledPool.length];
+            const newStatus = rawStatus.replace(/{guild}/g, message.guild.name).substring(0, 500);
+            index++;
+            
             if (typeof vc.setVoiceStatus === 'function') {
               await vc.setVoiceStatus(newStatus);
             } else {
@@ -73,35 +86,38 @@ export const commands = [
           }
         }
         
-        return m.edit(cv2.success('Enabled', `Auto VC Status enabled! Set statuses for **${updated}** voice channels.`)).catch(()=>null);
+        return m.edit(cv2.success(action === 'on' ? 'Enabled' : 'Shuffled', `Set unique statuses for **${updated}** voice channels.`)).catch(()=>null);
       }
 
       if (action === 'off') {
         db.updateGuildConfig(guildId, { autoVcStatus: false });
-        return message.reply(cv2.success('Disabled', 'Auto VC Status disabled. New VCs will no longer get random statuses.'));
-      }
-
-      if (action === 'shuffle') {
-        if (!cfg.autoVcStatus) return message.reply(cv2.warn('Disabled', 'Enable the feature first with `!autovcstatus on`.'));
+        const m = await message.reply(cv2.success('Disabled', 'Auto VC Status disabled. Clearing statuses from all voice channels...'));
         
-        const m = await message.reply(cv2.success('Shuffling', 'Assigning new random statuses to all VCs...'));
+        await message.guild.channels.fetch();
         const vcs = message.guild.channels.cache.filter(c => c.type === ChannelType.GuildVoice);
-        let updated = 0;
+        const homeVcId = cfg.homeVcId;
         
+        let cleared = 0;
         for (const vc of vcs.values()) {
+          if (vc.id === homeVcId || vc.name.toLowerCase().includes('home')) continue;
+          
           try {
-            await vc.setVoiceStatus(getRandomStatus(message.guild, customStatuses));
-            updated++;
-            await new Promise(r => setTimeout(r, 600));
-          } catch (e) {}
+            if (typeof vc.setVoiceStatus === 'function') {
+              await vc.setVoiceStatus(null);
+            } else {
+              await message.client.rest.put(`/channels/${vc.id}/voice-status`, { body: { status: null } });
+            }
+            cleared++;
+            await new Promise(r => setTimeout(r, 800));
+          } catch(e) {}
         }
         
-        return m.edit(cv2.success('Shuffled', `Successfully shuffled statuses for **${updated}** voice channels.`)).catch(()=>null);
+        return m.edit(cv2.success('Disabled', `Auto VC Status disabled. Cleared statuses from **${cleared}** voice channels.`)).catch(()=>null);
       }
 
       if (action === 'add') {
         const text = args.slice(1).join(' ');
-        if (!text) return message.reply(cv2.warn('Usage', 'Provide the status text/emojis. Example: `!autovcstatus add <:myemoji:123> chill zone`'));
+        if (!text) return message.reply(cv2.warn('Usage', 'Provide the status text/emojis. Example: `!autovcstatus add <:myemoji:123> **chill zone**`'));
         if (text.length > 500) return message.reply(cv2.danger('Error', 'Status too long (max 500 chars).'));
         
         customStatuses.push(text);
