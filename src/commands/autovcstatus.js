@@ -54,16 +54,22 @@ export const commands = [
         const m = await message.reply(cv2.success('Enabled', 'Auto VC Status enabled! Sweeping voice channels now...'));
         
         // Sweep all VCs
+        await message.guild.channels.fetch();
         const vcs = message.guild.channels.cache.filter(c => c.type === ChannelType.GuildVoice);
         let updated = 0;
         
         for (const vc of vcs.values()) {
           try {
-            await vc.setVoiceStatus(getRandomStatus(message.guild, customStatuses));
+            const newStatus = getRandomStatus(message.guild, customStatuses);
+            if (typeof vc.setVoiceStatus === 'function') {
+              await vc.setVoiceStatus(newStatus);
+            } else {
+              await message.client.rest.put(`/channels/${vc.id}/voice-status`, { body: { status: newStatus } });
+            }
             updated++;
-            await new Promise(r => setTimeout(r, 600)); // Rate limit protection
+            await new Promise(r => setTimeout(r, 800)); // Rate limit protection
           } catch (e) {
-            // Ignore missing permissions for specific channels
+            console.error(`Failed to set VC status for ${vc.id}:`, e.message);
           }
         }
         
