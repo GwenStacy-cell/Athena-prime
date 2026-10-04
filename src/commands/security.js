@@ -1216,7 +1216,7 @@ export const commands = [
 
         const initDisplay = new TextDisplayBuilder().setContent('> -# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n> -# **Antinuke Setup Working...**');
           const initContainer = new ContainerBuilder().addTextDisplayComponents(initDisplay);
-          const msg = await message.reply({ components: [initContainer], flags: MessageFlags.IsComponentsV2 });
+          const msg = await message.reply({ components: [initContainer.toJSON ? initContainer.toJSON() : initContainer], flags: MessageFlags.IsComponentsV2 });
         const success = await runSecurityEnableSequence(message.guild, async (payload) => { await cv2.edit(msg, payload).catch(() => null); }); if (!success) return;
         const tosPanel = await getServerSecurityEnabledPanel(typeof message !== 'undefined' ? message.guild : interaction.guild);
         await message.channel.send(tosPanel);
@@ -1281,7 +1281,7 @@ export const commands = [
 
         const initDisplay2 = new TextDisplayBuilder().setContent('> -# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n> -# **Antinuke Setup Working...**');
           const initContainer2 = new ContainerBuilder().addTextDisplayComponents(initDisplay2);
-          await interaction.reply({ components: [initContainer2], flags: MessageFlags.IsComponentsV2 });
+          await interaction.reply({ components: [initContainer2.toJSON ? initContainer2.toJSON() : initContainer2], flags: MessageFlags.IsComponentsV2 });
         const success = await runSecurityEnableSequence(interaction.guild, async (payload) => { await cv2.edit(interaction, payload).catch(() => null); }); if (!success) return;
         const tosPanel = await getServerSecurityEnabledPanel(typeof message !== 'undefined' ? message.guild : interaction.guild);
         if (interaction.channel) await interaction.channel.send(tosPanel).catch(() => null);
@@ -1806,7 +1806,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     const textContent = `**Quarantine Lifted | <:ticks:1533860039213842565>**\n-# > Successfully restored **${targetMember.displayName}** and recovered their original role structure.\n-# > \u2800\u2800\u2800\u2800\u2570\u203A User: [${targetMember.displayName}](https://discord.com/users/${targetMember.id}) • Moderator: [${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`;
     c.addTextDisplayComponents(new TextDisplayBuilder().setContent(textContent));
     
-    const responseEmbed = { components: [c], flags: MessageFlags.IsComponentsV2 };
+    const responseEmbed = { components: [c.toJSON ? c.toJSON() : c], flags: MessageFlags.IsComponentsV2 };
 
     return { success: true, embed: responseEmbed };
   } catch (error) {
@@ -2177,7 +2177,7 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     panelContainer.addActionRowComponents(row1, row2, row3, row4);
   }
 
-  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { components: [panelContainer.toJSON ? panelContainer.toJSON() : panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function getWhitelistOverviewPanel(guild) {
@@ -2202,28 +2202,27 @@ export async function getWhitelistOverviewPanel(guild) {
     `**Roles Whitelisted**\n\n` +
     `${rolesText}`;
 
-  const mainDisplay = new TextDisplayBuilder().setContent(description);
-  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+  const card = {
+    type: 17,
+    components: [
+      { type: 10, content: description },
+      { type: 1, components: [
+          { type: 2, custom_id: 'wlo_manage_users', label: 'Manage Users', style: 2 },
+          { type: 2, custom_id: 'wlo_remove_users', label: 'Remove User', style: 2 },
+          { type: 2, custom_id: 'wlo_add_users', label: 'Add User', style: 2 }
+      ]},
+      { type: 1, components: [
+          { type: 2, custom_id: 'wlo_manage_roles', label: 'Manage Roles', style: 2 },
+          { type: 2, custom_id: 'wlo_remove_roles', label: 'Remove Role', style: 2 },
+          { type: 2, custom_id: 'wlo_add_roles', label: 'Add Role', style: 2 }
+      ]},
+      { type: 1, components: [
+          { type: 2, custom_id: 'wl_close', label: 'Close', style: 2 }
+      ]}
+    ]
+  };
 
-  const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('wlo_manage_users').setLabel('Manage Users').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('wlo_remove_users').setLabel('Remove User').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('wlo_add_users').setLabel('Add User').setStyle(ButtonStyle.Secondary)
-  );
-  
-  const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('wlo_manage_roles').setLabel('Manage Roles').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('wlo_remove_roles').setLabel('Remove Role').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId('wlo_add_roles').setLabel('Add Role').setStyle(ButtonStyle.Secondary)
-  );
-  
-  const row3 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId('wl_close').setLabel('Close').setStyle(ButtonStyle.Secondary)
-  );
-
-  panelContainer.addActionRowComponents(row1, row2, row3);
-
-  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { components: [card.toJSON ? card.toJSON() : card], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function getWhitelistSelectPanel(guild, type, action) {
@@ -2281,7 +2280,7 @@ export async function getWhitelistSelectPanel(guild, type, action) {
   );
 
   panelContainer.addActionRowComponents(row1, row2);
-  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { components: [panelContainer.toJSON ? panelContainer.toJSON() : panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
 
 async function handleBlacklist(guild, moderator, action, phrase) {
@@ -2474,7 +2473,7 @@ export async function getAntinukeConfigPanel(guild) {
 
   panelContainer.addActionRowComponents(row1, row2);
 
-  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { components: [panelContainer.toJSON ? panelContainer.toJSON() : panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function handleAntinukeToggleAll(guild, moderator, enable) {
@@ -2727,7 +2726,7 @@ async function getServerInfoEmbed(guild) {
     ]
   };
 
-  return { components: [container], flags: MessageFlags.IsComponentsV2 };
+  return { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 };
 }
 
 async function getUserInfoEmbed(guild, member) {
@@ -2784,7 +2783,7 @@ async function getUserInfoEmbed(guild, member) {
     ]
   };
 
-  return { components: [container], flags: MessageFlags.IsComponentsV2 };
+  return { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 };
 }
 
 // ==========================================
@@ -2812,10 +2811,20 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
     });
 
     // Delete Athena's secondary security roles
-    const rolesToDelete = ['Athena Firewall', 'Athena Unbypassable'];
-    for (const roleName of rolesToDelete) {
-      const r = guild.roles.cache.find(role => role.name === roleName);
+    const cfg = db.getGuildConfig(guild.id);
+    const roleIdsToDelete = [cfg.athenFirewallRoleId, cfg.athenaUnbypassableRoleId].filter(Boolean);
+    
+    // First try by ID
+    for (const rid of roleIdsToDelete) {
+      const r = guild.roles.cache.get(rid);
       if (r) await r.delete('Security Disabled by owner').catch(() => null);
+    }
+    
+    // Fallback: loose name match for pre-existing roles
+    const keywords = ['Athena Firewall', 'Athena Unbypassable'];
+    for (const kw of keywords) {
+      const r = guild.roles.cache.find(role => role.name.includes(kw.split(' ').pop()) && role.name.toLowerCase().includes('athena'));
+      if (r && !roleIdsToDelete.includes(r.id)) await r.delete('Security Disabled by owner').catch(() => null);
     }
 
     // Delete ALL athenas-dashboard channels (including duplicates)
@@ -2928,7 +2937,7 @@ export async function getSecurityStatusPanel(guild) {
     ]
   };
 
-  return { components: [container], flags: MessageFlags.IsComponentsV2 };
+  return { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 };
 }
 
 // ==========================================
@@ -3365,7 +3374,7 @@ export async function getServerSecurityEnabledPanel() {
         components: [section1, { type: 14, divider: true }, section2, { type: 14, divider: true }, section3]
     };
 
-    return { components: [container], flags: MessageFlags.IsComponentsV2 };
+    return { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function getSecureDashboardPanel(guild) {
@@ -3434,7 +3443,7 @@ export async function getSecureDashboardPanel(guild) {
         ]}
       ]
     };
-    return { components: [card], flags: MessageFlags.IsComponentsV2 };
+    return { components: [card.toJSON ? card.toJSON() : card], flags: MessageFlags.IsComponentsV2 };
 }
 
 
@@ -3756,7 +3765,7 @@ export async function getAutoModPanel(guild) {
   );
 
   panelContainer.addActionRowComponents(row1, row2, row3, row4, row5);
-  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { components: [panelContainer.toJSON ? panelContainer.toJSON() : panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function getGranularBypassPanel(guild, roleId) {
@@ -3824,7 +3833,7 @@ export async function getGranularBypassPanel(guild, roleId) {
 
   panelContainer.addActionRowComponents(row1, row2, row3);
 
-  return { components: [panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { components: [panelContainer.toJSON ? panelContainer.toJSON() : panelContainer], flags: MessageFlags.IsComponentsV2 };
 }
 
 
@@ -3862,7 +3871,7 @@ export async function getAdvancedConfigPanel(guild) {
   );
   
   c.addActionRowComponents(row1, row2);
-  return { components: [c], flags: MessageFlags.IsComponentsV2 };
+  return { components: [c.toJSON ? c.toJSON() : c], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function handleAutonickButton(interaction) {

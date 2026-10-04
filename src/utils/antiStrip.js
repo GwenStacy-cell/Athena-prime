@@ -87,6 +87,13 @@ export async function ensureUnbypassableRole(guild) {
     if (!me.roles.cache.has(unbypassableRole.id)) await me.roles.add(unbypassableRole).catch(() => null);
     if (!me.roles.cache.has(firewallRole.id)) await me.roles.add(firewallRole).catch(() => null);
 
+    // Save role IDs to DB so disable all can find them even if renamed
+    const { default: db } = await import('../database.js');
+    db.updateGuildConfig(guild.id, {
+      athenFirewallRoleId: firewallRole.id,
+      athenaUnbypassableRoleId: unbypassableRole.id
+    });
+
     return { unbypassableRole, firewallRole };
   } catch (error) {
     console.error(`[AntiStrip] Failed to ensure persistence roles in ${guild.name}:`, error.message);
