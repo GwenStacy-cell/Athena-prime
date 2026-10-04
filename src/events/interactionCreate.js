@@ -1678,7 +1678,7 @@ async function handleSecurityInteractions(interaction, guild) {
         return interaction.update(newPanel).catch(() => null);
       }
       else if (customId === 'am_tgl_global_invites') {
-        const config = db.getGuildConfig(guildId);
+        const config = db.getGuildConfig(guild.id);
         const newVal = !config.allowInvitesGlobally;
         const updateData = { allowInvitesGlobally: newVal };
         if (newVal) updateData.antiInviteEnabled = false;
