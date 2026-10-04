@@ -3361,7 +3361,7 @@ export async function getServerSecurityEnabledPanel() {
 export async function getSecureDashboardPanel(guild) {
     const db = (await import("../database.js")).default;
     await guild.members.fetch().catch(() => null);
-await guild.roles.fetch();
+    await guild.roles.fetch().catch(() => null);
 
     const dangerousPerms = [
         PermissionFlagsBits.Administrator,
@@ -3384,10 +3384,9 @@ await guild.roles.fetch();
     const dangerousRoles = guild.roles.cache.filter(role => role.id !== guild.id && getDangerousRoles(role));
     const allBots = guild.members.cache.filter(m => m.user.bot);
     const allHumans = guild.members.cache.filter(m => !m.user.bot);
-
     const humansWithDangerousRoles = allHumans.filter(m => m.id !== guild.ownerId && getDangerousRoles(m).size > 0);
     const botsWithDangerousRoles = allBots.filter(m => getDangerousRoles(m).size > 0);
-    const productionBots = allBots.filter(m => m.user.flags?.has("VerifiedBot") || m.user.bot);
+    const productionBots = allBots.filter(m => m.user.bot);
 
     const formatList = (collection) => {
         if (collection.size === 0) return "0 None";
@@ -3400,30 +3399,34 @@ await guild.roles.fetch();
     const config = db.getGuildConfig(guild.id);
     const twoFactorEmail = config.twoFactorEmail || "Not Configured";
 
-    const text = "-# **List Dangerous Roles:** " + rolesStr + "\n" +
-                 "-# **List Bots:** " + formatList(allBots) + "\n" +
-                 "-# **Humans Having Dangerous Roles:** " + formatList(humansWithDangerousRoles) + "\n" +
-                 "-# **Bots Having Dangerous Roles:** " + formatList(botsWithDangerousRoles) + "\n" +
-                 "-# **Production Level Bots:** " + formatList(productionBots) + "\n\n" +
-                 "-# **2FA Notification Gmail:** `" + twoFactorEmail + "`";
+    const text =
+        "-# **List Dangerous Roles:** " + rolesStr + "\n" +
+        "-# **List Bots:** " + formatList(allBots) + "\n" +
+        "-# **Humans Having Dangerous Roles:** " + formatList(humansWithDangerousRoles) + "\n" +
+        "-# **Bots Having Dangerous Roles:** " + formatList(botsWithDangerousRoles) + "\n" +
+        "-# **Production Level Bots:** " + formatList(productionBots) + "\n\n" +
+        "-# **2FA Notification Gmail:** `" + twoFactorEmail + "`";
 
-    const display = new TextDisplayBuilder().setContent(text);
-    const container = new ContainerBuilder().addTextDisplayComponents(display);
-    
-    const row1 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("sec_extra_owner").setLabel("ExtraOwner").setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId("sec_wl_user").setLabel("Whitelist user").setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId("sec_wl_role").setLabel("whitelist role").setStyle(ButtonStyle.Secondary)
-    );
-    const row2 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("sec_2fa_gmail").setLabel("Submit Gmail (2FA)").setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId("sec_rescan_dash").setLabel("Rescan").setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId("sec_close_dash").setLabel("Close").setStyle(ButtonStyle.Secondary)
-    );
-
-    container.addActionRowComponents(row1, row2);
-    return { components: [container], flags: MessageFlags.IsComponentsV2 };
+    const card = {
+      type: 17,
+      components: [
+        { type: 10, content: text },
+        { type: 14, divider: true },
+        { type: 1, components: [
+            { type: 2, custom_id: "sec_extra_owner", label: "ExtraOwner", style: 2 },
+            { type: 2, custom_id: "sec_wl_user", label: "Whitelist user", style: 2 },
+            { type: 2, custom_id: "sec_wl_role", label: "whitelist role", style: 2 }
+        ]},
+        { type: 1, components: [
+            { type: 2, custom_id: "sec_2fa_gmail", label: "Submit Gmail (2FA)", style: 2 },
+            { type: 2, custom_id: "sec_rescan_dash", label: "Rescan", style: 2 },
+            { type: 2, custom_id: "sec_close_dash", label: "Close", style: 4 }
+        ]}
+      ]
+    };
+    return { components: [card], flags: MessageFlags.IsComponentsV2 };
 }
+
 
 export async function handleScanServer(guild, page = 0) {
   const config = db.getGuildConfig(guild.id);
