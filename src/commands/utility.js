@@ -279,7 +279,7 @@ export const commands = [
     permissions: [],
     async executePrefix(message) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
-      const { generatePingGraph } = await import('../utils/graph.js');
+      let generatePingGraph; try { generatePingGraph = (await import('../utils/graph.js')).generatePingGraph; } catch(e) { console.error('Graph module missing:', e.message); }
       const cfg = db.getGuildConfig(message.guild?.id || '0');
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
@@ -309,11 +309,11 @@ export const commands = [
       ];
 
       await sent.delete().catch(() => null);
-        await message.reply({ components: [{ type: 17, components: comps }], files: [attachment], flags: MessageFlags.IsComponentsV2 });
+        await message.reply({ components: [{ type: 17, components: comps }], files: attachment ? [attachment] : [], flags: MessageFlags.IsComponentsV2 });
     },
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
-      const { generatePingGraph } = await import('../utils/graph.js');
+      let generatePingGraph; try { generatePingGraph = (await import('../utils/graph.js')).generatePingGraph; } catch(e) { console.error('Graph module missing:', e.message); }
       const cfg = db.getGuildConfig(interaction.guild?.id || '0');
       const accentHex = cfg?.accentColor || '#00e5ff';
       const accentInt = parseInt(accentHex.replace('#', ''), 16);
@@ -346,7 +346,7 @@ export const commands = [
       ];
 
       await interaction.deleteReply().catch(() => null);
-        await interaction.followUp({ components: [{ type: 17, components: comps }], files: [attachment], flags: MessageFlags.IsComponentsV2 });
+        await interaction.followUp({ components: [{ type: 17, components: comps }], files: attachment ? [attachment] : [], flags: MessageFlags.IsComponentsV2 });
     }
   },
 
