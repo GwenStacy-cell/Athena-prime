@@ -96,7 +96,7 @@ export default {
         for (const [roleId] of interaction.roles) mults[roleId] = 1.5;
         db.setXpSystem(interaction.guild.id, { ...system, multipliers: mults });
         const panel = await buildXpDashboard(interaction.guild.id);
-        return interaction.update(panel);
+        return cv2.respond(interaction, panel, 7);
       }
 
       if (interaction.isRoleSelectMenu() && interaction.customId === 'xp_add_reward') {
@@ -269,7 +269,7 @@ export default {
         const system = db.getXpSystem(interaction.guild.id);
         db.setXpSystem(interaction.guild.id, { ...system, announceChannelId: channelId });
         const panel = await buildXpDashboard(interaction.guild.id);
-        return interaction.update(panel);
+        return cv2.respond(interaction, panel, 7);
       }
 
       if (interaction.customId === 'xp_reward_level_modal') {
@@ -283,7 +283,7 @@ export default {
         for (const roleId of roleIds) rewards[level] = roleId;
         db.setXpSystem(interaction.guild.id, { ...system, roleRewards: rewards });
         const panel = await buildXpDashboard(interaction.guild.id);
-        return interaction.update(panel);
+        return cv2.respond(interaction, panel, 7);
       }
 
       if (interaction.customId === 'xp_cmd_modal') {
@@ -293,7 +293,7 @@ export default {
         const system = db.getXpSystem(interaction.guild.id);
         db.setXpSystem(interaction.guild.id, { ...system, cmdChannelId: channelId });
         const panel = await buildXpDashboard(interaction.guild.id);
-        return interaction.update(panel);
+        return cv2.respond(interaction, panel, 7);
       }
 
       if (interaction.isModalSubmit()) {
@@ -519,7 +519,7 @@ export default {
         const { getAutoModPanel } = await import('../commands/security.js');
         const panel = await getAutoModPanel(interaction.guild);
         
-        await interaction.update(panel).catch(() => null);
+        await cv2.respond(interaction, panel, 7).catch(() => null);
         
         const trapChannel = interaction.guild.channels.cache.get(channelId);
         if (trapChannel) {
@@ -1111,17 +1111,17 @@ if (interaction.customId === "modal_2fa_setup") {
         try {
           if (action === 'prev') {
             const newPanel = await handleScanServer(interaction.guild, page - 1);
-            return await interaction.update(newPanel);
+            return await cv2.respond(interaction, newPanel, 7);
           }
           if (action === 'next') {
             const newPanel = await handleScanServer(interaction.guild, page + 1);
-            return await interaction.update(newPanel);
+            return await cv2.respond(interaction, newPanel, 7);
           }
           if (action === 'ban') {
              const botId = interaction.values[0];
              await interaction.guild.members.ban(botId, { reason: 'Unauthorized Bot Banned via Scanner' }).catch(() => null);
              const newPanel = await handleScanServer(interaction.guild, page);
-             return await interaction.update(newPanel);
+             return await cv2.respond(interaction, newPanel, 7);
           }
           if (action === 'banall') {
              await interaction.guild.members.fetch();
@@ -1134,7 +1134,7 @@ if (interaction.customId === "modal_2fa_setup") {
                 await interaction.guild.members.ban(id, { reason: 'Mass Ban via Scanner' }).catch(() => null);
              }
              const newPanel = await handleScanServer(interaction.guild, page);
-             return await interaction.update(newPanel);
+             return await cv2.respond(interaction, newPanel, 7);
           }
         } catch (err) {
           console.error(err);
@@ -1262,7 +1262,7 @@ if (interaction.customId === "modal_2fa_setup") {
             { type: 10, content: '-# Athena Bulletproof Security' }
           ]
         };
-        try { await interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 }); } catch(err) { console.error("INTERACTION ERROR:", err); await interaction.channel.send("UPDATE CRASHED: " + err.message); return; }
+        try { await cv2.respond(interaction, { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 }, 7); } catch(err) { console.error("INTERACTION ERROR:", err); await interaction.channel.send("UPDATE CRASHED: " + err.message); return; }
         
         try {
           const { stopRecording } = await import('../utils/audioRecorder.js');
@@ -1363,14 +1363,14 @@ if (interaction.customId === "modal_2fa_setup") {
       // LEVELING BUTTONS
       if (interaction.customId === 'xp_dash') {
         const panel = await buildXpDashboard(interaction.guild.id);
-        return interaction.reply({ ...panel, flags: (panel.flags ?? MessageFlags.IsComponentsV2) | MessageFlags.Ephemeral });
+        return cv2.respond(interaction, { ...panel, flags: (panel.flags || 32768) | MessageFlags.Ephemeral }, 4);
       }
 
       if (interaction.customId === 'xp_toggle') {
         const system = db.getXpSystem(interaction.guild.id);
         db.setXpSystem(interaction.guild.id, { ...system, enabled: !system.enabled });
         const panel = await buildXpDashboard(interaction.guild.id);
-        return interaction.update(panel);
+        return cv2.respond(interaction, panel, 7);
       }
 
       if (interaction.customId === 'xp_set_announce') {
@@ -1394,7 +1394,7 @@ if (interaction.customId === "modal_2fa_setup") {
       if (interaction.customId === 'xp_clear') {
         db.setXpSystem(interaction.guild.id, { enabled: false, announceChannelId: null, cmdChannelId: null, roleRewards: {}, multipliers: {} });
         const panel = await buildXpDashboard(interaction.guild.id);
-        return interaction.update(panel);
+        return cv2.respond(interaction, panel, 7);
       }
 
       if (interaction.customId === 'xp_save') {
@@ -1505,7 +1505,7 @@ async function handleSecurityInteractions(interaction, guild) {
       try {
         const sec = await import('../commands/security.js');
         const panel = await sec.getAntinukeConfigPanel(guild);
-        return interaction.update(panel);
+        return cv2.respond(interaction, panel, 7);
       } catch(e) { console.error(e); }
     }
 
@@ -1520,7 +1520,7 @@ async function handleSecurityInteractions(interaction, guild) {
       try {
         const sec = await import("../commands/security.js");
         const panel = await sec.getSecureDashboardPanel(guild);
-        return interaction.update(panel);
+        return cv2.respond(interaction, panel, 7);
       } catch(e) { console.error(e); }
     }
 
@@ -1534,7 +1534,7 @@ async function handleSecurityInteractions(interaction, guild) {
     if (customId === "sec_wl_user" || customId === "sec_wl_role") {
       const { getWhitelistOverviewPanel } = await import("../commands/security.js");
       const panel = await getWhitelistOverviewPanel(interaction.guild);
-      return interaction.reply({ ...panel, flags: MessageFlags.Ephemeral });
+      return cv2.respond(interaction, { ...panel, flags: (panel.flags || 32768) | MessageFlags.Ephemeral }, 4);
     }
 
     if (customId === "sec_2fa_gmail") {
@@ -1598,7 +1598,7 @@ async function handleSecurityInteractions(interaction, guild) {
     try {
       const sec = await import('../commands/security.js');
       const panel = await sec.getSecurityStatusPanel(guild);
-      return interaction.update(panel);
+      return cv2.respond(interaction, panel, 7);
     } catch(e) { console.error(e); }
   }
 
@@ -1607,7 +1607,7 @@ async function handleSecurityInteractions(interaction, guild) {
     try {
       const sec = await import('../commands/security.js');
       const panel = await sec.getAntilinkModulePanel(guild);
-      return interaction.update(panel);
+      return cv2.respond(interaction, panel, 7);
     } catch(e) { console.error(e); }
   }
 
@@ -1668,14 +1668,14 @@ async function handleSecurityInteractions(interaction, guild) {
         db.updateGuildConfig(guild.id, updateData);
         const { getAdvancedConfigPanel } = await import('../commands/security.js');
         const newPanel = await getAdvancedConfigPanel(guild);
-        return interaction.update(newPanel).catch(() => null);
+        return cv2.respond(interaction, newPanel, 7).catch(() => null);
       }
       else if (customId === 'am_tgl_selfbot') {
         const current = config.selfbotDetectionEnabled !== false;
         db.updateGuildConfig(guild.id, { selfbotDetectionEnabled: !current });
         const { getAutoModPanel } = await import('../commands/security.js');
         const newPanel = await getAutoModPanel(guild);
-        return interaction.update(newPanel).catch(() => null);
+        return cv2.respond(interaction, newPanel, 7).catch(() => null);
       }
       else if (customId === 'am_tgl_global_invites') {
         const config = db.getGuildConfig(guild.id);
@@ -1685,17 +1685,17 @@ async function handleSecurityInteractions(interaction, guild) {
         db.updateGuildConfig(guild.id, updateData);
         const { getAdvancedConfigPanel } = await import('../commands/security.js');
         const newPanel = await getAdvancedConfigPanel(guild);
-        return interaction.update(newPanel).catch(() => null);
+        return cv2.respond(interaction, newPanel, 7).catch(() => null);
       }
       else if (customId === 'am_advanced_configs') {
         const { getAdvancedConfigPanel } = await import('../commands/security.js');
         const newPanel = await getAdvancedConfigPanel(guild);
-        return interaction.update(newPanel).catch(() => null);
+        return cv2.respond(interaction, newPanel, 7).catch(() => null);
       }
       else if (customId === 'am_back_to_main') {
         const { getAutoModPanel } = await import('../commands/security.js');
         const newPanel = await getAutoModPanel(guild);
-        return interaction.update(newPanel).catch(() => null);
+        return cv2.respond(interaction, newPanel, 7).catch(() => null);
       }
       else if (customId === 'am_timeout_cycle') {
         const current = config.honeypotTimeoutMinutes || 15;
@@ -1797,7 +1797,7 @@ async function handleSecurityInteractions(interaction, guild) {
           } else {
             panel = await sec.getAutoModPanel(guild);
           }
-          return interaction.update(panel);
+          return cv2.respond(interaction, panel, 7);
         } catch (e) {
           console.error(e);
         }
@@ -1814,7 +1814,7 @@ async function handleSecurityInteractions(interaction, guild) {
     try {
       const sec = await import('../commands/security.js');
       const panel = await sec.getWhitelistOverviewPanel(guild);
-      return interaction.update(panel);
+      return cv2.respond(interaction, panel, 7);
     } catch(e) { console.error(e); }
   }
 
@@ -1839,10 +1839,10 @@ async function handleSecurityInteractions(interaction, guild) {
           if (subAction === 'remove') {
             db.updateWhitelist(guild.id, targetId, type, null);
             const panel = await sec.getWhitelistOverviewPanel(guild);
-            return interaction.update(panel);
+            return cv2.respond(interaction, panel, 7);
           } else {
             const panel = await sec.getWhitelistPanel(guild, targetId, type, 'manage');
-            return interaction.update(panel);
+            return cv2.respond(interaction, panel, 7);
           }
         } catch(e) { console.error(e); }
         return;
@@ -1860,7 +1860,7 @@ async function handleSecurityInteractions(interaction, guild) {
       try {
         const sec = await import('../commands/security.js');
         const panel = await sec.getWhitelistSelectPanel(guild, type, subAction);
-        return interaction.update(panel);
+        return cv2.respond(interaction, panel, 7);
       } catch(e) { console.error(e); }
       return;
     }
@@ -1930,11 +1930,11 @@ async function handleSecurityInteractions(interaction, guild) {
     const sec = await import('../commands/security.js');
     if (viewToRender === 'overview') {
       const panel = await sec.getWhitelistOverviewPanel(guild);
-      await interaction.update(panel);
+      await cv2.respond(interaction, panel, 7);
     } else {
       if (sec.getWhitelistPanel) {
         const panel = await sec.getWhitelistPanel(guild, targetId, type, viewToRender);
-        await interaction.update(panel);
+        await cv2.respond(interaction, panel, 7);
       } else {
         await interaction.update({ content: 'Saved.', components: [] });
       }
@@ -1975,7 +1975,7 @@ export async function handleWhitelistModal(interaction) {
     const sec = await import('../commands/security.js');
     if (sec.getWhitelistPanel) {
       const panel = await sec.getWhitelistPanel(interaction.guild, targetId, type, 'manage');
-      await interaction.update(panel);
+      await cv2.respond(interaction, panel, 7);
     } else {
       await interaction.update({ content: 'Saved.', components: [] });
     }

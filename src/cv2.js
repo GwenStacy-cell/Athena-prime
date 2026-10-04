@@ -121,6 +121,22 @@ export var cv2 = Object.assign(_m(false), {
   },
   buildContainer: buildContainer,
   make:           make,
+  
+  respond: async function(ctx, payload, type = 4) {
+    if (typeof payload === 'string') payload = { content: payload };
+    const isCV2 = payload.flags != null && (payload.flags & 32768);
+    let body = payload;
+    if (isCV2) {
+      body = { components: payload.components, flags: payload.flags };
+      if (payload.content) body.content = payload.content;
+      if (payload.embeds) body.embeds = payload.embeds;
+      if (payload.files) body.files = payload.files;
+    }
+    
+    // type 4 = ChannelMessageWithSource (Reply)
+    // type 7 = UpdateMessage (Update)
+    return ctx.client.rest.post(`/interactions/${ctx.id}/${ctx.token}/callback`, { body: { type: type, data: body } });
+  },
   edit: async function(ctx, payload) {
     if (typeof payload === 'string') payload = { content: payload };
     // Strip all legacy discord.js fields that are injected as undefined/null
