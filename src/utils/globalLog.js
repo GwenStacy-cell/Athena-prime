@@ -48,12 +48,6 @@ export async function postGlobalActionLog(client, opts) {
       },
       { type: 14, divider: true },
       {
-        type: 9,
-        components: [{ type: 10, content: '\u200B' }],
-        accessory: { type: 11, media: { url: 'attachment://action-log.png' } }
-      },
-      { type: 14, divider: true },
-      {
         type: 1,
         components: [
           { type: 2, style: 5, label: 'Open Server', url: `https://discord.com/channels/${guildId}` },
