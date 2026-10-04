@@ -11,7 +11,31 @@ const DEFAULT_STATUSES = [
   "<:on:1533844867191406672> **Vibing to the rhythm**",
   "<:emoji_16:1521464002046328944> **Late night thoughts**",
   "<:on:1533844867191406672> **Safe space**",
-  "<:emoji_16:1521464002046328944> **Chasing cherry blossom dreams**"
+  "<:emoji_16:1521464002046328944> **Chasing cherry blossom dreams**",
+  "<:on:1533844867191406672> **Welcome to the heart of {guild}**",
+  "<:emoji_16:1521464002046328944> **Elevating the standard at {guild}**",
+  "<:on:1533844867191406672> **{guild} Exclusive lounge**",
+  "<:emoji_16:1521464002046328944> **Unwinding in {guild}'s sanctuary**",
+  "<:on:1533844867191406672> **Connecting minds across {guild}**",
+  "<:emoji_16:1521464002046328944> **{guild} After hours**",
+  "<:on:1533844867191406672> **Finding focus in {guild}**",
+  "<:emoji_16:1521464002046328944> **{guild}'s creative studio**",
+  "<:on:1533844867191406672> **Building the future of {guild}**",
+  "<:emoji_16:1521464002046328944> **The official {guild} hangout**",
+  "<:on:1533844867191406672> **Networking within {guild}**",
+  "<:emoji_16:1521464002046328944> **{guild} Community broadcast**",
+  "<:on:1533844867191406672> **Brainstorming at {guild}**",
+  "<:emoji_16:1521464002046328944> **{guild} Elite circle**",
+  "<:on:1533844867191406672> **Relaxing in {guild}'s atmosphere**",
+  "<:emoji_16:1521464002046328944> **Where {guild} comes to life**",
+  "<:on:1533844867191406672> **{guild} VIP Section**",
+  "<:emoji_16:1521464002046328944> **Excellence powered by {guild}**",
+  "<:on:1533844867191406672> **{guild}'s midnight café**",
+  "<:emoji_16:1521464002046328944> **Chilling in {guild}'s orbit**",
+  "<:on:1533844867191406672> **The {guild} collective**",
+  "<:emoji_16:1521464002046328944> **{guild} Study and focus**",
+  "<:on:1533844867191406672> **Engaging with {guild}**",
+  "<:emoji_16:1521464002046328944> **{guild}'s hidden retreat**"
 ];
 
 function getRandomStatus(guild, customStatuses) {
