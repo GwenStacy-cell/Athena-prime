@@ -871,6 +871,7 @@ const helpModules = [
     "`!moveprotect / !vcprotect add/remove/list @user` - Prevent admins from moving/muting protected users `[server owner]`",
     "`!massmove dest / !massdc` - Move/disconnect everyone `[extra owners]`",
     "`!botvoice` - Force bot to join/stay in VC `[admin]`",
+      "`!voicerole @role` - Auto-assign role when joining any VC `[admin]`",
       "`!autovcstatus on/off` - Enable/disable random aesthetic VC statuses for all voice channels `[admin]`",
       "`!autovcstatus shuffle` - Instantly reshuffle all VC statuses `[admin]`",
       "`!autovcstatus add <emoji> <text>` - Add a custom status (supports custom emojis!) `[admin]`",
@@ -982,13 +983,8 @@ const helpModules = [
     "**News Integrations:**",
     "- Automatically pull updates from RSS, Twitter, or Reddit straight to your server",
     "- Configure mention roles for each news source"
-  ] },
-  { id: 'community', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Community', label: 'Community Settings', emoji: 'community', commands: [
-    "`!voicerole @role` - Auto-assign role when joining any VC `[admin]`",
-    "",
-    "**Community Dynamics:**",
-    "- Voicerole automatically grants and removes roles based on VC presence"
   ] }
+  
 ];
 
 const HELP_GIF = 'https://cdn.discordapp.com/attachments/1534869224277807175/1542472732325978234/ATHENA-8-27-2026.png?ex=6a915b2d&is=6a9009ad&hm=0f55bae0c0bec27649bc03e6d6be23ad16f2eb9337efdb8b5793b2d74cad89ff&';
