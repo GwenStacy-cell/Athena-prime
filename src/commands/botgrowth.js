@@ -23,7 +23,7 @@ export const commands = [
         
         if (type === 'current') {
             const servers = [...client.guilds.cache.values()].sort((a,b) => b.memberCount - a.memberCount).slice(0, 15);
-            let desc = '<:emoji_16:1521464002046328944> **Top 15 Live Servers (by Member Count):**\n\n';
+            let desc = '<:emoji_16:1533860111704002665> **Top 15 Live Servers (by Member Count):**\n\n';
             servers.forEach((g, i) => {
                 desc += `**${i+1}.** ${g.name} (\`${g.id}\`) - 👤 ${g.memberCount}\n`;
             });
@@ -39,7 +39,7 @@ export const commands = [
             e.setDescription(desc);
         }
         else if (type === 'leaves') {
-            let desc = '<:emoji_16:1521464002046328944> **Recent Leaves (Last 20):**\n\n';
+            let desc = '<:emoji_16:1533860111704002665> **Recent Leaves (Last 20):**\n\n';
             if (stats.recentLeaves.length === 0) desc += '*No recent leaves recorded.*\n';
             stats.recentLeaves.forEach((g, i) => {
                 desc += `**${i+1}.** ${g.name} (\`${g.id}\`)\n`;

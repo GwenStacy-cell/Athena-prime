@@ -118,7 +118,7 @@ export const commands = [
       if (channels.includes('ALL')) return message.reply(cv2.warn('Error', 'All channels are already ignored.'));
       channels.push('ALL');
       db.updateIgnoredChannels(guildId, channels);
-      return message.reply(cv2.success('Ignore All Enabled', 'Bot commands will now be ignored in ALL channels server-wide.\n-# <:emoji_16:1521464002046328944> **Note:** Admins are immune.'));
+      return message.reply(cv2.success('Ignore All Enabled', 'Bot commands will now be ignored in ALL channels server-wide.\n-# <:emoji_16:1533860111704002665> **Note:** Admins are immune.'));
     }
   },
   {

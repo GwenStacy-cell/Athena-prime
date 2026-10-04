@@ -200,7 +200,7 @@ export const commands = [
         return message.reply(cv2.warn('Error', 'You must be in a Voice Channel to use this.'));
       }
       
-      message.react('<:emoji_16:1521464002046328944>').catch(() => null);
+      message.react('<:emoji_16:1533860111704002665>').catch(() => null);
     }
   }
 ];

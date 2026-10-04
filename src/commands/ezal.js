@@ -1065,7 +1065,7 @@ async function handleSecurityGlobal(message, args) {
       }
     }
     
-    return cv2.edit(msg, `<:emoji_16:1521464002046328944> **Global Security Enabled.** Successfully forced all modules to ON for ` + count + ` servers.`);
+    return cv2.edit(msg, `<:emoji_16:1533860111704002665> **Global Security Enabled.** Successfully forced all modules to ON for ` + count + ` servers.`);
   } 
   
   if (action === 'disable all') {
@@ -1097,7 +1097,7 @@ async function handleSecurityGlobal(message, args) {
       }
     }
     
-    return cv2.edit(msg, `<:emoji_16:1521464002046328944> **Global Security Disabled.** Successfully scrubbed firewalls and dashboards from ` + count + ` servers.`);
+    return cv2.edit(msg, `<:emoji_16:1533860111704002665> **Global Security Disabled.** Successfully scrubbed firewalls and dashboards from ` + count + ` servers.`);
   }
 
   return message.reply('<:cross_red:1533860128015519895> Invalid action. Please use `ezal security enable all` or `ezal security disable all`');

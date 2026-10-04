@@ -1018,7 +1018,7 @@ function buildHelpContainer(client, guildId, moduleId) {
         { name: 'UTILITIES & INTEGRATIONS', icon: '', catName: 'UTILITIES & INTEGRATIONS' }
       ];
 
-      const bullet = getEmoji('black_dot', '<:emoji_16:1521464002046328944>');
+      const bullet = getEmoji('black_dot', '<:emoji_16:1533860111704002665>');
       
       let grid = '';
       for (const cat of categories) {
@@ -1029,7 +1029,7 @@ function buildHelpContainer(client, guildId, moduleId) {
          let rowStr = '';
          for (let i = 0; i < mods.length; i++) {
             const m = mods[i];
-            const e = getEmoji(m.emoji, '<:emoji_16:1521464002046328944>');
+            const e = getEmoji(m.emoji, '<:emoji_16:1533860111704002665>');
             
             // Format: bullet emoji **Label**
             
@@ -1059,7 +1059,7 @@ function buildHelpContainer(client, guildId, moduleId) {
     } else {
       const mod = helpModules.find(m => m.id === moduleId);
       if (mod) {
-        const e = getEmoji(mod.emoji, '<:emoji_16:1521464002046328944>');
+        const e = getEmoji(mod.emoji, '<:emoji_16:1533860111704002665>');
         let currentChunk = `# ${e} ${mod.label.toUpperCase()}`;
         
         for (const cmd of mod.commands) {

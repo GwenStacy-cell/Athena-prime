@@ -10,7 +10,7 @@ import * as downloader from '../utils/mediaDownloader.js';
 import db from '../database.js';
 
 import { isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';
-const TOGGLE_ON = '<:emoji_16:1521464002046328944>';
+const TOGGLE_ON = '<:emoji_16:1533860111704002665>';
 
 export default {
   name: 'interactionCreate',
@@ -471,7 +471,7 @@ export default {
         if (verifyData && verifyData.roleId) {
           try {
              await interaction.member.roles.add(verifyData.roleId);
-             return await interaction.reply({ content: '-# <:emoji_16:1521464002046328944> **Identity Authenticated! You have been granted access to the server.**', flags: 64 }).catch(()=>null);
+             return await interaction.reply({ content: '-# <:emoji_16:1533860111704002665> **Identity Authenticated! You have been granted access to the server.**', flags: 64 }).catch(()=>null);
           } catch(e) {
              return await interaction.reply({ content: '-# **Failed to assign the verification role.**', flags: 64 }).catch(()=>null);
           }
@@ -1158,7 +1158,7 @@ if (interaction.customId === "modal_2fa_setup") {
              return await interaction.reply({ content: '-# **You are already verified.**', flags: MessageFlags.Ephemeral }).catch(() => null);
           }
           await interaction.member.roles.add(role);
-          return await interaction.reply({ content: '-# <:emoji_16:1521464002046328944> **Identity Authenticated! You have been granted access to the server.**', flags: MessageFlags.Ephemeral }).catch(() => null);
+          return await interaction.reply({ content: '-# <:emoji_16:1533860111704002665> **Identity Authenticated! You have been granted access to the server.**', flags: MessageFlags.Ephemeral }).catch(() => null);
         } catch (err) {
           return await interaction.reply({ content: '-# **Failed to assign the verification role. Ensure my role is higher than the verification role.**', flags: MessageFlags.Ephemeral }).catch(() => null);
         }
@@ -1398,7 +1398,7 @@ if (interaction.customId === "modal_2fa_setup") {
       }
 
       if (interaction.customId === 'xp_save') {
-        return interaction.reply({ content: '<:emoji_16:1521464002046328944> XP settings saved successfully!', flags: 64 });
+        return interaction.reply({ content: '<:emoji_16:1533860111704002665> XP settings saved successfully!', flags: 64 });
       }
 
       // VOICE CONTROL BUTTONS

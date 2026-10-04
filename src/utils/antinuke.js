@@ -214,7 +214,7 @@ async function notifyAndLog(guild, executor, eventType, punishResult, rollbackRe
         if (owner) {
           const isFailure = punishResult.startsWith('Total failure') || punishResult.startsWith('Hierarchy blocked');
           const desc = isFailure 
-            ? `<:emoji_16:1521464002046328944> **URGENT:** A hostile action was detected on **${guild.name}**, but **COULD NOT BE NEUTRALIZED** because the attacker's role is higher than mine in the Discord Server Settings!\n\n**Please intervene immediately and move my role higher!**`
+            ? `<:emoji_16:1533860111704002665> **URGENT:** A hostile action was detected on **${guild.name}**, but **COULD NOT BE NEUTRALIZED** because the attacker's role is higher than mine in the Discord Server Settings!\n\n**Please intervene immediately and move my role higher!**`
             : `A hostile action was detected, neutralized, and reversed on **${guild.name}** in milliseconds.`;
           
           await owner.send(cv2.danger(
