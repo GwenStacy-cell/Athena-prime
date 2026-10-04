@@ -2795,24 +2795,34 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
   // We only handle enable=false here now, because enable=true is handled by runSecurityEnableSequence
   if (!enable) {
     db.updateGuildConfig(guild.id, {
-      securityEnabled:   false,
-      antiNukeEnabled:   false,
-      antiSpamEnabled:   false,
-      antiInviteEnabled: false,
-      antiLinkEnabled:   false,
-      blacklistWords: []
+      securityEnabled:          false,
+      antiNukeEnabled:          false,
+      antiSpamEnabled:          false,
+      antiInviteEnabled:        false,
+      antiLinkEnabled:          false,
+      antiSpamMentionEnabled:   false,
+      antiFloodEnabled:         false,
+      wordFilterEnabled:        false,
+      allowAllLinks:            false,
+      allowInvitesGlobally:     false,
+      blacklistWords:           [],
+      antinukeModules:          Object.fromEntries(['antiRoleCreate','antiRoleDelete','antiRoleUpdate','antiRolePermUpdate','antiMemberRoleUpdate','antiRoleReorder','antiChannelCreate','antiChannelDelete','antiChannelUpdate','antiChannelPermUpdate','antiChannelReorder','antiChannelNameMod','antiEmojiCreate','antiEmojiDelete','antiEmojiUpdate','antiWebhooks','antiBotAdd','antiServerUpdate','antiBan','antiKick','antiUnban','antiInvite','antiScheduledEvents','antiMemberPurge','antiMassBan','antiAutomodUpdate','antiAppCommands'].map(k => [k, false])),
+      dashboardChannelId:       null,
+      dashboardMessageIds:      []
     });
-    
-    // Delete roles
+
+    // Delete Athena's secondary security roles
     const rolesToDelete = ['Athena Firewall', 'Athena Unbypassable'];
     for (const roleName of rolesToDelete) {
       const r = guild.roles.cache.find(role => role.name === roleName);
-      if (r) await r.delete('Security Disabled').catch(() => null);
+      if (r) await r.delete('Security Disabled by owner').catch(() => null);
     }
-    
-    // Delete dashboard
-    const dashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
-    if (dashboard) await dashboard.delete('Security Disabled').catch(() => null);
+
+    // Delete ALL athenas-dashboard channels (including duplicates)
+    const allDashboards = guild.channels.cache.filter(c => c.name === 'athenas-dashboard');
+    for (const ch of allDashboards.values()) {
+      await ch.delete('Security Disabled').catch(() => null);
+    }
 
     const textContent =
       `# ALL SECURITY SHIELDS DISENGAGED\n\n` +
