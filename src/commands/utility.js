@@ -747,7 +747,8 @@ const helpModules = [
     "- `!gstart 1h 2x Discord Nitro` (1 hour, 2 winners)",
     "- `!gstart 30m 1x $10 Steam Card` (30 mins, 1 winner)"
   ] },
-  { id: 'welcome', category: 'ENGAGEMENT & UTILITY', shortLabel: 'Welcome', label: 'Welcome & Leave', emoji: 'welcome', commands: [
+  { id: 'welcome', category: 'ENGAGEMENT & UTILITY', shortLabel: 'Welcome', label: 'Welcome, Leave & Announcements', emoji: 'welcome', commands: [
+    "`!announce` - Open the interactive Announcement Builder `[manage messages]`",
     "`!welcome` - Interactive Welcome message builder `[manage guild]`",
     "`!leave` - Interactive Leave message builder `[manage guild]`",
     "`!autorole` - Configure roles given on join `[manage guild]`",
@@ -805,8 +806,14 @@ const helpModules = [
     "`!userinfo [@user]` - Detailed user information",
     "`!serverinfo` - Detailed server information",
     "`!snipe` - View the last deleted message",
-    "`!news setup|add|remove|list|disable` - Configure automated RSS feeds `[admin]`",
-    "`!shortcuts enable|disable` - Toggle `a` -> `!avatar`, `b` -> `!banner` shortcuts"
+    "`!news` - Configure automated RSS feeds `[admin]`",
+    "`!shortcuts enable|disable` - Toggle `a` -> `!avatar`, `b` -> `!banner` shortcuts",
+    "",
+    "**News Feed System:**",
+    "**Step 1:** Run `/news setup` to assign a channel. (Use `create_role: True` to auto-create an alert role).",
+    "**Step 2:** Use `/news add` with a preset or custom URL.",
+    "**Step 3:** Use `/news remove` to delete feeds using the new Autocomplete dropdown.",
+    "**Step 4:** Run `/news disable` to completely wipe all feeds and settings."
   ] }
 ];
 
