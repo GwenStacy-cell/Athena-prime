@@ -497,7 +497,7 @@ export default {
           
           // Channel Warning
           const scamEmbed = cv2.danger('Scam Detected', `<a:emoji_35:1533024049926639699> <@${message.author.id}>, your message was flagged as a scam and removed.`);
-          await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
+          if (message.channel && message.channel.send) await message.channel.send({ embeds: [scamEmbed] }).catch(() => null); else return;
           
           const logEmbed = cv2.danger('LOG: MALICIOUS SCAM TEXT DELETED', `**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted fraudulent text/link containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).\n\n**Channel:** <#${message.channel.id}>`);
           
@@ -568,7 +568,7 @@ export default {
                const scamEmbed = new EmbedBuilder()
                  .setColor('#ff0000') // Pure red
                  .setDescription(`<a:emoji_35:1533024049926639699> <@${message.author.id}>, your image was flagged as a scam and removed.`);
-               await message.channel.send({ embeds: [scamEmbed] }).then(m => setTimeout(() => m.delete().catch(()=>null), 5000));
+               if (message.channel && message.channel.send) await message.channel.send({ embeds: [scamEmbed] }).catch(() => null); else return;
                
                // 2. Security Channel Log
                const logEmbed = new EmbedBuilder()

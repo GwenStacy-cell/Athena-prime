@@ -401,6 +401,55 @@ export default {
   }
 
     try {
+        // ==========================================
+    // GLOBALLY PATCH CV2 RESPONSES TO BYPASS DJS V14 VALIDATION BUG
+    // ==========================================
+    const isCV2 = (opts) => opts && opts.flags != null && (opts.flags & 32768);
+
+    const _editReply = interaction.editReply.bind(interaction);
+    interaction.editReply = async function(options) {
+      if (isCV2(options)) {
+         return interaction.client.rest.patch(`/webhooks/${interaction.client.user.id}/${interaction.token}/messages/@original`, {
+           body: { components: options.components, flags: options.flags }, files: options.files
+         });
+      }
+      return _editReply(options);
+    };
+
+    const _reply = interaction.reply.bind(interaction);
+    interaction.reply = async function(options) {
+      if (isCV2(options)) {
+         return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
+           body: { type: 4, data: { components: options.components, flags: options.flags } }, files: options.files
+         });
+      }
+      return _reply(options);
+    };
+
+    if (interaction.update) {
+      const _update = interaction.update.bind(interaction);
+      interaction.update = async function(options) {
+        if (isCV2(options)) {
+           return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
+             body: { type: 7, data: { components: options.components, flags: options.flags } }, files: options.files
+           });
+        }
+        return _update(options);
+      };
+    }
+    
+    if (interaction.followUp) {
+      const _followUp = interaction.followUp.bind(interaction);
+      interaction.followUp = async function(options) {
+        if (isCV2(options)) {
+           return interaction.client.rest.post(`/webhooks/${interaction.client.user.id}/${interaction.token}`, {
+             body: { components: options.components, flags: options.flags }, files: options.files
+           });
+        }
+        return _followUp(options);
+      };
+    }
+
     const guild = interaction.guild;
     if (guild) setGuildContext(guild.id);
     

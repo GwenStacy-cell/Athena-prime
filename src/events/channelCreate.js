@@ -59,12 +59,12 @@ export default {
           const isQChannel = config.quarantineChannelId === channel.id || config.quarantineVcId === channel.id;
           
           if (!isQChannel) {
-            await channel.permissionOverwrites.edit(qRole, {
+            try { await channel.permissionOverwrites.edit(qRole, {
               ViewChannel: false,
               SendMessages: false,
               Connect: false,
               Speak: false
-            }, { reason: 'Athena Prime - auto-hide new channel from quarantined users' });
+            }, { reason: 'Athena Prime - auto-hide new channel from quarantined users' }).catch(() => null); } catch(e) {}
           }
         }
       }
