@@ -102,14 +102,14 @@ export async function handleAnnouncementInteractions(interaction) {
         .setLabel('Title')
         .setStyle(TextInputStyle.Short)
         .setRequired(false)
-        .setValue(embed.data.title || '');
+        ; if (embed.data.title) titleInput.setValue(embed.data.title);
         
       const descInput = new TextInputBuilder()
         .setCustomId('ann_desc')
         .setLabel('Description (Content)')
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true)
-        .setValue(embed.data.description || '');
+        ; if (embed.data.description) descInput.setValue(embed.data.description);
 
       modal.addComponents(new ActionRowBuilder().addComponents(titleInput), new ActionRowBuilder().addComponents(descInput));
       return interaction.showModal(modal);
@@ -125,14 +125,14 @@ export async function handleAnnouncementInteractions(interaction) {
         .setLabel('Image URL (Large)')
         .setStyle(TextInputStyle.Short)
         .setRequired(false)
-        .setValue(embed.data.image?.url || '');
+        ; if (embed.data.image?.url) imageInput.setValue(embed.data.image.url);
         
       const thumbInput = new TextInputBuilder()
         .setCustomId('ann_thumb')
         .setLabel('Thumbnail URL (Small)')
         .setStyle(TextInputStyle.Short)
         .setRequired(false)
-        .setValue(embed.data.thumbnail?.url || '');
+        ; if (embed.data.thumbnail?.url) thumbInput.setValue(embed.data.thumbnail.url);
 
       modal.addComponents(new ActionRowBuilder().addComponents(imageInput), new ActionRowBuilder().addComponents(thumbInput));
       return interaction.showModal(modal);

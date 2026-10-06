@@ -15,6 +15,13 @@ const TOGGLE_ON = '<:emoji_16:1533860111704002665>';
 export default {
   name: 'interactionCreate',
   async execute(interaction) {
+    if (interaction.customId && interaction.customId.startsWith('ann_')) {
+      try {
+        const announce = await import('../commands/announce.js');
+        return announce.handleAnnouncementInteractions(interaction);
+      } catch (e) { console.error(e); }
+    }
+
 
     // --- SUGGESTION BUTTONS ---
     if (interaction.isButton() && interaction.customId.startsWith('sug_')) {
