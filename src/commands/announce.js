@@ -154,7 +154,7 @@ export async function handleAnnouncementInteractions(interaction) {
       return interaction.showModal(modal);
     }
 
-    if (customId === 'ann_publish') {
+        if (customId === 'ann_publish') {
       const footer = embed.data.footer?.text || '';
       if (!footer.startsWith('Target Channel: ') || footer.includes('Not Set')) {
         return interaction.reply({ content: 'You must set a target channel first by clicking **Set Channel**.', flags: 64 });
@@ -166,15 +166,41 @@ export async function handleAnnouncementInteractions(interaction) {
         return interaction.reply({ content: 'Target channel not found. Please set a valid Channel ID.', flags: 64 });
       }
 
-      // Prepare final embed
-      const finalEmbed = EmbedBuilder.from(embed);
-      finalEmbed.setAuthor(null);
-      finalEmbed.setFooter(null);
+      const container = { type: 17, components: [] };
+      let hasHeader = false;
+      
+      if (embed.data.title && embed.data.thumbnail?.url) {
+         container.components.push({
+           type: 9,
+           components: [{ type: 10, content: `## ${embed.data.title}` }],
+           accessory: { type: 11, media: { url: embed.data.thumbnail.url } }
+         });
+         hasHeader = true;
+      } else if (embed.data.title) {
+         container.components.push({ type: 10, content: `## ${embed.data.title}` });
+         hasHeader = true;
+      } else if (embed.data.thumbnail?.url) {
+         container.components.push({
+           type: 9,
+           components: [{ type: 10, content: embed.data.description || '' }],
+           accessory: { type: 11, media: { url: embed.data.thumbnail.url } }
+         });
+         hasHeader = true;
+      }
+
+      if (embed.data.description && (!hasHeader || !embed.data.thumbnail?.url)) {
+         container.components.push({ type: 10, content: embed.data.description });
+      } else if (embed.data.description && embed.data.title && embed.data.thumbnail?.url) {
+         container.components.push({ type: 10, content: embed.data.description });
+      }
+
+      if (embed.data.image?.url) {
+         container.components.push({ type: 12, items: [{ media: { url: embed.data.image.url } }] });
+      }
 
       try {
-        await targetChannel.send({ embeds: [finalEmbed] });
+        await targetChannel.send({ components: [container], flags: 32768 });
         
-        // Update original message to show it was published
         const publishedRow = new ActionRowBuilder().addComponents(
           new ButtonBuilder().setCustomId('pub_dummy').setLabel('Published Successfully').setStyle(ButtonStyle.Success).setDisabled(true)
         );

@@ -486,6 +486,22 @@ export default {
     }
 
     // ==========================================
+
+    // ==========================================
+    // 1.5 AUTOCOMPLETE
+    // ==========================================
+    if (interaction.isAutocomplete()) {
+      const command = commandMap.get(interaction.commandName);
+      if (command && command.autocomplete) {
+        try {
+          await command.autocomplete(interaction);
+        } catch (error) {
+          console.error('Autocomplete Error:', error);
+        }
+      }
+      return;
+    }
+
     // 2. MODALS
     // ==========================================
     

@@ -39,14 +39,15 @@ export async function postGlobalActionLog(client, opts) {
         type: 10,
         content: [
           `**${guildName || 'Unknown Server'}**`,
-          `**Target:** <@${targetId}> (\`${targetTag || targetId}\`)`,
+          `**Target:** [${targetTag || targetId}](https://discord.com/users/${targetId})`,
           `**Target ID:** \`${targetId}\``,
-          `**Action Taken By:** <@${executorId}> (${executorTag || 'Anti-Nuke / Bot'})`,
+          `**Action Taken By:** [${executorTag || 'Anti-Nuke / Bot'}](https://discord.com/users/${executorId})`,
           `**Executor ID:** \`${executorId}\``,
           `**Reason:** ${reason || 'No reason provided'}`,
         ].join('\n')
       },
       { type: 14, divider: true },
+      { type: 12, items: [{ media: { url: `attachment://${attachment.name}` } }] },
       {
         type: 1,
         components: [
