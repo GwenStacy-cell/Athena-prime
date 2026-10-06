@@ -3,7 +3,7 @@ import { MessageFlags } from 'discord.js';
 // Returns true if a line already has discord markdown — skip auto-formatting
 function isPreformatted(line) {
   if (!line.trim()) return true;
-  return /^(-#|#{1,3} |> |\*\*|__|`|\|)/.test(line) || /^[\u2022\-\*\+] /.test(line);
+  return /^(-#|#{1,3} |> )/.test(line);
 }
 
 // Returns true if line starts with a custom or unicode emoji
@@ -16,10 +16,10 @@ function styleLine(line, addBullet) {
   if (!line.trim()) return line;
   if (isPreformatted(line)) return line;
   const startsEmoji = hasEmojiStart(line);
-  const hasBold = line.includes('**');
-  if (startsEmoji || hasBold) return '-# ' + line;
-  const bullet = addBullet ? '\u2022 ' : '';
-  return '-# **' + bullet + line + '**';
+  const hasListMarker = /^[\u2022\-\*+] /.test(line);
+  
+  const bullet = (addBullet && !hasListMarker) ? '\u2022 ' : '';
+  return '-# ' + bullet + line;
 }
 
 // Separator raw component
@@ -56,7 +56,7 @@ function buildContainer(title, description, fields, customFooter) {
       inlineBuf.push('**' + f.name + ':** ' + f.value);
     } else {
       if (inlineBuf.length > 0) { fieldText += '-# ' + inlineBuf.join('  **\u00b7**  ') + '\n'; inlineBuf = []; }
-      fieldText += '\n**' + f.name + '**\n' + f.value + '\n';
+      fieldText += '\n-# **' + f.name + '**\n-# ' + f.value.replace(/\n/g, '\n-# ') + '\n';
     }
   }
   if (inlineBuf.length > 0) fieldText += '\n-# ' + inlineBuf.join('  **\u00b7**  ') + '\n';
@@ -88,7 +88,7 @@ function buildContainer(title, description, fields, customFooter) {
 
   if (footers[footerText]) footerText = footers[footerText];
 
-  comps.push({ type: 10, content: `-# **${footerText}**` });
+  comps.push({ type: 10, content: `-# ${footerText}` });
 
   return { type: 17, components: comps };
 }

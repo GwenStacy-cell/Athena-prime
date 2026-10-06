@@ -129,7 +129,7 @@ export async function endGiveaway(client, messageId, gwData) {
     if (winners.length > 0) {
       const winEmbed = new EmbedBuilder()
         .setColor(accentColor)
-        .setDescription(`##  Giveaway Ended \n\n${EMOJI_WINNER}\n\n**Winner(s):** ${winners.map(id => `<@${id}>`).join(', ')}\n**Prize:** ${gwData.prize}\n\n*Congratulations! Please DM the host to claim your prize.*`);
+        .setDescription(`##  Giveaway Ended \n\n${EMOJI_WINNER}\n\n**Winner(s):** ${winners.map(id => `<@${id}>`).join(', ')}\n**Prize:** ${gwData.prize}\n\n**Congratulations! Please DM the host to claim your prize.**`);
 
       await channel.send({ content: `${winners.map(id => `<@${id}>`).join(', ')}`, embeds: [winEmbed] });
 

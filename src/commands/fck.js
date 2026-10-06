@@ -8,13 +8,13 @@ You've been reported to Athena Prime. We know who you are, where you chat, and w
 
 Don't push it again.
 
-- *Athena Prime*`,
+- **Athena Prime**`,
 
   `You've been flagged.
 
 Consider this your one and only warning. There won't be another.
 
-- *Athena Prime Enforcement*`,
+- **Athena Prime Enforcement**`,
 
   `We see you.
 
@@ -22,7 +22,7 @@ Every move you make in that server is logged. You are one mistake away from cons
 
 Fix yourself. Now.
 
-- *Athena Prime*`,
+- **Athena Prime**`,
 
   `This is a formal notice.
 
@@ -30,13 +30,13 @@ Your behavior has been reviewed and found unacceptable. The server owner has bee
 
 Don't make us act.
 
-- *Athena Prime Black Division*`,
+- **Athena Prime Black Division**`,
 
   `Tread carefully.
 
 You've been put on our radar. We don't issue second warnings. You don't want to find out what comes next.
 
-- *Athena Prime*`,
+- **Athena Prime**`,
 
   `You've crossed the line.
 
@@ -44,7 +44,7 @@ The server owner knows. Athena Prime knows. You have been documented, flagged, a
 
 Fall in line - or fall out entirely.
 
-- *Athena Prime Command*`,
+- **Athena Prime Command**`,
 
   `Last warning.
 
@@ -52,7 +52,7 @@ We don't explain ourselves twice. You know what you did. The server owner author
 
 Don't test what comes after it.
 
-- *Athena Prime*`,
+- **Athena Prime**`,
 
   `Your name is on our list now.
 
@@ -60,7 +60,7 @@ We don't forget. We don't forgive. And we absolutely do not tolerate whatever it
 
 Clean it up.
 
-- *Athena Prime*`,
+- **Athena Prime**`,
 ];
 
 const PUBLIC_LOG_LINES = [

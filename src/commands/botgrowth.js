@@ -32,7 +32,7 @@ export const commands = [
         }
         else if (type === 'joins') {
             let desc = '<a:AnyaYay:1537513785718476850> **Recent Joins (Last 20):**\n\n';
-            if (stats.recentJoins.length === 0) desc += '*No recent joins recorded.*\n';
+            if (stats.recentJoins.length === 0) desc += '**No recent joins recorded.**\n';
             stats.recentJoins.forEach((g, i) => {
                 desc += `**${i+1}.** ${g.name} (\`${g.id}\`) - 👤 ${g.memberCount || '?'} | By: ${g.addedBy || 'Unknown'}\n`;
             });
@@ -40,7 +40,7 @@ export const commands = [
         }
         else if (type === 'leaves') {
             let desc = '<:emoji_16:1533860111704002665> **Recent Leaves (Last 20):**\n\n';
-            if (stats.recentLeaves.length === 0) desc += '*No recent leaves recorded.*\n';
+            if (stats.recentLeaves.length === 0) desc += '**No recent leaves recorded.**\n';
             stats.recentLeaves.forEach((g, i) => {
                 desc += `**${i+1}.** ${g.name} (\`${g.id}\`)\n`;
             });
@@ -107,7 +107,7 @@ export const commands = [
       for (const val of Object.values(stats)) total += val;
 
       if (sortedCmds.length === 0) {
-        lines.push('*No commands executed yet.*');
+        lines.push('**No commands executed yet.**');
       } else {
         sortedCmds.forEach(([cmd, count], i) => {
           lines.push(`**${i + 1}.** \`${cmd}\` — ${count} uses`);

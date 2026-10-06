@@ -97,7 +97,7 @@ export const commands = [
         if (i.customId === 'app_mngr_clear') {
           db.updateAppConfig(message.guild.id, { questions: [] });
           // Update message
-          embed.components = embed.components.filter(c => !c.content?.startsWith('### Current') && !c.content?.match(/^\*\*\d+\.\*\*/));
+          embed.components = embed.components.filter(c => !c.content?.startsWith('### Current') && !c.content?.match(/^\**\**\d+\.\**\**/));
           row.components[0].setDisabled(false);
           await i.update({ components: [embed, row.toJSON()] });
           return;
@@ -124,7 +124,7 @@ export async function handleAppManagerModals(interaction) {
     config.questions.push(qText);
     db.updateAppConfig(interaction.guild.id, { questions: config.questions });
     
-    await interaction.reply({ content: cv2.success('Question Added', `Successfully added: **${qText}**\n*Please run \`!app\` again to see the updated panel.*`), flags: MessageFlags.IsComponentsV2 });
+    await interaction.reply({ content: cv2.success('Question Added', `Successfully added: **${qText}**\n**Please run \`!app\` again to see the updated panel.**`), flags: MessageFlags.IsComponentsV2 });
     await interaction.message.delete().catch(() => null);
   }
 }

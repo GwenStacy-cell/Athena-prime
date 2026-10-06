@@ -184,9 +184,9 @@ export const commands = [
       comps.push({ type: 10, content: `# GLOBAL NO-PREFIX STATUS PANEL` });
       comps.push({ type: 14, divider: true });
       
-      comps.push({ type: 10, content: `## **Granted Users (${userLines.length})**\n` + (userLines.join('\n\n') || '*None*') });
-      comps.push({ type: 10, content: `## **Granted Servers (${serverLines.length})**\n` + (serverLines.join('\n\n') || '*None*') });
-      comps.push({ type: 10, content: `## **Banned Users (0)**\n*None*` });
+      comps.push({ type: 10, content: `## **Granted Users (${userLines.length})**\n` + (userLines.join('\n\n') || '**None**') });
+      comps.push({ type: 10, content: `## **Granted Servers (${serverLines.length})**\n` + (serverLines.join('\n\n') || '**None**') });
+      comps.push({ type: 10, content: `## **Banned Users (0)**\n**None**` });
       
       comps.push({ type: 14, divider: true });
       comps.push({ type: 10, content: '-# **Athena Bulletproof Security !!!**' });

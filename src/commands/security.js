@@ -1211,7 +1211,7 @@ export const commands = [
             return message.reply(cv2.warn('Security Active', 'Security is already enabled on this server. To re-enable or refresh the system, please use `!security disable all` first, and then run `!security enable all` again.'));
           }
         if (message.guild.memberCount < 200 && !isBotOwnerSync(message.author.id)) {
-          return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
+          return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n**Bot Owners bypass this restriction.**'));
         }
 
         const initDisplay = new TextDisplayBuilder().setContent('> -# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n> -# **Antinuke Setup Working...**');
@@ -1276,7 +1276,7 @@ export const commands = [
             return interaction.reply(cv2.warn('Security Active', 'Security is already enabled on this server. To re-enable or refresh the system, please use `/security disable_all` first, and then run `/security enable_all` again.'));
           }
         if (interaction.guild.memberCount < 200 && !isBotOwnerSync(interaction.user.id)) {
-          return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n*Bot Owners bypass this restriction.*'));
+          return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n**Bot Owners bypass this restriction.**'));
         }
 
         const initDisplay2 = new TextDisplayBuilder().setContent('> -# <a:loading:1542155051286396938> **Athena Prime Antinuke Setup**\n> -# **Antinuke Setup Working...**');
@@ -2516,7 +2516,7 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
 <:on:1533844867191406672> **Restoration Layer:** Zero-Latency Channel & Role Recovery
 <:on:1533844867191406672> **Condemned Cache:** Instant nuker skip-to-restoration active
 
-*Athena Prime's firewall now operates at raw HTTP speed. Nuke bots are eliminated in ~1-3 milliseconds via a direct Discord API strike. Predictive quarantine intercepts suspicious admins before they can cause structural damage. Unauthorized channels are instantly deleted, deleted channels are instantly restored.*
+**Athena Prime's firewall now operates at raw HTTP speed. Nuke bots are eliminated in ~1-3 milliseconds via a direct Discord API strike. Predictive quarantine intercepts suspicious admins before they can cause structural damage. Unauthorized channels are instantly deleted, deleted channels are instantly restored.**
 
 *(Use 'antinuke config' or individual commands to fine-tune modules)*`,
         [
@@ -3085,7 +3085,7 @@ async function handleLinksAllow(guild, action, domain) {
   const formatted = list.map((d, i) => `${i + 1}. \`${d}\``).join('\n');
   return cv2.info(
       'Allowed Link Domains',
-      `These domains bypass the anti-link filter:\n\n${formatted}\n\n*Use \`/linksallow remove <domain>\` to remove any.*`
+      `These domains bypass the anti-link filter:\n\n${formatted}\n\n**Use \`/linksallow remove <domain>\` to remove any.**`
     );
 }
 
@@ -3573,7 +3573,7 @@ const allMembers = guild.members.cache;
 
   if (unauthorizedBots.length === 0 && highRiskHumans.length === 0) {
      cv2Components.push({ type: 14, divider: true });
-     cv2Components.push({ type: 10, content: `-# *Server security is optimal. No unauthorized bots or untrusted high-risk users detected.*` });
+     cv2Components.push({ type: 10, content: `-# **Server security is optimal. No unauthorized bots or untrusted high-risk users detected.**` });
   }
   
   cv2Components.push({ type: 14, divider: true });
