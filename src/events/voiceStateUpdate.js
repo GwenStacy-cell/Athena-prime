@@ -448,7 +448,7 @@ export default {
           if (freshChannel && freshChannel.members.size === 0) {
             db.removeJtcChannel(tempChannel.id);
             await freshChannel.delete('JTC: User failed to move or instantly left').catch(()=>null);
-            console.log(`[JTC] Purged ghost room for ${member.user.tag}`);
+            
           }
         }, 2500);
 
@@ -493,7 +493,7 @@ export default {
           const sendPanel = async () => {
             try {
               const freshChannel = await guild.channels.fetch(tempChannel.id).catch(() => null);
-              if (!freshChannel) { console.warn('[JTC] VC channel gone before panel send'); return; }
+              if (!freshChannel) { return; }
               await freshChannel.send(vcPanel);
               console.log(`[JTC]  Sent panel to VC text: ${freshChannel.name}`);
             } catch (e) {

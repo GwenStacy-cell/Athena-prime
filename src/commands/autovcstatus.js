@@ -90,9 +90,10 @@ export const commands = [
         let index = 0;
         let updated = 0;
         
+        const botVcId = message.guild.members.me?.voice?.channelId;
         for (const vc of vcs.values()) {
-          // Protect home VC and any VC explicitly named "home"
-          if (vc.id === homeVcId || vc.name.toLowerCase().includes('home')) continue;
+          // Protect home VC, bot's current VC, and any VC explicitly named "home"
+          if (vc.id === homeVcId || vc.id === botVcId || vc.name.toLowerCase().includes('home')) continue;
           
           try {
             const rawStatus = shuffledPool[index % shuffledPool.length];
