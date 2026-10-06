@@ -262,6 +262,107 @@ if (PORT) {
 // Authenticate with Discord APIs
 console.log(chalk.yellow('\n⏳ Connecting to Discord Gateway...'));
 attachWiretap(client);
+
+// =========================================================================
+// GLOBAL CV2 INTERCEPTOR (ACCENT BORDERLESS EVERYTHING)
+// Transforms all discord.js EmbedBuilder payloads into pure CV2 Type 17 Containers
+// =========================================================================
+const originalPost = client.rest.post.bind(client.rest);
+const originalPatch = client.rest.patch.bind(client.rest);
+
+function convertEmbedToCV2(embedData) {
+  const comps = [];
+  
+  if (embedData.author || embedData.thumbnail) {
+    const text = embedData.author ? `**${embedData.author.name}**` : ' ';
+    const iconUrl = (embedData.author && embedData.author.icon_url) ? embedData.author.icon_url : (embedData.thumbnail ? embedData.thumbnail.url : undefined);
+    
+    comps.push({
+      type: 9,
+      components: [{ type: 10, content: text }],
+      accessory: iconUrl ? { type: 11, media: { url: iconUrl } } : undefined
+    });
+    comps.push({ type: 14, divider: true });
+  }
+
+  if (embedData.title) {
+    comps.push({ type: 10, content: `## **${embedData.title}**` });
+    comps.push({ type: 14, divider: true });
+  }
+
+  if (embedData.description) {
+    let desc = embedData.description;
+    const lines = desc.split('\n');
+    desc = lines.map(l => {
+      if (!l.trim()) return l;
+      if (/^(-#|#{1,3} |> )/.test(l)) return l;
+      return '-# ' + l;
+    }).join('\n');
+    comps.push({ type: 10, content: desc });
+  }
+
+  if (embedData.fields && embedData.fields.length > 0) {
+    let fieldText = '';
+    let inlineBuf = [];
+    for (const f of embedData.fields) {
+      if (f.inline) {
+        inlineBuf.push(`**${f.name}:** ${f.value}`);
+      } else {
+        if (inlineBuf.length > 0) { fieldText += '-# ' + inlineBuf.join('  **\u00b7**  ') + '\n'; inlineBuf = []; }
+        fieldText += `\n-# **${f.name}**\n-# ${f.value.replace(/\n/g, '\n-# ')}\n`;
+      }
+    }
+    if (inlineBuf.length > 0) fieldText += '\n-# ' + inlineBuf.join('  **\u00b7**  ') + '\n';
+    
+    if (fieldText.trim()) {
+      comps.push({ type: 14, divider: true });
+      comps.push({ type: 10, content: fieldText.trim() });
+    }
+  }
+
+  if (embedData.image) {
+    comps.push({ type: 14, divider: true });
+    comps.push({ type: 12, items: [{ media: { url: embedData.image.url } }] });
+  }
+
+  if (embedData.footer) {
+    comps.push({ type: 14, divider: true });
+    comps.push({ type: 10, content: `-# ${embedData.footer.text}` });
+  }
+
+  return { type: 17, components: comps };
+}
+
+function interceptPayload(body) {
+  if (!body) return false;
+  const target = body.data || body;
+  
+  if (target.embeds && target.embeds.length > 0) {
+    const cv2Containers = target.embeds.map(e => convertEmbedToCV2(e));
+    
+    if (target.content) {
+       cv2Containers[0].components.unshift({ type: 14, divider: true });
+       cv2Containers[0].components.unshift({ type: 10, content: target.content });
+       delete target.content;
+    }
+    
+    target.components = [...cv2Containers, ...(target.components || [])];
+    delete target.embeds;
+    target.flags = (target.flags || 0) | 32768; // MessageFlags.IsComponentsV2
+    return true;
+  }
+  return false;
+}
+
+client.rest.post = async function(url, options) {
+  if (options && options.body) interceptPayload(options.body);
+  return originalPost(url, options);
+};
+client.rest.patch = async function(url, options) {
+  if (options && options.body) interceptPayload(options.body);
+  return originalPatch(url, options);
+};
+
 client.login(token).catch(err => {
   console.error(chalk.red.bold('\n❌ Connection Failed: Invalid token or network blockage!'));
   console.error(err);
