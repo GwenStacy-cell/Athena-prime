@@ -270,12 +270,18 @@ attachWiretap(client);
 const originalPost = client.rest.post.bind(client.rest);
 const originalPatch = client.rest.patch.bind(client.rest);
 
-function convertEmbedToCV2(embedData) {
-  const comps = [];
-  
-  if (embedData.author) {
-      comps.push({ type: 10, content: `-# **• ${embedData.author.name}**` });
+function pushDivider(comps) {
+    if (comps.length > 0 && comps[comps.length - 1].type !== 14) {
       comps.push({ type: 14, divider: true });
+    }
+  }
+
+  function convertEmbedToCV2(embedData) {
+    const comps = [];
+    
+    if (embedData.author) {
+      comps.push({ type: 10, content: `-# **• ${embedData.author.name}**` });
+      pushDivider(comps);
     }
     
     // If there's a thumbnail but no main image, promote it to the main image
@@ -283,53 +289,53 @@ function convertEmbedToCV2(embedData) {
         embedData.image = { url: embedData.thumbnail.url };
     }
 
-  if (embedData.title) {
-    comps.push({ type: 10, content: `## **${embedData.title}**` });
-    comps.push({ type: 14, divider: true });
-  }
+    if (embedData.title) {
+      comps.push({ type: 10, content: `## **${embedData.title}**` });
+      pushDivider(comps);
+    }
 
-  if (embedData.description) {
-    let desc = embedData.description;
-    const lines = desc.split('\n');
-    desc = lines.map(l => {
-      if (!l.trim()) return l;
-      if (/^(-#|#{1,3} |> )/.test(l)) return l;
-      return '-# ' + l;
-    }).join('\n');
-    comps.push({ type: 10, content: desc });
-  }
+    if (embedData.description) {
+      let desc = embedData.description;
+      const lines = desc.split('\n');
+      desc = lines.map(l => {
+        if (!l.trim()) return l;
+        if (/^(-#|#{1,3} |> )/.test(l)) return l;
+        return '-# ' + l;
+      }).join('\n');
+      comps.push({ type: 10, content: desc });
+    }
 
-  if (embedData.fields && embedData.fields.length > 0) {
-    let fieldText = '';
-    let inlineBuf = [];
-    for (const f of embedData.fields) {
-      if (f.inline) {
-        inlineBuf.push(`**${f.name}:** ${f.value}`);
-      } else {
-        if (inlineBuf.length > 0) { fieldText += '-# ' + inlineBuf.join('  **\u00b7**  ') + '\n'; inlineBuf = []; }
-        fieldText += `\n-# **${f.name}**\n-# ${f.value.replace(/\n/g, '\n-# ')}\n`;
+    if (embedData.fields && embedData.fields.length > 0) {
+      let fieldText = '';
+      let inlineBuf = [];
+      for (const f of embedData.fields) {
+        if (f.inline) {
+          inlineBuf.push(`**${f.name}:** ${f.value}`);
+        } else {
+          if (inlineBuf.length > 0) { fieldText += '-# ' + inlineBuf.join('  **·**  ') + '\n'; inlineBuf = []; }
+          fieldText += `\n-# **${f.name}**\n-# ${f.value.replace(/\n/g, '\n-# ')}\n`;
+        }
+      }
+      if (inlineBuf.length > 0) fieldText += '\n-# ' + inlineBuf.join('  **·**  ') + '\n';
+      
+      if (fieldText.trim()) {
+        pushDivider(comps);
+        comps.push({ type: 10, content: fieldText.trim() });
       }
     }
-    if (inlineBuf.length > 0) fieldText += '\n-# ' + inlineBuf.join('  **\u00b7**  ') + '\n';
-    
-    if (fieldText.trim()) {
-      comps.push({ type: 14, divider: true });
-      comps.push({ type: 10, content: fieldText.trim() });
+
+    if (embedData.image) {
+      pushDivider(comps);
+      comps.push({ type: 12, items: [{ media: { url: embedData.image.url } }] });
     }
-  }
 
-  if (embedData.image) {
-    comps.push({ type: 14, divider: true });
-    comps.push({ type: 12, items: [{ media: { url: embedData.image.url } }] });
-  }
+    if (embedData.footer) {
+      pushDivider(comps);
+      comps.push({ type: 10, content: `-# ${embedData.footer.text}` });
+    }
 
-  if (embedData.footer) {
-    comps.push({ type: 14, divider: true });
-    comps.push({ type: 10, content: `-# ${embedData.footer.text}` });
+    return { type: 17, components: comps };
   }
-
-  return { type: 17, components: comps };
-}
 
 function interceptPayload(body) {
     if (!body) return false;
