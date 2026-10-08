@@ -466,6 +466,20 @@ export const commands = [
     async _processSteal(input, context, guild) {
       const EMOJI_RE = /<(a?):([a-zA-Z0-9_]+):(\d+)>/g;
       const matches  = [...input.matchAll(EMOJI_RE)];
+      
+      const LINK_RE  = /https:\/\/cdn\.discordapp\.com\/emojis\/(\d+)\.(png|gif|webp)/g;
+      const linkMatches = [...input.matchAll(LINK_RE)];
+      
+      for (const m of linkMatches) {
+        const isAnim = m[2] === 'gif' || input.includes('animated=true');
+        const id = m[1];
+        
+        // Try to extract a name if they typed one before the link
+        let nameMatch = input.match(new RegExp(`([a-zA-Z0-9_]+)\\s+https:\/\/cdn\.discordapp\.com\/emojis\/` + id));
+        let name = nameMatch ? nameMatch[1] : `emoji_${id.substring(0, 5)}`;
+        
+        matches.push(['', isAnim ? 'a' : '', name, id]);
+      }
 
       if (!matches.length) {
         return context.reply(cv2.warn(
