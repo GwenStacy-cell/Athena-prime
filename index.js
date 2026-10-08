@@ -273,17 +273,15 @@ const originalPatch = client.rest.patch.bind(client.rest);
 function convertEmbedToCV2(embedData) {
   const comps = [];
   
-  if (embedData.author || embedData.thumbnail) {
-    const text = embedData.author ? `**${embedData.author.name}**` : ' ';
-    const iconUrl = (embedData.author && embedData.author.icon_url) ? embedData.author.icon_url : (embedData.thumbnail ? embedData.thumbnail.url : undefined);
+  if (embedData.author) {
+      comps.push({ type: 10, content: `-# **> ${embedData.author.name}**` });
+      comps.push({ type: 14, divider: true });
+    }
     
-    comps.push({
-      type: 9,
-      components: [{ type: 10, content: text }],
-      accessory: iconUrl ? { type: 11, media: { url: iconUrl } } : undefined
-    });
-    comps.push({ type: 14, divider: true });
-  }
+    // If there's a thumbnail but no main image, promote it to the main image
+    if (embedData.thumbnail && !embedData.image) {
+        embedData.image = { url: embedData.thumbnail.url };
+    }
 
   if (embedData.title) {
     comps.push({ type: 10, content: `## **${embedData.title}**` });
