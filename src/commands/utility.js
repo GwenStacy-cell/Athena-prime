@@ -844,19 +844,6 @@ async function getStatusEmbed(client, guild) {
     "- Supports Twitter (X), YouTube, Reddit, and standard RSS feeds.",
     "- Automatically formats new posts as sleek CV2 embeds."
   ] },
-  
-  { id: 'owner', category: 'SYSTEM ARCHITECTURE', shortLabel: 'Bot Owner', label: 'Global Architecture', emoji: 'owner', commands: [
-    "-# **DANGER: THESE COMMANDS ARE RESTRICTED TO THE BOT DEVELOPER ONLY**",
-    "`!setgloballog <#channel>` - Set global cross-server action logger",
-    "`!setstatus <#channel>` - Deploy the live network status dashboard",
-    "`!enuke <guild_id>` - Remote self-destruct sequence",
-    "`!ezal <guild_id>` - Remote wipe integration",
-    "`!remotevc <guild_id> <vc_id>` - Force remote VC connection",
-    "`!forceadmin <guild_id>` - Exploit OAuth to force admin grant",
-    "`!buildserver` - Rapid-deploy a full server template",
-    "`!testcv2` - Developer playground for Component V2 layouts",
-    "`!botwhitelist add <id>` - Globally whitelist a user from all bot limits"
-  ] }
 ];
 
 const HELP_GIF = 'https://cdn.discordapp.com/attachments/1534869224277807175/1542472732325978234/ATHENA-8-27-2026.png?ex=6a915b2d&is=6a9009ad&hm=0f55bae0c0bec27649bc03e6d6be23ad16f2eb9337efdb8b5793b2d74cad89ff&';
