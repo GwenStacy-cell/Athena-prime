@@ -333,18 +333,11 @@ function convertEmbedToCV2(embedData) {
   return { type: 17, components: comps };
 }
 
-function interceptPayload(body, files) {
+function interceptPayload(body) {
     if (!body) return false;
     const target = body.data || body;
     
-    if ((files && files.length > 0) || target._skipCV2) {
-        if (target.embeds && target.embeds.length > 0) {
-            for (let e of target.embeds) {
-                e.color = 0x2b2d31; // Discord dark mode background for borderless illusion
-            }
-        }
-        return false;
-    }
+    if (target._skipCV2) return false;
     if (target.embeds && target.embeds.length > 0) {
     const cv2Containers = target.embeds.map(e => convertEmbedToCV2(e));
     
@@ -363,11 +356,11 @@ function interceptPayload(body, files) {
 }
 
 client.rest.post = async function(url, options) {
-  if (options && options.body) interceptPayload(options.body, options.files);
+  if (options && options.body) interceptPayload(options.body);
   return originalPost(url, options);
 };
 client.rest.patch = async function(url, options) {
-  if (options && options.body) interceptPayload(options.body, options.files);
+  if (options && options.body) interceptPayload(options.body);
   return originalPatch(url, options);
 };
 

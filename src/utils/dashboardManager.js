@@ -164,9 +164,9 @@ export async function updateDashboardMessage(guild, client) {
         try { m2 = await channel.messages.fetch(msgIds[1]); } catch(e) { throw new Error(`Fetch m2 failed: ${e.code}`); }
         try { m3 = await channel.messages.fetch(msgIds[2]); } catch(e) { throw new Error(`Fetch m3 failed: ${e.code}`); }
         
-        try { await m1.edit({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [], _skipCV2: true }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
-        try { await m2.edit({ embeds: [embedTo], files: [fileTo], attachments: [], _skipCV2: true }); } catch(e) { throw new Error(`Edit m2 failed: ${e.code}`); }
-        try { await m3.edit({ embeds: [embedAm], files: [fileAm], attachments: [], _skipCV2: true }); } catch(e) { throw new Error(`Edit m3 failed: ${e.code}`); }
+        try { await m1.edit({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
+        try { await m2.edit({ embeds: [embedTo], files: [fileTo], attachments: [] }); } catch(e) { throw new Error(`Edit m2 failed: ${e.code}`); }
+        try { await m3.edit({ embeds: [embedAm], files: [fileAm], attachments: [] }); } catch(e) { throw new Error(`Edit m3 failed: ${e.code}`); }
         
         // Cleanup duplicates if any exist
         const fetched = await channel.messages.fetch({ limit: 50 }).catch(() => null);
@@ -182,10 +182,7 @@ export async function updateDashboardMessage(guild, client) {
         if (err.message.includes('10008')) {
           console.log(`[Dashboard Sync] Old messages not found in ${guild.id}. (msgIds: ${msgIds.join(', ')}). Error: ${err.message}. Reposting dashboard...`);
         } else {
-          if (err && !err.message?.includes('ECONNRESET') && !err.message?.includes('Connect Timeout') && err.code !== 'ECONNRESET') {
-            console.error(`[Dashboard Sync] Failed to edit messages in ${guild.id}:`, err.message);
-          }
-          return; // Stop here, don't delete and repost!
+          console.log(`[Dashboard Sync] Edit failed in ${guild.id}, recreating dashboard...`);
         }
       }
     }
@@ -200,9 +197,9 @@ export async function updateDashboardMessage(guild, client) {
       if (botMessages.size === 3) {
         const msgs = [...botMessages.values()];
         try {
-          await msgs[0].edit({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [], _skipCV2: true });
-          await msgs[1].edit({ embeds: [embedTo], files: [fileTo], attachments: [], _skipCV2: true });
-          await msgs[2].edit({ embeds: [embedAm], files: [fileAm], attachments: [], _skipCV2: true });
+          await msgs[0].edit({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] });
+          await msgs[1].edit({ embeds: [embedTo], files: [fileTo], attachments: [] });
+          await msgs[2].edit({ embeds: [embedAm], files: [fileAm], attachments: [] });
           db.setDashboardInfo(guild.id, channel.id, [msgs[0].id, msgs[1].id, msgs[2].id]);
           return; // Adopted successfully
         } catch (e) {
@@ -216,9 +213,9 @@ export async function updateDashboardMessage(guild, client) {
       }
     }
 
-    const m1 = await channel.send({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb], _skipCV2: true });
-    const m2 = await channel.send({ embeds: [embedTo], files: [fileTo], _skipCV2: true });
-    const m3 = await channel.send({ embeds: [embedAm], files: [fileAm], _skipCV2: true });
+    const m1 = await channel.send({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb] });
+    const m2 = await channel.send({ embeds: [embedTo], files: [fileTo] });
+    const m3 = await channel.send({ embeds: [embedAm], files: [fileAm] });
 
     db.setDashboardInfo(guild.id, channel.id, [m1.id, m2.id, m3.id]);
 

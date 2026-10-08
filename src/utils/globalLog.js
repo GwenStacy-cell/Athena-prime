@@ -43,7 +43,7 @@ export async function postGlobalActionLog(client, opts) {
     new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(`Violator: ${(targetTag || targetId).substring(0, 60)}`).setURL(`https://discord.com/users/${targetId}`)
   );
 
-  const payload = { embeds: [embed], components: [row], files: [attachment], _skipCV2: true };
+  const payload = { embeds: [embed], components: [row], files: [attachment],  };
 
   for (const guild of client.guilds.cache.values()) {
     const cfg = db.getGuildConfig(guild.id);
