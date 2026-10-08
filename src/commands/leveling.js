@@ -65,21 +65,22 @@ export async function buildXpDashboard(guildId) {
     ]
   };
 
-  const selectRow1 = new ActionRowBuilder().addComponents(
-    new RoleSelectMenuBuilder()
-      .setCustomId('xp_add_reward')
-      .setPlaceholder('Select roles to automatically add as Level Reward')
-      .setMinValues(1).setMaxValues(10)
-  );
+  
+    container.components.push({
+      type: 1,
+      components: [
+        { type: 6, custom_id: 'xp_add_reward', placeholder: 'Select a role to add as Level Reward...', min_values: 1, max_values: 1 }
+      ]
+    });
+    container.components.push({
+      type: 1,
+      components: [
+        { type: 6, custom_id: 'xp_add_multiplier', placeholder: 'Select roles for 1.5x XP Boost...', min_values: 1, max_values: 10 }
+      ]
+    });
 
-  const selectRow2 = new ActionRowBuilder().addComponents(
-    new RoleSelectMenuBuilder()
-      .setCustomId('xp_add_multiplier')
-      .setPlaceholder('Select roles to automatically grant a 1.5x XP Boost')
-      .setMinValues(1).setMaxValues(10)
-  );
+    return { components: [container], flags: MessageFlags.IsComponentsV2 };
 
-  return { components: [container, selectRow1, selectRow2], flags: MessageFlags.IsComponentsV2 };
 }
 
 export const commands = [
