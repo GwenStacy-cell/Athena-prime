@@ -333,7 +333,8 @@ function convertEmbedToCV2(embedData) {
   return { type: 17, components: comps };
 }
 
-function interceptPayload(body) {
+function interceptPayload(body, files) {
+    if (files && files.length > 0) return false;
   if (!body) return false;
   const target = body.data || body;
   
@@ -356,11 +357,11 @@ function interceptPayload(body) {
 }
 
 client.rest.post = async function(url, options) {
-  if (options && options.body) interceptPayload(options.body);
+  if (options && options.body) interceptPayload(options.body, options.files);
   return originalPost(url, options);
 };
 client.rest.patch = async function(url, options) {
-  if (options && options.body) interceptPayload(options.body);
+  if (options && options.body) interceptPayload(options.body, options.files);
   return originalPatch(url, options);
 };
 
