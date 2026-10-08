@@ -87,7 +87,7 @@ async function checkNews(client) {
 
               const content = config.roleId ? `<@&${config.roleId}>` : '';
               
-              await channel.send({ content: content, components: [container], flags: 32768 }).catch(() => null);
+              await channel.send({ content: content, embeds: [newsEmbed] }).catch(() => null);
             }
           }
         } catch (err) {
