@@ -24,6 +24,41 @@ export default {
 
 
     // --- SUGGESTION BUTTONS ---
+    if (interaction.isButton() && interaction.customId.startsWith('ticket_')) {
+      import('../commands/ticket.js').then(m => {
+        if (m.handleTicketButtons) m.handleTicketButtons(interaction).catch(e => console.error(e));
+      }).catch(e => console.error(e));
+      return;
+    }
+    
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('ticket_')) {
+      import('../commands/ticket.js').then(m => {
+        if (m.handleTicketModals) m.handleTicketModals(interaction).catch(e => console.error(e));
+      }).catch(e => console.error(e));
+      return;
+    }
+
+    if (interaction.isButton() && interaction.customId.startsWith('tp_')) {
+      import('../commands/ticketpanel.js').then(m => {
+        if (m.handleTicketPanelButtons) m.handleTicketPanelButtons(interaction).catch(e => console.error(e));
+      }).catch(e => console.error(e));
+      return;
+    }
+    
+    if (interaction.isAnySelectMenu() && interaction.customId.startsWith('tp_')) {
+      import('../commands/ticketpanel.js').then(m => {
+        if (m.handleTicketPanelMenus) m.handleTicketPanelMenus(interaction).catch(e => console.error(e));
+      }).catch(e => console.error(e));
+      return;
+    }
+    
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('tp_')) {
+      import('../commands/ticketpanel.js').then(m => {
+        if (m.handleTicketPanelModals) m.handleTicketPanelModals(interaction).catch(e => console.error(e));
+      }).catch(e => console.error(e));
+      return;
+    }
+
     if (interaction.isButton() && interaction.customId.startsWith('sug_')) {
       import('../commands/community.js').then(m => {
         if (m.handleSuggestionButtons) m.handleSuggestionButtons(interaction).catch(()=>{});
