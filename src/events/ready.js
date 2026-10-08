@@ -153,14 +153,26 @@ export default {
       'Armed',
       'Secured',
       'Truly Unbypassable',
-      'Dev Prince'
+      'Dev Prince',
+      'Made in India | Challenging the World !',
+      'Use !help, to learn more',
+      'Trusted by {users} Users in {servers} Servers'
     ];
     let statusIndex = 0;
 
     const updatePresence = () => {
+      let stateStr = customStatuses[statusIndex];
+      if (stateStr.includes('{users}')) {
+        const totalUsers = client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
+        stateStr = stateStr.replace('{users}', totalUsers);
+      }
+      if (stateStr.includes('{servers}')) {
+        stateStr = stateStr.replace('{servers}', client.guilds.cache.size);
+      }
+      
       client.user.setPresence({
         activities: [
-          { name: 'status', type: ActivityType.Custom, state: customStatuses[statusIndex] }
+          { name: 'status', type: ActivityType.Custom, state: stateStr }
         ],
         status: 'online'
       });
