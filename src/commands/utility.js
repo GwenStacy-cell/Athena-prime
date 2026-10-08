@@ -686,7 +686,7 @@ const helpModules = [
     "- Supports **Custom Trigger Limits** (e.g., allowed to kick 5 members max per hour)."
   ] },
   
-  { id: 'moderation', category: 'MODERATION SUITE', shortLabel: 'Mods', label: 'Moderation Tools', emoji: 'mod', commands: [
+  { id: 'moderation', category: 'SERVER ADMINISTRATION', shortLabel: 'Mods', label: 'Moderation Tools', emoji: 'mod', commands: [
     "`!ban @user [reason]` - Ban a member `[ban members]`",
     "`!kick @user [reason]` - Kick a member `[kick members]`",
     "`!timeout @user [time] [reason]` - Timeout a member `[moderate members]`",
@@ -701,7 +701,7 @@ const helpModules = [
     "`!ur @user <new_name>` - Update role (name modifier) `[manage roles]`",
     "`!createrole` - Interactive Role Creator with 26 permission toggles `[manage roles]`"
   ] },
-  { id: 'mass_actions', category: 'MODERATION SUITE', shortLabel: 'Mass Mod', label: 'Mass Actions', emoji: 'mass', commands: [
+  { id: 'mass_actions', category: 'SERVER ADMINISTRATION', shortLabel: 'Mass Mod', label: 'Mass Actions', emoji: 'mass', commands: [
     "`!massban` - Open interactive menu to ban multiple users `[ban members]`",
     "`!masskick` - Open interactive menu to kick multiple users `[kick members]`",
     "`!masstimeout` - Open interactive menu to timeout multiple users `[moderate members]`",
@@ -712,7 +712,7 @@ const helpModules = [
     "These commands spawn secure CV2 panels that allow selecting targets from specific voice channels, roles, or text channels. Protected and whitelisted users are automatically skipped."
   ] },
 
-  { id: 'tickets', category: 'ENGAGEMENT & UTILITY', shortLabel: 'Tickets', label: 'Ticket System', emoji: 'tickets', commands: [
+  { id: 'tickets', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tickets', label: 'Ticket System', emoji: 'tickets', commands: [
     "`!ticket` - Configure the ticket system `[manage guild]`",
     "`!ticketpanel` - Deploy a ticket creation panel `[manage guild]`",
     "`!add @user` - Add a user to a ticket `[ticket support]`",
@@ -726,7 +726,7 @@ const helpModules = [
     "Step 3: Click **Set Ping Role** to choose who gets notified.",
     "Step 4: Run `!ticketpanel` in your desired public channel."
   ] },
-  { id: 'leveling', category: 'ENGAGEMENT & UTILITY', shortLabel: 'XP', label: 'Leveling & XP', emoji: 'leveling', commands: [
+  { id: 'leveling', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'XP', label: 'Leveling & XP', emoji: 'leveling', commands: [
     "`!xpsetup` - Open the XP Dashboard `[manage guild]`",
     "`!rank [@user]` - View level and XP progress",
     "`!givexp @user <amount>` - Manually grant XP `[admin]`",
@@ -738,7 +738,7 @@ const helpModules = [
     "Step 3: Use the multiplier dropdown to boost XP for server boosters or VIPs.",
     "Step 4: Set the **Announce Channel** where level-up messages will be sent."
   ] },
-  { id: 'giveaway', category: 'ENGAGEMENT & UTILITY', shortLabel: 'Giveaway', label: 'Giveaways', emoji: 'giveaway', commands: [
+  { id: 'giveaway', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Giveaway', label: 'Giveaways', emoji: 'giveaway', commands: [
     "`!gstart [duration] [winners] [prize]` - Start a giveaway `[manage guild]`",
     "`!gend [message_id]` - End a giveaway early `[manage guild]`",
     "`!greroll [message_id]` - Reroll giveaway winners `[manage guild]`",
@@ -747,7 +747,7 @@ const helpModules = [
     "- `!gstart 1h 2x Discord Nitro` (1 hour, 2 winners)",
     "- `!gstart 30m 1x $10 Steam Card` (30 mins, 1 winner)"
   ] },
-  { id: 'welcome', category: 'ENGAGEMENT & UTILITY', shortLabel: 'Welcome', label: 'Welcome, Leave & Announcements', emoji: 'welcome', commands: [
+  { id: 'welcome', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Welcome', label: 'Welcome, Leave & Announcements', emoji: 'welcome', commands: [
     "`!announce` - Open the interactive Announcement Builder `[manage messages]`",
     "`!welcome` - Interactive Welcome message builder `[manage guild]`",
     "`!leave` - Interactive Leave message builder `[manage guild]`",
@@ -757,7 +757,7 @@ const helpModules = [
     "**Builder Features:**",
     "The Welcome/Leave builder lets you set custom text, embeds, images, and variables like \{user.mention\}, \{user.name\}, and \{server.membercount\}."
   ] },
-  { id: 'voice', category: 'ENGAGEMENT & UTILITY', shortLabel: 'Voice', label: 'Voice Moderation', emoji: 'voice', commands: [
+  { id: 'voice', category: 'VOICE & MEDIA', shortLabel: 'Voice', label: 'Voice Moderation', emoji: 'voice', commands: [
     "`!vc` - Opens the CV2 Voice Dashboard `[manage channels]`",
     "`!vclock` - Lock current VC `[manage channels]`",
     "`!vcunlock` - Unlock current VC `[manage channels]`",
@@ -774,7 +774,7 @@ const helpModules = [
     "`!jtcdisable` - Disable JTC completely `[admin]`"
   ] },
   
-  { id: 'tracking', category: 'ANALYTICS & MEDIA', shortLabel: 'Tracking', label: 'Analytics & Tracking', emoji: 'tracking', commands: [
+  { id: 'tracking', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tracking', label: 'Analytics & Tracking', emoji: 'tracking', commands: [
     "`!serverlogs status|toggle|bind|autosetup` - Manage logging modules `[admin]`",
     "`!chatlb` - View the text chat leaderboard",
     "`!voicelb` - View the voice activity leaderboard",
@@ -782,14 +782,14 @@ const helpModules = [
     "`!invites` - Check your invite count",
     "`!top` - Server leaderboard overview"
   ] },
-  { id: 'config', category: 'ANALYTICS & MEDIA', shortLabel: 'Config', label: 'Server Configuration', emoji: 'config', commands: [
+  { id: 'config', category: 'SERVER ADMINISTRATION', shortLabel: 'Config', label: 'Server Configuration', emoji: 'config', commands: [
     "`!setup` - Setup basic bot configuration `[admin]`",
     "`!serverstats setup|config|disable` - Create live VC server stats `[admin]`",
     "`!ytstats setup` - Create live YouTube subscriber stats VC `[admin]`",
     "`!autovcstatus [on|off]` - Rotate custom statuses on all VCs `[admin]`",
     "`!accent <hex>` - Set the global CV2 accent color for the server `[admin]`"
   ] },
-  { id: 'community', category: 'ANALYTICS & MEDIA', shortLabel: 'Community', label: 'Community Tools', emoji: 'community', commands: [
+  { id: 'community', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Community', label: 'Community Tools', emoji: 'community', commands: [
     "`!rate` - Rate recent server edits with custom stars",
     "`!ratelb` - View the edit rating leaderboard",
     "`!voicerole @role` - Role assigned automatically when joining any VC `[admin]`",
@@ -797,7 +797,7 @@ const helpModules = [
     "`!media <url>` - Download TikTok/Insta/Twitter/YouTube videos directly",
     "`!chess` - Play an interactive game of chess in chat"
   ] },
-  { id: 'utilities', category: 'ANALYTICS & MEDIA', shortLabel: 'Utilities', label: 'General Utilities', emoji: 'utilities', commands: [
+  { id: 'utilities', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Utilities', label: 'General Utilities', emoji: 'utilities', commands: [
     "`!help` - Displays this menu",
     "`!dev` - Displays developer information and credits",
     "`!ping` - View bot latency and heartbeat graph",
