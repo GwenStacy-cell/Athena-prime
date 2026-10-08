@@ -334,11 +334,17 @@ function convertEmbedToCV2(embedData) {
 }
 
 function interceptPayload(body, files) {
-    if (files && files.length > 0) return false;
-  if (!body) return false;
-  const target = body.data || body;
-  
-  if (target._skipCV2) return false;
+    if (!body) return false;
+    const target = body.data || body;
+    
+    if ((files && files.length > 0) || target._skipCV2) {
+        if (target.embeds && target.embeds.length > 0) {
+            for (let e of target.embeds) {
+                e.color = 0x2b2d31; // Discord dark mode background for borderless illusion
+            }
+        }
+        return false;
+    }
     if (target.embeds && target.embeds.length > 0) {
     const cv2Containers = target.embeds.map(e => convertEmbedToCV2(e));
     
