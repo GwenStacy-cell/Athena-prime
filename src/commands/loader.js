@@ -1,4 +1,4 @@
-import { commands as shortcutsCmds } from './shortcuts.js';
+﻿import { commands as shortcutsCmds } from './shortcuts.js';
 import { commands as botvoiceCmds } from './botvoice.js';
 import { commands as authCmds } from './auth.js';
 import { commands as tierCmds } from './tier.js';
@@ -79,6 +79,7 @@ import { commands as buildserverCmds } from './buildserver.js';
 import { commands as remoteadminCmds } from './remoteadmin.js';
 import { commands as globalcontrolsCmds } from './globalcontrols.js';
 import { commands as autovcstatusCmds } from './autovcstatus.js';
+import { commands as shipCmds } from './ship.js';
 
 export const allCommands = [
   ...ccmdCmds,
@@ -101,6 +102,7 @@ export const allCommands = [
   ...remoteadminCmds,
   ...globalcontrolsCmds,
   ...autovcstatusCmds,
+  ...shipCmds,
   ...youtubeCmds,
   ...snipeCmds,
   ...vcpanelCmds,
@@ -176,3 +178,4 @@ for (const cmd of allCommands) {
 }
 
 export default commandMap;
+
