@@ -1413,6 +1413,24 @@ class Database {
   }
 
   // --- Liked Songs ---
+
+    // --- PING ALERTS ---
+    getPingAlertBlocks(userId) {
+      if (!this.cache.pingAlertBlocks) this.cache.pingAlertBlocks = {};
+      return this.cache.pingAlertBlocks[userId] || [];
+    }
+    
+    addPingAlertBlock(userId, guildId) {
+      if (!this.cache.pingAlertBlocks) this.cache.pingAlertBlocks = {};
+      if (!this.cache.pingAlertBlocks[userId]) this.cache.pingAlertBlocks[userId] = [];
+      if (!this.cache.pingAlertBlocks[userId].includes(guildId)) {
+        this.cache.pingAlertBlocks[userId].push(guildId);
+        this.save();
+        return true;
+      }
+      return false;
+    }
+
   getLikedSongs(userId) {
     if (!this.cache.likedSongs) this.cache.likedSongs = {};
     return this.cache.likedSongs[userId] || [];

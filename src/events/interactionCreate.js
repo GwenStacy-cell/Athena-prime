@@ -23,6 +23,56 @@ export default {
     }
 
 
+    
+    // ==========================================
+    // PING ALERTS SYSTEM
+    // ==========================================
+    if (interaction.isButton() && interaction.customId === 'ping_ack') {
+      await interaction.update({ content: '-# <:emoji_16:1521464002046328944> Notification acknowledged.', components: [] });
+      return;
+    }
+    
+    if (interaction.isButton() && interaction.customId.startsWith('ping_block_')) {
+      const guildId = interaction.customId.split('_')[2];
+      db.addPingAlertBlock(interaction.user.id, guildId);
+      await interaction.update({ content: '-# <:emoji_16:1521464002046328944> You will no longer receive ping notifications from this server.', components: [] });
+      return;
+    }
+    
+    if (interaction.isButton() && interaction.customId.startsWith('ping_reply_')) {
+      const parts = interaction.customId.split('_');
+      const channelId = parts[2];
+      const messageId = parts[3];
+      
+      const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
+      const modal = new ModalBuilder().setCustomId(`ping_modal_reply_${channelId}_${messageId}`).setTitle('Reply to Ping');
+      modal.addComponents(new ActionRowBuilder().addComponents(
+        new TextInputBuilder().setCustomId('reply_text').setLabel('Your Reply').setStyle(TextInputStyle.Paragraph).setRequired(true).setMaxLength(2000)
+      ));
+      return interaction.showModal(modal);
+    }
+    
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('ping_modal_reply_')) {
+      const parts = interaction.customId.split('_');
+      const channelId = parts[3];
+      const messageId = parts[4];
+      const replyText = interaction.fields.getTextInputValue('reply_text');
+      
+      try {
+        const client = interaction.client;
+        const channel = await client.channels.fetch(channelId).catch(() => null);
+        if (channel) {
+          await channel.send({ content: replyText, reply: { messageReference: messageId } }).catch(() => null);
+          await interaction.update({ content: '-# <:emoji_16:1521464002046328944> Reply sent successfully!', components: [] });
+        } else {
+          await interaction.reply({ content: '-# <:off:1533844858983157851> Failed to send reply: Channel not found.', flags: 64 });
+        }
+      } catch (e) {
+        await interaction.reply({ content: '-# <:off:1533844858983157851> Error sending reply.', flags: 64 });
+      }
+      return;
+    }
+
     // --- SUGGESTION BUTTONS ---
     if (interaction.isButton() && interaction.customId.startsWith('ticket_')) {
       import('../commands/ticket.js').then(m => {
