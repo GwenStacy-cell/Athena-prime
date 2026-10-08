@@ -826,30 +826,39 @@ function buildHelpContainer(client, guildId, moduleId) {
     
     
       const getEmoji = (name, fallback) => {
-        const customMap = {
+        const nameMap = {
+          'mod': 'moderation',
+          'mass': 'moderation',
+          'giveaway': 'giveaways',
+          'utilities': 'utility'
+        };
+        const searchName = nameMap[name] || name;
+        const e = client.emojis.cache.find(emoji => emoji.name === searchName || emoji.name === name);
+        if (e) return `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`;
+        
+        const unicodeFallback = {
           'security': '🛡️',
           'filters': '🎛️',
           'quarantine': '🔨',
           'whitelist': '🪪',
-          'moderation': '🛠️',
-          'mass_actions': '🧱',
+          'mod': '🛡️',
+          'mass': '🛡️',
           'tickets': '🎫',
-          'leveling': '📈',
+          'leveling': '⭐',
           'giveaway': '🎉',
           'welcome': '👋',
-          'voice': '🎙️',
-          'tracking': '📊',
+          'voice': '🔊',
+          'tracking': '📈',
           'config': '⚙️',
-          'community': '🌍',
-          'utilities': '🧰',
-          'black_dot': '•'
+          'community': '👥',
+          'utilities': '🛠️',
+          'black_dot': '•',
+          'home': '🏠'
         };
-        const e = client.emojis.cache.find(emoji => emoji.name === name);
-        if (e) return `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`;
-        return customMap[name] || fallback;
+        return unicodeFallback[name] || fallback;
       };
-  
-    let rawComponents = [];
+
+      let rawComponents = [];
   
     if (moduleId === 'home') {
       let topText = `# Hey !!! , I am <@${botId}> ,\n\n`;
