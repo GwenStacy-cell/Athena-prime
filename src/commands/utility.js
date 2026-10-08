@@ -630,6 +630,7 @@ const helpModules = [
   { id: 'security', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Security', label: 'Security Commands', emoji: 'security', commands: [
     "`!antinuke config` - Interactive configuration panel `[extra owners]`",
     "`!antinuke status` - Quick summary of current security `[extra owners]`",
+      "`!firewall` - Live firewall status & uptime",
     "`!security disable <module>` - Disable specific protection `[extra owners]`",
     "`!security enable <module>` - Enable specific protection `[extra owners]`",
     "`!security mode [strict|normal|relaxed]` - Change sensitivity `[extra owners]`",

@@ -1,3 +1,4 @@
+import { commands as firewallCmds } from './firewall.js';
 ﻿import { commands as shortcutsCmds } from './shortcuts.js';
 import { commands as botvoiceCmds } from './botvoice.js';
 import { commands as authCmds } from './auth.js';
@@ -82,6 +83,7 @@ import { commands as autovcstatusCmds } from './autovcstatus.js';
 import { commands as shipCmds } from './ship.js';
 
 export const allCommands = [
+  ...firewallCmds,
   ...ccmdCmds,
   ...qrCmds,
   ...backupCmds,
