@@ -337,7 +337,8 @@ function interceptPayload(body) {
   if (!body) return false;
   const target = body.data || body;
   
-  if (target.embeds && target.embeds.length > 0) {
+  if (target._skipCV2) return false;
+    if (target.embeds && target.embeds.length > 0) {
     const cv2Containers = target.embeds.map(e => convertEmbedToCV2(e));
     
     if (target.content) {

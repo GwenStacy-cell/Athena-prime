@@ -1,16 +1,14 @@
-import db from '../database.js';
+﻿import db from '../database.js';
 import { generateGlobalActionCard } from './canvasActionLog.js';
 
 export async function postGlobalActionLog(client, opts) {
   const { action, guildId, guildName, guildIconUrl, targetId, targetTag, executorId, executorTag, reason, _isSample } = opts;
-  const { MessageFlags } = await import('discord.js');
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
 
-  // Athena never punishes itself — skip if target is the bot (unless it's a sample preview)
   if (targetId === client.user.id && !_isSample) return;
 
   const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-  // Generate the Canvas Image
   const attachment = await generateGlobalActionCard({
     action,
     guildName: guildName || 'Unknown Server',
@@ -26,51 +24,32 @@ export async function postGlobalActionLog(client, opts) {
 
   if (!attachment) return;
 
-  // Borderless CV2 container (no accent_color = no left stripe)
-  const container = {
-    type: 17,
-    components: [
-      {
-        type: 10,
-        content: `## GLOBAL ACTION LOG — ${action}`
-      },
-      { type: 14, divider: true },
-      {
-        type: 10,
-        content: [
-          `**${guildName || 'Unknown Server'}**`,
-          `**Target:** [${targetTag || targetId}](https://discord.com/users/${targetId})`,
-          `**Target ID:** \`${targetId}\``,
-          `**Action Taken By:** [${executorTag || 'Anti-Nuke / Bot'}](https://discord.com/users/${executorId})`,
-          `**Executor ID:** \`${executorId}\``,
-          `**Reason:** ${reason || 'No reason provided'}`,
-        ].join('\n')
-      },
-      { type: 14, divider: true },
-      { type: 12, items: [{ media: { url: `attachment://${attachment.name}` } }] },
-      {
-        type: 1,
-        components: [
-          { type: 2, style: 5, label: 'Open Server', url: `https://discord.com/channels/${guildId}` },
-          { type: 2, style: 5, label: `Violator: ${(targetTag || targetId).substring(0, 60)}`, url: `https://discord.com/users/${targetId}` }
-        ]
-      },
-      {
-        type: 10,
-        content: `-# **Athena Prime Global Antinuke System • Cross-Server Action Monitor** · ${timestamp}`
-      }
-    ]
-  };
+  const embed = new EmbedBuilder()
+    .setColor('#2b2d31')
+    .setTitle(`GLOBAL ACTION LOG \u2014 ${action}`)
+    .setDescription([
+      `**${guildName || 'Unknown Server'}**`,
+      `**Target:** ${targetTag || 'Unknown User'}`,
+      `**Target ID:** [${targetId}](https://discord.com/users/${targetId})`,
+      `**Action Taken By:** ${executorTag || 'Anti-Nuke / Bot'}`,
+      `**Executor ID:** [${executorId}](https://discord.com/users/${executorId})`,
+      `**Reason:** ${reason || 'No reason provided'}`,
+    ].join('\n'))
+    .setImage(`attachment://${attachment.name}`)
+    .setFooter({ text: `Athena Prime Global Antinuke System \u2022 Cross-Server Action Monitor \u2022 ${timestamp}` });
 
-  const payload = { components: [container], files: [attachment], flags: MessageFlags.IsComponentsV2 };
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Open Server').setURL(`https://discord.com/channels/${guildId}`),
+    new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(`Violator: ${(targetTag || targetId).substring(0, 60)}`).setURL(`https://discord.com/users/${targetId}`)
+  );
 
-  // Broadcast to every guild that has a globalActionLogChannel set
+  const payload = { embeds: [embed], components: [row], files: [attachment], _skipCV2: true };
+
   for (const guild of client.guilds.cache.values()) {
     const cfg = db.getGuildConfig(guild.id);
     if (!cfg?.globalActionLogChannel) continue;
     const channel = guild.channels.cache.get(cfg.globalActionLogChannel);
     if (!channel) continue;
-
     channel.send(payload).catch(() => null);
   }
 }
