@@ -274,7 +274,7 @@ function convertEmbedToCV2(embedData) {
   const comps = [];
   
   if (embedData.author) {
-      comps.push({ type: 10, content: `-# **> ${embedData.author.name}**` });
+      comps.push({ type: 10, content: `-# **• ${embedData.author.name}**` });
       comps.push({ type: 14, divider: true });
     }
     
