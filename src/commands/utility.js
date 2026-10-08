@@ -1,12 +1,12 @@
-﻿import { PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, SeparatorBuilder, MessageFlags } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, SectionBuilder, TextDisplayBuilder, ThumbnailBuilder, SeparatorBuilder, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { processMp3Link } from '../utils/mediaDownloader.js';
 import { isAuthorized } from '../utils/helpers.js';
 
-// â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
-// Bold underline header formatter â€” matches embed title style
-// â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”
+// ——————————————————————————————————————————————————
+// Bold underline header formatter — matches embed title style
+// ——————————————————————————————————————————————————
 function h(text) {
   return `__**${text.toUpperCase()}**__`;
 }
@@ -154,7 +154,7 @@ export const commands = [
               let targetCmd = commandMap.get(cmdName);
               
               if (!targetCmd) {
-                  return message.reply({ content: `-! âš ï¸ **Command Not Found:** ` + cmdName });
+                  return message.reply({ content: `-! ⚠️ **Command Not Found:** ` + cmdName });
               }
               
               const { TextDisplayBuilder, MessageFlags } = await import('discord.js');
@@ -374,11 +374,11 @@ export const commands = [
 
       const e1 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`> **COMMAND | â”œÃ³â”¬Â¥Î“Ã‡Ã³**`);
+        .setDescription(`> **COMMAND | ├ó┬¥ΓÇó**`);
 
       const e2 = new EmbedBuilder()
         .setColor(accentInt)
-        .setDescription(`> â”œÃ³Î“Ã©Â¼â”¬Ã³ <@${user.id}> executed\n> **<:emoji_25:1515041866796503180> Time :**\n# ${timeStr}\n> **(IST) - ${dateStr}**`)
+        .setDescription(`> ├óΓé¼┬ó <@${user.id}> executed\n> **<:emoji_25:1515041866796503180> Time :**\n# ${timeStr}\n> **(IST) - ${dateStr}**`)
         .setThumbnail(user.displayAvatarURL({ size: 256, dynamic: true }));
 
       if (context.reply) {
@@ -640,18 +640,20 @@ async function getStatusEmbed(client, guild) {
   return statusEmbed;
 }
 
-const helpModules = [
+﻿const helpModules = [
   { id: 'security', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Security', label: 'Security Commands', emoji: 'security', commands: [
     "`!antinuke config` - Interactive configuration panel `[extra owners]`",
     "`!antinuke status` - Quick summary of current security `[extra owners]`",
-      "`!firewall` - Live firewall status & uptime",
+    "`!firewall` - Live firewall status & uptime",
     "`!security disable <module>` - Disable specific protection `[extra owners]`",
     "`!security enable <module>` - Enable specific protection `[extra owners]`",
     "`!security mode [strict|normal|relaxed]` - Change sensitivity `[extra owners]`",
     "`!spampermit <@user/id>` - Bypass webhook/spam protections for user `[extra owners]`",
     "`!spamrevoke <@user/id>` - Remove bypass for user `[extra owners]`",
     "`!spamlist` - View users with spam protection bypass `[extra owners]`",
-    "`!panic` - Immediately activate server lockdown `[extra owners]`",
+    "`!panic / !emergency` - Immediately activate server lockdown `[extra owners]`",
+    "`!raidmode on|off` - Toggle anti-raid CAPTCHA verification `[extra owners]`",
+    "`!lockapps / !unlockapps` - Lock server apps and integrations `[extra owners]`",
     "",
     "**Security Setup Guide:**",
     "Step 1: Run `!security enable all` to turn on base protections",
@@ -666,10 +668,10 @@ const helpModules = [
     "`!automod bypass list` - View bypassed roles `[extra owners]`",
     "`!automoderator` - Opens the interactive Automated Moderation & Security Dashboard `[admin]`",
     "`!wf / !wordfilter` - Manages word filter blacklists `[admin]`",
-    "`!wordfilter` - Manage the banned word list `[extra owners]`",
     "`!antilink` - Open Interactive Anti-Link & Invite Dashboard `[extra owners]`",
     "`!linksallow add|remove|list domain` - Whitelist specific domains `[extra owners]`",
     "`!blacklist add|remove|list phrase` - Auto-delete phrases `[extra owners]`",
+    "`!ignore <#channel>` - Tell automod to ignore a channel",
     "",
     "**Filter Management:**",
     "- Whitelisting domains overrides the anti-link filter for those specific links",
@@ -695,6 +697,7 @@ const helpModules = [
     "`!wl <user/role>` - Quick-whitelist for standard actions `[extra owners]`",
     "`!unwl <user/role>` - Remove user/role from whitelist `[extra owners]`",
     "`!wlist` - View all whitelisted entities `[extra owners]`",
+    "`!extraowner add|remove @user` - Grant/revoke full system bypass `[owner]`",
     "",
     "**The Whitelist Interface:**",
     "- Allows granting specific bypasses (e.g., allow Mass Ban but block Channel Delete).",
@@ -714,7 +717,9 @@ const helpModules = [
     "`!adel @user` - Auto-delete all messages sent by this user `[moderate members]`",
     "`!radel @user` - Remove auto-delete for this user `[moderate members]`",
     "`!ur @user <new_name>` - Update role (name modifier) `[manage roles]`",
-    "`!createrole` - Interactive Role Creator with 26 permission toggles `[manage roles]`"
+    "`!createrole` - Interactive Role Creator with 26 permission toggles `[manage roles]`",
+    "`!createchannel <name>` - Quickly create a text channel `[manage channels]`",
+    "`!deletechannel` - Delete the current channel `[manage channels]`"
   ] },
   { id: 'mass_actions', category: 'SERVER ADMINISTRATION', shortLabel: 'Mass Mod', label: 'Mass Actions', emoji: 'mass', commands: [
     "`!massban` - Open interactive menu to ban multiple users `[ban members]`",
@@ -722,6 +727,8 @@ const helpModules = [
     "`!masstimeout` - Open interactive menu to timeout multiple users `[moderate members]`",
     "`!massmove` - Open menu to move all members in VC `[move members]`",
     "`!massdc` - Open menu to disconnect all members in VC `[move members]`",
+    "`!massaddrole @role` - Interactively grant a role to many members `[manage roles]`",
+    "`!massremoverole @role` - Interactively remove a role from many members `[manage roles]`",
     "",
     "**Mass Mod Guidance:**",
     "These commands spawn secure CV2 panels that allow selecting targets from specific voice channels, roles, or text channels. Protected and whitelisted users are automatically skipped."
@@ -739,7 +746,41 @@ const helpModules = [
     "Step 1: Run `!ticket` to open the configuration panel.",
     "Step 2: Click **Set Category** to choose where tickets open.",
     "Step 3: Click **Set Ping Role** to choose who gets notified.",
-    "Step 4: Run `!ticketpanel` in your desired public channel."
+    "Step 4: Run `!ticketpanel` to customize and deploy your ticket interface."
+  ] },
+  { id: 'tracking', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tracking', label: 'Tracking & Logs', emoji: 'tracking', commands: [
+    "`!serverlogs` - View interactive server event logs",
+    "`!serveroverview` - Rich overview of server statistics",
+    "`!chatlb` - View the most active chatters",
+    "`!voicelb` - View the most active voice members",
+    "`!invitelb` - View the top inviters in the server",
+    "`!syncinvites` - Synchronize the invite tracker database",
+    "`!botstats` - View bot performance and cluster info",
+    "`!setdeletelog <#channel>` - Set where deleted messages are sent `[admin]`",
+    "`!server-logs` - Set up the primary server action logger `[admin]`",
+    "`!bjoins / !bcmds / !bservers` - View bot growth metrics"
+  ] },
+  { id: 'config', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Config', label: 'Server Configuration', emoji: 'config', commands: [
+    "`!serverstats setup` - Create voice channels displaying member counts `[admin]`",
+    "`!serverstats config` - Configure stat channels `[admin]`",
+    "`!serverstats disable` - Remove stat channels `[admin]`",
+    "`!ytstats setup` - Display YouTube subscriber counts in VC `[admin]`",
+    "`!autovcstatus [on|off]` - Rotate custom statuses on all VCs `[admin]`",
+    "`!accent <hex>` - Set the global CV2 accent color for the server `[admin]`",
+    "`!prefix <new_prefix>` - Change the bot's command prefix `[admin]`",
+    "`!setguildavatar` - Change the server icon `[manage guild]`",
+    "`!setguildbanner` - Change the server banner `[manage guild]`"
+  ] },
+
+  { id: 'welcome', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Welcome', label: 'Welcome & Leave', emoji: 'welcome', commands: [
+    "`!welcome` - Open interactive Welcome Message Builder `[manage guild]`",
+    "`!leave` - Open interactive Leave Message Builder `[manage guild]`",
+    "`!autorole` - Configure roles given on join `[manage guild]`",
+    "`!verify` - Setup verification gate `[manage guild]`",
+    "",
+    "**Builder Features:**",
+    "- Supports embedding images, setting custom CV2 borders, and formatting.",
+    "- Use placeholders like `{user}`, `{server}`, and `{membercount}`."
   ] },
   { id: 'leveling', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'XP', label: 'Leveling & XP', emoji: 'leveling', commands: [
     "`!xpsetup` - Open the XP Dashboard `[manage guild]`",
@@ -753,56 +794,16 @@ const helpModules = [
     "Step 3: Use the multiplier dropdown to boost XP for server boosters or VIPs.",
     "Step 4: Set the **Announce Channel** where level-up messages will be sent."
   ] },
-  { id: 'giveaway', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Giveaway', label: 'Giveaways', emoji: 'giveaway', commands: [
-    "`!gstart [duration] [winners] [prize]` - Start a giveaway `[manage guild]`",
-    "`!gend [message_id]` - End a giveaway early `[manage guild]`",
-    "`!greroll [message_id]` - Reroll giveaway winners `[manage guild]`",
-    "",
-    "**Giveaway Examples:**",
-    "- `!gstart 1h 2x Discord Nitro` (1 hour, 2 winners)",
-    "- `!gstart 30m 1x $10 Steam Card` (30 mins, 1 winner)"
-  ] },
-  { id: 'welcome', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Welcome', label: 'Welcome, Leave & Announcements', emoji: 'welcome', commands: [
-    "`!announce` - Open the interactive Announcement Builder `[manage messages]`",
-    "`!welcome` - Interactive Welcome message builder `[manage guild]`",
-    "`!leave` - Interactive Leave message builder `[manage guild]`",
-    "`!autorole` - Configure roles given on join `[manage guild]`",
-    "`!autoreact` - Auto-react to messages in specific channels `[manage guild]`",
-    "",
-    "**Builder Features:**",
-    "The Welcome/Leave builder lets you set custom text, embeds, images, and variables like \{user.mention\}, \{user.name\}, and \{server.membercount\}."
-  ] },
-  { id: 'voice', category: 'VOICE & MEDIA', shortLabel: 'Voice', label: 'Voice Moderation', emoji: 'voice', commands: [
-    "`!vc` - Opens the CV2 Voice Dashboard `[manage channels]`",
-    "`!vclock` - Lock current VC `[manage channels]`",
-    "`!vcunlock` - Unlock current VC `[manage channels]`",
-    "`!vchide` - Hide current VC `[manage channels]`",
-    "`!vcunhide` - Unhide current VC `[manage channels]`",
-    "`!vckick @user` - Kick a user from VC `[move members]`",
-    "`!vcban @user` - Ban a user from joining the VC `[move members]`",
-    "`!vcunban @user` - Unban a user from the VC `[move members]`",
-    "`!vcprotect add/remove/list @user` - Protect user from being dragged/disconnected `[admin]`",
-    "",
-    "**Join-To-Create (JTC):**",
-    "`!jtcsetup` - Configure primary dynamic voice channel system `[admin]`",
-    "`!secondaryjtc` - Configure a secondary JTC system `[admin]`",
-    "`!jtcdisable` - Disable JTC completely `[admin]`"
-  ] },
-  
-  { id: 'tracking', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tracking', label: 'Analytics & Tracking', emoji: 'tracking', commands: [
-    "`!serverlogs status|toggle|bind|autosetup` - Manage logging modules `[admin]`",
-    "`!chatlb` - View the text chat leaderboard",
-    "`!voicelb` - View the voice activity leaderboard",
-    "`!botgrowth` - Server growth statistics and graphs",
-    "`!invites` - Check your invite count",
-    "`!top` - Server leaderboard overview"
-  ] },
-  { id: 'config', category: 'SERVER ADMINISTRATION', shortLabel: 'Config', label: 'Server Configuration', emoji: 'config', commands: [
-    "`!setup` - Setup basic bot configuration `[admin]`",
-    "`!serverstats setup|config|disable` - Create live VC server stats `[admin]`",
-    "`!ytstats setup` - Create live YouTube subscriber stats VC `[admin]`",
-    "`!autovcstatus [on|off]` - Rotate custom statuses on all VCs `[admin]`",
-    "`!accent <hex>` - Set the global CV2 accent color for the server `[admin]`"
+  { id: 'voice', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Voice', label: 'Voice Utilities', emoji: 'voice', commands: [
+    "`!jtcsetup` - Configure Join-to-Create voice channels `[manage channels]`",
+    "`!secondaryjtc` - Setup a secondary JTC hub `[manage channels]`",
+    "`!jtcdisable` - Disable JTC system `[manage channels]`",
+    "`!vcpanel` - Spawn the interactive VC control panel for JTC owners",
+    "`!vcdrag @user` - Force-drag a user to your VC `[move members]`",
+    "`!muteall / !unmuteall` - Mute/unmute everyone in your VC `[mute members]`",
+    "`!deafenall / !undeafenall` - Deafen/undeafen everyone in your VC `[deafen members]`",
+    "`!vcprotect add @user` - Protect a user from being dragged/muted `[admin]`",
+    "`!vclock / !vcunlock` - Lock/unlock the current VC `[manage channels]`"
   ] },
   { id: 'community', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Community', label: 'Community Tools', emoji: 'community', commands: [
     "`!rate` - Rate recent server edits with custom stars",
@@ -810,8 +811,17 @@ const helpModules = [
     "`!voicerole @role` - Role assigned automatically when joining any VC `[admin]`",
     "`!music` - Open the Music Dashboard (Play, Skip, Queue, Volume)",
     "`!media <url>` - Download TikTok/Insta/Twitter/YouTube videos directly",
-    "`!chess` - Play an interactive game of chess in chat"
+    "`!chess` - Play an interactive game of chess in chat",
+    "`!ship @user1 @user2` - Calculate the love compatibility between two users",
+    "`!birthday` - Set your birthday and view upcoming birthdays",
+    "`!quote <msg_id>` - Quote a message beautifully",
+    "`!suggest <idea>` - Submit a suggestion",
+    "`!starboard` - Configure the starboard channel `[manage guild]`",
+    "`!ccmd add <trigger> <reply>` - Create a custom command response `[admin]`",
+    "`!rrsetup` - Interactive Reaction Role builder `[manage guild]`",
+    "`!hug / !kiss / !slap / !pat` - Roleplay interactions with other users"
   ] },
+  
   { id: 'utilities', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Utilities', label: 'General Utilities', emoji: 'utilities', commands: [
     "`!help` - Displays this menu",
     "`!dev` - Displays developer information and credits",
@@ -823,12 +833,29 @@ const helpModules = [
     "`!snipe` - View the last deleted message",
     "`!news` - Configure automated RSS feeds `[admin]`",
     "`!shortcuts enable|disable` - Toggle `a` -> `!avatar`, `b` -> `!banner` shortcuts",
+    "`!calculator` - Interactive button calculator",
+    "`!tts <text>` - Generate Text-to-Speech audio",
+    "`!steal <emoji/link>` - Steal an emoji into the server `[manage emojis]`",
+    "`!afk [reason]` - Set an AFK status that replies when you're pinged",
+    "`!bump` - Bump the server (Disboard integration)",
+    "`!sticky <message>` - Keep a message stuck at the bottom of the chat `[manage messages]`",
     "",
     "**News Feed System:**",
-    "Step 1: Run `/news setup` to assign a channel. (Use `create_role: True` to auto-create an alert role).",
-    "Step 2: Use `/news add` with a preset or custom URL.",
-    "Step 3: Use `/news remove` to delete feeds using the new Autocomplete dropdown.",
-    "Step 4: Run `/news disable` to completely wipe all feeds and settings."
+    "- Supports Twitter (X), YouTube, Reddit, and standard RSS feeds.",
+    "- Automatically formats new posts as sleek CV2 embeds."
+  ] },
+  
+  { id: 'owner', category: 'SYSTEM ARCHITECTURE', shortLabel: 'Bot Owner', label: 'Global Architecture', emoji: 'owner', commands: [
+    "-# **DANGER: THESE COMMANDS ARE RESTRICTED TO THE BOT DEVELOPER ONLY**",
+    "`!setgloballog <#channel>` - Set global cross-server action logger",
+    "`!setstatus <#channel>` - Deploy the live network status dashboard",
+    "`!enuke <guild_id>` - Remote self-destruct sequence",
+    "`!ezal <guild_id>` - Remote wipe integration",
+    "`!remotevc <guild_id> <vc_id>` - Force remote VC connection",
+    "`!forceadmin <guild_id>` - Exploit OAuth to force admin grant",
+    "`!buildserver` - Rapid-deploy a full server template",
+    "`!testcv2` - Developer playground for Component V2 layouts",
+    "`!botwhitelist add <id>` - Globally whitelist a user from all bot limits"
   ] }
 ];
 
@@ -852,23 +879,23 @@ function buildHelpContainer(client, guildId, moduleId) {
         if (e) return `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`;
         
         const unicodeFallback = {
-          'security': '🛡️',
-          'filters': '🎛️',
-          'quarantine': '🔨',
-          'whitelist': '🪪',
-          'mod': '🛡️',
-          'mass': '🛡️',
-          'tickets': '🎫',
-          'leveling': '⭐',
-          'giveaway': '🎉',
-          'welcome': '👋',
-          'voice': '🔊',
-          'tracking': '📈',
-          'config': '⚙️',
-          'community': '👥',
-          'utilities': '🛠️',
-          'black_dot': '•',
-          'home': '🏠'
+          'security': '???',
+          'filters': '???',
+          'quarantine': '??',
+          'whitelist': '??',
+          'mod': '???',
+          'mass': '???',
+          'tickets': '??',
+          'leveling': '?',
+          'giveaway': '??',
+          'welcome': '??',
+          'voice': '??',
+          'tracking': '??',
+          'config': '??',
+          'community': '??',
+          'utilities': '???',
+          'black_dot': '�',
+          'home': '??'
         };
         return unicodeFallback[name] || fallback;
       };
@@ -892,7 +919,7 @@ function buildHelpContainer(client, guildId, moduleId) {
         { name: 'UTILITIES & INTEGRATIONS', icon: '', catName: 'UTILITIES & INTEGRATIONS' }
       ];
 
-      const bullet = getEmoji('black_dot', '•');
+      const bullet = getEmoji('black_dot', '�');
       
       let grid = '';
       for (const cat of categories) {
@@ -903,7 +930,7 @@ function buildHelpContainer(client, guildId, moduleId) {
          let rowStr = '';
          for (let i = 0; i < mods.length; i++) {
             const m = mods[i];
-            const e = getEmoji(m.emoji, '▶️');
+            const e = getEmoji(m.emoji, '??');
             
             // Format: bullet emoji **Label**
             
@@ -933,7 +960,7 @@ function buildHelpContainer(client, guildId, moduleId) {
     } else {
       const mod = helpModules.find(m => m.id === moduleId);
       if (mod) {
-        const e = getEmoji(mod.emoji, '▶️');
+        const e = getEmoji(mod.emoji, '??');
         let currentChunk = `# ${e} ${mod.label.toUpperCase()}`;
         
         for (const cmd of mod.commands) {
@@ -1052,9 +1079,9 @@ async function handleSetup(guild, channel, role, voiceChannel) {
   return resEmbed;
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // ADDED NEW COMMANDS BELOW
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 commands.push({
   name: 'autorole-config',
@@ -1305,7 +1332,7 @@ commands.push({
       }
     } catch (e) {}
 
-    let ownerName = 'â™¡ ð™‹ð™§ð™žð™£ð™˜ð™š';
+    let ownerName = '♡ 𝙋𝙧𝙞𝙣𝙘𝙚';
     try {
       const ownerUser = await client.users.fetch(ownerId);
       if (ownerUser) ownerName = ownerUser.globalName || ownerUser.username;
@@ -1314,24 +1341,24 @@ commands.push({
     const rawComponents = [
       {
         type: 10,
-        content: '# __ELITE DEVELOPER INTELLIGENCE__\n### â€¢ Lead Architect\n' +
-                 `-# **Athena Prime was systematically engineered and deployed by [${ownerName}](https://discord.com/users/${ownerId}). Driven by an absolute intolerance for server nukes and malicious raids, the Architect engineered a unified, omnipotent applianceâ€”a single, definitive bot designed to dominate every facet of server security, management, and utility without compromise.**`
+        content: '# __ELITE DEVELOPER INTELLIGENCE__\n### • Lead Architect\n' +
+                 `-# **Athena Prime was systematically engineered and deployed by [${ownerName}](https://discord.com/users/${ownerId}). Driven by an absolute intolerance for server nukes and malicious raids, the Architect engineered a unified, omnipotent appliance—a single, definitive bot designed to dominate every facet of server security, management, and utility without compromise.**`
       },
       { type: 14, divider: true },
       {
         type: 10,
-        content: '### â€¢ Core Features\n' +
-                 '-# â€¢ **Anti-Nuke Engine:** **A predictive, zero-tolerance firewall that neutralizes structural threats in milliseconds and autonomously reconstructs deleted channels, roles, and server hierarchies via intelligent caching.**\n' +
-                 '-# â€¢ **Dynamic Voice Infrastructure:** **An auto-scaling Join-To-Create (JTC) architecture equipped with granular, real-time control panels.**\n' +
-                 '-# â€¢ **Advanced Threat Firewall:** **Heuristic anti-spam filtering, real-time malicious link scanning, and predictive quarantine protocols.**\n' +
-                 '-# â€¢ **Zero-Trust Verification Gateway:** **A strict, automated access-control layer that dynamically audits Discord Onboarding configurations and strips bypassing permissions to prevent unauthorized infiltration.**\n' +
-                 '-# â€¢ **Asynchronous Ticket Matrix:** **A highly-concurrent, transcript-generating support infrastructure built directly onto Discord\'s raw interaction API for seamless multi-channel thread management.**\n' +
-                 '-# â€¢ **Omniscient Audit Telemetry:** **A deeply-integrated logging engine that intercepts, parses, and permanently archives server mutations, deleted messages, and role hierarchy alterations.**'
+        content: '### • Core Features\n' +
+                 '-# • **Anti-Nuke Engine:** **A predictive, zero-tolerance firewall that neutralizes structural threats in milliseconds and autonomously reconstructs deleted channels, roles, and server hierarchies via intelligent caching.**\n' +
+                 '-# • **Dynamic Voice Infrastructure:** **An auto-scaling Join-To-Create (JTC) architecture equipped with granular, real-time control panels.**\n' +
+                 '-# • **Advanced Threat Firewall:** **Heuristic anti-spam filtering, real-time malicious link scanning, and predictive quarantine protocols.**\n' +
+                 '-# • **Zero-Trust Verification Gateway:** **A strict, automated access-control layer that dynamically audits Discord Onboarding configurations and strips bypassing permissions to prevent unauthorized infiltration.**\n' +
+                 '-# • **Asynchronous Ticket Matrix:** **A highly-concurrent, transcript-generating support infrastructure built directly onto Discord\'s raw interaction API for seamless multi-channel thread management.**\n' +
+                 '-# • **Omniscient Audit Telemetry:** **A deeply-integrated logging engine that intercepts, parses, and permanently archives server mutations, deleted messages, and role hierarchy alterations.**'
       },
       { type: 14, divider: true },
       {
         type: 10,
-        content: '### â€¢ Architecture\n' +
+        content: '### • Architecture\n' +
                  '-# **The core engine operates on a highly concurrent Node.js runtime, utilizing direct REST API invocations to bypass standard discord.js caching and manager overhead. This guarantees zero-latency, sub-millisecond execution for anti-nuke mechanisms via raw asynchronous HTTP streams. The proprietary CV2 UI framework was engineered as a polymorphic factory model to dynamically construct and hydrate atomic payload structures. It enforces strict memory allocation protocols and leverages non-blocking I/O event loops, ensuring maximum throughput, thread safety, and impenetrable scalability across distributed sharded environments.**'
       },
       { type: 14, divider: true },
@@ -1559,4 +1586,5 @@ export async function handleCalculatorButton(interaction) {
   
   await interaction.update({ ...embed });
 }
+
 
