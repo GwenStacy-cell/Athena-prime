@@ -7,7 +7,7 @@ import db from './database.js';
 const configPath = path.resolve('config.json');
 let config = {
   botName: 'Athena Prime',
-  footerText: 'Athena Prime Killer',
+  footerText: 'Athena Bulletproof Security System � V1.0.0',
   colors: {
     success: '#2b2d31',
     warning: '#2b2d31',
@@ -28,7 +28,7 @@ try {
 }
 
 const colors = config.colors;
-const FOOTER_TEXT = config.footerText || 'Athena Prime Killer';
+const FOOTER_TEXT = config.footerText || 'Athena Bulletproof Security System � V1.0.0';
 
 // ——————————————————————————————————————————
 // GUILD CONTEXT — set once per command invocation

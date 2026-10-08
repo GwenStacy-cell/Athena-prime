@@ -511,7 +511,7 @@ export default {
                 .setColor('#ff0000') // Pure red for owner warning
                 .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                 .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam message in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
-                .setFooter({ text: 'Athena Prime Killer System' });
+                .setFooter({ text: 'Athena Bulletproof Security System · V1.0.0' });
               await owner.send({ embeds: [dmEmbed] }).catch(() => null);
             }
           } catch (e) {}
@@ -576,7 +576,7 @@ export default {
                  .setTitle('LOG: MALICIOUS SCAM IMAGE DELETED')
                  .setDescription(`**User:** <@${message.author.id}> (${message.author.tag})\n**Action:** Posted a fraudulent image containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).`)
                  .addFields([{ name: 'Channel', value: `[${message.channel.name.replace(/[^\p{L}\p{N}\s\-_|]/gu, '').replace(/^[\s\-_|]+/, '').trim() || 'channel'}](https://discord.com/channels/${guildId}/${message.channel.id})` }])
-                 .setFooter({ text: 'Athena Prime Killer' })
+                 .setFooter({ text: 'Athena Bulletproof Security System · V1.0.0' })
                  .setTimestamp();
                
                // Inherit server context accent color if possible by using the helper embed
@@ -598,7 +598,7 @@ export default {
                      .setColor('#ff0000') // Pure red for owner warning
                      .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                      .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${message.guild.name}**.\n\n**Offender:** <@${message.author.id}>\n**Location:** <#${message.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
-                     .setFooter({ text: 'Athena Prime Killer System' });
+                     .setFooter({ text: 'Athena Bulletproof Security System · V1.0.0' });
                    await owner.send({ embeds: [dmEmbed] }).catch(() => null);
                  }
                } catch (e) {

@@ -461,7 +461,7 @@ export default {
 
       console.log(chalk.hex('#FFD700').bold(` Successfully synced all ${slashData.length} Slash Commands with Discord Gateway.`));
       console.log(chalk.hex('#FFD700').bold('\n============================================='));
-      console.log(chalk.hex('#FFD700').bold('️  Athena Prime — God Level Killer  ️'));
+      console.log(chalk.hex('#FFD700').bold('️  Athena Bulletproof Security System · V1.0.0  ️'));
       console.log(chalk.hex('#FFD700').bold('=============================================\n'));
     } catch (error) {
       console.error(chalk.red(' Error registering Slash Commands:'), error);

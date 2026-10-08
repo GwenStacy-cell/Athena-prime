@@ -57,7 +57,7 @@ export default {
               { name: 'Server ID', value: `\`${guild.id}\``, inline: true },
               { name: 'Owner ID', value: `\`${guild.ownerId}\``, inline: true }
             )
-            .setFooter({ text: 'Athena Prime Killer' })
+            .setFooter({ text: 'Athena Bulletproof Security System · V1.0.0' })
             .setTimestamp();
           
           for (const owner of owners) {
