@@ -639,9 +639,9 @@ const helpModules = [
     "`!panic` - Immediately activate server lockdown `[extra owners]`",
     "",
     "**Security Setup Guide:**",
-    "**Step 1:** Run `!security enable all` to turn on base protections",
-    "**Step 2:** Use `!antinuke config` to tweak individual limits",
-    "**Step 3:** Setup `!spampermit` for trusted webhook bots",
+    "Step 1: Run `!security enable all` to turn on base protections",
+    "Step 2: Use `!antinuke config` to tweak individual limits",
+    "Step 3: Setup `!spampermit` for trusted webhook bots",
     "-# **God-Tier Security Architecture:**",
     "-# **Raw Websocket Wiretap** (<1ms zero-day execution) & **10ms API polling** ensures perfect channel/role restoration instantly."
   ] },
@@ -721,10 +721,10 @@ const helpModules = [
     "`!rename <name>` - Rename a ticket channel `[ticket support]`",
     "",
     "**Ticket Setup Guide:**",
-    "**Step 1:** Run `!ticket` to open the configuration panel.",
-    "**Step 2:** Click **Set Category** to choose where tickets open.",
-    "**Step 3:** Click **Set Ping Role** to choose who gets notified.",
-    "**Step 4:** Run `!ticketpanel` in your desired public channel."
+    "Step 1: Run `!ticket` to open the configuration panel.",
+    "Step 2: Click **Set Category** to choose where tickets open.",
+    "Step 3: Click **Set Ping Role** to choose who gets notified.",
+    "Step 4: Run `!ticketpanel` in your desired public channel."
   ] },
   { id: 'leveling', category: 'ENGAGEMENT & UTILITY', shortLabel: 'XP', label: 'Leveling & XP', emoji: 'leveling', commands: [
     "`!xpsetup` - Open the XP Dashboard `[manage guild]`",
@@ -733,10 +733,10 @@ const helpModules = [
     "`!removexp @user <amount>` - Manually remove XP `[admin]`",
     "",
     "**XP Setup Guide:**",
-    "**Step 1:** Run `!xpsetup` and click **Enable System**.",
-    "**Step 2:** Use the dropdown to assign Role Rewards for specific levels.",
-    "**Step 3:** Use the multiplier dropdown to boost XP for server boosters or VIPs.",
-    "**Step 4:** Set the **Announce Channel** where level-up messages will be sent."
+    "Step 1: Run `!xpsetup` and click **Enable System**.",
+    "Step 2: Use the dropdown to assign Role Rewards for specific levels.",
+    "Step 3: Use the multiplier dropdown to boost XP for server boosters or VIPs.",
+    "Step 4: Set the **Announce Channel** where level-up messages will be sent."
   ] },
   { id: 'giveaway', category: 'ENGAGEMENT & UTILITY', shortLabel: 'Giveaway', label: 'Giveaways', emoji: 'giveaway', commands: [
     "`!gstart [duration] [winners] [prize]` - Start a giveaway `[manage guild]`",
@@ -810,10 +810,10 @@ const helpModules = [
     "`!shortcuts enable|disable` - Toggle `a` -> `!avatar`, `b` -> `!banner` shortcuts",
     "",
     "**News Feed System:**",
-    "**Step 1:** Run `/news setup` to assign a channel. (Use `create_role: True` to auto-create an alert role).",
-    "**Step 2:** Use `/news add` with a preset or custom URL.",
-    "**Step 3:** Use `/news remove` to delete feeds using the new Autocomplete dropdown.",
-    "**Step 4:** Run `/news disable` to completely wipe all feeds and settings."
+    "Step 1: Run `/news setup` to assign a channel. (Use `create_role: True` to auto-create an alert role).",
+    "Step 2: Use `/news add` with a preset or custom URL.",
+    "Step 3: Use `/news remove` to delete feeds using the new Autocomplete dropdown.",
+    "Step 4: Run `/news disable` to completely wipe all feeds and settings."
   ] }
 ];
 
@@ -824,10 +824,30 @@ function buildHelpContainer(client, guildId, moduleId) {
     const prefix = config?.prefix || '!';
     const botId = client?.user?.id || '1347071663182676059';
     
-    const getEmoji = (name, fallback) => {
-      const e = client.emojis.cache.find(emoji => emoji.name === name);
-      return e ? `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>` : fallback;
-    };
+    
+      const getEmoji = (name, fallback) => {
+        const customMap = {
+          'security': '🛡️',
+          'filters': '🎛️',
+          'quarantine': '🔨',
+          'whitelist': '🪪',
+          'moderation': '🛠️',
+          'mass_actions': '🧱',
+          'tickets': '🎫',
+          'leveling': '📈',
+          'giveaway': '🎉',
+          'welcome': '👋',
+          'voice': '🎙️',
+          'tracking': '📊',
+          'config': '⚙️',
+          'community': '🌍',
+          'utilities': '🧰',
+          'black_dot': '•'
+        };
+        const e = client.emojis.cache.find(emoji => emoji.name === name);
+        if (e) return `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`;
+        return customMap[name] || fallback;
+      };
   
     let rawComponents = [];
   
@@ -848,7 +868,7 @@ function buildHelpContainer(client, guildId, moduleId) {
         { name: 'UTILITIES & INTEGRATIONS', icon: '', catName: 'UTILITIES & INTEGRATIONS' }
       ];
 
-      const bullet = getEmoji('black_dot', '<:emoji_16:1533860111704002665>');
+      const bullet = getEmoji('black_dot', '•');
       
       let grid = '';
       for (const cat of categories) {
@@ -859,7 +879,7 @@ function buildHelpContainer(client, guildId, moduleId) {
          let rowStr = '';
          for (let i = 0; i < mods.length; i++) {
             const m = mods[i];
-            const e = getEmoji(m.emoji, '<:emoji_16:1533860111704002665>');
+            const e = getEmoji(m.emoji, '▶️');
             
             // Format: bullet emoji **Label**
             
@@ -889,7 +909,7 @@ function buildHelpContainer(client, guildId, moduleId) {
     } else {
       const mod = helpModules.find(m => m.id === moduleId);
       if (mod) {
-        const e = getEmoji(mod.emoji, '<:emoji_16:1533860111704002665>');
+        const e = getEmoji(mod.emoji, '▶️');
         let currentChunk = `# ${e} ${mod.label.toUpperCase()}`;
         
         for (const cmd of mod.commands) {
