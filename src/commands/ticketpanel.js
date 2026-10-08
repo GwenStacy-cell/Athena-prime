@@ -111,23 +111,9 @@ export async function handleTicketPanelButtons(interaction) {
   if (customId === 'tp_edit_text') {
     const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
     const config = db.getTickets(guild.id);
-    
     const modal = new ModalBuilder().setCustomId('tp_modal_text').setTitle('Edit Panel Text');
-    
-    const titleInput = new TextInputBuilder()
-      .setCustomId('title')
-      .setLabel('Panel Title')
-      .setStyle(TextInputStyle.Short)
-      .setValue(config.panelTitle || 'Support Tickets')
-      .setRequired(true);
-      
-    const descInput = new TextInputBuilder()
-      .setCustomId('description')
-      .setLabel('Panel Description')
-      .setStyle(TextInputStyle.Paragraph)
-      .setValue(config.panelDescription || 'Need help? Open a ticket below.')
-      .setRequired(true);
-      
+    const titleInput = new TextInputBuilder().setCustomId('title').setLabel('Panel Title').setStyle(TextInputStyle.Short).setValue(config.panelTitle || 'Support Tickets').setRequired(true);
+    const descInput = new TextInputBuilder().setCustomId('description').setLabel('Panel Description (Terms/Hours)').setStyle(TextInputStyle.Paragraph).setValue(config.panelDescription || 'Need help? Open a ticket below.').setRequired(true);
     modal.addComponents(new ActionRowBuilder().addComponents(titleInput), new ActionRowBuilder().addComponents(descInput));
     return interaction.showModal(modal);
   }
@@ -135,80 +121,68 @@ export async function handleTicketPanelButtons(interaction) {
   if (customId === 'tp_edit_media') {
     const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
     const config = db.getTickets(guild.id);
-    
     const modal = new ModalBuilder().setCustomId('tp_modal_media').setTitle('Edit Panel Media');
-    
-    const imageInput = new TextInputBuilder()
-      .setCustomId('image')
-      .setLabel('Large Image URL')
-      .setStyle(TextInputStyle.Short)
-      .setValue(config.panelImage || '')
-      .setRequired(false);
-      
-    const thumbInput = new TextInputBuilder()
-      .setCustomId('thumbnail')
-      .setLabel('Thumbnail URL')
-      .setStyle(TextInputStyle.Short)
-      .setValue(config.panelThumbnail || '')
-      .setRequired(false);
-      
+    const imageInput = new TextInputBuilder().setCustomId('image').setLabel('Large Image URL (Banner)').setStyle(TextInputStyle.Short).setValue(config.panelImage || '').setRequired(false);
+    const thumbInput = new TextInputBuilder().setCustomId('thumbnail').setLabel('Thumbnail URL').setStyle(TextInputStyle.Short).setValue(config.panelThumbnail || '').setRequired(false);
     modal.addComponents(new ActionRowBuilder().addComponents(imageInput), new ActionRowBuilder().addComponents(thumbInput));
     return interaction.showModal(modal);
   }
   
+  if (customId === 'tp_add_option') {
+    const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+    const config = db.getTickets(guild.id);
+    if ((config.panelOptions || []).length >= 5) return interaction.reply({ content: '-# **Limit Reached:** You can only have up to 5 ticket options.', flags: 64 }).catch(()=>null);
+    const modal = new ModalBuilder().setCustomId('tp_modal_option').setTitle('Add Ticket Option');
+    const labelInput = new TextInputBuilder().setCustomId('label').setLabel('Option Label (e.g. General Support)').setStyle(TextInputStyle.Short).setRequired(true);
+    const descInput = new TextInputBuilder().setCustomId('description').setLabel('Short Description').setStyle(TextInputStyle.Short).setRequired(true);
+    modal.addComponents(new ActionRowBuilder().addComponents(labelInput), new ActionRowBuilder().addComponents(descInput));
+    return interaction.showModal(modal);
+  }
+
+  if (customId === 'tp_clear_options') {
+    db.updateTicketConfig(guild.id, { panelOptions: [] });
+    await interaction.deferUpdate();
+    return require('./ticketpanel.js').updateManagerMessage(interaction.message);
+  }
+  
   if (customId === 'tp_deploy') {
     const config = db.getTickets(guild.id);
-    if (!config.targetChannelId) {
-       return interaction.reply({ content: '-# **Error:** Please select a target channel from the dropdown first!', flags: 64 }).catch(()=>null);
-    }
-    
+    if (!config.targetChannelId) return interaction.reply({ content: '-# **Error:** Please select a target channel from the dropdown first!', flags: 64 }).catch(()=>null);
     const targetChannel = guild.channels.cache.get(config.targetChannelId);
-    if (!targetChannel) {
-       return interaction.reply({ content: '-# **Error:** Target channel not found.', flags: 64 }).catch(()=>null);
-    }
+    if (!targetChannel) return interaction.reply({ content: '-# **Error:** Target channel not found.', flags: 64 }).catch(()=>null);
     
-    const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+    const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
     const guildConfig = db.getGuildConfig(guild.id);
     const embed = new EmbedBuilder()
       .setColor(guildConfig.accentColor || '#3b82f6')
       .setTitle(config.panelTitle || 'Support Tickets')
-      .setDescription(config.panelDescription || 'Need help? Click the button below to open a private ticket. A text and voice channel will be created for you.')
+      .setDescription(config.panelDescription || 'Need help? Click the button below to open a private ticket.')
       .setFooter({ text: 'Athena Prime Ticket System' });
       
     if (config.panelImage) embed.setImage(config.panelImage);
     if (config.panelThumbnail) embed.setThumbnail(config.panelThumbnail);
     
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('ticket_open_general').setLabel('Open Ticket').setEmoji('<:139707ticket:1533859896620089485>').setStyle(ButtonStyle.Primary)
-    );
+    let row;
+    if (config.panelOptions && config.panelOptions.length > 0) {
+      const select = new StringSelectMenuBuilder().setCustomId('ticket_select_option').setPlaceholder(config.panelPlaceholder || 'Select the reason for your ticket...');
+      for (const opt of config.panelOptions) {
+        select.addOptions({ label: opt.label, description: opt.description, value: opt.label.substring(0, 25) });
+      }
+      row = new ActionRowBuilder().addComponents(select);
+    } else {
+      row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('ticket_open_general').setLabel('Open Ticket').setEmoji('<:139707ticket:1533859896620089485>').setStyle(ButtonStyle.Primary)
+      );
+    }
     
     await targetChannel.send({ embeds: [embed], components: [row] }).catch(()=>null);
     return interaction.reply({ content: `-# **Success:** Ticket panel deployed to <#${config.targetChannelId}>!`, flags: 64 }).catch(()=>null);
   }
   
-  if (customId === 'tp_cancel') {
-    return interaction.message.delete().catch(()=>null);
-  }
+  if (customId === 'tp_cancel') return interaction.message.delete().catch(()=>null);
 }
 
 export async function handleTicketPanelMenus(interaction) {
-  const { customId, guild, values } = interaction;
-  const db = require('../database.js').default;
-  
-  if (customId === 'tp_target_channel') {
-    db.updateTicketConfig(guild.id, { targetChannelId: values[0] });
-    await interaction.deferUpdate();
-    return updateManagerMessage(interaction.message);
-  }
-  
-  if (customId === 'tp_close_roles') {
-    db.updateTicketConfig(guild.id, { closeTicketRoleIds: values });
-    await interaction.deferUpdate();
-    return updateManagerMessage(interaction.message);
-  }
-}
-
-export async function handleTicketPanelModals(interaction) {
   const { customId, guild, fields } = interaction;
   const db = require('../database.js').default;
   

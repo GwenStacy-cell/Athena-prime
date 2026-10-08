@@ -45,6 +45,13 @@ export default {
       return;
     }
     
+    if (interaction.isAnySelectMenu() && interaction.customId === 'ticket_select_option') {
+      import('../commands/ticket.js').then(m => {
+        if (m.handleTicketSelectMenu) m.handleTicketSelectMenu(interaction).catch(e => console.error(e));
+      }).catch(e => console.error(e));
+      return;
+    }
+    
     if (interaction.isAnySelectMenu() && interaction.customId.startsWith('tp_')) {
       import('../commands/ticketpanel.js').then(m => {
         if (m.handleTicketPanelMenus) m.handleTicketPanelMenus(interaction).catch(e => console.error(e));
