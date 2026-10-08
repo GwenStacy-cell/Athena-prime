@@ -742,11 +742,11 @@ async function getStatusEmbed(client, guild) {
     "`!close` - Close a ticket `[ticket support]`",
     "`!rename <name>` - Rename a ticket channel `[ticket support]`",
     "",
-    "**Ticket Setup Guide:**",
-    "Step 1: Run `!ticket` to open the configuration panel.",
-    "Step 2: Click **Set Category** to choose where tickets open.",
-    "Step 3: Click **Set Ping Role** to choose who gets notified.",
-    "Step 4: Run `!ticketpanel` to customize and deploy your ticket interface."
+    "**Ticket System Capabilities:**",
+      "- Features **Dropdown Menus**, **Interactive Q&A Modals**, and **Beautiful CV2 Welcome Embeds**.",
+      "- Automatically creates paired Voice Channels and Text Channels per ticket.",
+      "**Step 1:** Run `!ticket` to configure category and ping roles.",
+      "**Step 2:** Run `!ticketpanel` to deploy and customize the public interactive panel."
   ] },
   { id: 'tracking', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tracking', label: 'Tracking & Logs', emoji: 'tracking', commands: [
     "`!serverlogs` - View interactive server event logs",
@@ -835,7 +835,7 @@ async function getStatusEmbed(client, guild) {
     "`!shortcuts enable|disable` - Toggle `a` -> `!avatar`, `b` -> `!banner` shortcuts",
     "`!calculator` - Interactive button calculator",
     "`!tts <text>` - Generate Text-to-Speech audio",
-    "`!steal <emoji/link>` - Steal an emoji into the server `[manage emojis]`",
+    "`!steal <emoji/link>` - Steal an emoji (Supports raw emojis & direct Discord CDN Image Links) `[manage emojis]`",
     "`!afk [reason]` - Set an AFK status that replies when you're pinged",
     "`!bump` - Bump the server (Disboard integration)",
     "`!sticky <message>` - Keep a message stuck at the bottom of the chat `[manage messages]`",
