@@ -757,7 +757,7 @@ export default {
       const now = Date.now();
       
       // 60-second cooldown to prevent spamming XP
-      if (now - userXp.lastMessageAt >= 60000) {
+      if (now - userXp.lastMessageAt >= 10000) {
         const mult = getRoleMultiplier(guildId, message.member);
         const gained = Math.floor(getRandomXp() * mult);
         
