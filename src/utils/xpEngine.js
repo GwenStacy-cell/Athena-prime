@@ -78,7 +78,7 @@ export async function processLevelUp(client, guild, member, newLevel) {
       }
       description += `${BOOK} **Next Milestone Progress:**\nYou need **${remainingXp} more XP** to reach Level ${newLevel + 1}. Keep chatting and staying active in voice channels!`;
 
-      const announcementEmbed = embed.success('Level Up!', description).setImage('attachment://rank-card.png');
+      const announcementEmbed = embed.success('RANK ASCENSION', description).setImage('attachment://rank-card.png');
 
       await channel.send({ content: `<@${member.id}>`, embeds: [announcementEmbed], files: [attachment] }).catch(() => null);
     }

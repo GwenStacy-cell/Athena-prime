@@ -7,14 +7,60 @@ const CARD_HEIGHT = 250;
 const RADIUS = 20;
 
 export async function generateRankCard(member, xp, level, rank, requiredXp) {
-  const canvas = createCanvas(CARD_WIDTH, CARD_HEIGHT);
+  const canvas = createCanvas(900, 250);
   const ctx = canvas.getContext('2d');
 
-  // Background
-  ctx.fillStyle = '#2b2d31'; // Discord dark background
+  // Sci-fi / Golden Rank Card Design
+  // 1. Background Polygon
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, 900, 250);
+  
+  // Outer frame gradient
+  const frameGrad = ctx.createLinearGradient(0, 0, 900, 250);
+  frameGrad.addColorStop(0, '#ffd700'); // Gold
+  frameGrad.addColorStop(0.5, '#2a2a2a');
+  frameGrad.addColorStop(1, '#ff8c00'); // Dark Gold/Orange
+  
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = frameGrad;
+  
+  // Draw an angled sci-fi border
   ctx.beginPath();
-  ctx.roundRect(0, 0, CARD_WIDTH, CARD_HEIGHT, RADIUS);
+  ctx.moveTo(30, 10);
+  ctx.lineTo(870, 10);
+  ctx.lineTo(890, 30);
+  ctx.lineTo(890, 220);
+  ctx.lineTo(870, 240);
+  ctx.lineTo(30, 240);
+  ctx.lineTo(10, 220);
+  ctx.lineTo(10, 30);
+  ctx.closePath();
+  
+  // Fill background
+  const bgGrad = ctx.createLinearGradient(0, 0, 900, 250);
+  bgGrad.addColorStop(0, '#1a1a1a');
+  bgGrad.addColorStop(1, '#0a0a0a');
+  ctx.fillStyle = bgGrad;
   ctx.fill();
+  ctx.stroke();
+
+  // Glow settings for avatar ring
+  const avatarX = 140;
+  const avatarY = 125;
+  const avatarRadius = 85;
+
+  ctx.shadowColor = '#ffd700';
+  ctx.shadowBlur = 20;
+  ctx.strokeStyle = '#ffb300';
+  ctx.lineWidth = 6;
+
+  // Outer glowing ring
+  ctx.beginPath();
+  ctx.arc(avatarX, avatarY, avatarRadius + 10, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Reset shadow for clipping
+  ctx.shadowBlur = 0;
 
   // Draw Avatar
   const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256 });
@@ -22,65 +68,112 @@ export async function generateRankCard(member, xp, level, rank, requiredXp) {
   if (avatar) {
     ctx.save();
     ctx.beginPath();
-    ctx.arc(125, 125, 80, 0, Math.PI * 2, true);
+    ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    ctx.drawImage(avatar, 45, 45, 160, 160);
+    ctx.drawImage(avatar, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
     ctx.restore();
   }
 
-  // Draw Username
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 42px sans-serif';
+  // Text gradient for Name
+  const nameGrad = ctx.createLinearGradient(280, 70, 280, 110);
+  nameGrad.addColorStop(0, '#ffffff');
+  nameGrad.addColorStop(1, '#ffd700');
+
+  ctx.fillStyle = nameGrad;
+  ctx.font = 'bold 46px "Arial Black", Impact, sans-serif';
   let displayName = member.displayName.replace(/[^\x00-\x7F]/g, '').trim() || member.user.username.replace(/[^\x00-\x7F]/g, '').trim() || 'User';
   if (displayName.length > 15) displayName = displayName.substring(0, 15) + '...';
-  ctx.fillText(displayName, 240, 110);
-
-  // Draw Ranks
-  ctx.fillStyle = '#b9bbbe';
-  ctx.font = '24px sans-serif';
-  ctx.fillText(`Rank #${rank}`, 240, 150);
-
-  ctx.fillStyle = '#5865F2'; // Discord Blurple
-  ctx.font = 'bold 36px sans-serif';
-  ctx.fillText(`Level ${level}`, CARD_WIDTH - 200, 110);
-
-  // Draw XP Bar Background
-  const barX = 240;
-  const barY = 170;
-  const barWidth = 600;
-  const barHeight = 30;
   
-  ctx.fillStyle = '#404249';
-  ctx.beginPath();
-  ctx.roundRect(barX, barY, barWidth, barHeight, 15);
-  ctx.fill();
+  ctx.shadowColor = '#000000';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetX = 3;
+  ctx.shadowOffsetY = 3;
+  ctx.fillText(displayName.toUpperCase(), 270, 110);
+  
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
 
-  // Draw XP Bar Fill
-  // Calculate previous level required XP
+  // Rank text
+  ctx.fillStyle = '#a0a0a0';
+  ctx.font = '26px sans-serif';
+  ctx.fillText(`Rank #${rank}`, 275, 145);
+
+  // Level Badge (Sci-fi polygon on the right)
+  const badgeX = 650;
+  const badgeY = 70;
+  
+  ctx.fillStyle = '#151515';
+  ctx.strokeStyle = '#ffd700';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(badgeX, badgeY + 15);
+  ctx.lineTo(badgeX + 30, badgeY - 15);
+  ctx.lineTo(850, badgeY - 15);
+  ctx.lineTo(870, badgeY + 15);
+  ctx.lineTo(870, badgeY + 45);
+  ctx.lineTo(850, badgeY + 75);
+  ctx.lineTo(badgeX + 30, badgeY + 75);
+  ctx.lineTo(badgeX, badgeY + 45);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 32px sans-serif';
+  ctx.fillText('Level', badgeX + 40, badgeY + 40);
+
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 48px sans-serif';
+  ctx.fillText(`${level}`, badgeX + 130, badgeY + 44);
+
+  // XP Bar Outline
+  const barX = 270;
+  const barY = 175;
+  const barWidth = 570;
+  const barHeight = 28;
+  
+  ctx.fillStyle = '#111111';
+  ctx.strokeStyle = '#333333';
+  ctx.lineWidth = 2;
+  
+  ctx.beginPath();
+  ctx.roundRect(barX, barY, barWidth, barHeight, 14);
+  ctx.fill();
+  ctx.stroke();
+
   let prevXp = 0;
   if (level > 0) {
-    // We can't import calculateXpForLevel easily without circular dep or passing it
-    // For visual purposes we'll pass requiredXp
+    prevXp = 100 * Math.pow(level, 2) + 100 * level;
   }
-  
-  // Since we don't know the base easily, let's just make the progress bar based on total required XP.
-  // We'll pass the progress ratio directly from the command.
-  const progressRatio = Math.min(xp / requiredXp, 1);
+  const relativeXp = Math.max(0, xp - prevXp);
+  const relativeRequired = requiredXp - prevXp;
+  const progressRatio = Math.min(relativeXp / relativeRequired, 1);
   const fillWidth = barWidth * progressRatio;
 
-  if (fillWidth > 0) {
-    ctx.fillStyle = '#5865F2';
+  if (fillWidth > 10) {
+    const xpGrad = ctx.createLinearGradient(barX, barY, barX + fillWidth, barY);
+    xpGrad.addColorStop(0, '#ffaa00');
+    xpGrad.addColorStop(1, '#ffee55');
+
+    ctx.shadowColor = '#ffaa00';
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = xpGrad;
     ctx.beginPath();
-    ctx.roundRect(barX, barY, fillWidth, barHeight, 15);
+    ctx.roundRect(barX, barY, fillWidth, barHeight, 14);
     ctx.fill();
+    ctx.shadowBlur = 0;
   }
 
-  // XP Text
   ctx.fillStyle = '#ffffff';
-  ctx.font = '18px sans-serif';
+  ctx.font = 'bold 16px sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText(`${xp} / ${requiredXp} XP`, barX + barWidth - 10, barY + 22);
+  ctx.shadowColor = '#000000';
+  ctx.shadowBlur = 4;
+  ctx.fillText(`${xp} / ${requiredXp} XP`, barX + barWidth - 15, barY + 20);
+  ctx.shadowBlur = 0;
+  ctx.textAlign = 'left';
 
   const buffer = canvas.toBuffer('image/png');
   return new AttachmentBuilder(buffer, { name: 'rank-card.png' });
