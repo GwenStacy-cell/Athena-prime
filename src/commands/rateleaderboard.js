@@ -80,7 +80,7 @@ async function sendRateLeaderboard(context, page) {
   }).join('\n\n');
   
   const guildConfig = context.guild ? db.getGuildConfig(context.guild.id) : null;
-  const lbEmbed = cv2.buildContainer({
+  const lbEmbed = new EmbedBuilder({
     title: '🏆 Edit Rating Leaderboard',
     description: description,
     color: guildConfig?.accentColor || '#FFD700',

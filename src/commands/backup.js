@@ -34,16 +34,7 @@ export const commands = [
           
           await loadingMsg.edit({ 
             content: null,
-            components: [
-              cv2.buildContainer(
-                'Backup Complete', 
-                'Successfully saved a snapshot of **' + message.guild.name + '**.!', 
-                [
-                  { name: 'Backup ID', value: '`' + backupId + '`', inline: true },
-                  { name: 'Timestamp', value: '<t:' + Math.floor(Date.now() / 1000) + ':f>', inline: true }
-                ]
-              )
-            ],
+            embeds: [new EmbedBuilder().setTitle('Backup Complete').setDescription('Successfully saved a snapshot of the server.').setColor('#00ff00')],
             flags: 16384
           });
         } catch (err) {
@@ -98,12 +89,7 @@ export const commands = [
         
         await loadingMsg.edit({
           content: null,
-          components: [
-            cv2.buildContainer(
-              'Restoration Complete',
-              'Successfully restored **' + message.guild.name + '** from backup `' + backupId + '`.\n\n**Channels Restored:** ' + results.channelsCreated + '\n**Roles Restored:** ' + results.rolesCreated
-            )
-          ],
+          embeds: [new EmbedBuilder().setTitle('Restoration Complete').setDescription('Successfully restored the server from backup.').setColor('#00ff00')],
           flags: 16384
         });
       }
