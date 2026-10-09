@@ -12,7 +12,7 @@ export async function updateServerStatsChannels(guild, stats) {
   const humansCh = guild.channels.cache.get(stats.humansId);
   const botsCh = guild.channels.cache.get(stats.botsId);
   
-  const e = stats.emoji || 'â—';
+  const e = stats.emoji || '🔊';
   const f = stats.font || 'standard';
 
   const tName = formatServerStatChannelName('USERS', total, e, f);
@@ -29,22 +29,22 @@ export async function updateServerStatsChannels(guild, stats) {
   if (lastErr) throw lastErr;
 }
 
-export function formatServerStatChannelName(type, count, prefixEmoji = 'â—', fontStyle = 'standard') {
-  const fonts = {
-    standard: { USERS: 'USERS', MEMBERS: 'MEMBERS', BOTS: 'BOTS' },
-    bold: { USERS: 'ð—¨ð—¦ð—˜ð—¥ð—¦', MEMBERS: 'ð— ð—˜ð— ð—•ð—˜ð—¥ð—¦', BOTS: 'ð—•ð—¢ð—§ð—¦' },
-    italic: { USERS: 'ð˜œð˜šð˜Œð˜™ð˜š', MEMBERS: 'ð˜”ð˜Œð˜”ð˜‰ð˜Œð˜™ð˜š', BOTS: 'ð˜‰ð˜–ð˜›ð˜š' },
-    smallcaps: { USERS: 'á´œsá´‡Ê€s', MEMBERS: 'á´á´‡á´Ê™á´‡Ê€s', BOTS: 'Ê™á´á´›s' },
-    serif: { USERS: 'ð”ð’ð„ð‘ð’', MEMBERS: 'ðŒð„ðŒðð„ð‘ð’', BOTS: 'ððŽð“ð’' },
-    script: { USERS: 'ð“¤ð“¢ð“”ð“¡ð“¢', MEMBERS: 'ð“œð“”ð“œð“‘ð“”ð“¡ð“¢', BOTS: 'ð“‘ð“žð“£ð“¢' },
-    gothic: { USERS: 'ð”˜ð”–ð”ˆâ„œð”–', MEMBERS: 'ð”ð”ˆð”ð”…ð”ˆâ„œð”–', BOTS: 'ð”…ð”’ð”—ð”–' },
-    mono: { USERS: 'ï¼µï¼³ï¼¥ï¼²ï¼³', MEMBERS: 'ï¼­ï¼¥ï¼­ï¼¢ï¼¥ï¼²ï¼³', BOTS: 'ï¼¢ï¼¯ï¼´ï¼³' }
-  };
-  
-  const selectedFont = fonts[fontStyle.toLowerCase()] || fonts.standard;
-  const word = selectedFont[type] || fonts.standard[type];
-  
-  return `${prefixEmoji}ãƒ»${word}: ${count}`;
+export function formatServerStatChannelName(type, count, prefixEmoji = '🔊', fontStyle = 'standard') {
+    const fonts = {
+      standard: { USERS: 'USERS', MEMBERS: 'MEMBERS', BOTS: 'BOTS' },
+      bold: { USERS: '𝗨𝗦𝗘𝗥𝗦', MEMBERS: '𝗠𝗘𝗠𝗕𝗘𝗥𝗦', BOTS: '𝗕𝗢𝗧𝗦' },
+      italic: { USERS: '𝘜𝘚𝘌𝘙𝘚', MEMBERS: '𝘔𝘌𝘔𝘉𝘌𝘙𝘚', BOTS: '𝘉𝘖𝘛𝘚' },
+      smallcaps: { USERS: 'ᴜsᴇʀs', MEMBERS: 'ᴍᴇᴍʙᴇʀs', BOTS: 'ʙᴏᴛs' },
+      serif: { USERS: '𝐔𝐒𝐄𝐑𝐒', MEMBERS: '𝐌𝐄𝐌𝐁𝐄𝐑𝐒', BOTS: '𝐁𝐎𝐓𝐒' },
+      script: { USERS: '𝒰𝒮𝐸𝑅𝒮', MEMBERS: '𝑀𝐸𝑀𝐵𝐸𝑅𝒮', BOTS: '𝐵𝒪𝒯𝒮' },
+      gothic: { USERS: '𝔘𝔖𝔈ℜ𝔖', MEMBERS: '𝔐𝔈𝔐𝔅𝔈ℜ𝔖', BOTS: '𝔅𝔒𝔗𝔖' },
+      mono: { USERS: '𝚄𝚂𝙴𝚁𝚂', MEMBERS: '𝙼𝙴𝙼𝙱𝙴𝚁𝚂', BOTS: '𝙱𝙾𝚃𝚂' }
+    };
+    
+    const selectedFont = fonts[fontStyle.toLowerCase()] || fonts.standard;
+    const word = selectedFont[type] || fonts.standard[type];
+    
+    return `${prefixEmoji}・${word}: ${count}`;
 }
 
 export const commands = [
@@ -218,7 +218,7 @@ export const commands = [
       }
 
       if (action === 'setup') {
-        const m = await message.reply(' Setting up server stats channels. This may take a moment...');
+        const m = await message.reply(cv2.info('Processing...', 'Setting up server stats channels. This may take a moment...'));
         
         // Count members
         await message.guild.members.fetch().catch(() => null);
@@ -267,7 +267,7 @@ export const commands = [
             totalId: totalCh.id,
             humansId: humansCh.id,
             botsId: botsCh.id,
-            emoji: 'â—',
+            emoji: '🔊',
             font: 'standard'
           });
           
@@ -380,7 +380,7 @@ export const commands = [
             totalId: totalCh.id,
             humansId: humansCh.id,
             botsId: botsCh.id,
-            emoji: 'â—',
+            emoji: '🔊',
             font: 'standard'
           });
           
