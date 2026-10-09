@@ -958,21 +958,12 @@ export async function handleWarn(guild, moderator, target, reason, force = false
     await target.send({ embeds: [dmEmbed] }).catch(() => null);
 
   // Response channel embed
-  const container = {
-      type: 17,
-      components: [
-        {
-          type: 9,
-          components: [
-            { type: 10, content: `**User Warned |** <a:uptime:1552608831060844575>` }
-          ],
-          accessory: { type: 11, media: { url: target.user.displayAvatarURL({ extension: 'png', size: 128 }) } }
-        },
-        { type: 14, divider: true },
-        { type: 10, content: `-# Reason: ${target} , **${reason}**\n-# User has been warned. Your Limit is ${warns.length}/3. Exceeding the limits will lead to punishments.` }
-      ]
-    };
-    const resEmbed = { components: [container], flags: 32768 };
+  const resEmbed = { embeds: [
+      new EmbedBuilder()
+        .setDescription(`**User Warned |** <a:uptime:1552608831060844575>\n\n**Reason:** ${reason}\n-# ${target.user.username} has been warned. Your Limit is ${warns.length}/3. Exceeding the limits will lead to punishments.`)
+        .setThumbnail(target.user.displayAvatarURL({ extension: 'png', size: 128 }))
+        .setColor('#2b2d31')
+    ] };
 
   // Log to logs channel
   logToSecurityChannel(guild, cv2.log(

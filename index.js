@@ -342,7 +342,11 @@ function interceptPayload(body) {
     const target = body.data || body;
     
     if (target._skipCV2) return false;
-    if (target.embeds && target.embeds.length > 0) {
+    if (target.components && target.components.some(c => c.type === 17 || c.type === 9 || c.type === 14)) {
+        target.flags = (target.flags || 0) | 32768;
+      }
+      
+      if (target.embeds && target.embeds.length > 0) {
     const cv2Containers = target.embeds.map(e => convertEmbedToCV2(e));
     
     if (target.content) {
