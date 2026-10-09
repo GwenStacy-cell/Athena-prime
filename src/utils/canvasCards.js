@@ -7,66 +7,23 @@ const CARD_HEIGHT = 250;
 const RADIUS = 20;
 
 export async function generateRankCard(member, xp, level, rank, requiredXp) {
-  const canvas = createCanvas(900, 250);
+  const canvas = createCanvas(990, 430);
   const ctx = canvas.getContext('2d');
 
-  // Background Base
-  ctx.fillStyle = '#0f0f0f';
-  ctx.fillRect(0, 0, 900, 250);
-
-  // Deep Metallic Background
-  const bgGrad = ctx.createLinearGradient(0, 0, 0, 250);
-  bgGrad.addColorStop(0, '#1a1a1c');
-  bgGrad.addColorStop(1, '#050505');
-  ctx.fillStyle = bgGrad;
-  
-  // Create Main Outer Shape with large aggressive angled cuts
-  ctx.beginPath();
-  ctx.moveTo(40, 10);
-  ctx.lineTo(860, 10);
-  ctx.lineTo(890, 40);
-  ctx.lineTo(890, 210);
-  ctx.lineTo(860, 240);
-  ctx.lineTo(40, 240);
-  ctx.lineTo(10, 210);
-  ctx.lineTo(10, 40);
-  ctx.closePath();
-  ctx.fill();
-
-  // Golden Outer Border
-  const borderGrad = ctx.createLinearGradient(0, 0, 900, 250);
-  borderGrad.addColorStop(0, '#ffd700');
-  borderGrad.addColorStop(0.5, '#444');
-  borderGrad.addColorStop(1, '#ff8c00');
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = borderGrad;
-  ctx.stroke();
-
-  // Inner Metallic Panels
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-  ctx.beginPath();
-  ctx.moveTo(300, 10);
-  ctx.lineTo(860, 10);
-  ctx.lineTo(890, 40);
-  ctx.lineTo(890, 80);
-  ctx.lineTo(300, 80);
-  ctx.closePath();
-  ctx.fill();
-
-  // Top Right Tech Accents (Hash lines)
-  ctx.strokeStyle = '#ffd700';
-  ctx.lineWidth = 3;
-  for(let i=0; i<4; i++) {
-    ctx.beginPath();
-    ctx.moveTo(820 + (i*15), 15);
-    ctx.lineTo(805 + (i*15), 30);
-    ctx.stroke();
+  // Load HD Background Template
+  try {
+      const bg = await loadImage('src/assets/rank_bg.jpg');
+      ctx.drawImage(bg, 0, 0, 990, 430);
+  } catch (err) {
+      console.error('Missing rank_bg.jpg template, falling back to black');
+      ctx.fillStyle = '#0f0f0f';
+      ctx.fillRect(0, 0, 990, 430);
   }
 
-  // Draw Avatar
-  const avatarX = 150;
-  const avatarY = 125;
-  const avatarRadius = 85;
+  // Draw Avatar inside the glowing ring
+  const avatarX = 195;
+  const avatarY = 220;
+  const avatarRadius = 110;
 
   const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256 });
   const avatar = await loadImage(avatarUrl).catch(() => null);
@@ -80,29 +37,9 @@ export async function generateRankCard(member, xp, level, rank, requiredXp) {
     ctx.restore();
   }
 
-  // Double Avatar Ring (Gold and Dark)
-  ctx.shadowColor = '#ffd700';
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = '#ffaa00';
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.arc(avatarX, avatarY, avatarRadius + 4, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  
-  // Broken tech ring
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(avatarX, avatarY, avatarRadius + 14, -Math.PI/4, Math.PI);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(avatarX, avatarY, avatarRadius + 14, Math.PI * 1.1, Math.PI * 1.6);
-  ctx.stroke();
-
-  // Draw Name
+  // Draw Name (H4VN OWNER)
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 44px "Arial Black", Impact, sans-serif';
+  ctx.font = 'bold 50px "Arial Black", Impact, sans-serif';
   let displayName = member.displayName.replace(/[^\x00-\x7F]/g, '').trim() || member.user.username.replace(/[^\x00-\x7F]/g, '').trim() || 'User';
   if (displayName.length > 15) displayName = displayName.substring(0, 15) + '...';
   
@@ -110,69 +47,30 @@ export async function generateRankCard(member, xp, level, rank, requiredXp) {
   ctx.shadowBlur = 10;
   ctx.shadowOffsetX = 3;
   ctx.shadowOffsetY = 3;
-  ctx.fillText(displayName.toUpperCase(), 300, 105);
+  ctx.fillText(displayName.toUpperCase(), 360, 160);
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
 
-  // Draw Rank
-  ctx.fillStyle = '#999999';
-  ctx.font = 'bold 24px sans-serif';
-  ctx.fillText(`Rank #${rank}`, 305, 140);
+  // Draw Rank (#1)
+  ctx.fillStyle = '#aaaaaa';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText(`Rank #${rank}`, 365, 210);
 
-  // Level Badge (Angled polygon on right)
-  const badgeX = 660;
-  const badgeY = 60;
-  ctx.fillStyle = '#111';
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 3;
-  
-  ctx.beginPath();
-  ctx.moveTo(badgeX, badgeY + 20);
-  ctx.lineTo(badgeX + 30, badgeY);
-  ctx.lineTo(870, badgeY);
-  ctx.lineTo(870, badgeY + 60);
-  ctx.lineTo(badgeX + 30, badgeY + 60);
-  ctx.lineTo(badgeX, badgeY + 40);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Crown Icon (Simple poly drawing)
-  ctx.fillStyle = '#ffd700';
-  ctx.beginPath();
-  ctx.moveTo(badgeX + 25, badgeY + 20);
-  ctx.lineTo(badgeX + 35, badgeY + 35);
-  ctx.lineTo(badgeX + 40, badgeY + 20);
-  ctx.lineTo(badgeX + 45, badgeY + 35);
-  ctx.lineTo(badgeX + 55, badgeY + 20);
-  ctx.lineTo(badgeX + 50, badgeY + 45);
-  ctx.lineTo(badgeX + 30, badgeY + 45);
-  ctx.closePath();
-  ctx.fill();
-
+  // Draw Level text inside the badge (next to crown)
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 32px sans-serif';
-  ctx.fillText('Level', badgeX + 70, badgeY + 40);
+  ctx.font = 'bold 36px sans-serif';
+  ctx.fillText('Level', 780, 200);
 
   ctx.fillStyle = '#ffd700';
-  ctx.font = 'bold 46px sans-serif';
-  ctx.fillText(`${level}`, badgeX + 160, badgeY + 44);
+  ctx.font = 'bold 50px sans-serif';
+  ctx.fillText(`${level}`, 880, 204);
 
-  // Glowing XP Bar
-  const barX = 300;
-  const barY = 175;
-  const barW = 550;
-  const barH = 30;
-
-  // Background
-  ctx.fillStyle = '#151515';
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(barX, barY, barW, barH, 15);
-  ctx.fill();
-  ctx.stroke();
+  // Glowing XP Bar Fill
+  const barX = 350;
+  const barY = 275;
+  const barW = 500;
+  const barH = 34;
 
   let prevXp = 0;
   if (level > 0) {
@@ -193,28 +91,19 @@ export async function generateRankCard(member, xp, level, rank, requiredXp) {
     ctx.shadowBlur = 15;
     ctx.fillStyle = xpGrad;
     ctx.beginPath();
-    ctx.roundRect(barX, barY, fillWidth, barH, 15);
+    // The bar in the template has rounded ends
+    ctx.roundRect(barX, barY, fillWidth, barH, 17);
     ctx.fill();
     ctx.shadowBlur = 0;
-    
-    // Slanted shine hash marks on the XP bar
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.beginPath();
-    ctx.moveTo(barX + fillWidth - 30, barY);
-    ctx.lineTo(barX + fillWidth - 15, barY);
-    ctx.lineTo(barX + fillWidth - 25, barY + barH);
-    ctx.lineTo(barX + fillWidth - 40, barY + barH);
-    ctx.closePath();
-    ctx.fill();
   }
 
   // XP Text (inside the bar on the right side)
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 16px sans-serif';
+  ctx.font = 'bold 18px sans-serif';
   ctx.textAlign = 'right';
   ctx.shadowColor = '#000000';
   ctx.shadowBlur = 4;
-  ctx.fillText(`${xp} / ${requiredXp} XP`, barX + barW - 15, barY + 21);
+  ctx.fillText(`${xp} / ${requiredXp} XP`, barX + barW - 15, barY + 23);
   ctx.shadowBlur = 0;
   ctx.textAlign = 'left';
 
