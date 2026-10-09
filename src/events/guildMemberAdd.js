@@ -219,20 +219,29 @@ export default {
           
           const memberDisplayName = member.nickname || member.user.displayName || member.user.username;
           const inviterDisplayName = inviter ? (inviter.displayName || inviter.username) : null;
-          const inviterLine = inviter
-            ? `${inviterDisplayName}\n[${inviter.id}](https://discord.com/users/${inviter.id})`
+          const inviterLine = inviter ? `[${inviterDisplayName}](https://discord.com/users/${inviter.id})`
             : 'Unknown / Vanity URL / Temp Invite';
 
-          const inviteEmbed = {
-            color: config.accentColor ? parseInt(config.accentColor.replace('#', ''), 16) : 0x2b2d31,
-            author: { name: 'MEMBER JOINED', icon_url: member.user.displayAvatarURL({ dynamic: true }) },
-            description: `${bullet} **User Joined:** ${memberDisplayName}\n[${member.id}](https://discord.com/users/${member.id})\n${bullet} **Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n\n**INVITE DETAILS**\n${bullet} **Creator:** ${inviterLine}\n${bullet} **Invite Code:** \`${codeText}\`\n${bullet} **Total Uses:** ${usesText} / ${maxUses}\n${bullet} **Duration:** ${maxAge}\n${bullet} **Created At:** ${createdTime}`,
-            timestamp: new Date().toISOString(),
-            thumbnail: { url: member.user.displayAvatarURL({ dynamic: true, size: 256 }) },
-            footer: { text: `Total Members: ${guild.memberCount}`, icon_url: guild.iconURL({ dynamic: true }) }
-          };
           
-          await inviteChannel.send({ embeds: [inviteEmbed] }).catch(() => null);
+            const inviteEmbed = {
+              type: 17,
+              components: [
+                { type: 10, content: `## 🔴 **MEMBER JOINED**` },
+                { type: 14, divider: true },
+                { 
+                  type: 9, 
+                  components: [
+                    { type: 10, content: `**User Joined:** [${memberDisplayName}](https://discord.com/users/${member.id})\n**Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>` }
+                  ],
+                  accessory: { type: 11, media: { url: member.user.displayAvatarURL({ dynamic: true, size: 256 }) } }
+                },
+                { type: 14, divider: true },
+                { type: 10, content: `**INVITE DETAILS**\n**Creator:** ${inviterLine}\n**Invite Code:** \`${codeText}\`\n**Total Uses:** ${usesText} / ${maxUses}\n**Duration:** ${maxAge}\n**Created At:** ${createdTime}` }
+              ]
+            };
+            
+            await inviteChannel.send({ components: inviteEmbed.components, flags: 32768 }).catch(() => null);
+
         }
       } catch (err) {
         console.error('Failed to process invite tracking:', err);

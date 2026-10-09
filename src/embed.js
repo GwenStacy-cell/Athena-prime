@@ -7,7 +7,7 @@ import db from './database.js';
 const configPath = path.resolve('config.json');
 let config = {
   botName: 'Athena Prime',
-  footerText: 'Athena Bulletproof Security System � V1.0.0',
+  footerText: 'Athena Bulletproof Security System � V1.0.0',
   colors: {
     success: '#2b2d31',
     warning: '#2b2d31',
@@ -28,7 +28,7 @@ try {
 }
 
 const colors = config.colors;
-const FOOTER_TEXT = config.footerText || 'Athena Bulletproof Security System � V1.0.0';
+const FOOTER_TEXT = config.footerText || 'Athena Bulletproof Security System � V1.0.0';
 
 // ——————————————————————————————————————————
 // GUILD CONTEXT — set once per command invocation
@@ -66,7 +66,7 @@ export const embed = {
       .setColor(color || colors.dark)
       .setTimestamp();
 
-    if (title) builder.setTitle(`__**${title.toUpperCase()}**__`);
+    if (title) builder.setTitle(title);
     if (description) builder.setDescription(description);
     if (thumbnail) builder.setThumbnail(thumbnail);
     if (image) builder.setImage(image);
