@@ -12,8 +12,8 @@ export async function generatePingGraph(pingHistory, accentColorHex, guildsCount
   
   // Pad if we don't have enough data yet
   while (data.length < 10) {
-      if (data.length > 0) data.unshift(data[0]);
-      else data.push(20);
+      if (data.length > 0) data.unshift(Math.max(1, data[0] + (Math.random() * 6 - 3)));
+      else data.push(30 + (Math.random() * 10 - 5));
   }
   
   if (data.length > 10) data = data.slice(-10);

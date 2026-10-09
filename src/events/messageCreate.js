@@ -430,9 +430,9 @@ export default {
               const container = {
                   type: 17,
                   components: [
-                      { type: 9, components: [{ type: 10, content: '**Secure Notification : ' + message.guild.name + '**' }], accessory: { type: 11, media: { url: message.guild.iconURL({ dynamic: true }) || 'https://cdn.discordapp.com/embed/avatars/0.png' } } },
+                      { type: 9, components: [{ type: 10, content: '**Athena Notification : ' + message.guild.name + '**' }], accessory: { type: 11, media: { url: message.guild.iconURL({ dynamic: true }) || 'https://cdn.discordapp.com/embed/avatars/0.png' } } },
                       { type: 14, divider: true },
-                      { type: 10, content: "**Tagged By:** [@" + authorNick + "](https://discord.com/users/" + message.author.id + ")\n-# Channel: 💬 [" + message.channel.name + "](https://discord.com/channels/" + message.guild.id + "/" + message.channel.id + ")\n-# Message: `" + snippet + "`" },
+                      { type: 10, content: "**Tagged By:** [@" + authorNick + "](https://discord.com/users/" + message.author.id + ")\n-# Channel: 💬 [" + message.channel.name + "](https://discord.com/channels/" + message.guild.id + "/" + message.channel.id + ")\n-# Message: " + snippet },
                       { type: 14, divider: true },
                       {
                           type: 1,
@@ -444,7 +444,7 @@ export default {
                           ]
                       },
                       { type: 14, divider: true },
-                      { type: 10, content: '-# Secure Dm Notification' }
+                      { type: 10, content: '-# Athena Prime Notification' }
                   ]
               };
   
