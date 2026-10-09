@@ -304,7 +304,7 @@ export const commands = [
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
   
         const comps = [
-          { type: 10, content: `-### **| <a:uptime:1552608831060844575> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+          { type: 10, content: `-# **| <a:uptime:1552608831060844575> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
           { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
         ];
   
@@ -320,7 +320,7 @@ export const commands = [
 
       const { MessageFlags } = await import('discord.js');
       const replyResponse = await interaction.reply({ 
-        components: [{ type: 17, components: [{ type: 10, content: `-### <a:loading:1542155051286396938> **Athena Prime:** ${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}` }] }],
+        components: [{ type: 17, components: [{ type: 10, content: `-# <a:loading:1542155051286396938> **Athena Prime:** ${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}` }] }],
         flags: MessageFlags.IsComponentsV2,
         withResponse: true
       });
@@ -341,7 +341,7 @@ export const commands = [
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
   
         const comps = [
-          { type: 10, content: `-### **| <a:uptime:1552608831060844575> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+          { type: 10, content: `-# **| <a:uptime:1552608831060844575> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
           { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
         ];
   
