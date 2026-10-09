@@ -273,84 +273,75 @@ export const commands = [
   // --- PING COMMAND ---
   {
     name: 'ping',
-    aliases: ['p', 'latency'],
-    description: 'Checks the bot and gateway latency.',
-    category: 'utility',
-    permissions: [],
-    async executePrefix(message) {
-      const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
-      let generatePingGraph; try { generatePingGraph = (await import('../utils/graph.js')).generatePingGraph; } catch(e) { console.error('Graph module missing:', e.message); }
-      const cfg = db.getGuildConfig(message.guild?.id || '0');
-      const accentHex = cfg?.accentColor || '#00e5ff';
-      const accentInt = parseInt(accentHex.replace('#', ''), 16);
-
-      const { MessageFlags } = await import('discord.js');
-      const sent = await message.reply({ 
-        components: [{ type: 17, components: [{ type: 10, content: `-# <a:loading:1542155051286396938> **Athena Prime:** ${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}` }] }],
-        flags: MessageFlags.IsComponentsV2 
-      });
-      const apiMs = sent.createdTimestamp - message.createdTimestamp;
-      const wsMs  = Math.round(message.client.ws.ping);
-
-      const dbStart = Date.now();
-      db.getGuildConfig(message.guild?.id || '0');
-      const dbMs = Date.now() - dbStart;
-
-      const rSet = Math.floor(Math.random() * 3) + 1;
-      const rGet = Math.floor(Math.random() * 2) + 1;
-      const rDel = Math.floor(Math.random() * 2) + 1;
-
-            const buffer = await generatePingGraph(message.client.pingHistory && message.client.pingHistory.length > 0 ? message.client.pingHistory : wsMs, accentHex, message.client.guilds.cache.size);
+      aliases: ['p', 'latency'],
+      description: 'Checks the bot and gateway latency.',
+      category: 'utility',
+      permissions: [],
+      async executePrefix(message) {
+        const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
+        let generatePingGraph; try { generatePingGraph = (await import('../utils/graph.js')).generatePingGraph; } catch(e) { }
+        const cfg = db.getGuildConfig(message.guild?.id || '0');
+        const accentHex = cfg?.accentColor || '#00e5ff';
+  
+        const sent = await message.reply(cv2.info('Athena Prime', `${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}`));
+        
+        const apiMs = sent.createdTimestamp - message.createdTimestamp;
+        const wsMs  = Math.round(message.client.ws.ping);
+  
+        const dbStart = Date.now();
+        db.getGuildConfig(message.guild?.id || '0');
+        const dbMs = Date.now() - dbStart;
+  
+        const rSet = Math.floor(Math.random() * 3) + 1;
+        const rGet = Math.floor(Math.random() * 2) + 1;
+        const rDel = Math.floor(Math.random() * 2) + 1;
+  
+        const buffer = await generatePingGraph(message.client.pingHistory && message.client.pingHistory.length > 0 ? message.client.pingHistory : wsMs, accentHex, message.client.guilds.cache.size);
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
-  
-        const comps = [
-          { type: 10, content: `-# **| <a:uptime:1552608831060844575> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
-          { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
-        ];
-  
+        
+        const replyEmbed = new EmbedBuilder()
+          .setDescription(`-# **| <a:uptime:1552608831060844575> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
+          .setImage('attachment://ping_graph.png');
+    
         await sent.delete().catch(() => null);
-        await message.reply({ components: [{ type: 17, components: comps }], files: [attachment], flags: MessageFlags.IsComponentsV2 });
-    },
-    async executeSlash(interaction) {
-      const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
-      let generatePingGraph; try { generatePingGraph = (await import('../utils/graph.js')).generatePingGraph; } catch(e) { console.error('Graph module missing:', e.message); }
-      const cfg = db.getGuildConfig(interaction.guild?.id || '0');
-      const accentHex = cfg?.accentColor || '#00e5ff';
-      const accentInt = parseInt(accentHex.replace('#', ''), 16);
-
-      const { MessageFlags } = await import('discord.js');
-      const replyResponse = await interaction.reply({ 
-        components: [{ type: 17, components: [{ type: 10, content: `-# <a:loading:1542155051286396938> **Athena Prime:** ${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}` }] }],
-        flags: MessageFlags.IsComponentsV2,
-        withResponse: true
-      });
-      
-      const sentMessage = replyResponse?.resource?.message || replyResponse;
-      const apiMs = (sentMessage?.createdTimestamp || Date.now()) - interaction.createdTimestamp;
-      const wsMs  = Math.round(interaction.client.ws.ping);
-
-      const dbStart = Date.now();
-      db.getGuildConfig(interaction.guild?.id || '0');
-      const dbMs = Date.now() - dbStart;
-
-      const rSet = Math.floor(Math.random() * 3) + 1;
-      const rGet = Math.floor(Math.random() * 2) + 1;
-      const rDel = Math.floor(Math.random() * 2) + 1;
-
-      const buffer = await generatePingGraph(interaction.client.pingHistory && interaction.client.pingHistory.length > 0 ? interaction.client.pingHistory : wsMs, accentHex, interaction.client.guilds.cache.size);
+        await message.reply({ embeds: [replyEmbed], files: [attachment] });
+      },
+      async executeSlash(interaction) {
+        const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
+        let generatePingGraph; try { generatePingGraph = (await import('../utils/graph.js')).generatePingGraph; } catch(e) { }
+        const cfg = db.getGuildConfig(interaction.guild?.id || '0');
+        const accentHex = cfg?.accentColor || '#00e5ff';
+  
+        const replyResponse = await interaction.reply({ 
+          content: '',
+          embeds: [new EmbedBuilder().setDescription(`-# <a:loading:1542155051286396938> **Athena Prime:** ${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}`)],
+          withResponse: true
+        });
+        
+        const sentMessage = replyResponse?.resource?.message || replyResponse;
+        const apiMs = (sentMessage?.createdTimestamp || Date.now()) - interaction.createdTimestamp;
+        const wsMs  = Math.round(interaction.client.ws.ping);
+  
+        const dbStart = Date.now();
+        db.getGuildConfig(interaction.guild?.id || '0');
+        const dbMs = Date.now() - dbStart;
+  
+        const rSet = Math.floor(Math.random() * 3) + 1;
+        const rGet = Math.floor(Math.random() * 2) + 1;
+        const rDel = Math.floor(Math.random() * 2) + 1;
+  
+        const buffer = await generatePingGraph(interaction.client.pingHistory && interaction.client.pingHistory.length > 0 ? interaction.client.pingHistory : wsMs, accentHex, interaction.client.guilds.cache.size);
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
-  
-        const comps = [
-          { type: 10, content: `-# **| <a:uptime:1552608831060844575> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
-          { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
-        ];
-  
+        
+        const replyEmbed = new EmbedBuilder()
+          .setDescription(`-# **| <a:uptime:1552608831060844575> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
+          .setImage('attachment://ping_graph.png');
+    
         await interaction.deleteReply().catch(() => null);
-        await interaction.followUp({ components: [{ type: 17, components: comps }], files: [attachment], flags: MessageFlags.IsComponentsV2 });
-    }
-  },
-
-  // --- TIME COMMAND ---
+        await interaction.channel.send({ content: `<@${interaction.user.id}>`, embeds: [replyEmbed], files: [attachment] });
+      }
+    },
+    // --- TIME COMMAND ---
   {
     name: 'time',
     description: 'Check the current Indian Standard Time (IST)',
