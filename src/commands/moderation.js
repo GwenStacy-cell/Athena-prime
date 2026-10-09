@@ -845,7 +845,7 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.Administrator],
     async executePrefix(message) {
-      const m = await message.reply(' Syncing all channels to their categories. This might take a while to respect Discord rate limits...');
+      const m = await message.reply(cv2.info('Processing...', 'Syncing all channels to their categories. This might take a while to respect Discord rate limits...'));
       let success = 0;
       let failed = 0;
 

@@ -121,7 +121,7 @@ export const commands = [
         return message.reply(cv2.info('No Data', `${targetUser} has not sent any messages or joined any voice channels in the last 14 days.`));
       }
 
-      const m = await message.reply(' Generating your stats... Please wait.');
+      const m = await message.reply(cv2.info('Processing...', 'Generating your stats... Please wait.'));
 
       try {
         const buffer = await generateStatCard(targetUser, targetMember, userStats, serverRanks, topChannels, chartData, message.guild);

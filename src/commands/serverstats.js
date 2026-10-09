@@ -99,9 +99,9 @@ export const commands = [
       
       if (action === 'disable') {
         const stats = db.getServerStats(message.guild.id);
-        if (!stats) return message.reply(cv2.warning('Not Setup', 'Server stats are not currently set up.'));
+        if (!stats) return message.reply(cv2.warn('Not Setup', 'Server stats are not currently set up.'));
         
-        const m = await message.reply(' Disabling server stats and deleting channels...');
+        const m = await message.reply(cv2.info('Processing...', 'Disabling server stats and deleting channels...'));
         
         for (const id of [stats.categoryId, stats.totalId, stats.humansId, stats.botsId]) {
           const ch = message.guild.channels.cache.get(id);
@@ -114,7 +114,7 @@ export const commands = [
       
       if (action === 'config') {
         const stats = db.getServerStats(message.guild.id);
-        if (!stats) return message.reply(cv2.warning('Not Setup', 'Server stats are not currently set up. Please run `!serverstats setup` first.'));
+        if (!stats) return message.reply(cv2.warn('Not Setup', 'Server stats are not currently set up. Please run `!serverstats setup` first.'));
         
         let newEmoji = args[1];
         let newFont = args[2]?.toLowerCase();
@@ -213,7 +213,7 @@ export const commands = [
           await updateServerStatsChannels(message.guild, updatedStats);
           return message.reply(cv2.success('Stats Configured', `Server stats font/emoji updated to **${newFont || 'standard'}** with emoji **${newEmoji || 'none'}**!`));
         } catch (err) {
-          return message.reply(cv2.warning('Stats Configured, but Discord Ratelimited', `Server stats config updated!\n\nâš **Discord rejected the immediate channel rename!**\nError: \`${err.message}\`\n\nYour choices are saved and will automatically apply in ~10 minutes.`));
+          return message.reply(cv2.warn('Stats Configured, but Discord Ratelimited', `Server stats config updated!\n\nâš **Discord rejected the immediate channel rename!**\nError: \`${err.message}\`\n\nYour choices are saved and will automatically apply in ~10 minutes.`));
         }
       }
 
@@ -280,15 +280,15 @@ export const commands = [
       
       if (action === 'test') {
         const stats = db.getServerStats(message.guild.id);
-        if (!stats) return message.reply('Stats not setup.');
+        if (!stats) return message.reply(cv2.warn('Error', 'Stats not setup.'));
         const totalCh = message.guild.channels.cache.get(stats.totalId);
-        if (!totalCh) return message.reply('Channel not found in cache.');
+        if (!totalCh) return message.reply(cv2.warn('Error', 'Channel not found in cache.'));
         try {
           await totalCh.setName(totalCh.name + '1');
           await totalCh.setName(totalCh.name.slice(0, -1));
-          return message.reply('Success! I can rename the channel.');
+          return message.reply(cv2.success('Success', 'I can rename the channel.'));
         } catch (err) {
-          return message.reply(`Discord rejected the rename! Error: \`${err.message}\``);
+          return message.reply(cv2.danger('Rename Failed', `Discord rejected the rename! Error: \`${err.message}\``));
         }
       }
       
@@ -300,7 +300,7 @@ export const commands = [
       
       if (action === 'disable') {
         const stats = db.getServerStats(interaction.guild.id);
-        if (!stats) return interaction.editReply(cv2.warning('Not Setup', 'Server stats are not currently set up.'));
+        if (!stats) return interaction.editReply(cv2.warn('Not Setup', 'Server stats are not currently set up.'));
         
         for (const id of [stats.categoryId, stats.totalId, stats.humansId, stats.botsId]) {
           const ch = interaction.guild.channels.cache.get(id);
@@ -313,7 +313,7 @@ export const commands = [
       
       if (action === 'config') {
         const stats = db.getServerStats(interaction.guild.id);
-        if (!stats) return interaction.editReply(cv2.warning('Not Setup', 'Server stats are not currently set up.'));
+        if (!stats) return interaction.editReply(cv2.warn('Not Setup', 'Server stats are not currently set up.'));
         
         const newEmoji = interaction.options.getString('emoji');
         const newFont = interaction.options.getString('font');
