@@ -410,7 +410,46 @@ export default {
             const mentionDisplay = new TextDisplayBuilder().setContent(textContent);
             const mentionContainer = new ContainerBuilder().addTextDisplayComponents(mentionDisplay);
             message.reply({ components: [mentionContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
-          }
+            }
+          });
+        }
+      // 3. SECURE DM NOTIFICATION FOR TAGS
+      if (message.guild && message.mentions.users.size > 0) {
+        message.mentions.users.forEach(async (user) => {
+          if (user.id === message.author.id || user.bot) return;
+          
+          const blockedServers = db.getPingAlertBlocks(user.id) || [];
+          if (blockedServers.includes(message.guild.id)) return;
+  
+          try {
+              const authorNick = message.member?.displayName || message.author.username;
+              let snippet = message.content;
+              if (snippet.length > 50) snippet = snippet.substring(0, 47) + '...';
+              if (!snippet.trim()) snippet = 'Attachment/Embed only';
+  
+              const container = {
+                  type: 17,
+                  components: [
+                      { type: 9, components: [{ type: 10, content: '**Secure Notification : ' + message.guild.name + '**' }], accessory: { type: 11, media: { url: message.guild.iconURL({ dynamic: true }) || 'https://cdn.discordapp.com/embed/avatars/0.png' } } },
+                      { type: 14, divider: true },
+                      { type: 10, content: "**Tagged By:** [@" + authorNick + "](https://discord.com/users/" + message.author.id + ")\n-# Channel: 💬 [" + message.channel.name + "](https://discord.com/channels/" + message.guild.id + "/" + message.channel.id + ")\n-# Message: `" + snippet + "`" },
+                      { type: 14, divider: true },
+                      {
+                          type: 1,
+                          components: [
+                              { type: 2, style: 5, label: 'Jump to Channel', url: message.url },
+                              { type: 2, style: 2, label: 'Ack', custom_id: 'ping_ack' },
+                              { type: 2, style: 2, label: 'Reply', custom_id: 'ping_reply_' + message.channel.id + '_' + message.id },
+                              { type: 2, style: 2, label: 'Block Server Messages', custom_id: 'ping_block_' + message.guild.id }
+                          ]
+                      },
+                      { type: 14, divider: true },
+                      { type: 10, content: '-# Secure Dm Notification' }
+                  ]
+              };
+  
+              await user.send({ components: [container], flags: 32768 }).catch(() => null);
+          } catch(e) {}
         });
       }
     }
@@ -1662,3 +1701,4 @@ export default {
     }
   }
 };
+
