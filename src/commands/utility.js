@@ -300,14 +300,16 @@ export const commands = [
       const rGet = Math.floor(Math.random() * 2) + 1;
       const rDel = Math.floor(Math.random() * 2) + 1;
 
-      const buffer = await generatePingGraph(wsMs, accentHex, message.client.guilds.cache.size);
-      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
-
-      const comps = [
-        { type: 10, content: `-# **| <a:uptime:1552608831060844575> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }];
-
-      await sent.delete().catch(() => null);
-        await message.reply({ components: [{ type: 17, components: comps }], files: attachment ? [attachment] : [], flags: MessageFlags.IsComponentsV2 });
+            const buffer = await generatePingGraph(wsMs, accentHex, message.client.guilds.cache.size);
+        const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
+  
+        const comps = [
+          { type: 10, content: `-### **| <a:uptime:1552608831060844575> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+          { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
+        ];
+  
+        await sent.delete().catch(() => null);
+        await message.reply({ components: [{ type: 17, components: comps }], files: [attachment], flags: MessageFlags.IsComponentsV2 });
     },
     async executeSlash(interaction) {
       const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
@@ -336,13 +338,15 @@ export const commands = [
       const rDel = Math.floor(Math.random() * 2) + 1;
 
       const buffer = await generatePingGraph(wsMs, accentHex, interaction.client.guilds.cache.size);
-      const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
-
-      const comps = [
-        { type: 10, content: `-# **| <a:uptime:1552608831060844575> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }];
-
-      await interaction.deleteReply().catch(() => null);
-        await interaction.followUp({ components: [{ type: 17, components: comps }], files: attachment ? [attachment] : [], flags: MessageFlags.IsComponentsV2 });
+        const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
+  
+        const comps = [
+          { type: 10, content: `-### **| <a:uptime:1552608831060844575> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
+          { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
+        ];
+  
+        await interaction.deleteReply().catch(() => null);
+        await interaction.followUp({ components: [{ type: 17, components: comps }], files: [attachment], flags: MessageFlags.IsComponentsV2 });
     }
   },
 
