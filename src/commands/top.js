@@ -84,7 +84,7 @@ export const commands = [
         const buffer = await generateTopImage(interaction.guild, topMsgMembers, topVoiceMembers);
         const attachment = new AttachmentBuilder(buffer, { name: 'top-members.png' });
 
-        await interaction.editReply({ files: [attachment] });
+        await interaction.editReply({ content: '', components: [], embeds: [], files: [attachment] });
       } catch (e) {
         console.error('Top leaderboard slash error:', e);
         await interaction.editReply(cv2.danger('Error', 'Failed to generate leaderboard image.'));

@@ -304,9 +304,7 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:ticks:1533860039213842565> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
-        { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
-      ];
+        { type: 10, content: `-# **| <:ticks:1533860039213842565> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }];
 
       await sent.delete().catch(() => null);
         await message.reply({ components: [{ type: 17, components: comps }], files: attachment ? [attachment] : [], flags: MessageFlags.IsComponentsV2 });
@@ -341,9 +339,7 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:ticks:1533860039213842565> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` },
-        { type: 12, items: [{ media: { url: 'attachment://ping_graph.png' } }] }
-      ];
+        { type: 10, content: `-# **| <:ticks:1533860039213842565> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }];
 
       await interaction.deleteReply().catch(() => null);
         await interaction.followUp({ components: [{ type: 17, components: comps }], files: attachment ? [attachment] : [], flags: MessageFlags.IsComponentsV2 });
@@ -843,8 +839,7 @@ async function getStatusEmbed(client, guild) {
     "**News Feed System:**",
     "- Supports Twitter (X), YouTube, Reddit, and standard RSS feeds.",
     "- Automatically formats new posts as sleek CV2 embeds."
-  ] },
-];
+  ] }];
 
 const HELP_GIF = 'https://cdn.discordapp.com/attachments/1534869224277807175/1542472732325978234/ATHENA-8-27-2026.png?ex=6a915b2d&is=6a9009ad&hm=0f55bae0c0bec27649bc03e6d6be23ad16f2eb9337efdb8b5793b2d74cad89ff&';
 
