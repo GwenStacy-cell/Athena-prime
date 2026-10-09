@@ -28,14 +28,14 @@ export default {
     // PING ALERTS SYSTEM
     // ==========================================
     if (interaction.isButton() && interaction.customId === 'ping_ack') {
-      await interaction.update({ content: '-# <:emoji_16:1521464002046328944> Notification acknowledged.', components: [] });
+      await interaction.update({ content: '-# <a:uptime:1552608831060844575> Notification acknowledged.', components: [] });
       return;
     }
     
     if (interaction.isButton() && interaction.customId.startsWith('ping_block_')) {
       const guildId = interaction.customId.split('_')[2];
       db.addPingAlertBlock(interaction.user.id, guildId);
-      await interaction.update({ content: '-# <:emoji_16:1521464002046328944> You will no longer receive ping notifications from this server.', components: [] });
+      await interaction.update({ content: '-# <a:uptime:1552608831060844575> You will no longer receive ping notifications from this server.', components: [] });
       return;
     }
     
@@ -63,7 +63,7 @@ export default {
         const channel = await client.channels.fetch(channelId).catch(() => null);
         if (channel) {
           await channel.send({ content: replyText, reply: { messageReference: messageId } }).catch(() => null);
-          await interaction.update({ content: '-# <:emoji_16:1521464002046328944> Reply sent successfully!', components: [] });
+          await interaction.update({ content: '-# <a:uptime:1552608831060844575> Reply sent successfully!', components: [] });
         } else {
           await interaction.reply({ content: '-# <:off:1533844858983157851> Failed to send reply: Channel not found.', flags: 64 });
         }

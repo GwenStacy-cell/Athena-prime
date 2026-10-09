@@ -17,7 +17,7 @@ export default {
       const newContent = newMessage.content ? (newMessage.content.length > 1000 ? newMessage.content.substring(0, 997) + '...' : newMessage.content) : 'No new content';
 
       const editEmbed = embed.build({
-        description: `__**Message Edited |**__ <:ticks:1533860039213842565>\n> **Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n>  **Channel:** ${newMessage.channel}\n>  [Jump to Message](${newMessage.url})\n>  **Before:**\n>  ${oldContent}\n>  **After:**\n>  ${newContent}`,
+        description: `__**Message Edited |**__ <a:uptime:1552608831060844575>\n> **Author:** ${newMessage.author?.tag} (<@${newMessage.author?.id}>)\n>  **Channel:** ${newMessage.channel}\n>  [Jump to Message](${newMessage.url})\n>  **Before:**\n>  ${oldContent}\n>  **After:**\n>  ${newContent}`,
         color: '#2b2d31'
       });
 
@@ -59,7 +59,7 @@ export default {
                .setTitle('LOG: MALICIOUS SCAM IMAGE DELETED')
                .setDescription(`**User:** <@${newMessage.author.id}> (${newMessage.author.tag})\n**Action:** Posted a fraudulent image containing known scam keywords (Mr. Beast/Kasowin/Helawin/Crypto Casino).`)
                .addFields([{ name: 'Channel', value: `<#${newMessage.channel.id}>` }])
-               .setFooter({ text: 'Athena Bulletproof Security System · V1.0.0' })
+               .setFooter({ text: 'Athena Bulletproof Security System ï¿½ V1.0.0' })
                .setTimestamp();
              
              try {
@@ -80,7 +80,7 @@ export default {
                    .setColor('#ff0000')
                    .setTitle('<a:emoji_35:1533024049926639699> Automated Scam Intervention')
                    .setDescription(`Hello **${owner.user.username}**,\nI have successfully intercepted and deleted a fraudulent scam image in your server **${newMessage.guild.name}**.\n\n**Offender:** <@${newMessage.author.id}>\n**Location:** <#${newMessage.channel.id}>\n**Detected Keywords:** Mr. Beast / Kasowin / Helawin / Crypto Casino`)
-                   .setFooter({ text: 'Athena Bulletproof Security System · V1.0.0' });
+                   .setFooter({ text: 'Athena Bulletproof Security System ï¿½ V1.0.0' });
                  await owner.send({ embeds: [dmEmbed] }).catch(() => null);
                }
              } catch (e) {

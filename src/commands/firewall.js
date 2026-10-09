@@ -18,7 +18,7 @@ export const commands = [
       const cfg = db.getGuildConfig(guildId);
       const isFirewallActive = cfg.antiNukeEnabled === true;
       const FIRE = '<a:fire:1557839005998121153>';
-      const ON = '<:ticks:1533860039213842565>';
+      const ON = '<a:uptime:1552608831060844575>';
       const RED_OFF = '<:off:1533844858983157851>';
       const LOAD = '<a:loading:1542155051286396938>';
       

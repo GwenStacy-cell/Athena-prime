@@ -52,7 +52,7 @@ export default {
       executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
     }
     const delEmbed = embed.build({
-      description: `__**Role Deleted |**__ <:ticks:1533860039213842565>\n> **Role Name:** ${role.name}\n>  **Executor:** ${executor}`,
+      description: `__**Role Deleted |**__ <a:uptime:1552608831060844575>\n> **Role Name:** ${role.name}\n>  **Executor:** ${executor}`,
       color: '#2b2d31'
     });
     await logServerEvent(role.guild, 'roles', delEmbed);

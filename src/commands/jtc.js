@@ -47,9 +47,9 @@ function getEmoji(key) {
   if (emojiMap[key]?.id) return { id: emojiMap[key].id, name: emojiMap[key].name };
   // Fallback text emoji
   const fallbacks = {
-    name: '', limit: '<:ticks:1533860039213842565>', status: '<:ticks:1533860039213842565>', game: '<:ticks:1533860039213842565>', lfm: '<:ticks:1533860039213842565>',
-    bitrate: '<:ticks:1533860039213842565>', region: '<:ticks:1533860039213842565>', text: '#âƒ£', nsfw: '', claim: '',
-    lock: '<:ticks:1533860039213842565>', unlock: '<:ticks:1533860039213842565>', ghost: '<:ticks:1533860039213842565>', unghost: '<:ticks:1533860039213842565>',
+    name: '', limit: '<a:uptime:1552608831060844575>', status: '<a:uptime:1552608831060844575>', game: '<a:uptime:1552608831060844575>', lfm: '<a:uptime:1552608831060844575>',
+    bitrate: '<a:uptime:1552608831060844575>', region: '<a:uptime:1552608831060844575>', text: '#âƒ£', nsfw: '', claim: '',
+    lock: '<a:uptime:1552608831060844575>', unlock: '<a:uptime:1552608831060844575>', ghost: '<a:uptime:1552608831060844575>', unghost: '<a:uptime:1552608831060844575>',
     permit: '', reject: '', invite: '', transfer: ''
   };
   return fallbacks[key] || '';
@@ -266,13 +266,13 @@ export async function handleJtcSelectMenu(interaction) {
     const members = vcChannel.members.map(m => m.toString()).join(', ') || 'None';
     const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
     return interaction.reply(cv2.e.info('Channel Info â„¹', null, [
-        { name: '<:ticks:1533860039213842565> Name', value: vcChannel.name, inline: true },
+        { name: '<a:uptime:1552608831060844575> Name', value: vcChannel.name, inline: true },
         { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
-        { name: '<:ticks:1533860039213842565> Limit', value: vcChannel.userLimit === 0 ? 'No Limit' : `${vcChannel.userLimit}`, inline: true },
-        { name: '<:ticks:1533860039213842565> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
-        { name: '<:ticks:1533860039213842565> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
+        { name: '<a:uptime:1552608831060844575> Limit', value: vcChannel.userLimit === 0 ? 'No Limit' : `${vcChannel.userLimit}`, inline: true },
+        { name: '<a:uptime:1552608831060844575> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
+        { name: '<a:uptime:1552608831060844575> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
         { name: ' NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true },
-        { name: '<:ticks:1533860039213842565> Members In Channel', value: members }
+        { name: '<a:uptime:1552608831060844575> Members In Channel', value: members }
       ]));
   }
 
@@ -288,22 +288,22 @@ export async function handleJtcSelectMenu(interaction) {
 
   if (value === 'jtc_lock') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: false });
-    return interaction.reply(cv2.e.danger('Channel Locked <:ticks:1533860039213842565>', 'No one new can join your channel.'));
+    return interaction.reply(cv2.e.danger('Channel Locked <a:uptime:1552608831060844575>', 'No one new can join your channel.'));
   }
 
   if (value === 'jtc_unlock') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { Connect: null });
-    return interaction.reply(cv2.e.success('Channel Unlocked <:ticks:1533860039213842565>', 'Your channel is now open for anyone to join.'));
+    return interaction.reply(cv2.e.success('Channel Unlocked <a:uptime:1552608831060844575>', 'Your channel is now open for anyone to join.'));
   }
 
   if (value === 'jtc_ghost') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false });
-    return interaction.reply(cv2.e.info('Channel Hidden <:ticks:1533860039213842565>', 'Your channel is now invisible to others.\nUsers you permit can still see and join.'));
+    return interaction.reply(cv2.e.info('Channel Hidden <a:uptime:1552608831060844575>', 'Your channel is now invisible to others.\nUsers you permit can still see and join.'));
   }
 
   if (value === 'jtc_unghost') {
     await vcChannel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: null });
-    return interaction.reply(cv2.e.success('Channel Visible <:ticks:1533860039213842565>', 'Your channel is now visible to everyone again.'));
+    return interaction.reply(cv2.e.success('Channel Visible <a:uptime:1552608831060844575>', 'Your channel is now visible to everyone again.'));
   }
 
   if (value === 'jtc_nsfw') {
@@ -321,19 +321,19 @@ export async function handleJtcSelectMenu(interaction) {
       return interaction.reply(cv2.e.warn('No Game Detected', 'You are not playing any recognized game right now.'));
     }
     await vcChannel.setName(activity.name).catch(() => null);
-    return interaction.reply(cv2.e.success('Game Set <:ticks:1533860039213842565>', `Channel renamed to **${activity.name}**.`));
+    return interaction.reply(cv2.e.success('Game Set <a:uptime:1552608831060844575>', `Channel renamed to **${activity.name}**.`));
   }
 
   // â”€â”€ LFM - post Looking For Members message â”€â”€
   if (value === 'jtc_lfm') {
     const lfmEmbed = new EmbedBuilder()
       .setColor(getAccent(guild))
-      .setTitle('<:ticks:1533860039213842565> Looking for Members!')
+      .setTitle('<a:uptime:1552608831060844575> Looking for Members!')
       .setDescription(`**${member.displayName}** is looking for members to join their voice channel!\n\n**Channel:** ${vcChannel}\n**Slots Available:** ${vcChannel.userLimit === 0 ? 'Unlimited' : vcChannel.userLimit - vcChannel.members.size}`)
       .setFooter({ text: 'Join their channel to play together!' })
       .setTimestamp();
     await interaction.channel.send({ embeds: [lfmEmbed] }).catch(() => null);
-    return interaction.reply(cv2.e.success('LFM Posted <:ticks:1533860039213842565>', 'Your Looking for Members message has been posted in this channel.'));
+    return interaction.reply(cv2.e.success('LFM Posted <a:uptime:1552608831060844575>', 'Your Looking for Members message has been posted in this channel.'));
   }
 
   // â”€â”€ TEXT - create a temp text channel linked to VC â”€â”€
@@ -389,7 +389,7 @@ It is only visible to members in your voice channel.`));
     const modal = new ModalBuilder().setCustomId('jtc_status_modal').setTitle('Set Channel Status');
     modal.addComponents(new ActionRowBuilder().addComponents(
       new TextInputBuilder().setCustomId('jtc_status_val').setLabel('Channel Status')
-        .setStyle(TextInputStyle.Short).setPlaceholder('e.g. Playing Valorant <:ticks:1533860039213842565>').setRequired(true).setMaxLength(500)
+        .setStyle(TextInputStyle.Short).setPlaceholder('e.g. Playing Valorant <a:uptime:1552608831060844575>').setRequired(true).setMaxLength(500)
     ));
     return interaction.showModal(modal);
   }
@@ -477,25 +477,25 @@ export async function handleJtcModal(interaction) {
     const val = parseInt(interaction.fields.getTextInputValue('jtc_limit_val')) || 0;
     const limit = Math.min(Math.max(val, 0), 99);
     await vcChannel.setUserLimit(limit).catch(() => null);
-    return interaction.reply(cv2.success('Limit Updated <:ticks:1533860039213842565>', `User limit set to **${limit === 0 ? 'Unlimited' : limit}**.`));
+    return interaction.reply(cv2.success('Limit Updated <a:uptime:1552608831060844575>', `User limit set to **${limit === 0 ? 'Unlimited' : limit}**.`));
   }
 
   if (customId === 'jtc_status_modal') {
     const status = interaction.fields.getTextInputValue('jtc_status_val').trim();
     await interaction.client.rest.put(`/channels/${vcChannel.id}/voice-status`, { body: { status } }).catch(() => null);
-    return interaction.reply(cv2.success('Status Set <:ticks:1533860039213842565>', `Channel status set to: **${status}**`));
+    return interaction.reply(cv2.success('Status Set <a:uptime:1552608831060844575>', `Channel status set to: **${status}**`));
   }
 
   if (customId === 'jtc_bitrate_modal') {
     const kbps = Math.min(Math.max(parseInt(interaction.fields.getTextInputValue('jtc_bitrate_val')) || 64, 8), 384);
     await vcChannel.setBitrate(kbps * 1000).catch(() => null);
-    return interaction.reply(cv2.success('Bitrate Updated <:ticks:1533860039213842565>', `Bitrate set to **${kbps}kbps**.`));
+    return interaction.reply(cv2.success('Bitrate Updated <a:uptime:1552608831060844575>', `Bitrate set to **${kbps}kbps**.`));
   }
 
   if (customId === 'jtc_region_modal') {
     const region = interaction.fields.getTextInputValue('jtc_region_val').trim().toLowerCase() || null;
     await vcChannel.setRTCRegion(region).catch(() => null);
-    return interaction.reply(cv2.success('Region Updated <:ticks:1533860039213842565>', `Voice region set to **${region || 'Auto'}**.`));
+    return interaction.reply(cv2.success('Region Updated <a:uptime:1552608831060844575>', `Voice region set to **${region || 'Auto'}**.`));
   }
 
   if (customId === 'jtc_permit_modal') {
@@ -788,7 +788,7 @@ export const commands = [
   // â”€â”€â”€ VC SLASH COMMANDS â”€â”€â”€
   {
     name: 'vc',
-    description: '<:ticks:1533860039213842565> Voice channel quick actions.',
+    description: '<a:uptime:1552608831060844575> Voice channel quick actions.',
     category: 'utility',
     permissions: [],
     options: [
@@ -818,11 +818,11 @@ export const commands = [
       if (sub === 'info') {
         const owner = await guild.members.fetch(jtcData.ownerId).catch(() => null);
         return interaction.reply(cv2.info('Channel Info', null, [
-          { name: '<:ticks:1533860039213842565> Name', value: vcChannel.name, inline: true },
+          { name: '<a:uptime:1552608831060844575> Name', value: vcChannel.name, inline: true },
           { name: ' Owner', value: owner?.toString() || `\`${jtcData.ownerId}\``, inline: true },
-          { name: '<:ticks:1533860039213842565> Limit', value: vcChannel.userLimit === 0 ? 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
-          { name: '<:ticks:1533860039213842565> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
-          { name: '<:ticks:1533860039213842565> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
+          { name: '<a:uptime:1552608831060844575> Limit', value: vcChannel.userLimit === 0 ? 'Unlimited' : `${vcChannel.userLimit}`, inline: true },
+          { name: '<a:uptime:1552608831060844575> Bitrate', value: `${vcChannel.bitrate / 1000}kbps`, inline: true },
+          { name: '<a:uptime:1552608831060844575> Region', value: vcChannel.rtcRegion || 'Auto', inline: true },
           { name: ' NSFW', value: vcChannel.nsfw ? 'Yes' : 'No', inline: true }
         ]));
       }

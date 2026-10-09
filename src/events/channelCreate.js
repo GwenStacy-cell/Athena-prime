@@ -43,7 +43,7 @@ export default {
     }
 
     const createEmbed = embed.build({
-      description: `__**Channel Created |**__ <:ticks:1533860039213842565>\n> **Channel:** ${channel.name} (<#${channel.id}>)\n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
+      description: `__**Channel Created |**__ <a:uptime:1552608831060844575>\n> **Channel:** ${channel.name} (<#${channel.id}>)\n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
       color: '#2b2d31'
     });
     await logServerEvent(channel.guild, 'channels', createEmbed);

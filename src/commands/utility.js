@@ -304,7 +304,7 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:ticks:1533860039213842565> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }];
+        { type: 10, content: `-# **| <a:uptime:1552608831060844575> [${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }];
 
       await sent.delete().catch(() => null);
         await message.reply({ components: [{ type: 17, components: comps }], files: attachment ? [attachment] : [], flags: MessageFlags.IsComponentsV2 });
@@ -339,7 +339,7 @@ export const commands = [
       const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
 
       const comps = [
-        { type: 10, content: `-# **| <:ticks:1533860039213842565> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }];
+        { type: 10, content: `-# **| <a:uptime:1552608831060844575> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**` }];
 
       await interaction.deleteReply().catch(() => null);
         await interaction.followUp({ components: [{ type: 17, components: comps }], files: attachment ? [attachment] : [], flags: MessageFlags.IsComponentsV2 });

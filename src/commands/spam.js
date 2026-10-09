@@ -287,21 +287,21 @@ export const commands = [
     async executePrefix(message) {
       if (!(await isBotOwner(message.author))) return;
       const list = db.getSpamPermitted();
-      if (list.length === 0) return message.reply(cv2.info('Spam Permitted List', '<:ticks:1533860039213842565> No users have spam access yet.'));
+      if (list.length === 0) return message.reply(cv2.info('Spam Permitted List', '<a:uptime:1552608831060844575> No users have spam access yet.'));
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await message.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return message.reply(cv2.security('Spam Access List', `<:ticks:1533860039213842565> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
+      return message.reply(cv2.security('Spam Access List', `<a:uptime:1552608831060844575> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
     },
 
     async executeSlash(interaction) {
       if (!(await isBotOwner(interaction.user))) return interaction.reply(cv2.e.danger('Access Denied', 'Bot Owner only.'));
       const list = db.getSpamPermitted();
-      if (list.length === 0) return interaction.reply(cv2.info('Spam Permitted List', '<:ticks:1533860039213842565> No users have spam access yet.'));
+      if (list.length === 0) return interaction.reply(cv2.info('Spam Permitted List', '<a:uptime:1552608831060844575> No users have spam access yet.'));
       const lines = await Promise.all(list.map(async (id, i) => {
         try { const u = await interaction.client.users.fetch(id); return `${i+1}. **${u.tag}** (\`${id}\`)`; } catch { return `${i+1}. \`${id}\``; }
       }));
-      return interaction.reply(cv2.security('Spam Access List', `<:ticks:1533860039213842565> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
+      return interaction.reply(cv2.security('Spam Access List', `<a:uptime:1552608831060844575> **Permitted users:**\n\n${lines.join('\n')}\n\nTotal: **${list.length}**`));
     }
   }
 ];

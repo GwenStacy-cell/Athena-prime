@@ -34,7 +34,7 @@ export default {
       reason = entry.reason || reason;
     }
     const logEmbed = embed.build({
-      description: `__**Member Banned |**__ <:ticks:1533860039213842565>\n> **User:** ${ban.user.tag} (<@${ban.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
+      description: `__**Member Banned |**__ <a:uptime:1552608831060844575>\n> **User:** ${ban.user.tag} (<@${ban.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
       color: '#2b2d31',
       thumbnail: ban.user.displayAvatarURL({ dynamic: true })
     });

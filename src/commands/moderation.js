@@ -959,7 +959,7 @@ export async function handleWarn(guild, moderator, target, reason, force = false
 
   // Response channel embed
   const resEmbed = cv2.buildContainer({
-    description: `__**User Warned |**__ <:ticks:1533860039213842565>\n> Reason: . ${target} , **${reason}**\n> ã…¤has been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
+    description: `__**User Warned |**__ <a:uptime:1552608831060844575>\n> Reason: . ${target} , **${reason}**\n> ã…¤has been warned " Your Limit is ${warns.length}/3 " Exceeding the limits will leads to punishments ,`,
     color: '#2b2d31',
     thumbnail: target.user.displayAvatarURL({ dynamic: true })
   });
@@ -1514,7 +1514,7 @@ async function handleVcAction(guild, moderator, targets, action) {
 
   const actionName = action.charAt(0).toUpperCase() + action.slice(1);
   const embedRes = cv2.success(`${actionName} Complete`, `Processed **${targets.size}** member(s).`, [
-    { name: '<:ticks:1533860039213842565> Success', value: `\`${successCount}\``, inline: true },
+    { name: '<a:uptime:1552608831060844575> Success', value: `\`${successCount}\``, inline: true },
     { name: '<:off:1533844858983157851> Failed/Not in VC', value: `\`${failedCount}\``, inline: true }
   ]);
 

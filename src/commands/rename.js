@@ -64,7 +64,7 @@ export const commands = [
         
         const successEmbed = new EmbedBuilder()
           .setColor('#c6ff00')
-          .setDescription(`<:ticks:1533860039213842565> ${interaction.user} **Has Renamed** ${target} **|\n${newName}**`)
+          .setDescription(`<a:uptime:1552608831060844575> ${interaction.user} **Has Renamed** ${target} **|\n${newName}**`)
           .setFooter({ text: 'Athena Prime Unbypassable Security' });
 
         await interaction.reply({ embeds: [successEmbed] });

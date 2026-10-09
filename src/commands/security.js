@@ -1679,7 +1679,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
           type: 9,
           components: [{
             type: 10,
-            content: `-# **Server Isolation Notice |** <:ticks:1533860039213842565>\n> -# **Hello ${targetMember.displayName} , You have been Quarantined in ${guild.name}**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Your access has been restricted. Please navigate to <#${quarantineChannel.id}> to resolve this matter.\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Reason:** ${reason}\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Duration:** ${durationLabel}`
+            content: `-# **Server Isolation Notice |** <a:uptime:1552608831060844575>\n> -# **Hello ${targetMember.displayName} , You have been Quarantined in ${guild.name}**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Your access has been restricted. Please navigate to <#${quarantineChannel.id}> to resolve this matter.\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Reason:** ${reason}\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Duration:** ${durationLabel}`
           }],
           accessory: { type: 11, media: { url: guild.iconURL({ dynamic: true }) || undefined } }
         }]
@@ -1696,7 +1696,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
           type: 9,
           components: [{
             type: 10,
-            content: `-# **You Have Been Quarantined |** <:ticks:1533860039213842565>\n> -# **Hello [${targetMember.displayName}](https://discord.com/users/${targetMember.id}) , Security Isolation Active**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Please wait patiently for an Administrator or Moderator to review your case. Any further spamming or rule violations will result in a permanent ban.\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Reason:** ${reason}`
+            content: `-# **You Have Been Quarantined |** <a:uptime:1552608831060844575>\n> -# **Hello [${targetMember.displayName}](https://discord.com/users/${targetMember.id}) , Security Isolation Active**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Please wait patiently for an Administrator or Moderator to review your case. Any further spamming or rule violations will result in a permanent ban.\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Reason:** ${reason}`
           }],
           accessory: { type: 11, media: { url: targetMember.user.displayAvatarURL({ dynamic: true }) } }
         }]
@@ -1772,7 +1772,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     if (context === 'raidmode') {
       dmEmbed = cv2.success(
         'Raid Mode Ended',
-        `<:ticks:1533860039213842565> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
+        `<a:uptime:1552608831060844575> The server Lockdown/Raid Mode in **${guild.name}** has been lifted!\nYour original access privileges have been fully restored.`,
         []
       );
     } else {
@@ -1803,7 +1803,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     }
 
         const c = new ContainerBuilder();
-    const textContent = `**Quarantine Lifted | <:ticks:1533860039213842565>**\n-# > Successfully restored **${targetMember.displayName}** and recovered their original role structure.\n-# > \u2800\u2800\u2800\u2800\u2570\u203A User: [${targetMember.displayName}](https://discord.com/users/${targetMember.id}) • Moderator: [${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`;
+    const textContent = `**Quarantine Lifted | <a:uptime:1552608831060844575>**\n-# > Successfully restored **${targetMember.displayName}** and recovered their original role structure.\n-# > \u2800\u2800\u2800\u2800\u2570\u203A User: [${targetMember.displayName}](https://discord.com/users/${targetMember.id}) • Moderator: [${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`;
     c.addTextDisplayComponents(new TextDisplayBuilder().setContent(textContent));
     
     const responseEmbed = { components: [c.toJSON ? c.toJSON() : c], flags: MessageFlags.IsComponentsV2 };
@@ -2009,7 +2009,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const lockEmbed = cv2.danger(
         'Lockdown Activated', 
-        `<:ticks:1533860039213842565> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
+        `<a:uptime:1552608831060844575> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
       );
       logToSecurityChannel(guild, cv2.log('Channel Locked', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
       return lockEmbed;
@@ -2019,7 +2019,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
       });
       const unlockEmbed = cv2.success(
         'Lockdown Deactivated', 
-        `<:ticks:1533860039213842565> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
+        `<a:uptime:1552608831060844575> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
       );
       logToSecurityChannel(guild, cv2.log('Channel Unlocked', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
       return unlockEmbed;
@@ -2522,9 +2522,9 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
         [
           { name: 'Anti-Nuke',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: 'Anti-Spam',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '<:ticks:1533860039213842565> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '<:ticks:1533860039213842565> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: '<:ticks:1533860039213842565> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<a:uptime:1552608831060844575> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<a:uptime:1552608831060844575> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
+          { name: '<a:uptime:1552608831060844575> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: 'Enforced by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`, inline: true }
         ]
       )
@@ -2660,7 +2660,7 @@ async function handleAntiLink(guild, moderator, mode) {
   const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE` : `${TOGGLE_OFF} DEACTIVATED`;
   const resEmbed = cv2.success(
     'Anti-Link Configured',
-    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <:ticks:1533860039213842565> Discord Invites\n> <:ticks:1533860039213842565> NSFW Links\n> <:ticks:1533860039213842565> Scam/Phishing Links\n> <:ticks:1533860039213842565> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
+    `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <a:uptime:1552608831060844575> Discord Invites\n> <a:uptime:1552608831060844575> NSFW Links\n> <a:uptime:1552608831060844575> Scam/Phishing Links\n> <a:uptime:1552608831060844575> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
     [{ name: 'Changed by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
   );
 
@@ -2689,7 +2689,7 @@ async function getServerInfoEmbed(guild) {
   const antiSpamStatus   = config.antiSpamEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiInviteStatus = (config.antiInviteEnabled !== false) ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
   const antiLinkStatus   = config.antiLinkEnabled               ? `${TOGGLE_ON} ON`  : `${TOGGLE_OFF} OFF`;
-  const raidModeStatus   = config.raidMode                      ? '<:ticks:1533860039213842565> ENGAGED' : `${TOGGLE_ON} STANDBY`;
+  const raidModeStatus   = config.raidMode                      ? '<a:uptime:1552608831060844575> ENGAGED' : `${TOGGLE_ON} STANDBY`;
 
   let iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
 
@@ -2957,13 +2957,13 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const synced = await syncQuarantinePermissions(guild, qRole, qChannel?.id || null);
 
     const fields = [
-      { name: '<:ticks:1533860039213842565> Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
-      { name: '<:ticks:1533860039213842565> Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
-      { name: '<:ticks:1533860039213842565> Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
+      { name: '<a:uptime:1552608831060844575> Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
+      { name: '<a:uptime:1552608831060844575> Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
     ];
 
     const vc = config.quarantineVcId ? await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
-    if (vc) fields.push({ name: '<:ticks:1533860039213842565> Quarantine VC', value: `<#${vc.id}>`, inline: true });
+    if (vc) fields.push({ name: '<a:uptime:1552608831060844575> Quarantine VC', value: `<#${vc.id}>`, inline: true });
 
     return cv2.success(
         'Quarantine System Fixed ',
@@ -3018,7 +3018,7 @@ async function handleLinksAllow(guild, action, domain) {
   if (action === 'allowall') {
     db.updateGuildConfig(guild.id, { allowAllLinks: true });
     return cv2.success(
-        '<:ticks:1533860039213842565> All Links Allowed',
+        '<a:uptime:1552608831060844575> All Links Allowed',
         'The anti-link filter has been **completely disabled** for this server.\n\nAll users can now post any link freely.\n\nUse `/linksallow disallowall` to re-enable the filter.',
         [{ name: ' Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
       );
@@ -3028,7 +3028,7 @@ async function handleLinksAllow(guild, action, domain) {
     db.updateGuildConfig(guild.id, { allowAllLinks: false, allowedLinks: [] });
     return cv2.warn(
         '<a:AnyaYay:1537513785718476850> Anti-Link Filter Restored',
-        'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> <:ticks:1533860039213842565> Discord Invites\n> <:ticks:1533860039213842565> NSFW Links\n> <:ticks:1533860039213842565> Scam/Phishing Links\n> <:ticks:1533860039213842565> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
+        'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> <a:uptime:1552608831060844575> Discord Invites\n> <a:uptime:1552608831060844575> NSFW Links\n> <a:uptime:1552608831060844575> Scam/Phishing Links\n> <a:uptime:1552608831060844575> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
       );
   }
 
@@ -3070,7 +3070,7 @@ async function handleLinksAllow(guild, action, domain) {
 
   if (allOpen) {
     return cv2.info(
-        '<:ticks:1533860039213842565> All Links Allowed',
+        '<a:uptime:1552608831060844575> All Links Allowed',
         'The anti-link filter is currently **fully disabled - all links are permitted.\n\nUse `/linksallow disallowall` to re-enable the filter.'
       );
   }
@@ -3140,25 +3140,25 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
     'Mass Quarantine Executed',
     `**${moderator.user.tag}** mass-quarantined all members with role <@&${targetRole.id}>.`,
     [
-      { name: '<:ticks:1533860039213842565> Role',       value: `<@&${targetRole.id}>`, inline: true },
+      { name: '<a:uptime:1552608831060844575> Role',       value: `<@&${targetRole.id}>`, inline: true },
       { name: ' Quarantined', value: `\`${success}\``,       inline: true },
       { name: '<:off:1533844858983157851> Failed',      value: `\`${failed}\``,        inline: true },
       { name: ' Skipped',    value: `\`${skipped}\``,       inline: true },
-      { name: '<:ticks:1533860039213842565> Reason',     value: reason }
+      { name: '<a:uptime:1552608831060844575> Reason',     value: reason }
     ],
     'danger'
   ));
 
   return cv2.danger(
-      '<:ticks:1533860039213842565> Mass Quarantine Complete',
+      '<a:uptime:1552608831060844575> Mass Quarantine Complete',
       `All targeted members with <@&${targetRole.id}> have been processed.`,
       [
-        { name: '<:ticks:1533860039213842565> Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
+        { name: '<a:uptime:1552608831060844575> Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
         { name: ' Quarantined',  value: `\`${success}\``,  inline: true },
         { name: '<:off:1533844858983157851> Failed',       value: `\`${failed}\``,   inline: true },
         { name: ' Skipped',     value: `\`${skipped}\``,  inline: true },
-        { name: '<:ticks:1533860039213842565> Reason',       value: reason,             inline: false },
-        { name: '<:ticks:1533860039213842565> Executed By',  value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
+        { name: '<a:uptime:1552608831060844575> Reason',       value: reason,             inline: false },
+        { name: '<a:uptime:1552608831060844575> Executed By',  value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
       ]
     );
 }
@@ -3211,12 +3211,12 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
   ));
 
   return cv2.success(
-      '<:ticks:1533860039213842565> Mass Unquarantine Complete',
+      '<a:uptime:1552608831060844575> Mass Unquarantine Complete',
       `All quarantined members have been processed.`,
       [
         { name: ' Released',     value: `\`${success}\``, inline: true },
         { name: '<:off:1533844858983157851> Failed',        value: `\`${failed}\``,  inline: true },
-        { name: '<:ticks:1533860039213842565> Executed By', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
+        { name: '<a:uptime:1552608831060844575> Executed By', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
       ]
     );
 }

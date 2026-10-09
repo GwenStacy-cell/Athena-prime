@@ -124,20 +124,20 @@ function getManagerPanel(guildId, type) {
   const prefix = isWelcome ? 'welcmgr_' : 'leavmgr_';
 
   const replyData = cv2.info(
-    `<:ticks:1533860039213842565> ${label} Manager`,
+    `<a:uptime:1552608831060844575> ${label} Manager`,
     `Manage the settings for your server's ${label.toLowerCase()} messages.\n\n` +
     `**Current Configuration:**\n` +
-    `<:ticks:1533860039213842565> **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : 'Not Set'}\n` +
+    `<a:uptime:1552608831060844575> **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : 'Not Set'}\n` +
     ` **Status:** ${cfg.enabled ? ' Enabled' : ' Disabled'}\n` +
-    `<:ticks:1533860039213842565> **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `<:ticks:1533860039213842565> **Author (From):** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `<:ticks:1533860039213842565> **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `<:ticks:1533860039213842565> **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `<:ticks:1533860039213842565> **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
-    `<:ticks:1533860039213842565> **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
-    `<:ticks:1533860039213842565> **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    ` <:ticks:1533860039213842565> **Name Format:** ${cfg.nameFormat === 'user_link' ? 'Username Link' : cfg.nameFormat === 'nick_link' ? 'Nickname Link' : 'Tag (@user)'}\n` +
-      ` <:ticks:1533860039213842565> **Avatar Location:** ${cfg.avatarPos === 'author' ? 'Author (Top Left)' : cfg.avatarPos === 'footer' ? 'Footer (Bottom)' : cfg.avatarPos === 'image' ? 'Large Image (Bottom)' : cfg.avatarPos === 'off' ? 'Hidden' : 'Thumbnail (Top Right)'}\n` +
+    `<a:uptime:1552608831060844575> **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `<a:uptime:1552608831060844575> **Author (From):** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `<a:uptime:1552608831060844575> **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    `<a:uptime:1552608831060844575> **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
+    `<a:uptime:1552608831060844575> **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
+    `<a:uptime:1552608831060844575> **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
+    `<a:uptime:1552608831060844575> **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
+    ` <a:uptime:1552608831060844575> **Name Format:** ${cfg.nameFormat === 'user_link' ? 'Username Link' : cfg.nameFormat === 'nick_link' ? 'Nickname Link' : 'Tag (@user)'}\n` +
+      ` <a:uptime:1552608831060844575> **Avatar Location:** ${cfg.avatarPos === 'author' ? 'Author (Top Left)' : cfg.avatarPos === 'footer' ? 'Footer (Bottom)' : cfg.avatarPos === 'image' ? 'Large Image (Bottom)' : cfg.avatarPos === 'off' ? 'Hidden' : 'Thumbnail (Top Right)'}\n` +
     ` **Timestamp:** ${cfg.timestamp !== false ? ' On' : ' Off'}`
   );
 
@@ -426,7 +426,7 @@ export async function handleWelcomeManagerModal(interaction) {
 export const commands = [
   {
     name: 'welcome',
-    description: '<:ticks:1533860039213842565> Open the Welcome Message Manager.',
+    description: '<a:uptime:1552608831060844575> Open the Welcome Message Manager.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [], // No subcommands anymore!
@@ -439,7 +439,7 @@ export const commands = [
   },
   {
     name: 'leave',
-    description: '<:ticks:1533860039213842565> Open the Leave Message Manager.',
+    description: '<a:uptime:1552608831060844575> Open the Leave Message Manager.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [],
