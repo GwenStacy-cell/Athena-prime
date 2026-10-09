@@ -1,14 +1,22 @@
 import { createCanvas } from 'canvas';
 import fs from 'fs';
 
-export async function generatePingGraph(pingValue, accentColorHex, guildsCount = 10, patternsCount = 41) {
-  // We'll generate 10 data points for the ping history. 
-  // We'll simulate previous pings jittering around the current ping.
-  const data = [];
-  for(let i=0; i<9; i++) {
-     data.push(Math.max(10, pingValue + (Math.random() * 40 - 20)));
+export async function generatePingGraph(pingHistory, accentColorHex, guildsCount = 10, patternsCount = 41) {
+  // Use real ping history
+  let data = [];
+  if (Array.isArray(pingHistory)) {
+      data = [...pingHistory];
+  } else {
+      data = [pingHistory];
   }
-  data.push(pingValue);
+  
+  // Pad if we don't have enough data yet
+  while (data.length < 10) {
+      if (data.length > 0) data.unshift(data[0]);
+      else data.push(20);
+  }
+  
+  if (data.length > 10) data = data.slice(-10);
 
   const width = 800;
   const height = 250;

@@ -368,6 +368,18 @@ client.rest.patch = async function(url, options) {
   return originalPatch(url, options);
 };
 
+
+// GLOBAL PING TRACKER FOR REAL GRAPH DATA
+client.pingHistory = [];
+setInterval(() => {
+  if (client.ws && client.ws.ping > 0) {
+    client.pingHistory.push(Math.round(client.ws.ping));
+    if (client.pingHistory.length > 10) {
+      client.pingHistory.shift();
+    }
+  }
+}, 15000);
+
 client.login(token).catch(err => {
   console.error(chalk.red.bold('\n❌ Connection Failed: Invalid token or network blockage!'));
   console.error(err);

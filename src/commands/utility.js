@@ -300,7 +300,7 @@ export const commands = [
       const rGet = Math.floor(Math.random() * 2) + 1;
       const rDel = Math.floor(Math.random() * 2) + 1;
 
-            const buffer = await generatePingGraph(wsMs, accentHex, message.client.guilds.cache.size);
+            const buffer = await generatePingGraph(message.client.pingHistory && message.client.pingHistory.length > 0 ? message.client.pingHistory : wsMs, accentHex, message.client.guilds.cache.size);
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
   
         const comps = [
@@ -337,7 +337,7 @@ export const commands = [
       const rGet = Math.floor(Math.random() * 2) + 1;
       const rDel = Math.floor(Math.random() * 2) + 1;
 
-      const buffer = await generatePingGraph(wsMs, accentHex, interaction.client.guilds.cache.size);
+      const buffer = await generatePingGraph(interaction.client.pingHistory && interaction.client.pingHistory.length > 0 ? interaction.client.pingHistory : wsMs, accentHex, interaction.client.guilds.cache.size);
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
   
         const comps = [
