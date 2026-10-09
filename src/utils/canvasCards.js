@@ -7,23 +7,22 @@ const CARD_HEIGHT = 250;
 const RADIUS = 20;
 
 export async function generateRankCard(member, xp, level, rank, requiredXp) {
-  const canvas = createCanvas(990, 430);
+  const canvas = createCanvas(960, 255);
   const ctx = canvas.getContext('2d');
 
-  // Load HD Background Template
+  // Load HD Wide Background Template
   try {
       const bg = await loadImage('src/assets/rank_bg.jpg');
-      ctx.drawImage(bg, 0, 0, 990, 430);
+      ctx.drawImage(bg, 0, 0, 960, 255);
   } catch (err) {
-      console.error('Missing rank_bg.jpg template, falling back to black');
       ctx.fillStyle = '#0f0f0f';
-      ctx.fillRect(0, 0, 990, 430);
+      ctx.fillRect(0, 0, 960, 255);
   }
 
   // Draw Avatar inside the glowing ring
-  const avatarX = 195;
-  const avatarY = 220;
-  const avatarRadius = 110;
+  const avatarX = 180;
+  const avatarY = 127;
+  const avatarRadius = 78;
 
   const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256 });
   const avatar = await loadImage(avatarUrl).catch(() => null);
@@ -39,38 +38,38 @@ export async function generateRankCard(member, xp, level, rank, requiredXp) {
 
   // Draw Name (H4VN OWNER)
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 50px "Arial Black", Impact, sans-serif';
+  ctx.font = 'bold 40px "Arial Black", Impact, sans-serif';
   let displayName = member.displayName.replace(/[^\x00-\x7F]/g, '').trim() || member.user.username.replace(/[^\x00-\x7F]/g, '').trim() || 'User';
   if (displayName.length > 15) displayName = displayName.substring(0, 15) + '...';
   
   ctx.shadowColor = '#000000';
   ctx.shadowBlur = 10;
-  ctx.shadowOffsetX = 3;
-  ctx.shadowOffsetY = 3;
-  ctx.fillText(displayName.toUpperCase(), 360, 160);
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.fillText(displayName.toUpperCase(), 310, 100);
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
 
   // Draw Rank (#1)
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = 'bold 26px sans-serif';
-  ctx.fillText(`Rank #${rank}`, 365, 210);
+  ctx.font = 'bold 22px sans-serif';
+  ctx.fillText(`Rank #${rank}`, 315, 135);
 
   // Draw Level text inside the badge (next to crown)
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 36px sans-serif';
-  ctx.fillText('Level', 780, 200);
+  ctx.font = 'bold 28px sans-serif';
+  ctx.fillText('Level', 740, 128);
 
   ctx.fillStyle = '#ffd700';
-  ctx.font = 'bold 50px sans-serif';
-  ctx.fillText(`${level}`, 880, 204);
+  ctx.font = 'bold 40px sans-serif';
+  ctx.fillText(`${level}`, 825, 132);
 
   // Glowing XP Bar Fill
-  const barX = 350;
-  const barY = 275;
-  const barW = 500;
-  const barH = 34;
+  const barX = 308;
+  const barY = 181;
+  const barW = 545;
+  const barH = 22;
 
   let prevXp = 0;
   if (level > 0) {
@@ -88,22 +87,21 @@ export async function generateRankCard(member, xp, level, rank, requiredXp) {
     xpGrad.addColorStop(1, '#ffffff'); // Glowing hot tip
 
     ctx.shadowColor = '#ffaa00';
-    ctx.shadowBlur = 15;
+    ctx.shadowBlur = 10;
     ctx.fillStyle = xpGrad;
     ctx.beginPath();
-    // The bar in the template has rounded ends
-    ctx.roundRect(barX, barY, fillWidth, barH, 17);
+    ctx.roundRect(barX, barY, fillWidth, barH, 11);
     ctx.fill();
     ctx.shadowBlur = 0;
   }
 
   // XP Text (inside the bar on the right side)
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = 'bold 13px sans-serif';
   ctx.textAlign = 'right';
   ctx.shadowColor = '#000000';
   ctx.shadowBlur = 4;
-  ctx.fillText(`${xp} / ${requiredXp} XP`, barX + barW - 15, barY + 23);
+  ctx.fillText(`${xp} / ${requiredXp} XP`, barX + barW - 15, barY + 15);
   ctx.shadowBlur = 0;
   ctx.textAlign = 'left';
 
