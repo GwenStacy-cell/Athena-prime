@@ -509,10 +509,13 @@ export default {
       if (!interaction.deferred && !interaction.replied) {
         return interaction.reply(options);
       }
+      interaction.replied = true;
       if (isCV2(options)) {
         const flags = (options.flags != null ? options.flags : 0) | 32768;
+        const body = { components: options.components, flags };
+        if (options.content !== undefined) body.content = options.content;
         return interaction.client.rest.patch(`/webhooks/${interaction.client.user.id}/${interaction.token}/messages/@original`, {
-          body: { components: options.components, flags }, files: options.files
+          body, files: options.files
         });
       }
       return _editReply(options);
@@ -523,8 +526,10 @@ export default {
       interaction.replied = true;
       if (isCV2(options)) {
         const flags = (options.flags != null ? options.flags : 0) | 32768;
+        const data = { components: options.components, flags };
+        if (options.content !== undefined) data.content = options.content;
         return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
-          body: { type: 4, data: { components: options.components, flags } }, files: options.files
+          body: { type: 4, data }, files: options.files
         });
       }
       return _reply(options);
@@ -536,8 +541,10 @@ export default {
         interaction.replied = true;
         if (isCV2(options)) {
           const flags = (options.flags != null ? options.flags : 0) | 32768;
+          const data = { components: options.components, flags };
+          if (options.content !== undefined) data.content = options.content;
           return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
-            body: { type: 7, data: { components: options.components, flags } }, files: options.files
+            body: { type: 7, data }, files: options.files
           });
         }
         return _update(options);
@@ -549,8 +556,10 @@ export default {
       interaction.followUp = async function(options) {
         if (isCV2(options)) {
           const flags = (options.flags != null ? options.flags : 0) | 32768;
+          const body = { components: options.components, flags };
+          if (options.content !== undefined) body.content = options.content;
           return interaction.client.rest.post(`/webhooks/${interaction.client.user.id}/${interaction.token}`, {
-            body: { components: options.components, flags }, files: options.files
+            body, files: options.files
           });
         }
         return _followUp(options);

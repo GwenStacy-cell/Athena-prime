@@ -164,7 +164,15 @@ export async function updateDashboardMessage(guild, client) {
         try { m2 = await channel.messages.fetch(msgIds[1]); } catch(e) { throw new Error(`Fetch m2 failed: ${e.code}`); }
         try { m3 = await channel.messages.fetch(msgIds[2]); } catch(e) { throw new Error(`Fetch m3 failed: ${e.code}`); }
         
-        try { await m1.edit({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
+        // If existing messages were previously converted into CV2 containers (flags: 32768 or components present),
+        // Discord will not render native embed images on them. Purge and recreate cleanly.
+        const isOldCV2 = [m1, m2, m3].some(m => (m?.flags?.bitfield & 32768) || (m?.components && m.components.length > 0));
+        if (isOldCV2) {
+          await Promise.allSettled([m1.delete().catch(() => {}), m2.delete().catch(() => {}), m3.delete().catch(() => {})]);
+          throw new Error('Purged old CV2 messages to recreate clean embed dashboard');
+        }
+
+        try { await m1.edit({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
         try { await m2.edit({ embeds: [embedTo], files: [fileTo], attachments: [] }); } catch(e) { throw new Error(`Edit m2 failed: ${e.code}`); }
         try { await m3.edit({ embeds: [embedAm], files: [fileAm], attachments: [] }); } catch(e) { throw new Error(`Edit m3 failed: ${e.code}`); }
         
@@ -196,14 +204,17 @@ export async function updateDashboardMessage(guild, client) {
       // If we found exactly 3 bot messages, maybe they are the dashboard! Let's adopt them instead of deleting.
       if (botMessages.size === 3) {
         const msgs = [...botMessages.values()];
-        try {
-          await msgs[0].edit({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] });
-          await msgs[1].edit({ embeds: [embedTo], files: [fileTo], attachments: [] });
-          await msgs[2].edit({ embeds: [embedAm], files: [fileAm], attachments: [] });
-          db.setDashboardInfo(guild.id, channel.id, [msgs[0].id, msgs[1].id, msgs[2].id]);
-          return; // Adopted successfully
-        } catch (e) {
-          // If edit fails, we fall through to delete and repost
+        const isOldCV2 = msgs.some(m => (m?.flags?.bitfield & 32768) || (m?.components && m.components.length > 0));
+        if (!isOldCV2) {
+          try {
+            await msgs[0].edit({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] });
+            await msgs[1].edit({ embeds: [embedTo], files: [fileTo], attachments: [] });
+            await msgs[2].edit({ embeds: [embedAm], files: [fileAm], attachments: [] });
+            db.setDashboardInfo(guild.id, channel.id, [msgs[0].id, msgs[1].id, msgs[2].id]);
+            return; // Adopted successfully
+          } catch (e) {
+            // If edit fails, we fall through to delete and repost
+          }
         }
       }
 
@@ -213,7 +224,7 @@ export async function updateDashboardMessage(guild, client) {
       }
     }
 
-    const m1 = await channel.send({ content: '**[Live Sync Active]**', embeds: [embedDb], files: [fileDb] });
+    const m1 = await channel.send({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', embeds: [embedDb], files: [fileDb] });
     const m2 = await channel.send({ embeds: [embedTo], files: [fileTo] });
     const m3 = await channel.send({ embeds: [embedAm], files: [fileAm] });
 
