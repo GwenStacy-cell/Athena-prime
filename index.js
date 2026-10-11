@@ -283,15 +283,11 @@ function pushDivider(comps) {
       comps.push({ type: 10, content: `-# **• ${embedData.author.name}**` });
       pushDivider(comps);
     }
-    
-    // If there's a thumbnail but no main image, promote it to the main image
-    if (embedData.thumbnail && !embedData.image) {
-        embedData.image = { url: embedData.thumbnail.url };
-    }
 
+    // Header content (title + description)
+    let headerContent = '';
     if (embedData.title) {
-      comps.push({ type: 10, content: `## **${embedData.title}**` });
-      pushDivider(comps);
+      headerContent += `## **${embedData.title}**\n`;
     }
 
     if (embedData.description) {
@@ -302,7 +298,21 @@ function pushDivider(comps) {
         if (/^(-#|#{1,3} |> )/.test(l)) return l;
         return '-# ' + l;
       }).join('\n');
-      comps.push({ type: 10, content: desc });
+      headerContent += desc;
+    }
+
+    // If there is a thumbnail, render as Section (type 9) with small avatar / icon accessory (type 11)!
+    if (embedData.thumbnail && embedData.thumbnail.url) {
+      comps.push({
+        type: 9,
+        components: [{ type: 10, content: headerContent.trim() || '\u200b' }],
+        accessory: {
+          type: 11,
+          media: { url: embedData.thumbnail.url }
+        }
+      });
+    } else if (headerContent.trim()) {
+      comps.push({ type: 10, content: headerContent.trim() });
     }
 
     if (embedData.fields && embedData.fields.length > 0) {
@@ -342,25 +352,48 @@ function interceptPayload(body) {
     const target = body.data || body;
     
     if (target._skipCV2) return false;
-    if (target.components && target.components.some(c => c.type === 17 || c.type === 9 || c.type === 14)) {
-        target.flags = (target.flags || 0) | 32768;
+
+    // Case 1: Pre-built CV2 container - pull any outside action rows (buttons/menus) INSIDE!
+    if (target.components && target.components.some(c => c.type === 17)) {
+      target.flags = (target.flags || 0) | 32768;
+      const containerIdx = target.components.findIndex(c => c.type === 17);
+      const container = target.components[containerIdx];
+      const outsideRows = target.components.filter((c, idx) => idx !== containerIdx && c.type === 1);
+      if (outsideRows.length > 0) {
+        pushDivider(container.components);
+        container.components.push(...outsideRows);
+        target.components = [container, ...target.components.filter((c, idx) => idx !== containerIdx && c.type !== 1)];
+      }
+      return true;
+    }
+      
+    // Case 2: Embeds being converted into CV2 containers
+    if (target.embeds && target.embeds.length > 0) {
+      const cv2Containers = target.embeds.map(e => convertEmbedToCV2(e));
+      
+      if (target.content) {
+         cv2Containers[0].components.unshift({ type: 14, divider: true });
+         cv2Containers[0].components.unshift({ type: 10, content: target.content });
+         delete target.content;
+      }
+
+      // Bring ALL action rows (buttons, select menus) INSIDE the container!
+      if (target.components && target.components.length > 0) {
+        pushDivider(cv2Containers[0].components);
+        cv2Containers[0].components.push(...target.components);
       }
       
-      if (target.embeds && target.embeds.length > 0) {
-    const cv2Containers = target.embeds.map(e => convertEmbedToCV2(e));
-    
-    if (target.content) {
-       cv2Containers[0].components.unshift({ type: 14, divider: true });
-       cv2Containers[0].components.unshift({ type: 10, content: target.content });
-       delete target.content;
+      target.components = cv2Containers;
+      delete target.embeds;
+      target.flags = (target.flags || 0) | 32768; // MessageFlags.IsComponentsV2
+      return true;
     }
-    
-    target.components = [...cv2Containers, ...(target.components || [])];
-    delete target.embeds;
-    target.flags = (target.flags || 0) | 32768; // MessageFlags.IsComponentsV2
-    return true;
-  }
-  return false;
+
+    if (target.components && target.components.some(c => c.type === 9 || c.type === 14)) {
+      target.flags = (target.flags || 0) | 32768;
+    }
+
+    return false;
 }
 
 // REST TOKEN PERMANENT PROTECTION GUARD
