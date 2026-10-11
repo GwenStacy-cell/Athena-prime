@@ -52,12 +52,14 @@ export const commands = [
             components: [
                 { type: 10, content: '## **Athena Theme Configuration**' },
                 { type: 14, divider: true },
-                { type: 10, content: '-# **Please select your preferred chessboard aesthetic from the dropdown below.**' }
+                { type: 10, content: '-# **Please select your preferred chessboard aesthetic from the dropdown below.**' },
+                { type: 14, divider: true },
+                row.toJSON()
             ]
         };
         
         return message.reply({ 
-            components: [container, row.toJSON()], 
+            components: [container], 
             flags: MessageFlags.IsComponentsV2 
         }).catch(async (e) => {
             await message.reply({ content: '-# **Select your preferred Chessboard aesthetic:**', components: [row] }).catch(()=>null);

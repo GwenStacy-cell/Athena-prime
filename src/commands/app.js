@@ -32,6 +32,9 @@ export const commands = [
           return message.reply(cv2.warn('Missing Log Channel', 'You must set a log channel using `!app setlog <#channel>` before deploying the apply button!'));
         }
 
+        const applyBtn = new ButtonBuilder().setCustomId('btn_app_apply').setLabel('Apply for Staff').setStyle(ButtonStyle.Success);
+        const row = new ActionRowBuilder().addComponents(applyBtn);
+
         const embed = {
           type: 17,
           components: [
@@ -39,14 +42,12 @@ export const commands = [
             { type: 14, divider: true },
             { type: 10, content: 'We are currently looking for dedicated and active members to join our staff team. If you think you have what it takes, click the button below to fill out the application form!' },
             { type: 10, content: '> Please answer all questions honestly. Trolling or submitting joke applications will result in a ban.' },
-            { type: 14, divider: true }
+            { type: 14, divider: true },
+            row.toJSON()
           ]
         };
-
-        const applyBtn = new ButtonBuilder().setCustomId('btn_app_apply').setLabel('Apply for Staff').setStyle(ButtonStyle.Success);
-        const row = new ActionRowBuilder().addComponents(applyBtn);
         
-        await targetChannel.send({ components: [embed, row.toJSON()], flags: MessageFlags.IsComponentsV2 });
+        await targetChannel.send({ components: [embed], flags: MessageFlags.IsComponentsV2 });
         return message.reply(cv2.success('Deployed', `The Staff Application button has been deployed to <#${targetChannel.id}>!`));
       }
 

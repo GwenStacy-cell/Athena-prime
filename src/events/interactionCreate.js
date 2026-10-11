@@ -463,7 +463,8 @@ export default {
       const btnDeny = new ButtonBuilder().setCustomId(`btn_app_review_deny_${interaction.user.id}`).setLabel('Deny').setStyle(ButtonStyle.Danger);
       const row = new ActionRowBuilder().addComponents(btnAccept, btnDeny);
 
-      await logChannel.send({ components: [embed, row.toJSON()], flags: MessageFlags.IsComponentsV2 }).catch(()=>{});
+      embed.components.push(row.toJSON());
+      await logChannel.send({ components: [embed], flags: MessageFlags.IsComponentsV2 }).catch(()=>{});
       return interaction.editReply({ content: 'Your application has been submitted successfully!' }).catch(()=>{});
     }
 

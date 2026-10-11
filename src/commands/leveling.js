@@ -49,10 +49,6 @@ export async function buildXpDashboard(guildId) {
       },
       { type: 14, divider: true },
       {
-        type: 10,
-        content: `-# Athena Bulletproof Security System \u2022 V1.0.0`
-      },
-      {
         type: 1,
         components: [
           { type: 2, custom_id: 'xp_toggle',       label: system.enabled ? 'Disable System' : 'Enable System', style: system.enabled ? 4 : 3 },
@@ -61,26 +57,28 @@ export async function buildXpDashboard(guildId) {
           { type: 2, custom_id: 'xp_clear',        label: 'Clear Setup',      style: 4 },
           { type: 2, custom_id: 'xp_save',         label: 'Save Setup',       style: 3 }
         ]
+      },
+      {
+        type: 1,
+        components: [
+          { type: 6, custom_id: 'xp_add_reward', placeholder: 'Select a role to add as Level Reward...', min_values: 1, max_values: 1 }
+        ]
+      },
+      {
+        type: 1,
+        components: [
+          { type: 6, custom_id: 'xp_add_multiplier', placeholder: 'Select roles for 1.5x XP Boost...', min_values: 1, max_values: 10 }
+        ]
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: '-# Athena Bulletproof Security System • V1.0.0'
       }
     ]
   };
 
-  
-    container.components.push({
-      type: 1,
-      components: [
-        { type: 6, custom_id: 'xp_add_reward', placeholder: 'Select a role to add as Level Reward...', min_values: 1, max_values: 1 }
-      ]
-    });
-    container.components.push({
-      type: 1,
-      components: [
-        { type: 6, custom_id: 'xp_add_multiplier', placeholder: 'Select roles for 1.5x XP Boost...', min_values: 1, max_values: 10 }
-      ]
-    });
-
-    return { components: [container], flags: MessageFlags.IsComponentsV2 };
-
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
 export const commands = [

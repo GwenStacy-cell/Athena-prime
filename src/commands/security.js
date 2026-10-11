@@ -2356,30 +2356,44 @@ export async function buildAutonickDashboard(guildId, guild = null) {
       },
       { type: 14, divider: true },
       {
-        type: 10,
-        content: `-# Athena Bulletproof Security System • V1.0.0`
+        type: 1,
+        components: [
+          {
+            type: 2,
+            custom_id: 'autonick_toggle',
+            label: isEnabled ? 'Disable' : 'Enable',
+            style: isEnabled ? 4 : 3,
+            emoji: { id: isEnabled ? '1533844858983157851' : '1533844867191406672' }
+          },
+          {
+            type: 2,
+            custom_id: 'autonick_edit',
+            label: 'Edit Layout',
+            style: 1
+          },
+          {
+            type: 2,
+            custom_id: 'autonick_sync',
+            label: 'Sync Members',
+            style: 2
+          }
+        ]
       },
       {
         type: 1,
         components: [
-          new ButtonBuilder()
-            .setCustomId('autonick_toggle')
-            .setLabel(isEnabled ? 'Disable' : 'Enable')
-            .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Success)
-            .setEmoji(isEnabled ? { id: '1533844858983157851' } : { id: '1533844867191406672' }),
-          new ButtonBuilder()
-            .setCustomId('autonick_edit')
-            .setLabel('Edit Layout')
-            .setStyle(ButtonStyle.Primary),
-          new ButtonBuilder()
-            .setCustomId('autonick_sync')
-            .setLabel('Sync Members')
-            .setStyle(ButtonStyle.Secondary),
-          new ButtonBuilder()
-            .setCustomId('autonick_restore')
-            .setLabel('Restore Names')
-            .setStyle(ButtonStyle.Danger)
+          {
+            type: 2,
+            custom_id: 'autonick_restore',
+            label: 'Restore Names',
+            style: 4
+          }
         ]
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# Athena Bulletproof Security System • V1.0.0`
       }
     ]
   };
@@ -3663,7 +3677,12 @@ const allMembers = guild.members.cache;
     actionRows.push(new ActionRowBuilder().addComponents(banAllBtn));
   }
   
-  return { components: [container, ...actionRows], flags: MessageFlags.IsComponentsV2 };
+  if (actionRows.length > 0) {
+    cv2Components.push({ type: 14, divider: true });
+    cv2Components.push(...actionRows.map(r => r.toJSON ? r.toJSON() : r));
+  }
+
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function getAutoModPanel(guild) {

@@ -1,4 +1,4 @@
-﻿import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import cv2 from '../cv2.js';
 import { isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';
 
@@ -16,14 +16,23 @@ export const commands = [
         return message.reply(cv2.warn('No Emojis', 'There are no custom emojis to delete in this server.'));
       }
 
-      const container = new EmbedBuilder().setTitle('Emoji Wipe Sequence').setDescription('Are you sure you want to delete **ALL** custom emojis in this server?\n\nThis action **cannot be undone**.').setColor('#ff0000');
-
-      const confirmBtn = new ButtonBuilder().setCustomId('confirm_wipe_emojis').setLabel('Confirm Wipe').setStyle(ButtonStyle.Secondary);
+      const confirmBtn = new ButtonBuilder().setCustomId('confirm_wipe_emojis').setLabel('Confirm Wipe').setStyle(ButtonStyle.Danger);
       const cancelBtn = new ButtonBuilder().setCustomId('cancel_wipe_emojis').setLabel('Cancel').setStyle(ButtonStyle.Secondary);
       const row = new ActionRowBuilder().addComponents(confirmBtn, cancelBtn);
 
+      const container = {
+        type: 17,
+        components: [
+          { type: 10, content: '## **Emoji Wipe Sequence**\nAre you sure you want to delete **ALL** custom emojis in this server?\n\nThis action **cannot be undone**.' },
+          { type: 14, divider: true },
+          row.toJSON(),
+          { type: 14, divider: true },
+          { type: 10, content: '-# Athena Bulletproof Security System • V1.0.0' }
+        ]
+      };
+
       const msg = await message.reply({ 
-        components: [container, row],
+        components: [container],
         flags: MessageFlags.IsComponentsV2
       });
 

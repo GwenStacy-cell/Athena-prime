@@ -346,6 +346,39 @@ function pushDivider(comps) {
     return { type: 17, components: comps };
   }
 
+function isContainer(c) {
+    if (!c) return false;
+    if (c.type === 17 || c.data?.type === 17) return true;
+    if (typeof c.toJSON === 'function') {
+      try {
+        const j = c.toJSON();
+        if (j && j.type === 17) return true;
+      } catch {}
+    }
+    return false;
+  }
+
+  function isActionRow(c) {
+    if (!c) return false;
+    if (c.type === 1 || c.data?.type === 1) return true;
+    if (typeof c.toJSON === 'function') {
+      try {
+        const j = c.toJSON();
+        if (j && j.type === 1) return true;
+      } catch {}
+    }
+    return false;
+  }
+
+  function toCleanJson(c) {
+    if (!c) return c;
+    let res = typeof c.toJSON === 'function' ? c.toJSON() : c;
+    if (res && res.type === 1 && Array.isArray(res.components)) {
+      res.components = res.components.map(item => typeof item.toJSON === 'function' ? item.toJSON() : item);
+    }
+    return res;
+  }
+
 function interceptPayload(body) {
     if (!body) return false;
     const target = body.data || body;
@@ -353,15 +386,39 @@ function interceptPayload(body) {
     if (target._skipCV2) return false;
 
     // Case 1: Pre-built CV2 container - pull any outside action rows (buttons/menus) INSIDE!
-    if (target.components && target.components.some(c => c.type === 17)) {
+    if (target.components && target.components.some(isContainer)) {
       target.flags = (target.flags || 0) | 32768;
-      const containerIdx = target.components.findIndex(c => c.type === 17);
-      const container = target.components[containerIdx];
-      const outsideRows = target.components.filter((c, idx) => idx !== containerIdx && c.type === 1);
+      const containerIdx = target.components.findIndex(isContainer);
+      let container = toCleanJson(target.components[containerIdx]);
+      if (!container.components) container.components = [];
+
+      const outsideRows = target.components
+        .filter((c, idx) => idx !== containerIdx && isActionRow(c))
+        .map(toCleanJson);
+
       if (outsideRows.length > 0) {
+        let footerComp = null;
+        if (container.components.length > 0) {
+          const lastComp = container.components[container.components.length - 1];
+          if (lastComp && lastComp.type === 10 && typeof lastComp.content === 'string' && (lastComp.content.trim().startsWith('-#') || lastComp.content.trim().startsWith('*'))) {
+            footerComp = container.components.pop();
+            if (container.components.length > 0 && container.components[container.components.length - 1].type === 14) {
+              container.components.pop();
+            }
+          }
+        }
+
         pushDivider(container.components);
         container.components.push(...outsideRows);
-        target.components = [container, ...target.components.filter((c, idx) => idx !== containerIdx && c.type !== 1)];
+
+        if (footerComp) {
+          pushDivider(container.components);
+          container.components.push(footerComp);
+        }
+
+        target.components = [container, ...target.components.filter((c, idx) => idx !== containerIdx && !isActionRow(c))];
+      } else {
+        target.components[containerIdx] = container;
       }
       return true;
     }
@@ -378,8 +435,26 @@ function interceptPayload(body) {
 
       // Bring ALL action rows (buttons, select menus) INSIDE the container!
       if (target.components && target.components.length > 0) {
-        pushDivider(cv2Containers[0].components);
-        cv2Containers[0].components.push(...target.components);
+        const cleanRows = target.components.filter(isActionRow).map(toCleanJson);
+        if (cleanRows.length > 0) {
+          let footerComp = null;
+          const comps = cv2Containers[0].components;
+          if (comps.length > 0) {
+            const last = comps[comps.length - 1];
+            if (last && last.type === 10 && typeof last.content === 'string' && (last.content.trim().startsWith('-#') || last.content.trim().startsWith('*'))) {
+              footerComp = comps.pop();
+              if (comps.length > 0 && comps[comps.length - 1].type === 14) {
+                comps.pop();
+              }
+            }
+          }
+          pushDivider(comps);
+          comps.push(...cleanRows);
+          if (footerComp) {
+            pushDivider(comps);
+            comps.push(footerComp);
+          }
+        }
       }
       
       target.components = cv2Containers;
@@ -388,7 +463,7 @@ function interceptPayload(body) {
       return true;
     }
 
-    if (target.components && target.components.some(c => c.type === 9 || c.type === 14)) {
+    if (target.components && target.components.some(c => c.type === 9 || c.type === 14 || isContainer(c))) {
       target.flags = (target.flags || 0) | 32768;
     }
 
