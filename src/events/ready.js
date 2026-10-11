@@ -413,6 +413,16 @@ export default {
     }, 3 * 60 * 1000);
 
     // Start WebSub Push Notification Server
+    // Continuous Latency History Sampler
+    client.pingHistory = client.pingHistory || [];
+    setInterval(() => {
+      const p = Math.round(client.ws.ping);
+      if (p > 0) {
+        client.pingHistory.push(p);
+        if (client.pingHistory.length > 20) client.pingHistory.shift();
+      }
+    }, 15000);
+
     initWebSub(client);
 
       console.log(chalk.blue(' Updating permissions for existing stats channels...'));
