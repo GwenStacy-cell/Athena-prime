@@ -2334,7 +2334,7 @@ export async function buildAutonickDashboard(guildId, guild = null) {
         return m.displayName === expected;
       });
       const percent = manageable.size > 0 ? Math.round((synced.size / manageable.size) * 100) : 0;
-      statsSection = `\n- **Live Synced Members:** \`${synced.size}\` / \`${manageable.size}\` (\`${percent}%\` formatted)`;
+      statsSection = `\n-# **• __Live Synced Members:__ \`${synced.size}\` / \`${manageable.size}\` (\`${percent}%\` formatted)**`;
     } catch (e) {}
   }
 
@@ -2343,16 +2343,20 @@ export async function buildAutonickDashboard(guildId, guild = null) {
     components: [
       {
         type: 10,
-        content: `## **Autonick Manager**\n` +
-                 `- **Status:** ${isEnabled ? `${ON} \`ACTIVE\`` : `${OFF} \`DISABLED\``}\n` +
-                 `- **Current Layout:** \`${layout}\`\n` +
-                 `- **Example Preview:** \`${preview}\`` +
+        content: `## **__Autonick Manager__**`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **• __Status:__ ${isEnabled ? `${ON} \`ACTIVE\`` : `${OFF} \`DISABLED\``}**\n` +
+                 `-# **• __Current Layout:__ \`${layout}\`**\n` +
+                 `-# **• __Example Preview:__ \`${preview}\`**` +
                  statsSection
       },
       { type: 14, divider: true },
       {
         type: 10,
-        content: `-# Use the buttons below to toggle auto-formatting, customize the layout template, or run a live mass-sync across all server members.`
+        content: `-# **Use the buttons below to toggle auto-formatting, customize the layout template, or run a live mass-sync across all server members.**`
       },
       { type: 14, divider: true },
       {
@@ -2393,7 +2397,7 @@ export async function buildAutonickDashboard(guildId, guild = null) {
       { type: 14, divider: true },
       {
         type: 10,
-        content: `-# Athena Bulletproof Security System • V1.0.0`
+        content: `-# **Athena Bulletproof Security System • V1.0.0**`
       }
     ]
   };
@@ -3962,68 +3966,125 @@ export async function handleAutonickButton(interaction) {
   }
 
   if (customId === 'autonick_sync') {
-    // PUBLIC MESSAGE (VISIBLE FOR ALL)
+    const me = guild.members.me || await guild.members.fetchMe().catch(() => null);
+    if (!me || !me.permissions.has(PermissionFlagsBits.ManageNicknames)) {
+      const noPermCard = {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `## <:off:1533844858983157851> **__Missing Permissions__**`
+          },
+          { type: 14, divider: true },
+          {
+            type: 10,
+            content: `-# **• __Error:__ The bot lacks the __Manage Nicknames__ permission in this server.**\n` +
+                     `-# **• __Resolution:__ Grant the bot the __Manage Nicknames__ permission in Server Settings > Roles.**`
+          },
+          { type: 14, divider: true },
+          {
+            type: 10,
+            content: `-# **Athena Bulletproof Security System • V1.0.0**`
+          }
+        ]
+      };
+      return interaction.reply({ components: [noPermCard], flags: MessageFlags.IsComponentsV2 });
+    }
+
     const loadingCard = {
       type: 17,
       components: [
         {
           type: 10,
-          content: `## <a:loading:1542155051286396938> **Synchronizing Nicknames...**\n` +
-                   `- **Target Layout:** \`${cfg.autonick.layout}\`\n` +
-                   `- **Status:** Fetching server member roster...\n` +
-                   `- **Live Synced:** \`0\` members updated`
+          content: `## <a:loading:1542155051286396938> **__Synchronizing Nicknames...__**`
         },
         { type: 14, divider: true },
-        { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+        {
+          type: 10,
+          content: `-# **• __Target Layout:__ \`${cfg.autonick.layout}\`**\n` +
+                   `-# **• __Status:__ Fetching server member roster...**\n` +
+                   `-# **• __Live Synced:__ \`0\` members updated**`
+        },
+        { type: 14, divider: true },
+        {
+          type: 10,
+          content: `-# **Athena Bulletproof Security System • V1.0.0**`
+        }
       ]
     };
 
-    await interaction.reply({ components: [loadingCard], flags: MessageFlags.IsComponentsV2 });
-
-    let members;
-    try {
-      members = await guild.members.fetch();
-    } catch(e) {
-      const errCard = {
-        type: 17,
-        components: [
-          {
-            type: 10,
-            content: `## **Sync Error**\nFailed to fetch guild members: \`${e.message}\``
-          },
-          { type: 14, divider: true },
-          { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
-        ]
-      };
-      return interaction.editReply({ components: [errCard] });
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ components: [loadingCard], flags: MessageFlags.IsComponentsV2 });
+    } else {
+      await interaction.reply({ components: [loadingCard], flags: MessageFlags.IsComponentsV2 });
     }
 
+    let members = guild.members.cache;
+    try {
+      const fetched = await Promise.race([
+        guild.members.fetch({ time: 4000 }).catch(() => null),
+        new Promise(r => setTimeout(() => r(null), 4000))
+      ]);
+      if (fetched && fetched.size > 0) members = fetched;
+    } catch (e) {
+      members = guild.members.cache;
+    }
+    if (!members || members.size === 0) members = guild.members.cache;
+
+    const myHighestRole = me.roles.highest.position;
     const eligible = [];
+    let unmanageableCount = 0;
+    let alreadySyncedCount = 0;
+
     for (const [id, member] of members) {
       if (member.user.bot || member.id === guild.ownerId) continue;
-      if (!member.manageable) continue;
+      if (!member.manageable || member.roles.highest.position >= myHighestRole) {
+        unmanageableCount++;
+        continue;
+      }
       const expectedNick = formatNickname(cfg.autonick.layout, member.user.globalName || member.user.username);
       if (member.displayName !== expectedNick) {
         eligible.push({ member, expectedNick });
+      } else {
+        alreadySyncedCount++;
       }
     }
 
     if (eligible.length === 0) {
+      let statusLines = '';
+      if (unmanageableCount > 0 && alreadySyncedCount === 0) {
+        statusLines = `-# **• __Status:__ Found \`${unmanageableCount}\` member(s), but their roles are placed higher than or equal to the bot's role!**\n` +
+                      `-# **• __Resolution:__ In __Server Settings > Roles__, move the bot's role to the top of the role list.**`;
+      } else {
+        statusLines = `-# **• __Status:__ All manageable members are already up-to-date!**\n` +
+                      `-# **• __Live Synced:__ \`${alreadySyncedCount}\` members formatted**`;
+        if (unmanageableCount > 0) {
+          statusLines += `\n-# **• __Skipped Roles:__ \`${unmanageableCount}\` members skipped (placed higher than bot role)**`;
+        }
+      }
+
       const completeCard = {
         type: 17,
         components: [
           {
             type: 10,
-            content: `## <a:uptime:1552608831060844575> **Nickname Synchronization Complete**\n` +
-                     `- **Target Layout:** \`${cfg.autonick.layout}\`\n` +
-                     `- **Status:** All manageable members are already up-to-date!\n` +
-                     `- **Total Evaluated:** \`${members.filter(m => !m.user.bot && m.id !== guild.ownerId).size}\` members`
+            content: `## <a:uptime:1552608831060844575> **__Nickname Synchronization Complete__**`
           },
           { type: 14, divider: true },
-          { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+          {
+            type: 10,
+            content: `-# **• __Target Layout:__ \`${cfg.autonick.layout}\`**\n` +
+                     statusLines + `\n` +
+                     `-# **• __Total Evaluated:__ \`${members.filter(m => !m.user.bot && m.id !== guild.ownerId).size}\` members**`
+          },
+          { type: 14, divider: true },
+          {
+            type: 10,
+            content: `-# **Athena Bulletproof Security System • V1.0.0**`
+          }
         ]
       };
-      return interaction.editReply({ components: [completeCard] });
+      return interaction.editReply({ components: [completeCard], flags: MessageFlags.IsComponentsV2 });
     }
 
     let count = 0;
@@ -4044,21 +4105,30 @@ export async function handleAutonickButton(interaction) {
       if (i === total - 1 || now - lastUpdate >= 2000 || (i > 0 && i % 5 === 0)) {
         lastUpdate = now;
         const percent = Math.round(((i + 1) / total) * 100);
+        const progressCard = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `## <a:loading:1542155051286396938> **__Synchronizing Nicknames...__**`
+            },
+            { type: 14, divider: true },
+            {
+              type: 10,
+              content: `-# **• __Target Layout:__ \`${cfg.autonick.layout}\`**\n` +
+                       `-# **• __Progress:__ \`${count}\` / \`${total}\` members updated (\`${percent}%\`)**\n` +
+                       `-# **• __Live Synced:__ \`${count}\` updated • \`${failed}\` skipped**`
+            },
+            { type: 14, divider: true },
+            {
+              type: 10,
+              content: `-# **Athena Bulletproof Security System • V1.0.0**`
+            }
+          ]
+        };
         await interaction.editReply({
-          components: [{
-            type: 17,
-            components: [
-              {
-                type: 10,
-                content: `## <a:loading:1542155051286396938> **Synchronizing Nicknames...**\n` +
-                         `- **Target Layout:** \`${cfg.autonick.layout}\`\n` +
-                         `- **Progress:** **${count}** / **${total}** members updated (\`${percent}%\`)\n` +
-                         `- **Live Synced:** \`${count}\` updated • \`${failed}\` skipped`
-              },
-              { type: 14, divider: true },
-              { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
-            ]
-          }]
+          components: [progressCard],
+          flags: MessageFlags.IsComponentsV2
         }).catch(() => null);
       }
 
@@ -4070,79 +4140,136 @@ export async function handleAutonickButton(interaction) {
       components: [
         {
           type: 10,
-          content: `## <a:uptime:1552608831060844575> **Nickname Synchronization Complete**\n` +
-                   `- **Target Layout:** \`${cfg.autonick.layout}\`\n` +
-                   `- **Successfully Synced:** **${count}** members\n` +
-                   `- **Skipped / Unmanageable:** **${failed}** members\n` +
-                   `- **Total Processed:** **${total}** members`
+          content: `## <a:uptime:1552608831060844575> **__Nickname Synchronization Complete__**`
         },
         { type: 14, divider: true },
-        { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+        {
+          type: 10,
+          content: `-# **• __Target Layout:__ \`${cfg.autonick.layout}\`**\n` +
+                   `-# **• __Successfully Synced:__ \`${count}\` members**\n` +
+                   `-# **• __Skipped / Unmanageable:__ \`${failed + unmanageableCount}\` members**\n` +
+                   `-# **• __Total Processed:__ \`${total}\` members**`
+        },
+        { type: 14, divider: true },
+        {
+          type: 10,
+          content: `-# **Athena Bulletproof Security System • V1.0.0**`
+        }
       ]
     };
-    return interaction.editReply({ components: [finalCard] });
+    return interaction.editReply({ components: [finalCard], flags: MessageFlags.IsComponentsV2 });
   }
 
   if (customId === 'autonick_restore') {
-    // PUBLIC MESSAGE (VISIBLE FOR ALL)
+    const me = guild.members.me || await guild.members.fetchMe().catch(() => null);
+    if (!me || !me.permissions.has(PermissionFlagsBits.ManageNicknames)) {
+      const noPermCard = {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `## <:off:1533844858983157851> **__Missing Permissions__**`
+          },
+          { type: 14, divider: true },
+          {
+            type: 10,
+            content: `-# **• __Error:__ The bot lacks the __Manage Nicknames__ permission in this server.**\n` +
+                     `-# **• __Resolution:__ Grant the bot the __Manage Nicknames__ permission in Server Settings > Roles.**`
+          },
+          { type: 14, divider: true },
+          {
+            type: 10,
+            content: `-# **Athena Bulletproof Security System • V1.0.0**`
+          }
+        ]
+      };
+      return interaction.reply({ components: [noPermCard], flags: MessageFlags.IsComponentsV2 });
+    }
+
     const loadingCard = {
       type: 17,
       components: [
         {
           type: 10,
-          content: `## <a:loading:1542155051286396938> **Restoring Original Nicknames...**\n` +
-                   `- **Status:** Fetching server member roster...\n` +
-                   `- **Live Restored:** \`0\` names reset`
+          content: `## <a:loading:1542155051286396938> **__Restoring Original Nicknames...__**`
         },
         { type: 14, divider: true },
-        { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+        {
+          type: 10,
+          content: `-# **• __Status:__ Fetching server member roster...**\n` +
+                   `-# **• __Live Restored:__ \`0\` names reset**`
+        },
+        { type: 14, divider: true },
+        {
+          type: 10,
+          content: `-# **Athena Bulletproof Security System • V1.0.0**`
+        }
       ]
     };
 
-    await interaction.reply({ components: [loadingCard], flags: MessageFlags.IsComponentsV2 });
-
-    let members;
-    try {
-      members = await guild.members.fetch();
-    } catch(e) {
-      const errCard = {
-        type: 17,
-        components: [
-          {
-            type: 10,
-            content: `## **Restore Error**\nFailed to fetch guild members: \`${e.message}\``
-          },
-          { type: 14, divider: true },
-          { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
-        ]
-      };
-      return interaction.editReply({ components: [errCard] });
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({ components: [loadingCard], flags: MessageFlags.IsComponentsV2 });
+    } else {
+      await interaction.reply({ components: [loadingCard], flags: MessageFlags.IsComponentsV2 });
     }
 
+    let members = guild.members.cache;
+    try {
+      const fetched = await Promise.race([
+        guild.members.fetch({ time: 4000 }).catch(() => null),
+        new Promise(r => setTimeout(() => r(null), 4000))
+      ]);
+      if (fetched && fetched.size > 0) members = fetched;
+    } catch (e) {
+      members = guild.members.cache;
+    }
+    if (!members || members.size === 0) members = guild.members.cache;
+
+    const myHighestRole = me.roles.highest.position;
     const toRestore = [];
+    let unmanageableWithNick = 0;
+
     for (const [id, member] of members) {
       if (member.user.bot || member.id === guild.ownerId) continue;
-      if (!member.manageable) continue;
-      if (member.nickname) {
-        toRestore.push(member);
+      if (!member.nickname) continue;
+
+      if (!member.manageable || member.roles.highest.position >= myHighestRole) {
+        unmanageableWithNick++;
+        continue;
       }
+      toRestore.push(member);
     }
 
     if (toRestore.length === 0) {
+      let statusLines = '';
+      if (unmanageableWithNick > 0) {
+        statusLines = `-# **• __Status:__ Found \`${unmanageableWithNick}\` member(s) with nicknames, but their roles are placed higher than or equal to the bot's role!**\n` +
+                      `-# **• __Resolution:__ In __Server Settings > Roles__, move the bot's role to the top of the role list.**`;
+      } else {
+        statusLines = `-# **• __Status:__ No custom nicknames found to restore.**`;
+      }
+
       const cleanCard = {
         type: 17,
         components: [
           {
             type: 10,
-            content: `## <a:uptime:1552608831060844575> **Original Nicknames Restored**\n` +
-                     `- **Status:** No custom nicknames found to restore.\n` +
-                     `- **Evaluated:** \`${members.filter(m => !m.user.bot && m.id !== guild.ownerId).size}\` members`
+            content: `## <a:uptime:1552608831060844575> **__Original Nicknames Restored__**`
           },
           { type: 14, divider: true },
-          { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+          {
+            type: 10,
+            content: statusLines + `\n` +
+                     `-# **• __Total Evaluated:__ \`${members.filter(m => !m.user.bot && m.id !== guild.ownerId).size}\` members**`
+          },
+          { type: 14, divider: true },
+          {
+            type: 10,
+            content: `-# **Athena Bulletproof Security System • V1.0.0**`
+          }
         ]
       };
-      return interaction.editReply({ components: [cleanCard] });
+      return interaction.editReply({ components: [cleanCard], flags: MessageFlags.IsComponentsV2 });
     }
 
     let count = 0;
@@ -4163,20 +4290,29 @@ export async function handleAutonickButton(interaction) {
       if (i === total - 1 || now - lastUpdate >= 2000 || (i > 0 && i % 5 === 0)) {
         lastUpdate = now;
         const percent = Math.round(((i + 1) / total) * 100);
+        const progressCard = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `## <a:loading:1542155051286396938> **__Restoring Original Nicknames...__**`
+            },
+            { type: 14, divider: true },
+            {
+              type: 10,
+              content: `-# **• __Progress:__ \`${count}\` / \`${total}\` names restored (\`${percent}%\`)**\n` +
+                       `-# **• __Live Restored:__ \`${count}\` restored • \`${failed}\` skipped**`
+            },
+            { type: 14, divider: true },
+            {
+              type: 10,
+              content: `-# **Athena Bulletproof Security System • V1.0.0**`
+            }
+          ]
+        };
         await interaction.editReply({
-          components: [{
-            type: 17,
-            components: [
-              {
-                type: 10,
-                content: `## <a:loading:1542155051286396938> **Restoring Original Nicknames...**\n` +
-                         `- **Progress:** **${count}** / **${total}** names restored (\`${percent}%\`)\n` +
-                         `- **Live Restored:** \`${count}\` restored • \`${failed}\` skipped`
-              },
-              { type: 14, divider: true },
-              { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
-            ]
-          }]
+          components: [progressCard],
+          flags: MessageFlags.IsComponentsV2
         }).catch(() => null);
       }
 
@@ -4188,16 +4324,23 @@ export async function handleAutonickButton(interaction) {
       components: [
         {
           type: 10,
-          content: `## <a:uptime:1552608831060844575> **Original Nicknames Restored**\n` +
-                   `- **Successfully Restored:** **${count}** members\n` +
-                   `- **Skipped / Unmanageable:** **${failed}** members\n` +
-                   `- **Total Processed:** **${total}** members`
+          content: `## <a:uptime:1552608831060844575> **__Original Nicknames Restored__**`
         },
         { type: 14, divider: true },
-        { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+        {
+          type: 10,
+          content: `-# **• __Successfully Restored:__ \`${count}\` members**\n` +
+                   `-# **• __Skipped / Unmanageable:__ \`${failed + unmanageableWithNick}\` members**\n` +
+                   `-# **• __Total Processed:__ \`${total}\` members**`
+        },
+        { type: 14, divider: true },
+        {
+          type: 10,
+          content: `-# **Athena Bulletproof Security System • V1.0.0**`
+        }
       ]
     };
-    return interaction.editReply({ components: [finalCard] });
+    return interaction.editReply({ components: [finalCard], flags: MessageFlags.IsComponentsV2 });
   }
 }
 
