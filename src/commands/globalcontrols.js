@@ -137,6 +137,38 @@ export const commands = [
   },
 
   {
+    name: 'testgloballog',
+    description: 'Dispatch a test global action log card to the configured channel [Bot Owner]',
+    category: 'config',
+    aliases: ['testglog'],
+    async executePrefix(message, args) {
+      if (!isBotOwnerSync(message.author.id)) return;
+
+      const targetGuild = message.guild;
+      const cfg = db.getGuildConfig(targetGuild.id);
+      if (!cfg?.globalActionLogChannel) {
+        return message.reply(cv2.warn('Not Configured', 'Global action log is not configured in this server. Use `!setgloballog <channel_id>` first.'));
+      }
+
+      const { postGlobalActionLog } = await import('../utils/globalLog.js');
+      await postGlobalActionLog(message.client, {
+        action: 'BAN',
+        guildId: targetGuild.id,
+        guildName: targetGuild.name,
+        guildIconUrl: targetGuild.iconURL({ extension: 'png', size: 256 }),
+        targetId: message.author.id,
+        targetTag: message.author.tag,
+        executorId: message.client.user.id,
+        executorTag: message.client.user.tag,
+        reason: 'Manual test dispatch verification by bot owner',
+        _isSample: true
+      });
+
+      return message.reply(cv2.success('Test Sent', `Test global action log card sent to <#${cfg.globalActionLogChannel}>.`));
+    }
+  },
+
+  {
     name: 'setstatus',
     description: 'Set a channel for the live bot status panel [Bot Owner]',
     category: 'config',

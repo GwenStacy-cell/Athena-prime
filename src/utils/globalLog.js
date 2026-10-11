@@ -27,25 +27,29 @@ export async function postGlobalActionLog(client, opts) {
   const cleanTarget = String(targetTag || targetId).replace(/[`\[\]\(\)]/g, '').trim();
   const cleanExecutor = String(executorTag || 'Anti-Nuke / Bot').replace(/[`\[\]\(\)]/g, '').trim();
 
-  const card = {
-    type: 17,
-    components: [
-      { type: 10, content: `## **GLOBAL ACTION LOG — ${action}**` },
-      { type: 14, divider: true },
-      { type: 10, content: `**Server:** **${guildName || 'Unknown Server'}**\n**Target:** [${cleanTarget}](https://discord.com/users/${targetId}) \`(${targetId})\`\n**Action Taken By:** [${cleanExecutor}](https://discord.com/users/${executorId}) \`(${executorId})\`\n**Reason:** ${reason || 'No reason provided'}` },
-      { type: 14, divider: true },
-      { type: 10, content: `*Athena Prime Global Antinuke System • Cross-Server Action Monitor • ${timestamp}*` },
-      {
-        type: 1,
-        components: [
-          { type: 2, style: 5, label: 'Open Server', url: `https://discord.com/channels/${guildId}` },
-          { type: 2, style: 5, label: `Violator: ${cleanTarget.substring(0, 60)}`, url: `https://discord.com/users/${targetId}` }
-        ]
-      }
-    ]
-  };
+  const embed = new EmbedBuilder()
+    .setColor(0xED4245)
+    .setAuthor({
+      name: `GLOBAL ACTION LOG — ${action}`,
+      iconURL: guildIconUrl || client.user.displayAvatarURL()
+    })
+    .setDescription(
+      `-# **• __Server:__ \`${guildName || 'Unknown Server'}\`**\n` +
+      `-# **• __Target:__ [${cleanTarget}](https://discord.com/users/${targetId}) \`(${targetId})\`**\n` +
+      `-# **• __Action Taken By:__ [${cleanExecutor}](https://discord.com/users/${executorId}) \`(${executorId})\`**\n` +
+      `-# **• __Reason:__ \`${reason || 'No reason provided'}\`**`
+    )
+    .setImage(`attachment://${attachment.name || 'global_ban_log.png'}`)
+    .setFooter({
+      text: `Athena Prime Global Antinuke System • Cross-Server Action Monitor • ${timestamp}`
+    });
 
-  const payload = { components: [card], files: [attachment], flags: 32768 };
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel('Open Server').setURL(`https://discord.com/channels/${guildId}`),
+    new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(`Violator: ${cleanTarget.substring(0, 60)}`).setURL(`https://discord.com/users/${targetId}`)
+  );
+
+  const payload = { embeds: [embed], components: [row], files: [attachment], _skipCV2: true };
 
   for (const guild of client.guilds.cache.values()) {
     const cfg = db.getGuildConfig(guild.id);
