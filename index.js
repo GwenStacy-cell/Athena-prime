@@ -324,7 +324,7 @@ function pushDivider(comps) {
       }
     }
 
-    if (embedData.image) {
+    if (embedData.image && embedData.image.url && !embedData.image.url.startsWith('attachment://')) {
       pushDivider(comps);
       comps.push({ type: 12, items: [{ media: { url: embedData.image.url } }] });
     }
@@ -362,6 +362,28 @@ function interceptPayload(body) {
   }
   return false;
 }
+
+// REST TOKEN PERMANENT PROTECTION GUARD
+// Prevents @discordjs/rest from wiping client.rest.token when any request gets 401
+const originalSetToken = client.rest.setToken.bind(client.rest);
+client.rest.setToken = function(newToken) {
+  if (!newToken) {
+    const validToken = token || process.env.DISCORD_TOKEN || client.token;
+    if (validToken) {
+      return originalSetToken(validToken);
+    }
+  }
+  return originalSetToken(newToken);
+};
+
+const originalRequest = client.rest.request.bind(client.rest);
+client.rest.request = async function(options) {
+  const validToken = token || process.env.DISCORD_TOKEN || client.token;
+  if (validToken && options && options.auth !== false) {
+    originalSetToken(validToken);
+  }
+  return originalRequest(options);
+};
 
 client.rest.post = async function(url, options) {
   if (options && options.body) interceptPayload(options.body);

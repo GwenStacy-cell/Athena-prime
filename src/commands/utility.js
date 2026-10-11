@@ -337,8 +337,11 @@ export const commands = [
           .setDescription(`-# **| <a:uptime:1552608831060844575> [${interaction.member?.displayName || interaction.user.displayName}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
           .setImage('attachment://ping_graph.png');
     
-        await interaction.deleteReply().catch(() => null);
-        await interaction.channel.send({ content: `<@${interaction.user.id}>`, embeds: [replyEmbed], files: [attachment] });
+        await interaction.editReply({
+          content: null,
+          embeds: [replyEmbed],
+          files: [attachment]
+        });
       }
     },
     // --- TIME COMMAND ---

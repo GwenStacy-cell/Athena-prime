@@ -1,4 +1,4 @@
-﻿import db from '../database.js';
+import db from '../database.js';
 import { generateGlobalActionCard } from './canvasActionLog.js';
 
 export async function postGlobalActionLog(client, opts) {
@@ -29,9 +29,7 @@ export async function postGlobalActionLog(client, opts) {
     components: [
       { type: 10, content: `## **GLOBAL ACTION LOG — ${action}**` },
       { type: 14, divider: true },
-      { type: 10, content: `-### **${guildName || 'Unknown Server'}**\n**Target:** [${targetTag || targetId}](https://discord.com/users/${targetId})\n**Target ID:** \`${targetId}\`\n**Action Taken By:** [${executorTag || 'Anti-Nuke / Bot'}](https://discord.com/users/${executorId})\n**Executor ID:** \`${executorId}\`\n**Reason:** ${reason || 'No reason provided'}` },
-      { type: 14, divider: true },
-      { type: 12, items: [{ media: { url: `attachment://${attachment.name}` } }] },
+      { type: 10, content: `-# **${guildName || 'Unknown Server'}**\n-# **Target:** [${targetTag || targetId}](https://discord.com/users/${targetId})\n-# **Target ID:** \`${targetId}\`\n-# **Action Taken By:** [${executorTag || 'Anti-Nuke / Bot'}](https://discord.com/users/${executorId})\n-# **Executor ID:** \`${executorId}\`\n-# **Reason:** ${reason || 'No reason provided'}` },
       { type: 14, divider: true },
       { type: 10, content: `-# Athena Prime Global Antinuke System • Cross-Server Action Monitor • ${timestamp}` },
       {
