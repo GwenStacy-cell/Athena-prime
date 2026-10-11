@@ -727,104 +727,402 @@ export async function generateServerOverviewImage(guild, stats) {
 
 
 // ============================================================
-// TOP LEADERBOARD IMAGE — matches Statbot's s?top output
+// TOP LEADERBOARD IMAGE — Ultra-HD God of War / Dark Fire Theme
 // ============================================================
-export async function generateTopImage(guild, topMsgMembers, topVoiceMembers) {
-  const ROWS_PER_COL = 5;
-  const ROW_H = 46;
-  const HEADER_H = 100;
-  const SECTION_TITLE_H = 40;
-  const BOTTOM_PAD = 30;
-  const H = HEADER_H + SECTION_TITLE_H + (ROWS_PER_COL * ROW_H) + BOTTOM_PAD + 26;
-  const W = 820;
+export async function generateTopImage(guild, topMsgMembers = [], topVoiceMembers = []) {
+  const W = 1024;
+  const H = 530;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
-  const PAD = 18;
 
-  ctx.fillStyle = C.bg;
-  ctx.fillRect(0, 0, W, H);
+  try {
+    // 1. Draw base HD template
+    const templatePath = path.resolve('src/assets/top_gow_template.png');
+    let templateImg = null;
+    if (fs.existsSync(templatePath)) {
+      try {
+        templateImg = await loadImage(templatePath);
+        ctx.drawImage(templateImg, 0, 0, W, H);
+      } catch (e) {
+        console.error('[StatCanvas] Template load error:', e.message);
+      }
+    }
 
-  // ---- HEADER ----
-  const ICON_R = 36;
-  const ICON_CX = PAD + ICON_R;
-  const ICON_CY = PAD + ICON_R + 4;
+    if (!templateImg) {
+      // Robust dark slate fallback if file is ever missing
+      ctx.fillStyle = '#0F1014';
+      ctx.fillRect(0, 0, W, H);
+    }
 
-  if (guild.iconURL()) {
-    await drawCircularImage(ctx, guild.iconURL({ extension: 'png', size: 128 }), ICON_CX, ICON_CY, ICON_R);
+    // 2. Server Avatar (Top-Left Ornate Frame)
+    // Center: (103, 103), Radius: 43
+    const iconUrl = guild && typeof guild.iconURL === 'function'
+      ? guild.iconURL({ extension: 'png', size: 128 })
+      : null;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(103, 103, 43, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+
+    let guildAvatarLoaded = false;
+    if (iconUrl) {
+      try {
+        const gIcon = await loadImage(iconUrl);
+        ctx.drawImage(gIcon, 60, 60, 86, 86);
+        guildAvatarLoaded = true;
+      } catch {}
+    }
+
+    if (!guildAvatarLoaded) {
+      ctx.fillStyle = '#1A1C20';
+      ctx.fillRect(60, 60, 86, 86);
+      ctx.font = 'bold 36px "Cinzel", "Georgia", "NotoSans", serif';
+      ctx.fillStyle = '#E52B38';
+      ctx.textAlign = 'center';
+      const initial = (guild?.name || 'S').trim().charAt(0).toUpperCase();
+      ctx.fillText(initial, 103, 115);
+    }
+    ctx.restore();
+
+    // Subtle inner shadow ring over avatar for seamless integration with the ornate frame
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(103, 103, 43, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Server Name Typography (Metallic Silver + Crimson Dual Tone)
+    const rawName = (guild?.name || 'SERVER').toUpperCase();
+    const cleanName = safeText(rawName) || 'SERVER';
+    renderTopServerTitle(ctx, cleanName, 202, 70);
+
+    // 4. Rows (5 rows per column)
+    const ROWS = 5;
+    const ROW_START_Y = 200;
+    const ROW_STEP = 56;
+
+    const maxVoiceSec = topVoiceMembers.length > 0 && topVoiceMembers[0]?.total > 0
+      ? topVoiceMembers[0].total
+      : 1;
+
+    for (let i = 0; i < ROWS; i++) {
+      const rowCenterY = ROW_START_Y + i * ROW_STEP;
+      const isRank1 = i === 0;
+
+      // --- CARD 1 (MESSAGES) ---
+      const msgUser = topMsgMembers[i] || null;
+      await renderTopMemberRow(ctx, {
+        rank: i + 1,
+        isRank1,
+        user: msgUser,
+        statText: msgUser ? formatMsgsText(msgUser.total) : '0 msgs',
+        badgeX: 38,
+        avatarX: 104,
+        nameX: 138,
+        statRightX: 480,
+        rowCenterY,
+        isVoice: false
+      });
+
+      // Divider under message row
+      if (i < ROWS - 1) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(38, rowCenterY + 28);
+        ctx.lineTo(484, rowCenterY + 28);
+        if (isRank1) {
+          ctx.strokeStyle = 'rgba(229, 43, 56, 0.4)';
+          ctx.lineWidth = 1.5;
+          ctx.shadowColor = 'rgba(229, 43, 56, 0.6)';
+          ctx.shadowBlur = 6;
+        } else {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+          ctx.lineWidth = 1;
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // --- CARD 2 (VOICE) ---
+      const voiceUser = topVoiceMembers[i] || null;
+      const voiceSec = voiceUser?.total || 0;
+      const voiceRatio = maxVoiceSec > 0 ? (voiceSec / maxVoiceSec) : 0;
+
+      await renderTopMemberRow(ctx, {
+        rank: i + 1,
+        isRank1,
+        user: voiceUser,
+        statText: voiceUser ? formatVoiceHoursText(voiceUser.total) : '0.00 hours',
+        badgeX: 522,
+        avatarX: 588,
+        nameX: 618,
+        statRightX: 964,
+        rowCenterY,
+        isVoice: true,
+        voiceRatio
+      });
+
+      // Divider under voice row
+      if (i < ROWS - 1) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(522, rowCenterY + 28);
+        ctx.lineTo(968, rowCenterY + 28);
+        if (isRank1) {
+          ctx.strokeStyle = 'rgba(229, 43, 56, 0.4)';
+          ctx.lineWidth = 1.5;
+          ctx.shadowColor = 'rgba(229, 43, 56, 0.6)';
+          ctx.shadowBlur = 6;
+        } else {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+          ctx.lineWidth = 1;
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    return canvas.toBuffer('image/png');
+  } catch (err) {
+    console.error('[StatCanvas] generateTopImage critical error:', err);
+    // Ultimate failsafe: return black canvas buffer instead of crashing
+    return canvas.toBuffer('image/png');
+  }
+}
+
+function formatMsgsText(num) {
+  if (!num || num <= 0) return '0 msgs';
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(2) + 'M msgs';
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + 'k msgs';
+  return num + ' msgs';
+}
+
+function formatVoiceHoursText(seconds) {
+  if (!seconds || seconds <= 0) return '0.00 hours';
+  const hours = seconds / 3600;
+  return hours.toFixed(2) + ' hours';
+}
+
+function renderTopServerTitle(ctx, name, startX, baselineY) {
+  ctx.save();
+  let fontSize = 30;
+  if (name.length > 22) fontSize = 21;
+  else if (name.length > 16) fontSize = 24;
+  else if (name.length > 11) fontSize = 27;
+
+  ctx.font = `bold ${fontSize}px "Cinzel", "Georgia", "NotoSans", serif`;
+
+  const words = name.split(' ');
+  let part1 = '', part2 = '';
+  if (words.length > 1) {
+    const half = Math.ceil(words.length / 2);
+    part1 = words.slice(0, half).join(' ') + ' ';
+    part2 = words.slice(half).join(' ');
+  } else if (name.length > 7) {
+    const half = Math.floor(name.length / 2);
+    part1 = name.slice(0, half);
+    part2 = name.slice(half);
+  } else {
+    part1 = name;
+    part2 = '';
   }
 
-  const guildName = safeText(guild.name) || 'Server';
-  ctx.font = `bold 26px ${FONT_BOLD}`;
-  ctx.fillStyle = C.white;
-  ctx.fillText(guildName.toUpperCase(), ICON_CX + ICON_R + 14, ICON_CY - 6);
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 3;
 
-  ctx.font = `16px ${FONT_NORMAL}`;
-  ctx.fillStyle = C.gray;
-  ctx.fillText('\uf091 Top Statistics', ICON_CX + ICON_R + 14, ICON_CY + 18);
-  ctx.font = '14px "FontAwesome"';
-  ctx.fillText('\uf091', ICON_CX + ICON_R + 14, ICON_CY + 18);
+  const gradSilver = ctx.createLinearGradient(0, baselineY - fontSize, 0, baselineY);
+  gradSilver.addColorStop(0, '#FFFFFF');
+  gradSilver.addColorStop(0.5, '#E6E8EC');
+  gradSilver.addColorStop(1, '#B0B4BC');
+  ctx.fillStyle = gradSilver;
+  ctx.fillText(part1, startX, baselineY);
 
-  ctx.fillStyle = '#33363C';
-  ctx.fillRect(PAD, ICON_CY + ICON_R + 12, W - PAD * 2, 1);
+  if (part2) {
+    const w1 = ctx.measureText(part1).width;
+    const gradRed = ctx.createLinearGradient(0, baselineY - fontSize, 0, baselineY);
+    gradRed.addColorStop(0, '#FF4D5A');
+    gradRed.addColorStop(0.5, '#E52B38');
+    gradRed.addColorStop(1, '#94131D');
 
-  // ---- SECTION TITLE ----
-  const SEC_Y = ICON_CY + ICON_R + 20;
-  const COL_GAP = 14;
-  const COL_W = Math.floor((W - PAD * 2 - COL_GAP) / 2);
+    ctx.shadowColor = 'rgba(229, 43, 56, 0.5)';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = gradRed;
+    ctx.fillText(part2, startX + w1, baselineY);
+  }
+  ctx.restore();
+}
 
-  ctx.font = `bold 20px ${FONT_BOLD}`;
-  ctx.fillStyle = C.white;
-  ctx.fillText(`# Top Messages`, PAD, SEC_Y + 22);
-  ctx.fillText(`# Top Voice`, PAD + COL_W + COL_GAP, SEC_Y + 22);
+async function renderTopMemberRow(ctx, opts) {
+  const { rank, isRank1, user, statText, badgeX, avatarX, nameX, statRightX, rowCenterY, isVoice, voiceRatio } = opts;
 
-  // ---- 2-COLUMN GRID ----
-  const GRID_Y = SEC_Y + SECTION_TITLE_H;
+  // 1. Rank Badge (34w x 36h)
+  const bW = 34, bH = 36;
+  const bY = rowCenterY - 18;
+  const bR = 6;
 
-  const drawRow = (member, rank, displayCount, colX, rowY) => {
-    const name   = safeText(member.username) || `User ${rank}`;
-    const count  = displayCount;
+  ctx.save();
+  ctx.beginPath();
+  drawTopRoundRect(ctx, badgeX, bY, bW, bH, bR);
 
-    drawPanel(ctx, colX, rowY, COL_W, ROW_H - 6, 8, C.panel, true);
+  if (isRank1) {
+    const grad1 = ctx.createLinearGradient(0, bY, 0, bY + bH);
+    grad1.addColorStop(0, '#F53B47');
+    grad1.addColorStop(0.5, '#C8232D');
+    grad1.addColorStop(1, '#7E1118');
+    ctx.fillStyle = grad1;
+    ctx.shadowColor = 'rgba(245, 59, 71, 0.5)';
+    ctx.shadowBlur = 8;
+    ctx.fill();
 
-    ctx.font = `bold 18px ${FONT_BOLD}`;
-    ctx.fillStyle = C.white;
-    ctx.textAlign = 'right';
-    ctx.fillText(String(rank), colX + 36, rowY + 26);
-    ctx.textAlign = 'left';
+    ctx.strokeStyle = 'rgba(255, 120, 130, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
-    ctx.font = `16px ${FONT_NORMAL}`;
-    ctx.fillStyle = C.white;
-    const maxNameW = COL_W - 56 - 80;
-    ctx.fillText(truncateText(ctx, name, maxNameW), colX + 46, rowY + 26);
+    ctx.font = 'bold 18px "NotoSans", sans-serif';
+    ctx.fillStyle = '#140304';
+    ctx.textAlign = 'center';
+    ctx.fillText('1', badgeX + bW / 2, rowCenterY + 6);
+  } else {
+    const gradGlass = ctx.createLinearGradient(0, bY, 0, bY + bH);
+    gradGlass.addColorStop(0, '#242629');
+    gradGlass.addColorStop(1, '#17181A');
+    ctx.fillStyle = gradGlass;
+    ctx.fill();
 
-    ctx.font = `bold 18px ${FONT_BOLD}`;
-    ctx.fillStyle = C.white;
-    ctx.textAlign = 'right';
-    ctx.fillText(count, colX + COL_W - 14, rowY + 26);
-    ctx.textAlign = 'left';
-  };
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
-  // Messages (Left)
-  for (let i = 0; i < Math.min(topMsgMembers.length, ROWS_PER_COL); i++) {
-    drawRow(topMsgMembers[i], i + 1, formatNumber(topMsgMembers[i].total) + ' msgs', PAD, GRID_Y + i * ROW_H);
+    ctx.font = 'bold 16px "NotoSans", sans-serif';
+    ctx.fillStyle = '#A6ABB2';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(rank), badgeX + bW / 2, rowCenterY + 5);
+  }
+  ctx.restore();
+
+  // 2. User Avatar (36px diameter)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(avatarX, rowCenterY, 18, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+
+  let avatarLoaded = false;
+  if (user && user.avatarUrl) {
+    try {
+      const avImg = await loadImage(user.avatarUrl);
+      ctx.drawImage(avImg, avatarX - 18, rowCenterY - 18, 36, 36);
+      avatarLoaded = true;
+    } catch {}
   }
 
-  // Voice (Right)
-  for (let i = 0; i < Math.min(topVoiceMembers.length, ROWS_PER_COL); i++) {
-    drawRow(topVoiceMembers[i], i + 1, formatHours(topVoiceMembers[i].total), PAD + COL_W + COL_GAP, GRID_Y + i * ROW_H);
+  if (!avatarLoaded) {
+    ctx.fillStyle = user ? '#262930' : '#141618';
+    ctx.fillRect(avatarX - 18, rowCenterY - 18, 36, 36);
+    ctx.font = 'bold 15px "NotoSans", sans-serif';
+    ctx.fillStyle = user ? '#8C929E' : '#3E424B';
+    ctx.textAlign = 'center';
+    ctx.fillText(user ? (user.username ? user.username.charAt(0).toUpperCase() : '?') : '•', avatarX, rowCenterY + 5);
   }
+  ctx.restore();
 
-  // Footer
-  ctx.font = `12px ${FONT_NORMAL}`;
-  ctx.fillStyle = C.muted;
-  ctx.fillText('Server Lookback: Last 14 days  \u2014  Timezone: UTC', PAD, H - 10);
-  ctx.font = `bold 12px ${FONT_BOLD}`;
-  ctx.fillStyle = C.green;
-  ctx.textAlign = 'right';
-  ctx.fillText('Powered by Athena Prime', W - PAD, H - 10);
+  // Avatar circular outline
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(avatarX, rowCenterY, 18, 0, Math.PI * 2);
+  ctx.strokeStyle = isRank1 ? 'rgba(229, 43, 56, 0.35)' : 'rgba(255, 255, 255, 0.1)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.restore();
+
+  // 3. Username
+  ctx.save();
+  const userNameText = user ? (safeText(user.username) || `User ${rank}`) : '---';
+  const nameBaseline = isVoice ? (rowCenterY - 2) : (rowCenterY + 5);
+
+  ctx.font = 'bold 16px "NotoSans", sans-serif';
+  ctx.fillStyle = user ? (isRank1 ? '#FFFFFF' : '#E0E3E8') : '#555A64';
   ctx.textAlign = 'left';
 
-  return canvas.toBuffer('image/png');
+  const maxNameW = isVoice ? 170 : 210;
+  ctx.fillText(truncateText(ctx, userNameText, maxNameW), nameX, nameBaseline);
+  ctx.restore();
+
+  // 4. Voice Progress Bar (Only for Voice Card)
+  if (isVoice) {
+    const barX = nameX;
+    const barY = rowCenterY + 8;
+    const maxBarW = 190;
+    const barH = 5;
+
+    ctx.save();
+    // Background track
+    ctx.beginPath();
+    drawTopRoundRect(ctx, barX, barY, maxBarW, barH, 3);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
+    ctx.fill();
+
+    // Filled bar
+    if (user && voiceRatio > 0) {
+      const fillW = Math.max(8, Math.round(maxBarW * Math.min(1, voiceRatio)));
+      ctx.beginPath();
+      drawTopRoundRect(ctx, barX, barY, fillW, barH, 3);
+
+      if (isRank1) {
+        const gradBar = ctx.createLinearGradient(barX, 0, barX + fillW, 0);
+        gradBar.addColorStop(0, '#E52B38');
+        gradBar.addColorStop(1, '#FF5462');
+        ctx.fillStyle = gradBar;
+        ctx.shadowColor = 'rgba(255, 65, 77, 0.7)';
+        ctx.shadowBlur = 8;
+      } else {
+        const gradBar = ctx.createLinearGradient(barX, 0, barX + fillW, 0);
+        gradBar.addColorStop(0, '#5A5E66');
+        gradBar.addColorStop(1, '#8E949E');
+        ctx.fillStyle = gradBar;
+      }
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // 5. Stat Text
+  ctx.save();
+  ctx.font = 'bold 17px "NotoSans", sans-serif';
+  ctx.textAlign = 'right';
+
+  if (user) {
+    if (isRank1) {
+      ctx.fillStyle = '#FF414D';
+      ctx.shadowColor = 'rgba(255, 65, 77, 0.4)';
+      ctx.shadowBlur = 6;
+    } else {
+      ctx.fillStyle = '#FFFFFF';
+    }
+  } else {
+    ctx.fillStyle = '#4D515A';
+  }
+
+  ctx.fillText(statText, statRightX, rowCenterY + 5);
+  ctx.restore();
+}
+
+function drawTopRoundRect(ctx, x, y, w, h, r) {
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 

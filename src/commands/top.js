@@ -27,13 +27,17 @@ export const commands = [
           return Promise.all(rawTop.map(async (row) => {
             try {
               const member = await message.guild.members.fetch(row.user_id).catch(() => null);
+              const user = member?.user || (await message.client.users.fetch(row.user_id).catch(() => null));
               const username = member?.user?.username
                 || member?.displayName
-                || (await message.client.users.fetch(row.user_id).catch(() => null))?.username
+                || user?.username
                 || `User ${row.user_id.slice(-4)}`;
-              return { user_id: row.user_id, username, total: row.total };
+              const avatarUrl = member?.displayAvatarURL({ extension: 'png', size: 64 })
+                || user?.displayAvatarURL({ extension: 'png', size: 64 })
+                || null;
+              return { user_id: row.user_id, username, avatarUrl, total: row.total };
             } catch {
-              return { user_id: row.user_id, username: `User ${row.user_id.slice(-4)}`, total: row.total };
+              return { user_id: row.user_id, username: `User ${row.user_id.slice(-4)}`, avatarUrl: null, total: row.total };
             }
           }));
         };
@@ -67,13 +71,17 @@ export const commands = [
           return Promise.all(rawTop.map(async (row) => {
             try {
               const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
+              const user = member?.user || (await interaction.client.users.fetch(row.user_id).catch(() => null));
               const username = member?.user?.username
                 || member?.displayName
-                || (await interaction.client.users.fetch(row.user_id).catch(() => null))?.username
+                || user?.username
                 || `User ${row.user_id.slice(-4)}`;
-              return { user_id: row.user_id, username, total: row.total };
+              const avatarUrl = member?.displayAvatarURL({ extension: 'png', size: 64 })
+                || user?.displayAvatarURL({ extension: 'png', size: 64 })
+                || null;
+              return { user_id: row.user_id, username, avatarUrl, total: row.total };
             } catch {
-              return { user_id: row.user_id, username: `User ${row.user_id.slice(-4)}`, total: row.total };
+              return { user_id: row.user_id, username: `User ${row.user_id.slice(-4)}`, avatarUrl: null, total: row.total };
             }
           }));
         };
