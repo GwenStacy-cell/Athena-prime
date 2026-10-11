@@ -1,4 +1,4 @@
-﻿import { createCanvas, loadImage, registerFont } from 'canvas';
+import { createCanvas, loadImage } from 'canvas';
 import { AttachmentBuilder } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
@@ -6,12 +6,12 @@ import path from 'path';
 export async function generateGlobalActionCard(opts) {
     const { action, guildName, guildIconUrl, targetTag, targetId, executorName, executorId, reason, timestamp, guildId } = opts;
 
-    const width = 1021;
-    const height = 433;
+    const width = 1024;
+    const height = 455;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Load background
+    // Load clean template background
     const bgPath = path.resolve('./src/assets/banlog_template_clean.png');
     if (fs.existsSync(bgPath)) {
         const bg = await loadImage(bgPath);
@@ -21,51 +21,89 @@ export async function generateGlobalActionCard(opts) {
         ctx.fillRect(0, 0, width, height);
     }
 
-    // Draw Guild Icon if available (circular) over the top left placeholder
+    // 1. Draw Server Avatar in the top-left glowing crest (x=125, y=105, radius=54)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(125, 105, 54, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.clip();
+
+    let iconLoaded = false;
     if (guildIconUrl) {
         try {
             const icon = await loadImage(guildIconUrl);
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(126, 175, 54, 0, Math.PI * 2, true);
-            ctx.closePath();
-            ctx.clip();
-            ctx.drawImage(icon, 72, 121, 108, 108);
-            ctx.restore();
+            ctx.drawImage(icon, 71, 51, 108, 108);
+            iconLoaded = true;
         } catch (e) {
-            // Ignore if icon fails to load
+            iconLoaded = false;
         }
     }
 
-    // Set text styling
-    ctx.textBaseline = 'top';
+    if (!iconLoaded) {
+        // Fallback: Sleek dark background with server initials
+        ctx.fillStyle = '#141722';
+        ctx.fillRect(71, 51, 108, 108);
+        ctx.fillStyle = '#ff3333';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const initials = (guildName || 'AP').substring(0, 3).toUpperCase();
+        ctx.fillText(initials, 125, 105);
+    }
+    ctx.restore();
 
-    // Executor Tag
+    // 2. Server Subtitle: "[Server Name] • Security Enforcer: Athena Prime"
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 13px sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px sans-serif';
-    ctx.fillText(executorName.length > 20 ? executorName.substring(0, 17) + '...' : executorName, 170, 252);
-    
-    // Target Tag
-    ctx.fillText(targetTag.length > 20 ? targetTag.substring(0, 17) + '...' : targetTag, 595, 252);
-    
-    // IDs (Blue-ish color)
-    ctx.fillStyle = '#4d79ff';
-    ctx.font = 'bold 18px sans-serif';
-    ctx.fillText(executorId, 170, 292);
-    ctx.fillText(targetId, 595, 292);
-    
-    // Reason (Red color)
+    const displayGuildName = (guildName || 'Unknown Server').length > 25 
+        ? (guildName || 'Unknown Server').substring(0, 22) + '...' 
+        : (guildName || 'Unknown Server');
+    ctx.fillText(displayGuildName, 205, 107);
+    const sw = ctx.measureText(displayGuildName).width;
+
+    ctx.fillStyle = '#888888';
+    ctx.fillText(' • Security Enforcer: ', 205 + sw, 107);
+    const mw = ctx.measureText(' • Security Enforcer: ').width;
+
     ctx.fillStyle = '#ff3333';
-    ctx.font = 'bold 18px sans-serif';
-    let displayReason = reason || 'No reason provided';
-    if (displayReason.length > 60) displayReason = displayReason.substring(0, 57) + '...';
-    ctx.fillText(displayReason, 210, 345);
-    
-    // Server ID (Grey color)
-    ctx.fillStyle = '#a0a0a0';
+    ctx.fillText('Athena Prime', 205 + sw + mw, 107);
+
+    // 3. Executor Tag
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 16px sans-serif';
-    ctx.fillText(guildId, 775, 403);
+    const cleanExecutor = executorName || 'Anti-Nuke / Bot';
+    ctx.fillText(cleanExecutor.length > 24 ? cleanExecutor.substring(0, 21) + '...' : cleanExecutor, 152, 258);
+
+    // 4. Executor ID (Blue)
+    ctx.fillStyle = '#4d79ff';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText(String(executorId || 'N/A'), 152, 306);
+
+    // 5. Target Tag
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px sans-serif';
+    const cleanTarget = targetTag || String(targetId || 'N/A');
+    ctx.fillText(cleanTarget.length > 24 ? cleanTarget.substring(0, 21) + '...' : cleanTarget, 596, 258);
+
+    // 6. Target ID (Blue)
+    ctx.fillStyle = '#4d79ff';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText(String(targetId || 'N/A'), 596, 306);
+
+    // 7. Reason (Red)
+    ctx.fillStyle = '#ff3333';
+    ctx.font = 'bold 15px sans-serif';
+    let displayReason = reason || 'No reason provided';
+    if (displayReason.length > 55) displayReason = displayReason.substring(0, 52) + '...';
+    ctx.fillText(displayReason, 195, 349);
+
+    // 8. Server ID (Grey)
+    ctx.fillStyle = '#a0a0a0';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(String(guildId || 'N/A'), 776, 418);
 
     const buffer = canvas.toBuffer('image/png');
-    return new AttachmentBuilder(buffer, { name: 'action_log.png' });
+    return new AttachmentBuilder(buffer, { name: 'global_ban_log.png' });
 }

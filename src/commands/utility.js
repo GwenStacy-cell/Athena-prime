@@ -307,7 +307,7 @@ export const commands = [
         const cleanNick = (message.member?.displayName || message.author.displayName || message.author.username).replace(/[`\[\]\(\)]/g, '').trim();
 
         const replyEmbed = new EmbedBuilder()
-          .setDescription(`-# **| <a:uptime:1552608831060844575> [${cleanNick}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
+          .setDescription(`**| <a:uptime:1552608831060844575> [${cleanNick}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
           .setImage('attachment://ping_graph.png');
     
         await sent.delete().catch(() => null);
@@ -348,7 +348,7 @@ export const commands = [
         const cleanNick = (interaction.member?.displayName || interaction.user.displayName || interaction.user.username).replace(/[`\[\]\(\)]/g, '').trim();
 
         const replyEmbed = new EmbedBuilder()
-          .setDescription(`-# **| <a:uptime:1552608831060844575> [${cleanNick}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
+          .setDescription(`**| <a:uptime:1552608831060844575> [${cleanNick}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
           .setImage('attachment://ping_graph.png');
     
         await interaction.editReply({

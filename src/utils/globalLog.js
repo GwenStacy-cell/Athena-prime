@@ -24,19 +24,22 @@ export async function postGlobalActionLog(client, opts) {
 
   if (!attachment) return;
 
+  const cleanTarget = String(targetTag || targetId).replace(/[`\[\]\(\)]/g, '').trim();
+  const cleanExecutor = String(executorTag || 'Anti-Nuke / Bot').replace(/[`\[\]\(\)]/g, '').trim();
+
   const card = {
     type: 17,
     components: [
       { type: 10, content: `## **GLOBAL ACTION LOG — ${action}**` },
       { type: 14, divider: true },
-      { type: 10, content: `-# **${guildName || 'Unknown Server'}**\n-# **Target:** [${targetTag || targetId}](https://discord.com/users/${targetId})\n-# **Target ID:** \`${targetId}\`\n-# **Action Taken By:** [${executorTag || 'Anti-Nuke / Bot'}](https://discord.com/users/${executorId})\n-# **Executor ID:** \`${executorId}\`\n-# **Reason:** ${reason || 'No reason provided'}` },
+      { type: 10, content: `**Server:** **${guildName || 'Unknown Server'}**\n**Target:** [${cleanTarget}](https://discord.com/users/${targetId}) \`(${targetId})\`\n**Action Taken By:** [${cleanExecutor}](https://discord.com/users/${executorId}) \`(${executorId})\`\n**Reason:** ${reason || 'No reason provided'}` },
       { type: 14, divider: true },
-      { type: 10, content: `-# Athena Prime Global Antinuke System • Cross-Server Action Monitor • ${timestamp}` },
+      { type: 10, content: `*Athena Prime Global Antinuke System • Cross-Server Action Monitor • ${timestamp}*` },
       {
         type: 1,
         components: [
           { type: 2, style: 5, label: 'Open Server', url: `https://discord.com/channels/${guildId}` },
-          { type: 2, style: 5, label: `Violator: ${(targetTag || targetId).substring(0, 60)}`, url: `https://discord.com/users/${targetId}` }
+          { type: 2, style: 5, label: `Violator: ${cleanTarget.substring(0, 60)}`, url: `https://discord.com/users/${targetId}` }
         ]
       }
     ]

@@ -295,8 +295,7 @@ function pushDivider(comps) {
       const lines = desc.split('\n');
       desc = lines.map(l => {
         if (!l.trim()) return l;
-        if (/^(-#|#{1,3} |> )/.test(l)) return l;
-        return '-# ' + l;
+        return l.replace(/^-#\s*/, '');
       }).join('\n');
       headerContent += desc;
     }
@@ -322,11 +321,11 @@ function pushDivider(comps) {
         if (f.inline) {
           inlineBuf.push(`**${f.name}:** ${f.value}`);
         } else {
-          if (inlineBuf.length > 0) { fieldText += '-# ' + inlineBuf.join('  **·**  ') + '\n'; inlineBuf = []; }
-          fieldText += `\n-# **${f.name}**\n-# ${f.value.replace(/\n/g, '\n-# ')}\n`;
+          if (inlineBuf.length > 0) { fieldText += inlineBuf.join('  **·**  ') + '\n'; inlineBuf = []; }
+          fieldText += `\n**${f.name}**\n${f.value.replace(/^-#\s*/gm, '')}\n`;
         }
       }
-      if (inlineBuf.length > 0) fieldText += '\n-# ' + inlineBuf.join('  **·**  ') + '\n';
+      if (inlineBuf.length > 0) fieldText += '\n' + inlineBuf.join('  **·**  ') + '\n';
       
       if (fieldText.trim()) {
         pushDivider(comps);
@@ -341,7 +340,7 @@ function pushDivider(comps) {
 
     if (embedData.footer) {
       pushDivider(comps);
-      comps.push({ type: 10, content: `-# ${embedData.footer.text}` });
+      comps.push({ type: 10, content: `*${embedData.footer.text.replace(/^-#\s*/, '')}*` });
     }
 
     return { type: 17, components: comps };
