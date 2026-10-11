@@ -10,21 +10,25 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 function resolve(text, member, cfg = {}) {
   if (!text) return '';
   const guild = member.guild;
-    let userFormat = `<@${member.id}>`;
+  const user = member.user || member;
+  const username = user.username || 'User';
+  const displayName = member.displayName || username;
+  let userFormat = `<@${member.id}>`;
   if (cfg.nameFormat === 'user_link') {
-    userFormat = `[${member.user.username}](https://discord.com/users/${member.id})`;
+    userFormat = `[${username}](https://discord.com/users/${member.id})`;
   } else if (cfg.nameFormat === 'nick_link') {
-    userFormat = `[${member.displayName}](https://discord.com/users/${member.id})`;
+    userFormat = `[${displayName}](https://discord.com/users/${member.id})`;
   }
+  const avatarUrl = user.displayAvatarURL ? user.displayAvatarURL({ size: 256 }) : '';
   return text
     .replace(/{user}/gi, userFormat)
     .replace(/{usermention}/gi, userFormat)
-    .replace(/{username}/gi, member.user.username)
-    .replace(/{displayname}/gi, member.displayName)
-    .replace(/{server}/gi, guild.name)
-    .replace(/{count}/gi, String(guild.memberCount))
-    .replace(/{avatar}/gi, member.user.displayAvatarURL({ dynamic: true }))
-    .replace(/{user\.avatar}/gi, member.user.displayAvatarURL({ dynamic: true }));
+    .replace(/{username}/gi, username)
+    .replace(/{displayname}/gi, displayName)
+    .replace(/{server}/gi, guild?.name || 'Server')
+    .replace(/{count}/gi, String(guild?.memberCount || 0))
+    .replace(/{avatar}/gi, avatarUrl)
+    .replace(/{user\.avatar}/gi, avatarUrl);
 }
 
 // ============================================================
@@ -40,14 +44,15 @@ export function buildWelcomeEmbed(member, cfg) {
     e.setColor(0x5865F2);
   }
 
-  const userAvatar = member.user.displayAvatarURL({ dynamic: true, size: 256 });
+  const user = member.user || member;
+  const userAvatar = user.displayAvatarURL ? user.displayAvatarURL({ size: 256 }) : undefined;
   const avatarPos = cfg.avatarPos || 'thumbnail';
 
   if (cfg.from || avatarPos === 'author') {
     try {
       e.setAuthor({
-        name: (cfg.from ? resolve(cfg.from, member, cfg) : resolve('{user}', member, cfg)).replace(/<@!?\d+>/g, member.user.username),
-        iconURL: (avatarPos === 'author') ? userAvatar : (cfg.fromIcon ? resolve(cfg.fromIcon, member, cfg) : member.guild.iconURL({ dynamic: true }) || undefined)
+        name: (cfg.from ? resolve(cfg.from, member, cfg) : resolve('{user}', member, cfg)).replace(/<@!?\d+>/g, user.username || 'User'),
+        iconURL: (avatarPos === 'author') ? userAvatar : (cfg.fromIcon ? resolve(cfg.fromIcon, member, cfg) : member.guild?.iconURL({ dynamic: true }) || undefined)
       });
     } catch (err) {}
   }
@@ -55,17 +60,17 @@ export function buildWelcomeEmbed(member, cfg) {
   if (cfg.title) e.setTitle(resolve(cfg.title, member, cfg));
 
   if (cfg.description) e.setDescription(resolve(cfg.description, member, cfg));
-  else if (!cfg.title && !cfg.from) e.setDescription(`**Welcome to ${member.guild.name}!**`);
+  else if (!cfg.title && !cfg.from) e.setDescription(`**Welcome to ${member.guild?.name || 'the server'}!**`);
 
   if (cfg.thumbnailUrl) {
     try { e.setThumbnail(resolve(cfg.thumbnailUrl, member, cfg)); } catch(e) {}
-  } else if (avatarPos === 'thumbnail') {
+  } else if (avatarPos === 'thumbnail' && userAvatar) {
     e.setThumbnail(userAvatar);
   }
 
   if (cfg.image) {
     try { e.setImage(resolve(cfg.image, member, cfg)); } catch(e) {}
-  } else if (avatarPos === 'image') {
+  } else if (avatarPos === 'image' && userAvatar) {
     e.setImage(userAvatar);
   }
 
@@ -124,21 +129,21 @@ function getManagerPanel(guildId, type) {
   const prefix = isWelcome ? 'welcmgr_' : 'leavmgr_';
 
   const replyData = cv2.info(
-    `<a:uptime:1552608831060844575> ${label} Manager`,
-    `Manage the settings for your server's ${label.toLowerCase()} messages.\n\n` +
-    `**Current Configuration:**\n` +
-    `<a:uptime:1552608831060844575> **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : 'Not Set'}\n` +
-    ` **Status:** ${cfg.enabled ? ' Enabled' : ' Disabled'}\n` +
-    `<a:uptime:1552608831060844575> **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `<a:uptime:1552608831060844575> **Author (From):** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `<a:uptime:1552608831060844575> **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    `<a:uptime:1552608831060844575> **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : 'Not Set'}\n` +
-    `<a:uptime:1552608831060844575> **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : 'Default'}\n` +
-    `<a:uptime:1552608831060844575> **Image:** ${cfg.image ? '[Link Set]' : 'Not Set'}\n` +
-    `<a:uptime:1552608831060844575> **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : 'Not Set'}\n` +
-    ` <a:uptime:1552608831060844575> **Name Format:** ${cfg.nameFormat === 'user_link' ? 'Username Link' : cfg.nameFormat === 'nick_link' ? 'Nickname Link' : 'Tag (@user)'}\n` +
-      ` <a:uptime:1552608831060844575> **Avatar Location:** ${cfg.avatarPos === 'author' ? 'Author (Top Left)' : cfg.avatarPos === 'footer' ? 'Footer (Bottom)' : cfg.avatarPos === 'image' ? 'Large Image (Bottom)' : cfg.avatarPos === 'off' ? 'Hidden' : 'Thumbnail (Top Right)'}\n` +
-    ` **Timestamp:** ${cfg.timestamp !== false ? ' On' : ' Off'}`
+    `${label} Manager`,
+    `-# **• Manage settings for your server's ${label.toLowerCase()} messages.**\n\n` +
+    `-# **__Current Configuration:__**\n` +
+    `-# **• __Channel:__** ${cfg.channelId ? `<#${cfg.channelId}>` : '`Not Set`'}\n` +
+    `-# **• __Status:__** ${cfg.enabled ? '`Enabled`' : '`Disabled`'}\n` +
+    `-# **• __Top Text:__** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : '`Not Set`'}\n` +
+    `-# **• __Author (From):__** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : '`Not Set`'}\n` +
+    `-# **• __Title:__** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : '`Not Set`'}\n` +
+    `-# **• __Description:__** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : '`Not Set`'}\n` +
+    `-# **• __Color:__** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : '`Default`'}\n` +
+    `-# **• __Image:__** ${cfg.image ? '`[Link Set]`' : '`Not Set`'}\n` +
+    `-# **• __Footer:__** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : '`Not Set`'}\n` +
+    `-# **• __Name Format:__** ${cfg.nameFormat === 'user_link' ? '`Username Link`' : cfg.nameFormat === 'nick_link' ? '`Nickname Link`' : '`Tag (@user)`'}\n` +
+    `-# **• __Avatar Location:__** ${cfg.avatarPos === 'author' ? '`Author (Top Left)`' : cfg.avatarPos === 'footer' ? '`Footer (Bottom)`' : cfg.avatarPos === 'image' ? '`Large Image (Bottom)`' : cfg.avatarPos === 'off' ? '`Hidden`' : '`Thumbnail (Top Right)`'}\n` +
+    `-# **• __Timestamp:__** ${cfg.timestamp !== false ? '`On`' : '`Off`'}`
   );
 
   const channelSelectRow = new ActionRowBuilder().addComponents(
@@ -160,12 +165,12 @@ function getManagerPanel(guildId, type) {
     new ButtonBuilder().setCustomId(`${prefix}image`).setLabel('Image').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}footer`).setLabel('Footer').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}cycle_avatar`).setLabel('Avatar Location').setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId(`${prefix}toggle_time`).setLabel('Toggle Time').setStyle(ButtonStyle.Success)
+    new ButtonBuilder().setCustomId(`${prefix}toggle_time`).setLabel('Toggle Time').setStyle(cfg.timestamp !== false ? ButtonStyle.Success : ButtonStyle.Secondary)
   );
 
   const row3 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`${prefix}status`).setLabel(cfg.enabled ? 'Disable System' : 'Enable System').setStyle(cfg.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
-      new ButtonBuilder().setCustomId(`${prefix}cycle_name`).setLabel('Name Format').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`${prefix}cycle_name`).setLabel('Name Format').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}test`).setLabel('Test Message').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`${prefix}reset`).setLabel('Reset All').setStyle(ButtonStyle.Danger)
   );
@@ -181,9 +186,10 @@ export async function handleWelcomeManagerMenu(interaction) {
   const isServerOwner = interaction.guild.ownerId === interaction.user.id;
   const isBotOwner = isBotOwnerSync(interaction.user.id);
   const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
+  const hasPerm = interaction.member?.permissions?.has(PermissionFlagsBits.ManageGuild) || interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
 
-  if (!isServerOwner && !isBotOwner && !isExtraOwner) {
-    return interaction.reply({ content: 'You do not have permission to manage this system.', flags: 64 });
+  if (!isServerOwner && !isBotOwner && !isExtraOwner && !hasPerm) {
+    return interaction.reply(cv2.asEphemeral(cv2.danger('Access Denied', 'You need the **Manage Server** permission to configure this system.')));
   }
   const guildId = interaction.guild.id;
   const isWelcome = interaction.customId.startsWith('welcmgr_');
@@ -208,9 +214,10 @@ export async function handleWelcomeManagerButton(interaction) {
   const isServerOwner = interaction.guild.ownerId === interaction.user.id;
   const isBotOwner = isBotOwnerSync(interaction.user.id);
   const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
+  const hasPerm = interaction.member?.permissions?.has(PermissionFlagsBits.ManageGuild) || interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
 
-  if (action !== 'test' && !isServerOwner && !isBotOwner && !isExtraOwner) {
-    return interaction.reply({ content: 'You do not have permission to manage this system.', flags: 64 });
+  if (!isServerOwner && !isBotOwner && !isExtraOwner && !hasPerm) {
+    return interaction.reply(cv2.asEphemeral(cv2.danger('Access Denied', 'You need the **Manage Server** permission to configure this system.')));
   }
 
   const getConfig = isWelcome ? db.getWelcomeConfig.bind(db) : db.getLeaveConfig.bind(db);
@@ -257,18 +264,50 @@ export async function handleWelcomeManagerButton(interaction) {
   }
 
   if (action === 'test') {
-    if (!cfg.channelId) return interaction.reply(cv2.warn('Channel Not Set', 'Please select a channel first.'));
+    if (!cfg.channelId) {
+      return interaction.reply(cv2.asEphemeral(cv2.warn(
+        'Channel Not Set',
+        `Please select a ${typeStr} channel from the dropdown menu first.`
+      )));
+    }
     
-    await interaction.deferReply();
-    
+    let targetChannel = interaction.guild.channels.cache.get(cfg.channelId);
+    if (!targetChannel) {
+      targetChannel = await interaction.guild.channels.fetch(cfg.channelId).catch(() => null);
+    }
+
+    if (!targetChannel) {
+      return interaction.reply(cv2.asEphemeral(cv2.danger(
+        'Channel Not Found',
+        `The configured channel <#${cfg.channelId}> could not be found in this server.`
+      )));
+    }
+
     const content = cfg.message ? resolve(cfg.message, interaction.member, cfg) : undefined;
     const testEmbed = buildWelcomeEmbed(interaction.member, cfg);
-    const payload = { embeds: [] };
-    if (content) payload.content = `**[Preview]** ${content}`;
-    if (testEmbed) payload.embeds = [testEmbed];
+    const sendPayload = {};
+    if (content) sendPayload.content = content;
+    if (testEmbed) sendPayload.embeds = [testEmbed];
     
-    await interaction.editReply(payload);
-    return;
+    if (!sendPayload.content && !sendPayload.embeds) {
+      return interaction.reply(cv2.asEphemeral(cv2.warn(
+        'No Content Set',
+        `Your ${typeStr} message configuration is empty. Please set a message, description, or title before testing.`
+      )));
+    }
+
+    try {
+      await targetChannel.send(sendPayload);
+      return interaction.reply(cv2.asEphemeral(cv2.success(
+        'Test Message Sent',
+        `A test ${typeStr} message has been sent to <#${targetChannel.id}>.`
+      )));
+    } catch (err) {
+      return interaction.reply(cv2.asEphemeral(cv2.danger(
+        'Delivery Failed',
+        `Could not send test message to <#${targetChannel.id}>:\n\`${err.message}\`\nEnsure the bot has permission to send messages and embed links in that channel.`
+      )));
+    }
   }
 
   // Modals for everything else
@@ -338,9 +377,10 @@ export async function handleWelcomeManagerModal(interaction) {
   const isServerOwner = interaction.guild.ownerId === interaction.user.id;
   const isBotOwner = isBotOwnerSync(interaction.user.id);
   const isExtraOwner = db.isExtraOwner(interaction.guild.id, interaction.user.id);
+  const hasPerm = interaction.member?.permissions?.has(PermissionFlagsBits.ManageGuild) || interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
 
-  if (!isServerOwner && !isBotOwner && !isExtraOwner) {
-    return interaction.reply({ content: 'You do not have permission to manage this system.', flags: 64 });
+  if (!isServerOwner && !isBotOwner && !isExtraOwner && !hasPerm) {
+    return interaction.reply(cv2.asEphemeral(cv2.danger('Access Denied', 'You need the **Manage Server** permission to configure this system.')));
   }
 
   const guildId = interaction.guild.id;
