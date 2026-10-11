@@ -283,18 +283,18 @@ export async function handleWelcomeManagerButton(interaction) {
       )));
     }
 
-    const content = cfg.message ? resolve(cfg.message, interaction.member, cfg) : undefined;
-    const testEmbed = buildWelcomeEmbed(interaction.member, cfg);
+    let content = cfg.message ? resolve(cfg.message, interaction.member, cfg) : undefined;
+    let testEmbed = buildWelcomeEmbed(interaction.member, cfg);
+    
+    if (!content && !testEmbed) {
+      content = isWelcome
+        ? `Hey <@${interaction.user.id}>, welcome to **${interaction.guild.name}**! (Default test preview)`
+        : `**${interaction.user.tag}** has left the server. (Default test preview)`;
+    }
+
     const sendPayload = {};
     if (content) sendPayload.content = content;
     if (testEmbed) sendPayload.embeds = [testEmbed];
-    
-    if (!sendPayload.content && !sendPayload.embeds) {
-      return interaction.reply(cv2.asEphemeral(cv2.warn(
-        'No Content Set',
-        `Your ${typeStr} message configuration is empty. Please set a message, description, or title before testing.`
-      )));
-    }
 
     try {
       await targetChannel.send(sendPayload);

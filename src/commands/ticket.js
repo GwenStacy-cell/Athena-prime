@@ -63,25 +63,27 @@ export const commands = [
         
         const staffRoles = [role1, role2, role3, role4].filter(r => r !== null).map(r => r.id);
 
-        const config = db.getGuildConfig(guildId);
-        const accentColor = config.accentColor || '#3b82f6';
-
-        const ticketEmbed = new EmbedBuilder()
-          .setColor(accentColor)
-          .setTitle(' Support Tickets')
-          .setDescription('Need help? Click the button below to open a private ticket. A text and voice channel will be created for you.')
-          .setFooter({ text: 'Athena Prime Support System', iconURL: interaction.client.user.displayAvatarURL() });
+        const container = {
+          type: 17,
+          components: [
+            { type: 10, content: '## **Support Tickets**' },
+            { type: 14, divider: true },
+            { type: 10, content: 'Need help? Click the button below to open a private ticket. A text and voice channel will be created for you.' },
+            { type: 14, divider: true },
+            { type: 10, content: '-# **Athena Prime Support System \u2022 V1.0.0**' }
+          ]
+        };
 
         const row = new ActionRowBuilder()
           .addComponents(
             new ButtonBuilder()
-              .setCustomId('ticket_open')
+              .setCustomId('ticket_open_general')
               .setLabel('Open Ticket')
-              .setEmoji('<:139707ticket:1533859896620089485>') // Custom user emoji
+              .setEmoji('<:139707ticket:1533859896620089485>')
               .setStyle(ButtonStyle.Primary)
           );
 
-        await interaction.channel.send({ embeds: [ticketEmbed], components: [row] });
+        await interaction.channel.send({ components: [container, row], flags: 32768 });
 
         db.updateTicketConfig(guildId, {
           categoryId: category.id,
@@ -124,11 +126,16 @@ export const commands = [
           } catch (err) {}
         }
 
-        const ticketEmbed = new EmbedBuilder()
-          .setColor(accentColor)
-          .setTitle(' Support Tickets')
-          .setDescription('Need help? Click the button below to open a private ticket. A text and voice channel will be created for you.')
-          .setFooter({ text: 'Athena Prime Support System', iconURL: message.client.user.displayAvatarURL() });
+        const container = {
+          type: 17,
+          components: [
+            { type: 10, content: '## **Support Tickets**' },
+            { type: 14, divider: true },
+            { type: 10, content: 'Need help? Click the button below to open a private ticket. A text and voice channel will be created for you.' },
+            { type: 14, divider: true },
+            { type: 10, content: '-# **Athena Prime Support System \u2022 V1.0.0**' }
+          ]
+        };
 
         const row = new ActionRowBuilder()
           .addComponents(
@@ -139,7 +146,7 @@ export const commands = [
               .setStyle(ButtonStyle.Primary)
           );
 
-        const panelMsg = await message.channel.send({ embeds: [ticketEmbed], components: [row] });
+        const panelMsg = await message.channel.send({ components: [container, row], flags: 32768 });
 
         db.updateTicketConfig(message.guild.id, {
           categoryId: category.id,
@@ -230,23 +237,27 @@ export async function handleTicketButtons(interaction) {
          db.save();
       }
       
-      const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-      const guildConfig = db.getGuildConfig(guild.id);
+      const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
       
-      const embed = new EmbedBuilder()
-        .setColor(guildConfig.accentColor || '#3b82f6')
-        .setTitle('Support Ticket')
-        .setDescription(`Welcome <@${user.id}>! Please describe your issue.\nSupport will be with you shortly.\n\n-# **Voice Channel:** <#${voiceChannel.id}>`)
-        .setFooter({ text: 'Athena Prime Support' });
+      const pings = `<@${user.id}> ${config.staffRoleIds.map(id => `<@&${id}>`).join(' ')}`;
+      const container = {
+        type: 17,
+        components: [
+          { type: 10, content: '## **Support Ticket**' },
+          { type: 14, divider: true },
+          { type: 10, content: `${pings}\n\n**Welcome <@${user.id}>!** Please describe your issue.\nSupport will be with you shortly.\n\n-# **Voice Channel:** <#${voiceChannel.id}>` },
+          { type: 14, divider: true },
+          { type: 10, content: '-# **Athena Prime Support \u2022 V1.0.0**' }
+        ]
+      };
         
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('ticket_close').setLabel('Close Ticket').setStyle(ButtonStyle.Danger)
       );
       
       await textChannel.send({
-        content: `<@${user.id}> ${config.staffRoleIds.map(id => `<@&${id}>`).join(' ')}`,
-        embeds: [embed],
-        components: [row]
+        components: [container, row],
+        flags: 32768
       });
       
       await interaction.editReply({ content: `-# **Ticket created:** <#${textChannel.id}>` }).catch(()=>null);
@@ -258,8 +269,34 @@ export async function handleTicketButtons(interaction) {
   }
   
   
-  if (['ticket_claim', 'ticket_lock', 'ticket_add_user', 'ticket_rem_user', 'ticket_add_role', 'ticket_info'].includes(customId)) {
-    return interaction.reply({ content: '-# <a:Loading:1537404628826587207> **Action in progress...** (This feature will be fully activated soon!)', flags: 64 }).catch(()=>null);
+  if (customId === 'ticket_claim') {
+    return interaction.reply({ content: `<a:uptime:1552608831060844575> **Ticket claimed by <@${interaction.user.id}>.**` });
+  }
+
+  if (customId === 'ticket_lock') {
+    const textChannel = interaction.channel;
+    const tId = textChannel.name.replace('ticket-', '');
+    const config = db.getTickets(guild.id);
+    const ownerId = config?.activeTickets?.[tId]?.ownerId;
+    if (ownerId) {
+      await textChannel.permissionOverwrites.edit(ownerId, { SendMessages: false }).catch(() => null);
+    }
+    return interaction.reply({ content: `<a:uptime:1552608831060844575> **Ticket locked by <@${interaction.user.id}>.**` });
+  }
+
+  if (customId === 'ticket_info') {
+    const textChannel = interaction.channel;
+    const tId = textChannel.name.replace('ticket-', '');
+    const config = db.getTickets(guild.id);
+    const tData = config?.activeTickets?.[tId];
+    const infoText = tData
+      ? `**Ticket ID:** #${tId}\n**Owner:** <@${tData.ownerId}>\n**Created:** <t:${Math.floor((tData.createdAt || Date.now()) / 1000)}:R>\n**Voice Channel:** ${tData.voiceId ? `<#${tData.voiceId}>` : 'None'}`
+      : `**Ticket Channel:** <#${textChannel.id}>`;
+    return interaction.reply({ content: infoText, flags: 64 });
+  }
+
+  if (['ticket_add_user', 'ticket_rem_user', 'ticket_add_role'].includes(customId)) {
+    return interaction.reply({ content: '-# <a:uptime:1552608831060844575> **Use Discord channel permissions to manage additional access.**', flags: 64 }).catch(() => null);
   }
 
   if (customId === 'ticket_close') {
@@ -406,32 +443,34 @@ export async function handleTicketModals(interaction) {
       };
       db.save();
       
-      // BUILD BEAUTIFUL EMBED (CV2 Compatible)
-      const guildConfig = db.getGuildConfig(guild.id);
-      const accent = guildConfig.accentColor || '#3b82f6';
-      
       const inquiry = fields.getTextInputValue('inquiry');
       const docs = fields.getTextInputValue('docs');
       const details = fields.getTextInputValue('details');
       const nowStr = new Date().toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
       
-      const embed = new EmbedBuilder()
-        .setColor(accent)
-        .setTitle(`<:emoji_30:1527715694240731177> ${reason} Ticket`)
-        .setDescription(`Welcome <@${user.id}>! Your ticket has been created.\nA staff member will assist you shortly.\n-# **Voice Channel:** <#${voiceChannel.id}>`)
-        .addFields(
-          { 
-            name: '<:127021calendar:1533857500334653550> Ticket Information', 
-            value: `**Created by:** <@${user.id}>\n**Type:** ${reason}\n**Created at:** ` + `\`${nowStr}\``,
-            inline: false
-          },
-          {
-            name: '<:info:1538520779774365778> Information Provided',
-            value: `**\u2022 Nature of Inquiry**\n\`\`\`\n${inquiry}\n\`\`\`\n**\u2022 Checked Documentation?**\n\`\`\`\n${docs}\n\`\`\`\n**\u2022 Additional Details**\n\`\`\`\n${details}\n\`\`\``,
-            inline: false
-          }
-        )
-        .setFooter({ text: 'Athena Prime Support System' });
+      const pings = `<@${user.id}> ${config.staffRoleIds.map(id => `<@&${id}>`).join(' ')}`;
+      const infoContent =
+        `${pings}\n\n` +
+        `**Welcome <@${user.id}>!** Your ticket has been created.\nA staff member will assist you shortly.\n-# **Voice Channel:** <#${voiceChannel.id}>\n\n` +
+        `**Ticket Information:**\n` +
+        `\u2022 **Created by:** <@${user.id}>\n` +
+        `\u2022 **Type:** ${reason}\n` +
+        `\u2022 **Created at:** \`${nowStr}\`\n\n` +
+        `**Information Provided:**\n` +
+        `\u2022 **Nature of Inquiry:**\n\`\`\`\n${inquiry}\n\`\`\`\n` +
+        `\u2022 **Checked Documentation?:**\n\`\`\`\n${docs}\n\`\`\`\n` +
+        `\u2022 **Additional Details:**\n\`\`\`\n${details}\n\`\`\``;
+
+      const container = {
+        type: 17,
+        components: [
+          { type: 10, content: `## <:emoji_30:1527715694240731177> **${reason} Ticket**` },
+          { type: 14, divider: true },
+          { type: 10, content: infoContent },
+          { type: 14, divider: true },
+          { type: 10, content: '-# **Athena Prime Support System \u2022 V1.0.0**' }
+        ]
+      };
         
       const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('ticket_claim').setLabel('Claim Ticket').setEmoji('<:Hand:1537877232230469733>').setStyle(ButtonStyle.Secondary),
@@ -449,13 +488,9 @@ export async function handleTicketModals(interaction) {
         new ButtonBuilder().setCustomId('ticket_info').setLabel('Ticket Info').setEmoji('<:info:1538520779774365778>').setStyle(ButtonStyle.Secondary)
       );
       
-      // Ping message
-      const pings = `<@${user.id}> ${config.staffRoleIds.map(id => `<@&${id}>`).join(' ')}`;
-      
       await textChannel.send({
-        content: pings,
-        embeds: [embed],
-        components: [row1, row2, row3]
+        components: [container, row1, row2, row3],
+        flags: 32768
       });
       
       await interaction.editReply({ content: `-# **Ticket created:** <#${textChannel.id}>` }).catch(()=>null);

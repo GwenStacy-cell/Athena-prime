@@ -17,27 +17,37 @@ export function generateBirthdayMessage(userId, guildId) {
   const e2 = BDAY_EMOJIS[Math.floor(Math.random() * BDAY_EMOJIS.length)];
   const e3 = BDAY_EMOJIS[Math.floor(Math.random() * BDAY_EMOJIS.length)];
 
-  const guildConfig = db.getGuildConfig(guildId) || {};
-  const accentColor = guildConfig.accentColor || '#ff0099';
+  const container = {
+    type: 17,
+    components: [
+      {
+        type: 10,
+        content: `## ${e1} HAPPY BIRTHDAY! ${e2}\n\n` +
+          `**Hey <@${userId}>!**\n\n` +
+          `Wishing you a truly spectacular day surrounded by the people who matter most. May this special day be filled with endless joy, beautiful memories, and boundless success in everything you do. Thank you for being such an incredible part of our community. Celebrate big, because you absolutely deserve it!\n\n` +
+          `-# **${e3} Have an extraordinary year ahead!**`
+      }
+    ]
+  };
 
-  const customEmbed = new EmbedBuilder()
-    .setColor(accentColor)
-    .setDescription(
-      `# ${e1} HAPPY BIRTHDAY! ${e2}\n\n` +
-      `## **Hey <@${userId}>!**\n\n` +
-      `### Wishing you a truly spectacular day surrounded by the people who matter most. May this special day be filled with endless joy, beautiful memories, and boundless success in everything you do. Thank you for being such an incredible part of our community. Celebrate big, because you absolutely deserve it!\n\n` +
-      `## ${e3} **Have an extraordinary year ahead!**`
-    );
-  
-  return { content: `<@${userId}>`, embeds: [customEmbed] };
+  return { components: [container], flags: 32768 };
 }
 
 export async function checkBirthdays(client, targetGuildId = null) {
   try {
-    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    const currentDay = now.getDate();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric'
+    }).formatToParts(new Date());
+    const dateMap = {};
+    for (const p of parts) {
+      if (p.type !== 'literal') dateMap[p.type] = Number(p.value);
+    }
+    const currentDay = dateMap.day;
+    const currentMonth = dateMap.month;
+    const currentYear = dateMap.year;
 
     const birthdayConfigs = db.cache.birthdays || {};
     let wishedCount = 0;
@@ -53,14 +63,21 @@ export async function checkBirthdays(client, targetGuildId = null) {
       if (config.channelId) {
         channel = guild.channels.cache.get(config.channelId) || await guild.channels.fetch(config.channelId).catch(() => null);
       }
-      if (!channel) {
-        channel = guild.systemChannel || guild.channels.cache.find(c => c.isTextBased() && c.permissionsFor(guild.members.me)?.has('SendMessages'));
+      if (!channel || !channel.permissionsFor(client.user.id)?.has(PermissionFlagsBits.SendMessages)) {
+        if (guild.systemChannel && guild.systemChannel.permissionsFor(client.user.id)?.has(PermissionFlagsBits.SendMessages)) {
+          channel = guild.systemChannel;
+        } else {
+          channel = guild.channels.cache.find(c => c.isTextBased() && c.permissionsFor(client.user.id)?.has(PermissionFlagsBits.SendMessages));
+        }
       }
-      if (!channel) continue;
+      if (!channel) {
+        console.warn(`[Birthdays] No writable channel found for guild ${guild.name} (${guildId})`);
+        continue;
+      }
 
       for (const [userId, dates] of Object.entries(config.users)) {
-        if (dates.day === currentDay && dates.month === currentMonth) {
-          if (dates.lastWishedYear === currentYear) {
+        if (Number(dates.day) === currentDay && Number(dates.month) === currentMonth) {
+          if (Number(dates.lastWishedYear) === currentYear) {
             continue; // Already wished this year
           }
 
@@ -140,9 +157,12 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
-      const isOwnerOrServerOwner = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild);
-      if (!isOwnerOrServerOwner) {
-        return message.reply(cv2.danger('Permission Denied', 'This command is restricted to the **Server Owner** and **Bot Owner** only.'));
+      const isAuthorized = isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) ||
+        message.member?.permissions?.has(PermissionFlagsBits.ManageGuild) ||
+        message.member?.permissions?.has(PermissionFlagsBits.Administrator) ||
+        db.isExtraOwner(message.guild?.id, message.author.id);
+      if (!isAuthorized) {
+        return message.reply(cv2.danger('Permission Denied', 'This command requires **Manage Server** or **Server Owner** permissions.'));
       }
 
       const subcommand = args[0]?.toLowerCase();
@@ -220,13 +240,18 @@ export const commands = [
           desc += `<a:Star2:1516523061468205227> <@${u.id}> — **${u.day} ${monthNames[u.month]}**\n`;
         });
 
-        const listEmbed = new EmbedBuilder()
-          .setColor(db.getGuildConfig(message.guild.id)?.accentColor || '#ff0099')
-          .setTitle('<a:cheers:1517075669547483206> Server Birthdays')
-          .setDescription(desc)
-          .setFooter({ text: `Total Birthdays: ${userIds.length}` });
+        const container = {
+          type: 17,
+          components: [
+            { type: 10, content: '## **<a:cheers:1517075669547483206> Server Birthdays**' },
+            { type: 14, divider: true },
+            { type: 10, content: desc.trim() },
+            { type: 14, divider: true },
+            { type: 10, content: `-# **Total Birthdays: ${userIds.length}**` }
+          ]
+        };
 
-        return message.reply({ embeds: [listEmbed] });
+        return message.reply({ components: [container], flags: 32768 });
       }
 
       if (subcommand === 'check') {
@@ -252,10 +277,13 @@ export const commands = [
     },
     async executeSlash(interaction) {
       const subcommand = interaction.options.getSubcommand();
-      const isOwnerOrServerOwner = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild);
+      const isAuthorized = isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild) ||
+        interaction.member?.permissions?.has(PermissionFlagsBits.ManageGuild) ||
+        interaction.member?.permissions?.has(PermissionFlagsBits.Administrator) ||
+        db.isExtraOwner(interaction.guild?.id, interaction.user.id);
 
-      if (!isOwnerOrServerOwner) {
-        return interaction.reply(cv2.danger('Permission Denied', 'This command is restricted to the **Server Owner** and **Bot Owner** only.'));
+      if (!isAuthorized) {
+        return interaction.reply(cv2.danger('Permission Denied', 'This command requires **Manage Server** or **Server Owner** permissions.'));
       }
 
       if (subcommand === 'setchannel') {
@@ -323,13 +351,18 @@ export const commands = [
           desc += `<a:Star2:1516523061468205227> <@${u.id}> — **${u.day} ${monthNames[u.month]}**\n`;
         });
 
-        const listEmbed = new EmbedBuilder()
-          .setColor(db.getGuildConfig(interaction.guild.id)?.accentColor || '#ff0099')
-          .setTitle('<a:cheers:1517075669547483206> Server Birthdays')
-          .setDescription(desc)
-          .setFooter({ text: `Total Birthdays: ${userIds.length}` });
+        const container = {
+          type: 17,
+          components: [
+            { type: 10, content: '## **<a:cheers:1517075669547483206> Server Birthdays**' },
+            { type: 14, divider: true },
+            { type: 10, content: desc.trim() },
+            { type: 14, divider: true },
+            { type: 10, content: `-# **Total Birthdays: ${userIds.length}**` }
+          ]
+        };
 
-        return interaction.reply({ embeds: [listEmbed] });
+        return interaction.reply({ components: [container], flags: 32768 });
       }
 
       if (subcommand === 'check') {
