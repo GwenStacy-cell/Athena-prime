@@ -1,4 +1,4 @@
-import { EmbedBuilder, AttachmentBuilder, AuditLogEvent, PermissionFlagsBits, ChannelType } from 'discord.js';
+import { EmbedBuilder, AttachmentBuilder, AuditLogEvent, PermissionFlagsBits, ChannelType, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import { generateDashboard, generateTimeoutCard, generateAutomodCard } from './dashboardCanvas.js';
 
@@ -138,21 +138,71 @@ export async function updateDashboardMessage(guild, client) {
     const fileTo = new AttachmentBuilder(toBuffer, { name: `timeout_${timestamp}.png` });
     const fileAm = new AttachmentBuilder(amBuffer, { name: `automod_${timestamp}.png` });
 
-    const embedDb = new EmbedBuilder()
-      .setColor(accentInt)
-      .setTitle("ATHENA'S SECURITY DASHBOARD")
-      .setDescription(`**Status:** **${stats.metrics.firewall === 'Active' ? 'PROTECTED' : 'VULNERABLE'}**\n**Last Sync:** <t:${Math.floor(Date.now() / 1000)}:R>\n**Live Monitoring:** **Active**`)
-      .setImage(`attachment://dashboard_${timestamp}.png`);
+    const cardDb = {
+      type: 17,
+      accent_color: accentInt,
+      components: [
+        {
+          type: 10,
+          content: `## **ATHENA'S SECURITY DASHBOARD**\n` +
+                   `-# **• __Status:__ \`${stats.metrics.firewall === 'Active' ? 'PROTECTED' : 'VULNERABLE'}\`**\n` +
+                   `-# **• __Last Sync:__ <t:${Math.floor(Date.now() / 1000)}:R>**\n` +
+                   `-# **• __Live Monitoring:__ \`Active\`**`
+        },
+        { type: 14, divider: true },
+        {
+          type: 12,
+          items: [{ media: { url: `attachment://${fileDb.name}` } }]
+        },
+        { type: 14, divider: true },
+        {
+          type: 10,
+          content: `-# **Athena Bulletproof Security System • V1.0.0**`
+        }
+      ]
+    };
 
-    const embedTo = new EmbedBuilder()
-      .setColor(accentInt)
-      .setTitle("ADMIN INTERVENTION & TIMEOUTS")
-      .setImage(`attachment://timeout_${timestamp}.png`);
+    const cardTo = {
+      type: 17,
+      accent_color: accentInt,
+      components: [
+        {
+          type: 10,
+          content: `## **ADMIN INTERVENTION & TIMEOUTS**`
+        },
+        { type: 14, divider: true },
+        {
+          type: 12,
+          items: [{ media: { url: `attachment://${fileTo.name}` } }]
+        },
+        { type: 14, divider: true },
+        {
+          type: 10,
+          content: `-# **Athena Bulletproof Security System • V1.0.0**`
+        }
+      ]
+    };
 
-    const embedAm = new EmbedBuilder()
-      .setColor(accentInt)
-      .setTitle("AUTOMATED SECURITY EVENTS")
-      .setImage(`attachment://automod_${timestamp}.png`);
+    const cardAm = {
+      type: 17,
+      accent_color: accentInt,
+      components: [
+        {
+          type: 10,
+          content: `## **AUTOMATED SECURITY EVENTS**`
+        },
+        { type: 14, divider: true },
+        {
+          type: 12,
+          items: [{ media: { url: `attachment://${fileAm.name}` } }]
+        },
+        { type: 14, divider: true },
+        {
+          type: 10,
+          content: `-# **Athena Bulletproof Security System • V1.0.0**`
+        }
+      ]
+    };
 
     let msgIds = cfg.dashboardMessageIds || [];
     
@@ -164,17 +214,19 @@ export async function updateDashboardMessage(guild, client) {
         try { m2 = await channel.messages.fetch(msgIds[1]); } catch(e) { throw new Error(`Fetch m2 failed: ${e.code}`); }
         try { m3 = await channel.messages.fetch(msgIds[2]); } catch(e) { throw new Error(`Fetch m3 failed: ${e.code}`); }
         
-        // If existing messages were previously converted into CV2 containers (flags: 32768 or components present),
-        // Discord will not render native embed images on them. Purge and recreate cleanly.
-        const isOldCV2 = [m1, m2, m3].some(m => (m?.flags?.bitfield & 32768) || (m?.components && m.components.length > 0));
-        if (isOldCV2) {
+        // If existing messages do not have type 12 media gallery, purge and recreate cleanly
+        const needsRecreate = [m1, m2, m3].some(m => {
+          const comps = m?.components?.[0]?.components || [];
+          return !comps.some(c => c.type === 12);
+        });
+        if (needsRecreate) {
           await Promise.allSettled([m1.delete().catch(() => {}), m2.delete().catch(() => {}), m3.delete().catch(() => {})]);
-          throw new Error('Purged old CV2 messages to recreate clean embed dashboard');
+          throw new Error('Purged old dashboard messages to recreate clean accent borderless CV2 containers');
         }
 
-        try { await m1.edit({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
-        try { await m2.edit({ embeds: [embedTo], files: [fileTo], attachments: [] }); } catch(e) { throw new Error(`Edit m2 failed: ${e.code}`); }
-        try { await m3.edit({ embeds: [embedAm], files: [fileAm], attachments: [] }); } catch(e) { throw new Error(`Edit m3 failed: ${e.code}`); }
+        try { await m1.edit({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', components: [cardDb], files: [fileDb], attachments: [], flags: MessageFlags.IsComponentsV2 }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
+        try { await m2.edit({ components: [cardTo], files: [fileTo], attachments: [], flags: MessageFlags.IsComponentsV2 }); } catch(e) { throw new Error(`Edit m2 failed: ${e.code}`); }
+        try { await m3.edit({ components: [cardAm], files: [fileAm], attachments: [], flags: MessageFlags.IsComponentsV2 }); } catch(e) { throw new Error(`Edit m3 failed: ${e.code}`); }
         
         // Cleanup duplicates if any exist
         const fetched = await channel.messages.fetch({ limit: 50 }).catch(() => null);
@@ -204,12 +256,15 @@ export async function updateDashboardMessage(guild, client) {
       // If we found exactly 3 bot messages, maybe they are the dashboard! Let's adopt them instead of deleting.
       if (botMessages.size === 3) {
         const msgs = [...botMessages.values()];
-        const isOldCV2 = msgs.some(m => (m?.flags?.bitfield & 32768) || (m?.components && m.components.length > 0));
-        if (!isOldCV2) {
+        const needsRecreate = msgs.some(m => {
+          const comps = m?.components?.[0]?.components || [];
+          return !comps.some(c => c.type === 12);
+        });
+        if (!needsRecreate) {
           try {
-            await msgs[0].edit({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', embeds: [embedDb], files: [fileDb], attachments: [] });
-            await msgs[1].edit({ embeds: [embedTo], files: [fileTo], attachments: [] });
-            await msgs[2].edit({ embeds: [embedAm], files: [fileAm], attachments: [] });
+            await msgs[0].edit({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', components: [cardDb], files: [fileDb], attachments: [], flags: MessageFlags.IsComponentsV2 });
+            await msgs[1].edit({ components: [cardTo], files: [fileTo], attachments: [], flags: MessageFlags.IsComponentsV2 });
+            await msgs[2].edit({ components: [cardAm], files: [fileAm], attachments: [], flags: MessageFlags.IsComponentsV2 });
             db.setDashboardInfo(guild.id, channel.id, [msgs[0].id, msgs[1].id, msgs[2].id]);
             return; // Adopted successfully
           } catch (e) {
@@ -224,9 +279,9 @@ export async function updateDashboardMessage(guild, client) {
       }
     }
 
-    const m1 = await channel.send({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', embeds: [embedDb], files: [fileDb] });
-    const m2 = await channel.send({ embeds: [embedTo], files: [fileTo] });
-    const m3 = await channel.send({ embeds: [embedAm], files: [fileAm] });
+    const m1 = await channel.send({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', components: [cardDb], files: [fileDb], flags: MessageFlags.IsComponentsV2 });
+    const m2 = await channel.send({ components: [cardTo], files: [fileTo], flags: MessageFlags.IsComponentsV2 });
+    const m3 = await channel.send({ components: [cardAm], files: [fileAm], flags: MessageFlags.IsComponentsV2 });
 
     db.setDashboardInfo(guild.id, channel.id, [m1.id, m2.id, m3.id]);
 

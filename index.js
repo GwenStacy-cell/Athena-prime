@@ -330,17 +330,21 @@ function pushDivider(comps) {
       }
     }
 
-    if (embedData.image && embedData.image.url && !embedData.image.url.startsWith('attachment://')) {
+    if (embedData.image && embedData.image.url) {
       pushDivider(comps);
       comps.push({ type: 12, items: [{ media: { url: embedData.image.url } }] });
     }
 
     if (embedData.footer) {
       pushDivider(comps);
-      comps.push({ type: 10, content: `*${embedData.footer.text.replace(/^-#\s*/, '')}*` });
+      comps.push({ type: 10, content: `-# **${embedData.footer.text.replace(/^-#\s*/, '')}**` });
     }
 
-    return { type: 17, components: comps };
+    const container = { type: 17, components: comps };
+    if (embedData.color != null) {
+      container.accent_color = embedData.color;
+    }
+    return container;
   }
 
 function isContainer(c) {
@@ -383,21 +387,6 @@ function interceptPayload(body) {
     if (target._skipCV2 || body._skipCV2) {
       delete target._skipCV2;
       delete body._skipCV2;
-      return false;
-    }
-
-    // Do NOT convert embeds to CV2 containers if they have local file attachments (attachment://)
-    // Discord Components V2 (type 17 containers) do not support attachment:// in media galleries (type 12) or accessories (type 11).
-    // Native embeds MUST be preserved so Discord displays canvas cards and generated graphics properly!
-    if (target.embeds && target.embeds.some(e => {
-      const data = (typeof e?.toJSON === 'function') ? e.toJSON() : e;
-      const imgUrl = data?.image?.url;
-      const thumbUrl = data?.thumbnail?.url;
-      const authorIcon = data?.author?.icon_url || data?.author?.iconURL;
-      return (typeof imgUrl === 'string' && imgUrl.startsWith('attachment://')) ||
-             (typeof thumbUrl === 'string' && thumbUrl.startsWith('attachment://')) ||
-             (typeof authorIcon === 'string' && authorIcon.startsWith('attachment://'));
-    })) {
       return false;
     }
 

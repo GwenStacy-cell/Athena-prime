@@ -26,7 +26,7 @@ function styleLine(line, addBullet) {
 const SEP = { type: 14, divider: true };
 
 // Build a raw CV2 container JSON with separators
-function buildContainer(title, description, fields, customFooter) {
+function buildContainer(title, description, fields, customFooter, accentColor) {
   if (!fields) fields = [];
   var comps = [];
 
@@ -88,29 +88,45 @@ function buildContainer(title, description, fields, customFooter) {
 
   if (footers[footerText]) footerText = footers[footerText];
 
-  comps.push({ type: 10, content: `-# ${footerText}` });
+  comps.push({ type: 10, content: `-# **${footerText}**` });
 
-  return { type: 17, components: comps };
+  const container = { type: 17, components: comps };
+  if (accentColor != null) {
+    container.accent_color = typeof accentColor === 'string' ? parseInt(accentColor.replace('#', ''), 16) : accentColor;
+  }
+  return container;
 }
 
-function make(title, desc, fields, eph, customFooter) {
+function make(title, desc, fields, eph, customFooter, accentColor) {
   if (!fields) fields = [];
   if (!eph) eph = false;
   var flags = eph ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2;
-  return { components: [buildContainer(title, desc, fields, customFooter)], flags: flags };
+  return { components: [buildContainer(title, desc, fields, customFooter, accentColor)], flags: flags };
 }
+
+const STATUS_COLORS = {
+  success:  0x57F287,
+  warn:     0xFEE75C,
+  danger:   0xED4245,
+  error:    0xED4245,
+  info:     0x5865F2,
+  raid:     0xED4245,
+  owner:    0x9B59B6,
+  security: 0x00FFFF,
+  log:      0x2B2D31
+};
 
 var _m = function(eph) {
   return {
-    success:  function(t,d,f,ft) { return make(t,d,f,eph,ft); },
-    warn:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
-    danger:   function(t,d,f,ft) { return make(t,d,f,eph,ft); },
-    error:    function(t,d,f,ft) { return make(t,d,f,eph,ft); },
-    info:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
-    raid:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
-    owner:    function(t,d,f,ft) { return make(t,d,f,eph,ft); },
-    security: function(t,d,f,ft) { return make(t,d,f,eph,ft); },
-    log:      function(t,d,f,ft) { return make('Log: ' + t, d, f, eph, ft); },
+    success:  function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.success); },
+    warn:     function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.warn); },
+    danger:   function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.danger); },
+    error:    function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.error); },
+    info:     function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.info); },
+    raid:     function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.raid); },
+    owner:    function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.owner); },
+    security: function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.security); },
+    log:      function(t,d,f,ft,c) { return make('Log: ' + t, d, f, eph, ft, c || STATUS_COLORS.log); },
   };
 };
 
