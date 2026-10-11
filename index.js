@@ -387,6 +387,15 @@ function isContainer(c) {
     return res;
   }
 
+function stripAccentColors(obj) {
+  if (!obj || typeof obj !== 'object') return;
+  delete obj.accent_color;
+  if (obj.data) delete obj.data.accent_color;
+  if (Array.isArray(obj.components)) {
+    for (const c of obj.components) stripAccentColors(c);
+  }
+}
+
 function interceptPayload(body) {
     if (!body) return false;
     const target = body.data || body;
@@ -396,6 +405,10 @@ function interceptPayload(body) {
       delete body._skipCV2;
       return false;
     }
+
+    // Unconditionally strip all accent borders globally
+    stripAccentColors(target);
+    stripAccentColors(body);
 
     // Case 1: Pre-built CV2 container - pull any outside action rows (buttons/menus) INSIDE!
     if (target.components && target.components.some(isContainer)) {
@@ -440,6 +453,7 @@ function interceptPayload(body) {
       } else {
         target.components[containerIdx] = container;
       }
+      stripAccentColors(target);
       return true;
     }
       
@@ -482,6 +496,7 @@ function interceptPayload(body) {
       target.components = cv2Containers;
       delete target.embeds;
       target.flags = (target.flags || 0) | 32768; // MessageFlags.IsComponentsV2
+      stripAccentColors(target);
       return true;
     }
 
@@ -492,14 +507,8 @@ function interceptPayload(body) {
     if ((target.flags & 32768) || (body.flags & 32768)) {
       delete target.content;
       delete body.content;
-      if (Array.isArray(target.components)) {
-        for (const c of target.components) {
-          if (c) {
-            delete c.accent_color;
-            if (c.data) delete c.data.accent_color;
-          }
-        }
-      }
+      stripAccentColors(target);
+      stripAccentColors(body);
     }
 
     return false;
@@ -524,7 +533,14 @@ client.rest.request = async function(options) {
   if (validToken && options && options.auth !== false) {
     originalSetToken(validToken);
   }
+  if (options && options.body) interceptPayload(options.body);
   return originalRequest(options);
+};
+
+const originalPut = client.rest.put.bind(client.rest);
+client.rest.put = async function(url, options) {
+  if (options && options.body) interceptPayload(options.body);
+  return originalPut(url, options);
 };
 
 client.rest.post = async function(url, options) {
