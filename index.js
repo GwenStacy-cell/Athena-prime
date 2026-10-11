@@ -389,16 +389,18 @@ function isContainer(c) {
 
 function stripAccentColors(obj) {
   if (!obj || typeof obj !== 'object') return;
-  delete obj.accent_color;
-  if (obj.data) delete obj.data.accent_color;
-  if (Array.isArray(obj.components)) {
-    for (const c of obj.components) stripAccentColors(c);
+  if ('accent_color' in obj) delete obj.accent_color;
+  if (obj.data && 'accent_color' in obj.data) delete obj.data.accent_color;
+  for (const key of Object.keys(obj)) {
+    if (obj[key] && typeof obj[key] === 'object') {
+      stripAccentColors(obj[key]);
+    }
   }
 }
 
 function interceptPayload(body) {
     if (!body) return false;
-    const target = body.data || body;
+    const target = body.json?.data || body.json || body.data || body;
     
     if (target._skipCV2 || body._skipCV2) {
       delete target._skipCV2;
@@ -417,11 +419,12 @@ function interceptPayload(body) {
       let container = toCleanJson(target.components[containerIdx]);
       if (!container.components) container.components = [];
 
-      const textContent = target.content || body.content;
+      const textContent = target.content || body.json?.content || body.content;
       if (textContent) {
         container.components.unshift({ type: 14, divider: true });
         container.components.unshift({ type: 10, content: textContent });
         delete target.content;
+        if (body.json) delete body.json.content;
         delete body.content;
       }
 
@@ -454,6 +457,7 @@ function interceptPayload(body) {
         target.components[containerIdx] = container;
       }
       stripAccentColors(target);
+      stripAccentColors(body);
       return true;
     }
       
@@ -461,11 +465,12 @@ function interceptPayload(body) {
     if (target.embeds && target.embeds.length > 0) {
       const cv2Containers = target.embeds.map(e => convertEmbedToCV2(e));
       
-      const textContent = target.content || body.content;
+      const textContent = target.content || body.json?.content || body.content;
       if (textContent) {
          cv2Containers[0].components.unshift({ type: 14, divider: true });
          cv2Containers[0].components.unshift({ type: 10, content: textContent });
          delete target.content;
+         if (body.json) delete body.json.content;
          delete body.content;
       }
 
@@ -495,8 +500,10 @@ function interceptPayload(body) {
       
       target.components = cv2Containers;
       delete target.embeds;
+      if (body.json) delete body.json.embeds;
       target.flags = (target.flags || 0) | 32768; // MessageFlags.IsComponentsV2
       stripAccentColors(target);
+      stripAccentColors(body);
       return true;
     }
 
@@ -504,8 +511,9 @@ function interceptPayload(body) {
       target.flags = (target.flags || 0) | 32768;
     }
 
-    if ((target.flags & 32768) || (body.flags & 32768)) {
+    if ((target.flags & 32768) || (body.flags & 32768) || (body.json?.flags & 32768)) {
       delete target.content;
+      if (body.json) delete body.json.content;
       delete body.content;
       stripAccentColors(target);
       stripAccentColors(body);
@@ -533,22 +541,35 @@ client.rest.request = async function(options) {
   if (validToken && options && options.auth !== false) {
     originalSetToken(validToken);
   }
-  if (options && options.body) interceptPayload(options.body);
+  if (options) {
+    if (options.body) interceptPayload(options.body);
+    if (options.json) interceptPayload(options.json);
+  }
   return originalRequest(options);
 };
 
 const originalPut = client.rest.put.bind(client.rest);
 client.rest.put = async function(url, options) {
-  if (options && options.body) interceptPayload(options.body);
+  if (options) {
+    if (options.body) interceptPayload(options.body);
+    if (options.json) interceptPayload(options.json);
+  }
   return originalPut(url, options);
 };
 
 client.rest.post = async function(url, options) {
-  if (options && options.body) interceptPayload(options.body);
+  if (options) {
+    if (options.body) interceptPayload(options.body);
+    if (options.json) interceptPayload(options.json);
+  }
   return originalPost(url, options);
 };
+
 client.rest.patch = async function(url, options) {
-  if (options && options.body) interceptPayload(options.body);
+  if (options) {
+    if (options.body) interceptPayload(options.body);
+    if (options.json) interceptPayload(options.json);
+  }
   return originalPatch(url, options);
 };
 
