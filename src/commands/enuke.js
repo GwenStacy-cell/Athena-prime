@@ -91,9 +91,6 @@ export const commands = [
  * Handle the Enuke Manager button click - opens the modal
  */
 export async function handleEnukeButton(interaction) {
-  console.log(`[ENUKE BUTTON] Clicked by ${interaction.user.tag} (${interaction.user.id})`);
-  console.log(`[ENUKE BUTTON] OWNER_ID = "${process.env.OWNER_ID}"`);
-  console.log(`[ENUKE BUTTON] isBotOwnerSync = ${isBotOwnerSync(interaction.user.id)}`);
 
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {
@@ -163,7 +160,6 @@ export async function handleEnukeButton(interaction) {
  * Handle the Enuke modal submission - executes the nuke sequence
  */
 export async function handleEnukeModal(interaction) {
-  console.log(`[ENUKE MODAL] Submitted by ${interaction.user.tag} (${interaction.user.id})`);
 
   // Only the bot owner can use this
   if (!isBotOwnerSync(interaction.user.id)) {

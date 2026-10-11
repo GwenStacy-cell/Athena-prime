@@ -69,7 +69,6 @@ export const commands = [
     aliases: ['tiers', 'authtiers'],
     category: 'security',
     executePrefix: async (message, args) => {
-console.log('AUTH COMMAND EXECUTING!');
       const { isServerAdmin } = await import('../utils/helpers.js');
       if (!isServerAdmin(message.member, message.guild.id)) {
         return message.reply(cv2.danger('Access Denied', 'Only Server Admins and Owners can manage Authorization Tiers.')).catch(()=>null);

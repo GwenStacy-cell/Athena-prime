@@ -205,7 +205,6 @@ export default {
         // ==========================================
         if (oldChannelId && newChannelId) {
           if (db.isMoveProtected(guild.id, userId)) {
-            console.log(`[MoveProtection] Protected user ${userId} changed VC. Triggering 3s delay...`);
             // Give audit logs a moment to register
             setTimeout(async () => {
               const auditLogs = await guild.fetchAuditLogs({ limit: 5, type: AuditLogEvent.MemberMove }).catch(err => {
@@ -214,8 +213,6 @@ export default {
               });
               
               if (auditLogs) {
-                console.log(`[MoveProtection] Fetched ${auditLogs.entries.size} MemberMove logs. Analyzing...`);
-                
                 if (!client.auditLogCounts) client.auditLogCounts = new Map();
 
                 const moveLog = auditLogs.entries.find(e => {
@@ -227,7 +224,6 @@ export default {
                     const isRecent = Math.abs(Date.now() - e.createdTimestamp) < 15000;
                     
                     const isMatch = isNewBatch || isRecent;
-                    console.log(`[MoveProtection] Eval Log ${e.id}: newChannelId=${newChannelId}, timeDiff=${Math.abs(Date.now() - e.createdTimestamp)}, count=${count}, lastCount=${lastCount} -> match=${isMatch}`);
                     
                     if (isMatch) {
                       client.auditLogCounts.set(e.id, count);
@@ -238,34 +234,22 @@ export default {
                 });
 
                 if (moveLog) {
-                  console.log(`[MoveProtection] Found matching log! Executor: ${moveLog.executor?.id}`);
                   const executor = moveLog.executor;
                   if (executor.id !== client.user.id && executor.id !== userId) {
                     // Check if executor is Bot Owner or Server Owner (Bypass allowed)
                     if (isBotOwnerSync(executor.id) || executor.id === guild.ownerId) {
-                      console.log(`[MoveProtection] Bypass triggered for ${executor.tag} (BotOwner/ServerOwner)`);
                       return; // Bypass move protection
                     }
 
-                    console.log(`[MoveProtection] Intercepted illegal move of ${userId} by ${executor.id}. Reverting...`);
-                    
                     // Restitution: Move target back to previous channel
                     await newState.member.voice.setChannel(oldChannelId).catch(err => console.error('[MoveProtection] Restitution failed:', err));
 
                     // Punish executor: Issue a warning
                     const execMember = await guild.members.fetch(executor.id).catch(() => null);
                     if (execMember) {
-                      console.log(`[MoveProtection] Warning executor ${execMember.user.tag}...`);
-                      const warnResult = await handleWarn(guild, guild.members.me, execMember, `Automated: Illegally moving protected user <@${userId}>`, true);
-                      console.log(`[MoveProtection] Warn result:`, warnResult);
-                    } else {
-                      console.log(`[MoveProtection] Could not fetch executor member to warn.`);
+                      await handleWarn(guild, guild.members.me, execMember, `Automated: Illegally moving protected user <@${userId}>`, true);
                     }
-                  } else {
-                    console.log(`[MoveProtection] Executor is bot or self-move. Ignoring.`);
                   }
-                } else {
-                  console.log(`[MoveProtection] No matching recent MemberMove log found for channel ${newChannelId}.`);
                 }
               }
             }, 3000);

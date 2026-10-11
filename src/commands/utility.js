@@ -202,7 +202,8 @@ export const commands = [
           const components = buildHelpContainer(message.client, message.guild?.id, 'home');
           reply = await message.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
         } catch (e) {
-          return message.channel.send({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
+          console.error('[Help] Prefix error:', e);
+          return;
         }
         const collector = reply.createMessageComponentCollector({ idle: 60000 });
       
@@ -239,7 +240,8 @@ export const commands = [
         reply = await interaction.fetchReply();
         
       } catch (e) {
-        return interaction.reply({ content: `**DEBUG ERROR:** \`${e.message}\`` }).catch(() => null);
+        console.error('[Help] Slash error:', e);
+        return;
       }
       if (!reply) return; // Prevent crashes if reply is undefined
       const collector = reply.createMessageComponentCollector({ idle: 60000 });

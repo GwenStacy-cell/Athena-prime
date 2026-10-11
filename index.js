@@ -104,9 +104,6 @@ shoukaku.on('close', (name, code, reason) => {
   console.log(`🔌 Lavalink node "${name}" closed (${code}): ${reason}`);
 });
 
-shoukaku.on('debug', (name, info) => {
-  console.log(`[${name}] ${info}`);
-});
 global.client.shoukaku = shoukaku;
 
 process.on('unhandledRejection', (error) => {
