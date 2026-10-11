@@ -6,7 +6,7 @@ import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { ensureUnbypassableRole } from '../utils/antiStrip.js';
 import { updatePlayerUI } from '../utils/musicManager.js';
 import { CronJob } from 'cron';
-import { generateBirthdayMessage } from '../commands/birthday.js';
+import { generateBirthdayMessage, checkBirthdays } from '../commands/birthday.js';
 import statsDB from '../statsDB.js';
 import { endGiveaway } from '../commands/giveaway.js';
 import { setupDashboardChannel, updateDashboardMessage } from '../utils/dashboardManager.js';
@@ -27,39 +27,27 @@ export default {
     console.log(chalk.cyan(` Logged in as: ${chalk.bold(client.user.tag)} (ID: ${client.user.id})`));
     console.log(chalk.yellow(` Watching ${client.guilds.cache.size} server(s)...`));
 
+    // Immediate startup scan for today's birthdays (in case bot restarted during the day)
+    console.log(chalk.magenta(' Performing startup birthday scan (IST)...'));
+    checkBirthdays(client).catch(err => console.error(chalk.red(' Error in startup birthday scan:'), err));
+
     // Daily Midnight IST Cron Job (00:00)
     new CronJob('0 0 * * *', async () => {
       try {
         // Prune old stats data
         statsDB.pruneOldStats();
 
-        const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-        const currentDay = now.getDate();
-        const currentMonth = now.getMonth() + 1;
-
-        console.log(chalk.magenta(` Checking birthdays for ${currentDay}/${currentMonth} (IST)...`));
-
-        const birthdayConfigs = db.cache.birthdays || {};
-        for (const [guildId, config] of Object.entries(birthdayConfigs)) {
-          if (!config.channelId || !config.users) continue;
-          
-          const guild = client.guilds.cache.get(guildId);
-          if (!guild) continue;
-          
-          const channel = guild.channels.cache.get(config.channelId);
-          if (!channel) continue;
-
-          for (const [userId, dates] of Object.entries(config.users)) {
-            if (dates.day === currentDay && dates.month === currentMonth) {
-              const message = generateBirthdayMessage(userId, guildId);
-              await channel.send(message).catch(() => null);
-            }
-          }
-        }
+        console.log(chalk.magenta(' Midnight cron: checking birthdays and pruning stats (IST)...'));
+        await checkBirthdays(client);
       } catch (err) {
         console.error(chalk.red(' Error running birthday cron job:'), err);
       }
     }, null, true, 'Asia/Kolkata');
+
+    // 30-Minute Birthday Interval (guarantees any daytime birthdays set or rejoins are wished)
+    setInterval(async () => {
+      await checkBirthdays(client).catch(() => null);
+    }, 30 * 60 * 1000);
 
     // Giveaway Timer (Runs every 15 seconds)
     setInterval(async () => {

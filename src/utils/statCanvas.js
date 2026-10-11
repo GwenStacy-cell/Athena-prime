@@ -755,14 +755,14 @@ export async function generateTopImage(guild, topMsgMembers = [], topVoiceMember
     }
 
     // 2. Server Avatar (Top-Left Ornate Frame)
-    // Center: (103, 103), Radius: 43
+    // Center: (104, 104), Radius: 60 (diameter 120px)
     const iconUrl = guild && typeof guild.iconURL === 'function'
       ? guild.iconURL({ extension: 'png', size: 128 })
       : null;
 
     ctx.save();
     ctx.beginPath();
-    ctx.arc(103, 103, 43, 0, Math.PI * 2);
+    ctx.arc(104, 104, 60, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
 
@@ -770,27 +770,27 @@ export async function generateTopImage(guild, topMsgMembers = [], topVoiceMember
     if (iconUrl) {
       try {
         const gIcon = await loadImage(iconUrl);
-        ctx.drawImage(gIcon, 60, 60, 86, 86);
+        ctx.drawImage(gIcon, 44, 44, 120, 120);
         guildAvatarLoaded = true;
       } catch {}
     }
 
     if (!guildAvatarLoaded) {
       ctx.fillStyle = '#1A1C20';
-      ctx.fillRect(60, 60, 86, 86);
-      ctx.font = 'bold 36px "Cinzel", "Georgia", "NotoSans", serif';
+      ctx.fillRect(44, 44, 120, 120);
+      ctx.font = 'bold 44px "Cinzel", "Georgia", "NotoSans", serif';
       ctx.fillStyle = '#E52B38';
       ctx.textAlign = 'center';
       const initial = (guild?.name || 'S').trim().charAt(0).toUpperCase();
-      ctx.fillText(initial, 103, 115);
+      ctx.fillText(initial, 104, 119);
     }
     ctx.restore();
 
     // Subtle inner shadow ring over avatar for seamless integration with the ornate frame
     ctx.save();
     ctx.beginPath();
-    ctx.arc(103, 103, 43, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.arc(104, 104, 60, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.lineWidth = 3;
     ctx.stroke();
     ctx.restore();
@@ -798,12 +798,12 @@ export async function generateTopImage(guild, topMsgMembers = [], topVoiceMember
     // 3. Server Name Typography (Metallic Silver + Crimson Dual Tone)
     const rawName = (guild?.name || 'SERVER').toUpperCase();
     const cleanName = safeText(rawName) || 'SERVER';
-    renderTopServerTitle(ctx, cleanName, 202, 70);
+    renderTopServerTitle(ctx, cleanName, 196, 96);
 
     // 4. Rows (5 rows per column)
     const ROWS = 5;
-    const ROW_START_Y = 200;
-    const ROW_STEP = 56;
+    const ROW_START_Y = 252;
+    const ROW_STEP = 52;
 
     const maxVoiceSec = topVoiceMembers.length > 0 && topVoiceMembers[0]?.total > 0
       ? topVoiceMembers[0].total
@@ -832,8 +832,8 @@ export async function generateTopImage(guild, topMsgMembers = [], topVoiceMember
       if (i < ROWS - 1) {
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(35, rowCenterY + 28);
-        ctx.lineTo(484, rowCenterY + 28);
+        ctx.moveTo(35, rowCenterY + 26);
+        ctx.lineTo(484, rowCenterY + 26);
         if (isRank1) {
           ctx.strokeStyle = 'rgba(229, 43, 56, 0.4)';
           ctx.lineWidth = 1.5;
@@ -870,8 +870,8 @@ export async function generateTopImage(guild, topMsgMembers = [], topVoiceMember
       if (i < ROWS - 1) {
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(522, rowCenterY + 28);
-        ctx.lineTo(968, rowCenterY + 28);
+        ctx.moveTo(522, rowCenterY + 26);
+        ctx.lineTo(968, rowCenterY + 26);
         if (isRank1) {
           ctx.strokeStyle = 'rgba(229, 43, 56, 0.4)';
           ctx.lineWidth = 1.5;
@@ -909,10 +909,10 @@ function formatVoiceHoursText(seconds) {
 
 function renderTopServerTitle(ctx, name, startX, baselineY) {
   ctx.save();
-  let fontSize = 30;
-  if (name.length > 22) fontSize = 21;
-  else if (name.length > 16) fontSize = 24;
-  else if (name.length > 11) fontSize = 27;
+  let fontSize = 36;
+  if (name.length > 25) fontSize = 22;
+  else if (name.length > 18) fontSize = 26;
+  else if (name.length > 12) fontSize = 30;
 
   ctx.font = `bold ${fontSize}px "Cinzel", "Georgia", "NotoSans", serif`;
 
@@ -922,7 +922,7 @@ function renderTopServerTitle(ctx, name, startX, baselineY) {
     const half = Math.ceil(words.length / 2);
     part1 = words.slice(0, half).join(' ') + ' ';
     part2 = words.slice(half).join(' ');
-  } else if (name.length > 7) {
+  } else if (name.length > 6) {
     const half = Math.floor(name.length / 2);
     part1 = name.slice(0, half);
     part2 = name.slice(half);
@@ -931,28 +931,34 @@ function renderTopServerTitle(ctx, name, startX, baselineY) {
     part2 = '';
   }
 
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetY = 3;
-
+  // 1. Part 1 (Metallic Silver Chiseled)
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 4;
   const gradSilver = ctx.createLinearGradient(0, baselineY - fontSize, 0, baselineY);
   gradSilver.addColorStop(0, '#FFFFFF');
-  gradSilver.addColorStop(0.5, '#E6E8EC');
-  gradSilver.addColorStop(1, '#B0B4BC');
+  gradSilver.addColorStop(0.3, '#E6E9EE');
+  gradSilver.addColorStop(0.7, '#A8ADB8');
+  gradSilver.addColorStop(1, '#6B717D');
   ctx.fillStyle = gradSilver;
   ctx.fillText(part1, startX, baselineY);
+  ctx.restore();
 
+  // 2. Part 2 (God of War Crimson Flame)
   if (part2) {
     const w1 = ctx.measureText(part1).width;
+    ctx.save();
+    ctx.shadowColor = 'rgba(229, 43, 56, 0.85)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 2;
     const gradRed = ctx.createLinearGradient(0, baselineY - fontSize, 0, baselineY);
-    gradRed.addColorStop(0, '#FF4D5A');
-    gradRed.addColorStop(0.5, '#E52B38');
-    gradRed.addColorStop(1, '#94131D');
-
-    ctx.shadowColor = 'rgba(229, 43, 56, 0.5)';
-    ctx.shadowBlur = 12;
+    gradRed.addColorStop(0, '#FF5260');
+    gradRed.addColorStop(0.4, '#E52B38');
+    gradRed.addColorStop(1, '#7E0F16');
     ctx.fillStyle = gradRed;
     ctx.fillText(part2, startX + w1, baselineY);
+    ctx.restore();
   }
   ctx.restore();
 }
@@ -960,9 +966,9 @@ function renderTopServerTitle(ctx, name, startX, baselineY) {
 async function renderTopMemberRow(ctx, opts) {
   const { rank, isRank1, user, statText, badgeX, avatarX, nameX, statRightX, rowCenterY, isVoice, voiceRatio } = opts;
 
-  // 1. Rank Badge (48w x 42h)
-  const bW = 48, bH = 42;
-  const bY = rowCenterY - 21;
+  // 1. Rank Badge (48w x 40h)
+  const bW = 48, bH = 40;
+  const bY = rowCenterY - 20;
   const bR = 8;
 
   ctx.save();
