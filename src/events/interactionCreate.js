@@ -497,24 +497,35 @@ export default {
         // ==========================================
     // GLOBALLY PATCH CV2 RESPONSES TO BYPASS DJS V14 VALIDATION BUG
     // ==========================================
-    const isCV2 = (opts) => opts && opts.flags != null && (opts.flags & 32768);
+    const isCV2 = (opts) => {
+      if (!opts) return false;
+      if (opts.flags != null && (opts.flags & 32768)) return true;
+      if (Array.isArray(opts.components) && opts.components.some(c => c && (c.type === 17 || c.type === 9 || c.type === 14 || c.data?.type === 17))) return true;
+      return false;
+    };
 
     const _editReply = interaction.editReply.bind(interaction);
     interaction.editReply = async function(options) {
+      if (!interaction.deferred && !interaction.replied) {
+        return interaction.reply(options);
+      }
       if (isCV2(options)) {
-         return interaction.client.rest.patch(`/webhooks/${interaction.client.user.id}/${interaction.token}/messages/@original`, {
-           body: { components: options.components, flags: options.flags }, files: options.files
-         });
+        const flags = (options.flags != null ? options.flags : 0) | 32768;
+        return interaction.client.rest.patch(`/webhooks/${interaction.client.user.id}/${interaction.token}/messages/@original`, {
+          body: { components: options.components, flags }, files: options.files
+        });
       }
       return _editReply(options);
     };
 
     const _reply = interaction.reply.bind(interaction);
     interaction.reply = async function(options) {
+      interaction.replied = true;
       if (isCV2(options)) {
-         return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
-           body: { type: 4, data: { components: options.components, flags: options.flags } }, files: options.files
-         });
+        const flags = (options.flags != null ? options.flags : 0) | 32768;
+        return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
+          body: { type: 4, data: { components: options.components, flags } }, files: options.files
+        });
       }
       return _reply(options);
     };
@@ -522,10 +533,12 @@ export default {
     if (interaction.update) {
       const _update = interaction.update.bind(interaction);
       interaction.update = async function(options) {
+        interaction.replied = true;
         if (isCV2(options)) {
-           return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
-             body: { type: 7, data: { components: options.components, flags: options.flags } }, files: options.files
-           });
+          const flags = (options.flags != null ? options.flags : 0) | 32768;
+          return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
+            body: { type: 7, data: { components: options.components, flags } }, files: options.files
+          });
         }
         return _update(options);
       };
@@ -535,9 +548,10 @@ export default {
       const _followUp = interaction.followUp.bind(interaction);
       interaction.followUp = async function(options) {
         if (isCV2(options)) {
-           return interaction.client.rest.post(`/webhooks/${interaction.client.user.id}/${interaction.token}`, {
-             body: { components: options.components, flags: options.flags }, files: options.files
-           });
+          const flags = (options.flags != null ? options.flags : 0) | 32768;
+          return interaction.client.rest.post(`/webhooks/${interaction.client.user.id}/${interaction.token}`, {
+            body: { components: options.components, flags }, files: options.files
+          });
         }
         return _followUp(options);
       };
