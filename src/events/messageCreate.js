@@ -413,7 +413,7 @@ export default {
             }
           });
         }
-      // 3. SECURE DM NOTIFICATION FOR TAGS
+      // 3. ATHENA DM NOTIFICATION FOR TAGS
       if (message.guild && message.mentions.users.size > 0) {
         message.mentions.users.forEach(async (user) => {
           if (user.id === message.author.id || user.bot) return;
@@ -422,17 +422,26 @@ export default {
           if (blockedServers.includes(message.guild.id)) return;
   
           try {
-              const authorNick = message.member?.displayName || message.author.username;
-              let snippet = message.content;
-              if (snippet.length > 50) snippet = snippet.substring(0, 47) + '...';
+              const cleanNick = (message.member?.displayName || message.author.displayName || message.author.username).replace(/[\[\]\(\)]/g, '').trim();
+              let snippet = message.cleanContent || message.content || '';
+              if (snippet.length > 60) snippet = snippet.substring(0, 57) + '...';
               if (!snippet.trim()) snippet = 'Attachment/Embed only';
+  
+              const iconUrl = message.guild.iconURL({ extension: 'png', size: 128 }) || message.author.displayAvatarURL({ extension: 'png', size: 128 });
   
               const container = {
                   type: 17,
                   components: [
-                      { type: 9, components: [{ type: 10, content: '**Athena Notification : ' + message.guild.name + '**' }], accessory: { type: 11, media: { url: message.guild.iconURL({ dynamic: true }) || 'https://cdn.discordapp.com/embed/avatars/0.png' } } },
+                      { 
+                        type: 9, 
+                        components: [{ type: 10, content: '**Athena Notification : ' + message.guild.name + '**' }], 
+                        accessory: { type: 11, media: { url: iconUrl } } 
+                      },
                       { type: 14, divider: true },
-                      { type: 10, content: "**Tagged By:** [@" + authorNick + "](https://discord.com/users/" + message.author.id + ")\n-# Channel: 💬 [" + message.channel.name + "](https://discord.com/channels/" + message.guild.id + "/" + message.channel.id + ")\n-# Message: " + snippet },
+                      { 
+                        type: 10, 
+                        content: `**Tagged By:** [${cleanNick}](https://discord.com/users/${message.author.id})\n-# Channel: [#${message.channel.name}](https://discord.com/channels/${message.guild.id}/${message.channel.id})\n-# Message: ${snippet}` 
+                      },
                       { type: 14, divider: true },
                       {
                           type: 1,

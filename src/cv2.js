@@ -77,7 +77,7 @@ function buildContainer(title, description, fields, customFooter) {
       'shield': 'Active Threat Neutralization and Firewall Defense Matrix Engaged.',
       'raid': 'Anti-Nuke Raid Protection Protocols Fully Enforced.',
       'info': 'System Data Retrieval and Analysis Complete.',
-      'log': 'Secure Audit Log Entry Processed.',
+      'log': 'Athena Audit Log Entry Processed.',
       'moderation': 'Administrative Moderation Action Executed.',
       'security': 'Athena Core Security System Active.',
       'owner': 'Executive Override Command Authorized.',

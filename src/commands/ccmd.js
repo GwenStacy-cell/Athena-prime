@@ -100,7 +100,7 @@ export const commands = [
             components: [
                 { type: 10, content: text.trim() },
                 { type: 14, divider: true },
-                { type: 10, content: `-# **Secure Custom Command Manager**` }
+                { type: 10, content: `-# **Athena Custom Command Manager**` }
             ]
         };
         return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
@@ -132,7 +132,7 @@ export const commands = [
             components: [
                 { type: 10, content: text.trim() },
                 { type: 14, divider: true },
-                { type: 10, content: `-# **Secure Custom Command Manager**` },
+                { type: 10, content: `-# **Athena Custom Command Manager**` },
                 { type: 14, divider: true },
                 row.toJSON()
             ]

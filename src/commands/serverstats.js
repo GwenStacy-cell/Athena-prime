@@ -148,7 +148,7 @@ export const commands = [
           const row1 = new ActionRowBuilder().addComponents(fontSelect);
           const row2 = new ActionRowBuilder().addComponents(emojiBtn);
 
-          const cv2Reply = cv2.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.\n\nâš **Note:** Discord limits voice channel renames to **2 times every 10 minutes**. If your changes don\'t apply immediately, please wait a few minutes for the rate limit to expire.');
+          const cv2Reply = cv2.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.\n\n<a:warning:1540656124313993247> **Note:** Discord limits voice channel renames to **2 times every 10 minutes**. If your changes don\'t apply immediately, please wait a few minutes for the rate limit to expire.');
           cv2Reply.components.push(row1, row2);
           const setupMsg = await message.reply(cv2Reply);
 
@@ -166,7 +166,7 @@ export const commands = [
                 await updateServerStatsChannels(message.guild, updated);
                 await i.editReply({ content: `<a:uptime:1552608831060844575> Font updated to **${selected}**!` });
               } catch (err) {
-                await i.editReply({ content: `âš Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour font choice **${selected}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
+                await i.editReply({ content: `<a:warning:1540656124313993247> Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour font choice **${selected}** has been saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
               }
             } else if (i.customId === 'serverstats_emoji') {
               const modal = new ModalBuilder()
@@ -195,7 +195,7 @@ export const commands = [
                   await updateServerStatsChannels(message.guild, updated);
                   await modalSubmit.editReply({ content: `<a:uptime:1552608831060844575> Emoji updated to ${emojiVal}!` });
                 } catch (err) {
-                  await modalSubmit.editReply({ content: `âš Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour emoji choice **${emojiVal}** has been securely saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
+                  await modalSubmit.editReply({ content: `<a:warning:1540656124313993247> Discord rejected the channel rename! Error: \`${err.message}\`\n\nYour emoji choice **${emojiVal}** has been saved. Please wait ~10 minutes without touching the config, and it will magically apply in the background.` });
                 }
               } catch(err) {}
             }
@@ -213,7 +213,7 @@ export const commands = [
           await updateServerStatsChannels(message.guild, updatedStats);
           return message.reply(cv2.success('Stats Configured', `Server stats font/emoji updated to **${newFont || 'standard'}** with emoji **${newEmoji || 'none'}**!`));
         } catch (err) {
-          return message.reply(cv2.warn('Stats Configured, but Discord Ratelimited', `Server stats config updated!\n\nâš **Discord rejected the immediate channel rename!**\nError: \`${err.message}\`\n\nYour choices are saved and will automatically apply in ~10 minutes.`));
+          return message.reply(cv2.warn('Stats Configured, but Discord Ratelimited', `Server stats config updated!\n\n<a:warning:1540656124313993247> **Discord rejected the immediate channel rename!**\nError: \`${err.message}\`\n\nYour choices are saved and will automatically apply in ~10 minutes.`));
         }
       }
 
