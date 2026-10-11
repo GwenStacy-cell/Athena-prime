@@ -144,7 +144,8 @@ export async function updateDashboardMessage(guild, client) {
       components: [
         {
           type: 10,
-          content: `## **ATHENA'S SECURITY DASHBOARD**\n` +
+          content: `<a:uptime:1552608831060844575> **[Live Sync Active]**\n` +
+                   `## **ATHENA'S SECURITY DASHBOARD**\n` +
                    `-# **• __Status:__ \`${stats.metrics.firewall === 'Active' ? 'PROTECTED' : 'VULNERABLE'}\`**\n` +
                    `-# **• __Last Sync:__ <t:${Math.floor(Date.now() / 1000)}:R>**\n` +
                    `-# **• __Live Monitoring:__ \`Active\`**`
@@ -224,7 +225,7 @@ export async function updateDashboardMessage(guild, client) {
           throw new Error('Purged old dashboard messages to recreate clean accent borderless CV2 containers');
         }
 
-        try { await m1.edit({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', components: [cardDb], files: [fileDb], attachments: [], flags: MessageFlags.IsComponentsV2 }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
+        try { await m1.edit({ components: [cardDb], files: [fileDb], attachments: [], flags: MessageFlags.IsComponentsV2 }); } catch(e) { throw new Error(`Edit m1 failed: ${e.code}`); }
         try { await m2.edit({ components: [cardTo], files: [fileTo], attachments: [], flags: MessageFlags.IsComponentsV2 }); } catch(e) { throw new Error(`Edit m2 failed: ${e.code}`); }
         try { await m3.edit({ components: [cardAm], files: [fileAm], attachments: [], flags: MessageFlags.IsComponentsV2 }); } catch(e) { throw new Error(`Edit m3 failed: ${e.code}`); }
         
@@ -262,7 +263,7 @@ export async function updateDashboardMessage(guild, client) {
         });
         if (!needsRecreate) {
           try {
-            await msgs[0].edit({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', components: [cardDb], files: [fileDb], attachments: [], flags: MessageFlags.IsComponentsV2 });
+            await msgs[0].edit({ components: [cardDb], files: [fileDb], attachments: [], flags: MessageFlags.IsComponentsV2 });
             await msgs[1].edit({ components: [cardTo], files: [fileTo], attachments: [], flags: MessageFlags.IsComponentsV2 });
             await msgs[2].edit({ components: [cardAm], files: [fileAm], attachments: [], flags: MessageFlags.IsComponentsV2 });
             db.setDashboardInfo(guild.id, channel.id, [msgs[0].id, msgs[1].id, msgs[2].id]);
@@ -279,7 +280,7 @@ export async function updateDashboardMessage(guild, client) {
       }
     }
 
-    const m1 = await channel.send({ content: '<a:uptime:1552608831060844575> **[Live Sync Active]**', components: [cardDb], files: [fileDb], flags: MessageFlags.IsComponentsV2 });
+    const m1 = await channel.send({ components: [cardDb], files: [fileDb], flags: MessageFlags.IsComponentsV2 });
     const m2 = await channel.send({ components: [cardTo], files: [fileTo], flags: MessageFlags.IsComponentsV2 });
     const m3 = await channel.send({ components: [cardAm], files: [fileAm], flags: MessageFlags.IsComponentsV2 });
 

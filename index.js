@@ -397,6 +397,14 @@ function interceptPayload(body) {
       let container = toCleanJson(target.components[containerIdx]);
       if (!container.components) container.components = [];
 
+      const textContent = target.content || body.content;
+      if (textContent) {
+        container.components.unshift({ type: 14, divider: true });
+        container.components.unshift({ type: 10, content: textContent });
+        delete target.content;
+        delete body.content;
+      }
+
       const outsideRows = target.components
         .filter((c, idx) => idx !== containerIdx && isActionRow(c))
         .map(toCleanJson);
@@ -432,10 +440,12 @@ function interceptPayload(body) {
     if (target.embeds && target.embeds.length > 0) {
       const cv2Containers = target.embeds.map(e => convertEmbedToCV2(e));
       
-      if (target.content) {
+      const textContent = target.content || body.content;
+      if (textContent) {
          cv2Containers[0].components.unshift({ type: 14, divider: true });
-         cv2Containers[0].components.unshift({ type: 10, content: target.content });
+         cv2Containers[0].components.unshift({ type: 10, content: textContent });
          delete target.content;
+         delete body.content;
       }
 
       // Bring ALL action rows (buttons, select menus) INSIDE the container!
@@ -470,6 +480,11 @@ function interceptPayload(body) {
 
     if (target.components && target.components.some(c => c.type === 9 || c.type === 14 || isContainer(c))) {
       target.flags = (target.flags || 0) | 32768;
+    }
+
+    if ((target.flags & 32768) || (body.flags & 32768)) {
+      delete target.content;
+      delete body.content;
     }
 
     return false;

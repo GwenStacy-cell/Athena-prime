@@ -504,6 +504,24 @@ export default {
       return false;
     };
 
+    const prepareCV2Payload = (options) => {
+      const flags = (options.flags != null ? options.flags : 0) | 32768;
+      let comps = Array.isArray(options.components) ? [...options.components] : [];
+      if (options.content) {
+        const cIdx = comps.findIndex(c => c && (c.type === 17 || c.data?.type === 17));
+        if (cIdx !== -1) {
+          const c = { ...(comps[cIdx].toJSON ? comps[cIdx].toJSON() : comps[cIdx]) };
+          c.components = Array.isArray(c.components) ? [...c.components] : [];
+          c.components.unshift({ type: 14, divider: true });
+          c.components.unshift({ type: 10, content: options.content });
+          comps[cIdx] = c;
+        } else {
+          comps.unshift({ type: 17, components: [{ type: 10, content: options.content }] });
+        }
+      }
+      return { components: comps, flags };
+    };
+
     const _editReply = interaction.editReply.bind(interaction);
     interaction.editReply = async function(options) {
       if (!interaction.deferred && !interaction.replied) {
@@ -511,9 +529,7 @@ export default {
       }
       interaction.replied = true;
       if (isCV2(options)) {
-        const flags = (options.flags != null ? options.flags : 0) | 32768;
-        const body = { components: options.components, flags };
-        if (options.content !== undefined) body.content = options.content;
+        const body = prepareCV2Payload(options);
         return interaction.client.rest.patch(`/webhooks/${interaction.client.user.id}/${interaction.token}/messages/@original`, {
           body, files: options.files
         });
@@ -525,9 +541,7 @@ export default {
     interaction.reply = async function(options) {
       interaction.replied = true;
       if (isCV2(options)) {
-        const flags = (options.flags != null ? options.flags : 0) | 32768;
-        const data = { components: options.components, flags };
-        if (options.content !== undefined) data.content = options.content;
+        const data = prepareCV2Payload(options);
         return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
           body: { type: 4, data }, files: options.files
         });
@@ -540,9 +554,7 @@ export default {
       interaction.update = async function(options) {
         interaction.replied = true;
         if (isCV2(options)) {
-          const flags = (options.flags != null ? options.flags : 0) | 32768;
-          const data = { components: options.components, flags };
-          if (options.content !== undefined) data.content = options.content;
+          const data = prepareCV2Payload(options);
           return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
             body: { type: 7, data }, files: options.files
           });
@@ -555,9 +567,7 @@ export default {
       const _followUp = interaction.followUp.bind(interaction);
       interaction.followUp = async function(options) {
         if (isCV2(options)) {
-          const flags = (options.flags != null ? options.flags : 0) | 32768;
-          const body = { components: options.components, flags };
-          if (options.content !== undefined) body.content = options.content;
+          const body = prepareCV2Payload(options);
           return interaction.client.rest.post(`/webhooks/${interaction.client.user.id}/${interaction.token}`, {
             body, files: options.files
           });
