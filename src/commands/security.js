@@ -515,11 +515,11 @@ export const commands = [
     permissions: [PermissionFlagsBits.ManageNicknames],
     options: [],
     async executePrefix(message, args) {
-      const payload = await buildAutonickDashboard(message.guild.id);
+      const payload = await buildAutonickDashboard(message.guild.id, message.guild);
       await message.reply(payload);
     },
     async executeSlash(interaction) {
-      const payload = await buildAutonickDashboard(interaction.guild.id);
+      const payload = await buildAutonickDashboard(interaction.guild.id, interaction.guild);
       await interaction.reply(payload);
     }
   },
@@ -2310,45 +2310,81 @@ async function handleBlacklist(guild, moderator, action, phrase) {
     return cv2.info('Filtered Word Blacklist', `If a non-moderator sends a message matching any of these terms, it will be deleted immediately:\n\n${formattedWords}`);
   }
 }
-export async function buildAutonickDashboard(guildId) {
+export async function buildAutonickDashboard(guildId, guild = null) {
   let cfg = db.getGuildConfig(guildId);
   if (!cfg.autonick) {
     cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
     db.updateGuildConfig(guildId, { autonick: cfg.autonick });
   }
 
-  const state = cfg.autonick.enabled ? 'ENABLED' : 'DISABLED';
-  const color = cfg.autonick.enabled ? 'success' : 'danger';
+  const { formatNickname } = await import('../utils/helpers.js');
+  const ON = '<:on:1533844867191406672>';
+  const OFF = '<:off:1533844858983157851>';
+  const isEnabled = !!cfg.autonick.enabled;
   const layout = cfg.autonick.layout || '{name}';
-  const exampleName = layout.replace('{name}', 'Username');
-  
-  const dashboardEmbed = cv2[color]('Autonick Manager', `**Status:** \`${state}\`\n**Current Layout:** \`${layout}\`\n**Example Preview:** \`${exampleName}\`\n\nUse the buttons below to cleanly manage the Auto-nickname settings.`);
+  const preview = formatNickname(layout, 'Speed');
 
-  const toggleBtn = new ButtonBuilder()
-    .setCustomId('autonick_toggle')
-    .setLabel(cfg.autonick.enabled ? 'Disable' : 'Enable')
-    .setStyle(cfg.autonick.enabled ? ButtonStyle.Danger : ButtonStyle.Success);
-    
-  const editBtn = new ButtonBuilder()
-    .setCustomId('autonick_edit')
-    .setLabel('Edit Layout')
-    .setStyle(ButtonStyle.Primary);
-    
-  const syncBtn = new ButtonBuilder()
-    .setCustomId('autonick_sync')
-    .setLabel('Sync Members')
-    .setStyle(ButtonStyle.Secondary);
+  let statsSection = '';
+  if (guild) {
+    try {
+      const allMembers = guild.members.cache.filter(m => !m.user.bot && m.id !== guild.ownerId);
+      const manageable = allMembers.filter(m => m.manageable);
+      const synced = manageable.filter(m => {
+        const expected = formatNickname(layout, m.user.globalName || m.user.username);
+        return m.displayName === expected;
+      });
+      const percent = manageable.size > 0 ? Math.round((synced.size / manageable.size) * 100) : 0;
+      statsSection = `\n- **Live Synced Members:** \`${synced.size}\` / \`${manageable.size}\` (\`${percent}%\` formatted)`;
+    } catch (e) {}
+  }
 
-  const restoreBtn = new ButtonBuilder()
-    .setCustomId('autonick_restore')
-    .setLabel('Restore Names')
-    .setStyle(ButtonStyle.Danger);
+  const container = {
+    type: 17,
+    components: [
+      {
+        type: 10,
+        content: `## **Autonick Manager**\n` +
+                 `- **Status:** ${isEnabled ? `${ON} \`ACTIVE\`` : `${OFF} \`DISABLED\``}\n` +
+                 `- **Current Layout:** \`${layout}\`\n` +
+                 `- **Example Preview:** \`${preview}\`` +
+                 statsSection
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# Use the buttons below to toggle auto-formatting, customize the layout template, or run a live mass-sync across all server members.`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# Athena Bulletproof Security System • V1.0.0`
+      },
+      {
+        type: 1,
+        components: [
+          new ButtonBuilder()
+            .setCustomId('autonick_toggle')
+            .setLabel(isEnabled ? 'Disable' : 'Enable')
+            .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            .setEmoji(isEnabled ? { id: '1533844858983157851' } : { id: '1533844867191406672' }),
+          new ButtonBuilder()
+            .setCustomId('autonick_edit')
+            .setLabel('Edit Layout')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId('autonick_sync')
+            .setLabel('Sync Members')
+            .setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder()
+            .setCustomId('autonick_restore')
+            .setLabel('Restore Names')
+            .setStyle(ButtonStyle.Danger)
+        ]
+      }
+    ]
+  };
 
-  const row = new ActionRowBuilder().addComponents(toggleBtn, editBtn, syncBtn);
-  const row2 = new ActionRowBuilder().addComponents(restoreBtn);
-  dashboardEmbed.components.push(row);
-  dashboardEmbed.components.push(row2);
-  return dashboardEmbed;
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 async function handleConfig(guild, moderator, setting, value) {
   const updates = {};
@@ -3877,58 +3913,272 @@ export async function getAdvancedConfigPanel(guild) {
 export async function handleAutonickButton(interaction) {
   const customId = interaction.customId;
   const guildId = interaction.guild.id;
+  const guild = interaction.guild;
   const db = (await import("../database.js")).default;
-  const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import("discord.js");
+  const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags } = await import("discord.js");
+  const { formatNickname } = await import('../utils/helpers.js');
   let cfg = db.getGuildConfig(guildId);
   if (!cfg.autonick) cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
 
   if (customId === 'autonick_toggle') {
     cfg.autonick.enabled = !cfg.autonick.enabled;
     db.updateGuildConfig(guildId, { autonick: cfg.autonick });
-    return interaction.update(await buildAutonickDashboard(guildId));
+    return interaction.update(await buildAutonickDashboard(guildId, guild));
   }
 
   if (customId === 'autonick_edit') {
     const modal = new ModalBuilder().setCustomId('autonick_modal').setTitle('Edit Autonick Layout');
     modal.addComponents(
       new ActionRowBuilder().addComponents(
-        new TextInputBuilder().setCustomId('layout').setLabel('Nickname Layout (use {name})').setStyle(TextInputStyle.Short).setValue(cfg.autonick.layout || '{name}').setRequired(true)
+        new TextInputBuilder()
+          .setCustomId('layout')
+          .setLabel('Nickname Layout (use {user} or {name})')
+          .setStyle(TextInputStyle.Short)
+          .setValue(cfg.autonick.layout || '{name}')
+          .setPlaceholder('e.g. (ENT{user}) or ENT | {name}')
+          .setRequired(true)
       )
     );
     return interaction.showModal(modal);
   }
 
   if (customId === 'autonick_sync') {
-    await interaction.reply({ ...cv2.info('Processing', 'Please wait...'), flags: 64 });
-    let count = 0;
+    // PUBLIC MESSAGE (VISIBLE FOR ALL)
+    const loadingCard = {
+      type: 17,
+      components: [
+        {
+          type: 10,
+          content: `## <a:loading:1542155051286396938> **Synchronizing Nicknames...**\n` +
+                   `- **Target Layout:** \`${cfg.autonick.layout}\`\n` +
+                   `- **Status:** Fetching server member roster...\n` +
+                   `- **Live Synced:** \`0\` members updated`
+        },
+        { type: 14, divider: true },
+        { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+      ]
+    };
+
+    await interaction.reply({ components: [loadingCard], flags: MessageFlags.IsComponentsV2 });
+
+    let members;
     try {
-      const members = await interaction.guild.members.fetch();
-      for (const [id, member] of members) {
-        if (member.user.bot || member.id === interaction.guild.ownerId) continue;
-        const newNick = cfg.autonick.layout.replace('{name}', member.user.username).substring(0, 32);
-        if (member.displayName !== newNick) {
-          await member.setNickname(newNick).catch(()=>{});
-          count++;
-        }
+      members = await guild.members.fetch();
+    } catch(e) {
+      const errCard = {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `## **Sync Error**\nFailed to fetch guild members: \`${e.message}\``
+          },
+          { type: 14, divider: true },
+          { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+        ]
+      };
+      return interaction.editReply({ components: [errCard] });
+    }
+
+    const eligible = [];
+    for (const [id, member] of members) {
+      if (member.user.bot || member.id === guild.ownerId) continue;
+      if (!member.manageable) continue;
+      const expectedNick = formatNickname(cfg.autonick.layout, member.user.globalName || member.user.username);
+      if (member.displayName !== expectedNick) {
+        eligible.push({ member, expectedNick });
       }
-    } catch(e) {}
-    return cv2.edit(interaction, { content: `Successfully synced nicknames for **${count}** members.` });
+    }
+
+    if (eligible.length === 0) {
+      const completeCard = {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `## <a:uptime:1552608831060844575> **Nickname Synchronization Complete**\n` +
+                     `- **Target Layout:** \`${cfg.autonick.layout}\`\n` +
+                     `- **Status:** All manageable members are already up-to-date!\n` +
+                     `- **Total Evaluated:** \`${members.filter(m => !m.user.bot && m.id !== guild.ownerId).size}\` members`
+          },
+          { type: 14, divider: true },
+          { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+        ]
+      };
+      return interaction.editReply({ components: [completeCard] });
+    }
+
+    let count = 0;
+    let failed = 0;
+    const total = eligible.length;
+    let lastUpdate = Date.now();
+
+    for (let i = 0; i < total; i++) {
+      const { member, expectedNick } = eligible[i];
+      try {
+        await member.setNickname(expectedNick, 'Athena Autonick Sync');
+        count++;
+      } catch (err) {
+        failed++;
+      }
+
+      const now = Date.now();
+      if (i === total - 1 || now - lastUpdate >= 2000 || (i > 0 && i % 5 === 0)) {
+        lastUpdate = now;
+        const percent = Math.round(((i + 1) / total) * 100);
+        await interaction.editReply({
+          components: [{
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## <a:loading:1542155051286396938> **Synchronizing Nicknames...**\n` +
+                         `- **Target Layout:** \`${cfg.autonick.layout}\`\n` +
+                         `- **Progress:** **${count}** / **${total}** members updated (\`${percent}%\`)\n` +
+                         `- **Live Synced:** \`${count}\` updated • \`${failed}\` skipped`
+              },
+              { type: 14, divider: true },
+              { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+            ]
+          }]
+        }).catch(() => null);
+      }
+
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    const finalCard = {
+      type: 17,
+      components: [
+        {
+          type: 10,
+          content: `## <a:uptime:1552608831060844575> **Nickname Synchronization Complete**\n` +
+                   `- **Target Layout:** \`${cfg.autonick.layout}\`\n` +
+                   `- **Successfully Synced:** **${count}** members\n` +
+                   `- **Skipped / Unmanageable:** **${failed}** members\n` +
+                   `- **Total Processed:** **${total}** members`
+        },
+        { type: 14, divider: true },
+        { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+      ]
+    };
+    return interaction.editReply({ components: [finalCard] });
   }
 
   if (customId === 'autonick_restore') {
-    await interaction.reply({ ...cv2.info('Processing', 'Please wait...'), flags: 64 });
-    let count = 0;
+    // PUBLIC MESSAGE (VISIBLE FOR ALL)
+    const loadingCard = {
+      type: 17,
+      components: [
+        {
+          type: 10,
+          content: `## <a:loading:1542155051286396938> **Restoring Original Nicknames...**\n` +
+                   `- **Status:** Fetching server member roster...\n` +
+                   `- **Live Restored:** \`0\` names reset`
+        },
+        { type: 14, divider: true },
+        { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+      ]
+    };
+
+    await interaction.reply({ components: [loadingCard], flags: MessageFlags.IsComponentsV2 });
+
+    let members;
     try {
-      const members = await interaction.guild.members.fetch();
-      for (const [id, member] of members) {
-        if (member.user.bot || member.id === interaction.guild.ownerId) continue;
-        if (member.nickname) {
-          await member.setNickname(null).catch(()=>{});
-          count++;
-        }
+      members = await guild.members.fetch();
+    } catch(e) {
+      const errCard = {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `## **Restore Error**\nFailed to fetch guild members: \`${e.message}\``
+          },
+          { type: 14, divider: true },
+          { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+        ]
+      };
+      return interaction.editReply({ components: [errCard] });
+    }
+
+    const toRestore = [];
+    for (const [id, member] of members) {
+      if (member.user.bot || member.id === guild.ownerId) continue;
+      if (!member.manageable) continue;
+      if (member.nickname) {
+        toRestore.push(member);
       }
-    } catch(e) {}
-    return cv2.edit(interaction, { content: `Successfully restored original names for **${count}** members.` });
+    }
+
+    if (toRestore.length === 0) {
+      const cleanCard = {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `## <a:uptime:1552608831060844575> **Original Nicknames Restored**\n` +
+                     `- **Status:** No custom nicknames found to restore.\n` +
+                     `- **Evaluated:** \`${members.filter(m => !m.user.bot && m.id !== guild.ownerId).size}\` members`
+          },
+          { type: 14, divider: true },
+          { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+        ]
+      };
+      return interaction.editReply({ components: [cleanCard] });
+    }
+
+    let count = 0;
+    let failed = 0;
+    const total = toRestore.length;
+    let lastUpdate = Date.now();
+
+    for (let i = 0; i < total; i++) {
+      const member = toRestore[i];
+      try {
+        await member.setNickname(null, 'Athena Autonick Restore');
+        count++;
+      } catch (err) {
+        failed++;
+      }
+
+      const now = Date.now();
+      if (i === total - 1 || now - lastUpdate >= 2000 || (i > 0 && i % 5 === 0)) {
+        lastUpdate = now;
+        const percent = Math.round(((i + 1) / total) * 100);
+        await interaction.editReply({
+          components: [{
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## <a:loading:1542155051286396938> **Restoring Original Nicknames...**\n` +
+                         `- **Progress:** **${count}** / **${total}** names restored (\`${percent}%\`)\n` +
+                         `- **Live Restored:** \`${count}\` restored • \`${failed}\` skipped`
+              },
+              { type: 14, divider: true },
+              { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+            ]
+          }]
+        }).catch(() => null);
+      }
+
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    const finalCard = {
+      type: 17,
+      components: [
+        {
+          type: 10,
+          content: `## <a:uptime:1552608831060844575> **Original Nicknames Restored**\n` +
+                   `- **Successfully Restored:** **${count}** members\n` +
+                   `- **Skipped / Unmanageable:** **${failed}** members\n` +
+                   `- **Total Processed:** **${total}** members`
+        },
+        { type: 14, divider: true },
+        { type: 10, content: `-# Athena Bulletproof Security System • V1.0.0` }
+      ]
+    };
+    return interaction.editReply({ components: [finalCard] });
   }
 }
 
@@ -3940,6 +4190,6 @@ export async function handleAutonickModal(interaction) {
   if (!cfg.autonick) cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' };
   cfg.autonick.layout = layout;
   db.updateGuildConfig(guildId, { autonick: cfg.autonick });
-  return interaction.update(await buildAutonickDashboard(guildId));
+  return interaction.update(await buildAutonickDashboard(guildId, interaction.guild));
 }
 

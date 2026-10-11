@@ -463,6 +463,15 @@ export function getPresenceStatus(guild, ownerId) {
   }
 }
 
+export function formatNickname(layout, name) {
+  if (!layout) layout = '{name}';
+  const cleanName = (name || 'User').trim();
+  if (/\{(name|user|username)\}/i.test(layout)) {
+    return layout.replace(/\{(name|user|username)\}/gi, cleanName).substring(0, 32);
+  }
+  return `${layout} ${cleanName}`.trim().substring(0, 32);
+}
+
 export async function applyAutonick(member, autonickConfig) {
   if (!autonickConfig || !autonickConfig.enabled) return false;
   if (!member.manageable) return false;
@@ -475,15 +484,7 @@ export async function applyAutonick(member, autonickConfig) {
   }
 
   const baseName = member.user.globalName || member.user.username;
-  const layoutLenWithoutName = layout.length - '{name}'.length;
-  const maxNameLen = Math.max(1, 32 - layoutLenWithoutName);
-  
-  let finalName = baseName;
-  if (finalName.length > maxNameLen) {
-    finalName = finalName.substring(0, maxNameLen);
-  }
-  
-  const targetNick = layout.replace('{name}', finalName).substring(0, 32);
+  const targetNick = formatNickname(layout, baseName);
   
   if (member.displayName === targetNick || member.nickname === targetNick) return false;
   
