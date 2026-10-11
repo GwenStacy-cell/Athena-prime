@@ -387,29 +387,58 @@ export const commands = [
       await this._executeTime(message.guild, message.client, message, message.author);
     },
     async executeSlash(interaction) {
+      await interaction.deferReply();
       await this._executeTime(interaction.guild, interaction.client, interaction, interaction.user);
     },
     async _executeTime(guild, client, context, user) {
-      const { EmbedBuilder } = await import('discord.js');
-      const cfg = db.getGuildConfig(guild?.id || '0');
-      const accentHex = cfg?.accentColor || '#00e5ff';
-      const accentInt = parseInt(accentHex.replace('#', ''), 16);
-
       const now = new Date();
       const timeStr = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' });
       const dateStr = now.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      const avatarUrl = user.displayAvatarURL ? user.displayAvatarURL({ size: 256, extension: 'png' }) : null;
 
-      const e1 = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`> **COMMAND | ├ó┬¥ΓÇó**`);
+      const sectionComponents = [
+        {
+          type: 10,
+          content: `-# **• Executed by <@${user.id}>**\n# **${timeStr}**\n-# **• Indian Standard Time (IST) · ${dateStr}**`
+        }
+      ];
 
-      const e2 = new EmbedBuilder()
-        .setColor(accentInt)
-        .setDescription(`> ├óΓé¼┬ó <@${user.id}> executed\n> **<:emoji_25:1515041866796503180> Time :**\n# ${timeStr}\n> **(IST) - ${dateStr}**`)
-        .setThumbnail(user.displayAvatarURL({ size: 256, dynamic: true }));
+      const mainSection = avatarUrl
+        ? {
+            type: 9,
+            components: sectionComponents,
+            accessory: {
+              type: 11,
+              media: { url: avatarUrl }
+            }
+          }
+        : sectionComponents[0];
 
-      if (context.reply) {
-        await context.reply({ embeds: [e1, e2] });
+      const container = {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: '## **Current System Time**'
+          },
+          { type: 14, divider: true },
+          mainSection,
+          { type: 14, divider: true },
+          {
+            type: 10,
+            content: '-# **Athena Bulletproof Security System · V1.0.0**'
+          }
+        ]
+      };
+
+      if (context.isChatInputCommand && context.isChatInputCommand()) {
+        if (context.deferred || context.replied) {
+          await context.editReply({ components: [container], flags: 32768 });
+        } else {
+          await context.reply({ components: [container], flags: 32768 });
+        }
+      } else if (context.reply) {
+        await context.reply({ components: [container], flags: 32768 });
       }
     }
   },
