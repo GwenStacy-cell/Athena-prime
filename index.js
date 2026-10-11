@@ -281,69 +281,76 @@ function pushDivider(comps) {
       pushDivider(comps);
     }
 
-    // Header content (title + description)
-    let headerContent = '';
     if (embedData.title) {
-      headerContent += `## **${embedData.title}**\n`;
+      comps.push({ type: 10, content: `## **${embedData.title}**` });
+      pushDivider(comps);
     }
 
     if (embedData.description) {
-      let desc = embedData.description;
-      const lines = desc.split('\n');
-      desc = lines.map(l => {
+      const lines = embedData.description.split('\n');
+      const formatted = lines.map(l => {
         if (!l.trim()) return l;
-        return l.replace(/^-#\s*/, '');
+        const clean = l.replace(/^-#\s*/, '').replace(/\*([^*]+)\*/g, '$1');
+        return `-# **${clean}**`;
       }).join('\n');
-      headerContent += desc;
-    }
 
-    // If there is a thumbnail, render as Section (type 9) with small avatar / icon accessory (type 11)!
-    if (embedData.thumbnail && embedData.thumbnail.url) {
-      comps.push({
-        type: 9,
-        components: [{ type: 10, content: headerContent.trim() || '\u200b' }],
-        accessory: {
-          type: 11,
-          media: { url: embedData.thumbnail.url }
-        }
-      });
-    } else if (headerContent.trim()) {
-      comps.push({ type: 10, content: headerContent.trim() });
+      if (embedData.thumbnail && embedData.thumbnail.url) {
+        comps.push({
+          type: 9,
+          components: [{ type: 10, content: formatted.trim() || '\u200b' }],
+          accessory: {
+            type: 11,
+            media: { url: embedData.thumbnail.url }
+          }
+        });
+      } else {
+        comps.push({ type: 10, content: formatted.trim() || '\u200b' });
+      }
+      pushDivider(comps);
+    } else if (embedData.thumbnail && embedData.thumbnail.url) {
+      if (comps.length > 0 && comps[comps.length - 1].type === 10) {
+        const last = comps.pop();
+        comps.push({
+          type: 9,
+          components: [last],
+          accessory: { type: 11, media: { url: embedData.thumbnail.url } }
+        });
+        pushDivider(comps);
+      }
     }
 
     if (embedData.fields && embedData.fields.length > 0) {
       let fieldText = '';
       let inlineBuf = [];
       for (const f of embedData.fields) {
+        const cleanVal = f.value.replace(/^-#\s*/gm, '').replace(/\*([^*]+)\*/g, '$1');
         if (f.inline) {
-          inlineBuf.push(`**${f.name}:** ${f.value}`);
+          inlineBuf.push(`**${f.name}:** ${cleanVal}`);
         } else {
-          if (inlineBuf.length > 0) { fieldText += inlineBuf.join('  **·**  ') + '\n'; inlineBuf = []; }
-          fieldText += `\n**${f.name}**\n${f.value.replace(/^-#\s*/gm, '')}\n`;
+          if (inlineBuf.length > 0) { fieldText += '-# **' + inlineBuf.join('  ·  ') + '**\n'; inlineBuf = []; }
+          fieldText += `\n-# **${f.name}**\n-# **${cleanVal.replace(/\n/g, '\n-# **')}**\n`;
         }
       }
-      if (inlineBuf.length > 0) fieldText += '\n' + inlineBuf.join('  **·**  ') + '\n';
+      if (inlineBuf.length > 0) fieldText += '\n-# **' + inlineBuf.join('  ·  ') + '**\n';
       
       if (fieldText.trim()) {
-        pushDivider(comps);
         comps.push({ type: 10, content: fieldText.trim() });
+        pushDivider(comps);
       }
     }
 
     if (embedData.image && embedData.image.url) {
-      pushDivider(comps);
       comps.push({ type: 12, items: [{ media: { url: embedData.image.url } }] });
+      pushDivider(comps);
     }
 
     if (embedData.footer) {
-      pushDivider(comps);
-      comps.push({ type: 10, content: `-# **${embedData.footer.text.replace(/^-#\s*/, '')}**` });
+      const footerText = embedData.footer.text.replace(/^-#\s*/, '').replace(/\*([^*]+)\*/g, '$1');
+      comps.push({ type: 10, content: `-# **${footerText}**` });
     }
 
+    // Pure borderless CV2 container (no accent_color)
     const container = { type: 17, components: comps };
-    if (embedData.color != null) {
-      container.accent_color = embedData.color;
-    }
     return container;
   }
 
@@ -485,6 +492,14 @@ function interceptPayload(body) {
     if ((target.flags & 32768) || (body.flags & 32768)) {
       delete target.content;
       delete body.content;
+      if (Array.isArray(target.components)) {
+        for (const c of target.components) {
+          if (c) {
+            delete c.accent_color;
+            if (c.data) delete c.data.accent_color;
+          }
+        }
+      }
     }
 
     return false;

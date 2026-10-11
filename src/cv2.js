@@ -14,19 +14,27 @@ function hasEmojiStart(line) {
 // Style a single line: grey, with optional bullet for plain text
 function styleLine(line, addBullet) {
   if (!line.trim()) return line;
-  if (isPreformatted(line)) return line;
+  if (isPreformatted(line)) {
+    const clean = line.replace(/\*([^*]+)\*/g, '$1');
+    if (clean.startsWith('-#') && !clean.includes('**')) {
+      const rest = clean.replace(/^-#\s*/, '');
+      return '-# **' + rest + '**';
+    }
+    return clean;
+  }
   const startsEmoji = hasEmojiStart(line);
   const hasListMarker = /^[\u2022\-\*+] /.test(line);
   
   const bullet = (addBullet && !hasListMarker) ? '\u2022 ' : '';
-  return '-# ' + bullet + line;
+  const cleanLine = line.replace(/\*([^*]+)\*/g, '$1').replace(/^\*\*|\*\*$/g, '');
+  return '-# **' + bullet + cleanLine + '**';
 }
 
 // Separator raw component
 const SEP = { type: 14, divider: true };
 
 // Build a raw CV2 container JSON with separators
-function buildContainer(title, description, fields, customFooter, accentColor) {
+function buildContainer(title, description, fields, customFooter) {
   if (!fields) fields = [];
   var comps = [];
 
@@ -52,14 +60,15 @@ function buildContainer(title, description, fields, customFooter, accentColor) {
   var inlineBuf = [];
   for (var i = 0; i < fields.length; i++) {
     var f = fields[i];
+    var cleanVal = (f.value || '').replace(/\*([^*]+)\*/g, '$1');
     if (f.inline) {
-      inlineBuf.push('**' + f.name + ':** ' + f.value);
+      inlineBuf.push('**' + f.name + ':** ' + cleanVal);
     } else {
-      if (inlineBuf.length > 0) { fieldText += '-# ' + inlineBuf.join('  **\u00b7**  ') + '\n'; inlineBuf = []; }
-      fieldText += '\n-# **' + f.name + '**\n-# ' + f.value.replace(/\n/g, '\n-# ') + '\n';
+      if (inlineBuf.length > 0) { fieldText += '-# **' + inlineBuf.join('  **\u00b7**  ') + '**\n'; inlineBuf = []; }
+      fieldText += '\n-# **' + f.name + '**\n-# **' + cleanVal.replace(/\n/g, '\n-# **') + '**\n';
     }
   }
-  if (inlineBuf.length > 0) fieldText += '\n-# ' + inlineBuf.join('  **\u00b7**  ') + '\n';
+  if (inlineBuf.length > 0) fieldText += '\n-# **' + inlineBuf.join('  **\u00b7**  ') + '**\n';
   if (fieldText.trim()) {
     comps.push(SEP);
     comps.push({ type: 10, content: fieldText.trim() });
@@ -90,43 +99,28 @@ function buildContainer(title, description, fields, customFooter, accentColor) {
 
   comps.push({ type: 10, content: `-# **${footerText}**` });
 
-  const container = { type: 17, components: comps };
-  if (accentColor != null) {
-    container.accent_color = typeof accentColor === 'string' ? parseInt(accentColor.replace('#', ''), 16) : accentColor;
-  }
-  return container;
+  // Pure borderless CV2 container (no accent_color)
+  return { type: 17, components: comps };
 }
 
-function make(title, desc, fields, eph, customFooter, accentColor) {
+function make(title, desc, fields, eph, customFooter) {
   if (!fields) fields = [];
   if (!eph) eph = false;
   var flags = eph ? (MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral) : MessageFlags.IsComponentsV2;
-  return { components: [buildContainer(title, desc, fields, customFooter, accentColor)], flags: flags };
+  return { components: [buildContainer(title, desc, fields, customFooter)], flags: flags };
 }
-
-const STATUS_COLORS = {
-  success:  0x57F287,
-  warn:     0xFEE75C,
-  danger:   0xED4245,
-  error:    0xED4245,
-  info:     0x5865F2,
-  raid:     0xED4245,
-  owner:    0x9B59B6,
-  security: 0x00FFFF,
-  log:      0x2B2D31
-};
 
 var _m = function(eph) {
   return {
-    success:  function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.success); },
-    warn:     function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.warn); },
-    danger:   function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.danger); },
-    error:    function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.error); },
-    info:     function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.info); },
-    raid:     function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.raid); },
-    owner:    function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.owner); },
-    security: function(t,d,f,ft,c) { return make(t,d,f,eph,ft, c || STATUS_COLORS.security); },
-    log:      function(t,d,f,ft,c) { return make('Log: ' + t, d, f, eph, ft, c || STATUS_COLORS.log); },
+    success:  function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    warn:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    danger:   function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    error:    function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    info:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    raid:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    owner:    function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    security: function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    log:      function(t,d,f,ft) { return make('Log: ' + t, d, f, eph, ft); },
   };
 };
 
@@ -143,9 +137,14 @@ export var cv2 = Object.assign(_m(false), {
     const isCV2 = payload.flags != null && (payload.flags & 32768);
     let body = payload;
     if (isCV2) {
-      body = { components: payload.components, flags: payload.flags };
-      if (payload.content) body.content = payload.content;
-      if (payload.embeds) body.embeds = payload.embeds;
+      const comps = Array.isArray(payload.components) ? [...payload.components] : [];
+      if (payload.content) {
+        if (comps[0]?.type === 17 && Array.isArray(comps[0].components)) {
+          comps[0].components.unshift({ type: 14, divider: true });
+          comps[0].components.unshift({ type: 10, content: payload.content });
+        }
+      }
+      body = { components: comps, flags: payload.flags };
       if (payload.files) body.files = payload.files;
     }
     

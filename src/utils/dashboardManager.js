@@ -140,7 +140,6 @@ export async function updateDashboardMessage(guild, client) {
 
     const cardDb = {
       type: 17,
-      accent_color: accentInt,
       components: [
         {
           type: 10,
@@ -165,7 +164,6 @@ export async function updateDashboardMessage(guild, client) {
 
     const cardTo = {
       type: 17,
-      accent_color: accentInt,
       components: [
         {
           type: 10,
@@ -186,7 +184,6 @@ export async function updateDashboardMessage(guild, client) {
 
     const cardAm = {
       type: 17,
-      accent_color: accentInt,
       components: [
         {
           type: 10,

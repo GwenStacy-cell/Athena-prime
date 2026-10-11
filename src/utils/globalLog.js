@@ -29,7 +29,6 @@ export async function postGlobalActionLog(client, opts) {
 
   const card = {
     type: 17,
-    accent_color: 0xed4245,
     components: [
       {
         type: 10,
