@@ -527,8 +527,8 @@ export default {
       if (!interaction.deferred && !interaction.replied) {
         return interaction.reply(options);
       }
-      interaction.replied = true;
       if (isCV2(options)) {
+        interaction.replied = true;
         const body = prepareCV2Payload(options);
         return interaction.client.rest.patch(`/webhooks/${interaction.client.user.id}/${interaction.token}/messages/@original`, {
           body, files: options.files
@@ -539,8 +539,8 @@ export default {
 
     const _reply = interaction.reply.bind(interaction);
     interaction.reply = async function(options) {
-      interaction.replied = true;
       if (isCV2(options)) {
+        interaction.replied = true;
         const data = prepareCV2Payload(options);
         return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
           body: { type: 4, data }, files: options.files
@@ -552,8 +552,8 @@ export default {
     if (interaction.update) {
       const _update = interaction.update.bind(interaction);
       interaction.update = async function(options) {
-        interaction.replied = true;
         if (isCV2(options)) {
+          interaction.replied = true;
           const data = prepareCV2Payload(options);
           return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
             body: { type: 7, data }, files: options.files

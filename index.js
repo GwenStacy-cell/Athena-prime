@@ -349,6 +349,11 @@ function pushDivider(comps) {
       comps.push({ type: 10, content: `-# **${footerText}**` });
     }
 
+    // Remove any trailing divider at the bottom of the container
+    while (comps.length > 0 && comps[comps.length - 1].type === 14) {
+      comps.pop();
+    }
+
     // Pure borderless CV2 container (no accent_color)
     const container = { type: 17, components: comps };
     return container;

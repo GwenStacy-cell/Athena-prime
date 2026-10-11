@@ -280,14 +280,14 @@ export const commands = [
       category: 'utility',
       permissions: [],
       async executePrefix(message) {
-        const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
+        const { AttachmentBuilder } = await import('discord.js');
         let generatePingGraph; try { generatePingGraph = (await import('../utils/graph.js')).generatePingGraph; } catch(e) { }
         const cfg = db.getGuildConfig(message.guild?.id || '0');
         const accentHex = cfg?.accentColor || '#00e5ff';
   
         const sent = await message.reply(cv2.info('Athena Prime', `${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}`));
         
-        const apiMs = sent.createdTimestamp - message.createdTimestamp;
+        const apiMs = Math.max(1, sent.createdTimestamp - message.createdTimestamp);
         const wsMs  = Math.max(5, Math.round(message.client.ws.ping) || 17);
   
         const dbStart = process.hrtime.bigint();
@@ -301,34 +301,40 @@ export const commands = [
 
         if (!message.client.pingHistory) message.client.pingHistory = [];
         message.client.pingHistory.push(wsMs);
-        if (message.client.pingHistory.length > 20) message.client.pingHistory.shift();
+        if (message.client.pingHistory.length > 25) message.client.pingHistory.shift();
   
         const buffer = await generatePingGraph(message.client.pingHistory, accentHex, message.client.guilds.cache.size);
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
         
-        const cleanNick = (message.member?.displayName || message.author.displayName || message.author.username).replace(/[`\[\]\(\)]/g, '').trim();
+        const rawName = message.member?.displayName || message.author.displayName || message.author.username;
+        const cleanNick = rawName.replace(/[`\[\]\(\)\*_~|]/g, '').trim() || 'User';
 
-        const replyEmbed = new EmbedBuilder()
-          .setDescription(`**| <a:uptime:1552608831060844575> [${cleanNick}](https://discord.com/users/${message.author.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
-          .setImage('attachment://ping_graph.png');
+        const pingContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `-# **• <a:uptime:1552608831060844575> [${cleanNick}](https://discord.com/users/${message.author.id}) \`${apiMs}ms\` \u00b7 WS: \`${wsMs}ms\` \u00b7 DB: \`${dbMs}ms\` \u00b7 Redis: SET: \`${rSet}ms\` GET: \`${rGet}ms\` DEL: \`${rDel}ms\`**`
+            },
+            {
+              type: 12,
+              items: [{ media: { url: 'attachment://ping_graph.png' } }]
+            }
+          ]
+        };
     
         await sent.delete().catch(() => null);
-        await message.reply({ embeds: [replyEmbed], files: [attachment] });
+        await message.reply({ components: [pingContainer], files: [attachment], flags: 32768 });
       },
       async executeSlash(interaction) {
-        const { EmbedBuilder, AttachmentBuilder } = await import('discord.js');
+        const { AttachmentBuilder } = await import('discord.js');
         let generatePingGraph; try { generatePingGraph = (await import('../utils/graph.js')).generatePingGraph; } catch(e) { }
         const cfg = db.getGuildConfig(interaction.guild?.id || '0');
         const accentHex = cfg?.accentColor || '#00e5ff';
   
-        const replyResponse = await interaction.reply({ 
-          content: '',
-          embeds: [new EmbedBuilder().setDescription(`-# <a:loading:1542155051286396938> **Athena Prime:** ${["Measuring Discord API gateway latency...", "Pinging regional server clusters...", "Awaiting acknowledgment from Discord servers...", "Synchronizing internal clock with Discord API...", "Tracing packet route to Discord gateway...", "Calculating websocket round-trip latency...", "Measuring read/write speed of local database..."][Math.floor(Math.random() * 7)]}`)],
-          withResponse: true
-        });
-        
-        const sentMessage = replyResponse?.resource?.message || replyResponse;
-        const apiMs = (sentMessage?.createdTimestamp || Date.now()) - interaction.createdTimestamp;
+        await interaction.deferReply();
+        const sentMessage = await interaction.fetchReply().catch(() => null);
+        const apiMs = sentMessage ? Math.max(1, sentMessage.createdTimestamp - interaction.createdTimestamp) : Math.max(1, Date.now() - interaction.createdTimestamp);
         const wsMs  = Math.max(5, Math.round(interaction.client.ws.ping) || 17);
   
         const dbStart = process.hrtime.bigint();
@@ -342,21 +348,32 @@ export const commands = [
 
         if (!interaction.client.pingHistory) interaction.client.pingHistory = [];
         interaction.client.pingHistory.push(wsMs);
-        if (interaction.client.pingHistory.length > 20) interaction.client.pingHistory.shift();
+        if (interaction.client.pingHistory.length > 25) interaction.client.pingHistory.shift();
   
         const buffer = await generatePingGraph(interaction.client.pingHistory, accentHex, interaction.client.guilds.cache.size);
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
         
-        const cleanNick = (interaction.member?.displayName || interaction.user.displayName || interaction.user.username).replace(/[`\[\]\(\)]/g, '').trim();
+        const rawName = interaction.member?.displayName || interaction.user.displayName || interaction.user.username;
+        const cleanNick = rawName.replace(/[`\[\]\(\)\*_~|]/g, '').trim() || 'User';
 
-        const replyEmbed = new EmbedBuilder()
-          .setDescription(`**| <a:uptime:1552608831060844575> [${cleanNick}](https://discord.com/users/${interaction.user.id}) ${apiMs}ms | WS : ${wsMs}ms | DB : ${dbMs}ms | Redis : SET : ${rSet}ms GET : ${rGet}ms DEL : ${rDel}ms**`)
-          .setImage('attachment://ping_graph.png');
+        const pingContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `-# **• <a:uptime:1552608831060844575> [${cleanNick}](https://discord.com/users/${interaction.user.id}) \`${apiMs}ms\` \u00b7 WS: \`${wsMs}ms\` \u00b7 DB: \`${dbMs}ms\` \u00b7 Redis: SET: \`${rSet}ms\` GET: \`${rGet}ms\` DEL: \`${rDel}ms\`**`
+            },
+            {
+              type: 12,
+              items: [{ media: { url: 'attachment://ping_graph.png' } }]
+            }
+          ]
+        };
     
         await interaction.editReply({
-          content: null,
-          embeds: [replyEmbed],
-          files: [attachment]
+          components: [pingContainer],
+          files: [attachment],
+          flags: 32768
         });
       }
     },
