@@ -820,10 +820,10 @@ export async function generateTopImage(guild, topMsgMembers = [], topVoiceMember
         isRank1,
         user: msgUser,
         statText: msgUser ? formatMsgsText(msgUser.total) : '0 msgs',
-        badgeX: 38,
+        badgeX: 35,
         avatarX: 104,
         nameX: 138,
-        statRightX: 480,
+        statRightX: 475,
         rowCenterY,
         isVoice: false
       });
@@ -832,7 +832,7 @@ export async function generateTopImage(guild, topMsgMembers = [], topVoiceMember
       if (i < ROWS - 1) {
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(38, rowCenterY + 28);
+        ctx.moveTo(35, rowCenterY + 28);
         ctx.lineTo(484, rowCenterY + 28);
         if (isRank1) {
           ctx.strokeStyle = 'rgba(229, 43, 56, 0.4)';
@@ -857,10 +857,10 @@ export async function generateTopImage(guild, topMsgMembers = [], topVoiceMember
         isRank1,
         user: voiceUser,
         statText: voiceUser ? formatVoiceHoursText(voiceUser.total) : '0.00 hours',
-        badgeX: 522,
-        avatarX: 588,
+        badgeX: 520,
+        avatarX: 585,
         nameX: 618,
-        statRightX: 964,
+        statRightX: 955,
         rowCenterY,
         isVoice: true,
         voiceRatio
@@ -960,10 +960,10 @@ function renderTopServerTitle(ctx, name, startX, baselineY) {
 async function renderTopMemberRow(ctx, opts) {
   const { rank, isRank1, user, statText, badgeX, avatarX, nameX, statRightX, rowCenterY, isVoice, voiceRatio } = opts;
 
-  // 1. Rank Badge (34w x 36h)
-  const bW = 34, bH = 36;
-  const bY = rowCenterY - 18;
-  const bR = 6;
+  // 1. Rank Badge (48w x 42h)
+  const bW = 48, bH = 42;
+  const bY = rowCenterY - 21;
+  const bR = 8;
 
   ctx.save();
   ctx.beginPath();
@@ -983,10 +983,10 @@ async function renderTopMemberRow(ctx, opts) {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    ctx.font = 'bold 18px "NotoSans", sans-serif';
+    ctx.font = 'bold 20px "NotoSans", sans-serif';
     ctx.fillStyle = '#140304';
     ctx.textAlign = 'center';
-    ctx.fillText('1', badgeX + bW / 2, rowCenterY + 6);
+    ctx.fillText('1', badgeX + bW / 2, rowCenterY + 7);
   } else {
     const gradGlass = ctx.createLinearGradient(0, bY, 0, bY + bH);
     gradGlass.addColorStop(0, '#242629');
@@ -998,10 +998,10 @@ async function renderTopMemberRow(ctx, opts) {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    ctx.font = 'bold 16px "NotoSans", sans-serif';
+    ctx.font = 'bold 18px "NotoSans", sans-serif';
     ctx.fillStyle = '#A6ABB2';
     ctx.textAlign = 'center';
-    ctx.fillText(String(rank), badgeX + bW / 2, rowCenterY + 5);
+    ctx.fillText(String(rank), badgeX + bW / 2, rowCenterY + 6);
   }
   ctx.restore();
 
