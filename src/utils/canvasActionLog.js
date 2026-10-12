@@ -52,7 +52,7 @@ export async function generateGlobalActionCard(opts) {
     }
     ctx.restore();
 
-    // 2. Server Subtitle: "[Server Name] • Security Enforcer: Athena Prime"
+    // 2. Server Subtitle: "[Server Name] • Defense Enforcer: Athena Prime"
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
     ctx.font = 'bold 13px sans-serif';
@@ -64,8 +64,8 @@ export async function generateGlobalActionCard(opts) {
     const sw = ctx.measureText(displayGuildName).width;
 
     ctx.fillStyle = '#888888';
-    ctx.fillText(' • Security Enforcer: ', 205 + sw, 107);
-    const mw = ctx.measureText(' • Security Enforcer: ').width;
+    ctx.fillText(' • Defense Enforcer: ', 205 + sw, 107);
+    const mw = ctx.measureText(' • Defense Enforcer: ').width;
 
     ctx.fillStyle = '#ff3333';
     ctx.fillText('Athena Prime', 205 + sw + mw, 107);
@@ -78,19 +78,19 @@ export async function generateGlobalActionCard(opts) {
 
     // 4. Executor ID (Blue)
     ctx.fillStyle = '#4d79ff';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.fillText(String(executorId || 'N/A'), 152, 306);
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(String(executorId || 'N/A'), 152, 312);
 
     // 5. Target Tag
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 16px sans-serif';
     const cleanTarget = targetTag || String(targetId || 'N/A');
-    ctx.fillText(cleanTarget.length > 24 ? cleanTarget.substring(0, 21) + '...' : cleanTarget, 596, 258);
+    ctx.fillText(cleanTarget.length > 24 ? cleanTarget.substring(0, 21) + '...' : cleanTarget, 612, 258);
 
     // 6. Target ID (Blue)
     ctx.fillStyle = '#4d79ff';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.fillText(String(targetId || 'N/A'), 596, 306);
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(String(targetId || 'N/A'), 612, 312);
 
     // 7. Reason (Red)
     ctx.fillStyle = '#ff3333';
@@ -99,10 +99,10 @@ export async function generateGlobalActionCard(opts) {
     if (displayReason.length > 55) displayReason = displayReason.substring(0, 52) + '...';
     ctx.fillText(displayReason, 195, 349);
 
-    // 8. Server ID (Grey)
+    // 8. Server ID (Grey) - flush with Server ID label (x=753)
     ctx.fillStyle = '#a0a0a0';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.fillText(String(guildId || 'N/A'), 776, 418);
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText(String(guildId || 'N/A'), 753, 418);
 
     const buffer = canvas.toBuffer('image/png');
     return new AttachmentBuilder(buffer, { name: 'global_ban_log.png' });

@@ -3,7 +3,6 @@ import db from '../database.js';
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
-import commandMap from './loader.js';
 
 let cachedCodebaseStats = null;
 
@@ -86,7 +85,11 @@ export const commands = [
       const botAnalytics = db.cache.botAnalytics || { joins: 0, leaves: 0, cmds: {} };
       
       // True command count
-      const uniqueCommands = new Set(commandMap.values()).size;
+      let uniqueCommands = 85;
+      try {
+        const { commandMap } = await import('./loader.js');
+        if (commandMap) uniqueCommands = new Set(commandMap.values()).size;
+      } catch (e) {}
 
       let ownerTag = `<@1509084068619489331>`; // Default fallback
       let ownerName = `Dev Prince`;
@@ -129,7 +132,7 @@ export const commands = [
           { type: 10, content: `## **Active Modules**` },
           {
             type: 10,
-            content: `-# **Security & AntiNuke :** **Active (${totalServers} Servers Enabled)**\n-# **AutoLogging System :** **Active (21 Log Categories)**\n-# **AutoMod Engine :** **Active (Anti-Spam & Honeypot)**\n-# **Ticket Management :** **Active (Panels & Transcripts)**\n-# **Giveaway System :** **Active (Auto-Roll & Reroll)**\n-# **Reaction & Activity Roles :** **Active (Auto-Assign & VC)**\n-# **Custom Triggers & AutoResponder :** **Active (Prefix & Keywords)**\n-# **Voice & VC Controls :** **Active (J2C & Panel Controls)**\n-# **Leveling & XP System :** **Active (XP Gain & Rewards)**\n-# **YouTube & Media Notifications :** **Active (Auto-Post & Feeds)**\n-# **Backup & Restore Manager :** **Active (Server Cloner & Backups)**\n-# **Blacklist & Quarantine :** **Active (User & Domain Protection)**`
+            content: `-# **Defense & AntiNuke :** **Active (${totalServers} Servers Enabled)**\n-# **AutoLogging System :** **Active (21 Log Categories)**\n-# **AutoMod Engine :** **Active (Anti-Spam & Honeypot)**\n-# **Ticket Management :** **Active (Panels & Transcripts)**\n-# **Giveaway System :** **Active (Auto-Roll & Reroll)**\n-# **Reaction & Activity Roles :** **Active (Auto-Assign & VC)**\n-# **Custom Triggers & AutoResponder :** **Active (Prefix & Keywords)**\n-# **Voice & VC Controls :** **Active (J2C & Panel Controls)**\n-# **Leveling & XP System :** **Active (XP Gain & Rewards)**\n-# **YouTube & Media Notifications :** **Active (Auto-Post & Feeds)**\n-# **Backup & Restore Manager :** **Active (Server Cloner & Backups)**\n-# **Blacklist & Quarantine :** **Active (User & Domain Protection)**`
           }
         ]
       };

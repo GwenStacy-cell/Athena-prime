@@ -139,7 +139,7 @@ export default {
     // Set custom rich activity presence
     const customStatuses = [
       'Armed',
-      'Secured',
+      'Fortified',
       'Truly Unbypassable',
       'Dev Prince',
       'Made in India | Challenging the World !',
@@ -180,7 +180,7 @@ export default {
       'Armed',
       'Dev Prince',
       'Unbypassable',
-      'Secured'
+      'Fortified'
     ];
     let nicknameIndex = 0;
 

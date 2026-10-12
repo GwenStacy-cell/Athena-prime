@@ -76,19 +76,20 @@ function buildContainer(title, description, fields, customFooter) {
 
   // Bottom divider
   comps.push(SEP);
-  let footerText = customFooter ? customFooter : 'Athena Bulletproof Security System \u00b7 V1.0.0';
+  let footerText = customFooter ? customFooter : 'Athena Bulletproof Defense Matrix \u00b7 V1.0.0';
   
   const footers = {
       'success': 'System Operation Successfully Completed.',
-      'warning': 'Security Protocol Advisory Issued.',
-      'danger': 'Critical Security Protocol Engaged.',
+      'warning': 'Defense Protocol Advisory Issued.',
+      'danger': 'Critical Defense Protocol Engaged.',
       'error': 'System Fault Encountered.',
       'shield': 'Active Threat Neutralization and Firewall Defense Matrix Engaged.',
       'raid': 'Anti-Nuke Raid Protection Protocols Fully Enforced.',
       'info': 'System Data Retrieval and Analysis Complete.',
       'log': 'Athena Audit Log Entry Processed.',
       'moderation': 'Administrative Moderation Action Executed.',
-      'security': 'Athena Core Security System Active.',
+      'security': 'Athena Core Defense System Active.',
+      'defense': 'Athena Core Defense System Active.',
       'owner': 'Executive Override Command Authorized.',
       'engagement': 'Community Engagement and Interaction Module Active.',
       'utility': 'System Utility and Diagnostic Tools Deployed.',
@@ -120,6 +121,7 @@ var _m = function(eph) {
     raid:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
     owner:    function(t,d,f,ft) { return make(t,d,f,eph,ft); },
     security: function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    defense:  function(t,d,f,ft) { return make(t,d,f,eph,ft); },
     log:      function(t,d,f,ft) { return make('Log: ' + t, d, f, eph, ft); },
   };
 };
