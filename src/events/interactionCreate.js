@@ -213,6 +213,57 @@ export default {
       }
 
       if (interaction.isButton()) {
+        // --- XP DASHBOARD BUTTONS ---
+        if (interaction.customId === 'xp_dash') {
+          const panel = await buildXpDashboard(interaction.guild.id);
+          return cv2.respond(interaction, { ...panel, flags: (panel.flags || 32768) | MessageFlags.Ephemeral }, 4);
+        }
+
+        if (interaction.customId === 'xp_toggle') {
+          const system = db.getXpSystem(interaction.guild.id);
+          db.setXpSystem(interaction.guild.id, { ...system, enabled: !system.enabled });
+          const panel = await buildXpDashboard(interaction.guild.id);
+          return cv2.respond(interaction, panel, 7);
+        }
+
+        if (interaction.customId === 'xp_set_announce') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle } = await import('discord.js');
+          const modal = new ModalBuilder().setCustomId('xp_announce_modal').setTitle('Set Announce Channel');
+          modal.addComponents(new ActionRowBuilder().addComponents(
+            new TextInputBuilder().setCustomId('channel_id').setLabel('Paste the Channel ID here').setStyle(TextInputStyle.Short).setRequired(true)
+          ));
+          return interaction.showModal(modal);
+        }
+
+        if (interaction.customId === 'xp_set_cmd') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle } = await import('discord.js');
+          const modal = new ModalBuilder().setCustomId('xp_cmd_modal').setTitle('Set Command Channel');
+          modal.addComponents(new ActionRowBuilder().addComponents(
+            new TextInputBuilder().setCustomId('channel_id').setLabel('Paste the Channel ID here').setStyle(TextInputStyle.Short).setRequired(true)
+          ));
+          return interaction.showModal(modal);
+        }
+
+        if (interaction.customId === 'xp_clear') {
+          db.setXpSystem(interaction.guild.id, { enabled: false, announceChannelId: null, cmdChannelId: null, roleRewards: {}, multipliers: {} });
+          const panel = await buildXpDashboard(interaction.guild.id);
+          return cv2.respond(interaction, panel, 7);
+        }
+
+        if (interaction.customId === 'xp_save') {
+          const saveContainer = {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content:
+                  `# Configuration Saved\n` +
+                  `-# • **Status:** <a:uptime:1552608831060844575> **__XP Manager settings saved and synchronized__**`
+              }
+            ]
+          };
+          return interaction.reply({ components: [saveContainer], flags: (MessageFlags.IsComponentsV2 || 32768) | MessageFlags.Ephemeral });
+        }
 
     // --- VC PANEL BUTTONS ---
     if (interaction.customId.startsWith('vcp_')) {

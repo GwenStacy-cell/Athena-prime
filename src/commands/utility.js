@@ -770,10 +770,12 @@ async function getStatusEmbed(client, guild) {
   
   { id: 'moderation', category: 'SERVER ADMINISTRATION', shortLabel: 'Mods', label: 'Moderation Tools', emoji: 'mod', commands: [
     "`!ban @user [reason]` - Ban a member from the server `[Extra Owner]`",
+    "`!tempban @user <time> [reason]` - Temporarily ban a member with auto-unban `[Extra Owner]`",
     "`!unban <userid>` - Unban a user by User ID `[Extra Owner]`",
     "`!unbanall` - Removes ALL active bans from the server `[Server Owner]`",
     "`!kick @user [reason]` - Kick a member from the server `[Extra Owner]`",
     "`!timeout @user [time] [reason]` - Timeout a member `[Extra Owner]`",
+    "`!temptimeout @user <time> [reason]` - Structured temporary timeout `[Extra Owner]`",
     "`!untimeout @user` - Remove timeout from a member `[Extra Owner]`",
     "`!warn @user [reason]` - Warn a member `[Extra Owner]`",
     "`!warnings @user` - View user's warnings `[Public]`",
@@ -948,6 +950,9 @@ async function getStatusEmbed(client, guild) {
     "`!sticky <message>` - Keep a message stuck at bottom of chat `[Extra Owner]`",
     "`!upload <url>` - Upload and mirror file from direct URL `[Public]`",
     "`!tier` - Check your current Athena Prime authorization tier `[Public]`",
+    "`!profile [@user]` - Official God of War canvas profile card `[Public]`",
+    "`!modmail setup|disable` - Direct Message support ticket bridge `[Extra Owner]`",
+    "`!reply <message>` - Reply to member inside active ModMail ticket `[Extra Owner]`",
     "",
     "**News Feed System:**",
     "- Supports Twitter (X), YouTube, Reddit, and standard RSS feeds.",

@@ -338,3 +338,177 @@ export async function generateLeaderboard(guild, users, page, totalPages) {
   const buffer = canvas.toBuffer('image/png');
   return new AttachmentBuilder(buffer, { name: 'leaderboard.png' });
 }
+
+export async function generateProfileCard(member, xpData, statsData, guild) {
+  const W = 960;
+  const H = 340;
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  let bgLoaded = false;
+  for (const bgPath of ['src/assets/rank_gow_bg.png', 'src/assets/rank_bg.jpg']) {
+    try {
+      const bg = await loadImage(bgPath);
+      ctx.drawImage(bg, 0, 0, W, H);
+      bgLoaded = true;
+      break;
+    } catch {}
+  }
+  if (!bgLoaded) {
+    ctx.fillStyle = '#0a0a0c';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Semi-transparent dark overlay for high contrast
+  ctx.fillStyle = 'rgba(7, 7, 10, 0.65)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Border frame
+  ctx.strokeStyle = 'rgba(165, 20, 20, 0.4)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(4, 4, W - 8, H - 8);
+
+  // Avatar Setup
+  const avatarCX = 135;
+  const avatarCY = 155;
+  const avatarR = 80;
+
+  // Red ring / seal behind avatar
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(avatarCX, avatarCY, avatarR + 10, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(190, 25, 25, 0.7)';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#cc1818';
+  ctx.shadowBlur = 12;
+  ctx.stroke();
+  ctx.restore();
+
+  // Draw Avatar
+  try {
+    const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256, forceStatic: true });
+    const av = await loadImage(avatarUrl);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(av, avatarCX - avatarR, avatarCY - avatarR, avatarR * 2, avatarR * 2);
+    ctx.restore();
+  } catch {
+    ctx.fillStyle = '#222226';
+    ctx.beginPath();
+    ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Username in Cinzel Two-Tone
+  let rawName = member.displayName.replace(/[^\x00-\x7F]/g, '').trim()
+             || member.user.username.replace(/[^\x00-\x7F]/g, '').trim()
+             || 'Warrior';
+  if (rawName.length > 18) rawName = rawName.substring(0, 18) + '...';
+  const upperName = rawName.toUpperCase();
+
+  let part1 = upperName;
+  let part2 = '';
+  const spaceIdx = upperName.indexOf(' ');
+  if (spaceIdx > 0 && spaceIdx < upperName.length - 1) {
+    part1 = upperName.substring(0, spaceIdx);
+    part2 = upperName.substring(spaceIdx + 1);
+  } else if (upperName.length > 5) {
+    const mid = Math.ceil(upperName.length / 2);
+    part1 = upperName.substring(0, mid);
+    part2 = upperName.substring(mid);
+  }
+
+  const textX = 255;
+  const nameY = 85;
+
+  ctx.font = `bold 38px "Cinzel", "Montserrat", "Roboto", serif`;
+  ctx.fillStyle = '#b0b4bb'; // Stone grey
+  ctx.shadowColor = '#000000';
+  ctx.shadowBlur = 8;
+  ctx.fillText(part1, textX, nameY);
+  const p1Width = ctx.measureText(part1).width;
+
+  if (part2) {
+    ctx.fillStyle = '#cc1818'; // Blood red
+    ctx.shadowColor = 'rgba(204,24,24,0.6)';
+    ctx.shadowBlur = 10;
+    ctx.fillText(' ' + part2, textX + p1Width, nameY);
+  }
+  ctx.shadowBlur = 0;
+
+  // Subtitle: Server & Badges
+  ctx.fillStyle = '#7a7f87';
+  ctx.font = `bold 16px "Montserrat", "Roboto", sans-serif`;
+  ctx.fillText(`MEMBER OF ${guild.name.toUpperCase()} • ATHENA VERIFIED`, textX, nameY + 28);
+
+  // Divider line
+  ctx.strokeStyle = 'rgba(180, 30, 30, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(textX, nameY + 42);
+  ctx.lineTo(W - 40, nameY + 42);
+  ctx.stroke();
+
+  // Metrics Grid (Level, Rank, Messages, Voice Hours)
+  const gridY = nameY + 85;
+  const metrics = [
+    { label: 'LEVEL', value: `${xpData.level || 0}`, color: '#ffffff' },
+    { label: 'RANK', value: `#${xpData.rank || 1}`, color: '#cc1818' },
+    { label: 'MESSAGES', value: `${(statsData.messages || 0).toLocaleString()}`, color: '#ffffff' },
+    { label: 'VOICE TIME', value: `${((statsData.voiceSeconds || 0) / 3600).toFixed(1)}h`, color: '#ffffff' }
+  ];
+
+  const colWidth = 160;
+  for (let i = 0; i < metrics.length; i++) {
+    const mx = textX + (i * colWidth);
+    ctx.fillStyle = '#656b73';
+    ctx.font = `bold 13px "Montserrat", "Roboto", sans-serif`;
+    ctx.fillText(metrics[i].label, mx, gridY);
+
+    ctx.fillStyle = metrics[i].color;
+    ctx.font = `bold 24px "Cinzel", "Montserrat", "Roboto", serif`;
+    ctx.fillText(metrics[i].value, mx, gridY + 30);
+  }
+
+  // XP Progress Bar
+  const barX = textX;
+  const barY = gridY + 75;
+  const barW = W - textX - 45;
+  const barH = 18;
+  const barR = 9;
+
+  ctx.fillStyle = 'rgba(20, 4, 4, 0.85)';
+  rrPath(ctx, barX, barY, barW, barH, barR);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(120, 15, 15, 0.7)';
+  ctx.lineWidth = 1.5;
+  rrPath(ctx, barX, barY, barW, barH, barR);
+  ctx.stroke();
+
+  const reqXp = xpData.requiredXp || 1000;
+  const currXp = xpData.xp || 0;
+  const ratio = Math.min(currXp / reqXp, 1);
+  const fillW = Math.max(barR * 2, barW * ratio);
+
+  const xpGrad = ctx.createLinearGradient(barX, barY, barX + fillW, barY);
+  xpGrad.addColorStop(0, '#6b0000');
+  xpGrad.addColorStop(0.5, '#bb1010');
+  xpGrad.addColorStop(1, '#ff3838');
+  ctx.fillStyle = xpGrad;
+  rrPath(ctx, barX, barY, fillW, barH, barR);
+  ctx.fill();
+
+  // XP Text
+  ctx.fillStyle = '#a5a9b0';
+  ctx.font = `bold 12px "Montserrat", "Roboto", sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText(`${currXp.toLocaleString()} / ${reqXp.toLocaleString()} XP`, barX + barW, barY - 6);
+  ctx.textAlign = 'left';
+
+  const buffer = canvas.toBuffer('image/png');
+  return new AttachmentBuilder(buffer, { name: 'profile_card.png' });
+}

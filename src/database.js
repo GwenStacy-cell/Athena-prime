@@ -14,6 +14,7 @@ const DEFAULT_SCHEMA = {
   afk: {},           // userId -> { reason, timestamp }
   warnings: {},      // guildId -> { userId -> [...] }
   quarantines: {},   // guildId -> { userId -> { roles, quarantinedAt, reason, expiresAt } }
+  tempBans: {},      // guildId -> { userId -> { bannedAt, expiresAt, reason, bannedBy } }
   extraOwners: {},   // guildId -> [ userId... ]
   spamPermitted: [], // global list
   backups: {},       // backupId -> backup data
@@ -72,6 +73,7 @@ class Database {
         this.cache.afk           = this.cache.afk           || {};
         this.cache.warnings      = this.cache.warnings      || {};
         this.cache.quarantines   = this.cache.quarantines   || {};
+        this.cache.tempBans      = this.cache.tempBans      || {};
         this.cache.extraOwners   = this.cache.extraOwners   || {};
         this.cache.spamPermitted = this.cache.spamPermitted || [];
         this.cache.backups        = this.cache.backups        || {};
@@ -681,6 +683,39 @@ class Database {
   getQuarantinedInGuild(guildId) {
     const guild = this.cache.quarantines?.[guildId] || {};
     return Object.entries(guild).map(([userId, record]) => ({ userId, ...record }));
+  }
+
+  // Temporary Ban System
+  addTempBan(guildId, userId, expiresAt, reason = 'No reason provided', bannedBy = null) {
+    if (!this.cache.tempBans) this.cache.tempBans = {};
+    if (!this.cache.tempBans[guildId]) this.cache.tempBans[guildId] = {};
+    this.cache.tempBans[guildId][userId] = {
+      bannedAt: Date.now(),
+      expiresAt,
+      reason,
+      bannedBy
+    };
+    this.save();
+  }
+
+  removeTempBan(guildId, userId) {
+    if (this.cache.tempBans?.[guildId]?.[userId]) {
+      const data = this.cache.tempBans[guildId][userId];
+      delete this.cache.tempBans[guildId][userId];
+      this.save();
+      return data;
+    }
+    return null;
+  }
+
+  getAllTempBans() {
+    const results = [];
+    for (const [guildId, users] of Object.entries(this.cache.tempBans || {})) {
+      for (const [userId, record] of Object.entries(users || {})) {
+        results.push({ guildId, userId, ...record });
+      }
+    }
+    return results;
   }
 
   // ==========================================

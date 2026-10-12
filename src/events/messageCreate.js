@@ -725,6 +725,77 @@ export default {
           return;
       }
 
+      // ----------------------------------------------------
+      // MODMAIL DM SUPPORT TICKET RELAY
+      // ----------------------------------------------------
+      try {
+        // Find mutual guilds where modmail is enabled
+        const activeGuilds = message.client.guilds.cache.filter(g => {
+          const cfg = db.getGuildConfig(g.id);
+          return cfg?.modmailEnabled && cfg?.modmailChannelId && g.members.cache.has(message.author.id);
+        });
+
+        if (activeGuilds.size > 0) {
+          const targetGuild = activeGuilds.first();
+          const cfg = db.getGuildConfig(targetGuild.id);
+          const channel = targetGuild.channels.cache.get(cfg.modmailChannelId);
+
+          if (channel) {
+            const threadName = `mm-${message.author.id}`;
+            let thread = channel.threads?.cache.find(t => t.name === threadName && !t.archived);
+
+            if (!thread) {
+              const activeThreads = await channel.threads?.fetchActive().catch(() => null);
+              thread = activeThreads?.threads?.find(t => t.name === threadName);
+            }
+
+            if (!thread) {
+              thread = await channel.threads.create({
+                name: threadName,
+                autoArchiveDuration: 1440,
+                reason: `ModMail ticket opened by ${message.author.tag}`
+              }).catch(() => null);
+
+              if (thread) {
+                const headerContainer = {
+                  type: 17,
+                  components: [
+                    {
+                      type: 10,
+                      content:
+                        `# New ModMail Ticket\n` +
+                        `-# • **Applicant:** ${message.author} (\`${message.author.id}\`)\n` +
+                        `-# • **Account Created:** <t:${Math.floor(message.author.createdTimestamp / 1000)}:R>\n` +
+                        `-# • **Staff Instructions:** Use \`!reply <message>\` to respond back to the user.`
+                    }
+                  ]
+                };
+                await thread.send({ components: [headerContainer], flags: 32768 }).catch(() => null);
+              }
+            }
+
+            if (thread) {
+              const msgContainer = {
+                type: 17,
+                components: [
+                  {
+                    type: 10,
+                    content:
+                      `# Incoming User Message\n` +
+                      `-# • **From:** ${message.author}\n\n` +
+                      `> ${message.content || '*(Attachment / Media)*'}`
+                  }
+                ]
+              };
+              await thread.send({ components: [msgContainer], flags: 32768 }).catch(() => null);
+              await message.react('<a:uptime:1552608831060844575>').catch(() => null);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[ModMail] Relay error:', err);
+      }
+
       return; // Ignore all other messages in DMs
     }
 

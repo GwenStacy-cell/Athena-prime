@@ -58,6 +58,8 @@ import { commands as topCmds } from './top.js';
 import { commands as siCmds } from './si.js';
 import { commands as invitelbCmds } from './invitelb.js';
 import { commands as chatlbCmds } from './chatlb.js';
+import { commands as modmailCmds } from './modmail.js';
+import { commands as profileCmds } from './profile.js';
 import { commands as voicelbCmds } from './voicelb.js';
 import { commands as stickyCmds } from './sticky.js';
 import { commands as fckCmds } from './fck.js';
@@ -162,6 +164,8 @@ export const allCommands = [
   ...adelCmds,
   ...botstatsCmds,
   ...shortcutsCmds,
+  ...modmailCmds,
+  ...profileCmds,
   uploadCmd,
   autoreactCmd,
   autoroleCmd,

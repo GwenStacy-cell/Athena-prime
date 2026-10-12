@@ -60,6 +60,41 @@ export default {
       }
     }, 15000);
 
+    // Temporary Ban & Quarantine Background Sweep (Runs every 30 seconds)
+    setInterval(async () => {
+      // 1. Sweep expired temporary bans
+      const tempBans = db.getAllTempBans();
+      const now = Date.now();
+      for (const ban of tempBans) {
+        if (ban.expiresAt && ban.expiresAt <= now) {
+          const guild = client.guilds.cache.get(ban.guildId);
+          if (guild) {
+            await guild.bans.remove(ban.userId, 'Athena Prime: Temporary ban duration elapsed').catch(() => null);
+          }
+          db.removeTempBan(ban.guildId, ban.userId);
+        }
+      }
+
+      // 2. Sweep expired quarantines
+      const quarantined = db.getAllQuarantinedUsers();
+      for (const q of quarantined) {
+        if (q.expiresAt && q.expiresAt <= now) {
+          const guild = client.guilds.cache.get(q.guildId);
+          if (guild) {
+            const member = await guild.members.fetch(q.userId).catch(() => null);
+            const cfg = db.getGuildConfig(q.guildId);
+            if (member && cfg?.quarantineRoleId) {
+              await member.roles.remove(cfg.quarantineRoleId).catch(() => null);
+              if (Array.isArray(q.roles) && q.roles.length > 0) {
+                await member.roles.add(q.roles).catch(() => null);
+              }
+            }
+          }
+          db.removeQuarantine(q.guildId, q.userId);
+        }
+      }
+    }, 30000);
+
     // Bump Reminder Timer (Runs every 60 seconds)
     setInterval(async () => {
       const reminders = db.getBumpReminders();

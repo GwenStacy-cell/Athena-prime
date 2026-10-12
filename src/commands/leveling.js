@@ -36,32 +36,35 @@ export async function buildXpDashboard(guildId) {
       {
         type: 10,
         content:
-          `## XP Manager\n` +
-          `Welcome to the Interactive XP Control Panel.\n\n` +
-          `**Status**: ${statusIcon}\n` +
-          `**Announce Channel**: ${system.announceChannelId ? `<#${system.announceChannelId}>` : 'Not Set'}\n` +
-          `**Command Channel**: ${system.cmdChannelId ? `<#${system.cmdChannelId}>` : 'Not Set'}`
+          `# XP Manager\n` +
+          `-# **__Interactive Leveling & XP Control Matrix__**\n\n` +
+          `-# • **Status:** ${statusIcon}\n` +
+          `-# • **Announce Channel:** ${system.announceChannelId ? `<#${system.announceChannelId}>` : '`Not Configured`'}\n` +
+          `-# • **Command Channel:** ${system.cmdChannelId ? `<#${system.cmdChannelId}>` : '`Not Configured`'}`
       },
       { type: 14, divider: true },
       {
         type: 10,
-        content: `-# Role Rewards (Auto-Milestones): ${rewardsText} \u2022 XP Multipliers (1.5x Auto-Boost): ${multipliersText}`
+        content:
+          `-# **__Milestones & Multipliers__**\n` +
+          `-# • **Role Rewards:** ${rewardsText}\n` +
+          `-# • **XP Multipliers:** ${multipliersText}`
       },
       { type: 14, divider: true },
       {
         type: 1,
         components: [
           { type: 2, custom_id: 'xp_toggle',       label: system.enabled ? 'Disable System' : 'Enable System', style: system.enabled ? 4 : 3 },
-          { type: 2, custom_id: 'xp_set_announce', label: 'Announce Ch (ID)', style: 1 },
-          { type: 2, custom_id: 'xp_set_cmd',      label: 'Command Ch (ID)',  style: 1 },
-          { type: 2, custom_id: 'xp_clear',        label: 'Clear Setup',      style: 4 },
-          { type: 2, custom_id: 'xp_save',         label: 'Save Setup',       style: 3 }
+          { type: 2, custom_id: 'xp_set_announce', label: 'Announce Channel', style: 2 },
+          { type: 2, custom_id: 'xp_set_cmd',      label: 'Command Channel',  style: 2 },
+          { type: 2, custom_id: 'xp_clear',        label: 'Reset Setup',      style: 4 },
+          { type: 2, custom_id: 'xp_save',         label: 'Save Configuration', style: 3 }
         ]
       },
       {
         type: 1,
         components: [
-          { type: 6, custom_id: 'xp_add_reward', placeholder: 'Select a role to add as Level Reward...', min_values: 1, max_values: 1 }
+          { type: 6, custom_id: 'xp_add_reward', placeholder: 'Select role to add as Level Reward...', min_values: 1, max_values: 1 }
         ]
       },
       {
@@ -73,7 +76,7 @@ export async function buildXpDashboard(guildId) {
       { type: 14, divider: true },
       {
         type: 10,
-        content: '-# Athena Bulletproof Security System • V1.0.0'
+        content: '-# Athena Prime Defense Matrix • V1.0.0'
       }
     ]
   };

@@ -478,6 +478,404 @@ export const commands = [
     }
   },
 
+  // --- TEMPBAN COMMAND ---
+  {
+    name: 'tempban',
+    aliases: ['tb', 'temporaryban'],
+    description: 'Temporarily bans a member from the server with auto-unban expiration.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.BanMembers],
+    options: [
+      { name: 'user', description: 'Member to temporarily ban', type: 6, required: true },
+      { name: 'duration', description: 'Duration (e.g. 10m, 2h, 7d)', type: 3, required: true },
+      { name: 'reason', description: 'Reason for temporary ban', type: 3, required: false }
+    ],
+    async executePrefix(message, args) {
+      if (!args[0]) {
+        const errorContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Temporary Ban Error\n` +
+                `-# • **Issue:** **__Missing Target Member or Duration__**\n` +
+                `-# • **Usage:** \`!tempban <@user|id> <duration> [reason]\`\n` +
+                `-# • **Examples:** \`!tempban @user 2h Toxicity\`, \`!tempban @user 7d Raid Attempt\``
+            }
+          ]
+        };
+        return message.reply({ components: [errorContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+
+      let target = message.mentions.members.first();
+      let targetId = args[0].replace(/[<@!>]/g, '').trim();
+
+      if (!target && /^\d{17,20}$/.test(targetId)) {
+        target = await message.guild.members.fetch(targetId).catch(() => null);
+      }
+
+      if (!target && !/^\d{17,20}$/.test(targetId)) {
+        const errorContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Invalid Target\n` +
+                `-# • **Issue:** **__Please specify a valid @mention or User ID__**`
+            }
+          ]
+        };
+        return message.reply({ components: [errorContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+
+      const durationStr = args[1];
+      const durationMs = parseDuration(durationStr);
+      if (!durationMs) {
+        const errorContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Invalid Duration\n` +
+                `-# • **Issue:** **__Unsupported or missing duration format__**\n` +
+                `-# • **Valid Formats:** \`10m\` (10 mins), \`2h\` (2 hours), \`1d\` (1 day), \`7d\` (7 days)`
+            }
+          ]
+        };
+        return message.reply({ components: [errorContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+
+      const reason = args.slice(2).join(' ') || 'No reason specified';
+      const expiresAt = Date.now() + durationMs;
+
+      // Protection & Hierarchy checks
+      const finalId = target ? target.id : targetId;
+      if (isBotOwnerSync(finalId) || isExtraOwner(message.guild.id, finalId)) {
+        const immuneContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Untouchable Entity\n` +
+                `-# • **Status:** **__User is shielded by Athena Prime authorization tier__**`
+            }
+          ]
+        };
+        return message.reply({ components: [immuneContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+
+      if (target && !canModerate(message.member, target)) {
+        const permContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Hierarchy Blocked\n` +
+                `-# • **Status:** **__Target possesses higher or equal role permissions__**`
+            }
+          ]
+        };
+        return message.reply({ components: [permContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+
+      try {
+        await message.guild.bans.create(finalId, { reason: `[TempBan: ${durationStr}] ${reason} - by ${message.author.tag}` });
+        db.addTempBan(message.guild.id, finalId, expiresAt, reason, message.author.id);
+
+        const expiryDate = Math.floor(expiresAt / 1000);
+        const successContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Member Temporarily Banned\n` +
+                `-# • **Target:** <@${finalId}> (\`${finalId}\`)\n` +
+                `-# • **Duration:** \`${durationStr}\`\n` +
+                `-# • **Unban Expiration:** <t:${expiryDate}:R> (<t:${expiryDate}:F>)\n` +
+                `-# • **Reason:** ${reason}\n` +
+                `-# • **Moderator:** ${message.author}`
+            }
+          ]
+        };
+        return message.reply({ components: [successContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      } catch (err) {
+        const failContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Execution Failed\n` +
+                `-# • **Error:** \`${err.message}\``
+            }
+          ]
+        };
+        return message.reply({ components: [failContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+    },
+    async executeSlash(interaction) {
+      const targetUser = interaction.options.getUser('user');
+      const durationStr = interaction.options.getString('duration');
+      const reason = interaction.options.getString('reason') || 'No reason specified';
+
+      const durationMs = parseDuration(durationStr);
+      if (!durationMs) {
+        return interaction.reply({
+          components: [{
+            type: 17,
+            components: [{
+              type: 10,
+              content:
+                `# Invalid Duration\n` +
+                `-# • **Issue:** **__Unsupported duration format__**\n` +
+                `-# • **Valid Formats:** \`10m\`, \`2h\`, \`1d\`, \`7d\``
+            }]
+          }],
+          flags: (MessageFlags.IsComponentsV2 || 32768) | MessageFlags.Ephemeral
+        });
+      }
+
+      if (isBotOwnerSync(targetUser.id) || isExtraOwner(interaction.guild.id, targetUser.id)) {
+        return interaction.reply({
+          components: [{
+            type: 17,
+            components: [{
+              type: 10,
+              content:
+                `# Untouchable Entity\n` +
+                `-# • **Status:** **__User is shielded by Athena Prime authorization tier__**`
+            }]
+          }],
+          flags: (MessageFlags.IsComponentsV2 || 32768) | MessageFlags.Ephemeral
+        });
+      }
+
+      const expiresAt = Date.now() + durationMs;
+      try {
+        await interaction.guild.bans.create(targetUser.id, { reason: `[TempBan: ${durationStr}] ${reason} - by ${interaction.user.tag}` });
+        db.addTempBan(interaction.guild.id, targetUser.id, expiresAt, reason, interaction.user.id);
+
+        const expiryDate = Math.floor(expiresAt / 1000);
+        return interaction.reply({
+          components: [{
+            type: 17,
+            components: [{
+              type: 10,
+              content:
+                `# Member Temporarily Banned\n` +
+                `-# • **Target:** <@${targetUser.id}> (\`${targetUser.id}\`)\n` +
+                `-# • **Duration:** \`${durationStr}\`\n` +
+                `-# • **Unban Expiration:** <t:${expiryDate}:R> (<t:${expiryDate}:F>)\n` +
+                `-# • **Reason:** ${reason}\n` +
+                `-# • **Moderator:** ${interaction.user}`
+            }]
+          }],
+          flags: (MessageFlags.IsComponentsV2 || 32768)
+        });
+      } catch (err) {
+        return interaction.reply({
+          components: [{
+            type: 17,
+            components: [{
+              type: 10,
+              content: `# Execution Failed\n-# • **Error:** \`${err.message}\``
+            }]
+          }],
+          flags: (MessageFlags.IsComponentsV2 || 32768) | MessageFlags.Ephemeral
+        });
+      }
+    }
+  },
+
+  // --- TEMPTIMEOUT COMMAND ---
+  {
+    name: 'temptimeout',
+    aliases: ['tto', 'tempmute'],
+    description: 'Places a member on temporary timeout with structured notification.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.ModerateMembers],
+    options: [
+      { name: 'user', description: 'Member to timeout', type: 6, required: true },
+      { name: 'duration', description: 'Duration (e.g. 10m, 2h, 1d)', type: 3, required: true },
+      { name: 'reason', description: 'Reason for timeout', type: 3, required: false }
+    ],
+    async executePrefix(message, args) {
+      const target = message.mentions.members.first();
+      if (!target) {
+        const errorContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Temporary Timeout Error\n` +
+                `-# • **Issue:** **__Missing Target Member__**\n` +
+                `-# • **Usage:** \`!temptimeout <@user> <duration> [reason]\`\n` +
+                `-# • **Examples:** \`!temptimeout @user 10m Spamming\``
+            }
+          ]
+        };
+        return message.reply({ components: [errorContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+
+      const durationStr = args[1];
+      const durationMs = parseDuration(durationStr);
+      if (!durationMs || durationMs > 28 * 24 * 3600 * 1000) {
+        const errorContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Invalid Duration\n` +
+                `-# • **Issue:** **__Duration must be between 10s and 28 days__**\n` +
+                `-# • **Valid Formats:** \`10m\`, \`2h\`, \`1d\`, \`7d\``
+            }
+          ]
+        };
+        return message.reply({ components: [errorContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+
+      const reason = args.slice(2).join(' ') || 'No reason specified';
+
+      if (!canModerate(message.member, target)) {
+        const permContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Hierarchy Blocked\n` +
+                `-# • **Status:** **__Target possesses higher or equal role permissions__**`
+            }
+          ]
+        };
+        return message.reply({ components: [permContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+
+      try {
+        await target.timeout(durationMs, `${reason} - by ${message.author.tag}`);
+        const expiryDate = Math.floor((Date.now() + durationMs) / 1000);
+        const successContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content:
+                `# Member Timed Out\n` +
+                `-# • **Target:** ${target} (\`${target.id}\`)\n` +
+                `-# • **Duration:** \`${durationStr}\`\n` +
+                `-# • **Lift Expiration:** <t:${expiryDate}:R> (<t:${expiryDate}:F>)\n` +
+                `-# • **Reason:** ${reason}\n` +
+                `-# • **Moderator:** ${message.author}`
+            }
+          ]
+        };
+        return message.reply({ components: [successContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      } catch (err) {
+        const failContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `# Execution Failed\n-# • **Error:** \`${err.message}\``
+            }
+          ]
+        };
+        return message.reply({ components: [failContainer], flags: (MessageFlags.IsComponentsV2 || 32768) });
+      }
+    },
+    async executeSlash(interaction) {
+      const targetUser = interaction.options.getUser('user');
+      const durationStr = interaction.options.getString('duration');
+      const reason = interaction.options.getString('reason') || 'No reason specified';
+
+      const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+      if (!target) {
+        return interaction.reply({
+          components: [{
+            type: 17,
+            components: [{
+              type: 10,
+              content: `# Member Not Found\n-# • **Issue:** **__Target is not present in this server__**`
+            }]
+          }],
+          flags: (MessageFlags.IsComponentsV2 || 32768) | MessageFlags.Ephemeral
+        });
+      }
+
+      const durationMs = parseDuration(durationStr);
+      if (!durationMs || durationMs > 28 * 24 * 3600 * 1000) {
+        return interaction.reply({
+          components: [{
+            type: 17,
+            components: [{
+              type: 10,
+              content:
+                `# Invalid Duration\n` +
+                `-# • **Issue:** **__Duration must be between 10s and 28 days__**\n` +
+                `-# • **Valid Formats:** \`10m\`, \`2h\`, \`1d\`, \`7d\``
+            }]
+          }],
+          flags: (MessageFlags.IsComponentsV2 || 32768) | MessageFlags.Ephemeral
+        });
+      }
+
+      if (!canModerate(interaction.member, target)) {
+        return interaction.reply({
+          components: [{
+            type: 17,
+            components: [{
+              type: 10,
+              content:
+                `# Hierarchy Blocked\n` +
+                `-# • **Status:** **__Target possesses higher or equal role permissions__**`
+            }]
+          }],
+          flags: (MessageFlags.IsComponentsV2 || 32768) | MessageFlags.Ephemeral
+        });
+      }
+
+      try {
+        await target.timeout(durationMs, `${reason} - by ${interaction.user.tag}`);
+        const expiryDate = Math.floor((Date.now() + durationMs) / 1000);
+        return interaction.reply({
+          components: [{
+            type: 17,
+            components: [{
+              type: 10,
+              content:
+                `# Member Timed Out\n` +
+                `-# • **Target:** ${target} (\`${target.id}\`)\n` +
+                `-# • **Duration:** \`${durationStr}\`\n` +
+                `-# • **Lift Expiration:** <t:${expiryDate}:R> (<t:${expiryDate}:F>)\n` +
+                `-# • **Reason:** ${reason}\n` +
+                `-# • **Moderator:** ${interaction.user}`
+            }]
+          }],
+          flags: (MessageFlags.IsComponentsV2 || 32768)
+        });
+      } catch (err) {
+        return interaction.reply({
+          components: [{
+            type: 17,
+            components: [{
+              type: 10,
+              content: `# Execution Failed\n-# • **Error:** \`${err.message}\``
+            }]
+          }],
+          flags: (MessageFlags.IsComponentsV2 || 32768) | MessageFlags.Ephemeral
+        });
+      }
+    }
+  },
+
   // --- SAY COMMAND ---
   {
     name: 'say',
