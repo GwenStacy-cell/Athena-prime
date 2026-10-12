@@ -1,9 +1,6 @@
 import { AuditLogEvent } from 'discord.js';
 import db from '../database.js';
-import { directStrike } from '../utils/antinuke.js';
-
-// Wiretap flood tracker: guildId -> [ { timestamp, webhookId, executorId } ]
-const webhookEventVelocity = new Map();
+import { directStrike, rawDeleteWebhook, rawRoleStrip, rawBan, isAuthorized, condemn } from '../utils/antinuke.js';
 
 export default {
   name: 'webhooksUpdate',
@@ -12,39 +9,59 @@ export default {
     const guild = channel.guild;
     const config = db.getGuildConfig(guild.id);
     if (!config?.securityEnabled && !config?.antiNukeEnabled) return;
+    if (config?.antinukeModules?.antiWebhooks === false) return;
 
     try {
-      // 1. Fetch channel's current webhooks
+      // 1. Fetch channel's current webhooks with 0ms delay
       const webhooks = await channel.fetchWebhooks().catch(() => null);
-      if (!webhooks) return;
+      if (!webhooks || webhooks.size === 0) return;
 
       const now = Date.now();
-      const guildEvents = webhookEventVelocity.get(guild.id) || [];
-      const recentEvents = guildEvents.filter(e => now - e.timestamp < 15000);
+      const token = guild.client.token;
 
-      // Check if newly created webhooks exceed safe velocity threshold
-      const newWebhooks = webhooks.filter(w => now - w.createdTimestamp < 30000);
+      // Check any newly created webhook (created within the last 60 seconds)
+      const newWebhooks = webhooks.filter(w => now - w.createdTimestamp < 60000);
 
       for (const [whId, webhook] of newWebhooks) {
-        recentEvents.push({ timestamp: now, webhookId: whId, ownerId: webhook.owner?.id });
-      }
-      webhookEventVelocity.set(guild.id, recentEvents);
+        const owner = webhook.owner;
 
-      // Flood detection: more than 2 webhooks created within 15 seconds
-      if (recentEvents.length >= 2) {
-        // Intercept rogue webhooks immediately
-        for (const [whId, webhook] of newWebhooks) {
-          await webhook.delete('[Athena Sentinel] Webhook Flood Attack Neutralized').catch(() => null);
+        // If owner is known and unauthorized: ZERO TOLERANCE (THRESHOLD = 1)
+        if (owner) {
+          if (isAuthorized(guild, owner, 'antiwebhooks')) continue;
+
+          // ⚡ Rogue webhook detected! Instant parallel annihilation
+          condemn(guild.id, owner.id);
+          
+          await Promise.all([
+            rawDeleteWebhook(whId, token, '[ATHENA SENTINEL] Rogue Webhook Neutralized'),
+            rawRoleStrip(guild.id, owner.id, token),
+            rawBan(guild.id, owner.id, token, '[ATHENA SENTINEL] Unauthorized Webhook Creation')
+          ]);
+
+          // Trigger directStrike for server log, quarantine fallback, and owner DM
+          directStrike(
+            guild,
+            AuditLogEvent.WebhookCreate,
+            'Unauthorized Webhook Creation',
+            whId,
+            async () => {
+              await rawDeleteWebhook(whId, token).catch(() => null);
+            }
+          ).catch(() => null);
+        } else {
+          // Owner unknown (e.g. lack of audit permissions) — immediately eliminate rogue webhook
+          await rawDeleteWebhook(whId, token, '[ATHENA SENTINEL] Unverified Rogue Webhook Neutralized').catch(() => null);
+
+          directStrike(
+            guild,
+            AuditLogEvent.WebhookCreate,
+            'Unauthorized Webhook Creation',
+            whId,
+            async () => {
+              await rawDeleteWebhook(whId, token).catch(() => null);
+            }
+          ).catch(() => null);
         }
-
-        // Fire direct antinuke strike to eliminate threat
-        await directStrike(
-          guild,
-          AuditLogEvent.WebhookCreate,
-          'Rapid Webhook Flood Attack',
-          channel.id,
-          async () => 'Deleted rogue flood webhooks'
-        );
       }
     } catch (err) {
       console.error('[Antinuke] Webhook Wiretap error:', err);

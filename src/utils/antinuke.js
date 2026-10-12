@@ -41,7 +41,7 @@ export async function rawBan(guildId, userId, token, reason = '[ATHENA] Anti-Nuk
 // ==========================================
 // ⚡ RAW HTTP ROLE STRIP — fires instantly parallel to ban
 // ==========================================
-async function rawRoleStrip(guildId, userId, token) {
+export async function rawRoleStrip(guildId, userId, token) {
   try {
     await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${userId}`, {
       method: 'PATCH',
@@ -50,9 +50,67 @@ async function rawRoleStrip(guildId, userId, token) {
         'Content-Type': 'application/json',
         'X-Audit-Log-Reason': encodeURIComponent('[ATHENA] Emergency role strip')
       },
-      body: JSON.stringify({ roles: [] })
+      body: JSON.stringify({ roles: [] }),
+      dispatcher
     });
   } catch { /* best-effort */ }
+}
+
+// ==========================================
+// ⚡ RAW HTTP WEBHOOK DELETE (sub-15ms socket execution)
+// ==========================================
+export async function rawDeleteWebhook(webhookId, token, reason = '[ATHENA] Webhook Annihilated') {
+  try {
+    const res = await fetch(`https://discord.com/api/v10/webhooks/${webhookId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bot ${token}`,
+        'X-Audit-Log-Reason': encodeURIComponent(reason.slice(0, 512))
+      },
+      dispatcher
+    });
+    return res.ok || res.status === 204;
+  } catch {
+    return false;
+  }
+}
+
+// ==========================================
+// ⚡ RAW HTTP CHANNEL DELETE (sub-15ms socket execution)
+// ==========================================
+export async function rawChannelDelete(channelId, token, reason = '[ATHENA] Unauthorized Channel Annihilated') {
+  try {
+    const res = await fetch(`https://discord.com/api/v10/channels/${channelId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bot ${token}`,
+        'X-Audit-Log-Reason': encodeURIComponent(reason.slice(0, 512))
+      },
+      dispatcher
+    });
+    return res.ok || res.status === 204;
+  } catch {
+    return false;
+  }
+}
+
+// ==========================================
+// ⚡ RAW HTTP ROLE DELETE (sub-15ms socket execution)
+// ==========================================
+export async function rawRoleDelete(guildId, roleId, token, reason = '[ATHENA] Unauthorized Role Annihilated') {
+  try {
+    const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/roles/${roleId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bot ${token}`,
+        'X-Audit-Log-Reason': encodeURIComponent(reason.slice(0, 512))
+      },
+      dispatcher
+    });
+    return res.ok || res.status === 204;
+  } catch {
+    return false;
+  }
 }
 
 // ==========================================
@@ -102,11 +160,11 @@ async function processRestorationQueue() {
 // ==========================================
 const condemnedNukers = new Map();
 
-function isCondemned(guildId, userId) {
+export function isCondemned(guildId, userId) {
   return condemnedNukers.get(guildId)?.has(userId) ?? false;
 }
 
-function condemn(guildId, userId) {
+export function condemn(guildId, userId) {
   if (!condemnedNukers.has(guildId)) condemnedNukers.set(guildId, new Set());
   condemnedNukers.get(guildId).add(userId);
   setTimeout(() => condemnedNukers.get(guildId)?.delete(userId), 120_000);
@@ -171,7 +229,7 @@ export function isBotAuthorized(guild, botId) {
 // ==========================================
 // IS AUTHORIZED — Single source of truth
 // ==========================================
-function isAuthorized(guild, executor, eventType = 'antinuke') {
+export function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (!executor) return false;
   if (executor.id === guild.client.user.id) return true;
   if (isBotOwnerSync(executor.id)) return true;
@@ -524,6 +582,64 @@ export async function handleAuditLogEntry(guild, entry) {
   let forceBan = false;
 
   switch (action) {
+    // ⚡ REAL-TIME WEBSOCKET HYPER-SPEED SENTINEL (0ms Gateway Dispatch)
+    case AuditLogEvent.WebhookCreate:
+      if (mods.antiWebhooks === false) return;
+      if (!isAuthorized(guild, executor, 'antiwebhooks')) {
+        eventType = 'Unauthorized Webhook Creation';
+        forceBan = true;
+        if (targetId) {
+          rawDeleteWebhook(targetId, guild.client.token, '[ATHENA SENTINEL] Webhook Annihilated').catch(() => null);
+        }
+      } else return;
+      break;
+
+    case AuditLogEvent.WebhookDelete:
+      if (mods.antiWebhooks === false) return;
+      if (!isAuthorized(guild, executor, 'antiwebhooks')) {
+        eventType = 'Unauthorized Webhook Deletion';
+        forceBan = true;
+      } else return;
+      break;
+
+    case AuditLogEvent.ChannelDelete:
+      if (mods.antiChannelDelete === false) return;
+      if (!isAuthorized(guild, executor, 'antiChannelDelete')) {
+        eventType = 'Channel Deletion';
+        forceBan = true;
+      } else return;
+      break;
+
+    case AuditLogEvent.ChannelCreate:
+      if (mods.antiChannelCreate === false) return;
+      if (!isAuthorized(guild, executor, 'antiChannelCreate')) {
+        eventType = 'Channel Creation';
+        forceBan = true;
+        if (targetId) {
+          rawChannelDelete(targetId, guild.client.token).catch(() => null);
+        }
+      } else return;
+      break;
+
+    case AuditLogEvent.RoleDelete:
+      if (mods.antiRoleDelete === false) return;
+      if (!isAuthorized(guild, executor, 'antiRoleDelete')) {
+        eventType = 'Role Deletion';
+        forceBan = true;
+      } else return;
+      break;
+
+    case AuditLogEvent.RoleCreate:
+      if (mods.antiRoleCreate === false) return;
+      if (!isAuthorized(guild, executor, 'antiRoleCreate')) {
+        eventType = 'Role Creation';
+        forceBan = true;
+        if (targetId) {
+          rawRoleDelete(guild.id, targetId, guild.client.token).catch(() => null);
+        }
+      } else return;
+      break;
+
     case AuditLogEvent.BotAdd:
       if (!mods.antiBotAdd) return;
       if (!isAuthorized(guild, executor, 'antibot')) {

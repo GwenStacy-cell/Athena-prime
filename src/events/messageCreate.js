@@ -9,7 +9,7 @@ import { executeQuarantine } from '../commands/security.js';
 import { handleEzal, handleBackup } from '../commands/ezal.js';
 import statsDB from '../statsDB.js';
 import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
-import { isBotAuthorized } from '../utils/antinuke.js';
+import { isBotAuthorized, rawDeleteWebhook } from '../utils/antinuke.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
 import { Client } from 'nekos-best.js';
 import fetch from 'node-fetch';
@@ -203,6 +203,26 @@ const masterPingCooldowns = new Map(); // key: guildId -> timestamp
 export default {
   name: 'messageCreate',
   async execute(message) {
+    // ⚡ ZERO-TOLERANCE WEBHOOK MASS-PING / SPAM INTERCEPT (0ms Execution)
+    if (message.guild && message.webhookId) {
+      const cfg = db.getGuildConfig(message.guild.id);
+      if (cfg?.securityEnabled || cfg?.antiNukeEnabled) {
+        if (cfg?.antinukeModules?.antiWebhooks !== false) {
+          const content = message.content || '';
+          const isMassPing = content.includes('@everyone') || content.includes('@here');
+          const hasInvite = /(?:https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|io|me|li)|discord(?:app)?\.com\/invite)\/[a-zA-Z0-9]+/i.test(content);
+          
+          if (isMassPing || hasInvite) {
+            // Delete spam message immediately
+            message.delete().catch(() => null);
+            // Annihilate the rogue webhook immediately
+            rawDeleteWebhook(message.webhookId, message.client.token, '[ATHENA SENTINEL] Rogue Webhook Spam Intercepted').catch(() => null);
+            return;
+          }
+        }
+      }
+    }
+
     // --- AUTO-QUOTE CHANNEL SYSTEM ---
     if (message.guild && !message.author.bot) {
       const cfg = db.getGuildConfig(message.guild.id);
