@@ -13,7 +13,7 @@ export const commands = [
     options: [], // removed type option
 
     async executePrefix(message, args) {
-      const waitMsg = await message.reply(cv2.info('<a:uptime:1552608831060844575> Loading...', 'Building top members leaderboard...'));
+      const waitMsg = await message.reply(cv2.info('<a:loading:1542155051286396938> Loading...', 'Building top members leaderboard...'));
 
       try {
         const rawMsgTop = statsDB.getTopMembers(message.guild.id, 5) || [];

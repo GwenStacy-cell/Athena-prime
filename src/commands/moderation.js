@@ -782,7 +782,7 @@ export const commands = [
       if (!allowed) {
         return message.reply(cv2.danger('Access Denied', `${message.author} Only the **Bot Owner**, **Server Owner**, or **Extra Owners** can mass-unban members.`));
       }
-      const sentMsg = await message.reply(cv2.info('<a:uptime:1552608831060844575> Processing...', 'Fetching ban list and removing bans, please wait.'));
+      const sentMsg = await message.reply(cv2.info('<a:loading:1542155051286396938> Processing...', 'Fetching ban list and removing bans, please wait.'));
       const result = await handleUnbanAll(message.guild, message.member);
       await sentMsg.edit(result);
     },

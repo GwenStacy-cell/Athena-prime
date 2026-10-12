@@ -78,7 +78,7 @@ export const commands = [
         if (action === 'on') db.updateGuildConfig(guildId, { autoVcStatus: true });
         if (action === 'shuffle' && !cfg.autoVcStatus) return message.reply(cv2.warn('Disabled', 'Enable the feature first with `!autovcstatus on`.'));
         
-        const m = await message.reply(cv2.success(action === 'on' ? 'Enabled' : 'Shuffling', '<a:uptime:1552608831060844575> Sweeping voice channels now...'));
+        const m = await message.reply(cv2.success(action === 'on' ? 'Enabled' : 'Shuffling', '<a:loading:1542155051286396938> Sweeping voice channels now...'));
         
         // Sweep all VCs
         await message.guild.channels.fetch();
@@ -117,7 +117,7 @@ export const commands = [
 
       if (action === 'off') {
         db.updateGuildConfig(guildId, { autoVcStatus: false });
-        const m = await message.reply(cv2.success('Disabled', '<a:uptime:1552608831060844575> Auto VC Status disabled. Clearing statuses from all voice channels...'));
+        const m = await message.reply(cv2.success('Disabled', '<a:loading:1542155051286396938> Auto VC Status disabled. Clearing statuses from all voice channels...'));
         
         await message.guild.channels.fetch();
         const vcs = message.guild.channels.cache.filter(c => c.type === ChannelType.GuildVoice);
