@@ -873,7 +873,7 @@ export default {
         const newLevel = calculateLevel(userXp.xp);
         if (newLevel > userXp.level) {
           userXp.level = newLevel;
-          processLevelUp(message.client, message.guild, message.member, newLevel).catch(() => null);
+          processLevelUp(message.client, message.guild, message.member, newLevel, message.channel).catch(() => null);
         }
         
         db.setUserXp(guildId, userId, userXp);

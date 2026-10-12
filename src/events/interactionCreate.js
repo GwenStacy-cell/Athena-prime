@@ -188,6 +188,38 @@ export default {
   if (!interaction.guild && !(interaction.isButton() && interaction.customId.startsWith('gen_invite_'))) return;
 
   // --- APP BUILDER ---
+  // XP STRING SELECT MENU (Announcement Mode)
+      if (interaction.isStringSelectMenu() && interaction.customId === 'xp_mode_select') {
+        const val = interaction.values[0];
+        const system = db.getXpSystem(interaction.guild.id);
+
+        if (val === 'channel_modal') {
+          const { ModalBuilder, TextInputBuilder, TextInputStyle } = await import('discord.js');
+          const modal = new ModalBuilder().setCustomId('xp_announce_modal').setTitle('Announcement Destination');
+          modal.addComponents(new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('channel_id')
+              .setLabel('Channel ID, mention, "current", or "dm"')
+              .setPlaceholder('e.g. 123456789012345678, current, dm, or disabled')
+              .setValue(system.announceChannelId || '')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+          ));
+          return interaction.showModal(modal);
+        }
+
+        if (val === 'current') {
+          db.setXpSystem(interaction.guild.id, { ...system, announceMode: 'current', announceChannelId: null });
+        } else if (val === 'dm') {
+          db.setXpSystem(interaction.guild.id, { ...system, announceMode: 'dm', announceChannelId: null });
+        } else if (val === 'disabled') {
+          db.setXpSystem(interaction.guild.id, { ...system, announceMode: 'disabled', announceChannelId: null });
+        }
+
+        const panel = await buildXpDashboard(interaction.guild.id);
+        return cv2.respond(interaction, panel, 7);
+      }
+
   // XP ROLE SELECT MENUS
       if (interaction.isRoleSelectMenu() && interaction.customId === 'xp_add_multiplier') {
         const system = db.getXpSystem(interaction.guild.id);
@@ -228,9 +260,16 @@ export default {
 
         if (interaction.customId === 'xp_set_announce') {
           const { ModalBuilder, TextInputBuilder, TextInputStyle } = await import('discord.js');
-          const modal = new ModalBuilder().setCustomId('xp_announce_modal').setTitle('Set Announce Channel');
+          const system = db.getXpSystem(interaction.guild.id);
+          const modal = new ModalBuilder().setCustomId('xp_announce_modal').setTitle('Announcement Destination');
           modal.addComponents(new ActionRowBuilder().addComponents(
-            new TextInputBuilder().setCustomId('channel_id').setLabel('Paste the Channel ID here').setStyle(TextInputStyle.Short).setRequired(true)
+            new TextInputBuilder()
+              .setCustomId('channel_id')
+              .setLabel('Channel ID, mention, "current", or "dm"')
+              .setPlaceholder('e.g. 123456789012345678, current, dm, or disabled')
+              .setValue(system.announceChannelId ? system.announceChannelId : (system.announceMode || 'current'))
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
           ));
           return interaction.showModal(modal);
         }
@@ -413,11 +452,28 @@ export default {
 
   // XP MODAL SUBMITS
       if (interaction.customId === 'xp_announce_modal') {
-        const channelId = interaction.fields.getTextInputValue('channel_id').trim();
-        const channel = interaction.guild.channels.cache.get(channelId);
-        if (!channel) return interaction.reply({ content: 'Invalid channel ID. Make sure you paste the channel ID, not the name.', flags: 64 });
+        const rawInput = interaction.fields.getTextInputValue('channel_id').trim();
+        const inputLower = rawInput.toLowerCase();
         const system = db.getXpSystem(interaction.guild.id);
-        db.setXpSystem(interaction.guild.id, { ...system, announceChannelId: channelId });
+
+        if (inputLower === 'current' || inputLower === 'current channel' || inputLower === 'chat') {
+          db.setXpSystem(interaction.guild.id, { ...system, announceMode: 'current', announceChannelId: null });
+        } else if (inputLower === 'dm' || inputLower === 'dms' || inputLower === 'direct message') {
+          db.setXpSystem(interaction.guild.id, { ...system, announceMode: 'dm', announceChannelId: null });
+        } else if (inputLower === 'off' || inputLower === 'disable' || inputLower === 'disabled' || inputLower === 'none') {
+          db.setXpSystem(interaction.guild.id, { ...system, announceMode: 'disabled', announceChannelId: null });
+        } else {
+          const cleanId = rawInput.replace(/[<#>]/g, '').trim();
+          const channel = interaction.guild.channels.cache.get(cleanId);
+          if (!channel) {
+            return interaction.reply({
+              content: 'Invalid input. Please enter a valid channel ID/mention, or type `current`, `dm`, or `disabled`.',
+              flags: 64
+            });
+          }
+          db.setXpSystem(interaction.guild.id, { ...system, announceMode: 'channel', announceChannelId: channel.id });
+        }
+
         const panel = await buildXpDashboard(interaction.guild.id);
         return cv2.respond(interaction, panel, 7);
       }

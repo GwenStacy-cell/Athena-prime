@@ -14,21 +14,40 @@ export async function buildXpDashboard(guildId) {
   const ON  = '<:on:1533844867191406672>';
   const OFF = '<:off:1533844858983157851>';
   const statusIcon = system.enabled ? ON : OFF;
+  const statusLabel = system.enabled ? 'ONLINE & ACTIVE' : 'OFFLINE & PAUSED';
 
-  let rewardsText = 'None';
+  // Determine current announcement setting text
+  let announceSettingText = 'Current Channel (Active Chat)';
+  const currentMode = system.announceMode || (system.announceChannelId ? 'channel' : 'current');
+  if (currentMode === 'dm') {
+    announceSettingText = 'Direct Message (User DM)';
+  } else if (currentMode === 'disabled') {
+    announceSettingText = 'Disabled (No Alerts)';
+  } else if (system.announceChannelId) {
+    announceSettingText = `<#${system.announceChannelId}> (Dedicated Channel)`;
+  } else {
+    announceSettingText = 'Current Channel (Where chatting)';
+  }
+
+  const cmdChannelText = system.cmdChannelId ? `<#${system.cmdChannelId}> (Restricted)` : 'All Channels (Unrestricted)';
+
+  let rewardsText = 'None configured';
   if (Object.keys(system.roleRewards || {}).length > 0) {
     rewardsText = Object.entries(system.roleRewards)
       .sort((a, b) => Number(a[0]) - Number(b[0]))
-      .map(([level, roleId]) => `**Level ${level}**: <@&${roleId}>`)
-      .join('\n');
+      .map(([level, roleId]) => `Level ${level} -> <@&${roleId}>`)
+      .join('\n-# • ');
   }
 
-  let multipliersText = 'None';
+  let multipliersText = 'None configured (1.0x default)';
   if (Object.keys(system.multipliers || {}).length > 0) {
     multipliersText = Object.entries(system.multipliers)
-      .map(([roleId, mult]) => `<@&${roleId}> (**${mult}x**)`)
-      .join('\n');
+      .map(([roleId, mult]) => `<@&${roleId}> (${mult}x)`)
+      .join('\n-# • ');
   }
+
+  const allUsers = db.getTopUsersXp(guildId, 99999);
+  const totalTracked = allUsers.length;
 
   const container = {
     type: 17,
@@ -38,27 +57,44 @@ export async function buildXpDashboard(guildId) {
         content:
           `# XP Manager\n` +
           `-# **__Interactive Leveling & XP Control Matrix__**\n\n` +
-          `-# • **Status:** ${statusIcon}\n` +
-          `-# • **Announce Channel:** ${system.announceChannelId ? `<#${system.announceChannelId}>` : '`Not Configured`'}\n` +
-          `-# • **Command Channel:** ${system.cmdChannelId ? `<#${system.cmdChannelId}>` : '`Not Configured`'}`
+          `-# • **System Status:** ${statusIcon} **${statusLabel}**\n` +
+          `-# • **Announcement Mode / Destination:** **${announceSettingText}**\n` +
+          `-# • **Commands Channel:** **${cmdChannelText}**\n` +
+          `-# • **Active Tracked Members:** **${totalTracked} users**\n` +
+          `-# • **Base XP Rate:** **15 - 25 XP / msg (60s cooldown)**`
       },
       { type: 14, divider: true },
       {
         type: 10,
         content:
-          `-# **__Milestones & Multipliers__**\n` +
-          `-# • **Role Rewards:** ${rewardsText}\n` +
-          `-# • **XP Multipliers:** ${multipliersText}`
+          `-# **__Current Rewards & Multipliers__**\n` +
+          `-# • **Level Role Rewards:**\n-# • ${rewardsText}\n\n` +
+          `-# • **Role XP Boost Multipliers:**\n-# • ${multipliersText}`
       },
       { type: 14, divider: true },
+      {
+        type: 1,
+        components: [
+          {
+            type: 3,
+            custom_id: 'xp_mode_select',
+            placeholder: `Mode: ${currentMode === 'channel' ? 'Dedicated Channel' : currentMode === 'dm' ? 'Direct Message' : currentMode === 'disabled' ? 'Disabled' : 'Current Channel'}`,
+            options: [
+              { label: 'Current Channel', value: 'current', description: 'Announce in the active chat where member leveled up', default: currentMode === 'current' },
+              { label: 'Direct Message (DM)', value: 'dm', description: 'Send level up card directly to member DMs', default: currentMode === 'dm' },
+              { label: 'Dedicated Channel', value: 'channel_modal', description: 'Set specific announcement channel by ID', default: currentMode === 'channel' },
+              { label: 'Disabled', value: 'disabled', description: 'Mute all level-up announcements', default: currentMode === 'disabled' }
+            ]
+          }
+        ]
+      },
       {
         type: 1,
         components: [
           { type: 2, custom_id: 'xp_toggle',       label: system.enabled ? 'Disable System' : 'Enable System', style: system.enabled ? 4 : 3 },
           { type: 2, custom_id: 'xp_set_announce', label: 'Announce Channel', style: 2 },
           { type: 2, custom_id: 'xp_set_cmd',      label: 'Command Channel',  style: 2 },
-          { type: 2, custom_id: 'xp_clear',        label: 'Reset Setup',      style: 4 },
-          { type: 2, custom_id: 'xp_save',         label: 'Save Configuration', style: 3 }
+          { type: 2, custom_id: 'xp_clear',        label: 'Reset Setup',      style: 4 }
         ]
       },
       {
@@ -76,7 +112,7 @@ export async function buildXpDashboard(guildId) {
       { type: 14, divider: true },
       {
         type: 10,
-        content: '-# Athena Prime Defense Matrix • V1.0.0'
+        content: '-# Athena Prime Defense Matrix • Leveling System'
       }
     ]
   };
