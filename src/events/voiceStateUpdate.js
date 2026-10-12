@@ -481,12 +481,15 @@ export default {
               await freshChannel.send(vcPanel);
               console.log(`[JTC]  Sent panel to VC text: ${freshChannel.name}`);
             } catch (e) {
+              if (e.code === 10003 || e.message?.includes('Unknown Channel')) {
+                return; // Channel was deleted when user left, abort retry
+              }
               attempt++;
               if (attempt < 3) {
-                console.warn(`[JTC] ️ VC text send failed (attempt ${attempt}): ${e.message}, retrying in 2s...`);
+                console.warn(`[JTC] VC text send failed (attempt ${attempt}): ${e.message}, retrying in 2s...`);
                 setTimeout(sendPanel, 2000);
               } else {
-                console.error(`[JTC]  VC text send failed after 3 attempts: ${e.message}`);
+                console.error(`[JTC] VC text send failed after 3 attempts: ${e.message}`);
               }
             }
           };

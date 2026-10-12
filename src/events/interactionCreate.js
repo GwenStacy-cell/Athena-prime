@@ -539,6 +539,10 @@ export default {
 
     const _reply = interaction.reply.bind(interaction);
     interaction.reply = async function(options) {
+      if (interaction.deferred || interaction.replied) {
+        if (interaction.followUp) return interaction.followUp(options);
+        return;
+      }
       if (isCV2(options)) {
         interaction.replied = true;
         const data = prepareCV2Payload(options);

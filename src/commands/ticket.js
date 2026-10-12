@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
@@ -166,8 +166,6 @@ export const commands = [
 
 export async function handleTicketButtons(interaction) {
   const { customId, guild, user } = interaction;
-  const db = require('../database.js').default;
-  const cv2 = require('../cv2.js').default;
   
   if (customId === 'ticket_open' || customId === 'ticket_open_general') {
     const config = db.getTickets(guild.id);
@@ -197,8 +195,6 @@ export async function handleTicketButtons(interaction) {
       config.ticketCount = (config.ticketCount || 0) + 1;
       const ticketId = config.ticketCount.toString().padStart(4, '0');
       
-      const { PermissionFlagsBits } = require('discord.js');
-      
       const permissionOverwrites = [
         { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
         { id: user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
@@ -226,19 +222,15 @@ export async function handleTicketButtons(interaction) {
       });
       
       if (db.createTicket) {
-         // Because db.createTicket does config.ticketCount++ internally, we just use the raw map to avoid double increment
-         if (!config.activeTickets) config.activeTickets = {};
-         config.activeTickets[ticketId] = {
-           textId: textChannel.id,
-           voiceId: voiceChannel.id,
-           ownerId: user.id,
-           createdAt: Date.now()
-         };
-         db.save();
+        if (!config.activeTickets) config.activeTickets = {};
+        config.activeTickets[ticketId] = {
+          textId: textChannel.id,
+          voiceId: voiceChannel.id,
+          ownerId: user.id,
+          createdAt: Date.now()
+        };
+        db.save();
       }
-      
-      const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-      
       const pings = `<@${user.id}> ${config.staffRoleIds.map(id => `<@&${id}>`).join(' ')}`;
       const container = {
         type: 17,
@@ -300,8 +292,6 @@ export async function handleTicketButtons(interaction) {
   }
 
   if (customId === 'ticket_close') {
-    const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
-    
     // Check if user has permission to close
     const config = db.getTickets(guild.id);
     if (config.closeTicketRoleIds && config.closeTicketRoleIds.length > 0) {
@@ -342,7 +332,6 @@ export async function handleTicketButtons(interaction) {
 
 export async function handleTicketSelectMenu(interaction) {
   const { customId, guild, user, values } = interaction;
-  const db = require('../database.js').default;
   
   if (customId === 'ticket_select_option') {
     const config = db.getTickets(guild.id);
@@ -357,7 +346,6 @@ export async function handleTicketSelectMenu(interaction) {
     const reason = values[0];
     
     // Show Modal to Ask Questions
-    const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
     const modal = new ModalBuilder().setCustomId('ticket_modal_submit_' + encodeURIComponent(reason)).setTitle(reason + ' Form');
     
     const inquiryInput = new TextInputBuilder()
@@ -388,7 +376,6 @@ export async function handleTicketSelectMenu(interaction) {
 
 export async function handleTicketModals(interaction) {
   const { customId, guild, user, fields } = interaction;
-  const db = require('../database.js').default;
   
   if (customId.startsWith('ticket_modal_submit_')) {
     const reason = decodeURIComponent(customId.replace('ticket_modal_submit_', ''));
@@ -406,7 +393,6 @@ export async function handleTicketModals(interaction) {
     try {
       config.ticketCount = (config.ticketCount || 0) + 1;
       const ticketId = config.ticketCount.toString().padStart(4, '0');
-      const { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
       
       const permissionOverwrites = [
         { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
