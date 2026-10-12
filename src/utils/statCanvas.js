@@ -909,10 +909,10 @@ function formatVoiceHoursText(seconds) {
 
 function renderTopServerTitle(ctx, name, startX, baselineY) {
   ctx.save();
-  let fontSize = 36;
+  let fontSize = 38;
   if (name.length > 25) fontSize = 22;
-  else if (name.length > 18) fontSize = 26;
-  else if (name.length > 12) fontSize = 30;
+  else if (name.length > 18) fontSize = 28;
+  else if (name.length > 12) fontSize = 32;
 
   ctx.font = `bold ${fontSize}px "Cinzel", "Georgia", "NotoSans", serif`;
 
@@ -931,37 +931,29 @@ function renderTopServerTitle(ctx, name, startX, baselineY) {
     part2 = '';
   }
 
-  // 1. Part 1 (Metallic Silver Chiseled)
+  // 1. Part 1 — flat stone grey (exactly like reference: dull grey, not bright white)
   ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetY = 4;
-  const gradSilver = ctx.createLinearGradient(0, baselineY - fontSize, 0, baselineY);
-  gradSilver.addColorStop(0, '#FFFFFF');
-  gradSilver.addColorStop(0.3, '#E6E9EE');
-  gradSilver.addColorStop(0.7, '#A8ADB8');
-  gradSilver.addColorStop(1, '#6B717D');
-  ctx.fillStyle = gradSilver;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 2;
+  ctx.fillStyle = '#b0b4bb'; // stone grey — matches "EDITORS" in reference
   ctx.fillText(part1, startX, baselineY);
   ctx.restore();
 
-  // 2. Part 2 (God of War Crimson Flame)
+  // 2. Part 2 — flat bright red (matches "HE4VEN" in reference)
   if (part2) {
     const w1 = ctx.measureText(part1).width;
     ctx.save();
-    ctx.shadowColor = 'rgba(229, 43, 56, 0.85)';
-    ctx.shadowBlur = 14;
+    ctx.shadowColor = 'rgba(200, 20, 20, 0.70)';
+    ctx.shadowBlur = 10;
     ctx.shadowOffsetY = 2;
-    const gradRed = ctx.createLinearGradient(0, baselineY - fontSize, 0, baselineY);
-    gradRed.addColorStop(0, '#FF5260');
-    gradRed.addColorStop(0.4, '#E52B38');
-    gradRed.addColorStop(1, '#7E0F16');
-    ctx.fillStyle = gradRed;
+    ctx.fillStyle = '#cc1818'; // blood red — matches the reference
     ctx.fillText(part2, startX + w1, baselineY);
     ctx.restore();
   }
   ctx.restore();
 }
+
 
 async function renderTopMemberRow(ctx, opts) {
   const { rank, isRank1, user, statText, badgeX, avatarX, nameX, statRightX, rowCenterY, isVoice, voiceRatio } = opts;
