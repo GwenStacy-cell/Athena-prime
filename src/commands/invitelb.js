@@ -14,7 +14,7 @@ export const commands = [
     options: [],
 
     async executePrefix(message, args) {
-      const waitMsg = await message.reply(cv2.info('Loading...', 'Building invite leaderboard...'));
+      const waitMsg = await message.reply(cv2.info('<a:uptime:1552608831060844575> Loading...', 'Building invite leaderboard...'));
 
       try {
         const rawInvites = statsDB.getTopInvites(message.guild.id, 10) || [];

@@ -13,7 +13,7 @@ export const commands = [
     options: [],
 
     async executePrefix(message, args) {
-      const waitMsg = await message.reply(cv2.info('Loading...', 'Building voice leaderboard...'));
+      const waitMsg = await message.reply(cv2.info('<a:uptime:1552608831060844575> Loading...', 'Building voice leaderboard...'));
 
       try {
         const rawMembers = statsDB.getTopVoiceMembers(message.guild.id, 10) || [];

@@ -138,13 +138,14 @@ export default {
 
     // Set custom rich activity presence
     const customStatuses = [
-      'Armed',
-      'Fortified',
+      'Fully Armed !',
+      "Fortified by Athena's Firewall !",
       'Truly Unbypassable',
-      'Dev Prince',
+      'Athena Prime by, Dev Prince',
       'Made in India | Challenging the World !',
       'Use !help, to learn more',
-      'Trusted by {users} Users in {servers} Servers'
+      'Trusted by {users} Users in {servers} Servers',
+      'Secured by | Zero Trust Architecture !'
     ];
     let statusIndex = 0;
 

@@ -1,4 +1,4 @@
-﻿import { PermissionFlagsBits, ChannelType } from 'discord.js';
+import { PermissionFlagsBits, ChannelType } from 'discord.js';
 import cv2 from '../cv2.js';
 import db from '../database.js';
 
@@ -78,7 +78,7 @@ export const commands = [
         if (action === 'on') db.updateGuildConfig(guildId, { autoVcStatus: true });
         if (action === 'shuffle' && !cfg.autoVcStatus) return message.reply(cv2.warn('Disabled', 'Enable the feature first with `!autovcstatus on`.'));
         
-        const m = await message.reply(cv2.success(action === 'on' ? 'Enabled' : 'Shuffling', 'Sweeping voice channels now...'));
+        const m = await message.reply(cv2.success(action === 'on' ? 'Enabled' : 'Shuffling', '<a:uptime:1552608831060844575> Sweeping voice channels now...'));
         
         // Sweep all VCs
         await message.guild.channels.fetch();
@@ -112,12 +112,12 @@ export const commands = [
           }
         }
         
-        return m.edit(cv2.success(action === 'on' ? 'Enabled' : 'Shuffled', `Set unique statuses for **${updated}** voice channels.`)).catch(()=>null);
+        return m.edit(cv2.success(action === 'on' ? 'Enabled' : 'Shuffled', `Set unique statuses for **${updated}** voice channels.\n-# Statuses are stored on Discord's backend and will appear once a member joins each VC.`)).catch(()=>null);
       }
 
       if (action === 'off') {
         db.updateGuildConfig(guildId, { autoVcStatus: false });
-        const m = await message.reply(cv2.success('Disabled', 'Auto VC Status disabled. Clearing statuses from all voice channels...'));
+        const m = await message.reply(cv2.success('Disabled', '<a:uptime:1552608831060844575> Auto VC Status disabled. Clearing statuses from all voice channels...'));
         
         await message.guild.channels.fetch();
         const vcs = message.guild.channels.cache.filter(c => c.type === ChannelType.GuildVoice);
