@@ -866,16 +866,50 @@ class Database {
     return this.cache.triggers[guildId] || [];
   }
 
-  addTrigger(guildId, match, response) {
+  getTrigger(guildId, match) {
+    if (!this.cache.triggers || !this.cache.triggers[guildId]) return null;
+    return this.cache.triggers[guildId].find(t => t.match.toLowerCase() === match.toLowerCase()) || null;
+  }
+
+  setTrigger(guildId, triggerData) {
     if (!this.cache.triggers) this.cache.triggers = {};
     if (!this.cache.triggers[guildId]) this.cache.triggers[guildId] = [];
 
-    const exists = this.cache.triggers[guildId].find(t => t.match.toLowerCase() === match.toLowerCase());
-    if (exists) return false;
+    const matchLower = triggerData.match.trim().toLowerCase();
+    const index = this.cache.triggers[guildId].findIndex(t => t.match.toLowerCase() === matchLower);
 
-    this.cache.triggers[guildId].push({ match, response });
+    const formatted = {
+      match: triggerData.match.trim(),
+      heading: triggerData.heading || null,
+      content: triggerData.content || triggerData.response || '',
+      gif: triggerData.gif || null,
+      footer: triggerData.footer || null,
+      updatedAt: Date.now()
+    };
+
+    if (index !== -1) {
+      this.cache.triggers[guildId][index] = formatted;
+    } else {
+      this.cache.triggers[guildId].push(formatted);
+    }
     this.save();
     return true;
+  }
+
+  addTrigger(guildId, match, response, extra = {}) {
+    return this.setTrigger(guildId, {
+      match,
+      content: response,
+      heading: extra.heading || null,
+      gif: extra.gif || null,
+      footer: extra.footer || null
+    });
+  }
+
+  updateTrigger(guildId, match, updates = {}) {
+    const existing = this.getTrigger(guildId, match);
+    if (!existing) return false;
+    return this.setTrigger(guildId, { ...existing, ...updates, match: updates.match || existing.match });
   }
 
   removeTrigger(guildId, match) {

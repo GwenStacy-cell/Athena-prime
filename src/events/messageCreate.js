@@ -1398,30 +1398,61 @@ export default {
       const triggers = db.getTriggers(guildId);
       
       for (const t of triggers) {
-        if (msgLowerForTriggers.includes(t.match.toLowerCase())) {
-          console.log(`[AutoResponder] Triggered by ${t.match} for message: ${message.content}`);
-          let responseText = t.response.trim();
+        if (!t.match) continue;
+        const triggerLower = t.match.toLowerCase();
+        
+        if (msgLowerForTriggers.includes(triggerLower)) {
+          const accentHex = dbConfig.accentColor || '#5865F2';
+          const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
-          // Extract original URL from Discord proxy link if needed
-          const proxyMatch = responseText.match(/https\/([^\s]+)/i);
-          if (responseText.includes('discordapp.net/external') && proxyMatch) {
-            responseText = 'https://' + proxyMatch[1];
+          const comps = [];
+
+          // 1. Heading (Title)
+          if (t.heading) {
+            comps.push({ type: 10, content: `## **${t.heading}**` });
+            comps.push({ type: 14, divider: true });
           }
 
-          const isUrl = /^https?:\/\/[^\s]+$/i.test(responseText);
-
-          if (isUrl) {
-            if (/\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(responseText)) {
-              const embedColor = dbConfig.accentColor ? parseInt(dbConfig.accentColor.replace('#', ''), 16) : 0x2b2d31;
-              const e = new EmbedBuilder().setImage(responseText).setColor(embedColor);
-              await message.channel.send({ embeds: [e] }).catch(() => null);
-            } else {
-              // If it's a tenor/giphy page link, or an .mp4, send the raw link and let Discord unfurl it
-              await message.channel.send(responseText).catch(() => null);
-            }
-          } else {
-            await message.channel.send(responseText).catch(() => null);
+          // 2. Content / Description (grey bold markdown per user rules)
+          const bodyText = t.content || t.response || '';
+          if (bodyText) {
+            const lines = bodyText.split('\n');
+            const formatted = lines.map(line => {
+              if (!line.trim()) return line;
+              if (line.startsWith('-#')) return line;
+              return `-# **${line}**`;
+            }).join('\n');
+            comps.push({ type: 10, content: formatted });
           }
+
+          // 3. Attached GIF / Image (Media Gallery in CV2)
+          let mediaUrl = t.gif || null;
+          if (!mediaUrl && t.response && /^https?:\/\/[^\s]+?\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(t.response.trim())) {
+            mediaUrl = t.response.trim();
+          }
+          if (mediaUrl) {
+            comps.push({
+              type: 12,
+              items: [
+                { media: { url: mediaUrl } }
+              ]
+            });
+          }
+
+          // 4. Footer (Divider + grey bold footer)
+          comps.push({ type: 14, divider: true });
+          const footerText = t.footer || `${message.guild.name} • Auto-Reply`;
+          comps.push({ type: 10, content: `-# **${footerText}**` });
+
+          const autoReplyContainer = {
+            type: 17,
+            accent_color: accentInt,
+            components: comps
+          };
+
+          await message.reply({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
+            message.channel.send({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+          });
           break; // Reply only once per message
         }
       }

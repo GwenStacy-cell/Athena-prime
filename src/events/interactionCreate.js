@@ -187,6 +187,12 @@ export default {
 
   if (!interaction.guild && !(interaction.isButton() && interaction.customId.startsWith('gen_invite_'))) return;
 
+  // AUTO-REPLY MATRIX INTERACTIONS
+  if (interaction.customId?.startsWith('ar_')) {
+    const { handleAutoReplyInteractions } = await import('../commands/trigger.js');
+    return handleAutoReplyInteractions(interaction);
+  }
+
   // --- APP BUILDER ---
   // XP STRING SELECT MENU (Announcement Mode)
       if (interaction.isStringSelectMenu() && interaction.customId === 'xp_mode_select') {

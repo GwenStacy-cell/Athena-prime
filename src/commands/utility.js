@@ -922,7 +922,7 @@ async function getStatusEmbed(client, guild) {
     "`!suggest <idea>` - Submit a suggestion `[Public]`",
     "`!starboard` - Configure the starboard channel `[Extra Owner]`",
     "`!ccmd add <trigger> <reply>` - Create a custom command response `[Extra Owner]`",
-    "`!trigger` - Manage auto-responder triggers `[Extra Owner]`",
+    "`!autoreply / !ar` - Custom keyword auto-replies with accent borderless CV2 embeds & GIFs `[Extra Owner]`",
     "`!rrsetup` - Interactive Reaction Role builder `[Extra Owner]`",
     "`!giveaway / !gw` - Manage server giveaways `[Extra Owner]`",
     "`!date @user` - Go on a special interactive date `[Public]`",
