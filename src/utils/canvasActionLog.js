@@ -1,9 +1,27 @@
-import { createCanvas, loadImage } from 'canvas';
 import { AttachmentBuilder } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
 
+let canvasMod = null;
+let canvasFailed = false;
+async function getCanvas() {
+  if (canvasMod) return canvasMod;
+  if (canvasFailed) return null;
+  try {
+    canvasMod = await import('canvas');
+    return canvasMod;
+  } catch (err) {
+    canvasFailed = true;
+    console.warn('[GlobalLog] Canvas module unavailable:', err.message);
+    return null;
+  }
+}
+
 export async function generateGlobalActionCard(opts) {
+    const canvasPkg = await getCanvas();
+    if (!canvasPkg) return null;
+    const { createCanvas, loadImage } = canvasPkg;
+
     const { action, guildName, guildIconUrl, targetTag, targetId, executorName, executorId, reason, timestamp, guildId } = opts;
 
     const width = 1024;

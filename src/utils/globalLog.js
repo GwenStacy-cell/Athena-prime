@@ -1,9 +1,9 @@
 import db from '../database.js';
-import { generateGlobalActionCard } from './canvasActionLog.js';
 
 export async function postGlobalActionLog(client, opts) {
   const { action, guildId, guildName, guildIconUrl, targetId, targetTag, executorId, executorTag, reason, _isSample } = opts;
   const { MessageFlags } = await import('discord.js');
+  const { generateGlobalActionCard } = await import('./canvasActionLog.js');
 
   if (targetId === client.user.id && !_isSample) return;
 

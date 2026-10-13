@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "deploy": "node deploy-commands.js"
+    "deploy": "node deploy-commands.js",
+    "postinstall": "npm rebuild canvas better-sqlite3 @discordjs/opus ffmpeg-static || true"
   },
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
@@ -44,6 +45,15 @@
     "tesseract.js": "^7.0.0",
     "@discordjs/opus": "^0.10.0",
     "chess.js": "^1.4.0"
+  },
+  "allowScripts": {
+    "@discordjs/opus": true,
+    "better-sqlite3": true,
+    "btch-downloader": true,
+    "canvas": true,
+    "esbuild": true,
+    "ffmpeg-static": true,
+    "tesseract.js": true
   },
   "devDependencies": {
     "jimp": "^1.6.1",
