@@ -1288,6 +1288,10 @@ class Database {
     this.save();
   }
 
+  saveGiveaways() {
+    this.save();
+  }
+
   removeGiveaway(messageId) {
     if (!this.cache.giveaways) return;
     if (this.cache.giveaways[messageId]) {
@@ -1372,6 +1376,14 @@ class Database {
       .slice(0, limit);
   }
 
+  getAllUsersXp(guildId) {
+    if (!this.cache.usersXp || !this.cache.usersXp[guildId]) return [];
+    return Object.entries(this.cache.usersXp[guildId]).map(([userId, data]) => ({
+      userId,
+      ...data
+    }));
+  }
+
   // --------------------------------------------------------------------------
   // Move Protection System
   // --------------------------------------------------------------------------
@@ -1445,6 +1457,22 @@ class Database {
       return true;
     }
     return false;
+  }
+
+  // --------------------------------------------------------------------------
+  // Mass Role System
+  // --------------------------------------------------------------------------
+  saveMassRole(guildId, roleId, userIds) {
+    if (!this.cache.massRoles) this.cache.massRoles = {};
+    if (!this.cache.massRoles[guildId]) this.cache.massRoles[guildId] = {};
+    this.cache.massRoles[guildId][roleId] = userIds;
+    this.save();
+    return true;
+  }
+
+  getMassRole(guildId, roleId) {
+    if (!this.cache.massRoles || !this.cache.massRoles[guildId]) return [];
+    return this.cache.massRoles[guildId][roleId] || [];
   }
   // Global Bot Blacklist (Flags)
   getBotBlacklist() {
