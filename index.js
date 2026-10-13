@@ -53,6 +53,7 @@ dotenv.config();
 // Print boot header
 console.log(chalk.hex('#FFD700').bold('\n============================================='));
 console.log(chalk.hex('#FFD700').bold('🛡️   Athena Prime - Initializing...   🛡️'));
+console.log(chalk.greenBright.bold('✨   Railway Auto-Deploy Verified: Active!   ✨'));
 console.log(chalk.hex('#FFD700').bold('=============================================\n'));
 
 const token = process.env.DISCORD_TOKEN;
@@ -600,8 +601,8 @@ import { startYtStatsEngine } from './src/utils/ytStatsEngine.js';
 import { startGitWatcher } from './src/utils/gitWatcher.js';
 
 client.once('clientReady', async () => {
-  // Start background auto-deploy watcher
-  startGitWatcher(30000);
+  // Start background auto-deploy watcher (checks every 20s)
+  startGitWatcher(20000);
 
   const all = db.getAllQuarantinedUsers();
   let restored = 0;
