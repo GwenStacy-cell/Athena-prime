@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags } from 'discord.js';
+import { PermissionFlagsBits, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
@@ -9,15 +9,15 @@ export function buildAutoReplyPreview(guild, trigger) {
 
   const comps = [];
 
-  // 1. Heading (Title)
-  if (trigger.heading) {
-    comps.push({ type: 10, content: `## **${trigger.heading}**` });
-    comps.push({ type: 14, divider: true });
+  // 1. Heading (Title) - 100% Optional
+  if (trigger.heading && trigger.heading.trim()) {
+    comps.push({ type: 10, content: `## **${trigger.heading.trim()}**` });
   }
 
-  // 2. Content / Description (grey bold markdown)
-  const bodyText = trigger.content || trigger.response || '';
+  // 2. Content / Description (grey bold markdown) - 100% Optional
+  const bodyText = (trigger.content || trigger.response || '').trim();
   if (bodyText) {
+    if (comps.length > 0) comps.push({ type: 14, divider: true });
     const lines = bodyText.split('\n');
     const formatted = lines.map(line => {
       if (!line.trim()) return line;
@@ -27,9 +27,13 @@ export function buildAutoReplyPreview(guild, trigger) {
     comps.push({ type: 10, content: formatted });
   }
 
-  // 3. Attached GIF / Image (Media Gallery in CV2)
-  const mediaUrl = trigger.gif || (trigger.response && /^https?:\/\/[^\s]+?\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(trigger.response.trim()) ? trigger.response.trim() : null);
+  // 3. Attached GIF / Image (Media Gallery in CV2) - 100% Optional
+  let mediaUrl = trigger.gif?.trim() || null;
+  if (!mediaUrl && trigger.response && /^https?:\/\/[^\s]+?\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(trigger.response.trim())) {
+    mediaUrl = trigger.response.trim();
+  }
   if (mediaUrl) {
+    if (comps.length > 0) comps.push({ type: 14, divider: true });
     comps.push({
       type: 12,
       items: [
@@ -38,10 +42,16 @@ export function buildAutoReplyPreview(guild, trigger) {
     });
   }
 
-  // 4. Footer
-  comps.push({ type: 14, divider: true });
-  const footerText = trigger.footer || `${guild.name} • Auto-Reply`;
-  comps.push({ type: 10, content: `-# **${footerText}**` });
+  // 4. Footer - 100% Optional & Unique per Reply
+  if (trigger.footer && trigger.footer.trim()) {
+    if (comps.length > 0) comps.push({ type: 14, divider: true });
+    comps.push({ type: 10, content: `-# **${trigger.footer.trim()}**` });
+  }
+
+  // Fallback if completely empty
+  if (comps.length === 0) {
+    comps.push({ type: 10, content: `-# **[Auto-Reply Triggered: \`${trigger.match}\`]**` });
+  }
 
   return {
     type: 17,
@@ -50,22 +60,31 @@ export function buildAutoReplyPreview(guild, trigger) {
   };
 }
 
-export function buildAutoReplyDashboard(guild) {
+export function buildAutoReplyDashboard(guild, page = 0) {
   const triggers = db.getTriggers(guild.id);
   const config = db.getGuildConfig(guild.id);
   const accentHex = config.accentColor || '#5865F2';
   const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
+  const itemsPerPage = 5;
+  const totalPages = Math.max(1, Math.ceil(triggers.length / itemsPerPage));
+  const currentPage = Math.max(0, Math.min(page, totalPages - 1));
+  const pageTriggers = triggers.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+
   let triggersContent = '-# • **No auto-replies configured yet.** Click **Create Auto-Reply** below to add one!';
   if (triggers.length > 0) {
-    triggersContent = triggers.map((t, idx) => {
-      const shortContent = (t.content || t.response || '').replace(/\n/g, ' ');
-      const preview = shortContent.length > 60 ? shortContent.slice(0, 57) + '...' : shortContent;
+    triggersContent = pageTriggers.map((t, idx) => {
+      const globalIdx = currentPage * itemsPerPage + idx + 1;
+      const rawContent = (t.content || t.response || '').trim();
+      const contentSnippet = rawContent ? (rawContent.length > 50 ? rawContent.slice(0, 47) + '...' : rawContent).replace(/\n/g, ' ') : (t.gif ? '`Media Only`' : '`None`');
+      const headingText = t.heading ? `\`${t.heading}\`` : '`None`';
+      const footerText = t.footer ? `\`${t.footer}\`` : '`None`';
+      const mediaText = t.gif ? '`<Attached>`' : '`None`';
+
       return (
-        `-# • **#${idx + 1} Keyword:** \`${t.match}\`\n` +
-        `-# • **Heading:** ${t.heading ? `**${t.heading}**` : '`None`'} | **Media:** ${t.gif ? '`Attached`' : '`None`'}\n` +
-        `-# • **Content:** ${preview ? `**${preview}**` : '`None`'}\n` +
-        `-# • **Footer:** ${t.footer ? `**${t.footer}**` : '`Default`'}`
+        `-# • **[#${globalIdx}] Keyword:** \`${t.match}\`\n` +
+        `-# • **Heading:** ${headingText} \u2022 **Footer:** ${footerText}\n` +
+        `-# • **Content:** **${contentSnippet}** \u2022 **GIF:** ${mediaText}`
       );
     }).join('\n-# • ──────────────────────────────\n');
   }
@@ -76,34 +95,70 @@ export function buildAutoReplyDashboard(guild) {
       content:
         `# Auto-Reply Manager\n` +
         `-# **__Server Keyword Auto-Responder Matrix__**\n\n` +
-        `-# • **Active Auto-Replies:** **${triggers.length} configured**\n` +
-        `-# • **Response Engine:** **Accent Borderless CV2 Container**\n` +
-        `-# • **Media Capabilities:** **GIF & Image Embedding Active**\n` +
-        `-# • **Access Tier:** **Server Owner & Extra Owners**`
+        `-# • **Total Active Replies:** **${triggers.length} configured**\n` +
+        `-# • **Page:** **${currentPage + 1} of ${totalPages}**\n` +
+        `-# • **Theme Accent:** **${accentHex}**\n` +
+        `-# • **Format:** **Accent Borderless CV2 Container**\n` +
+        `-# • **Customization:** **Heading, Content, GIF & Footer (All 100% Optional & Unique)**`
     },
     { type: 14, divider: true },
     {
       type: 10,
       content:
-        `-# **__Configured Server Triggers__**\n` +
+        `-# **__Active Auto-Replies List__**\n` +
         triggersContent
     },
-    { type: 14, divider: true },
-    {
-      type: 1,
-      components: [
-        { type: 2, custom_id: 'ar_btn_create', label: 'Create Auto-Reply', style: 3 },
-        { type: 2, custom_id: 'ar_btn_refresh', label: 'Refresh List', style: 2 }
-      ]
-    }
+    { type: 14, divider: true }
   ];
 
+  // Action Row 1: Primary Controls
+  const mainControls = [
+    { type: 2, custom_id: 'ar_btn_create', label: 'Create Auto-Reply', style: 3 },
+    { type: 2, custom_id: `ar_btn_refresh_${currentPage}`, label: 'Refresh', style: 2 },
+    { type: 2, custom_id: 'ar_btn_test_modal', label: 'Test / Preview', style: 1 }
+  ];
   if (triggers.length > 0) {
-    // Select menu to edit
+    mainControls.push({ type: 2, custom_id: 'ar_btn_clear_all', label: 'Clear All', style: 4 });
+  }
+
+  containerComps.push({
+    type: 1,
+    components: mainControls
+  });
+
+  // Action Row 2: Direct Remove Buttons for the items on this page (User explicitly requested remove buttons for them!)
+  if (pageTriggers.length > 0) {
+    const removeButtons = pageTriggers.slice(0, 5).map(t => ({
+      type: 2,
+      custom_id: `ar_btn_del_${encodeURIComponent(t.match)}`,
+      label: `Remove: ${t.match.slice(0, 15)}`,
+      style: 4
+    }));
+
+    containerComps.push({
+      type: 1,
+      components: removeButtons
+    });
+  }
+
+  // Action Row 3: Pagination if multiple pages
+  if (totalPages > 1) {
+    containerComps.push({
+      type: 1,
+      components: [
+        { type: 2, custom_id: `ar_page_${currentPage - 1}`, label: '◀ Prev', style: 2, disabled: currentPage === 0 },
+        { type: 2, custom_id: 'ar_page_noop', label: `Page ${currentPage + 1} / ${totalPages}`, style: 2, disabled: true },
+        { type: 2, custom_id: `ar_page_${currentPage + 1}`, label: 'Next ▶', style: 2, disabled: currentPage >= totalPages - 1 }
+      ]
+    });
+  }
+
+  // Action Row 4: Select Menu to Edit any trigger
+  if (triggers.length > 0) {
     const editOptions = triggers.slice(0, 25).map(t => ({
       label: `Edit: ${t.match}`.slice(0, 100),
       value: t.match.slice(0, 100),
-      description: (t.heading || t.content || 'Edit fields').slice(0, 100)
+      description: (t.heading || t.content || 'Click to edit fields').slice(0, 100)
     }));
 
     containerComps.push({
@@ -118,30 +173,32 @@ export function buildAutoReplyDashboard(guild) {
       ]
     });
 
-    // Select menu to delete
-    const deleteOptions = triggers.slice(0, 25).map(t => ({
-      label: `Delete: ${t.match}`.slice(0, 100),
-      value: t.match.slice(0, 100),
-      description: `Remove ${t.match} auto-reply`.slice(0, 100)
-    }));
+    // Action Row 5: Quick Select Menu to Delete any trigger
+    if (triggers.length > 5) {
+      const deleteOptions = triggers.slice(0, 25).map(t => ({
+        label: `Delete: ${t.match}`.slice(0, 100),
+        value: t.match.slice(0, 100),
+        description: `Delete trigger "${t.match}"`.slice(0, 100)
+      }));
 
-    containerComps.push({
-      type: 1,
-      components: [
-        {
-          type: 3,
-          custom_id: 'ar_select_delete',
-          placeholder: 'Select an Auto-Reply to Delete...',
-          options: deleteOptions
-        }
-      ]
-    });
+      containerComps.push({
+        type: 1,
+        components: [
+          {
+            type: 3,
+            custom_id: 'ar_select_delete',
+            placeholder: 'Or Select any Auto-Reply to Remove...',
+            options: deleteOptions
+          }
+        ]
+      });
+    }
   }
 
   containerComps.push({ type: 14, divider: true });
   containerComps.push({
     type: 10,
-    content: '-# Athena Prime Defense Matrix • Auto-Reply Suite'
+    content: '-# Athena Prime Defense Matrix • Auto-Reply Manager'
   });
 
   return {
@@ -155,36 +212,107 @@ export function buildAutoReplyDashboard(guild) {
 }
 
 export async function handleAutoReplyInteractions(interaction) {
+  // 1. BUTTON INTERACTIONS
   if (interaction.isButton()) {
-    if (interaction.customId === 'ar_btn_create') {
-      const modal = new ModalBuilder().setCustomId('ar_modal_create').setTitle('Create Auto-Reply');
+    // Direct Delete button for an item
+    if (interaction.customId.startsWith('ar_btn_del_')) {
+      const match = decodeURIComponent(interaction.customId.replace('ar_btn_del_', ''));
+      db.removeTrigger(interaction.guild.id, match);
+      const panel = buildAutoReplyDashboard(interaction.guild);
+      return cv2.respond(interaction, panel, 7);
+    }
+
+    // Pagination
+    if (interaction.customId.startsWith('ar_page_')) {
+      const pageStr = interaction.customId.replace('ar_page_', '');
+      const page = parseInt(pageStr, 10) || 0;
+      const panel = buildAutoReplyDashboard(interaction.guild, page);
+      return cv2.respond(interaction, panel, 7);
+    }
+
+    // Refresh
+    if (interaction.customId.startsWith('ar_btn_refresh')) {
+      const parts = interaction.customId.split('_');
+      const page = parseInt(parts[3] || '0', 10) || 0;
+      const panel = buildAutoReplyDashboard(interaction.guild, page);
+      return cv2.respond(interaction, panel, 7);
+    }
+
+    // Clear All
+    if (interaction.customId === 'ar_btn_clear_all') {
+      db.clearTriggers(interaction.guild.id);
+      const panel = buildAutoReplyDashboard(interaction.guild, 0);
+      return cv2.respond(interaction, panel, 7);
+    }
+
+    // Test Modal Prompt
+    if (interaction.customId === 'ar_btn_test_modal') {
+      const modal = new ModalBuilder().setCustomId('ar_modal_test_input').setTitle('Test Auto-Reply');
       modal.addComponents(
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_keyword').setLabel('Trigger Keyword').setPlaceholder('e.g. foofwo, rules, hello').setStyle(TextInputStyle.Short).setRequired(true)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_heading').setLabel('Heading (Title)').setPlaceholder('e.g. Server Welcome').setStyle(TextInputStyle.Short).setRequired(false)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_content').setLabel('Content / Reply Text').setPlaceholder('Enter response message here...').setStyle(TextInputStyle.Paragraph).setRequired(true)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_gif').setLabel('GIF / Image URL').setPlaceholder('e.g. https://media.tenor.com/...').setStyle(TextInputStyle.Short).setRequired(false)
-        ),
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_footer').setLabel('Footer Text').setPlaceholder('e.g. Athena Defense Suite').setStyle(TextInputStyle.Short).setRequired(false)
+          new TextInputBuilder()
+            .setCustomId('ar_test_keyword')
+            .setLabel('Keyword to Test')
+            .setPlaceholder('Enter the trigger keyword to preview...')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
         )
       );
       return interaction.showModal(modal);
     }
 
-    if (interaction.customId === 'ar_btn_refresh') {
-      const panel = buildAutoReplyDashboard(interaction.guild);
-      return cv2.respond(interaction, panel, 7);
+    // Create Modal (Everything except keyword is 100% Optional!)
+    if (interaction.customId === 'ar_btn_create') {
+      const modal = new ModalBuilder().setCustomId('ar_modal_create').setTitle('Create Auto-Reply');
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('ar_keyword')
+            .setLabel('Trigger Keyword (Required)')
+            .setPlaceholder('e.g. foofwo, hello, rules')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('ar_heading')
+            .setLabel('Heading / Title (Optional)')
+            .setPlaceholder('e.g. Server Welcome')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('ar_content')
+            .setLabel('Reply Message Content (Optional)')
+            .setPlaceholder('Enter reply text here...')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(false)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('ar_gif')
+            .setLabel('GIF / Image URL (Optional)')
+            .setPlaceholder('e.g. https://media.tenor.com/... or image link')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('ar_footer')
+            .setLabel('Custom Unique Footer (Optional)')
+            .setPlaceholder('e.g. Welcome to Editors Heaven')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)
+        )
+      );
+      return interaction.showModal(modal);
     }
   }
 
+  // 2. SELECT MENU INTERACTIONS
   if (interaction.isStringSelectMenu()) {
+    // Select menu to edit
     if (interaction.customId === 'ar_select_edit') {
       const match = interaction.values[0];
       const trigger = db.getTrigger(interaction.guild.id, match);
@@ -198,37 +326,75 @@ export async function handleAutoReplyInteractions(interaction) {
 
       modal.addComponents(
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_keyword').setLabel('Trigger Keyword').setValue(trigger.match).setStyle(TextInputStyle.Short).setRequired(true)
+          new TextInputBuilder()
+            .setCustomId('ar_keyword')
+            .setLabel('Trigger Keyword')
+            .setValue(trigger.match)
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_heading').setLabel('Heading (Title)').setValue(trigger.heading || '').setStyle(TextInputStyle.Short).setRequired(false)
+          new TextInputBuilder()
+            .setCustomId('ar_heading')
+            .setLabel('Heading / Title (Optional)')
+            .setValue(trigger.heading || '')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_content').setLabel('Content / Reply Text').setValue(trigger.content || trigger.response || '').setStyle(TextInputStyle.Paragraph).setRequired(true)
+          new TextInputBuilder()
+            .setCustomId('ar_content')
+            .setLabel('Reply Message Content (Optional)')
+            .setValue(trigger.content || trigger.response || '')
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(false)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_gif').setLabel('GIF / Image URL').setValue(trigger.gif || '').setStyle(TextInputStyle.Short).setRequired(false)
+          new TextInputBuilder()
+            .setCustomId('ar_gif')
+            .setLabel('GIF / Image URL (Optional)')
+            .setValue(trigger.gif || '')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)
         ),
         new ActionRowBuilder().addComponents(
-          new TextInputBuilder().setCustomId('ar_footer').setLabel('Footer Text').setValue(trigger.footer || '').setStyle(TextInputStyle.Short).setRequired(false)
+          new TextInputBuilder()
+            .setCustomId('ar_footer')
+            .setLabel('Custom Unique Footer (Optional)')
+            .setValue(trigger.footer || '')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)
         )
       );
       return interaction.showModal(modal);
     }
 
+    // Select menu to delete
     if (interaction.customId === 'ar_select_delete') {
       const match = interaction.values[0];
       db.removeTrigger(interaction.guild.id, match);
       const panel = buildAutoReplyDashboard(interaction.guild);
       return cv2.respond(interaction, panel, 7);
     }
+
+    // Select menu to test / preview
+    if (interaction.customId === 'ar_select_test') {
+      const match = interaction.values[0];
+      const trigger = db.getTrigger(interaction.guild.id, match);
+      if (!trigger) {
+        return interaction.reply({ content: 'Trigger not found.', flags: 64 });
+      }
+      const previewContainer = buildAutoReplyPreview(interaction.guild, trigger);
+      return interaction.reply({ components: [previewContainer], flags: MessageFlags.IsComponentsV2 });
+    }
   }
 
+  // 3. MODAL SUBMIT INTERACTIONS
   if (interaction.isModalSubmit()) {
     if (interaction.customId === 'ar_modal_create') {
       const match = interaction.fields.getTextInputValue('ar_keyword').trim();
       const heading = interaction.fields.getTextInputValue('ar_heading').trim() || null;
-      const content = interaction.fields.getTextInputValue('ar_content').trim();
+      const content = interaction.fields.getTextInputValue('ar_content').trim() || null;
       const gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
       const footer = interaction.fields.getTextInputValue('ar_footer').trim() || null;
 
@@ -241,7 +407,7 @@ export async function handleAutoReplyInteractions(interaction) {
       const oldMatch = decodeURIComponent(interaction.customId.replace('ar_modal_edit_', ''));
       const newMatch = interaction.fields.getTextInputValue('ar_keyword').trim();
       const heading = interaction.fields.getTextInputValue('ar_heading').trim() || null;
-      const content = interaction.fields.getTextInputValue('ar_content').trim();
+      const content = interaction.fields.getTextInputValue('ar_content').trim() || null;
       const gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
       const footer = interaction.fields.getTextInputValue('ar_footer').trim() || null;
 
@@ -253,6 +419,16 @@ export async function handleAutoReplyInteractions(interaction) {
       const panel = buildAutoReplyDashboard(interaction.guild);
       return cv2.respond(interaction, panel, 7);
     }
+
+    if (interaction.customId === 'ar_modal_test_input') {
+      const match = interaction.fields.getTextInputValue('ar_test_keyword').trim();
+      const trigger = db.getTrigger(interaction.guild.id, match);
+      if (!trigger) {
+        return interaction.reply({ content: `No auto-reply found matching keyword: \`${match}\`.`, flags: 64 });
+      }
+      const previewContainer = buildAutoReplyPreview(interaction.guild, trigger);
+      return interaction.reply({ components: [previewContainer], flags: MessageFlags.IsComponentsV2 });
+    }
   }
 }
 
@@ -260,7 +436,7 @@ export const commands = [
   {
     name: 'autoreply',
     aliases: ['ar', 'trigger', 'customreply'],
-    description: 'Manage custom auto-replies with accent borderless CV2 embeds, GIFs, and headers.',
+    description: 'Interactive Auto-Reply Manager with list of set replies, remove buttons, and optional fields.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],
     options: [
@@ -275,10 +451,10 @@ export const commands = [
         type: 1, // SUB_COMMAND
         options: [
           { name: 'keyword', description: 'Keyword to trigger the response', type: 3, required: true },
-          { name: 'content', description: 'Body text of the auto-reply', type: 3, required: true },
-          { name: 'heading', description: 'Title heading of the embed', type: 3, required: false },
-          { name: 'gif', description: 'Direct image or GIF URL to attach', type: 3, required: false },
-          { name: 'footer', description: 'Custom footer text', type: 3, required: false }
+          { name: 'content', description: 'Body text of the auto-reply (optional)', type: 3, required: false },
+          { name: 'heading', description: 'Title heading of the embed (optional)', type: 3, required: false },
+          { name: 'gif', description: 'Direct image or GIF URL to attach (optional)', type: 3, required: false },
+          { name: 'footer', description: 'Custom unique footer text (optional)', type: 3, required: false }
         ]
       },
       {
@@ -336,18 +512,18 @@ export const commands = [
       if (sub === 'add' || sub === 'create') {
         const rest = args.slice(1).join(' ');
         const parts = rest.split('|').map(p => p.trim());
-        if (parts.length < 2) {
+        if (parts.length === 0 || !parts[0]) {
           return message.reply(cv2.warn(
             'Usage Guide',
-            '`!ar add <keyword> | <content> [| <heading>] [| <gif>] [| <footer>]`\n\n' +
-            '**Examples:**\n' +
+            '`!ar add <keyword> | [content] | [heading] | [gif] | [footer]`\n\n' +
+            '**Note:** Heading, content, GIF, and footer are 100% optional!\n' +
             '-# • `!ar add foofwo | Welcome to our server!`\n' +
-            '-# • `!ar add foofwo | Welcome | Greeting | https://media.tenor.com/... | Athena Auto-Reply`'
+            '-# • `!ar add foofwo | Welcome | Greeting | https://media.tenor.com/... | Custom Footer`'
           ));
         }
 
         const match = parts[0];
-        const content = parts[1];
+        const content = parts[1] || null;
         const heading = parts[2] || null;
         let gif = parts[3] || null;
         const footer = parts[4] || null;
@@ -390,7 +566,7 @@ export const commands = [
         }
       }
 
-      if (sub === 'remove' || sub === 'delete') {
+      if (sub === 'remove' || sub === 'delete' || sub === 'del') {
         const match = args.slice(1).join(' ').trim();
         if (!match) return message.reply(cv2.warn('Usage Error', '`!ar remove <keyword>`'));
 
@@ -400,6 +576,11 @@ export const commands = [
         } else {
           return message.reply(cv2.warn('Not Found', `No auto-reply found matching \`${match}\`.`));
         }
+      }
+
+      if (sub === 'clear' || sub === 'clearall') {
+        db.clearTriggers(message.guild.id);
+        return message.reply(cv2.success('Auto-Replies Cleared', 'All auto-replies have been removed from this server.'));
       }
 
       if (sub === 'test' || sub === 'preview') {
@@ -415,7 +596,7 @@ export const commands = [
         return message.reply({ components: [previewContainer], flags: MessageFlags.IsComponentsV2 });
       }
 
-      if (sub === 'list' || sub === 'dashboard') {
+      if (sub === 'list' || sub === 'dashboard' || sub === 'manager') {
         const payload = buildAutoReplyDashboard(message.guild);
         return message.reply(payload);
       }
@@ -435,7 +616,7 @@ export const commands = [
 
       if (sub === 'create') {
         const match = interaction.options.getString('keyword').trim();
-        const content = interaction.options.getString('content').trim();
+        const content = interaction.options.getString('content') ? interaction.options.getString('content').trim() : null;
         const heading = interaction.options.getString('heading') ? interaction.options.getString('heading').trim() : null;
         const gif = interaction.options.getString('gif') ? interaction.options.getString('gif').trim() : null;
         const footer = interaction.options.getString('footer') ? interaction.options.getString('footer').trim() : null;

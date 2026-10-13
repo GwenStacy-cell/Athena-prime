@@ -507,6 +507,7 @@ export const commands = [
       await this._processSteal(message.content, message, message.guild);
     },
     async executeSlash(interaction) {
+      await interaction.deferReply().catch(() => null);
       // Gather all emoji inputs
       const inputs = [
         interaction.options.getString('emoji1'),
@@ -520,6 +521,13 @@ export const commands = [
       await this._processSteal(inputs, interaction, interaction.guild);
     },
     async _processSteal(input, context, guild) {
+      const sendReply = (payload) => {
+        if (context.isCommand?.() && (context.deferred || context.replied)) {
+          return context.editReply(payload).catch(() => null);
+        }
+        return context.reply(payload).catch(() => null);
+      };
+
       const EMOJI_RE = /<(a?):([a-zA-Z0-9_]+):(\d+)>/g;
       const matches  = [...input.matchAll(EMOJI_RE)];
       
@@ -538,7 +546,7 @@ export const commands = [
       }
 
       if (!matches.length) {
-        return context.reply(cv2.warn(
+        return sendReply(cv2.warn(
             'No Emojis Found',
             'Provide at least one custom emoji to steal.\n\nExample: `:pog: :lol: :hype:`'
           ));
@@ -596,7 +604,7 @@ export const commands = [
         lines.join('\n\n')
       );
 
-      return context.reply(resultEmbed);
+      return sendReply(resultEmbed);
     }
   },
   {

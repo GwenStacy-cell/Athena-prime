@@ -1407,15 +1407,15 @@ export default {
 
           const comps = [];
 
-          // 1. Heading (Title)
-          if (t.heading) {
-            comps.push({ type: 10, content: `## **${t.heading}**` });
-            comps.push({ type: 14, divider: true });
+          // 1. Heading (Title) - 100% Optional
+          if (t.heading && t.heading.trim()) {
+            comps.push({ type: 10, content: `## **${t.heading.trim()}**` });
           }
 
-          // 2. Content / Description (grey bold markdown per user rules)
-          const bodyText = t.content || t.response || '';
+          // 2. Content / Description (grey bold markdown) - 100% Optional
+          const bodyText = (t.content || t.response || '').trim();
           if (bodyText) {
+            if (comps.length > 0) comps.push({ type: 14, divider: true });
             const lines = bodyText.split('\n');
             const formatted = lines.map(line => {
               if (!line.trim()) return line;
@@ -1425,12 +1425,13 @@ export default {
             comps.push({ type: 10, content: formatted });
           }
 
-          // 3. Attached GIF / Image (Media Gallery in CV2)
-          let mediaUrl = t.gif || null;
+          // 3. Attached GIF / Image (Media Gallery in CV2) - 100% Optional
+          let mediaUrl = t.gif?.trim() || null;
           if (!mediaUrl && t.response && /^https?:\/\/[^\s]+?\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(t.response.trim())) {
             mediaUrl = t.response.trim();
           }
           if (mediaUrl) {
+            if (comps.length > 0) comps.push({ type: 14, divider: true });
             comps.push({
               type: 12,
               items: [
@@ -1439,10 +1440,16 @@ export default {
             });
           }
 
-          // 4. Footer (Divider + grey bold footer)
-          comps.push({ type: 14, divider: true });
-          const footerText = t.footer || `${message.guild.name} • Auto-Reply`;
-          comps.push({ type: 10, content: `-# **${footerText}**` });
+          // 4. Footer (Divider + grey bold footer) - 100% Optional & Unique per Reply
+          if (t.footer && t.footer.trim()) {
+            if (comps.length > 0) comps.push({ type: 14, divider: true });
+            comps.push({ type: 10, content: `-# **${t.footer.trim()}**` });
+          }
+
+          // If no fields were provided, fallback to standard notice
+          if (comps.length === 0) {
+            comps.push({ type: 10, content: `-# **[Auto-Reply Triggered: \`${t.match}\`]**` });
+          }
 
           const autoReplyContainer = {
             type: 17,

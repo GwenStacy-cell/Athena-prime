@@ -24,7 +24,7 @@ function patchDeferReply(cls) {
     const payload = { 
       content: `-# <a:loading:1542155051286396938> **Athena Prime:** ${randomText}`,
       flags: isEphemeral ? 64 : undefined,
-      fetchReply: options.fetchReply
+      withResponse: options.withResponse !== undefined ? options.withResponse : Boolean(options.fetchReply)
     };
     try {
       const res = await this.reply(payload);

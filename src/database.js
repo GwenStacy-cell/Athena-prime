@@ -928,6 +928,13 @@ class Database {
     return false;
   }
 
+  clearTriggers(guildId) {
+    if (!this.cache.triggers) return false;
+    this.cache.triggers[guildId] = [];
+    this.save();
+    return true;
+  }
+
   // ==========================================
   // JOIN TO CREATE (JTC)
   // ==========================================
