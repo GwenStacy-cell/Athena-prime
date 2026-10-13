@@ -53,7 +53,7 @@ dotenv.config();
 // Print boot header
 console.log(chalk.hex('#FFD700').bold('\n============================================='));
 console.log(chalk.hex('#FFD700').bold('🛡️   Athena Prime - Initializing...   🛡️'));
-console.log(chalk.greenBright.bold('✨   Railway Auto-Deploy Verified: Active!   ✨'));
+console.log(chalk.greenBright.bold('✨   Railway Auto-Deploy Engine: Online & Ready!   ✨'));
 console.log(chalk.hex('#FFD700').bold('=============================================\n'));
 
 const token = process.env.DISCORD_TOKEN;

@@ -57,7 +57,7 @@ export async function startGitWatcher(intervalMs = 30000) {
       const remoteCommit = await getRemoteCommit();
       if (remoteCommit && remoteCommit !== currentCommit) {
         console.log(chalk.yellow.bold(`\n======================================================`));
-        console.log(chalk.yellow.bold(`[AutoDeploy] New commit detected on GitHub: ${remoteCommit.slice(0, 7)}`));
+        console.log(chalk.yellow.bold(`[AutoDeploy] Update detected: ${currentCommit.slice(0, 7)} -> ${remoteCommit.slice(0, 7)}`));
         console.log(chalk.yellow.bold(`[AutoDeploy] Flushing DB and restarting to apply update...`));
         console.log(chalk.yellow.bold(`======================================================\n`));
 
