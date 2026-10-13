@@ -237,7 +237,7 @@ export default {
     // --- AUTO-QUOTE CHANNEL SYSTEM ---
     if (message.guild && !message.author.bot) {
       const cfg = db.getGuildConfig(message.guild.id);
-      const prefix = db.getPrefix(message.guild.id) || '!';
+      const prefix = cfg?.prefix || '!';
       const isCmd = message.content.startsWith(prefix) || message.content.startsWith('!');
       if (cfg && cfg.quoteChannelId === message.channel.id && !isCmd && message.content.trim().length > 0) {
         // Intercept message immediately

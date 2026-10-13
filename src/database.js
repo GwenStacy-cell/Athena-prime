@@ -174,6 +174,11 @@ class Database {
     this.save();
   }
 
+  getPrefix(guildId) {
+    if (!guildId) return process.env.DEFAULT_PREFIX || '!';
+    return this.getGuildConfig(guildId)?.prefix || process.env.DEFAULT_PREFIX || '!';
+  }
+
   getGuildConfig(guildId) {
     if (!this.cache.guilds[guildId]) {
       this.cache.guilds[guildId] = {
