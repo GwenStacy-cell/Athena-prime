@@ -1,4 +1,4 @@
-import { createCanvas } from 'canvas';
+import { createCanvas } from './canvas.js';
 
 function hexToRgb(hex) {
   let clean = String(hex || '').replace('#', '').trim();

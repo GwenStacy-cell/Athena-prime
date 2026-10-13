@@ -1,4 +1,4 @@
-﻿import { createCanvas, loadImage } from 'canvas';
+﻿import { createCanvas, loadImage } from './canvas.js';
 
 // Helper to strip standard emojis so they don't render as tofu boxes in node-canvas
 function stripEmojis(str) {

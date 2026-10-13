@@ -1,4 +1,4 @@
-import { createCanvas, registerFont } from 'canvas';
+import { createCanvas, registerFont } from './canvas.js';
 import path from 'path';
 
 // Register Roboto Font for headless Linux environments

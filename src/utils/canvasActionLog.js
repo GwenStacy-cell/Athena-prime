@@ -8,7 +8,7 @@ async function getCanvas() {
   if (canvasMod) return canvasMod;
   if (canvasFailed) return null;
   try {
-    canvasMod = await import('canvas');
+    canvasMod = await import('./canvas.js');
     return canvasMod;
   } catch (err) {
     canvasFailed = true;

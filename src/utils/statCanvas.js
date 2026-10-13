@@ -1,4 +1,4 @@
-import { createCanvas, loadImage, registerFont } from 'canvas';
+import { createCanvas, loadImage, registerFont } from './canvas.js';
 import path from 'path';
 import fs from 'fs';
 

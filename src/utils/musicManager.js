@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, AttachmentBuilder } from 'discord.js';
-import { createCanvas } from 'canvas';
+import { createCanvas } from './canvas.js';
 import { getVoiceConnection } from '@discordjs/voice';
 import db from '../database.js';
 import { connectToHomeVc } from './voice.js';

@@ -1,4 +1,4 @@
-﻿import { createCanvas, registerFont } from 'canvas';
+﻿import { createCanvas, registerFont } from './canvas.js';
 import crypto from 'crypto';
 
 // In-memory cache to store generated answers mapped to user IDs

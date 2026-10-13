@@ -1,5 +1,5 @@
 
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from './canvas.js';
 
 // Helper to draw rounded rectangles
 function roundRect(ctx, x, y, width, height, radius) {
