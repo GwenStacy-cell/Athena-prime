@@ -1,4 +1,4 @@
-﻿import { PermissionFlagsBits } from 'discord.js';
+import { PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
 
 export const commands = [
@@ -74,15 +74,18 @@ export const commands = [
       
       let sentMsg;
       if (isSlash) {
-        sentMsg = await interaction.reply({ ...payload, fetchReply: true });
+        await interaction.reply(payload);
+        sentMsg = await interaction.fetchReply().catch(() => null);
       } else {
-        sentMsg = await interaction.reply(payload);
+        sentMsg = await interaction.reply(payload).catch(() => null);
       }
       
       // Auto-delete after 60 seconds
-      setTimeout(() => {
-        sentMsg.delete().catch(() => null);
-      }, 60000);
+      if (sentMsg) {
+        setTimeout(() => {
+          sentMsg.delete().catch(() => null);
+        }, 60000);
+      }
       
       return sentMsg;
     }
