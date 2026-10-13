@@ -150,6 +150,10 @@ export var cv2 = Object.assign(_m(false), {
       if (payload.files) body.files = payload.files;
     }
     
+    if (ctx.replied || ctx.deferred) {
+      return cv2.edit(ctx, payload);
+    }
+
     // type 4 = ChannelMessageWithSource (Reply)
     // type 7 = UpdateMessage (Update)
     return ctx.client.rest.post(`/interactions/${ctx.id}/${ctx.token}/callback`, { body: { type: type, data: body } });

@@ -17,6 +17,17 @@ import { createRateMessage } from '../commands/rate.js';
 import { scanImageForScam, scanTextForScam, flaggedMessages } from '../utils/antiScam.js';
 import { createMockInteraction } from '../utils/mockInteraction.js';
 import { processMediaLink } from '../utils/mediaDownloader.js';
+import { buildAutoReplyPreview } from '../commands/trigger.js';
+
+function matchesTrigger(messageContent, triggerKeyword) {
+  if (!messageContent || !triggerKeyword) return false;
+  const content = messageContent.trim().toLowerCase();
+  const keyword = triggerKeyword.trim().toLowerCase();
+  if (content === keyword) return true;
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp('(^|\\s|[^a-zA-Z0-9_])' + escaped + '($|\\s|[^a-zA-Z0-9_])', 'i');
+  return regex.test(content);
+}
 
 export { getCachedGif };
 
@@ -1391,71 +1402,22 @@ export default {
       // ==========================================
       // 3.5. AUTO-RESPONDER TRIGGERS
     // ==========================================
-    // Do not trigger on prefix commands (avoids overlapping logic)
+    // Do not trigger on prefix commands or bot mentions (avoids overlapping logic)
     const prefix = dbConfig.prefix || '!';
-    {
-      const msgLowerForTriggers = message.content.toLowerCase();
+    const botMention1 = `<@${message.client.user?.id}>`;
+    const botMention2 = `<@!${message.client.user?.id}>`;
+    const isBotCommand = message.content.startsWith(prefix) || 
+                         message.content.startsWith(botMention1) || 
+                         message.content.startsWith(botMention2);
+
+    if (!isBotCommand) {
       const triggers = db.getTriggers(guildId);
       
       for (const t of triggers) {
         if (!t.match) continue;
-        const triggerLower = t.match.toLowerCase();
         
-        if (msgLowerForTriggers.includes(triggerLower)) {
-          const accentHex = dbConfig.accentColor || '#5865F2';
-          const accentInt = parseInt(accentHex.replace('#', ''), 16);
-
-          const comps = [];
-
-          // 1. Heading (Title) - 100% Optional
-          if (t.heading && t.heading.trim()) {
-            comps.push({ type: 10, content: `## **${t.heading.trim()}**` });
-          }
-
-          // 2. Content / Description (grey bold markdown) - 100% Optional
-          const bodyText = (t.content || t.response || '').trim();
-          if (bodyText) {
-            if (comps.length > 0) comps.push({ type: 14, divider: true });
-            const lines = bodyText.split('\n');
-            const formatted = lines.map(line => {
-              if (!line.trim()) return line;
-              if (line.startsWith('-#')) return line;
-              return `-# **${line}**`;
-            }).join('\n');
-            comps.push({ type: 10, content: formatted });
-          }
-
-          // 3. Attached GIF / Image (Media Gallery in CV2) - 100% Optional
-          let mediaUrl = t.gif?.trim() || null;
-          if (!mediaUrl && t.response && /^https?:\/\/[^\s]+?\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(t.response.trim())) {
-            mediaUrl = t.response.trim();
-          }
-          if (mediaUrl) {
-            if (comps.length > 0) comps.push({ type: 14, divider: true });
-            comps.push({
-              type: 12,
-              items: [
-                { media: { url: mediaUrl } }
-              ]
-            });
-          }
-
-          // 4. Footer (Divider + grey bold footer) - 100% Optional & Unique per Reply
-          if (t.footer && t.footer.trim()) {
-            if (comps.length > 0) comps.push({ type: 14, divider: true });
-            comps.push({ type: 10, content: `-# **${t.footer.trim()}**` });
-          }
-
-          // If no fields were provided, fallback to standard notice
-          if (comps.length === 0) {
-            comps.push({ type: 10, content: `-# **[Auto-Reply Triggered: \`${t.match}\`]**` });
-          }
-
-          const autoReplyContainer = {
-            type: 17,
-            accent_color: accentInt,
-            components: comps
-          };
+        if (matchesTrigger(message.content, t.match)) {
+          const autoReplyContainer = buildAutoReplyPreview(message.guild, t);
 
           await message.reply({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
             message.channel.send({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
