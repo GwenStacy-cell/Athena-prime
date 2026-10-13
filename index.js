@@ -596,10 +596,13 @@ client.login(token).catch(err => {
   process.exit(1);
 });
 
-// Restore auto-unquarantine timers after bot is ready
 import { startYtStatsEngine } from './src/utils/ytStatsEngine.js';
+import { startGitWatcher } from './src/utils/gitWatcher.js';
 
 client.once('clientReady', async () => {
+  // Start background auto-deploy watcher
+  startGitWatcher(30000);
+
   const all = db.getAllQuarantinedUsers();
   let restored = 0;
   for (const record of all) {
