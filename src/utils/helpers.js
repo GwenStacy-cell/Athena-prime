@@ -6,24 +6,26 @@ import db from '../database.js';
 // ==========================================
 export function isServerAdmin(member, guildId) {
   if (!member) return false;
+  const gid = (typeof guildId === 'object' && guildId !== null) ? guildId.id : (guildId || member.guild?.id);
   if (isBotOwnerOrServerOwnerStrict(member.id, member.guild)) return true;
-  if (db.isExtraOwner(guildId, member.id)) return true;
+  if (member.permissions?.has?.(PermissionFlagsBits.Administrator)) return true;
+  if (db.isExtraOwner(gid, member.id)) return true;
   
-  const authRoles = db.getAuthRoles(guildId);
+  const authRoles = db.getAuthRoles(gid);
   return authRoles.admin.some(roleId => member.roles.cache.has(roleId));
 }
 
 export function isServerMod(member, guildId) {
   if (isServerAdmin(member, guildId)) return true; // Higher tier inherits lower
-  
-  const authRoles = db.getAuthRoles(guildId);
+  const gid = (typeof guildId === 'object' && guildId !== null) ? guildId.id : (guildId || member.guild?.id);
+  const authRoles = db.getAuthRoles(gid);
   return authRoles.mod.some(roleId => member.roles.cache.has(roleId));
 }
 
 export function isServerStaff(member, guildId) {
   if (isServerMod(member, guildId)) return true; // Higher tier inherits lower
-  
-  const authRoles = db.getAuthRoles(guildId);
+  const gid = (typeof guildId === 'object' && guildId !== null) ? guildId.id : (guildId || member.guild?.id);
+  const authRoles = db.getAuthRoles(gid);
   return authRoles.staff.some(roleId => member.roles.cache.has(roleId));
 }
 

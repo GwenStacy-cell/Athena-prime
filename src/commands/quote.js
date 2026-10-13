@@ -1,4 +1,4 @@
-﻿import { AttachmentBuilder, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { AttachmentBuilder, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
 import { generateQuoteBuffer } from '../utils/canvasQuote.js';
 import cv2 from '../cv2.js';
 
@@ -20,8 +20,8 @@ function formatDiscordTimestamp(date) {
 export const commands = [
   {
     name: 'quote',
-    description: 'Generate an aesthetic image quote of a message.',
-    category: 'utilities',
+    description: 'Generate an aesthetic image quote of a message. Use !quote setchannel <#channel|none> to bind auto-quote channel.',
+    category: 'community',
     options: [],
     async executePrefix(message, args) {
       if (args.length === 0) {
@@ -31,17 +31,29 @@ export const commands = [
       // Check for Admin setchannel Route
       if (args[0].toLowerCase() === 'setchannel') {
         const { isServerAdmin } = await import('../utils/helpers.js');
-        if (!isServerAdmin(message.member, message.guild)) {
-          return message.reply(cv2.danger('Access Denied', 'Only Admins can bind the Auto-Quote channel.'));
+        if (!isServerAdmin(message.member, message.guild.id) && !message.member.permissions?.has?.(PermissionFlagsBits.Administrator)) {
+          return message.reply(cv2.danger('Access Denied', 'Only Admins and Extra Owners can bind the Auto-Quote channel.'));
         }
         
-        if (args[1]?.toLowerCase() === 'none' || args[1]?.toLowerCase() === 'off') {
+        if (!args[1]) {
+          const { default: db } = await import('../database.js');
+          const cfg = db.getGuildConfig(message.guild.id);
+          const current = cfg?.quoteChannelId ? `<#${cfg.quoteChannelId}>` : '`None`';
+          return message.reply(cv2.info('Auto-Quote Channel', `Current bound channel: ${current}\n\n**Usage:**\n\`!quote setchannel <#channel>\` - Bind channel\n\`!quote setchannel none\` - Disable auto-quote`));
+        }
+
+        if (args[1].toLowerCase() === 'none' || args[1].toLowerCase() === 'off' || args[1].toLowerCase() === 'disable') {
           const { default: db } = await import('../database.js');
           db.updateGuildConfig(message.guild.id, { quoteChannelId: null });
           return message.reply(cv2.success('Auto-Quote Disabled', 'The dedicated Auto-Quote channel has been disabled.'));
         }
         
-        const targetChannel = message.mentions.channels.first() || message.guild.channels.cache.get(args[1]);
+        const channelInput = args.slice(1).join(' ').trim();
+        const rawId = channelInput.replace(/[<#>]/g, '').trim();
+        const targetChannel = message.mentions.channels.first() 
+          || message.guild.channels.cache.get(rawId)
+          || message.guild.channels.cache.find(c => c.name.toLowerCase() === channelInput.replace(/^#/, '').toLowerCase());
+        
         if (!targetChannel) return message.reply(cv2.warn('Usage', '`!quote setchannel <#channel>` or `!quote setchannel none`'));
         
         const { default: db } = await import('../database.js');
@@ -100,7 +112,7 @@ export const commands = [
   {
     name: 'quotemaker',
     description: 'Launch the interactive Canvas Quote Generator dashboard.',
-    category: 'utilities',
+    category: 'community',
     async executePrefix(message) {
       const embed = {
         type: 17,
@@ -152,6 +164,22 @@ export const commands = [
           return i.showModal(modal);
         }
       });
+    }
+  },
+  {
+    name: 'setquote',
+    description: 'Bind Auto-Quote channel to turn typed messages into quotes.',
+    category: 'community',
+    async executePrefix(message, args) {
+      return commands[0].executePrefix(message, ['setchannel', ...args]);
+    }
+  },
+  {
+    name: 'unsetquote',
+    description: 'Disable Auto-Quote channel.',
+    category: 'community',
+    async executePrefix(message) {
+      return commands[0].executePrefix(message, ['setchannel', 'none']);
     }
   }
 ];

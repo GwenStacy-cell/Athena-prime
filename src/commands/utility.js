@@ -926,6 +926,7 @@ async function getStatusEmbed(client, guild) {
     "`!ship @user1 @user2` - Calculate love compatibility between two users `[Public]`",
     "`!birthday` - Set your birthday and view upcoming birthdays `[Public]`",
     "`!quote <msg_id>` - Quote a message beautifully `[Public]`",
+    "`!quote setchannel <#channel|none>` - Bind Auto-Quote channel to turn typed messages into quotes `[Extra Owner]`",
     "`!quotemaker` - Launch interactive Canvas Quote Generator `[Public]`",
     "`!suggest <idea>` - Submit a suggestion `[Public]`",
     "`!starboard` - Configure the starboard channel `[Extra Owner]`",
