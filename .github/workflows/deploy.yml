@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -12,7 +13,10 @@ jobs:
     steps:
       - name: Send Restart Signal to Pterodactyl
         run: |
-          STATUS=$(curl -s -o response.txt -w "%{http_code}" -X POST "${{ secrets.PTERO_URL }}/api/client/servers/${{ secrets.PTERO_SERVER_ID }}/power" \
+          # Strip trailing slash if user included one
+          PANEL_URL=$(echo "${{ secrets.PTERO_URL }}" | sed 's:/*$::')
+          
+          STATUS=$(curl -s -o response.txt -w "%{http_code}" -X POST "${PANEL_URL}/api/client/servers/${{ secrets.PTERO_SERVER_ID }}/power" \
             -H "Authorization: Bearer ${{ secrets.PTERO_API_KEY }}" \
             -H "Content-Type: application/json" \
             -H "Accept: application/json" \
