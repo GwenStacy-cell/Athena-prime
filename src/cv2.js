@@ -111,9 +111,17 @@ function make(title, desc, fields, eph, customFooter) {
   return { components: [buildContainer(title, desc, fields, customFooter)], flags: flags };
 }
 
+export const TICK_EMOJI = '<a:atheNATICK:1557841381630681106>';
+
 var _m = function(eph) {
   return {
-    success:  function(t,d,f,ft) { return make(t,d,f,eph,ft); },
+    success:  function(t,d,f,ft) {
+      var heading = t;
+      if (t && !t.includes('1557841381630681106')) {
+        heading = t + ' | ' + TICK_EMOJI;
+      }
+      return make(heading, d, f, eph, ft);
+    },
     warn:     function(t,d,f,ft) { return make(t,d,f,eph,ft); },
     danger:   function(t,d,f,ft) { return make(t,d,f,eph,ft); },
     error:    function(t,d,f,ft) { return make(t,d,f,eph,ft); },
@@ -127,6 +135,7 @@ var _m = function(eph) {
 };
 
 export var cv2 = Object.assign(_m(false), {
+  TICK_EMOJI:   TICK_EMOJI,
   e:            _m(true),
   asEphemeral:  function(p) {
     return Object.assign({}, p, { flags: ((p.flags != null ? p.flags : MessageFlags.IsComponentsV2) | MessageFlags.Ephemeral) });

@@ -68,7 +68,7 @@ export function makeAccentResponse(guild, title, description, isSuccess = true) 
   const config = db.getGuildConfig(guild.id);
   const accentHex = config.accentColor || '#5865F2';
   const accentInt = parseInt(accentHex.replace('#', ''), 16);
-  const prefixIcon = isSuccess ? '<a:uptime:1552608831060844575> ' : '';
+  const formattedTitle = isSuccess && !title.includes('1557841381630681106') ? `${title} | <a:atheNATICK:1557841381630681106>` : title;
 
   const bodyLines = description.split('\n').map(l => {
     if (!l.trim()) return l;
@@ -81,7 +81,7 @@ export function makeAccentResponse(guild, title, description, isSuccess = true) 
       type: 17,
       accent_color: accentInt,
       components: [
-        { type: 10, content: `## **${prefixIcon}${title}**` },
+        { type: 10, content: `## **${formattedTitle}**` },
         { type: 14, divider: true },
         { type: 10, content: bodyLines },
         { type: 14, divider: true },
