@@ -1411,9 +1411,12 @@ export default {
                          message.content.startsWith(botMention2);
 
     if (!isBotCommand) {
-      const triggers = db.getTriggers(guildId);
+      const serverTriggers = db.getTriggers(guildId);
+      const globalTriggers = db.getGlobalTriggers();
+      // Server-specific triggers take precedence over global triggers
+      const allTriggers = [...serverTriggers, ...globalTriggers];
       
-      for (const t of triggers) {
+      for (const t of allTriggers) {
         if (!t.match) continue;
         
         if (matchesTrigger(message.content, t.match)) {

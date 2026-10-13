@@ -21,6 +21,7 @@ const DEFAULT_SCHEMA = {
   guildBackupMap: {},// guildId -> backupId (for overwrite detection)
   modModes: {},      // guildId -> { expiresAt, startedBy }
   triggers: {},      // guildId -> [ {match, response} ]
+  globalTriggers: [], // global list -> [ {match, heading, content, gif, footer} ]
   jtc: {},           // guildId -> { lobbyChannelId, categoryId }
   jtcChannels: {},   // channelId -> { ownerId, guildId }
   botWhitelist: {},  // guildId -> [ botId... ]
@@ -80,6 +81,7 @@ class Database {
         this.cache.guildBackupMap = this.cache.guildBackupMap || {};
         this.cache.modModes       = this.cache.modModes       || {};
         this.cache.triggers       = this.cache.triggers       || {};
+        this.cache.globalTriggers = this.cache.globalTriggers || [];
         this.cache.jtc            = this.cache.jtc            || {};
         this.cache.botBlacklist   = this.cache.botBlacklist   || [];
         this.cache.jtcChannels    = this.cache.jtcChannels    || {};
@@ -931,6 +933,64 @@ class Database {
   clearTriggers(guildId) {
     if (!this.cache.triggers) return false;
     this.cache.triggers[guildId] = [];
+    this.save();
+    return true;
+  }
+
+  // ==========================================
+  // GLOBAL TRIGGERS (Bot Owner Only - Across all servers)
+  // ==========================================
+
+  getGlobalTriggers() {
+    if (!this.cache.globalTriggers) this.cache.globalTriggers = [];
+    return this.cache.globalTriggers;
+  }
+
+  getGlobalTrigger(match) {
+    if (!this.cache.globalTriggers) return null;
+    return this.cache.globalTriggers.find(t => t.match.toLowerCase() === match.toLowerCase()) || null;
+  }
+
+  setGlobalTrigger(triggerData) {
+    if (!this.cache.globalTriggers) this.cache.globalTriggers = [];
+    const matchLower = triggerData.match.trim().toLowerCase();
+    const index = this.cache.globalTriggers.findIndex(t => t.match.toLowerCase() === matchLower);
+
+    const formatted = {
+      match: triggerData.match.trim(),
+      heading: triggerData.heading || null,
+      content: triggerData.content || triggerData.response || '',
+      gif: triggerData.gif || null,
+      footer: triggerData.footer || null,
+      isGlobal: true,
+      updatedAt: Date.now()
+    };
+
+    if (index !== -1) {
+      this.cache.globalTriggers[index] = formatted;
+    } else {
+      this.cache.globalTriggers.push(formatted);
+    }
+    this.save();
+    return true;
+  }
+
+  removeGlobalTrigger(match) {
+    if (!this.cache.globalTriggers) return false;
+    const initialLength = this.cache.globalTriggers.length;
+    this.cache.globalTriggers = this.cache.globalTriggers.filter(
+      t => t.match.toLowerCase() !== match.toLowerCase()
+    );
+
+    if (this.cache.globalTriggers.length !== initialLength) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  clearGlobalTriggers() {
+    this.cache.globalTriggers = [];
     this.save();
     return true;
   }
