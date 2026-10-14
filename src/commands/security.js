@@ -1390,22 +1390,10 @@ export const commands = [
         return message.reply(cv2.danger('Access Denied', 'Only Server Admins, Extra Owners, and Bot Owners can run quarantine auto-setup.'));
       }
 
-      const statusMsg = await message.reply(cv2.info('Quarantine Auto-Setup', '<a:loading:1542155051286396938> Deploying Quarantine Role, Isolation Category, Text Channel, and Voice Channel...'));
+      const statusMsg = await message.reply(cv2.info('Quarantine Auto-Setup', '<a:loading:1542155051286396938> Scanning and configuring Quarantine Role, Category, Text Channel, and Voice Channel...'));
       try {
         const res = await autoSetupQuarantine(message.guild);
-        const fields = [
-          { name: '<a:uptime:1552608831060844575> Quarantine Role',    value: res.role ? `<@&${res.role.id}>` : 'None', inline: true },
-          { name: '<a:uptime:1552608831060844575> Quarantine Text',    value: res.textChannel ? `<#${res.textChannel.id}>` : 'None', inline: true },
-          { name: '<a:uptime:1552608831060844575> Quarantine VC',      value: res.voiceChannel ? `<#${res.voiceChannel.id}>` : 'None', inline: true },
-          { name: '<a:uptime:1552608831060844575> Category',           value: res.category ? `\`${res.category.name}\`` : 'None', inline: true },
-          { name: '<a:uptime:1552608831060844575> Channels Synced',    value: `\`${res.synced}\` channels isolated`, inline: true }
-        ];
-
-        return statusMsg.edit(cv2.success(
-          'Quarantine System Auto-Setup',
-          `The complete quarantine isolation system has been deployed and assigned.\nQuarantined members will be strictly contained within the quarantine zone.`,
-          fields
-        ));
+        return statusMsg.edit(formatQuarantineSetupResult(res));
       } catch (err) {
         return statusMsg.edit(cv2.danger('Auto-Setup Error', `Failed to complete quarantine setup: ${err.message}`));
       }
@@ -1415,22 +1403,10 @@ export const commands = [
         return interaction.reply(cv2.danger('Access Denied', 'Only Server Admins, Extra Owners, and Bot Owners can run quarantine auto-setup.'));
       }
 
-      await interaction.reply(cv2.info('Quarantine Auto-Setup', '<a:loading:1542155051286396938> Deploying Quarantine Role, Isolation Category, Text Channel, and Voice Channel...'));
+      await interaction.reply(cv2.info('Quarantine Auto-Setup', '<a:loading:1542155051286396938> Scanning and configuring Quarantine Role, Category, Text Channel, and Voice Channel...'));
       try {
         const res = await autoSetupQuarantine(interaction.guild);
-        const fields = [
-          { name: '<a:uptime:1552608831060844575> Quarantine Role',    value: res.role ? `<@&${res.role.id}>` : 'None', inline: true },
-          { name: '<a:uptime:1552608831060844575> Quarantine Text',    value: res.textChannel ? `<#${res.textChannel.id}>` : 'None', inline: true },
-          { name: '<a:uptime:1552608831060844575> Quarantine VC',      value: res.voiceChannel ? `<#${res.voiceChannel.id}>` : 'None', inline: true },
-          { name: '<a:uptime:1552608831060844575> Category',           value: res.category ? `\`${res.category.name}\`` : 'None', inline: true },
-          { name: '<a:uptime:1552608831060844575> Channels Synced',    value: `\`${res.synced}\` channels isolated`, inline: true }
-        ];
-
-        return cv2.edit(interaction, cv2.success(
-          'Quarantine System Auto-Setup',
-          `The complete quarantine isolation system has been deployed and assigned.\nQuarantined members will be strictly contained within the quarantine zone.`,
-          fields
-        ));
+        return cv2.edit(interaction, formatQuarantineSetupResult(res));
       } catch (err) {
         return cv2.edit(interaction, cv2.danger('Auto-Setup Error', `Failed to complete quarantine setup: ${err.message}`));
       }
@@ -3056,6 +3032,40 @@ export async function getSecurityStatusPanel(guild) {
   return { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 };
 }
 
+function formatQuarantineSetupResult(res) {
+  const catName = res.category ? res.category.name : '.      You Have Been Quarantined';
+
+  if (res.allFound) {
+    const fields = [
+      { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\`` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}>` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}>` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}>` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: true }
+    ];
+
+    return cv2.success(
+      'Quarantine System | <a:atheNATICK:1557841381630681106>',
+      `All quarantine components are already assigned and active under category **\`${catName}\`**.\nQuarantined members are strictly contained and isolated from all other server channels.`,
+      fields
+    );
+  }
+
+  const fields = [
+    { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\` • ${res.categoryFound ? 'Found' : 'Created'}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}> • ${res.roleFound ? 'Found' : 'Created'}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> • ${res.textFound ? 'Found' : 'Created'}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> • ${res.vcFound ? 'Found' : 'Created'}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: true }
+  ];
+
+  return cv2.success(
+    'Quarantine Auto-Setup | <a:atheNATICK:1557841381630681106>',
+    `Leftover quarantine components were created and assigned under category **\`${catName}\`**.\nQuarantined members will be strictly contained within the quarantine zone.`,
+    fields
+  );
+}
+
 // ==========================================
 // QRMANAGER - Quarantine system setup & repair
 // ==========================================
@@ -3065,20 +3075,7 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
   if (action === 'setup') {
     try {
       const res = await autoSetupQuarantine(guild);
-
-      const fields = [
-        { name: '<a:uptime:1552608831060844575> Quarantine Role',    value: res.role ? `<@&${res.role.id}>` : 'None', inline: true },
-        { name: '<a:uptime:1552608831060844575> Quarantine Text',    value: res.textChannel ? `<#${res.textChannel.id}>` : 'None', inline: true },
-        { name: '<a:uptime:1552608831060844575> Quarantine VC',      value: res.voiceChannel ? `<#${res.voiceChannel.id}>` : 'None', inline: true },
-        { name: '<a:uptime:1552608831060844575> Category',           value: res.category ? `\`${res.category.name}\`` : 'None', inline: true },
-        { name: '<a:uptime:1552608831060844575> Channels Synced',    value: `\`${res.synced}\` channels isolated`, inline: true }
-      ];
-
-      return cv2.success(
-        'Quarantine System Auto-Setup',
-        `The quarantine role, category, text channel, and voice channel have been deployed and assigned.\nQuarantined members will be strictly contained within the quarantine zone.`,
-        fields
-      );
+      return formatQuarantineSetupResult(res);
     } catch (err) {
       return cv2.danger('Setup Error', `Failed to complete quarantine setup: ${err.message}`);
     }
