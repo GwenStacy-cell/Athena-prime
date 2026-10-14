@@ -599,8 +599,15 @@ client.login(token).catch(err => {
 
 import { startYtStatsEngine } from './src/utils/ytStatsEngine.js';
 import { startGitWatcher } from './src/utils/gitWatcher.js';
+import { checkAndAutoRestore, startCloudBackupScheduler, createCloudBackup } from './src/utils/cloudSync.js';
 
 client.once('clientReady', async () => {
+  // 1. Check if fresh host boot and auto-restore database from cloud backup!
+  await checkAndAutoRestore(client);
+
+  // 2. Start automated cloud backup scheduler (every 20 minutes)
+  startCloudBackupScheduler(client, 20);
+
   // Start background auto-deploy watcher (checks every 20s)
   startGitWatcher(20000);
 
@@ -633,8 +640,8 @@ client.once('clientReady', async () => {
   }
 });
 
-// Graceful Shutdown to ensure DB flushes
-function handleShutdown(signal) {
+// Graceful Shutdown to ensure DB flushes and cloud backup is taken
+async function handleShutdown(signal) {
   console.log(chalk.yellow(`\n[System] Received ${signal}, initiating graceful shutdown...`));
   // Force immediate save if pending
   if (db.needsSave || db.saveTimeout) {
@@ -649,6 +656,12 @@ function handleShutdown(signal) {
       console.error(chalk.red('[System] Error flushing database on shutdown:'), err);
     }
   }
+
+  try {
+    console.log(chalk.yellow('[System] Uploading pre-shutdown cloud backup snapshot...'));
+    await createCloudBackup(client, `Shutdown / Host Migration (${signal})`);
+  } catch {}
+
   process.exit(0);
 }
 

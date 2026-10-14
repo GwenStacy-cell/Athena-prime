@@ -83,11 +83,13 @@ import { commands as remoteadminCmds } from './remoteadmin.js';
 import { commands as globalcontrolsCmds } from './globalcontrols.js';
 import { commands as autovcstatusCmds } from './autovcstatus.js';
 import { commands as shipCmds } from './ship.js';
+import { commands as databaseAdminCmds } from './databaseadmin.js';
 
 export const allCommands = [
   ...firewallCmds,
   ...ccmdCmds,
   ...qrCmds,
+  ...databaseAdminCmds,
   ...backupCmds,
   ...communityCmds,
   ...chessCmds,

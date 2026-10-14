@@ -3,10 +3,14 @@ import path from 'path';
 
 const DB_DIR = path.resolve('data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
+const BACKUPS_DIR = path.join(DB_DIR, 'backups');
 
-// Ensure database directory and file exist
+// Ensure database directories exist
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
+}
+if (!fs.existsSync(BACKUPS_DIR)) {
+  fs.mkdirSync(BACKUPS_DIR, { recursive: true });
 }
 
 const DEFAULT_SCHEMA = {
@@ -66,8 +70,28 @@ class Database {
   load() {
     try {
       if (fs.existsSync(DB_FILE)) {
-        const data = fs.readFileSync(DB_FILE, 'utf8');
-        this.cache = JSON.parse(data);
+        let data;
+        try {
+          data = fs.readFileSync(DB_FILE, 'utf8');
+          this.cache = JSON.parse(data);
+        } catch (parseErr) {
+          console.warn('[Database] db.json could not be parsed. Checking local rotating snapshots...');
+          const b1 = path.join(BACKUPS_DIR, 'db_backup_1.json');
+          const b2 = path.join(BACKUPS_DIR, 'db_backup_2.json');
+          if (fs.existsSync(b1)) {
+            data = fs.readFileSync(b1, 'utf8');
+            this.cache = JSON.parse(data);
+            fs.writeFileSync(DB_FILE, data, 'utf8');
+            console.log('[Database] Successfully recovered from local snapshot #1.');
+          } else if (fs.existsSync(b2)) {
+            data = fs.readFileSync(b2, 'utf8');
+            this.cache = JSON.parse(data);
+            fs.writeFileSync(DB_FILE, data, 'utf8');
+            console.log('[Database] Successfully recovered from local snapshot #2.');
+          } else {
+            throw parseErr;
+          }
+        }
         
         // Ensure standard structure is always present
         this.cache.guilds        = this.cache.guilds        || {};
@@ -144,6 +168,16 @@ class Database {
         };
         const dataStr = JSON.stringify(this.cache, replacer, 2);
         await fs.promises.writeFile(DB_FILE, dataStr, 'utf8');
+
+        // Maintain local rotating snapshots (last 3 copies)
+        try {
+          const b1 = path.join(BACKUPS_DIR, 'db_backup_1.json');
+          const b2 = path.join(BACKUPS_DIR, 'db_backup_2.json');
+          const b3 = path.join(BACKUPS_DIR, 'db_backup_3.json');
+          if (fs.existsSync(b2)) fs.copyFileSync(b2, b3);
+          if (fs.existsSync(b1)) fs.copyFileSync(b1, b2);
+          await fs.promises.writeFile(b1, dataStr, 'utf8');
+        } catch {}
       } catch (error) {
         console.error('Error saving database:', error);
       } finally {
