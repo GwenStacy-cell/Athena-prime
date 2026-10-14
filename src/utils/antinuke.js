@@ -226,6 +226,67 @@ export function isBotAuthorized(guild, botId) {
   return false;
 }
 
+// Map event descriptions to config module keys for granular whitelisting
+const EVENT_TO_MODULE_MAP = {
+  'channel deletion': 'antiChannelDelete',
+  'category deletion': 'antiChannelDelete',
+  'antichanneldelete': 'antiChannelDelete',
+  'channel creation': 'antiChannelCreate',
+  'antichannelcreate': 'antiChannelCreate',
+  'channel permission tampering': 'antiChannelPermUpdate',
+  'antichannelpermupdate': 'antiChannelPermUpdate',
+  'channel name modification': 'antiChannelNameMod',
+  'antichannelnamemod': 'antiChannelNameMod',
+  'channel reorder / tampering': 'antiChannelReorder',
+  'antichannelreorder': 'antiChannelReorder',
+  'channel settings tampering': 'antiChannelUpdate',
+  'antichannelupdate': 'antiChannelUpdate',
+  'role deletion': 'antiRoleDelete',
+  'antiroledelete': 'antiRoleDelete',
+  'role creation': 'antiRoleCreate',
+  'antirolecreate': 'antiRoleCreate',
+  'role permission escalation': 'antiRolePermUpdate',
+  'antirolepermupdate': 'antiRolePermUpdate',
+  'role name modification': 'antiRoleUpdate',
+  'role reorder / hierarchy tampering': 'antiRoleReorder',
+  'antirolereorder': 'antiRoleReorder',
+  'unauthorized dangerous role grant': 'antiMemberRoleUpdate',
+  'antimemberroleupdate': 'antiMemberRoleUpdate',
+  'emoji deletion': 'antiEmojiDelete',
+  'antiemojidelete': 'antiEmojiDelete',
+  'emoji creation': 'antiEmojiCreate',
+  'antiemojicreate': 'antiEmojiCreate',
+  'emoji modification': 'antiEmojiUpdate',
+  'antiemojiupdate': 'antiEmojiUpdate',
+  'unauthorized webhook creation': 'antiWebhooks',
+  'unauthorized webhook deletion': 'antiWebhooks',
+  'antiwebhooks': 'antiWebhooks',
+  'unauthorized bot addition': 'antiBotAdd',
+  'antibotadd': 'antiBotAdd',
+  'antibot': 'antiBotAdd',
+  'server settings tampering': 'antiServerUpdate',
+  'server vanity url tampering': 'antiServerUpdate',
+  'antiserverupdate': 'antiServerUpdate',
+  'member ban (mass ban attack)': 'antiBan',
+  'antiban': 'antiBan',
+  'unauthorized ban (mass ban module)': 'antiMassBan',
+  'antimassban': 'antiMassBan',
+  'member kick (mass kick attack)': 'antiKick',
+  'antikick': 'antiKick',
+  'unauthorized kick (purge module)': 'antiMemberPurge',
+  'unauthorized member purge': 'antiMemberPurge',
+  'antimemberpurge': 'antiMemberPurge',
+  'unauthorized ban removal': 'antiUnban',
+  'antiunban': 'antiUnban',
+  'antiinvite': 'antiInvite',
+  'scheduled event tampering': 'antiScheduledEvents',
+  'antischeduledevents': 'antiScheduledEvents',
+  'automod rule tampering': 'antiAutomodUpdate',
+  'antiautomodupdate': 'antiAutomodUpdate',
+  'integration / app command tampering': 'antiAppCommands',
+  'antiappcommands': 'antiAppCommands'
+};
+
 // ==========================================
 // IS AUTHORIZED — Single source of truth
 // ==========================================
@@ -238,7 +299,14 @@ export function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (executor.bot) return isBotAuthorized(guild, executor.id);
   if (db.isExtraOwner(guild.id, executor.id)) return true;
   const member = guild.members.cache.get(executor.id) || executor;
+
+  // Check direct eventType
   if (db.isWhitelisted(guild, member, eventType)) return true;
+
+  // Check normalized module key (e.g. 'Channel Deletion' -> 'antiChannelDelete')
+  const mappedKey = EVENT_TO_MODULE_MAP[String(eventType).toLowerCase().trim()];
+  if (mappedKey && db.isWhitelisted(guild, member, mappedKey)) return true;
+
   return false;
 }
 
@@ -439,7 +507,7 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
   if (alreadyCondemned) {
     // Already being punished — just run restoration
     if (rollbackFn) {
-      restorationQueue.push({ isCategory: false, execute: rollbackFn });
+      restorationQueue.push({ isCategory: eventType.includes('Category'), execute: rollbackFn });
       processRestorationQueue();
     }
     return;
@@ -530,19 +598,49 @@ export async function handleAuditLogEntry(guild, entry) {
           execute: async () => {
             try {
               const parentId = restoredCategories.get(ch.parentId) || ch.parentId;
-              const overwrites = ch.permissionOverwrites.cache.map(o => ({
-                id: o.id, type: o.type, allow: o.allow.bitfield, deny: o.deny.bitfield
-              }));
-              const newCh = await guild.channels.create({
-                name: ch.name, type: ch.type, topic: ch.topic || null,
-                parent: parentId || null, position: ch.position || 0,
+              const overwrites = ch.permissionOverwrites?.cache
+                ? ch.permissionOverwrites.cache.map(o => ({
+                    id: o.id,
+                    type: o.type,
+                    allow: o.allow?.bitfield ?? 0n,
+                    deny: o.deny?.bitfield ?? 0n
+                  }))
+                : [];
+
+              const createOptions = {
+                name: ch.name,
+                type: ch.type,
+                position: ch.rawPosition ?? ch.position ?? 0,
                 permissionOverwrites: overwrites,
                 reason: 'Athena Anti-Nuke: Restored (condemned fast path)'
-              });
+              };
+
+              if (!isCategory && parentId) {
+                createOptions.parent = parentId;
+              }
+
+              if ([0, 5, 15].includes(ch.type)) {
+                if (ch.topic) createOptions.topic = ch.topic;
+                if (typeof ch.nsfw === 'boolean') createOptions.nsfw = ch.nsfw;
+                if (typeof ch.rateLimitPerUser === 'number') createOptions.rateLimitPerUser = ch.rateLimitPerUser;
+              }
+
+              if ([2, 13].includes(ch.type)) {
+                if (ch.bitrate) createOptions.bitrate = ch.bitrate;
+                if (ch.userLimit) createOptions.userLimit = ch.userLimit;
+                if (ch.rtcRegion) createOptions.rtcRegion = ch.rtcRegion;
+              }
+
+              const newCh = await guild.channels.create(createOptions);
+
+              if (ch.rawPosition !== undefined) {
+                await newCh.setPosition(ch.rawPosition, { reason: 'Athena Anti-Nuke: Fixing channel position' }).catch(() => {});
+              }
+
               if (isCategory) mapRestoredCategory(ch.id, newCh.id);
             } catch (e) {
               try {
-                await guild.channels.create({ name: ch.name, type: ch.type, reason: 'Athena Anti-Nuke: Restored without parent' });
+                await guild.channels.create({ name: ch.name, type: ch.type, reason: 'Athena Anti-Nuke: Restored fallback' });
               } catch {}
             }
           }
@@ -558,8 +656,13 @@ export async function handleAuditLogEntry(guild, entry) {
           execute: async () => {
             try {
               await guild.roles.create({
-                name: r.name, colors: { primaryColor: r.color }, hoist: r.hoist,
-                permissions: r.permissions.bitfield, mentionable: r.mentionable,
+                name: r.name,
+                colors: { primaryColor: r.color },
+                hoist: r.hoist,
+                position: r.rawPosition ?? r.position,
+                unicodeEmoji: r.unicodeEmoji || undefined,
+                permissions: r.permissions.bitfield,
+                mentionable: r.mentionable,
                 reason: 'Athena Anti-Nuke: Restored deleted role (condemned fast path)'
               });
             } catch {}

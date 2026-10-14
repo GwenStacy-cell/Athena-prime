@@ -39,6 +39,8 @@ export default {
             name: role.name,
             colors: { primaryColor: role.color },
             hoist: role.hoist,
+            position: role.rawPosition ?? role.position,
+            unicodeEmoji: role.unicodeEmoji || undefined,
             permissions: role.permissions.bitfield,
             mentionable: role.mentionable,
             reason: 'Athena Anti-Nuke: Restored deleted role'

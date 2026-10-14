@@ -18,7 +18,7 @@ export default {
     // 0. BOT ADD GUARD � 1ms DIRECT STRIKE
     // ==========================================
     if (member.user.bot) {
-      if ((config.securityEnabled || config.antiNukeEnabled) && config.antinukeModules?.antiBotAdd) {
+      if ((config.securityEnabled || config.antiNukeEnabled) && config.antinukeModules?.antiBotAdd !== false) {
         import('../utils/antinuke.js').then(({ isBotAuthorized, rawBan, directStrike }) => {
           if (!isBotAuthorized(guild, member.id)) {
             // ? INSTANT 1ms ELIMINATION

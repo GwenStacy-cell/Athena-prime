@@ -1,4 +1,4 @@
-﻿import { AuditLogEvent } from 'discord.js';
+import { AuditLogEvent } from 'discord.js';
 import { cacheDeletedItem, directStrike, deletedCache, queuedRestorations, restoredCategories } from '../utils/antinuke.js';
 import db from '../database.js';
 import embed from '../embed.js';
@@ -12,10 +12,12 @@ export default {
 
     cacheDeletedItem(channel.id, channel);
 
+    const isCategory = channel.type === 4 || channel.type === 4;
+
     directStrike(
       channel.guild,
       AuditLogEvent.ChannelDelete,
-      'Channel Deletion',
+      isCategory ? 'Category Deletion' : 'Channel Deletion',
       channel.id,
       async () => {
         try {
@@ -23,23 +25,62 @@ export default {
           if (!cachedCh) return;
           if (queuedRestorations.has(channel.id)) return;
           queuedRestorations.add(channel.id);
-          const isCategory = cachedCh.type === 4;
+          
+          const isCat = cachedCh.type === 4;
           const parentId = restoredCategories.get(cachedCh.parentId) || cachedCh.parentId;
-          const overwrites = cachedCh.permissionOverwrites.cache.map(o => ({
-            id: o.id, type: o.type, allow: o.allow.bitfield, deny: o.deny.bitfield
-          }));
-          const newCh = await channel.guild.channels.create({
-            name: cachedCh.name, type: cachedCh.type, topic: cachedCh.topic || null,
-            parent: parentId || null, position: cachedCh.rawPosition,
+          const overwrites = cachedCh.permissionOverwrites?.cache
+            ? cachedCh.permissionOverwrites.cache.map(o => ({
+                id: o.id,
+                type: o.type,
+                allow: o.allow?.bitfield ?? 0n,
+                deny: o.deny?.bitfield ?? 0n
+              }))
+            : [];
+
+          const createOptions = {
+            name: cachedCh.name,
+            type: cachedCh.type,
+            position: cachedCh.rawPosition ?? cachedCh.position ?? 0,
             permissionOverwrites: overwrites,
             reason: 'Athena Anti-Nuke: Restored deleted channel'
-          });
-          // Explicitly set position again to guarantee it doesn't change relative position
-          await newCh.setPosition(cachedCh.rawPosition, { reason: 'Athena Anti-Nuke: Fixing channel position' }).catch(()=>{});
-          if (isCategory) restoredCategories.set(channel.id, newCh.id);
+          };
+
+          // Only non-categories can have a parent
+          if (!isCat && parentId) {
+            createOptions.parent = parentId;
+          }
+
+          // Text (0), Announcement (5), Forum (15) support topic, nsfw, slowmode
+          if ([0, 5, 15].includes(cachedCh.type)) {
+            if (cachedCh.topic) createOptions.topic = cachedCh.topic;
+            if (typeof cachedCh.nsfw === 'boolean') createOptions.nsfw = cachedCh.nsfw;
+            if (typeof cachedCh.rateLimitPerUser === 'number') createOptions.rateLimitPerUser = cachedCh.rateLimitPerUser;
+          }
+
+          // Voice (2) and Stage (13) support bitrate, userLimit, rtcRegion
+          if ([2, 13].includes(cachedCh.type)) {
+            if (cachedCh.bitrate) createOptions.bitrate = cachedCh.bitrate;
+            if (cachedCh.userLimit) createOptions.userLimit = cachedCh.userLimit;
+            if (cachedCh.rtcRegion) createOptions.rtcRegion = cachedCh.rtcRegion;
+          }
+
+          const newCh = await channel.guild.channels.create(createOptions);
+
+          // Guarantee position restoration
+          if (cachedCh.rawPosition !== undefined) {
+            await newCh.setPosition(cachedCh.rawPosition, { reason: 'Athena Anti-Nuke: Fixing channel position' }).catch(() => {});
+          }
+
+          if (isCat) {
+            restoredCategories.set(channel.id, newCh.id);
+          }
         } catch (e) {
           try {
-            await channel.guild.channels.create({ name: channel.name, type: channel.type, reason: 'Athena Anti-Nuke: Restored without parent' });
+            await channel.guild.channels.create({
+              name: channel.name,
+              type: channel.type,
+              reason: 'Athena Anti-Nuke: Restored fallback channel'
+            });
           } catch {}
         }
       }

@@ -8,7 +8,7 @@ export default {
   async execute(channel) {
     if (!channel.guild) return;
 
-    // s DIRECT STRIKE ?" fire the moment channel hits gateway
+    // ⚡ DIRECT STRIKE — fire the moment channel hits gateway
     directStrike(
       channel.guild,
       AuditLogEvent.ChannelCreate,
@@ -17,8 +17,10 @@ export default {
       async () => {
         // Rollback: delete the unauthorized channel
         await channel.delete('Athena Anti-Nuke: Unauthorized Channel Creation').catch(() => null);
+      }
+    ).catch(() => null);
 
-    // Auto VC Status
+    // Auto VC Status for newly created voice channels
     if (channel.type === 2) { // 2 = GuildVoice
       const cfg = db.getGuildConfig(channel.guild.id);
       if (cfg && cfg.autoVcStatus) {
@@ -28,9 +30,6 @@ export default {
         }).catch(() => null);
       }
     }
-
-      }
-    ).catch(() => null);
 
 
     // Fetch audit log to find creator
