@@ -7,81 +7,154 @@ if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
-const db = new Database(path.join(DB_DIR, 'stats.db'));
-db.pragma('journal_mode = WAL');
+let db = null;
+let _logMessageUser = null;
+let _logMessageChannel = null;
+let _logVoiceUser = null;
+let _logVoiceChannel = null;
+let _pruneData = null;
+let _pruneChannelData = null;
+let _logInvite = null;
+let _recordJoin = null;
+let _getInviter = null;
+let _logLeave = null;
+let _syncInvites = null;
 
-// Initialize tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS user_activity (
-    guild_id TEXT,
-    user_id TEXT,
-    date TEXT,
-    messages INTEGER DEFAULT 0,
-    voice_seconds INTEGER DEFAULT 0,
-    PRIMARY KEY (guild_id, user_id, date)
-  );
+function initDatabase() {
+  if (db && db.open) {
+    try { db.close(); } catch {}
+  }
 
-  CREATE TABLE IF NOT EXISTS channel_activity (
-    guild_id TEXT,
-    user_id TEXT,
-    channel_id TEXT,
-    date TEXT,
-    messages INTEGER DEFAULT 0,
-    voice_seconds INTEGER DEFAULT 0,
-    PRIMARY KEY (guild_id, user_id, channel_id, date)
-  );
+  db = new Database(path.join(DB_DIR, 'stats.db'));
+  db.pragma('journal_mode = WAL');
 
-  CREATE INDEX IF NOT EXISTS idx_user_activity_date ON user_activity(date);
-  CREATE INDEX IF NOT EXISTS idx_channel_activity_date ON channel_activity(date);
+  // Initialize tables
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_activity (
+      guild_id TEXT,
+      user_id TEXT,
+      date TEXT,
+      messages INTEGER DEFAULT 0,
+      voice_seconds INTEGER DEFAULT 0,
+      PRIMARY KEY (guild_id, user_id, date)
+    );
 
-  CREATE TABLE IF NOT EXISTS user_invites (
-    guild_id TEXT,
-    user_id TEXT,
-    regular INTEGER DEFAULT 0,
-    leaves INTEGER DEFAULT 0,
-    fake INTEGER DEFAULT 0,
-    PRIMARY KEY (guild_id, user_id)
-  );
+    CREATE TABLE IF NOT EXISTS channel_activity (
+      guild_id TEXT,
+      user_id TEXT,
+      channel_id TEXT,
+      date TEXT,
+      messages INTEGER DEFAULT 0,
+      voice_seconds INTEGER DEFAULT 0,
+      PRIMARY KEY (guild_id, user_id, channel_id, date)
+    );
 
-  CREATE TABLE IF NOT EXISTS join_history (
-    guild_id TEXT,
-    joined_user_id TEXT,
-    inviter_id TEXT,
-    PRIMARY KEY (guild_id, joined_user_id)
-  );
-`);
+    CREATE INDEX IF NOT EXISTS idx_user_activity_date ON user_activity(date);
+    CREATE INDEX IF NOT EXISTS idx_channel_activity_date ON channel_activity(date);
 
-// Prepared statements
-const _logMessageUser = db.prepare(`
-  INSERT INTO user_activity (guild_id, user_id, date, messages)
-  VALUES (?, ?, date('now'), 1)
-  ON CONFLICT(guild_id, user_id, date)
-  DO UPDATE SET messages = messages + 1;
-`);
+    CREATE TABLE IF NOT EXISTS user_invites (
+      guild_id TEXT,
+      user_id TEXT,
+      regular INTEGER DEFAULT 0,
+      leaves INTEGER DEFAULT 0,
+      fake INTEGER DEFAULT 0,
+      PRIMARY KEY (guild_id, user_id)
+    );
 
-const _logMessageChannel = db.prepare(`
-  INSERT INTO channel_activity (guild_id, user_id, channel_id, date, messages)
-  VALUES (?, ?, ?, date('now'), 1)
-  ON CONFLICT(guild_id, user_id, channel_id, date)
-  DO UPDATE SET messages = messages + 1;
-`);
+    CREATE TABLE IF NOT EXISTS join_history (
+      guild_id TEXT,
+      joined_user_id TEXT,
+      inviter_id TEXT,
+      PRIMARY KEY (guild_id, joined_user_id)
+    );
+  `);
 
-const _logVoiceUser = db.prepare(`
-  INSERT INTO user_activity (guild_id, user_id, date, voice_seconds)
-  VALUES (?, ?, date('now'), ?)
-  ON CONFLICT(guild_id, user_id, date)
-  DO UPDATE SET voice_seconds = voice_seconds + ?;
-`);
+  _logMessageUser = db.prepare(`
+    INSERT INTO user_activity (guild_id, user_id, date, messages)
+    VALUES (?, ?, date('now'), 1)
+    ON CONFLICT(guild_id, user_id, date)
+    DO UPDATE SET messages = messages + 1;
+  `);
 
-const _logVoiceChannel = db.prepare(`
-  INSERT INTO channel_activity (guild_id, user_id, channel_id, date, voice_seconds)
-  VALUES (?, ?, ?, date('now'), ?)
-  ON CONFLICT(guild_id, user_id, channel_id, date)
-  DO UPDATE SET voice_seconds = voice_seconds + ?;
-`);
+  _logMessageChannel = db.prepare(`
+    INSERT INTO channel_activity (guild_id, user_id, channel_id, date, messages)
+    VALUES (?, ?, ?, date('now'), 1)
+    ON CONFLICT(guild_id, user_id, channel_id, date)
+    DO UPDATE SET messages = messages + 1;
+  `);
 
-const _pruneData = db.prepare(`DELETE FROM user_activity WHERE date < date('now', '-31 days');`);
-const _pruneChannelData = db.prepare(`DELETE FROM channel_activity WHERE date < date('now', '-31 days');`);
+  _logVoiceUser = db.prepare(`
+    INSERT INTO user_activity (guild_id, user_id, date, voice_seconds)
+    VALUES (?, ?, date('now'), ?)
+    ON CONFLICT(guild_id, user_id, date)
+    DO UPDATE SET voice_seconds = voice_seconds + ?;
+  `);
+
+  _logVoiceChannel = db.prepare(`
+    INSERT INTO channel_activity (guild_id, user_id, channel_id, date, voice_seconds)
+    VALUES (?, ?, ?, date('now'), ?)
+    ON CONFLICT(guild_id, user_id, channel_id, date)
+    DO UPDATE SET voice_seconds = voice_seconds + ?;
+  `);
+
+  _pruneData = db.prepare(`DELETE FROM user_activity WHERE date < date('now', '-31 days');`);
+  _pruneChannelData = db.prepare(`DELETE FROM channel_activity WHERE date < date('now', '-31 days');`);
+
+  _logInvite = db.prepare(`
+    INSERT INTO user_invites (guild_id, user_id, regular)
+    VALUES (?, ?, 1)
+    ON CONFLICT(guild_id, user_id)
+    DO UPDATE SET regular = regular + 1;
+  `);
+
+  _recordJoin = db.prepare(`
+    INSERT OR REPLACE INTO join_history (guild_id, joined_user_id, inviter_id)
+    VALUES (?, ?, ?);
+  `);
+
+  _getInviter = db.prepare(`
+    SELECT inviter_id FROM join_history WHERE guild_id = ? AND joined_user_id = ?;
+  `);
+
+  _logLeave = db.prepare(`
+    UPDATE user_invites SET leaves = leaves + 1 WHERE guild_id = ? AND user_id = ?;
+  `);
+
+  _syncInvites = db.prepare(`
+    INSERT INTO user_invites (guild_id, user_id, regular)
+    VALUES (?, ?, ?)
+    ON CONFLICT(guild_id, user_id)
+    DO UPDATE SET regular = MAX(regular, excluded.regular);
+  `);
+}
+
+// Initialize on load
+initDatabase();
+
+export function checkpoint() {
+  try {
+    if (db && db.open) {
+      db.pragma('wal_checkpoint(TRUNCATE)');
+    }
+  } catch (e) {
+    console.warn('[StatsDB] Checkpoint warning:', e.message);
+  }
+}
+
+export function close() {
+  try {
+    if (db && db.open) {
+      checkpoint();
+      db.close();
+    }
+  } catch (e) {
+    console.warn('[StatsDB] Close warning:', e.message);
+  }
+}
+
+export function reopen() {
+  initDatabase();
+}
 
 export function logMessage(guildId, userId, channelId) {
   try {
@@ -378,33 +451,6 @@ export function getTopVoiceMembers(guildId, limit = 10) {
 // ============================================================
 // INVITE TRACKING
 // ============================================================
-const _logInvite = db.prepare(`
-  INSERT INTO user_invites (guild_id, user_id, regular)
-  VALUES (?, ?, 1)
-  ON CONFLICT(guild_id, user_id)
-  DO UPDATE SET regular = regular + 1;
-`);
-
-const _recordJoin = db.prepare(`
-  INSERT OR REPLACE INTO join_history (guild_id, joined_user_id, inviter_id)
-  VALUES (?, ?, ?);
-`);
-
-const _getInviter = db.prepare(`
-  SELECT inviter_id FROM join_history WHERE guild_id = ? AND joined_user_id = ?;
-`);
-
-const _logLeave = db.prepare(`
-  UPDATE user_invites SET leaves = leaves + 1 WHERE guild_id = ? AND user_id = ?;
-`);
-
-
-const _syncInvites = db.prepare(`
-  INSERT INTO user_invites (guild_id, user_id, regular)
-  VALUES (?, ?, ?)
-  ON CONFLICT(guild_id, user_id)
-  DO UPDATE SET regular = MAX(regular, excluded.regular);
-`);
 
 export function syncRetroactiveInvites(guildId, inviterId, amount) {
   try {
@@ -466,5 +512,8 @@ export default {
   logLeave,
   getTopInvites,
   getUserInvites,
-  syncRetroactiveInvites
+  syncRetroactiveInvites,
+  checkpoint,
+  close,
+  reopen
 };
