@@ -143,8 +143,16 @@ export const commands = [
   // --- HELP COMMAND ---
   {
     name: 'help',
-    description: 'Show Athena Prime command menu',
+    description: 'Show Athena Prime command menu or inspect command details and aliases',
     type: 1,
+    options: [
+      {
+        name: 'command',
+        description: 'Command or alias to inspect',
+        type: 3,
+        required: false
+      }
+    ],
     async executePrefix(message, args) {
         let reply;
         try {
@@ -181,7 +189,16 @@ export const commands = [
                   usageText = `@bot ${targetCmd.name}`;
               }
               
-              const display1 = new TextDisplayBuilder().setContent(`# Command Name: \`${targetCmd.name}\`\n\n> -# **Command usage:** \`${usageText}\`\n> -# **Command Permissions:** \`${permsText}\``);
+              const aliasesText = Array.isArray(targetCmd.aliases) && targetCmd.aliases.length > 0
+                  ? targetCmd.aliases.map(a => `\`${prefix}${a}\``).join(', ')
+                  : '`None`';
+
+              const display1 = new TextDisplayBuilder().setContent(
+                `# Command Name: \`${targetCmd.name}\`\n\n` +
+                `> -# **Command usage:** \`${usageText}\`\n` +
+                `> -# **Aliases:** ${aliasesText}\n` +
+                `> -# **Command Permissions:** \`${permsText}\``
+              );
               const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${targetCmd.description || "No description provided."}`);
               const display3 = new TextDisplayBuilder().setContent(`-# **Category:** ${catStr}`);
               
@@ -232,6 +249,59 @@ export const commands = [
       collector.on('end', () => reply.delete().catch(() => null));
     },
     async executeSlash(interaction) {
+      const cmdArg = interaction.options?.getString?.('command');
+      if (cmdArg) {
+        const cmdName = cmdArg.toLowerCase().trim();
+        const { default: commandMap } = await import('./loader.js');
+        let targetCmd = commandMap.get(cmdName);
+        
+        if (!targetCmd) {
+          return interaction.reply({ content: `-! <:cross_red:1533860128015519895> **Command Not Found:** ` + cmdName, flags: MessageFlags.Ephemeral });
+        }
+
+        const { TextDisplayBuilder, MessageFlags } = await import('discord.js');
+        
+        let permsText = "Public / Everyone";
+        if (targetCmd.permissions && targetCmd.permissions.length > 0) {
+          if (targetCmd.permissions.includes(8n)) permsText = "Administrator";
+          else if (targetCmd.permissions.includes(32n)) permsText = "Manage Server";
+          else if (targetCmd.permissions.includes(1099511627776n)) permsText = "Moderate Members";
+          else permsText = "Elevated Permissions";
+        }
+        
+        let catStr = targetCmd.category ? targetCmd.category.charAt(0).toUpperCase() + targetCmd.category.slice(1) : "General";
+        const db = (await import('../database.js')).default;
+        const config = interaction.guild ? db.getGuildConfig(interaction.guild.id) : null;
+        const prefix = config?.prefix || '!';
+
+        let usageText = `${prefix}${targetCmd.name}`;
+        const aliasesText = Array.isArray(targetCmd.aliases) && targetCmd.aliases.length > 0
+          ? targetCmd.aliases.map(a => `\`${prefix}${a}\``).join(', ')
+          : '`None`';
+
+        const display1 = new TextDisplayBuilder().setContent(
+          `# Command Name: \`${targetCmd.name}\`\n\n` +
+          `> -# **Command usage:** \`${usageText}\`\n` +
+          `> -# **Aliases:** ${aliasesText}\n` +
+          `> -# **Command Permissions:** \`${permsText}\``
+        );
+        const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${targetCmd.description || "No description provided."}`);
+        const display3 = new TextDisplayBuilder().setContent(`-# **Category:** ${catStr}`);
+
+        const container = {
+          type: 17,
+          components: [
+            display1,
+            { type: 14, divider: true },
+            display2,
+            { type: 14, divider: true },
+            display3
+          ]
+        };
+
+        return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      }
+
       const components = buildHelpContainer(interaction.client, interaction.guild?.id, 'home');
       
       let reply;
@@ -750,13 +820,13 @@ async function getStatusEmbed(client, guild) {
     "-# **Instant Anti-Spam** and **Malicious Link Filtering** engineered directly into Discord event stream."
   ] },
   { id: 'quarantine', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Quarantine', label: 'Quarantine System', emoji: 'quarantine', commands: [
-    "`!setupquarantine` - Auto-setup Quarantine role, isolation category, text & VC `[Extra Owner]`",
-    "`!qrmanager setup|setrole|setchannel|setvc|status` - Manage system `[Extra Owner]`",
-    "`!quarantine @user [reason]` - Strip roles and isolate (alias: `!qr`) `[Extra Owner]`",
-    "`!unquarantine @user` - Lift quarantine status `[Extra Owner]`",
-    "`!massquarantine @role` - Quarantine all members of a role `[Extra Owner]`",
-    "`!massunquarantine` - Release all currently quarantined members `[Extra Owner]`",
-    "`!lockdown on|off` - Restrict channel to staff only `[Extra Owner]`",
+    "`!setupquarantine / !qrsetup` - Auto-setup Quarantine role, isolation category, text & VC `[Extra Owner]`",
+    "`!qrmanager setup|setrole|setchannel|setvc|status` - Manage quarantine configuration `[Extra Owner]`",
+    "`!quarantine / !qr @user [reason]` - Strip roles and isolate member `[Extra Owner]`",
+    "`!unquarantine / !unqr @user` - Lift quarantine status `[Extra Owner]`",
+    "`!massquarantine / !mq @role` - Quarantine all members of a role `[Extra Owner]`",
+    "`!massunquarantine / !unmq` - Release all currently quarantined members `[Extra Owner]`",
+    "`!lockdown / !ld on|off` - Restrict channel to staff only `[Extra Owner]`",
     "`!maxwarnings <amount>` - Configure warnings before auto-quarantine `[Extra Owner]`",
     "",
     "**Quarantine Architecture:**",
@@ -778,18 +848,18 @@ async function getStatusEmbed(client, guild) {
   ] },
   
   { id: 'moderation', category: 'SERVER ADMINISTRATION', shortLabel: 'Mods', label: 'Moderation Tools', emoji: 'mod', commands: [
-    "`!ban @user [reason]` - Ban a member from the server `[Extra Owner]`",
+    "`!ban / !b @user [reason]` - Ban a member from the server `[Extra Owner]`",
     "`!tempban @user <time> [reason]` - Temporarily ban a member with auto-unban `[Extra Owner]`",
     "`!unban <userid>` - Unban a user by User ID `[Extra Owner]`",
     "`!unbanall` - Removes ALL active bans from the server `[Server Owner]`",
-    "`!kick @user [reason]` - Kick a member from the server `[Extra Owner]`",
-    "`!timeout @user [time] [reason]` - Timeout a member `[Extra Owner]`",
+    "`!kick / !k @user [reason]` - Kick a member from the server `[Extra Owner]`",
+    "`!timeout / !to @user [time] [reason]` - Timeout a member `[Extra Owner]`",
     "`!temptimeout @user <time> [reason]` - Structured temporary timeout `[Extra Owner]`",
-    "`!untimeout @user` - Remove timeout from a member `[Extra Owner]`",
-    "`!warn @user [reason]` - Warn a member `[Extra Owner]`",
+    "`!untimeout / !unto / !removetimeout @user` - Remove timeout from a member `[Extra Owner]`",
+    "`!warn / !w @user [reason]` - Warn a member `[Extra Owner]`",
     "`!warnings @user` - View user's warnings `[Public]`",
-    "`!clearwarns @user` - Clear user's warnings `[Extra Owner]`",
-    "`!purge [amount]` - Delete recent messages `[Extra Owner]`",
+    "`!clearwarns / !cw @user` - Clear user's warnings `[Extra Owner]`",
+    "`!purge / !clear [amount]` - Delete recent messages `[Extra Owner]`",
     "`!slowmode <seconds>` - Set channel slowmode `[Extra Owner]`",
     "`!nuke` - Clone and delete the current channel `[Extra Owner]`",
     "`!hide / !unhide` - Hide or unhide a channel `[Extra Owner]`",
@@ -803,11 +873,11 @@ async function getStatusEmbed(client, guild) {
     "`!addrole @user @role` - Add role to a user `[Extra Owner]`",
     "`!removerole @user @role` - Remove role from a user `[Extra Owner]`",
     "`!striproles @user` - Strip all roles from a user `[Extra Owner]`",
-    "`!createchannel <name>` - Quickly create a text channel `[Extra Owner]`",
-    "`!createvc <name> [limit]` - Quickly create a voice channel `[Extra Owner]`",
-    "`!deletechannel <#channel...>` - Delete one or more channels `[Extra Owner]`",
-    "`!delcat <category>` - Delete category (keeps channels safe) `[Extra Owner]`",
-    "`!delcatall <category>` - Delete category AND all its channels `[Extra Owner]`",
+    "`!createchannel / !createc <name>` - Quickly create a text channel `[Extra Owner]`",
+    "`!createvc / !makevc <name> [limit]` - Quickly create a voice channel `[Extra Owner]`",
+    "`!deletechannel / !delc <#channel...>` - Delete one or more channels `[Extra Owner]`",
+    "`!delcat / !deletecategory <category>` - Delete category (keeps channels safe) `[Extra Owner]`",
+    "`!delcatall / !deletecategoryall <category>` - Delete category AND all its channels `[Extra Owner]`",
     "`!say <message>` - Send a raw text message via bot `[Extra Owner]`",
     "`!announce` - Launch interactive announcement builder `[Extra Owner]`",
     "`!fck @user <reason>` - Send direct official warning DM `[Server Owner]`"
@@ -844,34 +914,32 @@ async function getStatusEmbed(client, guild) {
   ] },
   { id: 'tracking', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tracking', label: 'Tracking & Logs', emoji: 'tracking', commands: [
     "`!serverlogs` - View interactive server event logs `[Extra Owner]`",
-    "`!serveroverview` - Rich overview of server statistics `[Public]`",
+    "`!serveroverview / !server` - Rich overview of server statistics `[Public]`",
     "`!serverinfo / !si` - Detailed server statistics `[Public]`",
-    "`!top` - View top message and voice leaderboard `[Public]`",
-    "`!stats [@user]` - View server statistics and personal insights `[Public]`",
-    "`!chatlb` - View the most active chatters `[Public]`",
-    "`!voicelb` - View the most active voice members `[Public]`",
-    "`!invitelb` - View the top inviters in the server `[Public]`",
+    "`!top / !leaderboard / !lb` - View top message and voice leaderboard `[Public]`",
+    "`!stats / !mystats / !me [@user]` - View server statistics and personal insights `[Public]`",
+    "`!chatlb / !topchat` - View the most active chatters `[Public]`",
+    "`!voicelb / !topvoice` - View the most active voice members `[Public]`",
+    "`!invitelb / !topinvites` - View the top inviters in the server `[Public]`",
     "`!syncinvites` - Synchronize the invite tracker database `[Extra Owner]`",
-    "`!invitesetup <#channel>` - Setup invite tracking logs channel `[Extra Owner]`",
-    "`!invitedisable` - Disable invite tracking `[Extra Owner]`",
-    "`!botstats` - View bot performance and cluster info `[Public]`",
+    "`!invitesetup / !setinvites <#channel>` - Setup invite tracking logs channel `[Extra Owner]`",
+    "`!invitedisable / !disableinvites` - Disable invite tracking `[Extra Owner]`",
+    "`!botstats / !botinfo / !bi` - View bot performance and cluster info `[Public]`",
     "`!bjoins / !bcmds / !bservers` - View bot growth metrics `[Public]`",
     "`!record / !voicelog` - Setup voice logging channel `[Extra Owner]`",
     "`!setdeletelog <#channel>` - Set where deleted messages are sent `[Extra Owner]`"
   ] },
   { id: 'config', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Config', label: 'Server Configuration', emoji: 'config', commands: [
-    "`!serverstats setup` - Create voice channels displaying member counts `[Extra Owner]`",
-    "`!serverstats config` - Configure stat channels `[Extra Owner]`",
-    "`!serverstats disable` - Remove stat channels `[Extra Owner]`",
+    "`!serverstats / !statsetup setup|config|disable` - Manage voice channels displaying member counts `[Extra Owner]`",
     "`!ytstats setup` - Display YouTube subscriber counts in VC `[Extra Owner]`",
-    "`!autovcstatus [on|off|shuffle]` - Rotate custom statuses on all VCs `[Extra Owner]`",
+    "`!autovcstatus / !randomvc [on|off|shuffle]` - Rotate custom statuses on all VCs `[Extra Owner]`",
     "`!accent <hex>` - Set the global CV2 accent color for the server `[Extra Owner]`",
     "`!prefix <new_prefix>` - Change the bot's command prefix `[Extra Owner]`",
     "`!setguildavatar` - Change the bot's server icon `[Extra Owner]`",
     "`!setguildbanner` - Change the bot's server banner `[Extra Owner]`",
     "`!sethomevc / !unsethomevc` - Bind bot to a dedicated 24/7 VC `[Extra Owner]`",
-    "`!backup create|info` - Server infrastructure Backup Suite `[Server Owner]`",
-    "`!setsuggestions <#channel>` - Set designated channel for suggestions `[Extra Owner]`",
+    "`!backup / !bcp create|info` - Server infrastructure Backup Suite `[Server Owner]`",
+    "`!setsuggestions / !suggestchannel <#channel>` - Set designated channel for suggestions `[Extra Owner]`",
     "`!setstatschannel <#channel>` - Set dedicated channel for stats commands `[Extra Owner]`"
   ] },
 
@@ -915,11 +983,11 @@ async function getStatusEmbed(client, guild) {
     "`!moveprotect add|remove|list @user` - Protect user from being moved `[Extra Owner]`",
     "`!vclock / !vcunlock` - Lock/unlock the current VC `[Extra Owner]`",
     "`!theatermode` - Toggle Theater Mode in current VC `[Extra Owner]`",
-    "`!botvoice` - Control bot server mute and deafen status `[Extra Owner]`"
+    "`!botvoice / !bv` - Control bot server mute and deafen status `[Extra Owner]`"
   ] },
   { id: 'community', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Community', label: 'Community Tools', emoji: 'community', commands: [
-    "`!rate` - Rate recent server edits with custom stars `[Public]`",
-    "`!ratelb` - View the edit rating leaderboard `[Public]`",
+    "`!rate / !edit` - Rate recent server edits with custom stars `[Public]`",
+    "`!ratelb / !editlb` - View the edit rating leaderboard `[Public]`",
     "`!voicerole @role` - Role assigned automatically when joining any VC `[Extra Owner]`",
     "`!music / !play <query>` - Open Music Dashboard (Play, Skip, Queue, Volume) `[Public]`",
     "`!setupmusic` - Deploy 24/7 compact music controller channel `[Extra Owner]`",
@@ -929,16 +997,16 @@ async function getStatusEmbed(client, guild) {
     "`!chess` - Play an interactive game of chess in chat `[Public]`",
     "`!ship @user1 @user2` - Calculate love compatibility between two users `[Public]`",
     "`!birthday` - Set your birthday and view upcoming birthdays `[Public]`",
-    "`!quote <msg_id>` - Quote a message beautifully `[Public]`",
-    "`!quote setchannel <#channel|none>` - Bind Auto-Quote channel to turn typed messages into quotes `[Extra Owner]`",
+    "`!quote / !q <msg_id>` - Quote a message beautifully `[Public]`",
+    "`!quote setchannel / !setquote <#channel|none>` - Bind Auto-Quote channel to turn typed messages into quotes `[Extra Owner]`",
     "`!quotemaker` - Launch interactive Canvas Quote Generator `[Public]`",
-    "`!suggest <idea>` - Submit a suggestion `[Public]`",
+    "`!suggest / !suggestion <idea>` - Submit a suggestion `[Public]`",
     "`!starboard` - Configure the starboard channel `[Extra Owner]`",
-    "`!ccmd add <trigger> <reply>` - Create a custom command response `[Extra Owner]`",
+    "`!ccmd / !customcmd add <trigger> <reply>` - Create a custom command response `[Extra Owner]`",
     "`!autoreply / !ar` - Custom keyword auto-replies with accent borderless CV2 embeds & GIFs `[Extra Owner]`",
-    "`!rrsetup` - Interactive Reaction Role builder `[Extra Owner]`",
+    "`!rrsetup / !reactionrole` - Interactive Reaction Role builder `[Extra Owner]`",
     "`!giveaway / !gw` - Manage server giveaways `[Extra Owner]`",
-    "`!date @user` - Go on a special interactive date `[Public]`",
+    "`!date / !go-on-date @user` - Go on a special interactive date `[Public]`",
     "`!app` - Manage Staff Application system `[Extra Owner]`",
     "`!hug / !kiss / !slap / !pat` - Roleplay interactions with other users `[Public]`"
   ] },
@@ -946,25 +1014,25 @@ async function getStatusEmbed(client, guild) {
   { id: 'utilities', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Utilities', label: 'General Utilities', emoji: 'utilities', commands: [
     "`!help [module/command]` - Displays this interactive menu `[Public]`",
     "`!dev` - Displays developer information and credits `[Public]`",
-    "`!ping` - View bot latency and heartbeat graph `[Public]`",
-    "`!avatar [@user]` - View user's avatar `[Public]`",
-    "`!banner [@user]` - View user's banner `[Public]`",
-    "`!userinfo [@user]` - Detailed user information `[Public]`",
+    "`!ping / !p` - View bot latency and heartbeat graph `[Public]`",
+    "`!avatar / !av / !pfp [@user]` - View user's avatar `[Public]`",
+    "`!banner / !bnr [@user]` - View user's banner `[Public]`",
+    "`!userinfo / !ui / !whois [@user]` - Detailed user information `[Public]`",
     "`!time` - Check current Indian Standard Time (IST) `[Public]`",
     "`!snipe` - View the last deleted message `[Public]`",
     "`!news` - Configure automated RSS feeds `[Extra Owner]`",
-    "`!shortcuts enable|disable` - Toggle `a` -> `!avatar`, `b` -> `!banner` shortcuts `[Public]`",
-    "`!calculator` - Interactive button calculator `[Public]`",
+    "`!shortcuts / !sc enable|disable` - Toggle `a` -> `!avatar`, `b` -> `!banner` shortcuts `[Public]`",
+    "`!calculator / !calc` - Interactive button calculator `[Public]`",
     "`!tts <text>` - Generate Text-to-Speech audio `[Public]`",
-    "`!qrcode <text/link>` - Generate high-resolution QR code `[Public]`",
+    "`!qrcode / !qrc <text/link>` - Generate high-resolution QR code `[Public]`",
     "`!steal <emoji/link>` - Steal an emoji to this server `[Extra Owner]`",
     "`!afk [reason]` - Set an AFK status that replies when pinged `[Public]`",
     "`!bump` - Bump the server (Disboard integration) `[Public]`",
-    "`!sticky <message>` - Keep a message stuck at bottom of chat `[Extra Owner]`",
+    "`!sticky / !stick <message>` - Keep a message stuck at bottom of chat `[Extra Owner]`",
     "`!upload <url>` - Upload and mirror file from direct URL `[Public]`",
-    "`!tier` - Check your current Athena Prime authorization tier `[Public]`",
-    "`!profile [@user]` - Official God of War canvas profile card `[Public]`",
-    "`!modmail setup|disable` - Direct Message support ticket bridge `[Extra Owner]`",
+    "`!tier / !mytier / !perms` - Check your current Athena Prime authorization tier `[Public]`",
+    "`!profile / !card [@user]` - Official God of War canvas profile card `[Public]`",
+    "`!modmail / !mm setup|disable` - Direct Message support ticket bridge `[Extra Owner]`",
     "`!reply <message>` - Reply to member inside active ModMail ticket `[Extra Owner]`",
     "",
     "**News Feed System:**",

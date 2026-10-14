@@ -20,6 +20,7 @@ function formatDiscordTimestamp(date) {
 export const commands = [
   {
     name: 'quote',
+    aliases: ['q'],
     description: 'Generate an aesthetic image quote of a message. Use !quote setchannel <#channel|none> to bind auto-quote channel.',
     category: 'community',
     options: [],
