@@ -750,6 +750,7 @@ async function getStatusEmbed(client, guild) {
     "-# **Instant Anti-Spam** and **Malicious Link Filtering** engineered directly into Discord event stream."
   ] },
   { id: 'quarantine', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Quarantine', label: 'Quarantine System', emoji: 'quarantine', commands: [
+    "`!setupquarantine` - Auto-setup Quarantine role, isolation category, text & VC `[Extra Owner]`",
     "`!qrmanager setup|setrole|setchannel|setvc|status` - Manage system `[Extra Owner]`",
     "`!quarantine @user [reason]` - Strip roles and isolate (alias: `!qr`) `[Extra Owner]`",
     "`!unquarantine @user` - Lift quarantine status `[Extra Owner]`",
@@ -803,7 +804,10 @@ async function getStatusEmbed(client, guild) {
     "`!removerole @user @role` - Remove role from a user `[Extra Owner]`",
     "`!striproles @user` - Strip all roles from a user `[Extra Owner]`",
     "`!createchannel <name>` - Quickly create a text channel `[Extra Owner]`",
-    "`!deletechannel` - Delete the current channel `[Extra Owner]`",
+    "`!createvc <name> [limit]` - Quickly create a voice channel `[Extra Owner]`",
+    "`!deletechannel <#channel...>` - Delete one or more channels `[Extra Owner]`",
+    "`!delcat <category>` - Delete category (keeps channels safe) `[Extra Owner]`",
+    "`!delcatall <category>` - Delete category AND all its channels `[Extra Owner]`",
     "`!say <message>` - Send a raw text message via bot `[Extra Owner]`",
     "`!announce` - Launch interactive announcement builder `[Extra Owner]`",
     "`!fck @user <reason>` - Send direct official warning DM `[Server Owner]`"

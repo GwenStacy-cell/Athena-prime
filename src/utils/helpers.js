@@ -293,6 +293,204 @@ export async function getOrCreateQuarantineChannel(guild, quarantineRole) {
 }
 
 /**
+ * Resolves or builds a single voice channel for quarantine isolation
+ */
+export async function getOrCreateQuarantineVc(guild, quarantineRole, parentCategory = null) {
+  const config = db.getGuildConfig(guild.id);
+  let vc = null;
+
+  if (config.quarantineVcId) {
+    vc = await guild.channels.fetch(config.quarantineVcId).catch(() => null);
+  }
+
+  if (!vc) {
+    vc = guild.channels.cache.find(c => c.name.toLowerCase().includes('quarantine') && c.type === ChannelType.GuildVoice);
+    
+    if (!vc) {
+      vc = await guild.channels.create({
+        name: '🔊 Quarantine Isolation',
+        type: ChannelType.GuildVoice,
+        parent: parentCategory?.id || undefined,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id,
+            deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.Connect]
+          },
+          {
+            id: quarantineRole.id,
+            allow: [
+              PermissionFlagsBits.ViewChannel,
+              PermissionFlagsBits.Connect
+            ]
+          }
+        ],
+        reason: 'Athena Prime automatic quarantine voice channel creation'
+      }).catch(() => null);
+    }
+
+    if (vc) {
+      db.updateGuildConfig(guild.id, { quarantineVcId: vc.id });
+    }
+  }
+
+  return vc;
+}
+
+/**
+ * Automated end-to-end setup of Quarantine Role, Isolation Category, Text Channel, and Voice Channel,
+ * binding all IDs to database and syncing channel permissions.
+ */
+export async function autoSetupQuarantine(guild) {
+  // 1. Quarantined Role
+  const role = await getOrCreateQuarantineRole(guild);
+  if (!role) throw new Error('Could not create or locate the Quarantined role.');
+
+  // 2. Quarantine Category
+  let category = guild.channels.cache.find(c => 
+    c.type === ChannelType.GuildCategory && 
+    c.name.toLowerCase().includes('quarantine')
+  );
+  if (!category) {
+    category = await guild.channels.create({
+      name: '🚨 QUARANTINE ISOLATION',
+      type: ChannelType.GuildCategory,
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone.id,
+          deny: [PermissionFlagsBits.ViewChannel]
+        },
+        {
+          id: role.id,
+          allow: [PermissionFlagsBits.ViewChannel]
+        }
+      ],
+      reason: 'Athena Prime - quarantine isolation category auto-setup'
+    }).catch(() => null);
+  }
+
+  // 3. Quarantine Text Channel
+  let textChannel = null;
+  const config = db.getGuildConfig(guild.id);
+  if (config.quarantineChannelId) {
+    textChannel = await guild.channels.fetch(config.quarantineChannelId).catch(() => null);
+  }
+  if (!textChannel) {
+    textChannel = guild.channels.cache.find(c => 
+      c.type === ChannelType.GuildText && 
+      (c.name === 'quarantine-zone' || c.name.toLowerCase().includes('quarantine'))
+    );
+  }
+  if (!textChannel) {
+    textChannel = await guild.channels.create({
+      name: 'quarantine-zone',
+      type: ChannelType.GuildText,
+      parent: category?.id || undefined,
+      topic: '🚨 Under Investigation - Restricted Access Area - Athena Prime',
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone.id,
+          deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
+        },
+        {
+          id: role.id,
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.SendMessages,
+            PermissionFlagsBits.ReadMessageHistory
+          ]
+        }
+      ],
+      reason: 'Athena Prime - quarantine text channel auto-setup'
+    }).catch(() => null);
+  } else if (category && !textChannel.parentId) {
+    await textChannel.setParent(category.id).catch(() => null);
+  }
+
+  // 4. Quarantine Voice Channel (VC)
+  let voiceChannel = null;
+  if (config.quarantineVcId) {
+    voiceChannel = await guild.channels.fetch(config.quarantineVcId).catch(() => null);
+  }
+  if (!voiceChannel) {
+    voiceChannel = guild.channels.cache.find(c => 
+      c.type === ChannelType.GuildVoice && 
+      c.name.toLowerCase().includes('quarantine')
+    );
+  }
+  if (!voiceChannel) {
+    voiceChannel = await guild.channels.create({
+      name: '🔊 Quarantine Isolation',
+      type: ChannelType.GuildVoice,
+      parent: category?.id || undefined,
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone.id,
+          deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.Connect]
+        },
+        {
+          id: role.id,
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.Connect
+          ]
+        }
+      ],
+      reason: 'Athena Prime - quarantine voice channel auto-setup'
+    }).catch(() => null);
+  } else if (category && !voiceChannel.parentId) {
+    await voiceChannel.setParent(category.id).catch(() => null);
+  }
+
+  // 5. Update Database Configuration
+  db.updateGuildConfig(guild.id, {
+    quarantineRoleId: role.id,
+    quarantineChannelId: textChannel?.id || null,
+    quarantineVcId: voiceChannel?.id || null
+  });
+
+  // 6. Ensure explicit channel overwrites for role & everyone
+  if (category) {
+    await category.permissionOverwrites.edit(role, { ViewChannel: true }).catch(() => null);
+    await category.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false }).catch(() => null);
+  }
+  if (textChannel) {
+    await textChannel.permissionOverwrites.edit(role, {
+      ViewChannel: true,
+      SendMessages: true,
+      ReadMessageHistory: true,
+      Connect: false
+    }).catch(() => null);
+    await textChannel.permissionOverwrites.edit(guild.roles.everyone, {
+      ViewChannel: false,
+      SendMessages: false
+    }).catch(() => null);
+  }
+  if (voiceChannel) {
+    await voiceChannel.permissionOverwrites.edit(role, {
+      ViewChannel: true,
+      Connect: true,
+      Speak: true
+    }).catch(() => null);
+    await voiceChannel.permissionOverwrites.edit(guild.roles.everyone, {
+      ViewChannel: false,
+      Connect: false
+    }).catch(() => null);
+  }
+
+  // 7. Enforce Server-Wide Channel Sync (denies quarantineRole on all normal channels)
+  const excludeIds = [textChannel?.id, voiceChannel?.id, category?.id].filter(Boolean);
+  const synced = await syncQuarantinePermissions(guild, role, excludeIds);
+
+  return {
+    role,
+    category,
+    textChannel,
+    voiceChannel,
+    synced
+  };
+}
+
+/**
  * Checks if a user is the bot application owner or the server owner
  */
 export async function isBotOwnerOrServerOwner(user, guild) {
@@ -388,11 +586,17 @@ export async function syncQuarantinePermissions(guild, quarantineRole, excludeCh
   await guild.channels.fetch().catch(() => null);
 
   // Collect ALL channel IDs that the quarantine role should be allowed to see
-  // excludeChannelId is the quarantine TEXT channel
   const config = db.getGuildConfig(guild.id);
   const allowedChannelIds = new Set();
-  if (excludeChannelId) allowedChannelIds.add(excludeChannelId);
+  if (excludeChannelId) {
+    if (Array.isArray(excludeChannelId) || excludeChannelId instanceof Set) {
+      excludeChannelId.forEach(id => { if (id) allowedChannelIds.add(id); });
+    } else {
+      allowedChannelIds.add(excludeChannelId);
+    }
+  }
   if (config.quarantineVcId) allowedChannelIds.add(config.quarantineVcId);
+  if (config.quarantineChannelId) allowedChannelIds.add(config.quarantineChannelId);
 
   let synced = 0;
 
@@ -415,9 +619,13 @@ export async function syncQuarantinePermissions(guild, quarantineRole, excludeCh
           await channel.permissionOverwrites.edit(quarantineRole, {
             ViewChannel:  true,
             Connect:      true,
-            Speak:        false, // can hear but not speak by default
+            Speak:        true,
             SendMessages: false
           }, { reason: 'Athena Prime - quarantine VC access grant' });
+        } else if (channel.type === ChannelType.GuildCategory) {
+          await channel.permissionOverwrites.edit(quarantineRole, {
+            ViewChannel:  true
+          }, { reason: 'Athena Prime - quarantine category access grant' });
         } else {
           await channel.permissionOverwrites.edit(quarantineRole, {
             ViewChannel:      true,

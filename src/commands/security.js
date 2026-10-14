@@ -10,10 +10,12 @@ import {
   logToSecurityChannel, 
   getOrCreateQuarantineRole, 
   getOrCreateQuarantineChannel,
+  autoSetupQuarantine,
   isBotOwnerOrServerOwner,
   isBotOwnerOrServerOwnerStrict,
   isBotOwnerSync,
   isExtraOwner,
+  isServerAdmin,
   syncQuarantinePermissions
 } from '../utils/helpers.js';
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
@@ -1372,6 +1374,66 @@ export const commands = [
       const channel = interaction.options.getChannel('channel');
       const result = await handleQrManager(interaction.guild, interaction.member, action, role, channel);
       await cv2.edit(interaction, result);
+    }
+  },
+
+  // --- SETUPQUARANTINE / AUTO-SETUP QUARANTINE ---
+  {
+    name: 'setupquarantine',
+    aliases: ['quarantinesetup', 'autosetupquarantine', 'qrsetup', 'quarantine-setup'],
+    description: 'Auto-setup Quarantine role, text channel, voice channel, and server isolation.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [],
+    async executePrefix(message) {
+      if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) && !isExtraOwner(message.guild.id, message.author.id) && !message.member.permissions?.has(PermissionFlagsBits.Administrator) && !isServerAdmin(message.member, message.guild.id)) {
+        return message.reply(cv2.danger('Access Denied', 'Only Server Admins, Extra Owners, and Bot Owners can run quarantine auto-setup.'));
+      }
+
+      const statusMsg = await message.reply(cv2.info('Quarantine Auto-Setup', '<a:loading:1542155051286396938> Deploying Quarantine Role, Isolation Category, Text Channel, and Voice Channel...'));
+      try {
+        const res = await autoSetupQuarantine(message.guild);
+        const fields = [
+          { name: '<a:uptime:1552608831060844575> Quarantine Role',    value: res.role ? `<@&${res.role.id}>` : 'None', inline: true },
+          { name: '<a:uptime:1552608831060844575> Quarantine Text',    value: res.textChannel ? `<#${res.textChannel.id}>` : 'None', inline: true },
+          { name: '<a:uptime:1552608831060844575> Quarantine VC',      value: res.voiceChannel ? `<#${res.voiceChannel.id}>` : 'None', inline: true },
+          { name: '<a:uptime:1552608831060844575> Category',           value: res.category ? `\`${res.category.name}\`` : 'None', inline: true },
+          { name: '<a:uptime:1552608831060844575> Channels Synced',    value: `\`${res.synced}\` channels isolated`, inline: true }
+        ];
+
+        return statusMsg.edit(cv2.success(
+          'Quarantine System Auto-Setup',
+          `The complete quarantine isolation system has been deployed and assigned.\nQuarantined members will be strictly contained within the quarantine zone.`,
+          fields
+        ));
+      } catch (err) {
+        return statusMsg.edit(cv2.danger('Auto-Setup Error', `Failed to complete quarantine setup: ${err.message}`));
+      }
+    },
+    async executeSlash(interaction) {
+      if (!isBotOwnerOrServerOwnerStrict(interaction.user.id, interaction.guild) && !isExtraOwner(interaction.guild.id, interaction.user.id) && !interaction.member.permissions?.has(PermissionFlagsBits.Administrator) && !isServerAdmin(interaction.member, interaction.guild.id)) {
+        return interaction.reply(cv2.danger('Access Denied', 'Only Server Admins, Extra Owners, and Bot Owners can run quarantine auto-setup.'));
+      }
+
+      await interaction.reply(cv2.info('Quarantine Auto-Setup', '<a:loading:1542155051286396938> Deploying Quarantine Role, Isolation Category, Text Channel, and Voice Channel...'));
+      try {
+        const res = await autoSetupQuarantine(interaction.guild);
+        const fields = [
+          { name: '<a:uptime:1552608831060844575> Quarantine Role',    value: res.role ? `<@&${res.role.id}>` : 'None', inline: true },
+          { name: '<a:uptime:1552608831060844575> Quarantine Text',    value: res.textChannel ? `<#${res.textChannel.id}>` : 'None', inline: true },
+          { name: '<a:uptime:1552608831060844575> Quarantine VC',      value: res.voiceChannel ? `<#${res.voiceChannel.id}>` : 'None', inline: true },
+          { name: '<a:uptime:1552608831060844575> Category',           value: res.category ? `\`${res.category.name}\`` : 'None', inline: true },
+          { name: '<a:uptime:1552608831060844575> Channels Synced',    value: `\`${res.synced}\` channels isolated`, inline: true }
+        ];
+
+        return cv2.edit(interaction, cv2.success(
+          'Quarantine System Auto-Setup',
+          `The complete quarantine isolation system has been deployed and assigned.\nQuarantined members will be strictly contained within the quarantine zone.`,
+          fields
+        ));
+      } catch (err) {
+        return cv2.edit(interaction, cv2.danger('Auto-Setup Error', `Failed to complete quarantine setup: ${err.message}`));
+      }
     }
   },
 
@@ -3001,29 +3063,25 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
   const config = db.getGuildConfig(guild.id);
 
   if (action === 'setup') {
-    // Create/resolve quarantine role + channel
-    const qRole = await getOrCreateQuarantineRole(guild);
-    if (!qRole) return cv2.danger('<:off:1533844858983157851> Failed', 'Could not create or find the Quarantine role. Check bot permissions.');
+    try {
+      const res = await autoSetupQuarantine(guild);
 
-    const qChannel = await getOrCreateQuarantineChannel(guild, qRole);
+      const fields = [
+        { name: '<a:uptime:1552608831060844575> Quarantine Role',    value: res.role ? `<@&${res.role.id}>` : 'None', inline: true },
+        { name: '<a:uptime:1552608831060844575> Quarantine Text',    value: res.textChannel ? `<#${res.textChannel.id}>` : 'None', inline: true },
+        { name: '<a:uptime:1552608831060844575> Quarantine VC',      value: res.voiceChannel ? `<#${res.voiceChannel.id}>` : 'None', inline: true },
+        { name: '<a:uptime:1552608831060844575> Category',           value: res.category ? `\`${res.category.name}\`` : 'None', inline: true },
+        { name: '<a:uptime:1552608831060844575> Channels Synced',    value: `\`${res.synced}\` channels isolated`, inline: true }
+      ];
 
-    // Sync deny overwrites on ALL channels (except quarantine-zone)
-    const synced = await syncQuarantinePermissions(guild, qRole, qChannel?.id || null);
-
-    const fields = [
-      { name: '<a:uptime:1552608831060844575> Quarantine Role',    value: qRole    ? `<@&${qRole.id}>`     : ' Not Created', inline: true },
-      { name: '<a:uptime:1552608831060844575> Quarantine Channel', value: qChannel ? `<#${qChannel.id}>`   : ' Not Created', inline: true },
-      { name: '<a:uptime:1552608831060844575> Channels Synced',    value: `\`${synced}\` channels updated`, inline: true }
-    ];
-
-    const vc = config.quarantineVcId ? await guild.channels.fetch(config.quarantineVcId).catch(() => null) : null;
-    if (vc) fields.push({ name: '<a:uptime:1552608831060844575> Quarantine VC', value: `<#${vc.id}>`, inline: true });
-
-    return cv2.success(
-        'Quarantine System Fixed ',
-        `The quarantine role and channel have been set up.\nDeny overwrites applied to **${synced}** channels - quarantined users will only see the quarantine zone.`,
+      return cv2.success(
+        'Quarantine System Auto-Setup',
+        `The quarantine role, category, text channel, and voice channel have been deployed and assigned.\nQuarantined members will be strictly contained within the quarantine zone.`,
         fields
       );
+    } catch (err) {
+      return cv2.danger('Setup Error', `Failed to complete quarantine setup: ${err.message}`);
+    }
   }
 
   if (action === 'setrole') {

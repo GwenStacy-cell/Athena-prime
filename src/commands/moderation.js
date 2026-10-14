@@ -369,6 +369,50 @@ export const commands = [
     }
   },
 
+  // --- UNTIMEOUT / REMOVE TIMEOUT COMMAND ---
+  {
+    name: 'untimeout',
+    aliases: ['removetimeout', 'unto', 'cleartimeout'],
+    description: 'Removes the timeout from a member.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.ModerateMembers],
+    options: [
+      {
+        name: 'user',
+        description: 'Member to remove timeout from',
+        type: 6,
+        required: true
+      },
+      {
+        name: 'reason',
+        description: 'Reason for removing timeout',
+        type: 3,
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const target = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0].replace(/[<@!>]/g, '')).catch(() => null) : null);
+      if (!target) {
+        return message.reply(cv2.warn('Command Error', `${message.author} Please mention a valid member or provide their ID.\n\n**Usage:** \`!untimeout <@user> [reason]\``));
+      }
+      const reason = args.slice(1).join(' ') || 'No reason provided';
+      const result = await handleUntimeout(message.guild, message.member, target, reason);
+      await message.reply(result);
+    },
+    async executeSlash(interaction) {
+      const targetUser = interaction.options.getUser('user');
+      const reason = interaction.options.getString('reason') || 'No reason provided';
+
+      const target = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+      if (!target) {
+        return interaction.reply(cv2.warn('Command Error', `${interaction.user} Member not found.`));
+      }
+
+      const result = await handleUntimeout(interaction.guild, interaction.member, target, reason);
+      await interaction.reply(result);
+    }
+  },
+
   // --- KICK COMMAND ---
   {
     name: 'kick',
@@ -1479,7 +1523,54 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
     return resEmbed;
   } catch (error) {
     console.error(error);
-    return cv2.danger('<:off:1533844858983157851> Failed', 'An error occurred while executing the timeout. Ensure my role is higher than the target.');
+    return cv2.danger('Failed', 'An error occurred while executing the timeout. Ensure my role is higher than the target.');
+  }
+}
+
+async function handleUntimeout(guild, moderator, target, reason) {
+  // Owner immunity check
+  if (!isBotOwnerSync(moderator.id) && (isBotOwnerSync(target.id) || isExtraOwner(guild.id, target.id))) {
+    return cv2.danger('Untouchable', 'This user is protected by **Athena Prime** and cannot be moderated.');
+  }
+
+  if (!canModerate(moderator, target)) {
+    return cv2.danger('Permission Denied', `You do not have enough power to modify timeout for **${target.user.tag}**.`);
+  }
+
+  if (!target.isCommunicationDisabled()) {
+    return cv2.warn('Not Timed Out', `**${target.user.tag}** does not have an active timeout.`);
+  }
+
+  try {
+    await target.timeout(null, `${reason} - by ${moderator.user.tag}`);
+
+    // Send DM
+    const dmEmbed = new EmbedBuilder()
+      .setColor(0x00FF88)
+      .setTitle('Timeout Removed')
+      .setDescription(`Your timeout has been removed in **${guild.name}**.\n\n**Reason:** ${reason}`);
+    await target.send({ embeds: [dmEmbed] }).catch(() => null);
+
+    const resEmbed = cv2.success('Timeout Removed', `Successfully removed timeout from **${target.user.tag}**.`, [
+      { name: 'Member', value: `${target}`, inline: true },
+      { name: 'Reason', value: reason, inline: true }
+    ]);
+
+    logToSecurityChannel(guild, cv2.log(
+      'Member Timeout Removed',
+      `Moderator removed timeout from member.`,
+      [
+        { name: 'Target', value: `${target.user.tag} (${target.id})`, inline: true },
+        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+        { name: 'Reason', value: reason }
+      ],
+      'info'
+    ));
+
+    return resEmbed;
+  } catch (error) {
+    console.error(error);
+    return cv2.danger('Failed', 'An error occurred while removing the timeout. Ensure my role is higher than the target.');
   }
 }
 
