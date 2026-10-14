@@ -32,8 +32,6 @@ export const commands = [
                 vc = channel;
             } else {
                 // Check if it's a user
-                const guild = channel ? channel.guild : (message.guild || null);
-                // We need to find the user in ANY voice channel globally!
                 let globalVc = null;
                 message.client.guilds.cache.forEach(g => {
                     const mem = g.members.cache.get(targetId);
@@ -45,14 +43,13 @@ export const commands = [
         
         if (!vc) return message.reply(cv2.error('<:off:1533844858983157851> Failed', 'You must be in a Voice Channel to start a recording session, or provide a valid Channel ID / User ID as a target.'));
         
-        // If we are in DMs, we must use vc.guild instead of message.guild
         const targetGuild = vc.guild;
         try {
           await startRecording(vc);
           const container = {
             type: 17,
             components: [
-              { type: 10, content: `## **Voice Recording Started**\n\n-# Channel: ?? **${vc.name}** | Initiated By: ${message.author}\n\n-# Live multi-user audio capture is active (Unmuted & Undeafened).\n-# When finished, run \`!record stop\` or click **Stop & Export** below.\n-# Audio recording will be delivered directly via DM (or in this channel).` },
+              { type: 10, content: `## Voice Recording Started | <a:atheNATICK:1557841381630681106>\n\n-# Channel: 🔊 **${vc.name}** | Initiated By: ${message.author}\n\n-# Live multi-user audio capture is active.\n-# When finished, run \`!record stop\` or click **Stop & Export** below.\n-# Audio recording will be delivered directly via DM (with channel fallback).` },
               {
                 type: 1,
                 components: [
@@ -72,12 +69,12 @@ export const commands = [
 
       if (sub === 'stop') {
         const vc = message.member?.voice?.channel;
-        const vcName = vc ? vc.name : 'Unknown Channel';
+        const vcName = vc ? vc.name : 'Voice Channel';
         
         const container = {
           type: 17,
           components: [
-            { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: ?? **${vcName}**\n\n-# Processing and exporting the audio file, please wait...` },
+            { type: 10, content: `## Voice Recording Stopped | <a:atheNATICK:1557841381630681106>\n\n-# Channel: 🔊 **${vcName}**\n\n-# Processing and exporting the audio file, please wait...` },
             { type: 14, divider: true },
             { type: 10, content: '-# Athena Bulletproof Security' }
           ]
@@ -87,7 +84,6 @@ export const commands = [
         try {
           let targetGuildId = message.guild ? message.guild.id : (args[1] ? args[1] : null);
           if (targetGuildId) {
-             // If they passed a channel ID or user ID, find the guild
              const channel = message.client.channels.cache.get(targetGuildId);
              if (channel && channel.guild) targetGuildId = channel.guild.id;
              else {
@@ -100,12 +96,12 @@ export const commands = [
              }
           }
           if (!targetGuildId) return message.reply("You must specify a valid target (Server ID, Channel ID, or User ID) when stopping remotely from DMs: `!record stop <ID>`");
-          const targetGuild = message.client.guilds.cache.get(targetGuildId);
+          const targetGuild = message.client.guilds.cache.get(targetGuildId) || message.guild;
           const result = await stopRecording(targetGuildId);
           if (!result) {
-             return msg.edit({ components: [{ type: 17, components: [{ type: 10, content: '-# No active recording found for this server.' }] }] });
+             return msg.edit({ components: [{ type: 17, components: [{ type: 10, content: '-# <:off:1533844858983157851> No active recording found for this server.' }] }] });
           }
-          const { mp3Path, startTime, durationMs } = result;
+          const { mp3Path, startTime, durationMs, userCount } = result;
           
           const durSec = Math.floor(durationMs / 1000);
           const durationStr = `${Math.floor(durSec/60)}m ${durSec%60}s`;
@@ -114,10 +110,10 @@ export const commands = [
           const dmContainer = {
              type: 17,
              components: [
-                { type: 10, content: `## **Athena Voice Export**` },
+                { type: 10, content: `## Athena Voice Export | <a:atheNATICK:1557841381630681106>` },
                 {
                    type: 9,
-                   components: [{ type: 10, content: `-# **Server :** **${targetGuild ? targetGuild.name : 'Unknown'}**\n-# **Channel :** **${vcName}**\n-# **Started At :** **${startDate}**\n-# **Duration :** **${durationStr}**` }],
+                   components: [{ type: 10, content: `-# **Server :** **${targetGuild ? targetGuild.name : 'Unknown'}**\n-# **Channel :** **${vcName}**\n-# **Started At :** **${startDate}**\n-# **Duration :** **${durationStr}**\n-# **Speakers Detected :** **${userCount || 1}**` }],
                    accessory: { type: 11, media: { url: (targetGuild ? targetGuild.iconURL({ dynamic: true }) : null) || 'https://i.imgur.com/8Qj85vP.png' } }
                 },
                 { type: 14, divider: true },
@@ -125,13 +121,39 @@ export const commands = [
              ]
           };
           
-          await message.author.send({ components: [dmContainer], flags: MessageFlags.IsComponentsV2, files: [mp3Path] }).catch(() => null);
-          await msg.edit({ components: [{ type: 17, components: [{ type: 10, content: `-# **Audio Export Successful:** Delivered securely to your DMs.` }] }] });
+          let dmDelivered = false;
+          try {
+            await message.author.send({ components: [dmContainer], flags: MessageFlags.IsComponentsV2, files: [mp3Path] });
+            dmDelivered = true;
+          } catch (e) {
+            dmDelivered = false;
+          }
+
+          if (dmDelivered) {
+            await msg.edit({ components: [{ type: 17, components: [{ type: 10, content: `-# **Audio Export Successful | <a:atheNATICK:1557841381630681106>**\n-# Delivered securely to your DMs.` }] }] });
+          } else {
+            // Deliver in channel when DMs are closed
+            const channelExportContainer = {
+              type: 17,
+              components: [
+                { type: 10, content: `## Athena Voice Export | <a:atheNATICK:1557841381630681106>` },
+                {
+                  type: 9,
+                  components: [{ type: 10, content: `-# **Server :** **${targetGuild ? targetGuild.name : 'Unknown'}**\n-# **Channel :** **${vcName}**\n-# **Started At :** **${startDate}**\n-# **Duration :** **${durationStr}**\n-# **Note :** Your DMs are closed, so the audio was delivered here.` }],
+                  accessory: { type: 11, media: { url: (targetGuild ? targetGuild.iconURL({ dynamic: true }) : null) || 'https://i.imgur.com/8Qj85vP.png' } }
+                },
+                { type: 14, divider: true },
+                { type: 10, content: `-# **Audio file is attached below.**` }
+              ]
+            };
+            await message.channel.send({ content: `${message.author}, your DMs are closed, so here is your voice recording:`, components: [channelExportContainer], flags: MessageFlags.IsComponentsV2, files: [mp3Path] });
+            await msg.edit({ components: [{ type: 17, components: [{ type: 10, content: `-# **Audio Export Successful | <a:atheNATICK:1557841381630681106>**\n-# Delivered in this channel (DMs closed).` }] }] });
+          }
           
           const fs = await import('fs');
           fs.unlink(mp3Path, () => {});
         } catch (err) {
-          await msg.edit({ components: [{ type: 17, components: [{ type: 10, content: `-# **Failed to process audio:** ${err.message}` }] }] });
+          await msg.edit({ components: [{ type: 17, components: [{ type: 10, content: `-# <:off:1533844858983157851> **Recording Failed:** ${err.message}` }] }] });
         }
         return;
       }
@@ -144,9 +166,6 @@ export const commands = [
           ? (message.guild.channels.cache.get(cfg.voiceLogChannel) || await message.guild.channels.fetch(cfg.voiceLogChannel).catch(() => null))
           : null;
         if (!channel) {
-          channel = message.guild.channels.cache.find(c => c.name === 'voice-records' && c.type === ChannelType.GuildText);
-        }
-        if (!channel) {
           channel = await message.guild.channels.create({
             name: 'voice-records',
             type: ChannelType.GuildText,
@@ -158,8 +177,8 @@ export const commands = [
               }
             ]
           });
+          db.updateGuildConfig(message.guild.id, { voiceLogChannel: channel.id });
         }
-        db.updateGuildConfig(message.guild.id, { voiceLogChannel: channel.id });
         message.channel.send(cv2.success('Voice Records Setup', `Successfully setup voice logging in <#${channel.id}>.\nAll VC joins and leaves will be recorded there.`));
       } catch (error) {
         console.error(error);

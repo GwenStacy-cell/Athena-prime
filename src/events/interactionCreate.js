@@ -1571,53 +1571,100 @@ if (interaction.customId === "modal_2fa_setup") {
 
       // RECORD BUTTONS
       if (interaction.customId.startsWith('record_stop')) {
-          const targetGuildId = interaction.customId.split('_')[2] || interaction.guild?.id;
-          if (!targetGuildId) return interaction.reply({ content: 'Cannot determine target server.', flags: 64 });
+        const targetGuildId = interaction.customId.split('_')[2] || interaction.guild?.id;
+        if (!targetGuildId) return interaction.reply({ content: '<:off:1533844858983157851> Cannot determine target server.', flags: 64 });
         const vc = interaction.member?.voice?.channel;
-        const vcName = vc ? vc.name : 'Unknown Channel';
+        const vcName = vc ? vc.name : 'Voice Channel';
         const container = {
           type: 17,
           components: [
-            { type: 10, content: `## **Voice Recording Stopped**\n\n-# Channel: 🔊 **${vcName}**\n\n-# Processing and exporting the audio file, please wait...` },
+            { type: 10, content: `## Voice Recording Stopped | <a:atheNATICK:1557841381630681106>\n\n-# Channel: 🔊 **${vcName}**\n\n-# Processing and exporting the audio file, please wait...` },
             { type: 14, divider: true },
             { type: 10, content: '-# Athena Bulletproof Security' }
           ]
         };
-        try { await cv2.respond(interaction, { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 }, 7); } catch(err) { console.error("INTERACTION ERROR:", err); await interaction.channel.send("UPDATE CRASHED: " + err.message); return; }
+        try { await cv2.respond(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 }, 7); } catch(err) { console.error("INTERACTION ERROR:", err); }
         
         try {
           const { stopRecording } = await import('../utils/audioRecorder.js');
           const result = await stopRecording(targetGuildId);
-            if (!result) {
-             const emptyContainer = { type: 17, components: [{ type: 10, content: '-# No active recording found for this server.' }] };
-             return interaction.message.edit({ components: [emptyContainer] });
+          if (!result) {
+            const emptyContainer = { type: 17, components: [{ type: 10, content: '-# <:off:1533844858983157851> No active recording found for this server.' }] };
+            return interaction.message.edit({ components: [emptyContainer] });
           }
-          const successContainer = { type: 17, components: [{ type: 10, content: '-# **Audio Export Successful!**' }] };
-          await interaction.message.edit({ components: [successContainer] });
-          await interaction.followUp({ files: [result.mp3Path] });
-            const fs = await import('fs');
-            fs.unlink(result.mp3Path, () => {});
+          
+          const targetGuild = interaction.client.guilds.cache.get(targetGuildId) || interaction.guild;
+          const durSec = Math.floor(result.durationMs / 1000);
+          const durationStr = `${Math.floor(durSec/60)}m ${durSec%60}s`;
+          const startDate = new Date(result.startTime).toLocaleString('en-US', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
+
+          const dmContainer = {
+            type: 17,
+            components: [
+              { type: 10, content: `## Athena Voice Export | <a:atheNATICK:1557841381630681106>` },
+              {
+                type: 9,
+                components: [{ type: 10, content: `-# **Server :** **${targetGuild ? targetGuild.name : 'Unknown'}**\n-# **Channel :** **${vcName}**\n-# **Started At :** **${startDate}**\n-# **Duration :** **${durationStr}**\n-# **Speakers Detected :** **${result.userCount || 1}**` }],
+                accessory: { type: 11, media: { url: (targetGuild ? targetGuild.iconURL({ dynamic: true }) : null) || 'https://i.imgur.com/8Qj85vP.png' } }
+              },
+              { type: 14, divider: true },
+              { type: 10, content: `-# **Audio file is attached below.**` }
+            ]
+          };
+
+          let dmDelivered = false;
+          try {
+            await interaction.user.send({ components: [dmContainer], flags: MessageFlags.IsComponentsV2, files: [result.mp3Path] });
+            dmDelivered = true;
+          } catch (e) {
+            dmDelivered = false;
+          }
+
+          if (dmDelivered) {
+            const successContainer = { type: 17, components: [{ type: 10, content: `-# **Audio Export Successful | <a:atheNATICK:1557841381630681106>**\n-# Delivered securely to your DMs.` }] };
+            await interaction.message.edit({ components: [successContainer] });
+          } else {
+            const channelFallbackContainer = {
+              type: 17,
+              components: [
+                { type: 10, content: `## Athena Voice Export | <a:atheNATICK:1557841381630681106>` },
+                {
+                  type: 9,
+                  components: [{ type: 10, content: `-# **Server :** **${targetGuild ? targetGuild.name : 'Unknown'}**\n-# **Channel :** **${vcName}**\n-# **Started At :** **${startDate}**\n-# **Duration :** **${durationStr}**\n-# **Note :** Your DMs are closed, so the audio was delivered here.` }],
+                  accessory: { type: 11, media: { url: (targetGuild ? targetGuild.iconURL({ dynamic: true }) : null) || 'https://i.imgur.com/8Qj85vP.png' } }
+                },
+                { type: 14, divider: true },
+                { type: 10, content: `-# **Audio file is attached below.**` }
+              ]
+            };
+            await interaction.followUp({ content: `${interaction.user}, your DMs are closed, so here is your voice recording:`, components: [channelFallbackContainer], flags: MessageFlags.IsComponentsV2, files: [result.mp3Path] });
+            const successContainer = { type: 17, components: [{ type: 10, content: `-# **Audio Export Successful | <a:atheNATICK:1557841381630681106>**\n-# Delivered in this channel (DMs closed).` }] };
+            await interaction.message.edit({ components: [successContainer] });
+          }
+
+          const fs = await import('fs');
+          fs.unlink(result.mp3Path, () => {});
         } catch (err) {
-          const errContainer = { type: 17, components: [{ type: 10, content: `-# **Recording Stopped:** ${err.message}` }] };
+          const errContainer = { type: 17, components: [{ type: 10, content: `-# <:off:1533844858983157851> **Recording Stopped:** ${err.message}` }] };
           await interaction.message.edit({ components: [errContainer] });
         }
         return;
       }
 
       if (interaction.customId.startsWith('record_status')) {
-          const targetGuildId = interaction.customId.split('_')[2] || interaction.guild?.id;
-          if (!targetGuildId) return interaction.reply({ content: 'Cannot determine target server.', flags: 64 });
+        const targetGuildId = interaction.customId.split('_')[2] || interaction.guild?.id;
+        if (!targetGuildId) return interaction.reply({ content: '<:off:1533844858983157851> Cannot determine target server.', flags: 64 });
         const { getRecordingStatus } = await import('../utils/audioRecorder.js');
         const isActive = getRecordingStatus(targetGuildId);
         const container = {
           type: 17,
           components: [
-            { type: 10, content: `## **Voice Recording Status**\n-# Status: ${isActive ? 'Active 🔴' : 'Inactive ⚪'}` },
+            { type: 10, content: `## Voice Recording Status | <a:uptime:1552608831060844575>\n-# Status: ${isActive ? '<a:uptime:1552608831060844575> **Recording Active**' : '<:off:1533844858983157851> **Inactive**'}` },
             { type: 14, divider: true },
             { type: 10, content: '-# Athena Bulletproof Security' }
           ]
         };
-        try { return await interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, ephemeral: false }); } catch(err) { console.error("INTERACTION ERROR:", err); await interaction.channel.send("REPLY CRASHED: " + err.message); return; }
+        try { return await interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, ephemeral: true }); } catch(err) { console.error("INTERACTION ERROR:", err); }
       }
 
       // MEDIA PROMPT BUTTONS
