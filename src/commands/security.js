@@ -3039,14 +3039,14 @@ function formatQuarantineSetupResult(res) {
     const fields = [
       { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\`` : 'None', inline: true },
       { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}>` : 'None', inline: true },
-      { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}>` : 'None', inline: true },
-      { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}>` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> (Synced)` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> (Synced)` : 'None', inline: true },
       { name: '<a:uptime:1552608831060844575> Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: true }
     ];
 
     return cv2.success(
       'Quarantine System | <a:atheNATICK:1557841381630681106>',
-      `All quarantine components are already assigned and active under category **\`${catName}\`**.\nQuarantined members are strictly contained and isolated from all other server channels.`,
+      `All quarantine components are already assigned, synced, and active under category **\`${catName}\`**.\nQuarantined members are strictly contained and isolated from all other server channels.`,
       fields
     );
   }
@@ -3054,14 +3054,14 @@ function formatQuarantineSetupResult(res) {
   const fields = [
     { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\` • ${res.categoryFound ? 'Found' : 'Created'}` : 'None', inline: true },
     { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}> • ${res.roleFound ? 'Found' : 'Created'}` : 'None', inline: true },
-    { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> • ${res.textFound ? 'Found' : 'Created'}` : 'None', inline: true },
-    { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> • ${res.vcFound ? 'Found' : 'Created'}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> • ${res.textFound ? (res.textWasUnderCat ? 'Found & Synced' : 'Assigned under Category & Synced') : 'Created & Synced'}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> • ${res.vcFound ? (res.vcWasUnderCat ? 'Found & Synced' : 'Assigned under Category & Synced') : 'Created & Synced'}` : 'None', inline: true },
     { name: '<a:uptime:1552608831060844575> Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: true }
   ];
 
   return cv2.success(
     'Quarantine Auto-Setup | <a:atheNATICK:1557841381630681106>',
-    `Leftover quarantine components were created and assigned under category **\`${catName}\`**.\nQuarantined members will be strictly contained within the quarantine zone.`,
+    `Configured and assigned quarantine components under category **\`${catName}\`** with synced permissions.\nQuarantined members are strictly contained within the quarantine zone.`,
     fields
   );
 }
@@ -3086,21 +3086,37 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     db.updateGuildConfig(guild.id, { quarantineRoleId: roleArg.id });
     const qChannelId = db.getGuildConfig(guild.id).quarantineChannelId;
     await syncQuarantinePermissions(guild, roleArg, qChannelId);
-    return cv2.success('Quarantine Role Set', `Set <@&${roleArg.id}> as the quarantine role and synced deny overwrites across all channels.`);
+    return cv2.success('Quarantine Role Set | <a:atheNATICK:1557841381630681106>', `Set <@&${roleArg.id}> as the quarantine role and synced deny overwrites across all channels.`);
   }
 
   if (action === 'setchannel') {
     if (!channelArg) return cv2.warn('Missing Channel', 'Please specify a text channel using the `channel` option.');
     db.updateGuildConfig(guild.id, { quarantineChannelId: channelArg.id });
+    const targetCat = guild.channels.cache.find(c => 
+      c.type === ChannelType.GuildCategory && 
+      (c.name === '.      You Have Been Quarantined' || c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
+    );
+    if (targetCat && channelArg.parentId !== targetCat.id) {
+      await channelArg.setParent(targetCat.id, { lockPermissions: true }).catch(() => null);
+      await channelArg.lockPermissions().catch(() => null);
+    }
     const qRole = await getOrCreateQuarantineRole(guild);
     await syncQuarantinePermissions(guild, qRole, channelArg.id);
-    return cv2.success('Quarantine Channel Set', `Set <#${channelArg.id}> as the quarantine text zone and synced deny overwrites across all channels.\nQuarantined users will be able to view and chat here.`);
+    return cv2.success('Quarantine Channel Set | <a:atheNATICK:1557841381630681106>', `Set <#${channelArg.id}> as the quarantine text zone${targetCat ? ` under \`${targetCat.name}\`` : ''} and synced permissions.\nQuarantined users will be able to view and chat here.`);
   }
 
   if (action === 'setvc') {
     if (!channelArg) return cv2.warn('Missing VC', 'Please specify a voice channel using the `channel` option.');
     db.updateGuildConfig(guild.id, { quarantineVcId: channelArg.id });
-    return cv2.success('Quarantine VC Set', `Set <#${channelArg.id}> as the quarantine voice channel.\nWhen a member is quarantined they will be moved here (if they are in a VC). On unquarantine they are returned to their previous VC.`);
+    const targetCat = guild.channels.cache.find(c => 
+      c.type === ChannelType.GuildCategory && 
+      (c.name === '.      You Have Been Quarantined' || c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
+    );
+    if (targetCat && channelArg.parentId !== targetCat.id) {
+      await channelArg.setParent(targetCat.id, { lockPermissions: true }).catch(() => null);
+      await channelArg.lockPermissions().catch(() => null);
+    }
+    return cv2.success('Quarantine VC Set | <a:atheNATICK:1557841381630681106>', `Set <#${channelArg.id}> as the quarantine voice channel${targetCat ? ` under \`${targetCat.name}\`` : ''} and synced permissions.\nWhen a member is quarantined they will be moved here.`);
   }
 
   if (action === 'status') {

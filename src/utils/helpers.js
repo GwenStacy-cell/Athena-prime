@@ -416,6 +416,7 @@ export async function autoSetupQuarantine(guild) {
   // 3. Quarantine Text Channel Check (pure font, no emojis)
   let textChannel = null;
   let textFound = false;
+  let textWasUnderCat = false;
 
   if (config.quarantineChannelId) {
     textChannel = await guild.channels.fetch(config.quarantineChannelId).catch(() => null);
@@ -435,8 +436,8 @@ export async function autoSetupQuarantine(guild) {
 
   if (textChannel) {
     textFound = true;
-    if (category && textChannel.parentId !== category.id) {
-      await textChannel.setParent(category.id).catch(() => null);
+    if (category && textChannel.parentId === category.id) {
+      textWasUnderCat = true;
     }
   } else {
     textChannel = await guild.channels.create({
@@ -465,6 +466,7 @@ export async function autoSetupQuarantine(guild) {
   // 4. Quarantine Voice Channel (VC) Check (pure font, no emojis)
   let voiceChannel = null;
   let vcFound = false;
+  let vcWasUnderCat = false;
 
   if (config.quarantineVcId) {
     voiceChannel = await guild.channels.fetch(config.quarantineVcId).catch(() => null);
@@ -484,8 +486,8 @@ export async function autoSetupQuarantine(guild) {
 
   if (voiceChannel) {
     vcFound = true;
-    if (category && voiceChannel.parentId !== category.id) {
-      await voiceChannel.setParent(category.id).catch(() => null);
+    if (category && voiceChannel.parentId === category.id) {
+      vcWasUnderCat = true;
     }
   } else {
     voiceChannel = await guild.channels.create({
@@ -516,40 +518,52 @@ export async function autoSetupQuarantine(guild) {
     quarantineVcId: voiceChannel?.id || null
   });
 
-  // 6. Ensure explicit channel overwrites for role & everyone
+  // 6. Ensure Quarantine Category Permissions & Assign/Sync Channels Under Category
   if (category) {
-    await category.permissionOverwrites.edit(role, { ViewChannel: true }).catch(() => null);
-    await category.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false }).catch(() => null);
-  }
-  if (textChannel) {
-    await textChannel.permissionOverwrites.edit(role, {
-      ViewChannel: true,
-      SendMessages: true,
-      ReadMessageHistory: true,
-      Connect: false
-    }).catch(() => null);
-    await textChannel.permissionOverwrites.edit(guild.roles.everyone, {
-      ViewChannel: false,
-      SendMessages: false
-    }).catch(() => null);
-  }
-  if (voiceChannel) {
-    await voiceChannel.permissionOverwrites.edit(role, {
-      ViewChannel: true,
-      Connect: true,
-      Speak: true
-    }).catch(() => null);
-    await voiceChannel.permissionOverwrites.edit(guild.roles.everyone, {
-      ViewChannel: false,
-      Connect: false
-    }).catch(() => null);
+    // Toggle quarantine isolation overwrites on parent category
+    await category.permissionOverwrites.set([
+      {
+        id: guild.roles.everyone.id,
+        deny: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.Connect
+        ]
+      },
+      {
+        id: role.id,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ReadMessageHistory,
+          PermissionFlagsBits.Connect,
+          PermissionFlagsBits.Speak
+        ]
+      }
+    ], 'Athena Prime quarantine category isolation permissions').catch(() => null);
+
+    // Assign text channel under category and sync permissions
+    if (textChannel) {
+      if (textChannel.parentId !== category.id) {
+        await textChannel.setParent(category.id, { lockPermissions: true }).catch(() => null);
+      }
+      await textChannel.lockPermissions().catch(() => null);
+    }
+
+    // Assign voice channel under category and sync permissions
+    if (voiceChannel) {
+      if (voiceChannel.parentId !== category.id) {
+        await voiceChannel.setParent(category.id, { lockPermissions: true }).catch(() => null);
+      }
+      await voiceChannel.lockPermissions().catch(() => null);
+    }
   }
 
   // 7. Enforce Server-Wide Channel Sync (denies quarantineRole on all normal channels)
   const excludeIds = [textChannel?.id, voiceChannel?.id, category?.id].filter(Boolean);
   const synced = await syncQuarantinePermissions(guild, role, excludeIds);
 
-  const allFound = roleFound && categoryFound && textFound && vcFound;
+  const allFound = roleFound && categoryFound && textFound && vcFound && textWasUnderCat && vcWasUnderCat;
 
   return {
     role,
@@ -561,7 +575,9 @@ export async function autoSetupQuarantine(guild) {
     roleFound,
     categoryFound,
     textFound,
-    vcFound
+    vcFound,
+    textWasUnderCat,
+    vcWasUnderCat
   };
 }
 
