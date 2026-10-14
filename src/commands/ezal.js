@@ -857,13 +857,8 @@ async function handleUnbanServer(message, args) {
   return message.reply(`<a:uptime:1552608831060844575> **Server Unbanned:** \`${guildId}\`. The bot can now be invited again.`);
 }
 
-async function handleRestoreSetup(message, args) {
-  const guildId = args[0];
-  if (!guildId) return message.reply('Provide a server ID to restore setup.');
-  const guild = message.client.guilds.cache.get(guildId);
-  if (!guild) return message.reply('I am not currently in that server. Unban it and invite me first!');
-
-  const sent = await message.reply('Starting dynamic setup restoration...');
+async function restoreSingleGuildSetup(guild) {
+  const guildId = guild.id;
   const config = db.getGuildConfig(guildId);
 
   try {
@@ -875,14 +870,14 @@ async function handleRestoreSetup(message, args) {
   try {
     const jtcConfig = db.cache.jtc[guildId];
     if (jtcConfig && jtcConfig.lobbyChannelId) {
-      let lobby = guild.channels.cache.get(jtcConfig.lobbyChannelId);
+      let lobby = guild.channels.cache.get(jtcConfig.lobbyChannelId) || await guild.channels.fetch(jtcConfig.lobbyChannelId).catch(() => null);
       if (!lobby) {
-        const cat = guild.channels.cache.get(jtcConfig.categoryId) || await guild.channels.create({ name: 'âž• Voice Rooms', type: ChannelType.GuildCategory });
+        const cat = (jtcConfig.categoryId ? (guild.channels.cache.get(jtcConfig.categoryId) || await guild.channels.fetch(jtcConfig.categoryId).catch(() => null)) : null) || await guild.channels.create({ name: 'âž• Voice Rooms', type: ChannelType.GuildCategory });
         lobby = await guild.channels.create({ name: 'âž• Join to Create', type: ChannelType.GuildVoice, parent: cat.id });
         db.cache.jtc[guildId] = { lobbyChannelId: lobby.id, categoryId: cat.id };
         db.save();
         if (jtcConfig.panelChannelId) {
-          const pc = guild.channels.cache.get(jtcConfig.panelChannelId);
+          const pc = guild.channels.cache.get(jtcConfig.panelChannelId) || await guild.channels.fetch(jtcConfig.panelChannelId).catch(() => null);
           if (!pc) {
             const newPc = await guild.channels.create({ name: 'jtc-panel', type: ChannelType.GuildText });
             db.cache.jtc[guildId].panelChannelId = newPc.id;
@@ -899,7 +894,7 @@ async function handleRestoreSetup(message, args) {
   try {
     const aRole = config.accentManagerRoleId;
     if (aRole) {
-      let realRole = guild.roles.cache.get(aRole);
+      let realRole = guild.roles.cache.get(aRole) || await guild.roles.fetch(aRole).catch(() => null);
       if (!realRole) {
         realRole = await guild.roles.create({ name: 'Accent Manager', colors: { primaryColor: config.accentColor || '#ff0000' } });
         db.updateGuildConfig(guildId, { accentManagerRoleId: realRole.id });
@@ -1034,7 +1029,33 @@ async function handleRestoreSetup(message, args) {
       }
     }
   } catch(e) {}
+}
 
+async function handleRestoreSetup(message, args) {
+  const target = args[0]?.toLowerCase();
+  if (!target) {
+    return message.reply('Provide a server ID to restore setup, or `all` to dynamically restore setups across all servers.\n\n**Usage:**\n`ezal restoresetup <serverId>`\n`ezal restoresetup all`');
+  }
+
+  if (target === 'all') {
+    const sent = await message.reply('Starting dynamic setup restoration across ALL servers...');
+    let restoredCount = 0;
+    for (const guild of message.client.guilds.cache.values()) {
+      try {
+        await restoreSingleGuildSetup(guild);
+        restoredCount++;
+      } catch (e) {
+        console.error(`[RestoreSetup] Failed for guild ${guild.name} (${guild.id}):`, e);
+      }
+    }
+    return cv2.edit(sent, `<a:uptime:1552608831060844575> **Dynamic Restore Complete!** Restored setups across \`${restoredCount}\` servers.`);
+  }
+
+  const guild = message.client.guilds.cache.get(args[0]) || await message.client.guilds.fetch(args[0]).catch(() => null);
+  if (!guild) return message.reply('I am not currently in that server. Unban it and invite me first!');
+
+  const sent = await message.reply(`Starting dynamic setup restoration for \`${guild.name}\`...`);
+  await restoreSingleGuildSetup(guild);
   await cv2.edit(sent, `<a:uptime:1552608831060844575> **Dynamic Restore Complete** for \`${guild.name}\`!`);
 }
 
