@@ -820,8 +820,10 @@ async function getStatusEmbed(client, guild) {
     "-# **Instant Anti-Spam** and **Malicious Link Filtering** engineered directly into Discord event stream."
   ] },
   { id: 'quarantine', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Quarantine', label: 'Quarantine System', emoji: 'quarantine', commands: [
-    "`!setupquarantine / !qrsetup` - Auto-setup Quarantine role, isolation category, text & VC `[Extra Owner]`",
-    "`!qrmanager setup|setrole|setchannel|setvc|status` - Manage quarantine configuration `[Extra Owner]`",
+    "`!setupquarantine / !qrsetup / !quarantinesetup` - Auto-setup role, category, text & VC, sync permissions `[Extra Owner]`",
+    "`/setupquarantine` - Slash command to deploy, assign leftovers, and sync permissions `[Extra Owner]`",
+    "`!qrmanager setup / /qrmanager action:Setup` - Auto-setup, assign unparented channels, & fix all permissions `[Extra Owner]`",
+    "`!qrmanager setrole|setchannel|setvc|status` - Manage quarantine configuration and view status `[Extra Owner]`",
     "`!quarantine / !qr @user [reason]` - Strip roles and isolate member `[Extra Owner]`",
     "`!unquarantine / !unqr @user` - Lift quarantine status `[Extra Owner]`",
     "`!massquarantine / !mq @role` - Quarantine all members of a role `[Extra Owner]`",
@@ -830,9 +832,11 @@ async function getStatusEmbed(client, guild) {
     "`!maxwarnings <amount>` - Configure warnings before auto-quarantine `[Extra Owner]`",
     "",
     "**Quarantine Architecture:**",
-    "- Isolated users cannot view, message, or connect to any normal channel.",
-    "- System automatically creates high-priority isolation overrides.",
-    "- Restricts newly created channels to prevent quarantine evasion."
+    "- **Smart Auto-Setup**: Creates leftover components, aligns them under `.      You Have Been Quarantined`, and syncs permissions.",
+    "- **Pure Font Naming**: All categories and channels use clean typography without emojis.",
+    "- **Role Color**: Dedicated red `#ff0000` Quarantined role with zero global permissions.",
+    "- **Full Isolation**: Isolated users cannot view, message, or connect to any normal channel.",
+    "- **Channel Sweeper**: Automatically syncs deny overwrites across all channels to prevent evasion."
   ] },
   { id: 'whitelist', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Whitelist', label: 'Whitelist Manager', emoji: 'whitelist', commands: [
     "`!whitelist / !wl` - Opens Interactive Whitelist Overview Panel `[Extra Owner]`",
