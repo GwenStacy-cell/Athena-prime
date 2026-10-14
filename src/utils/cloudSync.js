@@ -20,40 +20,102 @@ let backupInterval = null;
 let isBackingUp = false;
 
 /**
- * Calculates current counts of all modular bot data for diagnostics and backup manifests.
+ * Calculates comprehensive current counts of all modular bot data for diagnostics and backup manifests.
  */
 export function getDatabaseMetrics() {
   const cache = db.cache || {};
+  const guilds = Object.values(cache.guilds || {});
   return {
     guilds: Object.keys(cache.guilds || {}).length,
-    xpSystems: Object.keys(cache.xpSystems || {}).length,
-    xpUsers: Object.values(cache.usersXp || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
-    serverStats: Object.keys(cache.serverStats || {}).length,
+    accentColors: guilds.filter(g => g.accentColor).length,
+    securityServers: guilds.filter(g => g.securityEnabled || g.antiNukeEnabled).length,
+    automodServers: guilds.filter(g => g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled).length,
+    honeypots: guilds.filter(g => g.honeypotChannelId).length,
     extraOwners: Object.keys(cache.extraOwners || {}).length,
     extraOwnersTotal: Object.values(cache.extraOwners || {}).reduce((acc, curr) => acc + (Array.isArray(curr) ? curr.length : 0), 0),
     botWhitelist: Object.keys(cache.botWhitelist || {}).length,
-    triggers: Object.keys(cache.triggers || {}).length + (cache.globalTriggers || []).length,
+    whitelistedRoles: guilds.reduce((acc, g) => acc + (g.linkBypassRoles?.length || 0) + (g.inviteBypassRoles?.length || 0) + Object.keys(g.whitelist?.roles || {}).length, 0),
+    whitelistedUsers: guilds.reduce((acc, g) => acc + Object.keys(g.whitelist?.users || {}).length, 0),
     quarantines: Object.keys(cache.quarantines || {}).length,
+    warnings: Object.values(cache.warnings || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
+    tempBans: Object.values(cache.tempBans || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
+    xpSystems: Object.keys(cache.xpSystems || {}).length,
+    xpUsers: Object.values(cache.usersXp || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
+    serverStats: Object.keys(cache.serverStats || {}).length,
+    welcome: Object.keys(cache.welcome || {}).length,
+    leave: Object.keys(cache.leave || {}).length,
+    triggers: Object.keys(cache.triggers || {}).length + (cache.globalTriggers || []).length,
     tickets: Object.keys(cache.tickets || {}).length,
     verification: Object.keys(cache.verification || {}).length,
     giveaways: Object.keys(cache.giveaways || {}).length,
     reactionRoles: Object.keys(cache.reactionRoles || {}).length,
     stickyMessages: Object.keys(cache.stickyMessages || {}).length,
-    npUsers: Object.keys(cache.npUsers || {}).length,
-    npServers: Object.keys(cache.npServers || {}).length,
-    birthdays: Object.keys(cache.birthdays || {}).length,
-    jtc: Object.keys(cache.jtc || {}).length,
-    welcome: Object.keys(cache.welcome || {}).length,
-    leave: Object.keys(cache.leave || {}).length,
-    vcProtection: Object.keys(cache.vcProtection || {}).length,
+    adel: Object.values(cache.adelList || {}).reduce((acc, c) => acc + Object.keys(c || {}).length, 0),
+    birthdayServers: Object.keys(cache.birthdays || {}).length,
+    birthdayUsers: Object.values(cache.birthdays || {}).reduce((acc, b) => acc + Object.keys(b.users || {}).length, 0),
     apps: Object.keys(cache.apps || {}).length,
+    homeVc: guilds.filter(g => g.homeVcId).length,
+    voiceLogs: guilds.filter(g => g.voiceLogChannel).length,
+    jtc: Object.keys(cache.jtc || {}).length,
+    jtcChannels: Object.keys(cache.jtcChannels || {}).length,
+    vcProtection: Object.values(cache.vcProtection || {}).reduce((acc, u) => acc + (Array.isArray(u) ? u.length : 0), 0),
     vcDrags: Object.values(cache.vcDrags || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
     serverBackups: Object.keys(cache.backups || {}).length,
-    automodGuilds: Object.values(cache.guilds || {}).filter(g => g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled).length,
-    honeypots: Object.values(cache.guilds || {}).filter(g => g.honeypotChannelId).length,
-    whitelistedRoles: Object.values(cache.guilds || {}).reduce((acc, g) => acc + (g.linkBypassRoles?.length || 0) + (g.inviteBypassRoles?.length || 0) + Object.keys(g.whitelist?.roles || {}).length, 0),
-    whitelistedUsers: Object.values(cache.guilds || {}).reduce((acc, g) => acc + Object.keys(g.whitelist?.users || {}).length, 0)
+    npUsers: Object.keys(cache.npUsers || {}).length,
+    npServers: Object.keys(cache.npServers || {}).length,
+    npManagers: (cache.npManagers || []).length
   };
+}
+
+/**
+ * Formats full structured breakdown of all backed-up bot data.
+ */
+export function formatDatabaseMetrics(m, options = {}) {
+  const { reason, timestamp, sizeKb, prefixText, channelId, fileName } = options;
+
+  let text = '';
+  if (prefixText) text += `${prefixText}\n\n`;
+  if (channelId) text += `> -# **Backup Channel:** <#${channelId}>\n\n`;
+  if (fileName) text += `> -# **Restored Snapshot:** \`${fileName}\`\n\n`;
+
+  text += 
+    `**Servers & Configurations:**\n` +
+    `> -# **Tracked Servers:** \`${m.guilds}\` | **Saved Accent Colors:** \`${m.accentColors}\`\n\n` +
+    `**Security & Defense Matrix:**\n` +
+    `> -# **Security & Anti-Nuke:** \`${m.securityServers} servers active\`\n` +
+    `> -# **Automod & Word Filters:** \`${m.automodServers} servers (Spam, Links, Invites, Badwords)\`\n` +
+    `> -# **Honeypot Traps:** \`${m.honeypots} channels\`\n` +
+    `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
+    `> -# **Bypasses & Security Whitelist:** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} whitelisted users\`\n` +
+    `> -# **Quarantines & Warnings:** \`${m.quarantines} quarantined, ${m.warnings} warning records, ${m.tempBans} tempbans\`\n\n` +
+    `**Engagement & Community Features:**\n` +
+    `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
+    `> -# **Server Stats Counters:** \`${m.serverStats} setups\`\n` +
+    `> -# **Welcome & Leave Systems:** \`${m.welcome} welcome, ${m.leave} goodbye setups\`\n` +
+    `> -# **Custom Triggers & Auto-Replies:** \`${m.triggers} triggers\`\n` +
+    `> -# **Tickets & Verification:** \`${m.tickets} ticket setups, ${m.verification} verification setups\`\n` +
+    `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} giveaways, ${m.reactionRoles} menus\`\n` +
+    `> -# **Sticky Messages:** \`${m.stickyMessages} channels\`\n` +
+    `> -# **Auto-Delete (ADEL / RADEL):** \`${m.adel} channels\`\n` +
+    `> -# **Birthday Records:** \`${m.birthdayServers} servers (${m.birthdayUsers} registered birthdays)\`\n` +
+    `> -# **Staff Applications:** \`${m.apps} application setups\`\n\n` +
+    `**Voice Systems & Session Protection:**\n` +
+    `> -# **Home VC & Voice Logs:** \`${m.homeVc} home VCs, ${m.voiceLogs} voice log channels\`\n` +
+    `> -# **Join to Create (JTC):** \`${m.jtc} lobby setups, ${m.jtcChannels} active temp channels\`\n` +
+    `> -# **VC Drag & Voice Protection:** \`${m.vcDrags} active drag sessions, ${m.vcProtection} protected users\`\n\n` +
+    `**Storage, Backups & Analytics:**\n` +
+    `> -# **Server Backups:** \`${m.serverBackups} saved templates\`\n` +
+    `> -# **No-Prefix (NP) System:** \`${m.npUsers} users, ${m.npServers} servers, ${m.npManagers} managers\`\n` +
+    `> -# **Voice & Message Analytics:** \`SQLite stats.db (WAL mode active)\`\n`;
+
+  if (sizeKb !== undefined) text += `> -# **Snapshot Size:** \`${sizeKb} KB\`\n`;
+  if (timestamp) {
+    const tsSec = Math.floor(timestamp / 1000);
+    text += `> -# **Timestamp:** <t:${tsSec}:F> (<t:${tsSec}:R>)\n`;
+  }
+  if (reason) text += `> -# **Trigger Event:** \`${reason}\`\n`;
+
+  return text.trim();
 }
 
 /**
@@ -191,19 +253,12 @@ export async function createCloudBackup(client, reason = 'Automated Schedule') {
 
     const payload = cv2.info(
       `Database Cloud Backup | <a:atheNATICK:1557841381630681106>`,
-      `Automated persistent cloud snapshot stored.\n\n` +
-      `> -# **Tracked Servers:** \`${m.guilds}\`\n` +
-      `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-      `> -# **Server Stats Setups:** \`${m.serverStats} servers\`\n` +
-      `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
-      `> -# **Custom Triggers & Auto-Replies:** \`${m.triggers}\`\n` +
-      `> -# **Quarantines Preserved:** \`${m.quarantines}\`\n` +
-      `> -# **Tickets & Verification:** \`${m.tickets} ticket setups, ${m.verification} verification setups\`\n` +
-      `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} giveaways, ${m.reactionRoles} menus\`\n` +
-      `> -# **Sticky Messages:** \`${m.stickyMessages} channels\`\n` +
-      `> -# **Snapshot Size:** \`${sizeKb} KB\`\n` +
-      `> -# **Timestamp:** <t:${Math.floor(timestamp / 1000)}:F> (<t:${Math.floor(timestamp / 1000)}:R>)\n` +
-      `> -# **Trigger Event:** \`${reason}\``
+      formatDatabaseMetrics(m, {
+        prefixText: 'Automated persistent cloud snapshot stored.',
+        sizeKb,
+        timestamp,
+        reason
+      })
     );
     payload.files = files;
 
@@ -360,17 +415,11 @@ export async function checkAndAutoRestore(client) {
     if (channel) {
       await channel.send(cv2.success(
         `Database Auto-Restored | <a:atheNATICK:1557841381630681106>`,
-        `**New Hosting Migration Detected!**\n` +
-        `The bot detected a fresh boot and automatically restored all server configurations from the latest cloud backup.\n\n` +
-        `> -# **Restored Servers:** \`${m.guilds}\`\n` +
-        `> -# **XP Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-        `> -# **Server Stats Setups:** \`${m.serverStats} servers\`\n` +
-        `> -# **Extra Owners:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users)\`\n` +
-        `> -# **Triggers / Auto-Replies:** \`${m.triggers}\`\n` +
-        `> -# **Quarantines Preserved:** \`${m.quarantines}\`\n` +
-        `> -# **Tickets & Giveaways:** \`${m.tickets} tickets, ${m.giveaways} giveaways\`\n` +
-        `> -# **Restored From:** \`${result.fileName}\`\n` +
-        `> -# **Timestamp:** <t:${Math.floor(Date.now() / 1000)}:R>`
+        formatDatabaseMetrics(m, {
+          prefixText: '**New Hosting Migration Detected!**\nThe bot detected a fresh boot and automatically restored all server configurations from the latest cloud backup.',
+          fileName: result.fileName,
+          timestamp: Date.now()
+        })
       )).catch(() => null);
     }
 

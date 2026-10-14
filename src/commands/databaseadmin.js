@@ -11,7 +11,8 @@ import {
   manualRestore, 
   restoreFromCloud, 
   getBackupChannel, 
-  getDatabaseMetrics 
+  getDatabaseMetrics,
+  formatDatabaseMetrics 
 } from '../utils/cloudSync.js';
 
 const DATA_DIR = path.resolve('data');
@@ -107,19 +108,13 @@ export const commands = [
 
         const successPayload = cv2.success(
           `Database Backed Up | <a:atheNATICK:1557841381630681106>`,
-          `**Cloud snapshot successfully stored!**\n\n` +
-          `> -# **Backup Channel:** <#${result.channelId}>\n` +
-          `> -# **Tracked Servers:** \`${m.guilds}\`\n` +
-          `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-          `> -# **Server Stats Setups:** \`${m.serverStats} servers\`\n` +
-          `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
-          `> -# **Custom Triggers & Auto-Replies:** \`${m.triggers}\`\n` +
-          `> -# **Quarantines Preserved:** \`${m.quarantines}\`\n` +
-          `> -# **Tickets & Giveaways:** \`${m.tickets} tickets, ${m.giveaways} giveaways\`\n` +
-          `> -# **Reaction Roles:** \`${m.reactionRoles} menus\`\n` +
-          `> -# **Snapshot Size:** \`${sizeKb} KB\`\n` +
-          `> -# **Timestamp:** <t:${Math.floor(result.timestamp / 1000)}:R>\n\n` +
-          `Your entire database is securely archived in Discord. If you ever switch hosting companies, the bot will automatically restore everything on boot.`
+          formatDatabaseMetrics(m, {
+            prefixText: '**Cloud snapshot successfully stored!**\nYour entire database is securely archived in Discord. If you ever switch hosting companies, the bot will automatically restore everything on boot.',
+            channelId: result.channelId,
+            sizeKb,
+            timestamp: result.timestamp,
+            reason: `Manual Backup by ${user.tag || user.username}`
+          })
         );
         successPayload.files = [new AttachmentBuilder(DB_FILE, { name: `athena_db_backup_${Date.now()}.json` })];
 
@@ -154,13 +149,11 @@ export const commands = [
 
         const exportPayload = cv2.info(
           `Database Export | <a:atheNATICK:1557841381630681106>`,
-          `Here are your raw database files.\n\n` +
-          `> -# **Tracked Servers:** \`${m.guilds}\`\n` +
-          `> -# **XP Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-          `> -# **Server Stats Setups:** \`${m.serverStats} servers\`\n` +
-          `> -# **Extra Owners:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users)\`\n` +
-          `> -# **Size:** \`${sizeKb} KB\`\n` +
-          `> -# **Timestamp:** <t:${Math.floor(Date.now() / 1000)}:F>`
+          formatDatabaseMetrics(m, {
+            prefixText: 'Here are your raw database files.',
+            sizeKb,
+            timestamp: Date.now()
+          })
         );
         exportPayload.files = files;
 
@@ -199,18 +192,11 @@ export const commands = [
           const m = cloudRes.metrics;
           const successPayload = cv2.success(
             `Database Restored | <a:atheNATICK:1557841381630681106>`,
-            `**Database successfully restored from cloud backup!**\n\n` +
-            `> -# **Tracked Servers:** \`${m.guilds}\`\n` +
-            `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-            `> -# **Server Stats Setups:** \`${m.serverStats} servers\`\n` +
-            `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
-            `> -# **Custom Triggers & Auto-Replies:** \`${m.triggers}\`\n` +
-            `> -# **Quarantines Preserved:** \`${m.quarantines}\`\n` +
-            `> -# **Tickets & Giveaways:** \`${m.tickets} tickets, ${m.giveaways} giveaways\`\n` +
-            `> -# **Reaction Roles:** \`${m.reactionRoles} menus\`\n` +
-            `> -# **Sticky Messages:** \`${m.stickyMessages} channels\`\n` +
-            `> -# **Restored From:** \`${cloudRes.fileName}\`\n\n` +
-            `All bot systems and guild configurations are now fully active without needing a bot restart.`
+            formatDatabaseMetrics(m, {
+              prefixText: '**Database successfully restored from cloud backup!**\nAll bot systems and guild configurations are now fully active without needing a bot restart.',
+              fileName: cloudRes.fileName,
+              timestamp: cloudRes.timestamp
+            })
           );
 
           if (context.isCommand?.()) return context.editReply(successPayload);
@@ -242,17 +228,11 @@ export const commands = [
           const m = restoreResult.metrics;
           return sendReply(cv2.success(
             `Database Restored | <a:atheNATICK:1557841381630681106>`,
-            `**Database successfully restored and hot-reloaded!**\n\n` +
-            `> -# **Tracked Servers:** \`${m.guilds}\`\n` +
-            `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-            `> -# **Server Stats Setups:** \`${m.serverStats} servers\`\n` +
-            `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
-            `> -# **Custom Triggers & Auto-Replies:** \`${m.triggers}\`\n` +
-            `> -# **Quarantines Preserved:** \`${m.quarantines}\`\n` +
-            `> -# **Tickets & Giveaways:** \`${m.tickets} tickets, ${m.giveaways} giveaways\`\n` +
-            `> -# **Reaction Roles:** \`${m.reactionRoles} menus\`\n` +
-            `> -# **Source File:** \`${attachment.name}\`\n\n` +
-            `All bot systems and guild configurations are now fully active without needing a bot restart.`
+            formatDatabaseMetrics(m, {
+              prefixText: '**Database successfully restored and hot-reloaded!**\nAll bot systems and guild configurations are now fully active without needing a bot restart.',
+              fileName: attachment.name,
+              timestamp: Date.now()
+            })
           ));
         } catch (err) {
           return sendReply(cv2.danger('Restore Error', `Failed to process uploaded file: \`${err.message}\``));
@@ -313,20 +293,8 @@ export const commands = [
         `> -# **Auto-Sync Scheduler:** \`Active (Every 20m)\`\n` +
         `> -# **Last Cloud Backup:** ${lastBackupStr}\n` +
         `> -# **Local Database Size:** \`${sizeKb} KB\`\n\n` +
-        `**Stored & Protected Data Breakdown:**\n` +
-        `> -# **Tracked Servers:** \`${m.guilds}\`\n` +
-        `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-        `> -# **Server Stats Setups:** \`${m.serverStats} servers\`\n` +
-        `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
-        `> -# **Automod & Honeypots:** \`${m.automodGuilds} active automod servers, ${m.honeypots} honeypots\`\n` +
-        `> -# **Bypasses & Security Roles:** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} security whitelisted users\`\n` +
-        `> -# **Custom Triggers & Auto-Replies:** \`${m.triggers}\`\n` +
-        `> -# **Active Quarantines:** \`${m.quarantines}\`\n` +
-        `> -# **Tickets & Verification:** \`${m.tickets} tickets, ${m.verification} verification setups\`\n` +
-        `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} giveaways, ${m.reactionRoles} menus\`\n` +
-        `> -# **VC Drag Sessions & Backups:** \`${m.vcDrags} active drag sessions, ${m.serverBackups} server templates\`\n` +
-        `> -# **Sticky Messages:** \`${m.stickyMessages} channels\`\n\n` +
-        `**Management Commands:**\n` +
+        formatDatabaseMetrics(m, { sizeKb }) +
+        `\n\n**Management Commands:**\n` +
         `-# • \`!db backup\` — Force immediate cloud backup\n` +
         `-# • \`!db restore latest\` — Pull & restore latest cloud backup from Discord\n` +
         `-# • \`!db export\` — Download raw \`db.json\` & \`stats.db\`\n` +
