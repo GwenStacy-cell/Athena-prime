@@ -41,15 +41,34 @@ export function getDatabaseMetrics() {
   const leaveEmbeds = leaveConfigs.filter(c => c && (c.title || c.description || c.from || c.footer)).length;
   const leaveGifs = leaveConfigs.filter(c => c && (c.image || c.thumbnailUrl)).length;
 
+  // Automod detailed module toggles breakdown
+  const antiSpamServers = guilds.filter(g => g.antiSpamEnabled).length;
+  const antiInviteServers = guilds.filter(g => g.antiInviteEnabled).length;
+  const antiLinkServers = guilds.filter(g => g.antiLinkEnabled).length;
+  const wordFilterServers = guilds.filter(g => g.wordFilterEnabled).length;
+  const antiFloodServers = guilds.filter(g => g.antiFloodEnabled || g.bigFontsEnabled).length;
+  const antiMentionServers = guilds.filter(g => g.antiSpamMentionEnabled).length;
   const blacklistedWordsCount = guilds.reduce((acc, g) => acc + (g.blacklistWords?.length || 0), 0);
   const allowedLinksCount = guilds.reduce((acc, g) => acc + (g.allowedLinks?.length || 0), 0);
   const logChannelsCount = guilds.filter(g => g.logChannel || g.serverLogs).length;
+
+  // Birthday detailed breakdown
+  const birthdayConfigs = Object.values(cache.birthdays || {});
+  const birthdayChannels = birthdayConfigs.filter(b => b && b.channelId).length;
+  const birthdayServers = Object.keys(cache.birthdays || {}).length;
+  const birthdayUsers = birthdayConfigs.reduce((acc, b) => acc + Object.keys(b.users || {}).length, 0);
 
   return {
     guilds: Object.keys(cache.guilds || {}).length,
     accentColors: guilds.filter(g => g.accentColor).length,
     securityServers: guilds.filter(g => g.securityEnabled || g.antiNukeEnabled).length,
     automodServers: guilds.filter(g => g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled).length,
+    antiSpamServers,
+    antiInviteServers,
+    antiLinkServers,
+    wordFilterServers,
+    antiFloodServers,
+    antiMentionServers,
     blacklistedWordsCount,
     allowedLinksCount,
     honeypots: guilds.filter(g => g.honeypotChannelId).length,
@@ -83,8 +102,12 @@ export function getDatabaseMetrics() {
     reactionRoles: Object.keys(cache.reactionRoles || {}).length,
     stickyMessages: Object.keys(cache.stickyMessages || {}).length,
     adel: Object.values(cache.adelList || {}).reduce((acc, c) => acc + Object.keys(c || {}).length, 0),
-    birthdayServers: Object.keys(cache.birthdays || {}).length,
-    birthdayUsers: Object.values(cache.birthdays || {}).reduce((acc, b) => acc + Object.keys(b.users || {}).length, 0),
+    
+    // Detailed Birthdays
+    birthdayChannels,
+    birthdayServers,
+    birthdayUsers,
+
     apps: Object.keys(cache.apps || {}).length,
     homeVc: guilds.filter(g => g.homeVcId).length,
     voiceLogs: guilds.filter(g => g.voiceLogChannel).length,
@@ -116,7 +139,8 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **Tracked Servers:** \`${m.guilds}\` | **Saved Accent Colors:** \`${m.accentColors}\`\n\n` +
     `**Security & Defense Matrix:**\n` +
     `> -# **Security & Anti-Nuke:** \`${m.securityServers} servers active\`\n` +
-    `> -# **Automod & Word Filters:** \`${m.automodServers} servers (${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links)\`\n` +
+    `> -# **Automod Module Toggles:** \`${m.automodServers} servers active | Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, WordFilter: ${m.wordFilterServers}, Flood: ${m.antiFloodServers}, Link: ${m.antiLinkServers}\`\n` +
+    `> -# **Custom Filter Rules:** \`${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links\`\n` +
     `> -# **Honeypot Traps:** \`${m.honeypots} channels\`\n` +
     `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
     `> -# **Bypasses & Security Whitelist:** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} whitelisted users\`\n` +
@@ -131,7 +155,7 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} giveaways, ${m.reactionRoles} menus\`\n` +
     `> -# **Sticky Messages:** \`${m.stickyMessages} channels\`\n` +
     `> -# **Auto-Delete (ADEL / RADEL):** \`${m.adel} channels\`\n` +
-    `> -# **Birthday Records:** \`${m.birthdayServers} servers (${m.birthdayUsers} registered birthdays)\`\n` +
+    `> -# **Birthday System Settings:** \`${m.birthdayChannels} announcement channels | ${m.birthdayServers} servers, ${m.birthdayUsers} registered birthdays\`\n` +
     `> -# **Staff Applications:** \`${m.apps} application setups\`\n\n` +
     `**Voice Systems & Session Protection:**\n` +
     `> -# **Home VC & Logs:** \`${m.homeVc} home VCs, ${m.voiceLogs} voice logs, ${m.logChannelsCount} server audit logs\`\n` +
