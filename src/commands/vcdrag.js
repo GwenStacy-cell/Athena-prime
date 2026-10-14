@@ -341,8 +341,16 @@ async function handleVcDrag(guild, moderator, target, intervalSec) {
     intervalSec
   });
 
+  // Persist session to database for 100% survival across restarts and host migrations
+  db.saveActiveVcDrag(guild.id, target.id, {
+    initiatorId: moderator.id,
+    targetTag: target.user.tag,
+    startedAt: Date.now(),
+    intervalSec
+  });
+
   return cv2.danger(
-      ' VC Drag Activated',
+      'VC Drag Activated',
       `${target} is now being dragged through every voice channel every **${intervalSec}s**.\n\nUse \`/vcdragstop\` or \`!vcdragstop @${target.user.username}\` to stop.`,
       [
         { name: 'Target', value: `${target.user.tag} (${target.id})`, inline: true },
@@ -366,11 +374,12 @@ function handleVcDragStop(guild, moderator, target) {
   const session = activeDrags.get(sessionKey);
   clearInterval(session.timer);
   activeDrags.delete(sessionKey);
+  db.removeActiveVcDrag(guild.id, target.id);
 
   const durationSec = Math.round((Date.now() - session.startedAt) / 1000);
 
   return cv2.success(
-      'VC Drag Stopped',
+      `VC Drag Stopped | <a:atheNATICK:1557841381630681106>`,
       `The VC drag session for **${session.targetTag}** has been terminated.`,
       [
         { name: 'Target', value: session.targetTag, inline: true },
@@ -378,6 +387,33 @@ function handleVcDragStop(guild, moderator, target) {
         { name: 'Stopped By', value: moderator.user.tag, inline: true }
       ]
     );
+}
+
+/**
+ * Automatically restores and restarts any unended VC drag sessions on bot boot
+ */
+export async function restoreActiveVcDrags(client) {
+  try {
+    const allDrags = db.getActiveVcDrags();
+    let resumed = 0;
+    for (const [guildId, guildDrags] of Object.entries(allDrags)) {
+      const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
+      if (!guild) continue;
+      for (const [targetId, dragInfo] of Object.entries(guildDrags || {})) {
+        const target = await guild.members.fetch(targetId).catch(() => null);
+        if (!target) continue;
+        const initiator = await guild.members.fetch(dragInfo.initiatorId).catch(() => null);
+        const moderator = initiator || { id: dragInfo.initiatorId, user: { tag: 'Owner' } };
+        await handleVcDrag(guild, moderator, target, dragInfo.intervalSec || 2);
+        resumed++;
+      }
+    }
+    if (resumed > 0) {
+      console.log(`[VCDrag] Successfully resumed ${resumed} unended VC drag session(s) from database.`);
+    }
+  } catch (err) {
+    console.warn('[VCDrag] Error restoring active VC drag sessions:', err.message);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -64,7 +64,8 @@ const DEFAULT_SCHEMA = {
   likedSongs: {},     // userId -> [song objects]
   bannedServers: [],  // [guildIds]
   tts: { users: {}, autoTts: {} },
-  dbBackupChannelId: null
+  dbBackupChannelId: null,
+  vcDrags: {}         // guildId -> { userId -> { initiatorId, targetTag, startedAt, intervalSec } }
 };
 
 class Database {
@@ -151,6 +152,7 @@ class Database {
         this.cache.likedSongs     = this.cache.likedSongs     || {};
         this.cache.bannedServers  = this.cache.bannedServers  || [];
         this.cache.dbBackupChannelId = this.cache.dbBackupChannelId || null;
+        this.cache.vcDrags        = this.cache.vcDrags        || {};
       } else {
         this.save();
       }
@@ -2089,6 +2091,27 @@ class Database {
   updateAppConfig(guildId, data) {
     const config = this.getAppConfig(guildId);
     this.cache.apps[guildId] = { ...config, ...data };
+    this.save();
+  }
+
+  // --- VC Drag Sessions Persistence ---
+  getActiveVcDrags() {
+    return this.cache.vcDrags || {};
+  }
+
+  saveActiveVcDrag(guildId, userId, data) {
+    if (!this.cache.vcDrags) this.cache.vcDrags = {};
+    if (!this.cache.vcDrags[guildId]) this.cache.vcDrags[guildId] = {};
+    this.cache.vcDrags[guildId][userId] = data;
+    this.save();
+  }
+
+  removeActiveVcDrag(guildId, userId) {
+    if (!this.cache.vcDrags || !this.cache.vcDrags[guildId]) return;
+    delete this.cache.vcDrags[guildId][userId];
+    if (Object.keys(this.cache.vcDrags[guildId]).length === 0) {
+      delete this.cache.vcDrags[guildId];
+    }
     this.save();
   }
 

@@ -46,7 +46,9 @@ export function getDatabaseMetrics() {
     welcome: Object.keys(cache.welcome || {}).length,
     leave: Object.keys(cache.leave || {}).length,
     vcProtection: Object.keys(cache.vcProtection || {}).length,
-    apps: Object.keys(cache.apps || {}).length
+    apps: Object.keys(cache.apps || {}).length,
+    vcDrags: Object.values(cache.vcDrags || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
+    serverBackups: Object.keys(cache.backups || {}).length
   };
 }
 

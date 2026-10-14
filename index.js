@@ -638,6 +638,12 @@ client.once('clientReady', async () => {
   if (restored > 0) {
     console.log(chalk.cyan(`⏰ Restored ${restored} auto-unquarantine timer(s) from database.`));
   }
+
+  // Restore active unended VC drag sessions from database
+  try {
+    const { restoreActiveVcDrags } = await import('./src/commands/vcdrag.js');
+    await restoreActiveVcDrags(client);
+  } catch {}
 });
 
 // Graceful Shutdown to ensure DB flushes and cloud backup is taken
