@@ -3,7 +3,8 @@ import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 
 export const commands = [{
-  name: 'stealemoji',
+  name: 'emojistealer',
+  aliases: ['stealallemojis', 'copyemojis', 'copyserveremojis'],
     slashHidden: true,
     description: 'Steal emojis from this server and copy them to another (Strictly for owners)',
   async executePrefix(message) {

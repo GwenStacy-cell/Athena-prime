@@ -1537,6 +1537,40 @@ export default {
     }
 
     // ==========================================
+    // 4.65 PREFIX-LESS: STEAL (Emoji / GIF Stealer)
+    // ==========================================
+    if (msgCheck === 'steal' || msgCheck.startsWith('steal ') ||
+        msgCheck === 'stealemoji' || msgCheck.startsWith('stealemoji ') ||
+        msgCheck === 'addemoji' || msgCheck.startsWith('addemoji ')) {
+      const hasMediaOrArgs = (message.attachments && message.attachments.size > 0) ||
+                             message.reference ||
+                             /<(a?):([a-zA-Z0-9_]+):(\d+)>/.test(message.content) ||
+                             /https?:\/\//.test(message.content) ||
+                             db.getNpUser(message.author.id) ||
+                             db.getNpServer(message.guild.id);
+      if (dbConfig.shortcutsEnabled !== false && hasMediaOrArgs) {
+        const stealCmd = commandMap.get('steal');
+        if (stealCmd) {
+          const isBypass = isBotOwnerSync(message.author.id) ||
+            message.author.id === message.guild.ownerId ||
+            db.isExtraOwner(message.guild.id, message.author.id);
+          const hasPerm = isBypass || message.member?.permissions?.has(PermissionFlagsBits.ManageGuildExpressions);
+          if (!hasPerm) {
+            await message.reply(cv2.danger('Access Denied', 'You do not possess the required permissions to execute this command.')).catch(() => null);
+            return;
+          }
+          try {
+            const stealArgs = message.content.trim().split(/ +/).slice(1);
+            await stealCmd.executePrefix(message, stealArgs);
+          } catch (error) {
+            console.error('Error executing steal shortcut:', error);
+          }
+          return;
+        }
+      }
+    }
+
+    // ==========================================
     // 4.7 PREFIX-LESS: FCK (Prank DM command)
     // ==========================================
     if (msgCheck === 'fck' || msgCheck.startsWith('fck ') ||

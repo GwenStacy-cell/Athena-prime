@@ -3,6 +3,66 @@ import db from '../database.js';
 import cv2 from '../cv2.js';
 import { processMp3Link } from '../utils/mediaDownloader.js';
 import { isAuthorized } from '../utils/helpers.js';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { spawn } from 'child_process';
+import ffmpegPath from 'ffmpeg-static';
+
+async function optimizeEmojiBuffer(buffer, isAnimated = false) {
+  if (!buffer || buffer.length <= 256 * 1024) return buffer;
+
+  if (isAnimated) {
+    const tmpDir = os.tmpdir();
+    const uniqueId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const inPath = path.join(tmpDir, `emoji_in_${uniqueId}.gif`);
+    const outPath = path.join(tmpDir, `emoji_out_${uniqueId}.gif`);
+
+    try {
+      await fs.promises.writeFile(inPath, buffer);
+
+      const presets = [
+        'fps=15,scale=128:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3',
+        'fps=12,scale=96:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=64[p];[s1][p]paletteuse=dither=bayer:bayer_scale=2',
+        'fps=10,scale=80:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=32[p];[s1][p]paletteuse=dither=bayer:bayer_scale=1',
+        'fps=8,scale=64:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=16[p];[s1][p]paletteuse=dither=bayer:bayer_scale=1'
+      ];
+
+      for (const vf of presets) {
+        try {
+          await new Promise((resolve, reject) => {
+            const proc = spawn(ffmpegPath, ['-y', '-i', inPath, '-vf', vf, outPath]);
+            proc.on('close', code => code === 0 ? resolve() : reject(new Error('exit ' + code)));
+            proc.on('error', reject);
+          });
+          if (fs.existsSync(outPath)) {
+            const compressed = await fs.promises.readFile(outPath);
+            if (compressed.length <= 256 * 1024) {
+              return compressed;
+            }
+          }
+        } catch {}
+      }
+    } catch {} finally {
+      try { await fs.promises.unlink(inPath); } catch {}
+      try { await fs.promises.unlink(outPath); } catch {}
+    }
+  } else {
+    try {
+      const { createCanvas, loadImage, isCanvasAvailable } = await import('../utils/canvas.js');
+      if (isCanvasAvailable) {
+        const img = await loadImage(buffer);
+        const canvas = createCanvas(128, 128);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, 128, 128);
+        const compressed = canvas.toBuffer('image/png');
+        if (compressed.length <= 256 * 1024) return compressed;
+      }
+    } catch {}
+  }
+
+  return buffer;
+}
 
 // ——————————————————————————————————————————————————
 // Bold underline header formatter — matches embed title style
@@ -562,11 +622,14 @@ export const commands = [
 
   {
     name: 'steal',
-    description: 'Steal one or more custom emojis into this server.',
+    aliases: ['addemoji', 'stealemoji', 'emojisteal', 'steal-emoji'],
+    description: 'Steal custom emojis or upload GIFs and images as server emojis.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuildExpressions],
     options: [
-      { name: 'emoji1', description: 'Paste an emoji to steal', type: 3, required: true },
+      { name: 'emoji1', description: 'Paste an emoji or image/GIF URL to steal', type: 3, required: false },
+      { name: 'file', description: 'Upload a GIF or image to add as an emoji', type: 11, required: false },
+      { name: 'name', description: 'Custom name for the emoji (optional)', type: 3, required: false },
       { name: 'emoji2', description: 'Paste an emoji to steal', type: 3, required: false },
       { name: 'emoji3', description: 'Paste an emoji to steal', type: 3, required: false },
       { name: 'emoji4', description: 'Paste an emoji to steal', type: 3, required: false },
@@ -574,11 +637,10 @@ export const commands = [
       { name: 'emoji6', description: 'Paste an emoji to steal', type: 3, required: false }
     ],
     async executePrefix(message, args) {
-      await this._processSteal(message.content, message, message.guild);
+      await this._processSteal(message.content, message, message.guild, args);
     },
     async executeSlash(interaction) {
       await interaction.deferReply().catch(() => null);
-      // Gather all emoji inputs
       const inputs = [
         interaction.options.getString('emoji1'),
         interaction.options.getString('emoji2'),
@@ -588,9 +650,12 @@ export const commands = [
         interaction.options.getString('emoji6')
       ].filter(Boolean).join(' ');
 
-      await this._processSteal(inputs, interaction, interaction.guild);
+      const file = interaction.options.getAttachment('file');
+      const customName = interaction.options.getString('name');
+
+      await this._processSteal(inputs, interaction, interaction.guild, customName ? [customName] : [], file);
     },
-    async _processSteal(input, context, guild) {
+    async _processSteal(input, context, guild, args = [], directAttachment = null) {
       const sendReply = (payload) => {
         if (context.isCommand?.() && (context.deferred || context.replied)) {
           return context.editReply(payload).catch(() => null);
@@ -598,83 +663,267 @@ export const commands = [
         return context.reply(payload).catch(() => null);
       };
 
+      const user = context.user || context.author;
+      const items = [];
+      const seenUrls = new Set();
+      const seenIds = new Set();
+
+      function cleanEmojiName(rawName, fallback = 'stolen_emoji') {
+        if (!rawName) rawName = fallback;
+        let clean = String(rawName).trim();
+        clean = clean.replace(/\.[a-zA-Z0-9]+$/i, '');
+        clean = clean.replace(/[^a-zA-Z0-9_]/g, '_').replace(/^_+|_+$/g, '');
+        if (clean.length < 2) clean = (clean || 'em') + '_em';
+        if (clean.length > 32) clean = clean.slice(0, 32);
+        return clean || fallback;
+      }
+
+      function addItem(item) {
+        if (!item || !item.url) return;
+        if (item.id && seenIds.has(item.id)) return;
+        if (seenUrls.has(item.url)) return;
+        if (item.id) seenIds.add(item.id);
+        seenUrls.add(item.url);
+        items.push(item);
+      }
+
+      // 1. Slash command direct file attachment
+      if (directAttachment) {
+        const isImg = directAttachment.contentType?.startsWith('image/') || /\.(gif|png|jpe?g|webp)$/i.test(directAttachment.name);
+        if (isImg) {
+          addItem({
+            type: 'asset',
+            name: cleanEmojiName(args[0] || directAttachment.name),
+            url: directAttachment.url
+          });
+        }
+      }
+
+      // 2. Message attachments (e.g. davin_logo.gif uploaded with !steal)
+      if (context.attachments && context.attachments.size > 0) {
+        for (const [, att] of context.attachments) {
+          const isImg = att.contentType?.startsWith('image/') || /\.(gif|png|jpe?g|webp)$/i.test(att.name);
+          if (isImg) {
+            const customNameArg = (context.attachments.size === 1 && args[0] && !args[0].startsWith('http') && !args[0].startsWith('<')) ? args[0] : att.name;
+            addItem({
+              type: 'asset',
+              name: cleanEmojiName(customNameArg),
+              url: att.url
+            });
+          }
+        }
+      }
+
+      // 3. Replied-to message attachments and embeds
+      if (context.reference?.messageId && context.channel?.messages) {
+        const refMsg = await context.channel.messages.fetch(context.reference.messageId).catch(() => null);
+        if (refMsg) {
+          if (refMsg.attachments && refMsg.attachments.size > 0) {
+            for (const [, att] of refMsg.attachments) {
+              const isImg = att.contentType?.startsWith('image/') || /\.(gif|png|jpe?g|webp)$/i.test(att.name);
+              if (isImg) {
+                const customNameArg = (refMsg.attachments.size === 1 && args[0] && !args[0].startsWith('http') && !args[0].startsWith('<')) ? args[0] : att.name;
+                addItem({
+                  type: 'asset',
+                  name: cleanEmojiName(customNameArg),
+                  url: att.url
+                });
+              }
+            }
+          }
+          if (refMsg.embeds && refMsg.embeds.length > 0) {
+            for (const emb of refMsg.embeds) {
+              const imgUrl = emb.image?.url || emb.thumbnail?.url || (emb.video?.url?.endsWith('.gif') ? emb.video.url : null);
+              if (imgUrl) {
+                addItem({
+                  type: 'asset',
+                  name: cleanEmojiName(args[0] || 'stolen_gif'),
+                  url: imgUrl
+                });
+              }
+            }
+          }
+          if (refMsg.content) {
+            const refEmojiMatches = [...refMsg.content.matchAll(/<(a?):([a-zA-Z0-9_]+):(\d+)>/g)];
+            for (const rm of refEmojiMatches) {
+              const isAnim = rm[1] === 'a';
+              const name = rm[2];
+              const id = rm[3];
+              const ext = isAnim ? 'gif' : 'png';
+              addItem({
+                type: 'emoji',
+                id,
+                name: cleanEmojiName(name),
+                url: `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`
+              });
+            }
+          }
+        }
+      }
+
+      // 4. Custom emojis in input <a:name:id> and <:name:id>
       const EMOJI_RE = /<(a?):([a-zA-Z0-9_]+):(\d+)>/g;
-      const matches  = [...input.matchAll(EMOJI_RE)];
-      
-      const LINK_RE  = /https:\/\/cdn\.discordapp\.com\/emojis\/(\d+)\.(png|gif|webp)/g;
-      const linkMatches = [...input.matchAll(LINK_RE)];
-      
+      const emojiMatches = [...(input || '').matchAll(EMOJI_RE)];
+      for (const m of emojiMatches) {
+        const isAnim = m[1] === 'a';
+        const name = m[2];
+        const id = m[3];
+        const ext = isAnim ? 'gif' : 'png';
+        addItem({
+          type: 'emoji',
+          id,
+          name: cleanEmojiName(name),
+          url: `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`
+        });
+      }
+
+      // 5. Discord emoji CDN links
+      const LINK_RE = /https:\/\/cdn\.discordapp\.com\/emojis\/(\d+)\.(png|gif|webp)/g;
+      const linkMatches = [...(input || '').matchAll(LINK_RE)];
       for (const m of linkMatches) {
-        const isAnim = m[2] === 'gif' || input.includes('animated=true');
         const id = m[1];
-        
-        // Try to extract a name if they typed one before the link
-        let nameMatch = input.match(new RegExp(`([a-zA-Z0-9_]+)\\s+https:\/\/cdn\.discordapp\.com\/emojis\/` + id));
+        const ext = m[2];
+        let nameMatch = (input || '').match(new RegExp(`([a-zA-Z0-9_]+)\\s+https:\/\/cdn\\.discordapp\\.com\/emojis\/` + id));
         let name = nameMatch ? nameMatch[1] : `emoji_${id.substring(0, 5)}`;
-        
-        matches.push(['', isAnim ? 'a' : '', name, id]);
+        addItem({
+          type: 'emoji',
+          id,
+          name: cleanEmojiName(name),
+          url: `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`
+        });
       }
 
-      if (!matches.length) {
+      // 6. Direct image/GIF URLs in input
+      const URL_RE = /(https?:\/\/[^\s<>"']+\.(?:gif|png|jpe?g|webp)(?:\?[^\s<>"']*)?)/gi;
+      const urlMatches = [...(input || '').matchAll(URL_RE)];
+      for (const m of urlMatches) {
+        const fullUrl = m[1];
+        if (fullUrl.includes('cdn.discordapp.com/emojis/')) continue;
+        let urlName = 'stolen_emoji';
+        try {
+          const parsed = new URL(fullUrl);
+          const parts = parsed.pathname.split('/');
+          const filename = parts[parts.length - 1];
+          if (filename) urlName = filename;
+        } catch {}
+        const nameArg = args.find(a => a && !a.startsWith('http') && !a.startsWith('<'));
+        addItem({
+          type: 'asset',
+          name: cleanEmojiName(nameArg || urlName),
+          url: fullUrl
+        });
+      }
+
+      // 7. Tenor URLs in input
+      const TENOR_RE = /(https?:\/\/(?:media\.tenor\.com|tenor\.com\/view)\/[^\s<>"']+)/gi;
+      const tenorMatches = [...(input || '').matchAll(TENOR_RE)];
+      for (const m of tenorMatches) {
+        let tenorUrl = m[1];
+        if (tenorUrl.includes('tenor.com/view/')) {
+          try {
+            const tr = await fetch(tenorUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            if (tr.ok) {
+              const thtml = await tr.text();
+              const om = thtml.match(/<meta property=["']og:image["'] content=["']([^"']+)["']/i) ||
+                         thtml.match(/(https:\/\/[a-z0-9._/-]+\.gif)/i);
+              if (om && om[1]) tenorUrl = om[1];
+            }
+          } catch {}
+        }
+        if (tenorUrl.includes('.gif') || tenorUrl.includes('media.tenor.com')) {
+          const nameArg = args.find(a => a && !a.startsWith('http') && !a.startsWith('<'));
+          addItem({
+            type: 'asset',
+            name: cleanEmojiName(nameArg || 'tenor_gif'),
+            url: tenorUrl
+          });
+        }
+      }
+
+      if (!items.length) {
         return sendReply(cv2.warn(
-            'No Emojis Found',
-            'Provide at least one custom emoji to steal.\n\nExample: `:pog: :lol: :hype:`'
-          ));
+          'No Emojis or GIFs Found',
+          'Provide a custom emoji, attach a GIF/image, or reply to a message containing one.\n\n**Usage Examples:**\n-# • Attach a `.gif` or image file with `!steal [optional_name]`\n-# • Paste custom emojis: `!steal :pog: :hype:`\n-# • Paste an image/GIF link: `!steal https://example.com/logo.gif [name]`\n-# • Reply to any GIF or emoji message with `!steal`'
+        ));
       }
 
-      // Deduplicate by emoji ID
-      const seen  = new Set();
-      const emojis = matches.filter(m => !seen.has(m[3]) && seen.add(m[3]));
+      const added = [];
+      const failed = [];
 
-      const added   = [];
-      const failed  = [];
+      for (const item of items) {
+        const name = item.name;
 
-      for (const [, animated, name, id] of emojis) {
-        if (guild.emojis.cache.has(id)) {
+        if (item.id && guild.emojis.cache.has(item.id)) {
           failed.push(`\`${name}\` - already present in server`);
           continue;
         }
-        
+
         const { isBotOwnerSync } = await import('../utils/helpers.js');
-        const isOwner = isBotOwnerSync(context.user ? context.user.id : context.author.id);
+        const isOwner = isBotOwnerSync(user.id);
         if (!isOwner && guild.emojis.cache.some(e => e.name === name)) {
-          failed.push(`\`${name}\` - name already in use`);
+          failed.push(`\`${name}\` - name \`${name}\` already in use`);
           continue;
         }
 
-        const ext = animated ? 'gif' : 'png';
-        const url = `https://cdn.discordapp.com/emojis/${id}.${ext}?size=128&quality=lossless`;
-        
         try {
-          const response = await fetch(url);
-          
-          if (!response.ok) throw new Error('Invalid Asset');
+          const response = await fetch(item.url);
+          if (!response.ok) throw new Error(`Download failed (HTTP ${response.status})`);
 
           const arrayBuffer = await response.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
+          let buffer = Buffer.from(arrayBuffer);
+          const isGif = buffer.slice(0, 3).toString('ascii') === 'GIF' || item.url.toLowerCase().includes('.gif');
 
-          const created = await guild.emojis.create({ attachment: buffer, name });
+          // Auto-optimize buffer if larger than Discord's 256KB emoji limit
+          if (buffer.length > 256 * 1024) {
+            buffer = await optimizeEmojiBuffer(buffer, isGif);
+          }
+
+          // Discord emoji 256KB size limit check
+          if (buffer.length > 256 * 1024) {
+            failed.push(`\`${name}\` - file exceeds Discord's 256KB emoji limit (${(buffer.length / 1024).toFixed(1)}KB)`);
+            continue;
+          }
+
+          const created = await guild.emojis.create({
+            attachment: buffer,
+            name: name,
+            reason: `Stolen by ${user.tag || user.username}`
+          });
           added.push(created.toString());
         } catch (err) {
           const reason = err.message?.includes('30008')
-            ? 'server emoji limit reached'
+            ? 'server emoji slots are full'
             : err.message?.includes('50013')
-            ? 'missing permissions'
+            ? 'missing Manage Expressions permission'
+            : err.message?.includes('256')
+            ? 'file exceeds Discord 256KB emoji limit'
             : err.message || 'unknown error';
           failed.push(`\`${name}\` - ${reason}`);
         }
       }
 
       const lines = [];
-      if (added.length)  lines.push(`**Added (${added.length})**\n${added.join(' ')}`);
-      if (failed.length) lines.push(`**Failed (${failed.length})**\n${failed.join('\n')}`);
+      if (added.length) lines.push(`**Added (${added.length}):**\n${added.join(' ')}`);
+      if (failed.length) lines.push(`**Failed (${failed.length}):**\n${failed.join('\n')}`);
 
-      const resultEmbed = cv2.info(
-        `Steal - ${added.length}/${emojis.length} Added`,
+      if (added.length > 0 && failed.length === 0) {
+        return sendReply(cv2.success(
+          `Emoji Added | <a:atheNATICK:1557841381630681106>`,
+          lines.join('\n\n')
+        ));
+      }
+
+      if (added.length > 0 && failed.length > 0) {
+        return sendReply(cv2.warn(
+          `Steal Partial - ${added.length}/${items.length} Added`,
+          lines.join('\n\n')
+        ));
+      }
+
+      return sendReply(cv2.danger(
+        'Steal Failed',
         lines.join('\n\n')
-      );
-
-      return sendReply(resultEmbed);
+      ));
     }
   },
   {
