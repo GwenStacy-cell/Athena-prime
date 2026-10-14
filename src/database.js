@@ -55,7 +55,16 @@ const DEFAULT_SCHEMA = {
   npBannedCommands: [],// global list of command names banned from NP
   npPaused: false,    // boolean to pause entire NP system
   adelList: {},       // guildId -> { channelId -> [userId...] }
-  botAnalytics: { joins: 0, leaves: 0, cmds: {} } // global stats tracking
+  botAnalytics: { joins: 0, leaves: 0, cmds: {} }, // global stats tracking
+  welcome: {},        // guildId -> welcome config
+  leave: {},          // guildId -> leave config
+  vcProtection: {},   // guildId -> [userIds]
+  apps: {},           // guildId -> staff application config
+  pingAlertBlocks: {},// userId -> [guildIds]
+  likedSongs: {},     // userId -> [song objects]
+  bannedServers: [],  // [guildIds]
+  tts: { users: {}, autoTts: {} },
+  dbBackupChannelId: null
 };
 
 class Database {
@@ -134,6 +143,14 @@ class Database {
         this.cache.npPaused       = this.cache.npPaused       || false;
         this.cache.adelList       = this.cache.adelList       || {};
         this.cache.botAnalytics   = this.cache.botAnalytics   || { joins: 0, leaves: 0, cmds: {} };
+        this.cache.welcome        = this.cache.welcome        || {};
+        this.cache.leave          = this.cache.leave          || {};
+        this.cache.vcProtection   = this.cache.vcProtection   || {};
+        this.cache.apps           = this.cache.apps           || {};
+        this.cache.pingAlertBlocks = this.cache.pingAlertBlocks || {};
+        this.cache.likedSongs     = this.cache.likedSongs     || {};
+        this.cache.bannedServers  = this.cache.bannedServers  || [];
+        this.cache.dbBackupChannelId = this.cache.dbBackupChannelId || null;
       } else {
         this.save();
       }

@@ -42,7 +42,11 @@ export function getDatabaseMetrics() {
     npUsers: Object.keys(cache.npUsers || {}).length,
     npServers: Object.keys(cache.npServers || {}).length,
     birthdays: Object.keys(cache.birthdays || {}).length,
-    jtc: Object.keys(cache.jtc || {}).length
+    jtc: Object.keys(cache.jtc || {}).length,
+    welcome: Object.keys(cache.welcome || {}).length,
+    leave: Object.keys(cache.leave || {}).length,
+    vcProtection: Object.keys(cache.vcProtection || {}).length,
+    apps: Object.keys(cache.apps || {}).length
   };
 }
 
@@ -86,7 +90,26 @@ export async function getBackupChannel(client) {
     }
   }
 
-  // 5. Auto-create private backup channel in first available guild where bot has Administrator
+  // 5. Search for any channel whose name includes 'backup' or 'db' containing previous athena_db backups
+  for (const guild of client.guilds.cache.values()) {
+    const candidateChannels = guild.channels.cache.filter(c => 
+      c.isTextBased() && 
+      (c.name.includes('backup') || c.name.includes('db') || c.name.includes('snapshot'))
+    );
+    for (const ch of candidateChannels.values()) {
+      try {
+        const msgs = await ch.messages.fetch({ limit: 10 }).catch(() => null);
+        if (msgs && msgs.some(m => m.attachments.some(a => a.name?.startsWith('athena_db_')))) {
+          db.cache.dbBackupChannelId = ch.id;
+          db.save();
+          console.log(chalk.cyan(`[CloudSync] Discovered previous cloud backup channel #${ch.name} in ${guild.name} (${ch.id})`));
+          return ch;
+        }
+      } catch {}
+    }
+  }
+
+  // 6. Auto-create private backup channel in first available guild where bot has Administrator
   for (const guild of client.guilds.cache.values()) {
     const me = guild.members.me;
     if (me && me.permissions.has(PermissionFlagsBits.Administrator)) {
