@@ -41,28 +41,64 @@ export function getDatabaseMetrics() {
   const leaveEmbeds = leaveConfigs.filter(c => c && (c.title || c.description || c.from || c.footer)).length;
   const leaveGifs = leaveConfigs.filter(c => c && (c.image || c.thumbnailUrl)).length;
 
+  // Max Warnings breakdown across all guilds
+  let maxWarningsSet = 0, maxWarningsTotal = 0;
+  guilds.forEach(g => {
+    if (g && g.maxWarnings !== undefined) {
+      maxWarningsSet++;
+      maxWarningsTotal += g.maxWarnings;
+    }
+  });
+  const maxWarningsAvg = maxWarningsSet > 0 ? (maxWarningsTotal / maxWarningsSet).toFixed(1) : '3.0';
+
+  // Antinuke & Security detailed modules breakdown
+  const antiBotAddServers = guilds.filter(g => g && g.antinukeModules?.antiBotAdd).length;
+  const antiRoleModulesServers = guilds.filter(g => g && (g.antinukeModules?.antiRoleCreate || g.antinukeModules?.antiRoleDelete)).length;
+  const antiChannelModulesServers = guilds.filter(g => g && (g.antinukeModules?.antiChannelCreate || g.antinukeModules?.antiChannelDelete)).length;
+  const antiWebhookServers = guilds.filter(g => g && g.antinukeModules?.antiWebhooks).length;
+  const antiNukeThresholds = guilds.filter(g => g && g.antiNukeThreshold !== undefined).length;
+  const raidModeServers = guilds.filter(g => g && g.raidMode).length;
+
   // Automod detailed module toggles breakdown
-  const antiSpamServers = guilds.filter(g => g.antiSpamEnabled).length;
-  const antiInviteServers = guilds.filter(g => g.antiInviteEnabled).length;
-  const antiLinkServers = guilds.filter(g => g.antiLinkEnabled).length;
-  const wordFilterServers = guilds.filter(g => g.wordFilterEnabled).length;
-  const antiFloodServers = guilds.filter(g => g.antiFloodEnabled || g.bigFontsEnabled).length;
-  const antiMentionServers = guilds.filter(g => g.antiSpamMentionEnabled).length;
-  const blacklistedWordsCount = guilds.reduce((acc, g) => acc + (g.blacklistWords?.length || 0), 0);
-  const allowedLinksCount = guilds.reduce((acc, g) => acc + (g.allowedLinks?.length || 0), 0);
-  const logChannelsCount = guilds.filter(g => g.logChannel || g.serverLogs).length;
+  const antiSpamServers = guilds.filter(g => g && g.antiSpamEnabled).length;
+  const antiInviteServers = guilds.filter(g => g && g.antiInviteEnabled).length;
+  const antiLinkServers = guilds.filter(g => g && g.antiLinkEnabled).length;
+  const wordFilterServers = guilds.filter(g => g && g.wordFilterEnabled).length;
+  const antiFloodServers = guilds.filter(g => g && (g.antiFloodEnabled || g.bigFontsEnabled)).length;
+  const antiMentionServers = guilds.filter(g => g && g.antiSpamMentionEnabled).length;
+  const blacklistedWordsCount = guilds.reduce((acc, g) => acc + (g?.blacklistWords?.length || 0), 0);
+  const allowedLinksCount = guilds.reduce((acc, g) => acc + (g?.allowedLinks?.length || 0), 0);
+
+  // Quarantine & Moderation channels/roles
+  const quarantineRolesCount = guilds.filter(g => g && g.quarantineRoleId).length;
+  const quarantineChannelsCount = guilds.filter(g => g && g.quarantineChannelId).length;
+  const quarantineVcsCount = guilds.filter(g => g && g.quarantineVcId).length;
+  const logChannelsCount = guilds.filter(g => g && g.logChannel).length;
+  const serverLogsCount = guilds.filter(g => g && g.serverLogs).length;
 
   // Birthday detailed breakdown
   const birthdayConfigs = Object.values(cache.birthdays || {});
   const birthdayChannels = birthdayConfigs.filter(b => b && b.channelId).length;
   const birthdayServers = Object.keys(cache.birthdays || {}).length;
-  const birthdayUsers = birthdayConfigs.reduce((acc, b) => acc + Object.keys(b.users || {}).length, 0);
+  const birthdayUsers = birthdayConfigs.reduce((acc, b) => acc + Object.keys(b?.users || {}).length, 0);
 
   return {
     guilds: Object.keys(cache.guilds || {}).length,
-    accentColors: guilds.filter(g => g.accentColor).length,
-    securityServers: guilds.filter(g => g.securityEnabled || g.antiNukeEnabled).length,
-    automodServers: guilds.filter(g => g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled).length,
+    customPrefixes: guilds.filter(g => g && g.prefix && g.prefix !== '!').length,
+    autoNicks: guilds.filter(g => g && g.autonick).length,
+    accentColors: guilds.filter(g => g && g.accentColor).length,
+    dashboardChannels: guilds.filter(g => g && g.dashboardChannelId).length,
+
+    securityServers: guilds.filter(g => g && (g.securityEnabled || g.antiNukeEnabled)).length,
+    antiBotAddServers,
+    antiRoleModulesServers,
+    antiChannelModulesServers,
+    antiWebhookServers,
+    antiNukeThresholds,
+    raidModeServers,
+    honeypots: guilds.filter(g => g && g.honeypotChannelId).length,
+
+    automodServers: guilds.filter(g => g && (g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled)).length,
     antiSpamServers,
     antiInviteServers,
     antiLinkServers,
@@ -71,20 +107,23 @@ export function getDatabaseMetrics() {
     antiMentionServers,
     blacklistedWordsCount,
     allowedLinksCount,
-    honeypots: guilds.filter(g => g.honeypotChannelId).length,
+
+    maxWarningsSet,
+    maxWarningsAvg,
+    quarantines: Object.keys(cache.quarantines || {}).length,
+    quarantineRolesCount,
+    quarantineChannelsCount,
+    quarantineVcsCount,
+    warnings: Object.values(cache.warnings || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
+    tempBans: Object.values(cache.tempBans || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
+
     extraOwners: Object.keys(cache.extraOwners || {}).length,
     extraOwnersTotal: Object.values(cache.extraOwners || {}).reduce((acc, curr) => acc + (Array.isArray(curr) ? curr.length : 0), 0),
     botWhitelist: Object.keys(cache.botWhitelist || {}).length,
-    whitelistedRoles: guilds.reduce((acc, g) => acc + (g.linkBypassRoles?.length || 0) + (g.inviteBypassRoles?.length || 0) + Object.keys(g.whitelist?.roles || {}).length, 0),
-    whitelistedUsers: guilds.reduce((acc, g) => acc + Object.keys(g.whitelist?.users || {}).length, 0),
-    quarantines: Object.keys(cache.quarantines || {}).length,
-    warnings: Object.values(cache.warnings || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
-    tempBans: Object.values(cache.tempBans || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
-    xpSystems: Object.keys(cache.xpSystems || {}).length,
-    xpUsers: Object.values(cache.usersXp || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
-    serverStats: Object.keys(cache.serverStats || {}).length,
+    whitelistedRoles: guilds.reduce((acc, g) => acc + (g?.linkBypassRoles?.length || 0) + (g?.inviteBypassRoles?.length || 0) + Object.keys(g?.whitelist?.roles || {}).length, 0),
+    whitelistedUsers: guilds.reduce((acc, g) => acc + Object.keys(g?.whitelist?.users || {}).length, 0),
+    botBlacklistUsers: Object.keys(cache.botBlacklist || {}).length,
 
-    // Detailed Welcome & Leave
     welcomeActive,
     welcomeMessages,
     welcomeEmbeds,
@@ -95,6 +134,9 @@ export function getDatabaseMetrics() {
     leaveEmbeds,
     leaveGifs,
 
+    xpSystems: Object.keys(cache.xpSystems || {}).length,
+    xpUsers: Object.values(cache.usersXp || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
+    serverStats: Object.keys(cache.serverStats || {}).length,
     triggers: Object.keys(cache.triggers || {}).length + (cache.globalTriggers || []).length,
     tickets: Object.keys(cache.tickets || {}).length,
     verification: Object.keys(cache.verification || {}).length,
@@ -103,19 +145,21 @@ export function getDatabaseMetrics() {
     stickyMessages: Object.keys(cache.stickyMessages || {}).length,
     adel: Object.values(cache.adelList || {}).reduce((acc, c) => acc + Object.keys(c || {}).length, 0),
     
-    // Detailed Birthdays
     birthdayChannels,
     birthdayServers,
     birthdayUsers,
 
     apps: Object.keys(cache.apps || {}).length,
-    homeVc: guilds.filter(g => g.homeVcId).length,
-    voiceLogs: guilds.filter(g => g.voiceLogChannel).length,
+    serverLogsCount,
     logChannelsCount,
+    voiceLogs: guilds.filter(g => g && g.voiceLogChannel).length,
+    homeVc: guilds.filter(g => g && g.homeVcId).length,
+    theaterModeVcs: guilds.filter(g => g && g.theaterModeVcId).length,
     jtc: Object.keys(cache.jtc || {}).length,
     jtcChannels: Object.keys(cache.jtcChannels || {}).length,
     vcProtection: Object.values(cache.vcProtection || {}).reduce((acc, u) => acc + (Array.isArray(u) ? u.length : 0), 0),
     vcDrags: Object.values(cache.vcDrags || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
+
     serverBackups: Object.keys(cache.backups || {}).length,
     npUsers: Object.keys(cache.npUsers || {}).length,
     npServers: Object.keys(cache.npServers || {}).length,
@@ -135,32 +179,49 @@ export function formatDatabaseMetrics(m, options = {}) {
   if (fileName) text += `> -# **Restored Snapshot:** \`${fileName}\`\n\n`;
 
   text += 
-    `**Servers & Configurations:**\n` +
-    `> -# **Tracked Servers:** \`${m.guilds}\` | **Saved Accent Colors:** \`${m.accentColors}\`\n\n` +
-    `**Security & Defense Matrix:**\n` +
+    `**Server Profiles & Configurations:**\n` +
+    `> -# **Tracked Servers:** \`${m.guilds}\` | **Custom Prefixes:** \`${m.customPrefixes}\` | **Auto-Nicks:** \`${m.autoNicks}\`\n` +
+    `> -# **Saved Accent Colors:** \`${m.accentColors}\` | **Dashboard Channels:** \`${m.dashboardChannels}\`\n\n` +
+
+    `**Security & Anti-Nuke Engine:**\n` +
     `> -# **Security & Anti-Nuke:** \`${m.securityServers} servers active\`\n` +
-    `> -# **Automod Module Toggles:** \`${m.automodServers} servers active | Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, WordFilter: ${m.wordFilterServers}, Flood: ${m.antiFloodServers}, Link: ${m.antiLinkServers}\`\n` +
-    `> -# **Custom Filter Rules:** \`${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links\`\n` +
-    `> -# **Honeypot Traps:** \`${m.honeypots} channels\`\n` +
+    `> -# **Core Modules:** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bot Add: ${m.antiBotAddServers}\`\n` +
+    `> -# **Thresholds & Traps:** \`${m.antiNukeThresholds} configured limits, ${m.honeypots} honeypot channels, Raid Mode: ${m.raidModeServers}\`\n\n` +
+
+    `**Automod Protection Matrix:**\n` +
+    `> -# **Active Automod Servers:** \`${m.automodServers} servers active\`\n` +
+    `> -# **Granular Modules:** \`Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, Word Filter: ${m.wordFilterServers}, Flood: ${m.antiFloodServers}, Mention: ${m.antiMentionServers}, Link: ${m.antiLinkServers}\`\n` +
+    `> -# **Custom Filter Rules:** \`${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links\`\n\n` +
+
+    `**Moderation, Warnings & Enforcement:**\n` +
+    `> -# **Max Warning Thresholds:** \`${m.maxWarningsSet} guilds configured (Avg strike limit: ${m.maxWarningsAvg} warnings)\`\n` +
+    `> -# **Active Records:** \`${m.warnings} warning records, ${m.tempBans} tempbans\`\n` +
+    `> -# **Quarantine System:** \`${m.quarantines} quarantined users | Roles: ${m.quarantineRolesCount}, Channels: ${m.quarantineChannelsCount}, VCs: ${m.quarantineVcsCount}\`\n\n` +
+
+    `**Whitelists, Bypasses & Ownership:**\n` +
     `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
     `> -# **Bypasses & Security Whitelist:** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} whitelisted users\`\n` +
-    `> -# **Quarantines & Warnings:** \`${m.quarantines} quarantined, ${m.warnings} warning records, ${m.tempBans} tempbans\`\n\n` +
-    `**Engagement & Community Features:**\n` +
-    `> -# **Welcome System Settings:** \`${m.welcomeActive} channels | ${m.welcomeEmbeds} custom embeds (Author/Title/Footer), ${m.welcomeGifs} GIFs/Images, ${m.welcomeMessages} messages\`\n` +
-    `> -# **Leave System Settings:** \`${m.leaveActive} channels | ${m.leaveEmbeds} custom embeds, ${m.leaveGifs} GIFs/Images, ${m.leaveMessages} messages\`\n` +
+    `> -# **Blacklisted Entities:** \`${m.botBlacklistUsers} blocked users/guilds\`\n\n` +
+
+    `**Welcome & Leave Engagement:**\n` +
+    `> -# **Welcome System Settings:** \`${m.welcomeActive} channels | ${m.welcomeEmbeds} custom embeds (Author/Title/Footer), ${m.welcomeGifs} GIFs/Images, ${m.welcomeColors} custom colors, ${m.welcomeMessages} messages\`\n` +
+    `> -# **Leave System Settings:** \`${m.leaveActive} channels | ${m.leaveEmbeds} custom embeds, ${m.leaveGifs} GIFs/Images, ${m.leaveMessages} messages\`\n\n` +
+
+    `**Community, Leveling & Triggers:**\n` +
     `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-    `> -# **Server Stats Counters:** \`${m.serverStats} setups\`\n` +
-    `> -# **Custom Triggers & Auto-Replies:** \`${m.triggers} triggers\`\n` +
+    `> -# **Server Stats & Triggers:** \`${m.serverStats} stats setups, ${m.triggers} custom triggers\`\n` +
     `> -# **Tickets & Verification:** \`${m.tickets} ticket setups, ${m.verification} verification setups\`\n` +
-    `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} giveaways, ${m.reactionRoles} menus\`\n` +
-    `> -# **Sticky Messages:** \`${m.stickyMessages} channels\`\n` +
-    `> -# **Auto-Delete (ADEL / RADEL):** \`${m.adel} channels\`\n` +
+    `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} active giveaways, ${m.reactionRoles} menus\`\n` +
+    `> -# **Auto-Delete & Sticky:** \`${m.stickyMessages} sticky channels, ${m.adel} auto-delete channels (ADEL/RADEL)\`\n` +
     `> -# **Birthday System Settings:** \`${m.birthdayChannels} announcement channels | ${m.birthdayServers} servers, ${m.birthdayUsers} registered birthdays\`\n` +
     `> -# **Staff Applications:** \`${m.apps} application setups\`\n\n` +
-    `**Voice Systems & Session Protection:**\n` +
-    `> -# **Home VC & Logs:** \`${m.homeVc} home VCs, ${m.voiceLogs} voice logs, ${m.logChannelsCount} server audit logs\`\n` +
+
+    `**Voice Systems & Audit Logging:**\n` +
+    `> -# **Server Logs & Audits:** \`${m.serverLogsCount} server logs, ${m.logChannelsCount} mod audit channels, ${m.voiceLogs} voice logs\`\n` +
+    `> -# **Voice Hubs:** \`${m.homeVc} home VCs, ${m.theaterModeVcs} theater mode VCs\`\n` +
     `> -# **Join to Create (JTC):** \`${m.jtc} lobby setups, ${m.jtcChannels} active temp channels\`\n` +
     `> -# **VC Drag & Voice Protection:** \`${m.vcDrags} active drag sessions, ${m.vcProtection} protected users\`\n\n` +
+
     `**Storage, Backups & Analytics:**\n` +
     `> -# **Server Backups:** \`${m.serverBackups} saved templates\`\n` +
     `> -# **No-Prefix (NP) System:** \`${m.npUsers} users, ${m.npServers} servers, ${m.npManagers} managers\`\n` +
