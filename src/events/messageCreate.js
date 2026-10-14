@@ -455,7 +455,21 @@ export default {
           if (blockedServers.includes(message.guild.id)) return;
   
           try {
-              const cleanNick = (message.member?.displayName || message.author.displayName || message.author.username).replace(/[\[\]\(\)]/g, '').trim();
+              let cleanNick = (message.member?.displayName || message.author.displayName || message.author.username)
+                .replace(/[^\p{L}\p{N}\s\-_]/gu, '')
+                .replace(/^[\s\-_]+/, '')
+                .replace(/[\s\-_]+$/, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+              if (!cleanNick) cleanNick = message.author.username.replace(/[\[\]\(\)]/g, '').trim() || 'User';
+
+              const cleanChannel = message.channel.name
+                .replace(/[^\p{L}\p{N}\s\-_]/gu, '')
+                .replace(/^[\s\-_]+/, '')
+                .replace(/[\s\-_]+$/, '')
+                .replace(/\s+/g, ' ')
+                .trim() || 'channel';
+
               let snippet = message.cleanContent || message.content || '';
               if (snippet.length > 60) snippet = snippet.substring(0, 57) + '...';
               if (!snippet.trim()) snippet = 'Attachment/Embed only';
@@ -473,7 +487,7 @@ export default {
                       { type: 14, divider: true },
                       { 
                         type: 10, 
-                        content: `**Tagged By:** [${cleanNick}](https://discord.com/users/${message.author.id})\n-# Channel: [#${message.channel.name}](https://discord.com/channels/${message.guild.id}/${message.channel.id})\n-# Message: ${snippet}` 
+                        content: `**Tagged By:** [${cleanNick}](https://discord.com/users/${message.author.id})\n-# Channel: [#${cleanChannel}](https://discord.com/channels/${message.guild.id}/${message.channel.id})\n-# Message: ${snippet}` 
                       },
                       { type: 14, divider: true },
                       {
@@ -481,7 +495,7 @@ export default {
                           components: [
                               { type: 2, style: 5, label: 'Jump to Channel', url: message.url },
                               { type: 2, style: 2, label: 'Ack', custom_id: 'ping_ack' },
-                              { type: 2, style: 2, label: 'Reply', custom_id: 'ping_reply_' + message.channel.id + '_' + message.id },
+                              { type: 2, style: 2, label: isBotOwnerSync(user.id) ? 'Reply (Owner)' : 'Reply', custom_id: 'ping_reply_' + message.channel.id + '_' + message.id },
                               { type: 2, style: 2, label: 'Block Server Messages', custom_id: 'ping_block_' + message.guild.id }
                           ]
                       },

@@ -40,12 +40,15 @@ export default {
     }
     
     if (interaction.isButton() && interaction.customId.startsWith('ping_reply_')) {
+      if (!isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ content: '-# <:cross_red:1533860128015519895> The Reply feature is restricted to the Bot Owner.', ephemeral: true });
+      }
       const parts = interaction.customId.split('_');
       const channelId = parts[2];
       const messageId = parts[3];
       
       const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = await import('discord.js');
-      const modal = new ModalBuilder().setCustomId(`ping_modal_reply_${channelId}_${messageId}`).setTitle('Reply to Ping');
+      const modal = new ModalBuilder().setCustomId(`ping_modal_reply_${channelId}_${messageId}`).setTitle('Reply to Ping (Owner Only)');
       modal.addComponents(new ActionRowBuilder().addComponents(
         new TextInputBuilder().setCustomId('reply_text').setLabel('Your Reply').setStyle(TextInputStyle.Paragraph).setRequired(true).setMaxLength(2000)
       ));
@@ -53,6 +56,9 @@ export default {
     }
     
     if (interaction.isModalSubmit() && interaction.customId.startsWith('ping_modal_reply_')) {
+      if (!isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ content: '-# <:cross_red:1533860128015519895> The Reply feature is restricted to the Bot Owner.', ephemeral: true });
+      }
       const parts = interaction.customId.split('_');
       const channelId = parts[3];
       const messageId = parts[4];
