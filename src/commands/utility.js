@@ -1043,6 +1043,9 @@ async function getStatusEmbed(client, guild) {
     "`!scanserver` - Scan server for dangerous bot permissions `[Extra Owner]`",
     "`!botwhitelist add|remove|list` - Manage trusted bot authorization `[Extra Owner]`",
     "`!autonick` - Interactive auto-nickname enforcer dashboard `[Extra Owner]`",
+    "`!config / !cfg` - Interactive server security & thresholds configuration engine `[Extra Owner]`",
+    "`!learn` - Toggle Anti-Nuke Behavioral / Machine Learning engine `[Extra Owner]`",
+    "`!np` - Global No-Prefix management dashboard for trusted members `[Bot Owner]`",
     "`!modmode` - Temporarily pause restore for server edits `[Server Owner]`",
     "",
     "**Security Setup Guide:**",
@@ -1062,6 +1065,8 @@ async function getStatusEmbed(client, guild) {
     "`!linksallow add|remove|list domain` - Whitelist specific domains `[Extra Owner]`",
     "`!blacklist add|remove|list phrase` - Auto-delete phrases `[Extra Owner]`",
     "`!ignore <#channel>` - Tell automod to ignore a channel `[Extra Owner]`",
+    "`!ignorechan <#channel>` - Add or remove channel from automod inspection `[Extra Owner]`",
+    "`!ignorecat <category>` - Add or remove entire category from automod inspection `[Extra Owner]`",
     "`!ignoreall / !unignoreall` - Ignore or unignore all text channels `[Extra Owner]`",
     "",
     "**Filter Management:**",
@@ -1133,6 +1138,9 @@ async function getStatusEmbed(client, guild) {
     "`!deletechannel / !delc <#channel...>` - Delete one or more channels `[Extra Owner]`",
     "`!delcat / !deletecategory <category>` - Delete category (keeps channels safe) `[Extra Owner]`",
     "`!delcatall / !deletecategoryall <category>` - Delete category AND all its channels `[Extra Owner]`",
+    "`!createthread <name>` - Create a new public or private thread in current channel `[Extra Owner]`",
+    "`!archivethread` - Archive the current thread `[Extra Owner]`",
+    "`!deletethread` - Delete the current thread `[Extra Owner]`",
     "`!say <message>` - Send a raw text message via bot `[Extra Owner]`",
     "`!announce` - Launch interactive announcement builder `[Extra Owner]`",
     "`!fck @user <reason>` - Send direct official warning DM `[Server Owner]`"
@@ -1182,7 +1190,11 @@ async function getStatusEmbed(client, guild) {
     "`!botstats / !botinfo / !bi` - View bot performance and cluster info `[Public]`",
     "`!bjoins / !bcmds / !bservers` - View bot growth metrics `[Public]`",
     "`!record / !voicelog` - Setup voice logging channel `[Extra Owner]`",
-    "`!setdeletelog <#channel>` - Set where deleted messages are sent `[Extra Owner]`"
+    "`!setdeletelog <#channel>` - Set where deleted messages are sent `[Extra Owner]`",
+    "`!status` - Live bot engine performance, cluster health & security telemetry `[Public]`",
+    "`!setgloballog <#channel>` - Bind global cross-server moderation action logger `[Bot Owner]`",
+    "`!removegloballog` - Unset global action log channel `[Bot Owner]`",
+    "`!testgloballog` - Dispatch test cross-server action embed `[Bot Owner]`"
   ] },
   { id: 'config', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Config', label: 'Server Configuration', emoji: 'config', commands: [
     "`!serverstats / !statsetup setup|config|disable` - Manage voice channels displaying member counts `[Extra Owner]`",
@@ -1196,19 +1208,26 @@ async function getStatusEmbed(client, guild) {
     "`!backup / !bcp create|info` - Server infrastructure Backup Suite `[Server Owner]`",
     "`!db status / backup / export / restore / setchannel` - Automated Cloud Database Persistence Suite `[Bot Owner]`",
     "`!setsuggestions / !suggestchannel <#channel>` - Set designated channel for suggestions `[Extra Owner]`",
-    "`!setstatschannel <#channel>` - Set dedicated channel for stats commands `[Extra Owner]`"
+    "`!setstatschannel <#channel>` - Set dedicated channel for stats commands `[Extra Owner]`",
+    "`!setup` - Interactive Server Setup Wizard for logs, quarantine, and core features `[Extra Owner]`",
+    "`!setstatus <#channel>` - Deploy 24/7 live bot status and resource telemetry panel `[Bot Owner]`",
+    "`!removestatus` - Remove the 24/7 live status panel `[Bot Owner]`",
+    "`!buildserver` - Auto-generate aesthetic server layout & channel structure `[Server Owner]`",
+    "`!remotevc <guildId> <vcId>` - Remotely bind bot home voice channel `[Bot Owner]`",
+    "`!forceadmin / !unforceadmin` - Remote emergency administration bridge `[Bot Owner]`"
   ] },
 
   { id: 'welcome', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Welcome', label: 'Welcome & Leave', emoji: 'welcome', commands: [
     "`!welcome` - Open interactive Welcome Message Builder `[Extra Owner]`",
     "`!leave` - Open interactive Leave Message Builder `[Extra Owner]`",
-    "`!autorole / !autorole-config` - Configure roles given on join `[Extra Owner]`",
-    "`!autoreact` - Manage Auto-React configurations `[Extra Owner]`",
+    "`!autorole / !autorole-config` - Open **AutoRole & Vanity Engine** (Human/Bot join roles & vanity status rewards) `[Extra Owner]`",
+    "`!autoreact` - Open **Auto-React Engine** (Add up to 5 automatic reaction emojis per channel) `[Extra Owner]`",
     "`!verify` - Setup verification gate `[Extra Owner]`",
     "",
-    "**Builder Features:**",
-    "- Supports embedding images, setting custom CV2 borders, and formatting.",
-    "- Use placeholders like `{user}`, `{server}`, and `{membercount}`."
+    "**Builder & Engine Features:**",
+    "- **AutoRole & Vanity Engine**: Automatically assigns human/bot roles on join and vanity URL reward roles.",
+    "- **Auto-React Engine**: Configure up to 5 custom or native reaction emojis per channel.",
+    "- Supports embedding images, setting custom CV2 borders, and placeholders like `{user}`, `{server}`, and `{membercount}`."
   ] },
   { id: 'leveling', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'XP', label: 'Leveling & XP', emoji: 'leveling', commands: [
     "`!xpsetup` - Open the XP Dashboard `[Extra Owner]`",
@@ -1226,6 +1245,7 @@ async function getStatusEmbed(client, guild) {
     "`!jtcsetup` - Configure Join-to-Create voice channels `[Extra Owner]`",
     "`!secondaryjtc` - Setup a secondary JTC hub `[Extra Owner]`",
     "`!jtcdisable` - Disable JTC system `[Extra Owner]`",
+    "`!jtc add @user` - Permit user into locked temporary JTC channel `[Public]`",
     "`!vcpanel` - Spawn the interactive VC control panel for JTC owners `[Public]`",
     "`!vc` - Voice channel quick actions and controls `[Public]`",
     "`!vcdrag @user` - Force-drag a user to your VC `[Extra Owner]`",
@@ -1255,7 +1275,9 @@ async function getStatusEmbed(client, guild) {
     "`!birthday` - Set your birthday and view upcoming birthdays `[Public]`",
     "`!quote / !q <msg_id>` - Quote a message beautifully `[Public]`",
     "`!quote setchannel / !setquote <#channel|none>` - Bind Auto-Quote channel to turn typed messages into quotes `[Extra Owner]`",
+    "`!unsetquote` - Disable dedicated Auto-Quote channel `[Extra Owner]`",
     "`!quotemaker` - Launch interactive Canvas Quote Generator `[Public]`",
+    "`!youtube add|remove|list` - Configure YouTube video upload notification alerts `[Extra Owner]`",
     "`!suggest / !suggestion <idea>` - Submit a suggestion `[Public]`",
     "`!starboard` - Configure the starboard channel `[Extra Owner]`",
     "`!ccmd / !customcmd add <trigger> <reply>` - Create a custom command response `[Extra Owner]`",
