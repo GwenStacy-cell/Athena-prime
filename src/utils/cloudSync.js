@@ -441,14 +441,9 @@ export async function createCloudBackup(client, reason = 'Automated Schedule') {
         reason
       })
     );
-    // 1. Post diagnostics manifest container
-    await channel.send(payload);
-
-    // 2. Post downloadable snapshot message without Components V2 flags so the files are visible and directly downloadable
-    const sentMsg = await channel.send({
-      content: `**Database Cloud Snapshot | <a:atheNATICK:1557841381630681106>**\n-# Created: <t:${Math.floor(timestamp / 1000)}:F> | Trigger: \`${reason}\` | Snapshot Size: \`${sizeKb} KB\``,
-      files
-    });
+    // Post diagnostics manifest container with files securely stored in Discord Cloud
+    payload.files = files;
+    const sentMsg = await channel.send(payload);
 
     // Save metadata
     db.cache.lastCloudBackup = timestamp;

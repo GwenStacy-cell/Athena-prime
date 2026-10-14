@@ -117,20 +117,11 @@ export const commands = [
           })
         );
         if (context.isCommand?.()) {
-          await context.editReply(successPayload);
-          return context.followUp({
-            content: `**Backup Snapshot File | <a:atheNATICK:1557841381630681106>**\n-# Download a local copy of this cloud snapshot:`,
-            files: [new AttachmentBuilder(DB_FILE, { name: `athena_db_backup_${Date.now()}.json` })]
-          }).catch(() => null);
+          return context.editReply(successPayload);
         }
 
-        if (statusMsg?.edit) await statusMsg.edit(successPayload);
-        else await sendReply(successPayload);
-
-        return (context.channel || context).send({
-          content: `**Backup Snapshot File | <a:atheNATICK:1557841381630681106>**\n-# Download a local copy of this cloud snapshot:`,
-          files: [new AttachmentBuilder(DB_FILE, { name: `athena_db_backup_${Date.now()}.json` })]
-        }).catch(() => null);
+        if (statusMsg?.edit) return statusMsg.edit(successPayload);
+        return sendReply(successPayload);
       }
 
       // 2. EXPORT ACTION
