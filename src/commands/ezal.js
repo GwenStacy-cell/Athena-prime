@@ -579,7 +579,7 @@ async function handleEhelp(message) {
         '`ezal emergency <serverId> [mode|end]` - Trigger emergency mode remotely\n' +
         '`ezal banserver <serverId>` - Ban a server and force leave instantly\n' +
         '`ezal unbanserver <serverId>` - Unban a server to allow invites\n' +
-        '`ezal restoresetup <serverId>` - Dynamically restore JTC, Welcome, Leave, Accent, and Quarantine setups\n' +
+        '`ezal restoresetup <serverId>` - Restore JTC, Welcome/Leave, News, Quotes, Auto-React, Invites, Media, Server/Delete Logs\n' +
           '`ezal security enable all` - Forcibly enable and initialize security on all servers\n' +
           '`ezal security disable all` - Forcibly disable security and strip dashboard on all servers'
     },
@@ -912,7 +912,7 @@ async function handleRestoreSetup(message, args) {
     const wCfg = db.getWelcomeConfig(guildId);
     const welcomeChannelId = wCfg?.channelId || config.welcomeChannelId;
     if (welcomeChannelId) {
-      let wCh = guild.channels.cache.get(welcomeChannelId);
+      let wCh = guild.channels.cache.get(welcomeChannelId) || await guild.channels.fetch(welcomeChannelId).catch(() => null);
       if (!wCh) {
         wCh = await guild.channels.create({ name: 'welcome', type: ChannelType.GuildText });
         db.updateGuildConfig(guildId, { welcomeChannelId: wCh.id });
@@ -924,13 +924,113 @@ async function handleRestoreSetup(message, args) {
     const lCfg = db.getLeaveConfig(guildId);
     const leaveChannelId = lCfg?.channelId || config.leaveChannelId;
     if (leaveChannelId) {
-      let lCh = guild.channels.cache.get(leaveChannelId);
+      let lCh = guild.channels.cache.get(leaveChannelId) || await guild.channels.fetch(leaveChannelId).catch(() => null);
       if (!lCh) {
         lCh = await guild.channels.create({ name: 'leave', type: ChannelType.GuildText });
         db.updateGuildConfig(guildId, { leaveChannelId: lCh.id });
         if (lCfg) {
           db.setLeaveConfig(guildId, { ...lCfg, channelId: lCh.id });
         }
+      }
+    }
+  } catch(e) {}
+
+  // 5. Restore News Channel
+  try {
+    const newsConfig = db.cache.newsFeeds?.[guildId];
+    if (newsConfig && newsConfig.channelId) {
+      let nCh = guild.channels.cache.get(newsConfig.channelId) || await guild.channels.fetch(newsConfig.channelId).catch(() => null);
+      if (!nCh) {
+        nCh = await guild.channels.create({ name: 'news', type: ChannelType.GuildText });
+        newsConfig.channelId = nCh.id;
+        db.save();
+      }
+    }
+  } catch(e) {}
+
+  // 6. Restore Quote Channel
+  try {
+    if (config.quoteChannelId) {
+      let qCh = guild.channels.cache.get(config.quoteChannelId) || await guild.channels.fetch(config.quoteChannelId).catch(() => null);
+      if (!qCh) {
+        qCh = await guild.channels.create({ name: 'quotes', type: ChannelType.GuildText });
+        db.updateGuildConfig(guildId, { quoteChannelId: qCh.id });
+      }
+    }
+  } catch(e) {}
+
+  // 7. Restore Auto-React Channels
+  try {
+    if (config.autoReacts && typeof config.autoReacts === 'object') {
+      let modified = false;
+      for (const [cid, emojis] of Object.entries(config.autoReacts)) {
+        let rCh = guild.channels.cache.get(cid) || await guild.channels.fetch(cid).catch(() => null);
+        if (!rCh && Array.isArray(emojis) && emojis.length > 0) {
+          rCh = await guild.channels.create({ name: 'reactions', type: ChannelType.GuildText });
+          delete config.autoReacts[cid];
+          config.autoReacts[rCh.id] = emojis;
+          modified = true;
+        }
+      }
+      if (modified) {
+        db.updateGuildConfig(guildId, { autoReacts: config.autoReacts });
+      }
+    }
+  } catch(e) {}
+
+  // 8. Restore Invite Logs Channel
+  try {
+    if (config.inviteChannelId) {
+      let invCh = guild.channels.cache.get(config.inviteChannelId) || await guild.channels.fetch(config.inviteChannelId).catch(() => null);
+      if (!invCh) {
+        invCh = await guild.channels.create({ name: 'invite-logs', type: ChannelType.GuildText });
+        db.updateGuildConfig(guildId, { inviteChannelId: invCh.id });
+      }
+    }
+  } catch(e) {}
+
+  // 9. Restore Media Downloader Channel
+  try {
+    if (config.mediaChannelId) {
+      let mCh = guild.channels.cache.get(config.mediaChannelId) || await guild.channels.fetch(config.mediaChannelId).catch(() => null);
+      if (!mCh) {
+        mCh = await guild.channels.create({ name: 'media-download', type: ChannelType.GuildText });
+        db.updateGuildConfig(guildId, { mediaChannelId: mCh.id });
+        const stickyText = 'MEDIA DOWNLOADER BOUND | The Auto-Media Downloader is now monitoring this channel.\nPaste TikTok, Instagram, YouTube, Twitter/X, or Reddit links to interactively extract the raw MP4 video or convert it to MP3 audio.\nIf Discord rejects a video due to file size, Athena will offer to compress it to a smaller version.\nDiscord\'s upload limit depends on your server\'s boost level.';
+        db.setStickyMessage(guildId, mCh.id, stickyText);
+      }
+    }
+  } catch(e) {}
+
+  // 10. Restore Server Logs & Message Delete Log Channels
+  try {
+    if (config.serverLogs) {
+      let modified = false;
+      if (config.serverLogs.defaultChannelId) {
+        let defCh = guild.channels.cache.get(config.serverLogs.defaultChannelId) || await guild.channels.fetch(config.serverLogs.defaultChannelId).catch(() => null);
+        if (!defCh) {
+          defCh = await guild.channels.create({ name: 'server-logs', type: ChannelType.GuildText });
+          config.serverLogs.defaultChannelId = defCh.id;
+          modified = true;
+        }
+      }
+      if (config.serverLogs.modules?.msgDeletes?.channelId) {
+        let delCh = guild.channels.cache.get(config.serverLogs.modules.msgDeletes.channelId) || await guild.channels.fetch(config.serverLogs.modules.msgDeletes.channelId).catch(() => null);
+        if (!delCh) {
+          delCh = await guild.channels.create({ name: 'message-logs', type: ChannelType.GuildText });
+          config.serverLogs.modules.msgDeletes.channelId = delCh.id;
+          modified = true;
+        }
+      }
+      if (modified) {
+        db.updateGuildConfig(guildId, { serverLogs: config.serverLogs });
+      }
+    }
+    if (config.logChannel) {
+      let lCh = guild.channels.cache.get(config.logChannel) || await guild.channels.fetch(config.logChannel).catch(() => null);
+      if (!lCh) {
+        lCh = await guild.channels.create({ name: 'mod-logs', type: ChannelType.GuildText });
+        db.updateGuildConfig(guildId, { logChannel: lCh.id });
       }
     }
   } catch(e) {}

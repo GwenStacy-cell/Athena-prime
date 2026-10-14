@@ -82,6 +82,45 @@ export function getDatabaseMetrics() {
   const birthdayServers = Object.keys(cache.birthdays || {}).length;
   const birthdayUsers = birthdayConfigs.reduce((acc, b) => acc + Object.keys(b?.users || {}).length, 0);
 
+  // News feeds & announcement channels
+  const newsFeeds = cache.newsFeeds || {};
+  let newsChannels = 0, newsFeedsCount = 0, newsRolesCount = 0;
+  for (const cfg of Object.values(newsFeeds)) {
+    if (cfg && cfg.channelId) newsChannels++;
+    if (cfg && cfg.roleId) newsRolesCount++;
+    if (Array.isArray(cfg?.feeds)) newsFeedsCount += cfg.feeds.length;
+  }
+  const newsServers = Object.keys(newsFeeds).length;
+
+  // Auto-Quote channel
+  const quoteChannels = guilds.filter(g => g && g.quoteChannelId).length;
+
+  // Auto-React channels & emojis
+  let autoReactChannels = 0, autoReactEmojisCount = 0, autoReactServers = 0;
+  guilds.forEach(g => {
+    if (g && g.autoReacts && Object.keys(g.autoReacts).length > 0) {
+      autoReactServers++;
+      for (const emojis of Object.values(g.autoReacts)) {
+        if (Array.isArray(emojis) && emojis.length > 0) {
+          autoReactChannels++;
+          autoReactEmojisCount += emojis.length;
+        }
+      }
+    }
+  });
+
+  // Invite tracking & logging
+  const inviteLogChannels = guilds.filter(g => g && g.inviteChannelId).length;
+  const inviteBypassChannels = guilds.filter(g => g && g.inviteAllowedChannel).length;
+
+  // Media downloader channel
+  const mediaChannels = guilds.filter(g => g && g.mediaChannelId).length;
+
+  // Message delete logs & server log breakdown
+  const msgDeleteLogChannels = guilds.filter(g => g && (g.serverLogs?.modules?.msgDeletes?.channelId || (g.serverLogs?.modules?.msgDeletes?.enabled && g.serverLogs?.defaultChannelId))).length;
+  const msgDeleteServers = guilds.filter(g => g && g.serverLogs?.modules?.msgDeletes?.enabled).length;
+  const msgEditLogChannels = guilds.filter(g => g && (g.serverLogs?.modules?.msgEdits?.channelId || (g.serverLogs?.modules?.msgEdits?.enabled && g.serverLogs?.defaultChannelId))).length;
+
   return {
     guilds: Object.keys(cache.guilds || {}).length,
     customPrefixes: guilds.filter(g => g && g.prefix && g.prefix !== '!').length,
@@ -134,6 +173,21 @@ export function getDatabaseMetrics() {
     leaveEmbeds,
     leaveGifs,
 
+    newsChannels,
+    newsFeedsCount,
+    newsRolesCount,
+    newsServers,
+    quoteChannels,
+    autoReactChannels,
+    autoReactServers,
+    autoReactEmojisCount,
+    inviteLogChannels,
+    inviteBypassChannels,
+    mediaChannels,
+    msgDeleteLogChannels,
+    msgDeleteServers,
+    msgEditLogChannels,
+
     xpSystems: Object.keys(cache.xpSystems || {}).length,
     xpUsers: Object.values(cache.usersXp || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
     serverStats: Object.keys(cache.serverStats || {}).length,
@@ -150,7 +204,7 @@ export function getDatabaseMetrics() {
     birthdayUsers,
 
     apps: Object.keys(cache.apps || {}).length,
-    serverLogsCount,
+    serverLogsCount: guilds.filter(g => g && g.serverLogs && (g.serverLogs.enabled || g.serverLogs.defaultChannelId)).length,
     logChannelsCount,
     voiceLogs: guilds.filter(g => g && g.voiceLogChannel).length,
     homeVc: guilds.filter(g => g && g.homeVcId).length,
@@ -186,12 +240,12 @@ export function formatDatabaseMetrics(m, options = {}) {
     `**Security & Anti-Nuke Engine:**\n` +
     `> -# **Security & Anti-Nuke:** \`${m.securityServers} servers active\`\n` +
     `> -# **Core Modules:** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bot Add: ${m.antiBotAddServers}\`\n` +
-    `> -# **Thresholds & Traps:** \`${m.antiNukeThresholds} configured limits, ${m.honeypots} honeypot channels, Raid Mode: ${m.raidModeServers}\`\n\n` +
+    `> -# **Thresholds & Traps:** \`${m.antiNukeThresholds} configured limits, ${m.honeypots} honeypots, Raid Mode: ${m.raidModeServers}\`\n\n` +
 
     `**Automod Protection Matrix:**\n` +
     `> -# **Active Automod Servers:** \`${m.automodServers} servers active\`\n` +
     `> -# **Granular Modules:** \`Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, Word Filter: ${m.wordFilterServers}, Flood: ${m.antiFloodServers}, Mention: ${m.antiMentionServers}, Link: ${m.antiLinkServers}\`\n` +
-    `> -# **Custom Filter Rules:** \`${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links\`\n\n` +
+    `> -# **Filter Rules & Bypasses:** \`${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links, ${m.inviteBypassChannels} invite channels\`\n\n` +
 
     `**Moderation, Warnings & Enforcement:**\n` +
     `> -# **Max Warning Thresholds:** \`${m.maxWarningsSet} guilds configured (Avg strike limit: ${m.maxWarningsAvg} warnings)\`\n` +
@@ -203,9 +257,16 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **Bypasses & Security Whitelist:** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} whitelisted users\`\n` +
     `> -# **Blacklisted Entities:** \`${m.botBlacklistUsers} blocked users/guilds\`\n\n` +
 
-    `**Welcome & Leave Engagement:**\n` +
-    `> -# **Welcome System Settings:** \`${m.welcomeActive} channels | ${m.welcomeEmbeds} custom embeds (Author/Title/Footer), ${m.welcomeGifs} GIFs/Images, ${m.welcomeColors} custom colors, ${m.welcomeMessages} messages\`\n` +
-    `> -# **Leave System Settings:** \`${m.leaveActive} channels | ${m.leaveEmbeds} custom embeds, ${m.leaveGifs} GIFs/Images, ${m.leaveMessages} messages\`\n\n` +
+    `**Welcome, Leave & Invite Tracking:**\n` +
+    `> -# **Welcome System Settings:** \`${m.welcomeActive} channels | ${m.welcomeEmbeds} custom embeds (Author/Title/Footer), ${m.welcomeGifs} GIFs, ${m.welcomeColors} colors, ${m.welcomeMessages} messages\`\n` +
+    `> -# **Leave System Settings:** \`${m.leaveActive} channels | ${m.leaveEmbeds} custom embeds, ${m.leaveGifs} GIFs, ${m.leaveMessages} messages\`\n` +
+    `> -# **Invite Tracking Engine:** \`${m.inviteLogChannels} invite log channels | Live join detection & inviter attribution\`\n\n` +
+
+    `**Automated Feeds, Media & Utilities:**\n` +
+    `> -# **News Feed System:** \`${m.newsChannels} news channels | ${m.newsFeedsCount} active RSS feeds, ${m.newsRolesCount} ping roles\`\n` +
+    `> -# **Auto-Quote Engine:** \`${m.quoteChannels} dedicated canvas quote channels\`\n` +
+    `> -# **Auto-React Channels:** \`${m.autoReactChannels} channels across ${m.autoReactServers} servers (${m.autoReactEmojisCount} emojis bound)\`\n` +
+    `> -# **Auto-Media Downloader:** \`${m.mediaChannels} media extraction channels bound\`\n\n` +
 
     `**Community, Leveling & Triggers:**\n` +
     `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
@@ -213,10 +274,11 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **Tickets & Verification:** \`${m.tickets} ticket setups, ${m.verification} verification setups\`\n` +
     `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} active giveaways, ${m.reactionRoles} menus\`\n` +
     `> -# **Auto-Delete & Sticky:** \`${m.stickyMessages} sticky channels, ${m.adel} auto-delete channels (ADEL/RADEL)\`\n` +
-    `> -# **Birthday System Settings:** \`${m.birthdayChannels} announcement channels | ${m.birthdayServers} servers, ${m.birthdayUsers} registered birthdays\`\n` +
+    `> -# **Birthday System Settings:** \`${m.birthdayChannels} announcement channels | ${m.birthdayServers} servers, ${m.birthdayUsers} birthdays\`\n` +
     `> -# **Staff Applications:** \`${m.apps} application setups\`\n\n` +
 
-    `**Voice Systems & Audit Logging:**\n` +
+    `**Diagnostic Logs & Voice Systems:**\n` +
+    `> -# **Message Deletions & Edits:** \`${m.msgDeleteLogChannels} message delete channels (${m.msgDeleteServers} servers), ${m.msgEditLogChannels} edit channels\`\n` +
     `> -# **Server Logs & Audits:** \`${m.serverLogsCount} server logs, ${m.logChannelsCount} mod audit channels, ${m.voiceLogs} voice logs\`\n` +
     `> -# **Voice Hubs:** \`${m.homeVc} home VCs, ${m.theaterModeVcs} theater mode VCs\`\n` +
     `> -# **Join to Create (JTC):** \`${m.jtc} lobby setups, ${m.jtcChannels} active temp channels\`\n` +
