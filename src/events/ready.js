@@ -17,6 +17,7 @@ import { formatServerStatChannelName } from '../commands/serverstats.js';
 import { initWebSub } from '../utils/websub.js';
 
 import { startYtStatsEngine } from '../utils/ytStatsEngine.js';
+import { checkAndAutoRestore, startCloudBackupScheduler } from '../utils/cloudSync.js';
 
 export default {
   name: 'clientReady',
@@ -26,6 +27,21 @@ export default {
     console.log(chalk.hex('#FFD700').bold(` SUCCESS: Connected to Discord Gateway!`));
     console.log(chalk.cyan(` Logged in as: ${chalk.bold(client.user.tag)} (ID: ${client.user.id})`));
     console.log(chalk.yellow(` Watching ${client.guilds.cache.size} server(s)...`));
+
+    // 0. Cloud Migration & Auto-Restore Check:
+    // If running on a new hosting server (empty/fresh db.json), automatically pull and restore latest backup from Discord!
+    try {
+      console.log(chalk.cyan(' Checking database cloud sync state...'));
+      const restoreStatus = await checkAndAutoRestore(client);
+      if (restoreStatus.restored) {
+        console.log(chalk.green.bold('[CloudSync] Successfully auto-restored database from Discord Cloud on new hosting!'));
+      }
+    } catch (err) {
+      console.error(chalk.red('[CloudSync] Boot auto-restore check error:'), err);
+    }
+
+    // Start background automated cloud backup scheduler (every 20 minutes)
+    startCloudBackupScheduler(client, 20);
 
     // Immediate startup scan for today's birthdays (in case bot restarted during the day)
     console.log(chalk.magenta(' Performing startup birthday scan (IST)...'));

@@ -441,9 +441,14 @@ export async function createCloudBackup(client, reason = 'Automated Schedule') {
         reason
       })
     );
-    payload.files = files;
+    // 1. Post diagnostics manifest container
+    await channel.send(payload);
 
-    const sentMsg = await channel.send(payload);
+    // 2. Post downloadable snapshot message without Components V2 flags so the files are visible and directly downloadable
+    const sentMsg = await channel.send({
+      content: `**Database Cloud Snapshot | <a:atheNATICK:1557841381630681106>**\n-# Created: <t:${Math.floor(timestamp / 1000)}:F> | Trigger: \`${reason}\` | Snapshot Size: \`${sizeKb} KB\``,
+      files
+    });
 
     // Save metadata
     db.cache.lastCloudBackup = timestamp;
@@ -484,19 +489,21 @@ export async function restoreFromCloud(client) {
     return { success: false, reason: 'No cloud backup channel found or configured.' };
   }
 
-  const messages = await channel.messages.fetch({ limit: 30 }).catch(() => null);
+  const messages = await channel.messages.fetch({ limit: 100 }).catch(() => null);
   if (!messages || messages.size === 0) {
     return { success: false, reason: 'Backup channel has no messages.' };
   }
 
-  // Find latest message with athena_db_*.json or db.json attachment
-  const backupMsg = messages.find(m => 
+  // Find latest message with athena_db_*.json or db.json attachment sorted by timestamp
+  const backupMessages = messages.filter(m => 
     m.attachments.some(a => a.name?.endsWith('.json') && (a.name.includes('athena_db_') || a.name === 'db.json'))
   );
 
-  if (!backupMsg) {
+  if (!backupMessages || backupMessages.size === 0) {
     return { success: false, reason: 'No database backup attachment found in recent channel messages.' };
   }
+
+  const backupMsg = backupMessages.sort((a, b) => b.createdTimestamp - a.createdTimestamp).first();
 
   const attachment = backupMsg.attachments.find(a => a.name?.endsWith('.json'));
   if (!attachment) {

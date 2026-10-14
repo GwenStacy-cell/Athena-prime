@@ -116,10 +116,21 @@ export const commands = [
             reason: `Manual Backup by ${user.tag || user.username}`
           })
         );
-        successPayload.files = [new AttachmentBuilder(DB_FILE, { name: `athena_db_backup_${Date.now()}.json` })];
+        if (context.isCommand?.()) {
+          await context.editReply(successPayload);
+          return context.followUp({
+            content: `**Backup Snapshot File | <a:atheNATICK:1557841381630681106>**\n-# Download a local copy of this cloud snapshot:`,
+            files: [new AttachmentBuilder(DB_FILE, { name: `athena_db_backup_${Date.now()}.json` })]
+          }).catch(() => null);
+        }
 
-        if (context.isCommand?.()) return context.editReply(successPayload);
-        return statusMsg?.edit ? statusMsg.edit(successPayload) : sendReply(successPayload);
+        if (statusMsg?.edit) await statusMsg.edit(successPayload);
+        else await sendReply(successPayload);
+
+        return (context.channel || context).send({
+          content: `**Backup Snapshot File | <a:atheNATICK:1557841381630681106>**\n-# Download a local copy of this cloud snapshot:`,
+          files: [new AttachmentBuilder(DB_FILE, { name: `athena_db_backup_${Date.now()}.json` })]
+        }).catch(() => null);
       }
 
       // 2. EXPORT ACTION
@@ -150,14 +161,23 @@ export const commands = [
         const exportPayload = cv2.info(
           `Database Export | <a:atheNATICK:1557841381630681106>`,
           formatDatabaseMetrics(m, {
-            prefixText: 'Here are your raw database files.',
+            prefixText: '**Raw database files compiled.** Click the attachments below to download.',
             sizeKb,
             timestamp: Date.now()
           })
         );
-        exportPayload.files = files;
 
-        return sendReply(exportPayload);
+        await sendReply(exportPayload);
+
+        const downloadPayload = {
+          content: `**Database Export Files | <a:atheNATICK:1557841381630681106>**\n-# Click the file attachments below to download your \`db.json\` (${sizeKb} KB)${fs.existsSync(STATS_FILE) ? ' and `stats.db`' : ''}:`,
+          files
+        };
+
+        if (context.isCommand?.()) {
+          return context.followUp(downloadPayload).catch(() => null);
+        }
+        return (context.channel || context).send(downloadPayload).catch(() => null);
       }
 
       // 3. RESTORE ACTION
