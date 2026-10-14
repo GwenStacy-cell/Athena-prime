@@ -1612,9 +1612,18 @@ if (interaction.customId === "modal_2fa_setup") {
             ]
           };
 
+          const fs = await import('fs');
+          const { AttachmentBuilder } = await import('discord.js');
+          const audioBuffer = fs.readFileSync(result.mp3Path);
+          const cleanServerName = (targetGuild ? targetGuild.name : 'Server').replace(/[^a-zA-Z0-9_-]/g, '_');
+          const cleanVcName = vcName.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const fileName = `${cleanServerName}_${cleanVcName}.mp3`;
+          const audioAttachment = new AttachmentBuilder(audioBuffer, { name: fileName });
+
           let dmDelivered = false;
           try {
-            await interaction.user.send({ components: [dmContainer], flags: MessageFlags.IsComponentsV2, files: [result.mp3Path] });
+            await interaction.user.send({ components: [dmContainer], flags: MessageFlags.IsComponentsV2 });
+            await interaction.user.send({ content: `-# 🔊 **Playable Voice Recording** (${durationStr})`, files: [audioAttachment] });
             dmDelivered = true;
           } catch (e) {
             dmDelivered = false;
@@ -1637,13 +1646,13 @@ if (interaction.customId === "modal_2fa_setup") {
                 { type: 10, content: `-# **Audio file is attached below.**` }
               ]
             };
-            await interaction.followUp({ content: `${interaction.user}, your DMs are closed, so here is your voice recording:`, components: [channelFallbackContainer], flags: MessageFlags.IsComponentsV2, files: [result.mp3Path] });
+            await interaction.followUp({ components: [channelFallbackContainer], flags: MessageFlags.IsComponentsV2 });
+            await interaction.followUp({ content: `${interaction.user}, here is your voice recording:`, files: [audioAttachment] });
             const successContainer = { type: 17, components: [{ type: 10, content: `-# **Audio Export Successful | <a:atheNATICK:1557841381630681106>**\n-# Delivered in this channel (DMs closed).` }] };
             await interaction.message.edit({ components: [successContainer] });
           }
 
-          const fs = await import('fs');
-          fs.unlink(result.mp3Path, () => {});
+          try { fs.unlinkSync(result.mp3Path); } catch(e) {}
         } catch (err) {
           const errContainer = { type: 17, components: [{ type: 10, content: `-# <:off:1533844858983157851> **Recording Stopped:** ${err.message}` }] };
           await interaction.message.edit({ components: [errContainer] });

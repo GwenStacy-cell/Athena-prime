@@ -121,9 +121,18 @@ export const commands = [
              ]
           };
           
+          const fs = await import('fs');
+          const { AttachmentBuilder } = await import('discord.js');
+          const audioBuffer = fs.readFileSync(mp3Path);
+          const cleanServerName = (targetGuild ? targetGuild.name : 'Server').replace(/[^a-zA-Z0-9_-]/g, '_');
+          const cleanVcName = vcName.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const fileName = `${cleanServerName}_${cleanVcName}.mp3`;
+          const audioAttachment = new AttachmentBuilder(audioBuffer, { name: fileName });
+
           let dmDelivered = false;
           try {
-            await message.author.send({ components: [dmContainer], flags: MessageFlags.IsComponentsV2, files: [mp3Path] });
+            await message.author.send({ components: [dmContainer], flags: MessageFlags.IsComponentsV2 });
+            await message.author.send({ content: `-# 🔊 **Playable Voice Recording** (${durationStr})`, files: [audioAttachment] });
             dmDelivered = true;
           } catch (e) {
             dmDelivered = false;
@@ -146,12 +155,12 @@ export const commands = [
                 { type: 10, content: `-# **Audio file is attached below.**` }
               ]
             };
-            await message.channel.send({ content: `${message.author}, your DMs are closed, so here is your voice recording:`, components: [channelExportContainer], flags: MessageFlags.IsComponentsV2, files: [mp3Path] });
+            await message.channel.send({ components: [channelExportContainer], flags: MessageFlags.IsComponentsV2 });
+            await message.channel.send({ content: `${message.author}, here is your voice recording:`, files: [audioAttachment] });
             await msg.edit({ components: [{ type: 17, components: [{ type: 10, content: `-# **Audio Export Successful | <a:atheNATICK:1557841381630681106>**\n-# Delivered in this channel (DMs closed).` }] }] });
           }
           
-          const fs = await import('fs');
-          fs.unlink(mp3Path, () => {});
+          try { fs.unlinkSync(mp3Path); } catch(e) {}
         } catch (err) {
           await msg.edit({ components: [{ type: 17, components: [{ type: 10, content: `-# <:off:1533844858983157851> **Recording Failed:** ${err.message}` }] }] });
         }
