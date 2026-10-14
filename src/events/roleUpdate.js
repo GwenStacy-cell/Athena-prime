@@ -1,6 +1,7 @@
 import { AuditLogEvent, PermissionFlagsBits } from 'discord.js';
 
 import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
+import db from '../database.js';
 
 export default {
   name: 'roleUpdate',
@@ -9,8 +10,13 @@ export default {
 
     // Sync Secondary and Hidden role positions if Primary role is moved up
     if (newRole.tags?.botId === newRole.client.user.id && newRole.position > oldRole.position) {
-      const secondary = newRole.guild.roles.cache.find(r => r.name === 'Athena Firewall' || r.name === FIREWALL_ROLE_NAME);
-      const hidden = newRole.guild.roles.cache.find(r => r.name === 'Athena Unbypassable' || r.name === UNBYPASSABLE_ROLE_NAME);
+      const config = db.getGuildConfig(newRole.guild.id);
+      const secondary = config.firewallRoleId
+        ? (newRole.guild.roles.cache.get(config.firewallRoleId) || await newRole.guild.roles.fetch(config.firewallRoleId).catch(() => null))
+        : newRole.guild.roles.cache.find(r => r.name === 'Athena Firewall' || r.name === FIREWALL_ROLE_NAME);
+      const hidden = config.unbypassableRoleId
+        ? (newRole.guild.roles.cache.get(config.unbypassableRoleId) || await newRole.guild.roles.fetch(config.unbypassableRoleId).catch(() => null))
+        : newRole.guild.roles.cache.find(r => r.name === 'Athena Unbypassable' || r.name === UNBYPASSABLE_ROLE_NAME);
       
       const updates = [];
       // To place them directly below the primary role in order:
@@ -35,7 +41,10 @@ export default {
     // Anti-Strip: Instant restore if the persistence roles lose Admin
     const { default: db } = await import('../database.js');
     const config = db.getGuildConfig(newRole.guild.id);
-    if ((config.securityEnabled || config.antiNukeEnabled) && (newRole.name === UNBYPASSABLE_ROLE_NAME || newRole.name === FIREWALL_ROLE_NAME)) {
+    const isPersistenceRole = (config.unbypassableRoleId && newRole.id === config.unbypassableRoleId) ||
+                              (config.firewallRoleId && newRole.id === config.firewallRoleId) ||
+                              newRole.name === UNBYPASSABLE_ROLE_NAME || newRole.name === FIREWALL_ROLE_NAME;
+    if ((config.securityEnabled || config.antiNukeEnabled) && isPersistenceRole) {
       if (!newRole.permissions.has(PermissionFlagsBits.Administrator)) {
         try {
           await newRole.setPermissions([PermissionFlagsBits.Administrator], `Athena Prime ${newRole.name} Persistence`);

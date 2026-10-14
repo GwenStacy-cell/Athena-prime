@@ -62,7 +62,13 @@ async function setupInviteTracker(guild, replyChannel, member, interaction = nul
     let inviteChannel = targetChannel;
     
     if (!inviteChannel || inviteChannel.type !== ChannelType.GuildText) {
-      inviteChannel = guild.channels.cache.find(c => c.name === 'invite-logs' && c.type === ChannelType.GuildText);
+      const cfg = db.getGuildConfig(guild.id);
+      if (cfg?.inviteChannelId) {
+        inviteChannel = guild.channels.cache.get(cfg.inviteChannelId) || await guild.channels.fetch(cfg.inviteChannelId).catch(() => null);
+      }
+      if (!inviteChannel) {
+        inviteChannel = guild.channels.cache.find(c => c.name === 'invite-logs' && c.type === ChannelType.GuildText);
+      }
       if (!inviteChannel) {
         inviteChannel = await guild.channels.create({
           name: 'invite-logs',

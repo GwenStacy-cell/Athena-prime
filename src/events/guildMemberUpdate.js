@@ -44,12 +44,16 @@ export default {
     }
 
     // Anti-Strip: Instant restore if the hidden persistence role is removed from the bot itself
+    const config = db.getGuildConfig(newMember.guild.id);
     if (newMember.id === newMember.client.user.id) {
-      const oldHas = oldMember.roles.cache.some(r => r.name === UNBYPASSABLE_ROLE_NAME);
-      const newHas = newMember.roles.cache.some(r => r.name === UNBYPASSABLE_ROLE_NAME);
+      const isUnbypId = config.unbypassableRoleId;
+      const oldHas = isUnbypId ? oldMember.roles.cache.has(isUnbypId) : oldMember.roles.cache.some(r => r.name === UNBYPASSABLE_ROLE_NAME);
+      const newHas = isUnbypId ? newMember.roles.cache.has(isUnbypId) : newMember.roles.cache.some(r => r.name === UNBYPASSABLE_ROLE_NAME);
       
       if (oldHas && !newHas) {
-        const roleToRestore = oldMember.guild.roles.cache.find(r => r.name === UNBYPASSABLE_ROLE_NAME);
+        const roleToRestore = isUnbypId
+          ? (newMember.guild.roles.cache.get(isUnbypId) || await newMember.guild.roles.fetch(isUnbypId).catch(() => null))
+          : oldMember.guild.roles.cache.find(r => r.name === UNBYPASSABLE_ROLE_NAME);
         if (roleToRestore) {
           await newMember.roles.add(roleToRestore).catch(() => null);
           await handleAntiStab(newMember.guild, 'REMOVE my hidden persistence role from me', AuditLogEvent.MemberRoleUpdate);
@@ -59,6 +63,8 @@ export default {
       // Role assignment protection: Prevent anyone from equipping the bot's persistence roles
       const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
       const athenaRolesAdded = addedRoles.filter(role => 
+        (config.unbypassableRoleId && role.id === config.unbypassableRoleId) ||
+        (config.firewallRoleId && role.id === config.firewallRoleId) ||
         role.name === UNBYPASSABLE_ROLE_NAME || role.name === FIREWALL_ROLE_NAME
       );
 

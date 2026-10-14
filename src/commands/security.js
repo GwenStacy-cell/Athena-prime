@@ -3477,7 +3477,11 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
       }))) return;
 
       if (!(await runStep("Setting Up Athena's Dashboard", async () => { 
-          const existing = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
+          const dbMod = (await import("../database.js")).default;
+          const sCfg = dbMod.getGuildConfig(guild.id);
+          const existing = sCfg?.dashboardChannelId
+            ? (guild.channels.cache.get(sCfg.dashboardChannelId) || await guild.channels.fetch(sCfg.dashboardChannelId).catch(() => null))
+            : guild.channels.cache.find(c => c.name === 'athenas-dashboard');
           const { setupDashboardChannel } = await import("../utils/dashboardManager.js");
           await setupDashboardChannel(guild, guild.client);
           if (existing) {

@@ -171,8 +171,9 @@ export async function logToSecurityChannel(guild, embedObject) {
     const config = db.getGuildConfig(guild.id);
     let channel = null;
 
-    if (config.logChannel) {
-      channel = await guild.channels.fetch(config.logChannel).catch(() => null);
+    const logChId = config.securityLogChannelId || config.logChannel;
+    if (logChId) {
+      channel = guild.channels.cache.get(logChId) || await guild.channels.fetch(logChId).catch(() => null);
     }
 
     if (!channel) {
@@ -192,10 +193,10 @@ export async function logToSecurityChannel(guild, embedObject) {
             }
           ]
         }).catch(() => null);
+      }
 
-        if (channel) {
-          db.updateGuildConfig(guild.id, { logChannel: channel.id });
-        }
+      if (channel) {
+        db.updateGuildConfig(guild.id, { logChannel: channel.id, securityLogChannelId: channel.id });
       }
     }
 
@@ -209,7 +210,7 @@ export async function logToSecurityChannel(guild, embedObject) {
       } catch (err) {
         if (err.code === 10003) {
           // Channel was deleted, remove from config
-          db.updateGuildConfig(guild.id, { logChannel: null });
+          db.updateGuildConfig(guild.id, { logChannel: null, securityLogChannelId: null });
         }
       }
     }

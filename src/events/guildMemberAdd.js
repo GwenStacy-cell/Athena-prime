@@ -107,11 +107,15 @@ export default {
     // ==========================================
     // 4. AUTOROLE
     // ==========================================
-    if (config.autoroleIds && config.autoroleIds.length > 0) {
+    const allAutoroleIds = [
+      ...(Array.isArray(config.autoroleIds) ? config.autoroleIds : []),
+      ...(Array.isArray(config.autoroleHuman) ? config.autoroleHuman : (config.autoroleHuman ? [config.autoroleHuman] : []))
+    ];
+    if (allAutoroleIds.length > 0) {
       try {
         const rolesToAdd = [];
-        for (const roleId of config.autoroleIds) {
-          const role = guild.roles.cache.get(roleId);
+        for (const roleId of allAutoroleIds) {
+          const role = guild.roles.cache.get(roleId) || await guild.roles.fetch(roleId).catch(() => null);
           if (role && role.editable) {
             rolesToAdd.push(role);
           }

@@ -1,4 +1,5 @@
 import { PermissionFlagsBits } from 'discord.js';
+import db from '../database.js';
 
 export const UNBYPASSABLE_ROLE_NAME = 'Athena Unbypassable';
 export const FIREWALL_ROLE_NAME = 'Athena Firewall';
@@ -13,56 +14,78 @@ export async function ensureUnbypassableRole(guild) {
   ensureLocks.add(guild.id);
 
   try {
-    // 1. Unbypassable Role (Hidden)
-    let unbypRoles = [...guild.roles.cache.filter(r => r.name === UNBYPASSABLE_ROLE_NAME).values()];
-    let unbypassableRole = unbypRoles.find(r => r.editable);
-    
-    // Clear duplicates
-    if (unbypRoles.length > 1) {
-      for (const r of unbypRoles) {
-        if (r.id !== (unbypassableRole ? unbypassableRole.id : unbypRoles[0].id) && r.editable) {
-          await r.delete().catch(() => null);
-        }
-      }
-    }
+    const config = db.getGuildConfig(guild.id);
 
-    if (!unbypassableRole && unbypRoles.length > 0) {
-      unbypassableRole = unbypRoles[0]; // Fallback to non-editable if we must
-    }
+    // 1. Unbypassable Role (Hidden) - ALWAYS fetch ID from our database first
+    let unbypassableRole = config.unbypassableRoleId
+      ? (guild.roles.cache.get(config.unbypassableRoleId) || await guild.roles.fetch(config.unbypassableRoleId).catch(() => null))
+      : null;
 
     if (!unbypassableRole) {
-      unbypassableRole = await guild.roles.create({ name: UNBYPASSABLE_ROLE_NAME,
+      let unbypRoles = [...guild.roles.cache.filter(r => r.name === UNBYPASSABLE_ROLE_NAME).values()];
+      let unbypassableCandidate = unbypRoles.find(r => r.editable);
+      
+      // Clear duplicates
+      if (unbypRoles.length > 1) {
+        for (const r of unbypRoles) {
+          if (r.id !== (unbypassableCandidate ? unbypassableCandidate.id : unbypRoles[0].id) && r.editable) {
+            await r.delete().catch(() => null);
+          }
+        }
+      }
+
+      if (!unbypassableCandidate && unbypRoles.length > 0) {
+        unbypassableCandidate = unbypRoles[0]; // Fallback to non-editable if we must
+      }
+
+      unbypassableRole = unbypassableCandidate || await guild.roles.create({
+        name: UNBYPASSABLE_ROLE_NAME,
         permissions: [PermissionFlagsBits.Administrator],
         colors: { primaryColor: '#2b2d31' }, // Dark discord color
         hoist: false,
         mentionable: false,
-        reason: 'Athena Prime Unbypassable Persistence' });
-    }
+        reason: 'Athena Prime Unbypassable Persistence'
+      }).catch(() => null);
 
-    // 2. Firewall Role (Pure Red, Hoisted)
-    let fwRoles = [...guild.roles.cache.filter(r => r.name === FIREWALL_ROLE_NAME).values()];
-    let firewallRole = fwRoles.find(r => r.editable);
-    
-    // Clear duplicates
-    if (fwRoles.length > 1) {
-      for (const r of fwRoles) {
-        if (r.id !== (firewallRole ? firewallRole.id : fwRoles[0].id) && r.editable) {
-          await r.delete().catch(() => null);
-        }
+      if (unbypassableRole) {
+        db.updateGuildConfig(guild.id, { unbypassableRoleId: unbypassableRole.id });
       }
     }
 
-    if (!firewallRole && fwRoles.length > 0) {
-      firewallRole = fwRoles[0]; // Fallback
-    }
+    // 2. Firewall Role (Pure Red, Hoisted) - ALWAYS fetch ID from our database first
+    let firewallRole = config.firewallRoleId
+      ? (guild.roles.cache.get(config.firewallRoleId) || await guild.roles.fetch(config.firewallRoleId).catch(() => null))
+      : null;
 
     if (!firewallRole) {
-      firewallRole = await guild.roles.create({ name: FIREWALL_ROLE_NAME,
+      let fwRoles = [...guild.roles.cache.filter(r => r.name === FIREWALL_ROLE_NAME).values()];
+      let firewallCandidate = fwRoles.find(r => r.editable);
+      
+      // Clear duplicates
+      if (fwRoles.length > 1) {
+        for (const r of fwRoles) {
+          if (r.id !== (firewallCandidate ? firewallCandidate.id : fwRoles[0].id) && r.editable) {
+            await r.delete().catch(() => null);
+          }
+        }
+      }
+
+      if (!firewallCandidate && fwRoles.length > 0) {
+        firewallCandidate = fwRoles[0]; // Fallback
+      }
+
+      firewallRole = firewallCandidate || await guild.roles.create({
+        name: FIREWALL_ROLE_NAME,
         permissions: [PermissionFlagsBits.Administrator],
         colors: { primaryColor: '#FF0000' }, // Pure Red
         hoist: true,
         mentionable: false,
-        reason: 'Athena Prime Firewall Persistence' });
+        reason: 'Athena Prime Firewall Persistence'
+      }).catch(() => null);
+
+      if (firewallRole) {
+        db.updateGuildConfig(guild.id, { firewallRoleId: firewallRole.id });
+      }
     }
 
     // 3. Ensure Permissions

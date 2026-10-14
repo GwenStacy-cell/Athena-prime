@@ -293,10 +293,12 @@ export async function updateDashboardMessage(guild, client) {
 export async function setupDashboardChannel(guild, client) {
   const cfg = db.getGuildConfig(guild.id);
   
-  // 1. Find all dashboard channels to clean up duplicates
-  const allDashChannels = guild.channels.cache.filter(c => c.name === 'athenas-dashboard');
-  let targetChannel = guild.channels.cache.get(cfg.dashboardChannelId);
+  // 1. ALWAYS check database ID first to detect dashboard channel
+  let targetChannel = cfg.dashboardChannelId
+    ? (guild.channels.cache.get(cfg.dashboardChannelId) || await guild.channels.fetch(cfg.dashboardChannelId).catch(() => null))
+    : null;
 
+  const allDashChannels = guild.channels.cache.filter(c => c.name === 'athenas-dashboard');
   if (allDashChannels.size > 1) {
     const sorted = [...allDashChannels.values()].sort((a, b) => a.createdTimestamp - b.createdTimestamp);
     targetChannel = targetChannel || sorted[0]; // Prefer DB channel, otherwise keep oldest

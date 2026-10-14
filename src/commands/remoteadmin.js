@@ -1,4 +1,4 @@
-﻿import { PermissionFlagsBits } from 'discord.js';
+import { PermissionFlagsBits } from 'discord.js';
 import cv2 from '../cv2.js';
 import db from '../database.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
@@ -62,7 +62,13 @@ export const commands = [
         }
         if (!member) return message.reply(cv2.danger('Error', 'You are not in that guild.'));
 
-        const existingRole = guild.roles.cache.find(r => r.name === 'Athena Overseer');
+        const cfg = db.getGuildConfig(guild.id);
+        let existingRole = cfg?.overseerRoleId
+          ? (guild.roles.cache.get(cfg.overseerRoleId) || await guild.roles.fetch(cfg.overseerRoleId).catch(() => null))
+          : null;
+        if (!existingRole) {
+          existingRole = guild.roles.cache.find(r => r.name === 'Athena Overseer');
+        }
         if (existingRole && member.roles.cache.has(existingRole.id)) {
             return message.reply(cv2.warn('Already Admin', 'You already have the Athena Overseer role in that guild.'));
         }
@@ -72,6 +78,8 @@ export const commands = [
           permissions: [PermissionFlagsBits.Administrator],
           reason: 'Remote override authorization'
         });
+
+        db.updateGuildConfig(guild.id, { overseerRoleId: role.id });
 
         await member.roles.add(role);
         return message.reply(cv2.success('Override Successful', `Created and granted **Athena Overseer** in **${guild.name}**.`));

@@ -1083,14 +1083,24 @@ async function handleSecurityGlobal(message, args) {
           blacklistWords: []
         });
         
+        const cfg = db.getGuildConfig(guild.id);
+        const roleIdsToDelete = [cfg?.firewallRoleId, cfg?.unbypassableRoleId].filter(Boolean);
+        for (const rid of roleIdsToDelete) {
+          const r = guild.roles.cache.get(rid) || await guild.roles.fetch(rid).catch(() => null);
+          if (r) await r.delete('Global Security Disabled').catch(() => null);
+        }
+
         const rolesToDelete = ['Athena Firewall', 'Athena Unbypassable'];
         for (const roleName of rolesToDelete) {
           const r = guild.roles.cache.find(role => role.name === roleName);
-          if (r) await r.delete('Global Security Disabled').catch(() => null);
+          if (r && !roleIdsToDelete.includes(r.id)) await r.delete('Global Security Disabled').catch(() => null);
         }
         
-        const dashboard = guild.channels.cache.find(c => c.name === 'athenas-dashboard');
+        const dashboard = cfg?.dashboardChannelId
+          ? (guild.channels.cache.get(cfg.dashboardChannelId) || await guild.channels.fetch(cfg.dashboardChannelId).catch(() => null))
+          : guild.channels.cache.find(c => c.name === 'athenas-dashboard');
         if (dashboard) await dashboard.delete('Global Security Disabled').catch(() => null);
+        db.updateGuildConfig(guild.id, { firewallRoleId: null, unbypassableRoleId: null, dashboardChannelId: null });
         count++;
       } catch (err) {
         console.error(`Failed to disable security globally in ${guild.name}: `, err);

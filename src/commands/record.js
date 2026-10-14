@@ -139,7 +139,13 @@ export const commands = [
       // Default behavior: Setup Voice Logs
       if (!message.guild) return message.reply("Setup can only be run inside a server.");
       try {
-        let channel = message.guild.channels.cache.find(c => c.name === 'voice-records' && c.type === ChannelType.GuildText);
+        const cfg = db.getGuildConfig(message.guild.id);
+        let channel = cfg?.voiceLogChannel
+          ? (message.guild.channels.cache.get(cfg.voiceLogChannel) || await message.guild.channels.fetch(cfg.voiceLogChannel).catch(() => null))
+          : null;
+        if (!channel) {
+          channel = message.guild.channels.cache.find(c => c.name === 'voice-records' && c.type === ChannelType.GuildText);
+        }
         if (!channel) {
           channel = await message.guild.channels.create({
             name: 'voice-records',

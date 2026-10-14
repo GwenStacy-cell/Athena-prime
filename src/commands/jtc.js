@@ -590,9 +590,18 @@ export const commands = [
       }
 
       if (!lobbyChannel) {
-        const cat = await guild.channels.create({ name: 'âž• Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
-        lobbyChannel = await guild.channels.create({ name: 'âž• Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
-        category = cat;
+        const existingCfg = db.getJtcConfig(guild.id);
+        if (existingCfg?.channelId) {
+          lobbyChannel = guild.channels.cache.get(existingCfg.channelId) || await guild.channels.fetch(existingCfg.channelId).catch(() => null);
+        }
+        if (existingCfg?.categoryId && !category) {
+          category = guild.channels.cache.get(existingCfg.categoryId) || await guild.channels.fetch(existingCfg.categoryId).catch(() => null);
+        }
+        if (!lobbyChannel) {
+          const cat = category || await guild.channels.create({ name: 'Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
+          lobbyChannel = await guild.channels.create({ name: 'Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
+          category = cat;
+        }
       }
 
       const categoryId = category?.id || lobbyChannel.parentId;
@@ -651,9 +660,18 @@ export const commands = [
       if (!panelChannel && panelIdStr) panelChannel = await guild.channels.fetch(panelIdStr.trim().replace(/\D/g, '')).catch(()=>null);
 
       if (!lobbyChannel) {
-        const cat = await guild.channels.create({ name: 'âž• Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
-        lobbyChannel = await guild.channels.create({ name: 'âž• Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
-        category = cat;
+        const existingCfg = db.getJtcConfig(guild.id);
+        if (existingCfg?.channelId) {
+          lobbyChannel = guild.channels.cache.get(existingCfg.channelId) || await guild.channels.fetch(existingCfg.channelId).catch(() => null);
+        }
+        if (existingCfg?.categoryId && !category) {
+          category = guild.channels.cache.get(existingCfg.categoryId) || await guild.channels.fetch(existingCfg.categoryId).catch(() => null);
+        }
+        if (!lobbyChannel) {
+          const cat = category || await guild.channels.create({ name: 'Voice Rooms', type: ChannelType.GuildCategory, reason: 'Athena Prime JTC Setup' });
+          lobbyChannel = await guild.channels.create({ name: 'Join to Create', type: ChannelType.GuildVoice, parent: cat.id, reason: 'Athena Prime JTC Setup' });
+          category = cat;
+        }
       }
 
       const categoryId = category?.id || lobbyChannel.parentId;
