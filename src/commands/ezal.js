@@ -563,6 +563,15 @@ async function handleEhelp(message) {
         '`ezal restore <backupId> [targetServerId]` - Restore a server from backup *(Bot Owner only)*'
     },
     {
+      name: 'Database Persistence & Cloud Backup',
+      value:
+        '`!db status` - View database health, backup channel & cloud sync status\n' +
+        '`!db backup` - Force immediate cloud backup snapshot to Discord\n' +
+        '`!db export` - Download raw db.json & stats.db files\n' +
+        '`!db restore` - Restore database from cloud or uploaded db.json\n' +
+        '`!db setchannel #channel` - Bind or change dedicated Discord cloud backup channel'
+    },
+    {
       name: 'Server Management',
       value:
         '`ezal servers` - List all servers the bot is in with their backup IDs and stats\n' +
@@ -651,7 +660,16 @@ export async function handleEzal(message) {
     case 'spampermit': return handleSpamPermit(message, args);
     case 'spamrevoke': return handleSpamRevoke(message, args);
     case 'spamlist': return handleSpamList(message);
-          case 'ehelp':
+    case 'db':
+    case 'database': {
+      const { commands } = await import('./databaseadmin.js');
+      const dbCmd = commands.find(c => c.name === 'db');
+      if (dbCmd) {
+        return dbCmd.executePrefix(message, args);
+      }
+      break;
+    }
+    case 'ehelp':
     case 'help':
     default:        return handleEhelp(message);
   }

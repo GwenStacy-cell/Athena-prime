@@ -1192,6 +1192,7 @@ async function getStatusEmbed(client, guild) {
     "`!setguildbanner` - Change the bot's server banner `[Extra Owner]`",
     "`!sethomevc / !unsethomevc` - Bind bot to a dedicated 24/7 VC `[Extra Owner]`",
     "`!backup / !bcp create|info` - Server infrastructure Backup Suite `[Server Owner]`",
+    "`!db status / backup / export / restore / setchannel` - Automated Cloud Database Persistence Suite `[Bot Owner]`",
     "`!setsuggestions / !suggestchannel <#channel>` - Set designated channel for suggestions `[Extra Owner]`",
     "`!setstatschannel <#channel>` - Set dedicated channel for stats commands `[Extra Owner]`"
   ] },
