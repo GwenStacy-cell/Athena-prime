@@ -48,7 +48,11 @@ export function getDatabaseMetrics() {
     vcProtection: Object.keys(cache.vcProtection || {}).length,
     apps: Object.keys(cache.apps || {}).length,
     vcDrags: Object.values(cache.vcDrags || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
-    serverBackups: Object.keys(cache.backups || {}).length
+    serverBackups: Object.keys(cache.backups || {}).length,
+    automodGuilds: Object.values(cache.guilds || {}).filter(g => g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled).length,
+    honeypots: Object.values(cache.guilds || {}).filter(g => g.honeypotChannelId).length,
+    whitelistedRoles: Object.values(cache.guilds || {}).reduce((acc, g) => acc + (g.linkBypassRoles?.length || 0) + (g.inviteBypassRoles?.length || 0) + Object.keys(g.whitelist?.roles || {}).length, 0),
+    whitelistedUsers: Object.values(cache.guilds || {}).reduce((acc, g) => acc + Object.keys(g.whitelist?.users || {}).length, 0)
   };
 }
 

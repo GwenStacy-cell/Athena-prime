@@ -318,10 +318,13 @@ export const commands = [
         `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
         `> -# **Server Stats Setups:** \`${m.serverStats} servers\`\n` +
         `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
+        `> -# **Automod & Honeypots:** \`${m.automodGuilds} active automod servers, ${m.honeypots} honeypots\`\n` +
+        `> -# **Bypasses & Security Roles:** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} security whitelisted users\`\n` +
         `> -# **Custom Triggers & Auto-Replies:** \`${m.triggers}\`\n` +
         `> -# **Active Quarantines:** \`${m.quarantines}\`\n` +
         `> -# **Tickets & Verification:** \`${m.tickets} tickets, ${m.verification} verification setups\`\n` +
         `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} giveaways, ${m.reactionRoles} menus\`\n` +
+        `> -# **VC Drag Sessions & Backups:** \`${m.vcDrags} active drag sessions, ${m.serverBackups} server templates\`\n` +
         `> -# **Sticky Messages:** \`${m.stickyMessages} channels\`\n\n` +
         `**Management Commands:**\n` +
         `-# • \`!db backup\` — Force immediate cloud backup\n` +
