@@ -81,7 +81,7 @@ export async function handleYtStatsButton(interaction) {
 
     // 1. Delete channels known to DB
     for (const stat of ytStats) {
-      const channel = interaction.guild.channels.cache.get(stat.channelId);
+      const channel = interaction.guild.channels.cache.get(stat.channelId) || await interaction.guild.channels.fetch(stat.channelId).catch(() => null);
       if (channel) {
         if (channel.parentId) categoriesToDelete.add(channel.parentId);
         await channel.delete().catch(() => null);
@@ -265,7 +265,9 @@ export async function handleYtStatsModal(interaction) {
     const { forceUpdateYtStats } = await import('../utils/ytStatsEngine.js');
     forceUpdateYtStats(interaction.guild).catch(() => null);
 
-    return interaction.update(getYtStatsPanel(interaction.guild.id, interaction.client));
+    return interaction.update(getYtStatsPanel(interaction.guild.id, interaction.client)).catch(async () => {
+      return interaction.reply({ content: '-# **YouTube Stats VC Bound Successfully!**', flags: 64 }).catch(() => null);
+    });
   }
 }
 

@@ -83,7 +83,8 @@ export const commands = [
               .setStyle(ButtonStyle.Primary)
           );
 
-        await interaction.channel.send({ components: [container, row], flags: 32768 });
+        container.components.push(row.toJSON());
+        await interaction.channel.send({ components: [container], flags: 32768 });
 
         db.updateTicketConfig(guildId, {
           categoryId: category.id,
@@ -146,7 +147,8 @@ export const commands = [
               .setStyle(ButtonStyle.Primary)
           );
 
-        const panelMsg = await message.channel.send({ components: [container, row], flags: 32768 });
+        container.components.push(row.toJSON());
+        const panelMsg = await message.channel.send({ components: [container], flags: 32768 });
 
         db.updateTicketConfig(message.guild.id, {
           categoryId: category.id,
@@ -247,8 +249,10 @@ export async function handleTicketButtons(interaction) {
         new ButtonBuilder().setCustomId('ticket_close').setLabel('Close Ticket').setStyle(ButtonStyle.Danger)
       );
       
+      container.components.push(row.toJSON());
+      
       await textChannel.send({
-        components: [container, row],
+        components: [container],
         flags: 32768
       });
       

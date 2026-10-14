@@ -107,10 +107,13 @@ export default {
     // ==========================================
     // 4. AUTOROLE
     // ==========================================
-    const allAutoroleIds = [
-      ...(Array.isArray(config.autoroleIds) ? config.autoroleIds : []),
-      ...(Array.isArray(config.autoroleHuman) ? config.autoroleHuman : (config.autoroleHuman ? [config.autoroleHuman] : []))
-    ];
+    const botRoleIds = Array.isArray(config.autoroleBot) ? config.autoroleBot : (config.autoroleBot ? [config.autoroleBot] : []);
+    const humanRoleIds = Array.isArray(config.autoroleHuman) ? config.autoroleHuman : (config.autoroleHuman ? [config.autoroleHuman] : []);
+    const legacyRoleIds = Array.isArray(config.autoroleIds) ? config.autoroleIds : (config.autoroleIds ? [config.autoroleIds] : []);
+    
+    const allAutoroleIds = member.user.bot
+      ? [...legacyRoleIds, ...botRoleIds]
+      : [...legacyRoleIds, ...humanRoleIds];
     if (allAutoroleIds.length > 0) {
       try {
         const rolesToAdd = [];

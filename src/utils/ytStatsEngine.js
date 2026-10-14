@@ -1,4 +1,4 @@
-﻿import db from '../database.js';
+import db from '../database.js';
 import { resolveYouTubeChannelId } from './youtubeNotifier.js';
 
 export async function scrapeYouTubeMetrics(handle) {
@@ -87,7 +87,7 @@ export async function forceUpdateYtStats(guild) {
   }
   
   for (const stat of config.ytStats) {
-    const channel = guild.channels.cache.get(stat.channelId);
+    const channel = guild.channels.cache.get(stat.channelId) || await guild.channels.fetch(stat.channelId).catch(() => null);
     if (!channel) continue;
     
     const metrics = cachedMetrics[stat.handle];

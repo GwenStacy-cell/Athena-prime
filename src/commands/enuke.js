@@ -72,7 +72,11 @@ export const commands = [
           .setStyle(ButtonStyle.Danger)
       );
 
-      enukeReply.components.push(row);
+      if (enukeReply.components && enukeReply.components[0] && enukeReply.components[0].type === 17) {
+        enukeReply.components[0].components.push(row.toJSON());
+      } else {
+        enukeReply.components.push(row);
+      }
       const msg = await message.reply(enukeReply);
 
       setTimeout(() => {

@@ -1,4 +1,4 @@
-﻿import db from '../database.js';
+import db from '../database.js';
 
 export default {
   name: 'presenceUpdate',
@@ -14,20 +14,23 @@ export default {
     const rawVanityRoles = Array.isArray(config.vanityRole) ? config.vanityRole : [config.vanityRole];
     const rolesToManage = [];
     for (const rId of rawVanityRoles) {
-      const role = newPresence.guild.roles.cache.get(rId);
+      const role = newPresence.guild.roles.cache.get(rId) || await newPresence.guild.roles.fetch(rId).catch(() => null);
       if (role && role.editable) rolesToManage.push(role);
     }
     if (rolesToManage.length === 0) return;
 
     const hasVanityInStatus = customStatus && customStatus.state && customStatus.state.includes(config.vanityString);
-    const hasAnyRole = rolesToManage.some(r => newPresence.member.roles.cache.has(r.id));
-
-    if (hasVanityInStatus && !hasAnyRole) {
-      // Award the vanity roles
-      await newPresence.member.roles.add(rolesToManage, 'Athena Prime: Vanity Status Award').catch(() => null);
-    } else if (!hasVanityInStatus && hasAnyRole) {
-      // Strip the vanity roles
-      await newPresence.member.roles.remove(rolesToManage, 'Athena Prime: Vanity Status Removed').catch(() => null);
+    
+    if (hasVanityInStatus) {
+      const rolesToAdd = rolesToManage.filter(r => !newPresence.member.roles.cache.has(r.id));
+      if (rolesToAdd.length > 0) {
+        await newPresence.member.roles.add(rolesToAdd, 'Athena Prime: Vanity Status Award').catch(() => null);
+      }
+    } else {
+      const rolesToRemove = rolesToManage.filter(r => newPresence.member.roles.cache.has(r.id));
+      if (rolesToRemove.length > 0) {
+        await newPresence.member.roles.remove(rolesToRemove, 'Athena Prime: Vanity Status Removed').catch(() => null);
+      }
     }
   }
 };

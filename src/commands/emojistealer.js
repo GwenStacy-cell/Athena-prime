@@ -58,7 +58,11 @@ export const commands = [{
       'Emoji Stealer (All Emojis)',
       `Found **${emojis.size}** emojis in this server.\n\nSelect a target server below to copy all of them:`
     );
-    uiReply.components.push(row);
+    if (uiReply.components && uiReply.components[0] && uiReply.components[0].type === 17) {
+      uiReply.components[0].components.push(row.toJSON());
+    } else {
+      uiReply.components.push(row);
+    }
 
     await message.reply(uiReply);
   }

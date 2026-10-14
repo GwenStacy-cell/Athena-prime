@@ -83,7 +83,8 @@ export const commands = [
       
       const row = new ActionRowBuilder().addComponents(btnAdd, btnClear, btnClose);
 
-      const reply = await message.reply({ components: [embed, row.toJSON()], flags: MessageFlags.IsComponentsV2 });
+      embed.components.push(row.toJSON());
+      const reply = await message.reply({ components: [embed], flags: MessageFlags.IsComponentsV2 });
       
       const collector = reply.createMessageComponentCollector({ time: 300000 });
 
@@ -98,9 +99,10 @@ export const commands = [
         if (i.customId === 'app_mngr_clear') {
           db.updateAppConfig(message.guild.id, { questions: [] });
           // Update message
-          embed.components = embed.components.filter(c => !c.content?.startsWith('### Current') && !c.content?.match(/^\**\**\d+\.\**\**/));
+          embed.components = embed.components.filter(c => !c.content?.startsWith('### Current') && !c.content?.match(/^\**\**\d+\.\**\**/) && c.type !== 1);
           row.components[0].setDisabled(false);
-          await i.update({ components: [embed, row.toJSON()] });
+          embed.components.push(row.toJSON());
+          await i.update({ components: [embed] });
           return;
         }
 
@@ -125,7 +127,7 @@ export async function handleAppManagerModals(interaction) {
     config.questions.push(qText);
     db.updateAppConfig(interaction.guild.id, { questions: config.questions });
     
-    await interaction.reply({ content: cv2.success('Question Added', `Successfully added: **${qText}**\n**Please run \`!app\` again to see the updated panel.**`), flags: MessageFlags.IsComponentsV2 });
+    await interaction.reply(cv2.success('Question Added', `Successfully added: **${qText}**\n**Please run \`!app\` again to see the updated panel.**`));
     await interaction.message.delete().catch(() => null);
   }
 }

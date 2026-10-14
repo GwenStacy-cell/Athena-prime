@@ -175,7 +175,16 @@ function getManagerPanel(guildId, type) {
     new ButtonBuilder().setCustomId(`${prefix}reset`).setLabel('Reset All').setStyle(ButtonStyle.Danger)
   );
 
-  replyData.components.push(channelSelectRow, row1, row2, row3);
+  if (replyData.components && replyData.components[0] && replyData.components[0].type === 17) {
+    replyData.components[0].components.push(
+      channelSelectRow.toJSON(),
+      row1.toJSON(),
+      row2.toJSON(),
+      row3.toJSON()
+    );
+  } else {
+    replyData.components.push(channelSelectRow, row1, row2, row3);
+  }
   return replyData;
 }
 

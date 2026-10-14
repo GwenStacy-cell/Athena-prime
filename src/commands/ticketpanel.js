@@ -47,7 +47,8 @@ export function buildTicketPanelPayload(guildId) {
     );
   }
 
-  return { components: [container, actionRow], flags: 32768 };
+  container.components.push(actionRow.toJSON());
+  return { components: [container], flags: 32768 };
 }
 
 export async function updateManagerMessage(message) {
@@ -131,7 +132,8 @@ export async function updateManagerMessage(message) {
       .setMaxValues(10)
   );
 
-  const payload = { components: [container, row3, row4, row1, row2], flags: 32768 };
+  container.components.push(row3.toJSON(), row4.toJSON(), row1.toJSON(), row2.toJSON());
+  const payload = { components: [container], flags: 32768 };
 
   if (message.author?.id === message.client.user.id) {
     await message.edit(payload).catch(() => null);

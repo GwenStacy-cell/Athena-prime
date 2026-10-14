@@ -1198,7 +1198,7 @@ async function getStatusEmbed(client, guild) {
   ] },
   { id: 'config', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Config', label: 'Server Configuration', emoji: 'config', commands: [
     "`!serverstats / !statsetup setup|config|disable` - Manage voice channels displaying member counts `[Extra Owner]`",
-    "`!ytstats setup` - Display YouTube subscriber counts in VC `[Extra Owner]`",
+    "`!ytstats` - Open **YouTube Stats VC Engine** (Dynamically display live YouTube subscriber counts in VC) `[Extra Owner]`",
     "`!autovcstatus / !randomvc [on|off|shuffle]` - Rotate custom statuses on all VCs `[Extra Owner]`",
     "`!accent <hex>` - Set the global CV2 accent color for the server `[Extra Owner]`",
     "`!prefix <new_prefix>` - Change the bot's command prefix `[Extra Owner]`",
@@ -1894,7 +1894,11 @@ async function sendCalculator(context) {
 
   rows[3].components[4].setDisabled(true); 
 
-  embed.components.push(...rows);
+  if (embed.components && embed.components[0] && embed.components[0].type === 17) {
+    embed.components[0].components.push(...rows.map(r => r.toJSON ? r.toJSON() : r));
+  } else {
+    embed.components.push(...rows);
+  }
 
   const payload = embed;
   let msg;
@@ -2031,7 +2035,11 @@ export async function handleCalculatorButton(interaction) {
 
   rows[3].components[4].setDisabled(true); 
 
-  embed.components.push(...rows);
+  if (embed.components && embed.components[0] && embed.components[0].type === 17) {
+    embed.components[0].components.push(...rows.map(r => r.toJSON ? r.toJSON() : r));
+  } else {
+    embed.components.push(...rows);
+  }
   
   await interaction.update({ ...embed });
 }

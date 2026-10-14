@@ -19,6 +19,15 @@ import { isBotOwner } from '../utils/helpers.js';
 // ==========================================
 export const spamMoreCache = new Map();
 
+function attachRow(payload, row) {
+  if (payload.components && payload.components[0] && payload.components[0].type === 17) {
+    payload.components[0].components.push(row.toJSON ? row.toJSON() : row);
+  } else {
+    payload.components.push(row);
+  }
+  return payload;
+}
+
 export const commands = [
 
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -106,14 +115,14 @@ export const commands = [
         const _r = result.success
           ? cv2.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM with your message **${count}x**.`)
           : cv2.warn('<:off:1533844858983157851> Failed', result.message);
-        if (result.success) _r.components.push(row);
+        if (result.success) attachRow(_r, row);
         await message.author.send(_r).catch(() => null);
       } else {
         // Spam current channel via webhook
         await executeChannelSpam(message.channel, text, count);
         const row = buildSpamMoreRow(userId, message.channel.id, null, text, 'channel');
         const _r = cv2.success('Channel Spam Deployed ', `Message sent **${count}x** anonymously in <#${message.channel.id}>.`);
-        _r.components.push(row);
+        attachRow(_r, row);
         await message.author.send(_r).catch(() => null);
       }
     },
@@ -165,13 +174,13 @@ export const commands = [
         const _r = result.success
           ? cv2.success('DM Spam Deployed ', `Spammed **${targetUser.tag}**'s DM **${count}x**.`)
           : cv2.warn('<:off:1533844858983157851> Failed', result.message);
-        if (result.success) _r.components.push(row);
+        if (result.success) attachRow(_r, row);
         await interaction.editReply(_r);
       } else {
         await executeChannelSpam(interaction.channel, text, count);
         const row = buildSpamMoreRow(userId, interaction.channel.id, null, text, 'channel');
         const _r = cv2.success('Channel Spam Deployed ', `Message sent **${count}x** anonymously.`);
-        _r.components.push(row);
+        attachRow(_r, row);
         await interaction.editReply(_r);
       }
     }
@@ -327,7 +336,7 @@ export async function handleSpamModal(interaction) {
   const row = buildSpamMoreRow(userId, interaction.channel.id, null, text, 'channel');
 
   const _r = cv2.success('Spam Deployed ', `Message sent **${count}x** anonymously.`);
-  _r.components.push(row);
+  attachRow(_r, row);
   await interaction.followUp(_r).catch(() => null);
 }
 
@@ -358,7 +367,7 @@ export async function handleSpamMoreButton(interaction) {
       const _r = result.success
         ? cv2.success('5 More Sent ', 'Sent 5 more DMs. Press again to send 5 more.')
         : cv2.warn('<:off:1533844858983157851> Failed', result.message);
-      if (result.success) _r.components.push(newRow);
+      if (result.success) attachRow(_r, newRow);
       await interaction.followUp(_r).catch(() => null);
     } else {
       const channel = await interaction.client.channels.fetch(cacheEntry.channelId).catch(() => null);
@@ -366,7 +375,7 @@ export async function handleSpamMoreButton(interaction) {
         await executeChannelSpam(channel, cacheEntry.text, 5);
         const newRow = buildSpamMoreRow(interaction.user.id, cacheEntry.channelId, null, cacheEntry.text, 'channel');
         const _r = cv2.success('5 More Sent ', 'Sent 5 more. Press again for 5 more.');
-        _r.components.push(newRow);
+        attachRow(_r, newRow);
         await interaction.followUp(_r).catch(() => null);
       }
     }

@@ -102,7 +102,7 @@ export const commands = [
       if (res.success) {
         const { default: db } = await import("../database.js");
         const cfg = db.getGuildConfig(message.guild.id);
-        const replyPayload = cv2.success('Track Queued', res.message);
+        let replyPayload = cv2.success('Track Queued', res.message);
         if (cfg.musicChannelId && message.channel.id !== cfg.musicChannelId) {
           // Can't push raw EmbedBuilder to cv2.success since cv2 doesn't use embeds. Wait! cv2 might support embeds field if mixed? 
           // Actually, cv2 is pure components + flags.

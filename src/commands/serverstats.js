@@ -149,7 +149,11 @@ export const commands = [
           const row2 = new ActionRowBuilder().addComponents(emojiBtn);
 
           const cv2Reply = cv2.info('Server Stats Configuration', 'Please select a font style from the dropdown below, or click the button to set a custom emoji prefix for your voice channels.\n\n<a:warning:1540656124313993247> **Note:** Discord limits voice channel renames to **2 times every 10 minutes**. If your changes don\'t apply immediately, please wait a few minutes for the rate limit to expire.');
-          cv2Reply.components.push(row1, row2);
+          if (cv2Reply.components && cv2Reply.components[0] && cv2Reply.components[0].type === 17) {
+            cv2Reply.components[0].components.push(row1.toJSON(), row2.toJSON());
+          } else {
+            cv2Reply.components.push(row1, row2);
+          }
           const setupMsg = await message.reply(cv2Reply);
 
           const collector = setupMsg.createMessageComponentCollector({ filter: i => i.user.id === message.author.id, time: 120000 });
