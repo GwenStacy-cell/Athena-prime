@@ -15,18 +15,20 @@ function hasEmojiStart(line) {
 function styleLine(line, addBullet) {
   if (!line.trim()) return line;
   if (isPreformatted(line)) {
-    const clean = line.replace(/\*([^*]+)\*/g, '$1');
-    if (clean.startsWith('-#') && !clean.includes('**')) {
-      const rest = clean.replace(/^-#\s*/, '');
+    if (line.startsWith('-#') && !line.includes('**')) {
+      const rest = line.replace(/^-#\s*/, '');
       return '-# **' + rest + '**';
     }
-    return clean;
+    return line;
   }
   const startsEmoji = hasEmojiStart(line);
   const hasListMarker = /^[\u2022\-\*+] /.test(line);
   
   const bullet = (addBullet && !hasListMarker) ? '\u2022 ' : '';
-  const cleanLine = line.replace(/\*([^*]+)\*/g, '$1').replace(/^\*\*|\*\*$/g, '');
+  if (line.includes('**')) {
+    return '-# ' + bullet + line;
+  }
+  const cleanLine = line.replace(/^\*\*|\*\*$/g, '');
   return '-# **' + bullet + cleanLine + '**';
 }
 
@@ -56,22 +58,45 @@ function buildContainer(title, description, fields, customFooter) {
   }
 
   // Fields
-  var fieldText = '';
+  var fieldLines = [];
   var inlineBuf = [];
-  for (var i = 0; i < fields.length; i++) {
-    var f = fields[i];
-    var cleanVal = (f.value || '').replace(/\*([^*]+)\*/g, '$1');
-    if (f.inline) {
-      inlineBuf.push('**' + f.name + ':** ' + cleanVal);
-    } else {
-      if (inlineBuf.length > 0) { fieldText += '-# **' + inlineBuf.join('  **\u00b7**  ') + '**\n'; inlineBuf = []; }
-      fieldText += '\n-# **' + f.name + '**\n-# **' + cleanVal.replace(/\n/g, '\n-# **') + '**\n';
+
+  function flushInline() {
+    if (inlineBuf.length > 0) {
+      fieldLines.push('-# ' + inlineBuf.join('  \u00b7  '));
+      inlineBuf = [];
     }
   }
-  if (inlineBuf.length > 0) fieldText += '\n-# **' + inlineBuf.join('  **\u00b7**  ') + '**\n';
-  if (fieldText.trim()) {
+
+  for (var i = 0; i < fields.length; i++) {
+    var f = fields[i];
+    if (!f || !f.name) continue;
+    var name = String(f.name).replace(/^\*\*|\*\*$/g, '').trim();
+    var val = String(f.value || '').trim();
+
+    if (f.inline) {
+      inlineBuf.push('**' + name + ':** ' + val);
+      if (inlineBuf.length >= 3) {
+        flushInline();
+      }
+    } else {
+      flushInline();
+      if (val.includes('\n')) {
+        var subLines = val.split('\n').map(function(l) {
+          return l.trim() ? (l.startsWith('-#') ? l : '-# ' + l) : '';
+        });
+        fieldLines.push('-# **' + name + ':**\n' + subLines.join('\n'));
+      } else {
+        fieldLines.push('-# **' + name + ':** ' + val);
+      }
+    }
+  }
+  flushInline();
+
+  var fieldText = fieldLines.join('\n').trim();
+  if (fieldText) {
     comps.push(SEP);
-    comps.push({ type: 10, content: fieldText.trim() });
+    comps.push({ type: 10, content: fieldText });
   }
 
   // Bottom divider

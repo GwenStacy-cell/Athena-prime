@@ -3037,11 +3037,11 @@ function formatQuarantineSetupResult(res) {
 
   if (res.allFound) {
     const fields = [
-      { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\` (DB Assigned)` : 'None', inline: true },
-      { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}> (DB Assigned)` : 'None', inline: true },
-      { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> (DB Assigned & Synced)` : 'None', inline: true },
-      { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> (DB Assigned & Synced)` : 'None', inline: true },
-      { name: '<a:uptime:1552608831060844575> Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: true }
+      { name: 'Quarantine Category', value: res.category ? `\`${res.category.name}\` (DB Assigned)` : 'None', inline: false },
+      { name: 'Quarantined Role', value: res.role ? `<@&${res.role.id}> (DB Assigned)` : 'None', inline: false },
+      { name: 'Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> (DB Assigned & Synced)` : 'None', inline: false },
+      { name: 'Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> (DB Assigned & Synced)` : 'None', inline: false },
+      { name: 'Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: false }
     ];
 
     return cv2.success(
@@ -3052,11 +3052,11 @@ function formatQuarantineSetupResult(res) {
   }
 
   const fields = [
-    { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\` • ${res.categoryInDb ? 'DB Assigned' : (res.categoryFound ? 'Found in Server' : 'Created')}` : 'None', inline: true },
-    { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}> • ${res.roleInDb ? 'DB Assigned' : (res.roleFound ? 'Found in Server' : 'Created')}` : 'None', inline: true },
-    { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> • ${res.textInDb ? (res.textWasUnderCat ? 'DB Assigned & Synced' : 'DB Assigned, Moved & Synced') : (res.textFound ? 'Found & Synced' : 'Created & Synced')}` : 'None', inline: true },
-    { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> • ${res.vcInDb ? (res.vcWasUnderCat ? 'DB Assigned & Synced' : 'DB Assigned, Moved & Synced') : (res.vcFound ? 'Found & Synced' : 'Created & Synced')}` : 'None', inline: true },
-    { name: '<a:uptime:1552608831060844575> Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: true }
+    { name: 'Quarantine Category', value: res.category ? `\`${res.category.name}\` • ${res.categoryInDb ? 'DB Assigned' : (res.categoryFound ? 'Found in Server' : 'Created')}` : 'None', inline: false },
+    { name: 'Quarantined Role', value: res.role ? `<@&${res.role.id}> • ${res.roleInDb ? 'DB Assigned' : (res.roleFound ? 'Found in Server' : 'Created')}` : 'None', inline: false },
+    { name: 'Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> • ${res.textInDb ? (res.textWasUnderCat ? 'DB Assigned & Synced' : 'DB Assigned, Moved & Synced') : (res.textFound ? 'Found & Synced' : 'Created & Synced')}` : 'None', inline: false },
+    { name: 'Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> • ${res.vcInDb ? (res.vcWasUnderCat ? 'DB Assigned & Synced' : 'DB Assigned, Moved & Synced') : (res.vcFound ? 'Found & Synced' : 'Created & Synced')}` : 'None', inline: false },
+    { name: 'Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: false }
   ];
 
   return cv2.success(
@@ -3126,9 +3126,9 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     const vc      = updatedConfig.quarantineVcId      ? await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null)      : null;
 
     return cv2.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
-        { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : ' Not Set - run `/qrmanager setup`', inline: true },
-        { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : ' Not Set - run `/qrmanager setup`', inline: true },
-        { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : ' Not Set - use `/qrmanager setvc`', inline: true }
+        { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : 'Not Set - run `/qrmanager setup`', inline: false },
+        { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : 'Not Set - run `/qrmanager setup`', inline: false },
+        { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : 'Not Set - use `/qrmanager setvc`', inline: false }
       ]);
   }
 
@@ -3143,9 +3143,9 @@ async function handleLinksAllow(guild, action, domain) {
   if (action === 'allowall') {
     db.updateGuildConfig(guild.id, { allowAllLinks: true });
     return cv2.success(
-        '<a:uptime:1552608831060844575> All Links Allowed',
+        'All Links Allowed | <a:atheNATICK:1557841381630681106>',
         'The anti-link filter has been **completely disabled** for this server.\n\nAll users can now post any link freely.\n\nUse `/linksallow disallowall` to re-enable the filter.',
-        [{ name: ' Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
+        [{ name: 'Note', value: 'This overrides all domain whitelists and disables the anti-link filter entirely.' }]
       );
   }
 
@@ -3265,25 +3265,25 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
     'Mass Quarantine Executed',
     `**${moderator.user.tag}** mass-quarantined all members with role <@&${targetRole.id}>.`,
     [
-      { name: '<a:uptime:1552608831060844575> Role',       value: `<@&${targetRole.id}>`, inline: true },
-      { name: ' Quarantined', value: `\`${success}\``,       inline: true },
-      { name: '<:off:1533844858983157851> Failed',      value: `\`${failed}\``,        inline: true },
-      { name: ' Skipped',    value: `\`${skipped}\``,       inline: true },
-      { name: '<a:uptime:1552608831060844575> Reason',     value: reason }
+      { name: 'Role',        value: `<@&${targetRole.id}>`, inline: true },
+      { name: 'Quarantined', value: `\`${success}\``,       inline: true },
+      { name: 'Failed',      value: `\`${failed}\``,        inline: true },
+      { name: 'Skipped',     value: `\`${skipped}\``,       inline: true },
+      { name: 'Reason',      value: reason }
     ],
     'danger'
   ));
 
   return cv2.danger(
-      '<a:uptime:1552608831060844575> Mass Quarantine Complete',
+      'Mass Quarantine Complete',
       `All targeted members with <@&${targetRole.id}> have been processed.`,
       [
-        { name: '<a:uptime:1552608831060844575> Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
-        { name: ' Quarantined',  value: `\`${success}\``,  inline: true },
-        { name: '<:off:1533844858983157851> Failed',       value: `\`${failed}\``,   inline: true },
-        { name: ' Skipped',     value: `\`${skipped}\``,  inline: true },
-        { name: '<a:uptime:1552608831060844575> Reason',       value: reason,             inline: false },
-        { name: '<a:uptime:1552608831060844575> Executed By',  value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
+        { name: 'Target Role',  value: `<@&${targetRole.id}> (${total} members targeted)`, inline: false },
+        { name: 'Quarantined',  value: `\`${success}\``,  inline: true },
+        { name: 'Failed',       value: `\`${failed}\``,   inline: true },
+        { name: 'Skipped',      value: `\`${skipped}\``,  inline: true },
+        { name: 'Reason',       value: reason,            inline: false },
+        { name: 'Executed By',  value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
       ]
     );
 }
@@ -3329,19 +3329,19 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
     'Mass Unquarantine Executed',
     `**${moderator.user.tag}** released all quarantined members.`,
     [
-      { name: ' Released', value: `\`${success}\``, inline: true },
-      { name: '<:off:1533844858983157851> Failed',   value: `\`${failed}\``,  inline: true }
+      { name: 'Released', value: `\`${success}\``, inline: true },
+      { name: 'Failed',   value: `\`${failed}\``,  inline: true }
     ],
     'success'
   ));
 
   return cv2.success(
-      '<a:uptime:1552608831060844575> Mass Unquarantine Complete',
+      'Mass Unquarantine Complete | <a:atheNATICK:1557841381630681106>',
       `All quarantined members have been processed.`,
       [
-        { name: ' Released',     value: `\`${success}\``, inline: true },
-        { name: '<:off:1533844858983157851> Failed',        value: `\`${failed}\``,  inline: true },
-        { name: '<a:uptime:1552608831060844575> Executed By', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
+        { name: 'Released',    value: `\`${success}\``, inline: true },
+        { name: 'Failed',      value: `\`${failed}\``,  inline: true },
+        { name: 'Executed By', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
       ]
     );
 }
