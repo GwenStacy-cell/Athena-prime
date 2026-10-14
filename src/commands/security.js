@@ -3037,31 +3037,31 @@ function formatQuarantineSetupResult(res) {
 
   if (res.allFound) {
     const fields = [
-      { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\`` : 'None', inline: true },
-      { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}>` : 'None', inline: true },
-      { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> (Synced)` : 'None', inline: true },
-      { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> (Synced)` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\` (DB Assigned)` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}> (DB Assigned)` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> (DB Assigned & Synced)` : 'None', inline: true },
+      { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> (DB Assigned & Synced)` : 'None', inline: true },
       { name: '<a:uptime:1552608831060844575> Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: true }
     ];
 
     return cv2.success(
       'Quarantine System | <a:atheNATICK:1557841381630681106>',
-      `All quarantine components are already assigned, synced, and active under category **\`${catName}\`**.\nQuarantined members are strictly contained and isolated from all other server channels.`,
+      `All assigned quarantine channels and role were found in the bot's server database, active and synced under category **\`${catName}\`**.\nQuarantined members are strictly contained and isolated from all other server channels.`,
       fields
     );
   }
 
   const fields = [
-    { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\` • ${res.categoryFound ? 'Found' : 'Created'}` : 'None', inline: true },
-    { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}> • ${res.roleFound ? 'Found' : 'Created'}` : 'None', inline: true },
-    { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> • ${res.textFound ? (res.textWasUnderCat ? 'Found & Synced' : 'Assigned under Category & Synced') : 'Created & Synced'}` : 'None', inline: true },
-    { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> • ${res.vcFound ? (res.vcWasUnderCat ? 'Found & Synced' : 'Assigned under Category & Synced') : 'Created & Synced'}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Quarantine Category', value: res.category ? `\`${res.category.name}\` • ${res.categoryInDb ? 'DB Assigned' : (res.categoryFound ? 'Found in Server' : 'Created')}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Quarantined Role', value: res.role ? `<@&${res.role.id}> • ${res.roleInDb ? 'DB Assigned' : (res.roleFound ? 'Found in Server' : 'Created')}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Quarantine Text', value: res.textChannel ? `<#${res.textChannel.id}> • ${res.textInDb ? (res.textWasUnderCat ? 'DB Assigned & Synced' : 'DB Assigned, Moved & Synced') : (res.textFound ? 'Found & Synced' : 'Created & Synced')}` : 'None', inline: true },
+    { name: '<a:uptime:1552608831060844575> Quarantine VC', value: res.voiceChannel ? `<#${res.voiceChannel.id}> • ${res.vcInDb ? (res.vcWasUnderCat ? 'DB Assigned & Synced' : 'DB Assigned, Moved & Synced') : (res.vcFound ? 'Found & Synced' : 'Created & Synced')}` : 'None', inline: true },
     { name: '<a:uptime:1552608831060844575> Channel Protection', value: `\`${res.synced}\` channels isolated`, inline: true }
   ];
 
   return cv2.success(
     'Quarantine Auto-Setup | <a:atheNATICK:1557841381630681106>',
-    `Configured and assigned quarantine components under category **\`${catName}\`** with synced permissions.\nQuarantined members are strictly contained within the quarantine zone.`,
+    `Checked server database for assigned channels & roles. Leftover components were configured and synced under category **\`${catName}\`**.\nQuarantined members are strictly contained within the quarantine zone.`,
     fields
   );
 }

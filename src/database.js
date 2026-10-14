@@ -189,6 +189,7 @@ class Database {
         quarantineRoleId: null,
         quarantineChannelId: null,
         quarantineVcId: null,
+        quarantineCategoryId: null,
         homeVcId: null,
         inviteChannelId: null,
         linkBypassRoles: [],
@@ -308,6 +309,7 @@ class Database {
       if (cfg.autonick === undefined) { cfg.autonick = { enabled: false, prefix: '', suffix: '', layout: '{name}' }; updated = true; }
       else if (cfg.autonick.layout === undefined) { cfg.autonick.layout = '{name}'; updated = true; }
       if (cfg.quarantineVcId === undefined) { cfg.quarantineVcId = null; updated = true; }
+      if (cfg.quarantineCategoryId === undefined) { cfg.quarantineCategoryId = null; updated = true; }
       if (cfg.homeVcId === undefined) { cfg.homeVcId = null; updated = true; }
       if (cfg.theaterModeVcId === undefined) { cfg.theaterModeVcId = null; updated = true; }
       if (cfg.inviteChannelId === undefined) { cfg.inviteChannelId = null; updated = true; }

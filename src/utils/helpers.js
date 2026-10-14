@@ -383,19 +383,31 @@ export async function autoSetupQuarantine(guild) {
   }
   if (!role) throw new Error('Could not create or locate the Quarantined role.');
 
-  // 2. Quarantine Category Check (pure font, no emojis)
+  // 2. Quarantine Category Check (check bot's database first, then guild)
   const categoryTargetName = '.      You Have Been Quarantined';
   let category = null;
   let categoryFound = false;
 
-  category = guild.channels.cache.find(c => 
-    c.type === ChannelType.GuildCategory && 
-    (c.name === categoryTargetName || c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
-  );
+  if (config.quarantineCategoryId) {
+    category = await guild.channels.fetch(config.quarantineCategoryId).catch(() => null);
+    if (category && category.type === ChannelType.GuildCategory) {
+      categoryFound = true;
+    } else {
+      category = null;
+    }
+  }
 
-  if (category) {
-    categoryFound = true;
-  } else {
+  if (!category) {
+    category = guild.channels.cache.find(c => 
+      c.type === ChannelType.GuildCategory && 
+      (c.name === categoryTargetName || c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
+    );
+    if (category) {
+      categoryFound = true;
+    }
+  }
+
+  if (!category) {
     category = await guild.channels.create({
       name: categoryTargetName,
       type: ChannelType.GuildCategory,
@@ -511,9 +523,10 @@ export async function autoSetupQuarantine(guild) {
     }).catch(() => null);
   }
 
-  // 5. Update Database Configuration
+  // 5. Update Database Configuration with all assigned IDs
   db.updateGuildConfig(guild.id, {
     quarantineRoleId: role.id,
+    quarantineCategoryId: category?.id || null,
     quarantineChannelId: textChannel?.id || null,
     quarantineVcId: voiceChannel?.id || null
   });
@@ -563,6 +576,11 @@ export async function autoSetupQuarantine(guild) {
   const excludeIds = [textChannel?.id, voiceChannel?.id, category?.id].filter(Boolean);
   const synced = await syncQuarantinePermissions(guild, role, excludeIds);
 
+  const roleInDb = Boolean(config.quarantineRoleId && role && config.quarantineRoleId === role.id);
+  const categoryInDb = Boolean(config.quarantineCategoryId && category && config.quarantineCategoryId === category.id);
+  const textInDb = Boolean(config.quarantineChannelId && textChannel && config.quarantineChannelId === textChannel.id);
+  const vcInDb = Boolean(config.quarantineVcId && voiceChannel && config.quarantineVcId === voiceChannel.id);
+
   const allFound = roleFound && categoryFound && textFound && vcFound && textWasUnderCat && vcWasUnderCat;
 
   return {
@@ -577,7 +595,11 @@ export async function autoSetupQuarantine(guild) {
     textFound,
     vcFound,
     textWasUnderCat,
-    vcWasUnderCat
+    vcWasUnderCat,
+    roleInDb,
+    categoryInDb,
+    textInDb,
+    vcInDb
   };
 }
 
