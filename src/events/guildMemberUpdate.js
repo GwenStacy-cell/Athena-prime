@@ -5,10 +5,12 @@ import db from '../database.js';
 export default {
   name: 'guildMemberUpdate',
   async execute(oldMember, newMember) {
-    // 0. Protect Quarantine State from Onboarding / Autoroles
     const qRecord = db.getQuarantine(newMember.guild.id, newMember.id);
     if (qRecord) {
-      const qRole = newMember.guild.roles.cache.find(r => r.name.toLowerCase().includes('quarantine'));
+      const config = db.getGuildConfig(newMember.guild.id);
+      const qRole = config.quarantineRoleId
+        ? (newMember.guild.roles.cache.get(config.quarantineRoleId) || await newMember.guild.roles.fetch(config.quarantineRoleId).catch(() => null))
+        : newMember.guild.roles.cache.find(r => r.name.toLowerCase() === 'quarantined');
       
       if (qRole) {
         // Collect all roles they CURRENTLY have that they shouldn't

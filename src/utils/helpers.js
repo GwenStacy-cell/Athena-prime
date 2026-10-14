@@ -225,8 +225,9 @@ export async function getOrCreateQuarantineRole(guild) {
   const config = db.getGuildConfig(guild.id);
   let role = null;
 
+  // ALWAYS fetch ID from our database first to detect
   if (config.quarantineRoleId) {
-    role = await guild.roles.fetch(config.quarantineRoleId).catch(() => null);
+    role = guild.roles.cache.get(config.quarantineRoleId) || await guild.roles.fetch(config.quarantineRoleId).catch(() => null);
   }
 
   if (!role) {
@@ -261,21 +262,31 @@ export async function getOrCreateQuarantineChannel(guild, quarantineRole, parent
   const config = db.getGuildConfig(guild.id);
   let channel = null;
 
+  // ALWAYS fetch ID from our database first to detect
   if (config.quarantineChannelId) {
-    channel = await guild.channels.fetch(config.quarantineChannelId).catch(() => null);
+    channel = guild.channels.cache.get(config.quarantineChannelId) || await guild.channels.fetch(config.quarantineChannelId).catch(() => null);
   }
 
   if (!channel) {
-    channel = guild.channels.cache.find(c => 
-      c.type === ChannelType.GuildText && 
-      (c.name === 'you-have-been-quarantined' || c.name === 'quarantine-zone' || c.name.toLowerCase().includes('quarantine'))
-    );
+    const catId = parentCategory?.id || config.quarantineCategoryId;
+    if (catId) {
+      channel = guild.channels.cache.find(c => 
+        c.type === ChannelType.GuildText && 
+        c.parentId === catId
+      );
+    }
+    if (!channel) {
+      channel = guild.channels.cache.find(c => 
+        c.type === ChannelType.GuildText && 
+        (c.name === 'you-have-been-quarantined' || c.name === 'quarantine-zone' || c.name.toLowerCase().includes('quarantine'))
+      );
+    }
     
     if (!channel) {
       channel = await guild.channels.create({
         name: 'you-have-been-quarantined',
         type: ChannelType.GuildText,
-        parent: parentCategory?.id || undefined,
+        parent: catId || undefined,
         topic: 'Restricted Access Area - You Have Been Quarantined - Athena Prime',
         permissionOverwrites: [
           {
@@ -309,21 +320,31 @@ export async function getOrCreateQuarantineVc(guild, quarantineRole, parentCateg
   const config = db.getGuildConfig(guild.id);
   let vc = null;
 
+  // ALWAYS fetch ID from our database first to detect
   if (config.quarantineVcId) {
-    vc = await guild.channels.fetch(config.quarantineVcId).catch(() => null);
+    vc = guild.channels.cache.get(config.quarantineVcId) || await guild.channels.fetch(config.quarantineVcId).catch(() => null);
   }
 
   if (!vc) {
-    vc = guild.channels.cache.find(c => 
-      c.type === ChannelType.GuildVoice && 
-      (c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
-    );
+    const catId = parentCategory?.id || config.quarantineCategoryId;
+    if (catId) {
+      vc = guild.channels.cache.find(c => 
+        (c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildStageVoice) && 
+        c.parentId === catId
+      );
+    }
+    if (!vc) {
+      vc = guild.channels.cache.find(c => 
+        (c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildStageVoice) && 
+        (c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
+      );
+    }
     
     if (!vc) {
       vc = await guild.channels.create({
         name: 'You Have Been Quarantined',
         type: ChannelType.GuildVoice,
-        parent: parentCategory?.id || undefined,
+        parent: catId || undefined,
         permissionOverwrites: [
           {
             id: guild.roles.everyone.id,
@@ -356,18 +377,28 @@ export async function getOrCreateQuarantineVc(guild, quarantineRole, parentCateg
 export async function autoSetupQuarantine(guild) {
   const config = db.getGuildConfig(guild.id);
 
-  // 1. Quarantined Role Check
+  // 1. Quarantined Role Check: ALWAYS fetch ID from our database first
   let role = null;
+  let roleInDb = false;
   let roleFound = false;
 
   if (config.quarantineRoleId) {
-    role = await guild.roles.fetch(config.quarantineRoleId).catch(() => null);
+    role = guild.roles.cache.get(config.quarantineRoleId) || await guild.roles.fetch(config.quarantineRoleId).catch(() => null);
+    if (role) {
+      roleInDb = true;
+      roleFound = true;
+    }
   }
+
+  // Fallback: search guild cache by name only if not found from database ID
   if (!role) {
     role = guild.roles.cache.find(r => r.name.toLowerCase() === 'quarantined');
+    if (role) {
+      roleFound = true;
+    }
   }
+
   if (role) {
-    roleFound = true;
     if (role.hexColor?.toLowerCase() !== '#ff0000') {
       await role.setColor('#ff0000').catch(() => null);
     }
@@ -383,20 +414,23 @@ export async function autoSetupQuarantine(guild) {
   }
   if (!role) throw new Error('Could not create or locate the Quarantined role.');
 
-  // 2. Quarantine Category Check (check bot's database first, then guild)
+  // 2. Quarantine Category Check: ALWAYS fetch ID from our database first
   const categoryTargetName = '.      You Have Been Quarantined';
   let category = null;
+  let categoryInDb = false;
   let categoryFound = false;
 
   if (config.quarantineCategoryId) {
-    category = await guild.channels.fetch(config.quarantineCategoryId).catch(() => null);
+    category = guild.channels.cache.get(config.quarantineCategoryId) || await guild.channels.fetch(config.quarantineCategoryId).catch(() => null);
     if (category && category.type === ChannelType.GuildCategory) {
+      categoryInDb = true;
       categoryFound = true;
     } else {
       category = null;
     }
   }
 
+  // Fallback: search guild cache by name only if not found from database ID
   if (!category) {
     category = guild.channels.cache.find(c => 
       c.type === ChannelType.GuildCategory && 
@@ -425,14 +459,22 @@ export async function autoSetupQuarantine(guild) {
     }).catch(() => null);
   }
 
-  // 3. Quarantine Text Channel Check (pure font, no emojis)
+  // 3. Quarantine Text Channel Check: ALWAYS fetch ID from our database first
   let textChannel = null;
+  let textInDb = false;
   let textFound = false;
-  let textWasUnderCat = false;
 
   if (config.quarantineChannelId) {
-    textChannel = await guild.channels.fetch(config.quarantineChannelId).catch(() => null);
+    textChannel = guild.channels.cache.get(config.quarantineChannelId) || await guild.channels.fetch(config.quarantineChannelId).catch(() => null);
+    if (textChannel && textChannel.type === ChannelType.GuildText) {
+      textInDb = true;
+      textFound = true;
+    } else {
+      textChannel = null;
+    }
   }
+
+  // Fallback: search under category or by name only if not found from database ID
   if (!textChannel && category) {
     textChannel = guild.channels.cache.find(c => 
       c.type === ChannelType.GuildText && 
@@ -448,9 +490,6 @@ export async function autoSetupQuarantine(guild) {
 
   if (textChannel) {
     textFound = true;
-    if (category && textChannel.parentId === category.id) {
-      textWasUnderCat = true;
-    }
   } else {
     textChannel = await guild.channels.create({
       name: 'you-have-been-quarantined',
@@ -475,32 +514,37 @@ export async function autoSetupQuarantine(guild) {
     }).catch(() => null);
   }
 
-  // 4. Quarantine Voice Channel (VC) Check (pure font, no emojis)
+  // 4. Quarantine Voice Channel (VC) Check: ALWAYS fetch ID from our database first
   let voiceChannel = null;
+  let vcInDb = false;
   let vcFound = false;
-  let vcWasUnderCat = false;
 
   if (config.quarantineVcId) {
-    voiceChannel = await guild.channels.fetch(config.quarantineVcId).catch(() => null);
+    voiceChannel = guild.channels.cache.get(config.quarantineVcId) || await guild.channels.fetch(config.quarantineVcId).catch(() => null);
+    if (voiceChannel && (voiceChannel.type === ChannelType.GuildVoice || voiceChannel.type === ChannelType.GuildStageVoice)) {
+      vcInDb = true;
+      vcFound = true;
+    } else {
+      voiceChannel = null;
+    }
   }
+
+  // Fallback: search under category or by name only if not found from database ID
   if (!voiceChannel && category) {
     voiceChannel = guild.channels.cache.find(c => 
-      c.type === ChannelType.GuildVoice && 
+      (c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildStageVoice) && 
       c.parentId === category.id
     );
   }
   if (!voiceChannel) {
     voiceChannel = guild.channels.cache.find(c => 
-      c.type === ChannelType.GuildVoice && 
+      (c.type === ChannelType.GuildVoice || c.type === ChannelType.GuildStageVoice) && 
       (c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
     );
   }
 
   if (voiceChannel) {
     vcFound = true;
-    if (category && voiceChannel.parentId === category.id) {
-      vcWasUnderCat = true;
-    }
   } else {
     voiceChannel = await guild.channels.create({
       name: 'You Have Been Quarantined',
@@ -523,7 +567,11 @@ export async function autoSetupQuarantine(guild) {
     }).catch(() => null);
   }
 
-  // 5. Update Database Configuration with all assigned IDs
+  // Check parent status BEFORE moving
+  const textWasUnderCat = Boolean(category && textChannel && textChannel.parentId === category.id);
+  const vcWasUnderCat = Boolean(category && voiceChannel && voiceChannel.parentId === category.id);
+
+  // 5. ALWAYS update Database Configuration with all assigned IDs
   db.updateGuildConfig(guild.id, {
     quarantineRoleId: role.id,
     quarantineCategoryId: category?.id || null,
@@ -576,12 +624,8 @@ export async function autoSetupQuarantine(guild) {
   const excludeIds = [textChannel?.id, voiceChannel?.id, category?.id].filter(Boolean);
   const synced = await syncQuarantinePermissions(guild, role, excludeIds);
 
-  const roleInDb = Boolean(config.quarantineRoleId && role && config.quarantineRoleId === role.id);
-  const categoryInDb = Boolean(config.quarantineCategoryId && category && config.quarantineCategoryId === category.id);
-  const textInDb = Boolean(config.quarantineChannelId && textChannel && config.quarantineChannelId === textChannel.id);
-  const vcInDb = Boolean(config.quarantineVcId && voiceChannel && config.quarantineVcId === voiceChannel.id);
-
-  const allFound = roleFound && categoryFound && textFound && vcFound && textWasUnderCat && vcWasUnderCat;
+  const allFound = (roleInDb && categoryInDb && textInDb && vcInDb && textWasUnderCat && vcWasUnderCat) ||
+                   (roleFound && categoryFound && textFound && vcFound && textWasUnderCat && vcWasUnderCat);
 
   return {
     role,
@@ -708,6 +752,8 @@ export async function syncQuarantinePermissions(guild, quarantineRole, excludeCh
       allowedChannelIds.add(excludeChannelId);
     }
   }
+  // ALWAYS fetch all quarantine zone IDs from database
+  if (config.quarantineCategoryId) allowedChannelIds.add(config.quarantineCategoryId);
   if (config.quarantineVcId) allowedChannelIds.add(config.quarantineVcId);
   if (config.quarantineChannelId) allowedChannelIds.add(config.quarantineChannelId);
 

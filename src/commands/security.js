@@ -1332,6 +1332,7 @@ export const commands = [
         choices: [
           { name: 'Setup & Fix All Permissions', value: 'setup' },
           { name: 'Set Quarantine Role',         value: 'setrole' },
+          { name: 'Set Quarantine Category',     value: 'setcategory' },
           { name: 'Set Quarantine Text Channel', value: 'setchannel' },
           { name: 'Set Quarantine Voice Channel', value: 'setvc' },
           { name: 'View Status',                 value: 'status' }
@@ -1345,14 +1346,14 @@ export const commands = [
       },
       {
         name: 'channel',
-        description: 'Channel to set (for setchannel or setvc)',
+        description: 'Channel or category to set (for setcategory, setchannel, or setvc)',
         type: 7,
         required: false
       }
     ],
     async executePrefix(message, args) {
       const action = args[0]?.toLowerCase();
-      if (!action) return message.reply(cv2.warn('Usage', 'Usage: `!qrmanager setup|setrole|setchannel|setvc|status`'));
+      if (!action) return message.reply(cv2.warn('Usage', 'Usage: `!qrmanager setup|setrole|setcategory|setchannel|setvc|status`'));
       
       let role = message.mentions.roles.first() || null;
       let channel = message.mentions.channels.first() || null;
@@ -1360,7 +1361,7 @@ export const commands = [
       if (!role && args[1] && action === 'setrole') {
         role = await message.guild.roles.fetch(args[1]).catch(() => null);
       }
-      if (!channel && args[1] && (action === 'setchannel' || action === 'setvc')) {
+      if (!channel && args[1] && (action === 'setchannel' || action === 'setvc' || action === 'setcategory')) {
         channel = await message.guild.channels.fetch(args[1]).catch(() => null);
       }
       
@@ -3089,13 +3090,28 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
     return cv2.success('Quarantine Role Set | <a:atheNATICK:1557841381630681106>', `Set <@&${roleArg.id}> as the quarantine role and synced deny overwrites across all channels.`);
   }
 
+  if (action === 'setcategory') {
+    if (!channelArg || channelArg.type !== ChannelType.GuildCategory) {
+      return cv2.warn('Invalid Category', 'Please specify a valid category channel using the `channel` option.');
+    }
+    db.updateGuildConfig(guild.id, { quarantineCategoryId: channelArg.id });
+    return cv2.success('Quarantine Category Set | <a:atheNATICK:1557841381630681106>', `Set category \`${channelArg.name}\` as the designated quarantine category.`);
+  }
+
   if (action === 'setchannel') {
     if (!channelArg) return cv2.warn('Missing Channel', 'Please specify a text channel using the `channel` option.');
     db.updateGuildConfig(guild.id, { quarantineChannelId: channelArg.id });
-    const targetCat = guild.channels.cache.find(c => 
-      c.type === ChannelType.GuildCategory && 
-      (c.name === '.      You Have Been Quarantined' || c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
-    );
+    const cfg = db.getGuildConfig(guild.id);
+    let targetCat = cfg.quarantineCategoryId
+      ? (guild.channels.cache.get(cfg.quarantineCategoryId) || await guild.channels.fetch(cfg.quarantineCategoryId).catch(() => null))
+      : null;
+    if (!targetCat) {
+      targetCat = guild.channels.cache.find(c => 
+        c.type === ChannelType.GuildCategory && 
+        (c.name === '.      You Have Been Quarantined' || c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
+      );
+      if (targetCat) db.updateGuildConfig(guild.id, { quarantineCategoryId: targetCat.id });
+    }
     if (targetCat && channelArg.parentId !== targetCat.id) {
       await channelArg.setParent(targetCat.id, { lockPermissions: true }).catch(() => null);
       await channelArg.lockPermissions().catch(() => null);
@@ -3108,10 +3124,17 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
   if (action === 'setvc') {
     if (!channelArg) return cv2.warn('Missing VC', 'Please specify a voice channel using the `channel` option.');
     db.updateGuildConfig(guild.id, { quarantineVcId: channelArg.id });
-    const targetCat = guild.channels.cache.find(c => 
-      c.type === ChannelType.GuildCategory && 
-      (c.name === '.      You Have Been Quarantined' || c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
-    );
+    const cfg = db.getGuildConfig(guild.id);
+    let targetCat = cfg.quarantineCategoryId
+      ? (guild.channels.cache.get(cfg.quarantineCategoryId) || await guild.channels.fetch(cfg.quarantineCategoryId).catch(() => null))
+      : null;
+    if (!targetCat) {
+      targetCat = guild.channels.cache.find(c => 
+        c.type === ChannelType.GuildCategory && 
+        (c.name === '.      You Have Been Quarantined' || c.name.toLowerCase().includes('you have been quarantined') || c.name.toLowerCase().includes('quarantine'))
+      );
+      if (targetCat) db.updateGuildConfig(guild.id, { quarantineCategoryId: targetCat.id });
+    }
     if (targetCat && channelArg.parentId !== targetCat.id) {
       await channelArg.setParent(targetCat.id, { lockPermissions: true }).catch(() => null);
       await channelArg.lockPermissions().catch(() => null);
@@ -3121,18 +3144,28 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 
   if (action === 'status') {
     const updatedConfig = db.getGuildConfig(guild.id);
-    const role    = updatedConfig.quarantineRoleId    ? await guild.roles.fetch(updatedConfig.quarantineRoleId).catch(() => null)       : null;
-    const channel = updatedConfig.quarantineChannelId ? await guild.channels.fetch(updatedConfig.quarantineChannelId).catch(() => null) : null;
-    const vc      = updatedConfig.quarantineVcId      ? await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null)      : null;
+    const category = updatedConfig.quarantineCategoryId
+      ? (guild.channels.cache.get(updatedConfig.quarantineCategoryId) || await guild.channels.fetch(updatedConfig.quarantineCategoryId).catch(() => null))
+      : null;
+    const role = updatedConfig.quarantineRoleId
+      ? (guild.roles.cache.get(updatedConfig.quarantineRoleId) || await guild.roles.fetch(updatedConfig.quarantineRoleId).catch(() => null))
+      : null;
+    const channel = updatedConfig.quarantineChannelId
+      ? (guild.channels.cache.get(updatedConfig.quarantineChannelId) || await guild.channels.fetch(updatedConfig.quarantineChannelId).catch(() => null))
+      : null;
+    const vc = updatedConfig.quarantineVcId
+      ? (guild.channels.cache.get(updatedConfig.quarantineVcId) || await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null))
+      : null;
 
     return cv2.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
-        { name: 'Quarantine Role',    value: role    ? `<@&${role.id}>`   : 'Not Set - run `/qrmanager setup`', inline: false },
-        { name: 'Quarantine Channel', value: channel ? `<#${channel.id}>` : 'Not Set - run `/qrmanager setup`', inline: false },
-        { name: 'Quarantine VC',      value: vc      ? `<#${vc.id}>`      : 'Not Set - use `/qrmanager setvc`', inline: false }
-      ]);
+      { name: 'Quarantine Category', value: category ? `\`${category.name}\`` : 'Not Set - run `/qrmanager setup`', inline: false },
+      { name: 'Quarantine Role',    value: role     ? `<@&${role.id}>`       : 'Not Set - run `/qrmanager setup`', inline: false },
+      { name: 'Quarantine Channel', value: channel  ? `<#${channel.id}>`     : 'Not Set - run `/qrmanager setup`', inline: false },
+      { name: 'Quarantine VC',      value: vc       ? `<#${vc.id}>`          : 'Not Set - use `/qrmanager setvc`', inline: false }
+    ]);
   }
 
-  return cv2.warn('Unknown Action', 'Valid actions: `setup`, `setrole`, `setchannel`, `setvc`, `status`');
+  return cv2.warn('Unknown Action', 'Valid actions: `setup`, `setrole`, `setcategory`, `setchannel`, `setvc`, `status`');
 }
 
 // ==========================================

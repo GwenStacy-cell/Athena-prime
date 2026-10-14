@@ -823,7 +823,7 @@ async function getStatusEmbed(client, guild) {
     "`!setupquarantine / !qrsetup / !quarantinesetup` - Auto-setup role, category, text & VC, sync permissions `[Extra Owner]`",
     "`/setupquarantine` - Slash command to deploy, assign leftovers, and sync permissions `[Extra Owner]`",
     "`!qrmanager setup / /qrmanager action:Setup` - Auto-setup, assign unparented channels, & fix all permissions `[Extra Owner]`",
-    "`!qrmanager setrole|setchannel|setvc|status` - Manage quarantine configuration and view status `[Extra Owner]`",
+    "`!qrmanager setrole|setcategory|setchannel|setvc|status` - Manage quarantine configuration and view status `[Extra Owner]`",
     "`!quarantine / !qr @user [reason]` - Strip roles and isolate member `[Extra Owner]`",
     "`!unquarantine / !unqr @user` - Lift quarantine status `[Extra Owner]`",
     "`!massquarantine / !mq @role` - Quarantine all members of a role `[Extra Owner]`",
