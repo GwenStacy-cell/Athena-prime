@@ -1,4 +1,4 @@
-﻿import { ActionRowBuilder, RoleSelectMenuBuilder } from 'discord.js';
+import { ActionRowBuilder, RoleSelectMenuBuilder } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
@@ -44,10 +44,10 @@ function buildAuthPayload(guildId) {
         accessory: { type: 11, media: { url: 'https://cdn.discordapp.com/emojis/1525429906102816788.webp?size=128&quality=lossless' } }
       },
       { type: 14, divider: true },
-      { type: 10, content: `### Admin Tier Roles\n-# **Examples:** \`!security\`, \`!massaddrole\`, \`!syncall\`\n-# **Bound Roles:** ${adminIds}` },
+      { type: 10, content: `### Admin Tier Roles\n-# **Examples:** \`!security\`, \`!ban\`, \`!massaddrole\`, \`!syncall\`\n-# **Bound Roles:** ${adminIds}` },
       adminSelect.toJSON(),
       { type: 14, divider: true },
-      { type: 10, content: `### Mod Tier Roles\n-# **Examples:** \`!ban\`, \`!kick\`, \`!timeout\`, \`!purge\`\n-# **Bound Roles:** ${modIds}` },
+      { type: 10, content: `### Mod Tier Roles\n-# **Examples:** \`!kick\`, \`!timeout\`, \`!purge\`\n-# **Bound Roles:** ${modIds}` },
       modSelect.toJSON(),
       { type: 14, divider: true },
       { type: 10, content: `### Staff Tier Roles\n-# **Examples:** \`!warn\`, \`!mute\`, \`!deafen\`, \`!slowmode\`\n-# **Bound Roles:** ${staffIds}` },

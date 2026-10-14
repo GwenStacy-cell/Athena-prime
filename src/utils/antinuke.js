@@ -295,10 +295,16 @@ export function isAuthorized(guild, executor, eventType = 'antinuke') {
   if (executor.id === guild.client.user.id) return true;
   if (isBotOwnerSync(executor.id)) return true;
   if (executor.id === guild.ownerId) return true;
+  if (db.isExtraOwner(guild.id, executor.id)) return true;
   if (eventType === 'antibot') return false;
   if (executor.bot) return isBotAuthorized(guild, executor.id);
-  if (db.isExtraOwner(guild.id, executor.id)) return true;
   const member = guild.members.cache.get(executor.id) || executor;
+
+  // Admin Tier roles bypass isAuthorized() (granting root bot access as defined in !auth)
+  const authRoles = db.getAuthRoles(guild.id);
+  if (member?.roles?.cache && authRoles?.admin?.some(roleId => member.roles.cache.has(roleId))) {
+    return true;
+  }
 
   // Check direct eventType
   if (db.isWhitelisted(guild, member, eventType)) return true;

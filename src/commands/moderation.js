@@ -479,6 +479,11 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
+      const { isServerAdmin } = await import('../utils/helpers.js');
+      if (!isServerAdmin(message.member, message.guild.id)) {
+        return message.reply(cv2.danger('Access Denied', 'The `!ban` command is restricted to **Admin Tier** roles and server administrators.')).catch(() => null);
+      }
+
       // Accept @mention or raw user ID (works for non-members too)
       let target = message.mentions.members.first();
       let targetId = null;
@@ -507,6 +512,11 @@ export const commands = [
       }
     },
     async executeSlash(interaction) {
+      const { isServerAdmin } = await import('../utils/helpers.js');
+      if (!isServerAdmin(interaction.member, interaction.guild.id)) {
+        return interaction.reply(cv2.danger('Access Denied', 'The `/ban` command is restricted to **Admin Tier** roles and server administrators.'));
+      }
+
       const targetUser = interaction.options.getUser('user');
       const reason = interaction.options.getString('reason') || 'No reason provided';
 
@@ -535,6 +545,11 @@ export const commands = [
       { name: 'reason', description: 'Reason for temporary ban', type: 3, required: false }
     ],
     async executePrefix(message, args) {
+      const { isServerAdmin } = await import('../utils/helpers.js');
+      if (!isServerAdmin(message.member, message.guild.id)) {
+        return message.reply(cv2.danger('Access Denied', 'The `!tempban` command is restricted to **Admin Tier** roles and server administrators.')).catch(() => null);
+      }
+
       if (!args[0]) {
         const errorContainer = {
           type: 17,
@@ -664,6 +679,11 @@ export const commands = [
       }
     },
     async executeSlash(interaction) {
+      const { isServerAdmin } = await import('../utils/helpers.js');
+      if (!isServerAdmin(interaction.member, interaction.guild.id)) {
+        return interaction.reply(cv2.danger('Access Denied', 'The `/tempban` command is restricted to **Admin Tier** roles and server administrators.'));
+      }
+
       const targetUser = interaction.options.getUser('user');
       const durationStr = interaction.options.getString('duration');
       const reason = interaction.options.getString('reason') || 'No reason specified';
@@ -1191,6 +1211,11 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
+      const { isServerAdmin } = await import('../utils/helpers.js');
+      if (!isServerAdmin(message.member, message.guild.id)) {
+        return message.reply(cv2.danger('Access Denied', 'The `!unban` command is restricted to **Admin Tier** roles and server administrators.')).catch(() => null);
+      }
+
       const rawArg = args[0];
       if (!rawArg) {
         return message.reply(cv2.warn('Command Error', `${message.author} Please specify a User ID or @mention.\n\n**Usage:** \`!unban <userId or @mention> [reason]\``));
@@ -1202,6 +1227,11 @@ export const commands = [
       await message.reply(result);
     },
     async executeSlash(interaction) {
+      const { isServerAdmin } = await import('../utils/helpers.js');
+      if (!isServerAdmin(interaction.member, interaction.guild.id)) {
+        return interaction.reply(cv2.danger('Access Denied', 'The `/unban` command is restricted to **Admin Tier** roles and server administrators.'));
+      }
+
       // Strip mention chars from the typed value just in case
       const userId = interaction.options.getString('userid').replace(/[<@!>]/g, '').trim();
       const reason = interaction.options.getString('reason') || 'No reason provided';

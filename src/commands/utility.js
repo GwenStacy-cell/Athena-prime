@@ -1025,6 +1025,8 @@ async function getStatusEmbed(client, guild) {
 
 ﻿const helpModules = [
   { id: 'security', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Security', label: 'Security Commands', emoji: 'security', commands: [
+    "`!auth / !tiers` - Manage role authorization tiers (Admin, Mod, Staff) `[Admin]`",
+    "`!tier / !perms` - Check your current authorization tier & clearance `[Public]`",
     "`!antinuke config` - Interactive configuration panel `[Extra Owner]`",
     "`!antinuke status` - Quick summary of current security `[Extra Owner]`",
     "`!firewall` - Live firewall status & gateway uptime `[Public]`",
@@ -1101,9 +1103,9 @@ async function getStatusEmbed(client, guild) {
   ] },
   
   { id: 'moderation', category: 'SERVER ADMINISTRATION', shortLabel: 'Mods', label: 'Moderation Tools', emoji: 'mod', commands: [
-    "`!ban / !b @user [reason]` - Ban a member from the server `[Extra Owner]`",
-    "`!tempban @user <time> [reason]` - Temporarily ban a member with auto-unban `[Extra Owner]`",
-    "`!unban <userid>` - Unban a user by User ID `[Extra Owner]`",
+    "`!ban / !b @user [reason]` - Ban a member from the server `[Admin Tier]`",
+    "`!tempban @user <time> [reason]` - Temporarily ban a member with auto-unban `[Admin Tier]`",
+    "`!unban <userid>` - Unban a user by User ID `[Admin Tier]`",
     "`!unbanall` - Removes ALL active bans from the server `[Server Owner]`",
     "`!kick / !k @user [reason]` - Kick a member from the server `[Extra Owner]`",
     "`!timeout / !to @user [time] [reason]` - Timeout a member `[Extra Owner]`",
