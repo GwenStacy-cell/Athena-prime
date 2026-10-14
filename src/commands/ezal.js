@@ -909,18 +909,28 @@ async function handleRestoreSetup(message, args) {
 
   // 4. Restore Welcome/Leave
   try {
-    if (config.welcomeChannelId) {
-      let wCh = guild.channels.cache.get(config.welcomeChannelId);
+    const wCfg = db.getWelcomeConfig(guildId);
+    const welcomeChannelId = wCfg?.channelId || config.welcomeChannelId;
+    if (welcomeChannelId) {
+      let wCh = guild.channels.cache.get(welcomeChannelId);
       if (!wCh) {
         wCh = await guild.channels.create({ name: 'welcome', type: ChannelType.GuildText });
         db.updateGuildConfig(guildId, { welcomeChannelId: wCh.id });
+        if (wCfg) {
+          db.setWelcomeConfig(guildId, { ...wCfg, channelId: wCh.id });
+        }
       }
     }
-    if (config.leaveChannelId) {
-      let lCh = guild.channels.cache.get(config.leaveChannelId);
+    const lCfg = db.getLeaveConfig(guildId);
+    const leaveChannelId = lCfg?.channelId || config.leaveChannelId;
+    if (leaveChannelId) {
+      let lCh = guild.channels.cache.get(leaveChannelId);
       if (!lCh) {
         lCh = await guild.channels.create({ name: 'leave', type: ChannelType.GuildText });
         db.updateGuildConfig(guildId, { leaveChannelId: lCh.id });
+        if (lCfg) {
+          db.setLeaveConfig(guildId, { ...lCfg, channelId: lCh.id });
+        }
       }
     }
   } catch(e) {}

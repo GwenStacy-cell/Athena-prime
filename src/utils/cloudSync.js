@@ -25,11 +25,33 @@ let isBackingUp = false;
 export function getDatabaseMetrics() {
   const cache = db.cache || {};
   const guilds = Object.values(cache.guilds || {});
+
+  // Welcome & Leave detailed breakdown
+  const welcomeConfigs = Object.values(cache.welcome || {});
+  const leaveConfigs = Object.values(cache.leave || {});
+
+  const welcomeActive = welcomeConfigs.filter(c => c && (c.channelId || c.enabled)).length;
+  const welcomeMessages = welcomeConfigs.filter(c => c && c.message).length;
+  const welcomeEmbeds = welcomeConfigs.filter(c => c && (c.title || c.description || c.from || c.footer)).length;
+  const welcomeGifs = welcomeConfigs.filter(c => c && (c.image || c.thumbnailUrl)).length;
+  const welcomeColors = welcomeConfigs.filter(c => c && c.color).length;
+
+  const leaveActive = leaveConfigs.filter(c => c && (c.channelId || c.enabled)).length;
+  const leaveMessages = leaveConfigs.filter(c => c && c.message).length;
+  const leaveEmbeds = leaveConfigs.filter(c => c && (c.title || c.description || c.from || c.footer)).length;
+  const leaveGifs = leaveConfigs.filter(c => c && (c.image || c.thumbnailUrl)).length;
+
+  const blacklistedWordsCount = guilds.reduce((acc, g) => acc + (g.blacklistWords?.length || 0), 0);
+  const allowedLinksCount = guilds.reduce((acc, g) => acc + (g.allowedLinks?.length || 0), 0);
+  const logChannelsCount = guilds.filter(g => g.logChannel || g.serverLogs).length;
+
   return {
     guilds: Object.keys(cache.guilds || {}).length,
     accentColors: guilds.filter(g => g.accentColor).length,
     securityServers: guilds.filter(g => g.securityEnabled || g.antiNukeEnabled).length,
     automodServers: guilds.filter(g => g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled).length,
+    blacklistedWordsCount,
+    allowedLinksCount,
     honeypots: guilds.filter(g => g.honeypotChannelId).length,
     extraOwners: Object.keys(cache.extraOwners || {}).length,
     extraOwnersTotal: Object.values(cache.extraOwners || {}).reduce((acc, curr) => acc + (Array.isArray(curr) ? curr.length : 0), 0),
@@ -42,8 +64,18 @@ export function getDatabaseMetrics() {
     xpSystems: Object.keys(cache.xpSystems || {}).length,
     xpUsers: Object.values(cache.usersXp || {}).reduce((acc, curr) => acc + Object.keys(curr || {}).length, 0),
     serverStats: Object.keys(cache.serverStats || {}).length,
-    welcome: Object.keys(cache.welcome || {}).length,
-    leave: Object.keys(cache.leave || {}).length,
+
+    // Detailed Welcome & Leave
+    welcomeActive,
+    welcomeMessages,
+    welcomeEmbeds,
+    welcomeGifs,
+    welcomeColors,
+    leaveActive,
+    leaveMessages,
+    leaveEmbeds,
+    leaveGifs,
+
     triggers: Object.keys(cache.triggers || {}).length + (cache.globalTriggers || []).length,
     tickets: Object.keys(cache.tickets || {}).length,
     verification: Object.keys(cache.verification || {}).length,
@@ -56,6 +88,7 @@ export function getDatabaseMetrics() {
     apps: Object.keys(cache.apps || {}).length,
     homeVc: guilds.filter(g => g.homeVcId).length,
     voiceLogs: guilds.filter(g => g.voiceLogChannel).length,
+    logChannelsCount,
     jtc: Object.keys(cache.jtc || {}).length,
     jtcChannels: Object.keys(cache.jtcChannels || {}).length,
     vcProtection: Object.values(cache.vcProtection || {}).reduce((acc, u) => acc + (Array.isArray(u) ? u.length : 0), 0),
@@ -83,15 +116,16 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **Tracked Servers:** \`${m.guilds}\` | **Saved Accent Colors:** \`${m.accentColors}\`\n\n` +
     `**Security & Defense Matrix:**\n` +
     `> -# **Security & Anti-Nuke:** \`${m.securityServers} servers active\`\n` +
-    `> -# **Automod & Word Filters:** \`${m.automodServers} servers (Spam, Links, Invites, Badwords)\`\n` +
+    `> -# **Automod & Word Filters:** \`${m.automodServers} servers (${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links)\`\n` +
     `> -# **Honeypot Traps:** \`${m.honeypots} channels\`\n` +
     `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
     `> -# **Bypasses & Security Whitelist:** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} whitelisted users\`\n` +
     `> -# **Quarantines & Warnings:** \`${m.quarantines} quarantined, ${m.warnings} warning records, ${m.tempBans} tempbans\`\n\n` +
     `**Engagement & Community Features:**\n` +
+    `> -# **Welcome System Settings:** \`${m.welcomeActive} channels | ${m.welcomeEmbeds} custom embeds (Author/Title/Footer), ${m.welcomeGifs} GIFs/Images, ${m.welcomeMessages} messages\`\n` +
+    `> -# **Leave System Settings:** \`${m.leaveActive} channels | ${m.leaveEmbeds} custom embeds, ${m.leaveGifs} GIFs/Images, ${m.leaveMessages} messages\`\n` +
     `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
     `> -# **Server Stats Counters:** \`${m.serverStats} setups\`\n` +
-    `> -# **Welcome & Leave Systems:** \`${m.welcome} welcome, ${m.leave} goodbye setups\`\n` +
     `> -# **Custom Triggers & Auto-Replies:** \`${m.triggers} triggers\`\n` +
     `> -# **Tickets & Verification:** \`${m.tickets} ticket setups, ${m.verification} verification setups\`\n` +
     `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} giveaways, ${m.reactionRoles} menus\`\n` +
@@ -100,7 +134,7 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **Birthday Records:** \`${m.birthdayServers} servers (${m.birthdayUsers} registered birthdays)\`\n` +
     `> -# **Staff Applications:** \`${m.apps} application setups\`\n\n` +
     `**Voice Systems & Session Protection:**\n` +
-    `> -# **Home VC & Voice Logs:** \`${m.homeVc} home VCs, ${m.voiceLogs} voice log channels\`\n` +
+    `> -# **Home VC & Logs:** \`${m.homeVc} home VCs, ${m.voiceLogs} voice logs, ${m.logChannelsCount} server audit logs\`\n` +
     `> -# **Join to Create (JTC):** \`${m.jtc} lobby setups, ${m.jtcChannels} active temp channels\`\n` +
     `> -# **VC Drag & Voice Protection:** \`${m.vcDrags} active drag sessions, ${m.vcProtection} protected users\`\n\n` +
     `**Storage, Backups & Analytics:**\n` +
