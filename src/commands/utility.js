@@ -228,6 +228,11 @@ export const commands = [
         try {
           if (args && args.length > 0) {
               const cmdName = args[0].toLowerCase();
+              if (cmdName === 'explain' || cmdName === 'architecture' || cmdName === 'deepdive' || cmdName === 'howitworks' || cmdName === 'docs') {
+                const { buildTopicsDirectoryContainer } = await import('../utils/explainerRegistry.js');
+                const container = buildTopicsDirectoryContainer(db.getGuildConfig(message.guild.id)?.prefix || '!');
+                return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+              }
               const matchingModule = helpModules.find(m => 
                 m.id === cmdName || 
                 m.shortLabel.toLowerCase() === cmdName || 
@@ -283,6 +288,14 @@ export const commands = [
               const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${targetCmd.description || "No description provided."}`);
               const display3 = new TextDisplayBuilder().setContent(`-# **Category:** ${catStr}`);
               
+              const actionRow = {
+                type: 1,
+                components: [
+                  { type: 2, custom_id: `arch_cmd_${targetCmd.name}`, label: 'Explain Architecture', style: 2, emoji: { id: '1523766065576935475' } },
+                  { type: 2, custom_id: 'arch_home', label: 'Topic Directory', style: 2, emoji: { id: '1523765738655973589' } }
+                ]
+              };
+
               const container = {
                   type: 17,
                   components: [
@@ -290,7 +303,9 @@ export const commands = [
                       { type: 14, divider: true },
                       display2,
                       { type: 14, divider: true },
-                      display3
+                      display3,
+                      { type: 14, divider: true },
+                      actionRow
                   ]
               };
               
@@ -312,6 +327,11 @@ export const commands = [
       const cmdArg = interaction.options?.getString?.('command');
       if (cmdArg) {
         const cmdName = cmdArg.toLowerCase().trim();
+        if (cmdName === 'explain' || cmdName === 'architecture' || cmdName === 'deepdive' || cmdName === 'howitworks' || cmdName === 'docs') {
+          const { buildTopicsDirectoryContainer } = await import('../utils/explainerRegistry.js');
+          const container = buildTopicsDirectoryContainer('/');
+          return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        }
         const matchingModule = helpModules.find(m => 
           m.id === cmdName || 
           m.shortLabel.toLowerCase() === cmdName || 
@@ -360,6 +380,14 @@ export const commands = [
         const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${targetCmd.description || "No description provided."}`);
         const display3 = new TextDisplayBuilder().setContent(`-# **Category:** ${catStr}`);
 
+        const actionRow = {
+          type: 1,
+          components: [
+            { type: 2, custom_id: `arch_cmd_${targetCmd.name}`, label: 'Explain Architecture', style: 2, emoji: { id: '1523766065576935475' } },
+            { type: 2, custom_id: 'arch_home', label: 'Topic Directory', style: 2, emoji: { id: '1523765738655973589' } }
+          ]
+        };
+
         const container = {
           type: 17,
           components: [
@@ -367,7 +395,9 @@ export const commands = [
             { type: 14, divider: true },
             display2,
             { type: 14, divider: true },
-            display3
+            display3,
+            { type: 14, divider: true },
+            actionRow
           ]
         };
 
@@ -1047,6 +1077,7 @@ export const helpModules = [
     "`!antinuke guide` - Exploit Defense & Architecture Guide `[Extra Owner]`",
     "`!firewall` - Live firewall status & gateway uptime `[Public]`",
     "`!unbypassable / !unb / !persistenceroles / !sentinels` - Deploy & ensure Athena Unbypassable persistence sentinel roles `[Admin / Extra Owner]`",
+    "`!explain / !architecture [topic|cmd]` - Deep-dive architectural breakdowns & exploit analyses `[Public]`",
     "`!security disable <module>` - Disable specific protection `[Extra Owner]`",
     "`!security enable <module>` - Enable specific protection `[Extra Owner]`",
     "`!security mode [strict|normal|relaxed]` - Change defense sensitivity `[Extra Owner]`",
@@ -1070,7 +1101,7 @@ export const helpModules = [
     "• **Role Interceptor**: Real-time dangerous role strip, quarantine containment & owner DM alerts.",
     "• **Onboarding Guard**: Join-time dangerous role neutralization & automatic onboarding prompt sanitization.",
     "• **Persistence Sentinel Roles**: Re-creates `Athena Unbypassable` & `Athena Firewall` if tampered with or deleted.",
-    "• Use `!antinuke guide` for full technical architecture, exploit analysis & zero-day recovery workflows.",
+    "• Use `!explain security` or `!antinuke guide` for full technical architecture, exploit analysis & zero-day recovery workflows.",
     "-# **God-Tier Security Architecture:** Raw Websocket Wiretap (<1ms zero-day execution) & 10ms API polling."
   ] },
   { id: 'filters', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Filters', label: 'Automod Filters', emoji: 'filters', commands: [
@@ -1532,9 +1563,13 @@ export function buildHelpContainer(client, guildId, moduleId) {
     const btnNext = new ButtonBuilder().setCustomId(`help_next_${moduleId}`).setEmoji('1523766065576935475').setStyle(ButtonStyle.Secondary);
     const btnRefresh = new ButtonBuilder().setCustomId('help_home').setEmoji('1523765738655973589').setStyle(ButtonStyle.Secondary);
     const btnDelete = new ButtonBuilder().setCustomId('help_delete').setEmoji('1523766340752642109').setStyle(ButtonStyle.Danger);
+    const btnExplain = new ButtonBuilder()
+      .setCustomId(moduleId === 'home' ? 'arch_home' : `arch_topic_${moduleId}`)
+      .setLabel('Explain Architecture')
+      .setStyle(ButtonStyle.Secondary);
 
     const row1 = new ActionRowBuilder().addComponents(selectMenu);
-    const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnDelete);
+    const row2 = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnRefresh, btnExplain, btnDelete);
 
     const HELP_GIF = 'https://cdn.discordapp.com/attachments/1534869224277807175/1542472732325978234/ATHENA-8-27-2026.png?ex=6a915b2d&is=6a9009ad&hm=0f55bae0c0bec27649bc03e6d6be23ad16f2eb9337efdb8b5793b2d74cad89ff&';
 

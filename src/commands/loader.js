@@ -85,8 +85,10 @@ import { commands as autovcstatusCmds } from './autovcstatus.js';
 import { commands as shipCmds } from './ship.js';
 import { commands as databaseAdminCmds } from './databaseadmin.js';
 import { commands as countingCmds } from './counting.js';
+import { commands as explainCmds } from './explain.js';
 
 export const allCommands = [
+  ...explainCmds,
   ...countingCmds,
   ...firewallCmds,
   ...ccmdCmds,

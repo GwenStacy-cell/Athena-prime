@@ -94,6 +94,21 @@ export default {
       }
     }
 
+    // ==========================================
+    // PERSISTENT ARCHITECTURE & EXPLAIN INTERACTIONS
+    // ==========================================
+    if (interaction.customId && (interaction.customId.startsWith('arch_') || interaction.customId.startsWith('explain_'))) {
+      try {
+        const { handleExplainInteraction } = await import('../commands/explain.js');
+        if (handleExplainInteraction) {
+          const handled = await handleExplainInteraction(interaction);
+          if (handled) return;
+        }
+      } catch (e) {
+        console.error('[InteractionCreate] Error handling explain interaction:', e);
+      }
+    }
+
     // --- COUNTING ENGINE INTERACTIONS ---
     if (interaction.customId && interaction.customId.startsWith('counting_')) {
       import('../commands/counting.js').then(m => {
