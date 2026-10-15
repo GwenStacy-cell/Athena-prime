@@ -59,6 +59,8 @@ export function getDatabaseMetrics() {
   const antiWebhookServers = guilds.filter(g => g && g.antinukeModules?.antiWebhooks).length;
   const antiNukeThresholds = guilds.filter(g => g && g.antiNukeThreshold !== undefined).length;
   const raidModeServers = guilds.filter(g => g && g.raidMode).length;
+  const firewallRolesCount = guilds.filter(g => g && g.firewallRoleId).length;
+  const unbypassableRolesCount = guilds.filter(g => g && g.unbypassableRoleId).length;
 
   // Automod detailed module toggles breakdown
   const antiSpamServers = guilds.filter(g => g && g.antiSpamEnabled).length;
@@ -69,6 +71,46 @@ export function getDatabaseMetrics() {
   const antiMentionServers = guilds.filter(g => g && g.antiSpamMentionEnabled).length;
   const blacklistedWordsCount = guilds.reduce((acc, g) => acc + (g?.blacklistWords?.length || 0), 0);
   const allowedLinksCount = guilds.reduce((acc, g) => acc + (g?.allowedLinks?.length || 0), 0);
+  const automodBypassRolesCount = guilds.reduce((acc, g) => acc + Object.keys(g?.automodBypasses || {}).length, 0);
+  const automodBypassServers = guilds.filter(g => g && g.automodBypasses && Object.keys(g.automodBypasses).length > 0).length;
+
+  // AutoRole & Vanity Engine breakdown
+  const autoroleHumanServers = guilds.filter(g => g && (Array.isArray(g.autoroleHuman) ? g.autoroleHuman.length > 0 : Boolean(g.autoroleHuman))).length;
+  const autoroleBotServers = guilds.filter(g => g && (Array.isArray(g.autoroleBot) ? g.autoroleBot.length > 0 : Boolean(g.autoroleBot))).length;
+  const vanityRewardServers = guilds.filter(g => g && (g.vanityString || (Array.isArray(g.vanityRole) ? g.vanityRole.length > 0 : Boolean(g.vanityRole)))).length;
+  const totalAutoroleBindings = guilds.reduce((acc, g) => {
+    let count = 0;
+    if (Array.isArray(g?.autoroleHuman)) count += g.autoroleHuman.length;
+    else if (g?.autoroleHuman) count += 1;
+    if (Array.isArray(g?.autoroleBot)) count += g.autoroleBot.length;
+    else if (g?.autoroleBot) count += 1;
+    if (Array.isArray(g?.vanityRole)) count += g.vanityRole.length;
+    else if (g?.vanityRole) count += 1;
+    return acc + count;
+  }, 0);
+
+  // YouTube Stats VC Engine breakdown
+  const ytStatsServers = guilds.filter(g => g && Array.isArray(g.ytStats) && g.ytStats.length > 0).length;
+  const ytStatsChannelsCount = guilds.reduce((acc, g) => acc + (Array.isArray(g?.ytStats) ? g.ytStats.length : 0), 0);
+
+  // ModMail Support Bridge breakdown
+  const modmailServers = guilds.filter(g => g && g.modmailEnabled && g.modmailChannelId).length;
+  const modmailChannelsCount = guilds.filter(g => g && g.modmailChannelId).length;
+
+  // Support Tickets Activity breakdown
+  const ticketConfigs = Object.values(cache.tickets || {});
+  const ticketSetups = Object.keys(cache.tickets || {}).length;
+  const ticketsActive = ticketConfigs.reduce((acc, t) => acc + Object.keys(t?.activeTickets || {}).length, 0);
+  const ticketsTotalCreated = ticketConfigs.reduce((acc, t) => acc + (t?.ticketCount || 0), 0);
+  const ticketStaffRolesCount = ticketConfigs.reduce((acc, t) => acc + (Array.isArray(t?.staffRoleIds) ? t.staffRoleIds.length : 0), 0);
+
+  // Community Features: Suggestions, Starboard, Voice Roles
+  const suggestionChannels = guilds.filter(g => g && g.suggestionChannelId).length;
+  const starboardChannels = guilds.filter(g => g && g.starboardChannelId).length;
+  const voiceRolesCount = guilds.filter(g => g && g.voiceRoleId).length;
+
+  // Global Action Logger
+  const globalActionLogServers = guilds.filter(g => g && g.globalActionLogChannel).length;
 
   // Quarantine & Moderation channels/roles
   const quarantineRolesCount = guilds.filter(g => g && g.quarantineRoleId).length;
@@ -125,7 +167,7 @@ export function getDatabaseMetrics() {
   return {
     guilds: Object.keys(cache.guilds || {}).length,
     customPrefixes: guilds.filter(g => g && g.prefix && g.prefix !== '!').length,
-    autoNicks: guilds.filter(g => g && g.autonick).length,
+    autoNicks: guilds.filter(g => g && g.autonick && (typeof g.autonick === 'object' ? g.autonick.enabled : Boolean(g.autonick))).length,
     accentColors: guilds.filter(g => g && g.accentColor).length,
     dashboardChannels: guilds.filter(g => g && g.dashboardChannelId).length,
 
@@ -138,6 +180,8 @@ export function getDatabaseMetrics() {
     antiNukeThresholds,
     raidModeServers,
     honeypots: guilds.filter(g => g && g.honeypotChannelId).length,
+    firewallRolesCount,
+    unbypassableRolesCount,
 
     automodServers: guilds.filter(g => g && (g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled)).length,
     antiSpamServers,
@@ -148,6 +192,28 @@ export function getDatabaseMetrics() {
     antiMentionServers,
     blacklistedWordsCount,
     allowedLinksCount,
+    automodBypassRolesCount,
+    automodBypassServers,
+
+    autoroleHumanServers,
+    autoroleBotServers,
+    vanityRewardServers,
+    totalAutoroleBindings,
+
+    ytStatsServers,
+    ytStatsChannelsCount,
+    modmailServers,
+    modmailChannelsCount,
+
+    ticketSetups,
+    ticketsActive,
+    ticketsTotalCreated,
+    ticketStaffRolesCount,
+
+    suggestionChannels,
+    starboardChannels,
+    voiceRolesCount,
+    globalActionLogServers,
 
     maxWarningsSet,
     maxWarningsAvg,
@@ -254,12 +320,21 @@ export function formatDatabaseMetrics(m, options = {}) {
     `**Security & Anti-Nuke Engine:**\n` +
     `> -# **Security & Anti-Nuke:** \`${m.securityServers} servers active\`\n` +
     `> -# **Core Modules:** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bot Add: ${m.antiBotAddServers}, Linked Role Guard: ${m.antiLinkedRoleServers || 0}\`\n` +
+    `> -# **Persistence Sentinel Roles:** \`${m.unbypassableRolesCount || 0} Athena Unbypassable, ${m.firewallRolesCount || 0} Athena Firewall bound\`\n` +
     `> -# **Thresholds & Traps:** \`${m.antiNukeThresholds} configured limits, ${m.honeypots} honeypots, Raid Mode: ${m.raidModeServers}\`\n\n` +
 
     `**Automod Protection Matrix:**\n` +
     `> -# **Active Automod Servers:** \`${m.automodServers} servers active\`\n` +
     `> -# **Granular Modules:** \`Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, Word Filter: ${m.wordFilterServers}, Flood: ${m.antiFloodServers}, Mention: ${m.antiMentionServers}, Link: ${m.antiLinkServers}\`\n` +
-    `> -# **Filter Rules & Bypasses:** \`${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links, ${m.inviteBypassChannels} invite channels\`\n\n` +
+    `> -# **Filter Rules & Bypasses:** \`${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links, ${m.inviteBypassChannels} invite channels, ${m.automodBypassRolesCount || 0} role bypasses (${m.automodBypassServers || 0} servers)\`\n\n` +
+
+    `**AutoRole & Vanity Engine:**\n` +
+    `> -# **AutoRole Deployments:** \`${m.autoroleHumanServers || 0} human autorole servers, ${m.autoroleBotServers || 0} bot autorole servers (${m.totalAutoroleBindings || 0} roles assigned)\`\n` +
+    `> -# **Vanity Status Rewards:** \`${m.vanityRewardServers || 0} servers actively rewarding vanity status URLs\`\n\n` +
+
+    `**YouTube Stats & ModMail Support Bridge:**\n` +
+    `> -# **YouTube Stats VC Engine:** \`${m.ytStatsChannelsCount || 0} dynamic stat VCs active across ${m.ytStatsServers || 0} servers\`\n` +
+    `> -# **ModMail Support Bridge:** \`${m.modmailServers || 0} servers active (${m.modmailChannelsCount || 0} dispatch channels bound)\`\n\n` +
 
     `**Moderation, Warnings & Enforcement:**\n` +
     `> -# **Max Warning Thresholds:** \`${m.maxWarningsSet} guilds configured (Avg strike limit: ${m.maxWarningsAvg} warnings)\`\n` +
@@ -285,14 +360,16 @@ export function formatDatabaseMetrics(m, options = {}) {
     `**Community, Leveling & Triggers:**\n` +
     `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
     `> -# **Server Stats & Triggers:** \`${m.serverStats} stats setups, ${m.triggers} custom triggers\`\n` +
-    `> -# **Tickets & Verification:** \`${m.tickets} ticket setups, ${m.verification} verification setups\`\n` +
-    `> -# **Giveaways & Reaction Roles:** \`${m.giveaways} active giveaways, ${m.reactionRoles} menus\`\n` +
+    `> -# **Support Tickets:** \`${m.ticketSetups || m.tickets || 0} setups | ${m.ticketsActive || 0} active tickets, ${m.ticketsTotalCreated || 0} total tickets created, ${m.ticketStaffRolesCount || 0} staff roles\`\n` +
+    `> -# **Suggestions, Starboard & Voice:** \`${m.suggestionChannels || 0} suggestion channels, ${m.starboardChannels || 0} starboard channels, ${m.voiceRolesCount || 0} voice roles\`\n` +
+    `> -# **Verification & Giveaways:** \`${m.verification} verification setups, ${m.giveaways} active giveaways, ${m.reactionRoles} menus\`\n` +
     `> -# **Auto-Delete & Sticky:** \`${m.stickyMessages} sticky channels, ${m.adel} auto-delete channels (ADEL/RADEL)\`\n` +
     `> -# **Birthday System Settings:** \`${m.birthdayChannels} announcement channels | ${m.birthdayServers} servers, ${m.birthdayUsers} birthdays\`\n` +
     `> -# **Staff Applications:** \`${m.apps} application setups\`\n` +
     `> -# **Counting Engine (Across Guilds):** \`${m.countingActive || 0} active channels (${m.countingGuilds || 0} guilds) | Peak Record: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak count, ${m.countingTotalValidatedCounts || 0} validated numbers | ${m.countingTotalUsers || 0} counters, ${m.countingTotalRuins || 0} ruins, ${m.countingTotalSaves || 0} active server saves\`\n\n` +
 
     `**Diagnostic Logs & Voice Systems:**\n` +
+    `> -# **Global Action Monitor:** \`${m.globalActionLogServers || 0} cross-server action logger channels bound\`\n` +
     `> -# **Message Deletions & Edits:** \`${m.msgDeleteLogChannels} message delete channels (${m.msgDeleteServers} servers), ${m.msgEditLogChannels} edit channels\`\n` +
     `> -# **Server Logs & Audits:** \`${m.serverLogsCount} server logs, ${m.logChannelsCount} mod audit channels, ${m.voiceLogs} voice logs\`\n` +
     `> -# **Voice Hubs:** \`${m.homeVc} home VCs, ${m.theaterModeVcs} theater mode VCs\`\n` +
