@@ -84,12 +84,12 @@ export default {
           const alertContainer = {
             type: 17,
             components: [
-              { type: 10, content: `## Linked Role Exploit on Join Neutralized | <a:atheNATICK:1557841381630681106>` },
+              { type: 10, content: `## Join-Time Dangerous Role Exploit Neutralized | <a:atheNATICK:1557841381630681106>` },
               { type: 14, divider: true },
               {
                 type: 10,
                 content:
-                  `-# **Exploit Vector:** \`Pre-Assigned Roles on Join (Discord Linked Role / Onboarding Bypass)\`\n` +
+                  `-# **Exploit Vector:** \`Pre-Assigned Roles on Join (Role-Based Invite Link / Linked Role / Onboarding Bypass)\`\n` +
                   `-# **Target Member:** ${member} (\`${member.id}\` | \`${member.user.tag}\`)\n` +
                   `-# **Target Clearance Tier:** \`[${targetTier}]\`\n` +
                   `-# **Intercepted Roles:** ${roleNames}\n` +
@@ -106,7 +106,7 @@ export default {
           const ownerExplainingDM = {
             type: 17,
             components: [
-              { type: 10, content: `## Critical Alert: Join-Time Linked Role Exploit Neutralized | <a:atheNATICK:1557841381630681106>` },
+              { type: 10, content: `## Critical Alert: Join-Time Dangerous Role Exploit Neutralized | <a:atheNATICK:1557841381630681106>` },
               { type: 14, divider: true },
               {
                 type: 10,
@@ -117,16 +117,16 @@ export default {
                   `> **Member Clearance Tier:** \`[${targetTier}]\`\n` +
                   `> **Intercepted Role(s):** ${roleNames}\n` +
                   `> **Escalated Permissions:** \`${dangerousPermList.join(', ') || 'Administrator / Elevated'}\`\n` +
-                  `> **Detection Vector:** \`Member joined with pre-assigned dangerous roles via Linked Role connection or Onboarding\``
+                  `> **Detection Vector:** \`Member joined with pre-assigned dangerous roles via Role-Based Invite Link, Linked Role connection, or Onboarding\``
               },
               { type: 14, divider: true },
               {
                 type: 10,
                 content:
                   `### How Does This Exploit Work?\n` +
-                  `> **What are Linked Roles?** Discord's Linked Roles (Application Connections) allow users to obtain roles automatically by connecting external accounts in **User Settings > Connections**.\n` +
+                  `> **What are Role-Based Invites & Linked Roles?** Discord allows server invites and third-party connections to automatically award roles upon server entry. If an invite link or connection is configured with administrative roles (${roleNames}), Discord awards that role immediately upon joining with **zero audit logs**.\n` +
                   `>\n` +
-                  `> **The Join Backdoor:** When a user with pre-linked connections joins a server that has connection requirements configured on administrative roles, Discord awards that role immediately upon joining with **zero audit logs**.\n` +
+                  `> **The Join Backdoor:** Rogue setups or compromised staff can generate invite links attached to \`Admin\` roles, allowing anyone who clicks the link to enter the server with full Administrator authority.\n` +
                   `>\n` +
                   `> **Athena Detection:** Athena intercepted ${member} entering the server with elevated privileges (${dangerousPermList.join(', ') || 'Administrator'}) and took immediate protective action.`
               },

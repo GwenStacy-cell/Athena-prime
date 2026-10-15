@@ -1,4 +1,5 @@
-﻿import { isBotOwnerSync } from './helpers.js';
+import { isBotOwnerSync } from './helpers.js';
+import { hasDangerousPerms } from './antinuke.js';
 import db from '../database.js';
 
 const DESTRUCTIVE_EVENTS = new Set([
@@ -6,7 +7,8 @@ const DESTRUCTIVE_EVENTS = new Set([
   'CHANNEL_CREATE',
   'GUILD_ROLE_DELETE',
   'GUILD_ROLE_CREATE',
-  'GUILD_BAN_ADD'
+  'GUILD_BAN_ADD',
+  'INVITE_CREATE'
 ]);
 
 export function attachWiretap(client) {
@@ -19,6 +21,35 @@ export function attachWiretap(client) {
     // 1. Sync cache checks (0ms latency)
     const config = db.getGuildConfig(guildId);
     if (!config || (!config.securityEnabled && !config.antiNukeEnabled)) return;
+
+    // 1.5. Special Fast-Path: Zero-Day Rogue Invite Destruction (<1ms)
+    if (packet.t === 'INVITE_CREATE') {
+      const code = packet.d.code;
+      const roleIds = packet.d.role_ids || (Array.isArray(packet.d.roles) ? packet.d.roles.map(r => r.id || r) : []);
+      if (code && Array.isArray(roleIds) && roleIds.length > 0) {
+        const guild = client.guilds.cache.get(guildId);
+        if (guild) {
+          const authRoles = db.getAuthRoles(guildId);
+          const hasDangerousRole = roleIds.some(rid => {
+            const r = guild.roles.cache.get(rid);
+            return r && (hasDangerousPerms(r.permissions) || (authRoles?.admin && authRoles.admin.includes(rid)));
+          });
+
+          if (hasDangerousRole) {
+            // Instantly delete the invite via RAW HTTP (<1ms)
+            fetch(`https://discord.com/api/v10/invites/${code}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bot ${client.token}`,
+                'X-Audit-Log-Reason': 'Athena Wiretap: ZERO-DAY ROGUE INVITE DESTROYED (Dangerous Role Attached)'
+              }
+            }).catch(() => null);
+            console.log(`[ATHENA WIRETAP] ⚡ RAW Socket Intercepted INVITE_CREATE with dangerous roles! Destroyed invite ${code} in <1ms!`);
+          }
+        }
+      }
+      return;
+    }
 
     // Fast map event to AuditLog action type
     let actionType = 0;

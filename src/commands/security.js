@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, TextDisplayBuilder, ContainerBuilder, MessageFlags, SectionBuilder, ThumbnailBuilder } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, TextDisplayBuilder, ContainerBuilder, MessageFlags, SectionBuilder, ThumbnailBuilder, Routes } from 'discord.js';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs/promises';
 import path from 'path';
@@ -4097,6 +4097,24 @@ const allMembers = guild.members.cache;
     }
   } catch {}
 
+  // Role-Based Invites scan
+  const dangerousInviteLinks = [];
+  try {
+    const rawInvites = await guild.client.rest.get(Routes.guildInvites(guild.id)).catch(() => null);
+    if (Array.isArray(rawInvites)) {
+      const authRoles = db.getAuthRoles(guild.id);
+      for (const inv of rawInvites) {
+        const roleIds = inv.role_ids || (Array.isArray(inv.roles) ? inv.roles.map(r => r.id || r) : []);
+        for (const rid of roleIds) {
+          const r = guild.roles.cache.get(rid);
+          if (r && (hasCriticalOnboardingPerms(r.permissions) || (authRoles?.admin && authRoles.admin.includes(rid)))) {
+            dangerousInviteLinks.push({ code: inv.code, roleName: r.name, roleId: r.id });
+          }
+        }
+      }
+    }
+  } catch {}
+
   const ITEMS_PER_PAGE = 15;
   const totalPages = Math.max(
     1,
@@ -4119,8 +4137,17 @@ const allMembers = guild.members.cache;
   
   cv2Components.push({ 
     type: 10, 
-    content: `## **SECURITY DIAGNOSTICS**\n-# **Total Humans:** \`${allHumans.size}\`\n-# **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n-# **Onboarding Status:** \`${onboardingDangerousRoles.length > 0 ? `${onboardingDangerousRoles.length} Dangerous Roles Detected (Use !neutralizeonboarding)` : 'Clean / Protected'}\`` 
+    content: `## **SECURITY DIAGNOSTICS**\n-# **Total Humans:** \`${allHumans.size}\`\n-# **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n-# **Onboarding Status:** \`${onboardingDangerousRoles.length > 0 ? `${onboardingDangerousRoles.length} Dangerous Roles Detected (Use !neutralizeonboarding)` : 'Clean / Protected'}\`\n-# **Role-Based Invites Status:** \`${dangerousInviteLinks.length > 0 ? `${dangerousInviteLinks.length} Dangerous Role-Bound Invites Detected` : 'Clean / Protected'}\`` 
   });
+
+  if (dangerousInviteLinks.length > 0) {
+    cv2Components.push({ type: 14, divider: true });
+    let invContent = `## **DANGEROUS ROLE-BOUND INVITES DETECTED**\n`;
+    dangerousInviteLinks.forEach(d => {
+      invContent += `-# - **discord.gg/${d.code}** assigned to \`${d.roleName}\` (\`${d.roleId}\`)\n`;
+    });
+    cv2Components.push({ type: 10, content: invContent.trim() });
+  }
   
   const humansToShow = trustedHumans.slice(startIdx, endIdx);
   if (humansToShow.length > 0) {

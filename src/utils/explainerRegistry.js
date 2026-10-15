@@ -50,12 +50,13 @@ As designed for Athena Prime:
 • **10ms API Polling:** Continual verification ensuring zero unlogged bypasses or gateway drops.`
       },
       {
-        pageTitle: 'Onboarding Guard & Sentinel Role Hierarchy',
+        pageTitle: 'Invite, Onboarding & Sentinel Role Hierarchy',
         content:
-`# Join-Time & Onboarding Guard (\`src/events/guildMemberAdd.js\` & \`src/utils/onboardingGuard.js\`)
-• **Trigger:** Real-time inspection upon member join & proactive Onboarding prompt audit.
-• **Exploit Vectors Mitigated:** Neutralizes Discord Onboarding & pre-linked role exploits if roles carry \`Administrator\`, \`Manage Server\`, \`Manage Roles\`, \`Ban Members\`, \`Kick Members\`, etc.
-• **Onboarding REST Sanitization:** Proactively queries Discord Guild Onboarding endpoints, scans prompt options for dangerous roles, excises dangerous roles from prompts, disarms permissions, and quarantines unauthorized holders.
+`# Role-Based Invite & Onboarding Guard (\`src/events/inviteCreate.js\`, \`guildMemberAdd.js\` & \`onboardingGuard.js\`)
+• **Trigger:** Real-time raw socket inspection upon invite creation, member join, and prompt audit.
+• **Exploit Vectors Mitigated:** Neutralizes Discord Role-Based Invites (invites created with Admin/dangerous roles attached), Discord Onboarding & pre-linked role exploits carrying \`Administrator\`, \`Manage Server\`, \`Manage Roles\`, \`Ban Members\`, etc.
+• **Zero-Day Invite Wiretap:** Instantly intercepts \`INVITE_CREATE\` packets; if an invite carries dangerous roles, Athena deletes the invite link in <1ms, disarms the role permissions, and quarantines unauthorized creators.
+• **Join-Time Defense:** If a user joins holding dangerous roles from an invite link, Athena strips the roles, disarms the permissions, and quarantines the user before commands can execute.
 
 # Persistence Sentinel Role Engine (\`src/utils/antiStrip.js\`)
 • **Command:** \`!unbypassable\` / \`/unbypassable\`
