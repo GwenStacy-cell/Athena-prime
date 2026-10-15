@@ -7,6 +7,19 @@ import {
   DETAILED_COMMANDS 
 } from '../utils/explainerRegistry.js';
 
+let commandMapCache = null;
+async function getCommandMap() {
+  if (!commandMapCache) {
+    try {
+      const loader = await import('./loader.js');
+      commandMapCache = loader.commandMap || loader.default;
+    } catch (e) {
+      console.error('[explain] Error loading commandMap:', e);
+    }
+  }
+  return commandMapCache;
+}
+
 export const commands = [
   {
     name: 'explain',
@@ -16,7 +29,7 @@ export const commands = [
     options: [
       {
         name: 'topic',
-        description: 'Command or architecture topic to explain (e.g., security, automod, unbypassable)',
+        description: 'Command or architecture topic to explain (e.g., security, kick, ban, automod, unbypassable)',
         type: 3,
         required: false,
         autocomplete: true
@@ -29,7 +42,8 @@ export const commands = [
 
         if (args && args.length > 0) {
           const query = args.join(' ').trim();
-          const container = buildExplainContainer(query, 0, prefix);
+          const cmdMap = await getCommandMap();
+          const container = buildExplainContainer(query, 0, prefix, cmdMap);
           return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
         }
 
@@ -44,7 +58,8 @@ export const commands = [
       try {
         const topic = interaction.options?.getString?.('topic');
         if (topic) {
-          const container = buildExplainContainer(topic, 0, '/');
+          const cmdMap = await getCommandMap();
+          const container = buildExplainContainer(topic, 0, '/', cmdMap);
           return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
         }
 
@@ -69,11 +84,20 @@ export const commands = [
           { name: 'Auth: Three-Tier Role Authorization Matrix', value: 'auth' },
           { name: 'Command: !antinuke (Defense Panel & Wiretap)', value: 'antinuke' },
           { name: 'Command: !unbypassable (Sentinel Persistence)', value: 'unbypassable' },
+          { name: 'Command: !kick (Hierarchy Kick Engine)', value: 'kick' },
+          { name: 'Command: !ban (Mass Ban & Wiretap Eviction)', value: 'ban' },
+          { name: 'Command: !timeout (Gateway Duration Mute)', value: 'timeout' },
+          { name: 'Command: !purge (Atomic Message Deletion)', value: 'purge' },
+          { name: 'Command: !slowmode (Channel Velocity Rate Limit)', value: 'slowmode' },
+          { name: 'Command: !nuke (Channel Clone & Nuclear Wipe)', value: 'nuke' },
+          { name: 'Command: !lock / !unlock (Channel Isolation & ACL)', value: 'lock' },
+          { name: 'Command: !addrole / !removerole (Role Assignment)', value: 'addrole' },
+          { name: 'Command: !striproles (Mass Demotion Defense)', value: 'striproles' },
+          { name: 'Command: !autorole (Join-Time Role Provisioning)', value: 'autorole' },
           { name: 'Command: !firewall (Live Gateway Telemetry)', value: 'firewall' },
           { name: 'Command: !neutralizeonboarding (Onboarding Audit)', value: 'neutralizeonboarding' },
           { name: 'Command: !panic (Instant Server Lockdown)', value: 'panic' },
           { name: 'Command: !scanserver (Dangerous Permissions Audit)', value: 'scanserver' },
-          { name: 'Command: !quarantine (Isolation & Role Strip)', value: 'quarantine' },
           { name: 'Command: !backup (Cloud Snapshot Serialization)', value: 'backup' }
         ];
 
@@ -115,7 +139,8 @@ export async function handleExplainInteraction(interaction) {
     // 3. Topic selection from dropdown
     if (customId === 'arch_select_topic' && interaction.isStringSelectMenu()) {
       const selected = interaction.values[0];
-      const container = buildExplainContainer(selected, 0, prefix);
+      const cmdMap = await getCommandMap();
+      const container = buildExplainContainer(selected, 0, prefix, cmdMap);
       await interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 });
       return true;
     }
@@ -123,7 +148,8 @@ export async function handleExplainInteraction(interaction) {
     // 4. Topic selection from direct buttons (e.g. arch_topic_security)
     if (customId.startsWith('arch_topic_')) {
       const topicId = customId.replace('arch_topic_', '');
-      const container = buildExplainContainer(topicId, 0, prefix);
+      const cmdMap = await getCommandMap();
+      const container = buildExplainContainer(topicId, 0, prefix, cmdMap);
       await interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 });
       return true;
     }
@@ -133,7 +159,8 @@ export async function handleExplainInteraction(interaction) {
       const parts = customId.split('_'); // ['arch', 'page', topicId, pageIndex]
       const topicId = parts[2];
       const pageIndex = parseInt(parts[3], 10) || 0;
-      const container = buildExplainContainer(topicId, pageIndex, prefix);
+      const cmdMap = await getCommandMap();
+      const container = buildExplainContainer(topicId, pageIndex, prefix, cmdMap);
       await interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 });
       return true;
     }
@@ -141,7 +168,8 @@ export async function handleExplainInteraction(interaction) {
     // 6. Inspect command from deep-dive button (e.g. arch_cmd_unbypassable)
     if (customId.startsWith('arch_cmd_')) {
       const cmdName = customId.replace('arch_cmd_', '');
-      const container = buildExplainContainer(cmdName, 0, prefix);
+      const cmdMap = await getCommandMap();
+      const container = buildExplainContainer(cmdName, 0, prefix, cmdMap);
       await interaction.update({ components: [container], flags: MessageFlags.IsComponentsV2 });
       return true;
     }

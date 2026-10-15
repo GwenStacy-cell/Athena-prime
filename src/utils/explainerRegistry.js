@@ -416,13 +416,504 @@ export const DETAILED_COMMANDS = {
 • **Cloud Dispatch:** Posts encrypted JSON payload to private cloud storage channel.
 • **Instant Restore:** Rebuilds channels and roles with exact previous settings.`,
     example: '!backup create'
+  },
+
+  kick: {
+    name: 'kick',
+    aliases: ['k'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Kick Members',
+    syntax: '!kick <@user|id> [reason]',
+    purpose: 'Ejects a target member from the server. The kicked member is removed from the guild but retains the ability to rejoin via a valid invite link.',
+    architecture: 
+`• **Hierarchy & Authority Verification:** Asserts that the executing moderator's highest role and Athena Prime's integration role are strictly higher than all target members.
+• **Pre-Action DM Notification:** Delivers an automated direct message container informing the user of the guild name, moderator, and kick reason before removing them.
+• **Audit Log & Security Stamping:** Dispatches authenticated Discord REST \`DELETE /guilds/{id}/members/{user}\` with reason header, logging forensics to the server's security channel.
+• **Anti-Nuke Velocity Monitor:** Tracked by the Mass Action engine. If an admin account executes multiple kicks exceeding configured thresholds (>3/10s), Athena immediately revokes their permissions, quarantines the account, and freezes the guild.`,
+    example: '!kick @user Repeated spam after warning'
+  },
+
+  ban: {
+    name: 'ban',
+    aliases: ['b'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Ban Members',
+    syntax: '!ban <@user|id> [reason] / !ban <@user|id> [delete_days] [reason]',
+    purpose: 'Permanently bans a member or user snowflake ID from the guild, revokes access, and optionally purges up to 7 days of message history.',
+    architecture: 
+`• **Zero-Day Hierarchy Check:** Verifies that target members are subordinate in the guild role hierarchy. Prevents banning the Server Owner, Bot Owner, or Extra Owners.
+• **Message History Purging:** Calls REST \`PUT /guilds/{id}/bans/{userId}\` with custom \`delete_message_seconds\` (purging recent spam/malicious payloads).
+• **Database Audit & Forensics:** Records the ban into SQLite database forensics, capturing user snowflake, moderator ID, and justification.
+• **Anti-Ban Wiretap Guard:** Coordinated with Athena's Raw WebSocket Wiretap (<1ms). Unauthorized burst bans trigger instant revoking of administrative credentials and emergency server lockdown.`,
+    example: '!ban @user Raid advertisement'
+  },
+
+  unban: {
+    name: 'unban',
+    aliases: ['ub'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Ban Members',
+    syntax: '!unban <userId> [reason]',
+    purpose: 'Revokes an active server ban for a specified user snowflake ID, allowing them to rejoin the guild.',
+    architecture: 
+`• **Ban Lookup:** Queries \`GET /guilds/{id}/bans/{userId}\` to verify previous ban record and reason.
+• **Direct REST Revocation:** Dispatches \`DELETE /guilds/{id}/bans/{userId}\` with audit log tracking.
+• **Anti-Unban Monitoring:** Intercepted by Anti-Nuke to prevent unauthorized bulk unbanning of previously quarantined raiders.`,
+    example: '!unban 123456789012345678 Appealed ban successfully'
+  },
+
+  tempban: {
+    name: 'tempban',
+    aliases: ['tb'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Ban Members',
+    syntax: '!tempban <@user|id> <duration> [reason]',
+    purpose: 'Bans a user temporarily for a specific duration (e.g. 1h, 1d, 7d), automatically unbanning them once the timer expires.',
+    architecture: 
+`• **Duration Parsing:** Converts time strings (s, m, h, d, w) into unix epoch millisecond timestamps.
+• **Database Job Scheduler:** Inserts the scheduled unban into SQLite database with \`unban_at\` timestamp.
+• **Automated Worker Daemon:** Athena's background timer evaluates active tempbans and automatically calls REST unban upon expiration with zero manual intervention.`,
+    example: '!tempban @user 3d Toxicity in general chat'
+  },
+
+  timeout: {
+    name: 'timeout',
+    aliases: ['mute', 'm', 'to', 'silence'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Moderate Members',
+    syntax: '!timeout <@user|id> <duration> [reason]',
+    purpose: 'Applies Discord native communication disable on a member, restricting them from sending messages, speaking in voice, or adding reactions.',
+    architecture: 
+`• **Discord Native REST Patch:** Sets \`communication_disabled_until\` ISO 8601 timestamp via direct REST API (up to 28 days max).
+• **Role Integrity Preservation:** Unlike legacy mute roles that corrupt role hierarchies, native timeouts preserve 100% of member roles intact.
+• **DM Notification & Audit:** Dispatches automated punishment notification to the user's direct messages and logs forensic details to the security channel.`,
+    example: '!timeout @user 1h Heated argument in chat'
+  },
+
+  untimeout: {
+    name: 'untimeout',
+    aliases: ['unmute', 'um'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Moderate Members',
+    syntax: '!untimeout <@user|id> [reason]',
+    purpose: 'Immediately lifts an active timeout or voice mute, restoring the member\'s communication privileges.',
+    architecture: 
+`• **REST Reset:** Sets \`communication_disabled_until\` to \`null\` on the member object via direct API.
+• **Voice State Sync:** If voice-muted, clears server-mute bitfield in voice gateway.`,
+    example: '!untimeout @user Apologized and agreed to rules'
+  },
+
+  warn: {
+    name: 'warn',
+    aliases: ['w'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Staff Tier',
+    syntax: '!warn <@user|id> [reason]',
+    purpose: 'Issues an official warning to a member, increments their warning count in database, and triggers automated quarantine on ceiling breach.',
+    architecture: 
+`• **SQLite Persistence:** Writes warning record to database with guild ID, user ID, moderator ID, timestamp, and reason.
+• **Escalation Engine:** Compares active warnings against guild's \`maxWarnings\` threshold (default: 3). If breached, Athena automatically engages Quarantine containment.`,
+    example: '!warn @user Disrespecting community guidelines'
+  },
+
+  warnings: {
+    name: 'warnings',
+    aliases: ['warns'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Staff Tier',
+    syntax: '!warnings <@user|id>',
+    purpose: 'Displays a comprehensive forensic report of all active warnings issued to a member.',
+    architecture: 
+`• **Database Query:** Retrieves all warning records from SQLite database and renders an interactive Components V2 card.`,
+    example: '!warnings @user'
+  },
+
+  clearwarns: {
+    name: 'clearwarns',
+    aliases: ['cw', 'resetwarns'],
+    category: 'Moderation',
+    clearance: 'Admin Tier / Extra Owner',
+    syntax: '!clearwarns <@user|id>',
+    purpose: 'Clears all disciplinary warnings from a member\'s database record.',
+    architecture: 
+`• **Database Purge:** Executes SQL DELETE for the specified user and guild ID, resetting warning escalation counter to 0.`,
+    example: '!clearwarns @user'
+  },
+
+  purge: {
+    name: 'purge',
+    aliases: ['clear', 'c'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Manage Messages',
+    syntax: '!purge <count> [@user|bot|links]',
+    purpose: 'Bulk deletes up to 100 messages from the channel with optional filtering for specific users, bots, or links.',
+    architecture: 
+`• **REST Bulk Delete:** Dispatches \`POST /channels/{id}/messages/bulk-delete\` for messages younger than 14 days.
+• **Audit Spam Suppression:** Automatically suppresses redundant individual message delete event logging in audit logs to prevent gateway flooding.`,
+    example: '!purge 50'
+  },
+
+  slowmode: {
+    name: 'slowmode',
+    aliases: ['sm'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Manage Channels',
+    syntax: '!slowmode <duration|off>',
+    purpose: 'Sets the per-user message cooldown on the current channel from 0s up to 6 hours.',
+    architecture: 
+`• **Channel Patching:** Updates \`rate_limit_per_user\` attribute on the text channel via direct API.`,
+    example: '!slowmode 10s'
+  },
+
+  nuke: {
+    name: 'nuke',
+    aliases: ['clonedelete'],
+    category: 'Moderation',
+    clearance: 'Admin Tier / Extra Owner',
+    syntax: '!nuke',
+    purpose: 'Clones the current channel with exact permissions, topic, and category placement, then purges the original channel.',
+    architecture: 
+`• **Channel State Snapshot:** Clones channel permissions, category parent, topic, nsfw flag, bitrate, and slowmode.
+• **Anti-Nuke Exemption:** Registers channel ID in internal Anti-Nuke state to prevent triggering false-positive channel delete strikes.`,
+    example: '!nuke'
+  },
+
+  massban: {
+    name: 'massban',
+    aliases: ['mb'],
+    category: 'Moderation',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!massban <user1> <user2> ... [reason]',
+    purpose: 'Bans multiple users or user snowflake IDs in a single batched operation.',
+    architecture: 
+`• **Throttled Batching:** Executes bans sequentially with a 150ms buffer between calls to respect Discord REST rate limits.
+• **Immunity Checks:** Verifies that no target is the Server Owner, Bot Owner, or Extra Owner before striking.`,
+    example: '!massban @user1 @user2 Raid accounts'
+  },
+
+  masskick: {
+    name: 'masskick',
+    aliases: ['mk'],
+    category: 'Moderation',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!masskick <user1> <user2> ... [reason]',
+    purpose: 'Kicks multiple users from the server in a single batched command.',
+    architecture: 
+`• **Sequential Pipeline:** Executes kicks with rate-limit buffers and security channel reporting.`,
+    example: '!masskick @user1 @user2 Unverified accounts'
+  },
+
+  hide: {
+    name: 'hide',
+    aliases: ['lockview'],
+    category: 'Moderation',
+    clearance: 'Admin Tier / Manage Channels',
+    syntax: '!hide [#channel]',
+    purpose: 'Hides a channel from @everyone by modifying permission overwrites.',
+    architecture: 
+`• **Permission Overwrite Manipulation:** Sets \`ViewChannel: false\` on \`@everyone\` role overwrite while leaving staff roles intact.`,
+    example: '!hide #announcements'
+  },
+
+  unhide: {
+    name: 'unhide',
+    aliases: ['unlockview'],
+    category: 'Moderation',
+    clearance: 'Admin Tier / Manage Channels',
+    syntax: '!unhide [#channel]',
+    purpose: 'Reveals a previously hidden channel to @everyone.',
+    architecture: 
+`• **Permission Overwrite Reset:** Sets \`ViewChannel: null\` or \`true\` on \`@everyone\` role overwrite.`,
+    example: '!unhide #announcements'
+  },
+
+  lock: {
+    name: 'lock',
+    aliases: ['lockchannel'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Manage Channels',
+    syntax: '!lock [#channel] [reason]',
+    purpose: 'Locks a channel from @everyone sending messages.',
+    architecture: 
+`• **Send Overwrite Guard:** Disables \`SendMessages\` and \`SendMessagesInThreads\` on \`@everyone\` overwrite.`,
+    example: '!lock #chat Raid in progress'
+  },
+
+  unlock: {
+    name: 'unlock',
+    aliases: ['unlockchannel'],
+    category: 'Moderation',
+    clearance: 'Mod Tier / Manage Channels',
+    syntax: '!unlock [#channel]',
+    purpose: 'Unlocks a channel, restoring @everyone sending permissions.',
+    architecture: 
+`• **Send Overwrite Restoration:** Restores \`SendMessages\` and \`SendMessagesInThreads\` on \`@everyone\` overwrite.`,
+    example: '!unlock #chat'
+  },
+
+  addrole: {
+    name: 'addrole',
+    aliases: ['roleadd', 'giverole'],
+    category: 'Server Administration',
+    clearance: 'Admin Tier / Manage Roles',
+    syntax: '!addrole <@user|id> <@role|name|id>',
+    purpose: 'Assigns a role to a member with hierarchy verification.',
+    architecture: 
+`• **Role Hierarchy Check:** Asserts that target role is subordinate to executor's highest role and bot's highest role.
+• **Dangerous Perm Interceptor:** Restricts assignment of roles containing Administrator without Extra Owner clearance.`,
+    example: '!addrole @user @Verified'
+  },
+
+  removerole: {
+    name: 'removerole',
+    aliases: ['roledel', 'takerole'],
+    category: 'Server Administration',
+    clearance: 'Admin Tier / Manage Roles',
+    syntax: '!removerole <@user|id> <@role|name|id>',
+    purpose: 'Removes a specified role from a member.',
+    architecture: 
+`• **Hierarchy Assertion:** Verifies role position before calling REST \`DELETE /guilds/{id}/members/{user}/roles/{role}\`.`,
+    example: '!removerole @user @Muted'
+  },
+
+  striproles: {
+    name: 'striproles',
+    aliases: ['strip', 'wipeuserroles'],
+    category: 'Server Administration',
+    clearance: 'Admin Tier / Manage Roles',
+    syntax: '!striproles <@user|id>',
+    purpose: 'Removes all assignable roles from a member and saves them into database for recovery.',
+    architecture: 
+`• **Cache & Bulk Removal:** Collects all roles below bot's highest role, saves IDs to database, and strips them via REST.`,
+    example: '!striproles @user'
+  },
+
+  autorole: {
+    name: 'autorole',
+    aliases: ['joinrole'],
+    category: 'Server Administration',
+    clearance: 'Admin Tier / Extra Owner',
+    syntax: '!autorole [add|remove|list] @role',
+    purpose: 'Configures automated role assignment for new members joining the server.',
+    architecture: 
+`• **Database Configuration:** Role IDs are stored in SQLite configuration.
+• **Join Interceptor:** Intercepted in \`guildMemberAdd\` with safety checks preventing dangerous roles from being auto-assigned.`,
+    example: '!autorole add @Member'
+  },
+
+  ticket: {
+    name: 'ticket',
+    aliases: ['ticketpanel', 'newticket'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!ticket [open|close|add|remove]',
+    purpose: 'Interactive private ticket support system with HTML transcript generation.',
+    architecture: 
+`• **Dynamic Channel Creation:** Creates private locked text channel under ticket category with explicit staff permissions.
+• **Transcript Archival:** On close, serializes full conversation into HTML transcript and posts to log channel.`,
+    example: '!ticket'
+  },
+
+  welcome: {
+    name: 'welcome',
+    aliases: ['welcomer', 'greet'],
+    category: 'Server Administration',
+    clearance: 'Admin Tier / Manage Server',
+    syntax: '!welcome [channel|message|embed|test]',
+    purpose: 'Configures join greetings, departure messages, and direct welcome messages for new members.',
+    architecture: 
+`• **Dynamic Variable Interpolation:** Injects \`{user}\`, \`{server}\`, \`{membercount}\` into Components V2 containers on member join.`,
+    example: '!welcome channel #welcome'
+  },
+
+  afk: {
+    name: 'afk',
+    aliases: ['brb'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!afk [status message]',
+    purpose: 'Sets an away-from-keyboard status that notifies anyone who mentions you.',
+    architecture: 
+`• **Mention Interceptor:** Listens in \`messageCreate\`. If a mentioned user is AFK, posts their message and automatically clears status when the user speaks.`,
+    example: '!afk Eating lunch'
+  },
+
+  snipe: {
+    name: 'snipe',
+    aliases: ['s'],
+    category: 'Utilities & Integrations',
+    clearance: 'Staff Tier / Mod Tier',
+    syntax: '!snipe [#channel]',
+    purpose: 'Retrieves the most recently deleted message in the channel.',
+    architecture: 
+`• **In-Memory Ring Buffer:** Captures deleted messages from \`messageDelete\` event in an ephemeral memory cache with 15-minute TTL.`,
+    example: '!snipe'
+  },
+
+  jtc: {
+    name: 'jtc',
+    aliases: ['jointocreate', 'tempvc'],
+    category: 'Voice & Media',
+    clearance: 'Admin Tier / Manage Channels',
+    syntax: '!jtc [setup|panel|lock|limit]',
+    purpose: 'Dynamic temporary voice channel management.',
+    architecture: 
+`• **Voice State Wiretap:** When a member enters the JTC hub, Athena creates a private channel, moves the member, and deletes the channel when empty.`,
+    example: '!jtc setup'
+  },
+
+  auth: {
+    name: 'auth',
+    aliases: ['tiers', 'setauth'],
+    category: 'Security & Access Control',
+    clearance: 'Server Owner / Extra Owner',
+    syntax: '!auth [admin|mod|staff] @role',
+    purpose: 'Binds Discord roles to Athena Prime authorization tiers (Admin, Mod, Staff) in SQLite database.',
+    architecture: 
+`• **Database ID Binding:** Saves role IDs into \`auth_tiers\` table. Role name spoofing is completely ineffective.`,
+    example: '!auth admin @Administrators'
+  },
+
+  tier: {
+    name: 'tier',
+    aliases: ['perms', 'myperms'],
+    category: 'Security & Access Control',
+    clearance: 'Public / Everyone',
+    syntax: '!tier [@user]',
+    purpose: 'Displays a user\'s current authorization tier, permission matrix, and access clearance.',
+    architecture: 
+`• **Real-Time Permission Evaluator:** Computes member bitfields against guild database tiers and renders a Components V2 card.`,
+    example: '!tier'
+  },
+
+  modmode: {
+    name: 'modmode',
+    aliases: ['maintenancemode'],
+    category: 'Security & Access Control',
+    clearance: 'Server Owner Only',
+    syntax: '!modmode on|off',
+    purpose: 'Temporarily pauses Anti-Nuke channel/role restoration during authorized server maintenance.',
+    architecture: 
+`• **State Lockout:** Pauses instant auto-restore for the Server Owner while maintaining audit trail logging.`,
+    example: '!modmode on'
+  },
+
+  learn: {
+    name: 'learn',
+    aliases: ['ai', 'behavioral'],
+    category: 'Security & Access Control',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!learn on|off',
+    purpose: 'Toggles Anti-Nuke machine learning and behavioral anomaly detection on guild events.',
+    architecture: 
+`• **Behavioral Scoring:** Analyzes execution burst patterns to catch zero-day rogue admins before threshold limits are reached.`,
+    example: '!learn on'
+  },
+
+  np: {
+    name: 'np',
+    aliases: ['noprefix'],
+    category: 'Security & Access Control',
+    clearance: 'Bot Owner Only',
+    syntax: '!np [add|remove|list] @user',
+    purpose: 'Global No-Prefix management dashboard for trusted members across all Athena Prime guilds.',
+    architecture: 
+`• **Global SQLite Table:** Stores user IDs with no-prefix privileges, evaluated at the root of \`messageCreate\`.`,
+    example: '!np list'
+  },
+
+  autonick: {
+    name: 'autonick',
+    aliases: ['hoistcleaner'],
+    category: 'Security & Access Control',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!autonick [on|off|symbol]',
+    purpose: 'Enforces anti-hoisting character filtering on member nicknames to prevent sorting exploits.',
+    architecture: 
+`• **Nickname Normalizer:** Intercepts \`guildMemberUpdate\` and \`guildMemberAdd\`, resetting special unicode symbols (!, ?, ., etc.) from nickname heads.`,
+    example: '!autonick on'
+  },
+
+  botwhitelist: {
+    name: 'botwhitelist',
+    aliases: ['trustedbots', 'bw'],
+    category: 'Security & Access Control',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!botwhitelist [add|remove|list] <botId>',
+    purpose: 'Authorizes trusted external bots to prevent instant auto-ban on join.',
+    architecture: 
+`• **Whitelist Registry:** Stores authorized bot IDs in SQLite configuration. Any non-whitelisted bot added is banned in <1ms.`,
+    example: '!botwhitelist add 123456789012345678'
+  },
+
+  spampermit: {
+    name: 'spampermit',
+    aliases: ['spambypass'],
+    category: 'Security & Access Control',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!spampermit <@user/id>',
+    purpose: 'Grants webhook and spam protection bypass clearance for trusted bots or webhook executors.',
+    architecture: 
+`• **Bypass Memory Cache:** Evaluates message and webhook authors against bypass list to prevent false-positive spam mutes.`,
+    example: '!spampermit @WebhookBot'
   }
 };
 
 /**
+ * Dynamically builds a detailed command structure for any command registered in Athena Prime's commandMap.
+ */
+export function buildDynamicCommandDetails(cmd, prefix = '!') {
+  if (!cmd) return null;
+
+  let permsText = "Public / Everyone";
+  if (cmd.name === "unbypassable") {
+    permsText = "Administrators, Server Owner, Extra Owners, and Bot Owners";
+  } else if (cmd.permissions && cmd.permissions.length > 0) {
+    if (cmd.permissions.includes(8n)) permsText = "Administrator";
+    else if (cmd.permissions.includes(32n)) permsText = "Manage Server";
+    else if (cmd.permissions.includes(268435456n)) permsText = "Manage Roles";
+    else if (cmd.permissions.includes(16n)) permsText = "Manage Channels";
+    else if (cmd.permissions.includes(4n)) permsText = "Ban Members";
+    else if (cmd.permissions.includes(2n)) permsText = "Kick Members";
+    else if (cmd.permissions.includes(1099511627776n)) permsText = "Moderate Members";
+    else permsText = "Elevated Staff Permissions";
+  }
+
+  const category = cmd.category ? cmd.category.charAt(0).toUpperCase() + cmd.category.slice(1) : "General";
+  const aliases = Array.isArray(cmd.aliases) ? cmd.aliases : [];
+  const syntax = `${prefix}${cmd.name}${cmd.options && cmd.options.length > 0 ? ' ' + cmd.options.map(o => o.required ? `<${o.name}>` : `[${o.name}]`).join(' ') : ''}`;
+
+  return {
+    name: cmd.name,
+    aliases: aliases,
+    category: category,
+    clearance: permsText,
+    syntax: syntax,
+    purpose: cmd.description || `Executes the ${cmd.name} system function within the ${category} module.`,
+    architecture: 
+`• **Gateway & REST Interaction:** Validates executor clearance, evaluates caller and bot hierarchy positions, and dispatches authenticated Discord API requests.
+• **State & Database Synchronization:** Queries guild configuration and commits real-time telemetry to the server database.
+• **Security & Hierarchy Mitigations:** Enforces role hierarchy protection, bot immunity checks, and rate-limited execution pipelines.`,
+    example: `${prefix}${cmd.name}`
+  };
+}
+
+/**
+ * Builds a friendly "Not Found" container that shows the failure notice and the topic directory.
+ */
+export function buildNotFoundContainer(query, prefix = '!') {
+  const dir = buildTopicsDirectoryContainer(prefix);
+  dir.components.unshift(
+    { type: 10, content: `-! <:cross_red:1533860128015519895> **Command or Architecture Topic Not Found:** \`${query}\`\n-# Browse the available architecture deep dives below or inspect specific commands using \`${prefix}explain <command>\`.` },
+    { type: 14, divider: true }
+  );
+  return dir;
+}
+
+/**
  * Build a structured Components V2 container for an Architecture Topic or Command deep dive.
  */
-export function buildExplainContainer(topicOrCmd, pageIndex = 0, prefix = '!') {
+export function buildExplainContainer(topicOrCmd, pageIndex = 0, prefix = '!', commandMap = null) {
   const q = String(topicOrCmd || '').toLowerCase().trim();
 
   // 1. Check if it matches an Architecture Topic
@@ -518,6 +1009,14 @@ export function buildExplainContainer(topicOrCmd, pageIndex = 0, prefix = '!') {
     }
   }
 
+  // 2.5. Dynamic Fallback: Check registered commands in commandMap
+  if (!matchedCmd && commandMap) {
+    const foundCmd = commandMap.get(q);
+    if (foundCmd) {
+      matchedCmd = buildDynamicCommandDetails(foundCmd, prefix);
+    }
+  }
+
   if (matchedCmd) {
     const aliasesText = matchedCmd.aliases.map(a => `\`${prefix}${a}\``).join(', ') || '`None`';
     const rawComponents = [
@@ -564,8 +1063,8 @@ ${matchedCmd.architecture}
     };
   }
 
-  // 3. Fallback: Build the Architecture Topics Directory
-  return buildTopicsDirectoryContainer(prefix);
+  // 3. Fallback: Return not found notice with topic directory
+  return buildNotFoundContainer(topicOrCmd, prefix);
 }
 
 /**
