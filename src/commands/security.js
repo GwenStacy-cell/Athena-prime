@@ -616,11 +616,13 @@ export const commands = [
     options: [
       {
         name: 'subcommand',
-        description: 'Choose antinuke subcommand action',
+        description: 'Choose antinuke action',
         type: 3,
-        required: true,
+        required: false,
         choices: [
-          { name: 'Open Config Panel', value: 'config' }
+          { name: 'Open Config Panel', value: 'config' },
+          { name: 'Security & Module Status', value: 'status' },
+          { name: 'Exploit Defense & Architecture Guide', value: 'guide' }
         ]
       }
     ],
@@ -630,13 +632,19 @@ export const commands = [
         return message.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.'));
       }
       
-      const sub = args.join(' ').toLowerCase();
+      const sub = args.join(' ').toLowerCase().trim();
 
       if (sub === 'config' || sub === '') {
         const panel = await getAntinukeConfigPanel(message.guild);
         await message.reply(panel);
+      } else if (sub === 'status' || sub === 'modules') {
+        const panel = await getSecurityStatusPanel(message.guild);
+        await message.reply(panel);
+      } else if (sub === 'guide' || sub === 'explain' || sub === 'info' || sub === 'architecture') {
+        const panel = await getAntinukeArchitecturePanel(message.guild);
+        await message.reply(panel);
       } else {
-        await message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!antinuke config\``));
+        await message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!antinuke [config|status|guide]\``));
       }
     },
     async executeSlash(interaction) {
@@ -645,10 +653,16 @@ export const commands = [
         return interaction.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.'));
       }
 
-      const sub = interaction.options.getString('subcommand');
+      const sub = interaction.options.getString('subcommand') || 'config';
 
       if (sub === 'config') {
         const panel = await getAntinukeConfigPanel(interaction.guild);
+        await interaction.reply(panel);
+      } else if (sub === 'status') {
+        const panel = await getSecurityStatusPanel(interaction.guild);
+        await interaction.reply(panel);
+      } else if (sub === 'guide') {
+        const panel = await getAntinukeArchitecturePanel(interaction.guild);
         await interaction.reply(panel);
       }
     }
@@ -2566,12 +2580,16 @@ export async function getAntinukeConfigPanel(guild) {
       .setLabel(`Punishment: ${config.antiNukePunishment.toUpperCase()}`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
+      .setCustomId('sec_architecture_guide')
+      .setLabel('Exploit Guide')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
       .setCustomId('sec_status_back')
-      .setLabel('Back')
+      .setLabel('Status')
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('save_panel')
-      .setLabel('Save & Close')
+      .setLabel('Close')
       .setStyle(ButtonStyle.Secondary)
   );
 
@@ -3016,12 +3034,12 @@ export async function getSecurityStatusPanel(guild) {
 
   
     const detailsSection = { type: 10, content:
-      "-# **Advanced Architecture Details:**\n" +
+      "-# **Advanced Architecture & Exploit Defense:**\n" +
+      "-# **1. Real-Time Role Interceptor (`guildMemberUpdate.js`):** Intercepts unauthorized gaining of Administrator / dangerous roles. Cross-examines 60s audit logs for authorized executors. Automatically strips roles, disarms dangerous permissions, and isolates the account in Quarantine.\n" +
+      "-# **2. Join-Time Dangerous Role Guard (`guildMemberAdd.js`):** Neutralizes Discord Onboarding & pre-linked role exploits by stripping join-time dangerous roles and isolating the user.\n" +
       "-# **Raw Websocket Wiretap:** Intercepts raw network streams to execute zero-day bans in <1ms, bypassing library latency.\n" +
       "-# **Lightspeed Detection:** Direct API polling every 10ms catches destructive events instantly.\n" +
-      "-# **Flawless Restoration:** Re-engineers exact channel/category raw positions and permissions post-nuke.\n" +
-      "-# **Parallel Retaliation:** Instantly unbans victims while simultaneously banning the rogue admin.\n" +
-      "-# **Deep Emoji Reconstruction:** Recreates deleted custom emojis with their original exact image data and names."
+      "-# **Flawless Restoration:** Re-engineers exact channel/category raw positions and permissions post-nuke."
     };
 
     const container = {
@@ -3035,10 +3053,71 @@ export async function getSecurityStatusPanel(guild) {
       { type: 14, divider: true },
       { type: 1, components: [
         { type: 2, custom_id: 'sec_module_manage', label: 'Manage Modules', style: 2 },
+        { type: 2, custom_id: 'sec_architecture_guide', label: 'Exploit Guide', style: 2 },
         { type: 2, custom_id: 'sec_close', label: 'Close', style: 2 }
       ]},
       { type: 14, divider: true },
       { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
+    ]
+  };
+
+  return { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function getAntinukeArchitecturePanel(guild) {
+  const container = {
+    type: 17,
+    components: [
+      {
+        type: 10,
+        content:
+          "# ANTINUKE EXPLOIT DEFENSE ARCHITECTURE\n" +
+          "-# **Autonomous Zero-Day Exploit Mitigation & Role Protection Systems**"
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          "## **1. Real-Time Role Interceptor (`src/events/guildMemberUpdate.js`)**\n" +
+          "-# • **Trigger:** Fires dynamically whenever any member's roles change.\n" +
+          "-# • **Dangerous Roles Scanned:** `Administrator`, `Manage Server`, `Manage Roles`, `Manage Channels`, `Ban Members`, `Kick Members`, `Manage Webhooks`, `Mention Everyone`, or Admin Tier roles.\n" +
+          "-# • **Exemption Matrix:** Skips only the Server Owner, Bot Owner, and Extra Owners.\n" +
+          "-# • **60-Second Audit Log Cross-Examination:**\n" +
+          "-#   • Scans audit logs for an authorized `MemberRoleUpdate` within the last 60 seconds.\n" +
+          "-#   • If no audit log exists, or if the executor is empty/self-assigned, or if the executor is unauthorized:\n" +
+          "-#     1. **Instant Role Strip:** Immediately strips the dangerous role(s) from the member via direct API.\n" +
+          "-#     2. **Disarms Compromised Role:** Revokes dangerous permissions from the role so no other user can exploit it via linked connection.\n" +
+          "-#     3. **Quarantine Containment:** Automatically places the exploiter into Quarantine isolation.\n" +
+          "-#     4. **Security Log & Owner Alert:** Dispatches a high-priority alert container to the server's security channel and DMs the Server Owner directly."
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          "## **2. Join-Time Dangerous Role Guard (`src/events/guildMemberAdd.js`)**\n" +
+          "-# • **Trigger:** Real-time inspection upon every member join.\n" +
+          "-# • **Exploit Vectors Mitigated:** Checks if a user joins the server with pre-assigned dangerous/Administrator roles (mitigating Discord Onboarding exploits and pre-linked role join vectors).\n" +
+          "-# • **Enforcement:** Instantly strips dangerous roles and quarantines the account."
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          "-# **Execution Engine:**\n" +
+          "-# • **Raw Websocket Wiretap:** <1ms zero-day direct API execution.\n" +
+          "-# • **10ms API Polling:** Continual verification ensuring zero unlogged bypasses."
+      },
+      { type: 14, divider: true },
+      {
+        type: 1,
+        components: [
+          { type: 2, custom_id: 'antinuke_config', label: 'Open Config Panel', style: 2 },
+          { type: 2, custom_id: 'sec_status_view', label: 'Module Status', style: 2 },
+          { type: 2, custom_id: 'sec_close', label: 'Close', style: 2 }
+        ]
+      },
+      { type: 14, divider: true },
+      { type: 10, content: '-# **Athena Bulletproof Security Matrix · V1.0.0**' }
     ]
   };
 
@@ -3533,6 +3612,12 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
 export async function getServerSecurityEnabledPanel() {
     const section1 = { type: 10, content: "-# **SERVER SECURITY ENABLED**\n-# **When server security is enabled these config actions required to from owner/extraowner /whitelist users and Roles**" };
 
+    const sectionExploit = { type: 10, content:
+      "-# **Active Anti-Exploit Protections:**\n" +
+      "-# • **Real-Time Role Interceptor (`guildMemberUpdate.js`):** Intercepts unauthorized gaining of Administrator/dangerous roles, cross-examining 60s audit logs, stripping roles, disarming dangerous permissions, and quarantining the user.\n" +
+      "-# • **Join-Time Dangerous Role Guard (`guildMemberAdd.js`):** Neutralizes Discord Onboarding & pre-linked role exploits by stripping join-time dangerous roles and quarantining the account instantly."
+    };
+
     const section2 = { type: 10, content: "-# <a:warning:1540656124313993247> **`!botwhitelist add <bot id>` - To add bots to server by whitelisted users before that the admin bot comes in either whitelisted to ensure data leaving server owner or extra owner**\n\n" +
                      "-# <a:warning:1540656124313993247> **`!whitelist @user` - Whitelist users to have securely immunity for the targeted user for whitelisted actions the targeted user is immune for target events**\n\n" +
                      "-# <a:warning:1540656124313993247> **`!whitelist @role` - The Roles can be whitelisted same as users , attempt to get or give whitelisted role to other user by whitelisted user or extra owner will be sent back in error and giver of whitelisted role will be banned**\n\n" +
@@ -3545,7 +3630,7 @@ export async function getServerSecurityEnabledPanel() {
 
     const container = {
         type: 17,
-        components: [section1, { type: 14, divider: true }, section2, { type: 14, divider: true }, section3]
+        components: [section1, { type: 14, divider: true }, sectionExploit, { type: 14, divider: true }, section2, { type: 14, divider: true }, section3]
     };
 
     return { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 };

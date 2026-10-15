@@ -1941,7 +1941,7 @@ async function handleSecurityInteractions(interaction, guild) {
       } catch(e) { console.error(e); }
     }
 
-    if (['toggle_antinuke', 'toggle_spam', 'toggle_invite', 'cycle_punishment', 'sec_status_back', 'save_panel'].includes(customId)) {
+    if (['toggle_antinuke', 'toggle_spam', 'toggle_invite', 'cycle_punishment', 'sec_status_back', 'sec_status_view', 'sec_architecture_guide', 'antinuke_config', 'save_panel'].includes(customId)) {
       try {
         let updated = false;
         const updateData = {};
@@ -1963,9 +1963,17 @@ async function handleSecurityInteractions(interaction, guild) {
           updateData.antiNukePunishment = current === 'ban' ? 'kick' : current === 'kick' ? 'quarantine' : 'ban';
           updated = true;
         }
-        if (customId === 'sec_status_back') {
+        if (customId === 'sec_architecture_guide') {
+           const sec = await import('../commands/security.js');
+           return interaction.update(await sec.getAntinukeArchitecturePanel(guild));
+        }
+        if (customId === 'sec_status_back' || customId === 'sec_status_view') {
            const sec = await import('../commands/security.js');
            return interaction.update(await sec.getSecurityStatusPanel(guild));
+        }
+        if (customId === 'antinuke_config') {
+           const sec = await import('../commands/security.js');
+           return interaction.update(await sec.getAntinukeConfigPanel(guild));
         }
         if (customId === 'save_panel') {
            return interaction.message.delete();

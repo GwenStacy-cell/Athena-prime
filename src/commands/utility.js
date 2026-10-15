@@ -218,7 +218,12 @@ export const commands = [
         try {
           if (args && args.length > 0) {
               const cmdName = args[0].toLowerCase();
-              const matchingModule = helpModules.find(m => m.id === cmdName || m.shortLabel.toLowerCase() === cmdName || (cmdName === 'count' && m.id === 'counting'));
+              const matchingModule = helpModules.find(m => 
+                m.id === cmdName || 
+                m.shortLabel.toLowerCase() === cmdName || 
+                (cmdName === 'count' && m.id === 'counting') ||
+                ((cmdName === 'antinuke' || cmdName === 'an') && m.id === 'security')
+              );
               if (matchingModule) {
                 const container = buildHelpContainer(message.client, message.guild.id, matchingModule.id);
                 return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
@@ -1034,6 +1039,7 @@ async function getStatusEmbed(client, guild) {
     "`!tier / !perms` - Check your current authorization tier & clearance `[Public]`",
     "`!antinuke config` - Interactive configuration panel `[Extra Owner]`",
     "`!antinuke status` - Quick summary of current security `[Extra Owner]`",
+    "`!antinuke guide` - Exploit Defense & Architecture Guide `[Extra Owner]`",
     "`!firewall` - Live firewall status & gateway uptime `[Public]`",
     "`!security disable <module>` - Disable specific protection `[Extra Owner]`",
     "`!security enable <module>` - Enable specific protection `[Extra Owner]`",
@@ -1052,6 +1058,22 @@ async function getStatusEmbed(client, guild) {
     "`!learn` - Toggle Anti-Nuke Behavioral / Machine Learning engine `[Extra Owner]`",
     "`!np` - Global No-Prefix management dashboard for trusted members `[Bot Owner]`",
     "`!modmode` - Temporarily pause restore for server edits `[Server Owner]`",
+    "",
+    "**1. Real-Time Role Interceptor (`src/events/guildMemberUpdate.js`):**",
+    "• Fires whenever any member's roles change.",
+    "• Checks if the user gained any dangerous role (`Administrator`, `Manage Server`, `Manage Roles`, `Manage Channels`, `Ban Members`, `Kick Members`, `Manage Webhooks`, `Mention Everyone`, or Admin Tier roles).",
+    "• Skips only the Server Owner, Bot Owner, and Extra Owners.",
+    "• **60-Second Audit Log Cross-Examination:**",
+    "  • Scans audit logs for an authorized `MemberRoleUpdate` within the last 60 seconds.",
+    "  • If no audit log exists, or if the executor is empty/self-assigned, or if the executor is unauthorized:",
+    "    1. **Instant Role Strip**: Immediately strips the dangerous role(s) from the member via direct API.",
+    "    2. **Disarms Compromised Role**: Revokes dangerous permissions from the role so no other user can exploit it via linked connection.",
+    "    3. **Quarantine Containment**: Automatically places the exploiter into Quarantine isolation.",
+    "    4. **Security Log & Owner Alert**: Dispatches a high-priority alert container to the server's security channel and DMs the Server Owner directly.",
+    "",
+    "**2. Join-Time Dangerous Role Guard (`src/events/guildMemberAdd.js`):**",
+    "• Checks if a user joins the server with pre-assigned dangerous/Administrator roles (mitigating Discord Onboarding exploits and pre-linked role join vectors).",
+    "• Instantly strips dangerous roles and quarantines the account.",
     "",
     "**Security Setup Guide:**",
     "Step 1: Run `!security enable all` to turn on base protections",
@@ -1451,7 +1473,7 @@ function buildHelpContainer(client, guildId, moduleId) {
           
           let formatted = cmd.replace(/!/g, prefix);
           let line = '';
-          if (formatted.startsWith('**') || formatted.startsWith('-#') || formatted.startsWith('Step ') || formatted.startsWith('  -') || formatted.startsWith('- ')) {
+          if (formatted.startsWith('**') || formatted.startsWith('-#') || formatted.startsWith('Step ') || formatted.startsWith('  -') || formatted.startsWith('- ') || formatted.startsWith('•') || formatted.startsWith('  •') || /^\s*\d+\./.test(formatted)) {
             line = formatted;
           } else {
             line = `> **${formatted}**`;
