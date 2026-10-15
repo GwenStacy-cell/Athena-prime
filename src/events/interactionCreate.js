@@ -79,6 +79,21 @@ export default {
       return;
     }
 
+    // ==========================================
+    // PERSISTENT HELP SYSTEM INTERACTIONS
+    // ==========================================
+    if (interaction.customId && interaction.customId.startsWith('help_')) {
+      try {
+        const { handleHelpInteraction } = await import('../commands/utility.js');
+        if (handleHelpInteraction) {
+          const handled = await handleHelpInteraction(interaction);
+          if (handled) return;
+        }
+      } catch (e) {
+        console.error('[InteractionCreate] Error handling help interaction:', e);
+      }
+    }
+
     // --- COUNTING ENGINE INTERACTIONS ---
     if (interaction.customId && interaction.customId.startsWith('counting_')) {
       import('../commands/counting.js').then(m => {

@@ -299,31 +299,10 @@ export const commands = [
           console.error('[Help] Prefix error:', e);
           return;
         }
-        const collector = reply.createMessageComponentCollector({ idle: 60000 });
-      
-      let currentIdx = -1;
-
-      collector.on('collect', async i => {
-        // Allow anyone to interact with the menu
-        
-        if (i.customId === 'help_delete') {
-          return reply.delete().catch(() => null);
-        }
-        
-        if (i.customId === 'help_home') currentIdx = -1;
-        else if (i.customId === 'help_prev') currentIdx = currentIdx <= 0 ? helpModules.length - 1 : currentIdx - 1;
-        else if (i.customId === 'help_next') currentIdx = currentIdx >= helpModules.length - 1 ? 0 : currentIdx + 1;
-        else if (i.customId === 'help_module_select') {
-          const val = i.values[0];
-          if (val === 'home') currentIdx = -1;
-          else currentIdx = helpModules.findIndex(m => m.id === val);
-        }
-
-        const newComponents = buildHelpContainer(message.client, message.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
-      });
-      
-      collector.on('end', () => reply.delete().catch(() => null));
+        const collector = reply.createMessageComponentCollector({ idle: 120000 });
+        collector.on('collect', async i => {
+          await handleHelpInteraction(i).catch(() => null);
+        });
     },
     async executeSlash(interaction) {
       const cmdArg = interaction.options?.getString?.('command');
@@ -398,31 +377,10 @@ export const commands = [
         return;
       }
       if (!reply) return; // Prevent crashes if reply is undefined
-      const collector = reply.createMessageComponentCollector({ idle: 60000 });
-      
-      let currentIdx = -1;
-
+      const collector = reply.createMessageComponentCollector({ idle: 120000 });
       collector.on('collect', async i => {
-        // Allow anyone to interact with the menu
-        
-        if (i.customId === 'help_delete') {
-          return interaction.deleteReply().catch(() => null);
-        }
-        
-        if (i.customId === 'help_home') currentIdx = -1;
-        else if (i.customId === 'help_prev') currentIdx = currentIdx <= 0 ? helpModules.length - 1 : currentIdx - 1;
-        else if (i.customId === 'help_next') currentIdx = currentIdx >= helpModules.length - 1 ? 0 : currentIdx + 1;
-        else if (i.customId === 'help_module_select') {
-          const val = i.values[0];
-          if (val === 'home') currentIdx = -1;
-          else currentIdx = helpModules.findIndex(m => m.id === val);
-        }
-
-        const newComponents = buildHelpContainer(interaction.client, interaction.guild?.id, currentIdx === -1 ? 'home' : helpModules[currentIdx].id);
-        await i.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+        await handleHelpInteraction(i).catch(() => null);
       });
-      
-      collector.on('end', () => interaction.deleteReply().catch(() => null));
     }
   },
 
@@ -1071,7 +1029,7 @@ async function getStatusEmbed(client, guild) {
   return statusEmbed;
 }
 
-const helpModules = [
+export const helpModules = [
   { id: 'security', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Security', label: 'Security Commands', emoji: 'security', commands: [
     "`!auth / !tiers` - Manage role authorization tiers (Admin, Mod, Staff) `[Admin]`",
     "`!tier / !perms` - Check your current authorization tier & clearance `[Public]`",
@@ -1428,7 +1386,7 @@ const helpModules = [
 
 const HELP_GIF = 'https://cdn.discordapp.com/attachments/1534869224277807175/1542472732325978234/ATHENA-8-27-2026.png?ex=6a915b2d&is=6a9009ad&hm=0f55bae0c0bec27649bc03e6d6be23ad16f2eb9337efdb8b5793b2d74cad89ff&';
 
-function buildHelpContainer(client, guildId, moduleId) {
+export function buildHelpContainer(client, guildId, moduleId) {
     const config = db.getGuildConfig(guildId);
     const prefix = config?.prefix || '!';
     const botId = client?.user?.id || '1347071663182676059';
@@ -1441,7 +1399,7 @@ function buildHelpContainer(client, guildId, moduleId) {
         'utilities': 'utility'
       };
       const searchName = nameMap[name] || name;
-      const e = client.emojis.cache.find(emoji => emoji.name === searchName || emoji.name === name);
+      const e = client?.emojis?.cache ? client.emojis.cache.find(emoji => emoji.name === searchName || emoji.name === name) : null;
       if (e) return `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`;
       
       const customEmojiFallback = {
@@ -1567,7 +1525,8 @@ function buildHelpContainer(client, guildId, moduleId) {
       {
         label: 'Home Menu',
         description: 'Return to the main help menu',
-        value: 'home'
+        value: 'home',
+        default: moduleId === 'home'
       }
     ]);
 
@@ -1575,13 +1534,14 @@ function buildHelpContainer(client, guildId, moduleId) {
       selectMenu.addOptions([
         {
           label: mod.label,
-          value: mod.id
+          value: mod.id,
+          default: moduleId === mod.id
         }
       ]);
     }
 
-    const btnPrev = new ButtonBuilder().setCustomId('help_prev').setEmoji('1523766004839088301').setStyle(ButtonStyle.Secondary);
-    const btnNext = new ButtonBuilder().setCustomId('help_next').setEmoji('1523766065576935475').setStyle(ButtonStyle.Secondary);
+    const btnPrev = new ButtonBuilder().setCustomId(`help_prev_${moduleId}`).setEmoji('1523766004839088301').setStyle(ButtonStyle.Secondary);
+    const btnNext = new ButtonBuilder().setCustomId(`help_next_${moduleId}`).setEmoji('1523766065576935475').setStyle(ButtonStyle.Secondary);
     const btnRefresh = new ButtonBuilder().setCustomId('help_home').setEmoji('1523765738655973589').setStyle(ButtonStyle.Secondary);
     const btnDelete = new ButtonBuilder().setCustomId('help_delete').setEmoji('1523766340752642109').setStyle(ButtonStyle.Danger);
 
@@ -1604,6 +1564,65 @@ function buildHelpContainer(client, guildId, moduleId) {
     };
 
     return rawContainer;
+}
+
+/**
+ * Global persistent interaction handler for Athena's Help Dashboard.
+ * Ensures the help menu responds instantly across bot restarts, timeouts, and channel reloads.
+ */
+export async function handleHelpInteraction(interaction) {
+  if (!interaction.customId || !interaction.customId.startsWith('help_')) return false;
+  if (interaction.replied || interaction.deferred) return true;
+
+  try {
+    if (interaction.customId === 'help_delete') {
+      await interaction.message.delete().catch(() => null);
+      return true;
+    }
+
+    let targetModuleId = 'home';
+
+    if (interaction.customId === 'help_home') {
+      targetModuleId = 'home';
+    } else if (interaction.customId === 'help_module_select') {
+      targetModuleId = interaction.values?.[0] || 'home';
+    } else if (interaction.customId.startsWith('help_prev') || interaction.customId.startsWith('help_next')) {
+      const isNext = interaction.customId.startsWith('help_next');
+      const parts = interaction.customId.split('_');
+      let currentId = parts.length > 2 ? parts.slice(2).join('_') : null;
+
+      if (!currentId) {
+        const selectComp = interaction.message.components?.flatMap(r => r.components || []).find(c => c.customId === 'help_module_select');
+        const defaultOpt = selectComp?.options?.find(o => o.default);
+        if (defaultOpt) currentId = defaultOpt.value;
+      }
+
+      let currentIdx = currentId && currentId !== 'home' ? helpModules.findIndex(m => m.id === currentId) : -1;
+
+      if (isNext) {
+        currentIdx = currentIdx >= helpModules.length - 1 ? -1 : currentIdx + 1;
+      } else {
+        currentIdx = currentIdx <= -1 ? helpModules.length - 1 : currentIdx - 1;
+      }
+
+      targetModuleId = currentIdx === -1 ? 'home' : helpModules[currentIdx].id;
+    }
+
+    const newComponents = buildHelpContainer(interaction.client, interaction.guild?.id, targetModuleId);
+    await interaction.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(async (err) => {
+      console.warn('[Help] Update failed:', err.message);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.deferUpdate().catch(() => null);
+      }
+    });
+    return true;
+  } catch (err) {
+    console.error('[Help] Error handling interaction:', err);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.deferUpdate().catch(() => null);
+    }
+    return true;
+  }
 }
 
 async function handleSetup(guild, channel, role, voiceChannel) {

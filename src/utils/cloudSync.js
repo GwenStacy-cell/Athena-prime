@@ -314,72 +314,50 @@ export function formatDatabaseMetrics(m, options = {}) {
 
   text += 
     `**Server Profiles & Configurations:**\n` +
-    `> -# **Tracked Servers:** \`${m.guilds}\` | **Custom Prefixes:** \`${m.customPrefixes}\` | **Auto-Nicks:** \`${m.autoNicks}\`\n` +
-    `> -# **Saved Accent Colors:** \`${m.accentColors}\` | **Dashboard Channels:** \`${m.dashboardChannels}\`\n\n` +
+    `> -# **Tracked Servers:** \`${m.guilds}\` | **Prefixes:** \`${m.customPrefixes}\` | **Auto-Nicks:** \`${m.autoNicks}\`\n` +
+    `> -# **Accent Colors:** \`${m.accentColors}\` | **Dashboards:** \`${m.dashboardChannels}\`\n\n` +
 
     `**Security & Anti-Nuke Engine:**\n` +
-    `> -# **Security & Anti-Nuke:** \`${m.securityServers} servers active\`\n` +
-    `> -# **Core Modules:** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bot Add: ${m.antiBotAddServers}, Linked Role Guard: ${m.antiLinkedRoleServers || 0}\`\n` +
-    `> -# **Persistence Sentinel Roles:** \`${m.unbypassableRolesCount || 0} Athena Unbypassable, ${m.firewallRolesCount || 0} Athena Firewall bound\`\n` +
-    `> -# **Thresholds & Traps:** \`${m.antiNukeThresholds} configured limits, ${m.honeypots} honeypots, Raid Mode: ${m.raidModeServers}\`\n\n` +
+    `> -# **Security Active:** \`${m.securityServers} servers\` | **Honeypots:** \`${m.honeypots}\` | **Raid Mode:** \`${m.raidModeServers}\`\n` +
+    `> -# **Shield Modules:** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bots: ${m.antiBotAddServers}, Linked Role: ${m.antiLinkedRoleServers || 0}\`\n` +
+    `> -# **Persistence Roles:** \`${m.unbypassableRolesCount || 0} Unbypassable, ${m.firewallRolesCount || 0} Firewall bound\`\n` +
+    `> -# **Thresholds:** \`${m.antiNukeThresholds} configured limits\`\n\n` +
 
     `**Automod Protection Matrix:**\n` +
-    `> -# **Active Automod Servers:** \`${m.automodServers} servers active\`\n` +
-    `> -# **Granular Modules:** \`Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, Word Filter: ${m.wordFilterServers}, Flood: ${m.antiFloodServers}, Mention: ${m.antiMentionServers}, Link: ${m.antiLinkServers}\`\n` +
-    `> -# **Filter Rules & Bypasses:** \`${m.blacklistedWordsCount} blacklisted words, ${m.allowedLinksCount} allowed links, ${m.inviteBypassChannels} invite channels, ${m.automodBypassRolesCount || 0} role bypasses (${m.automodBypassServers || 0} servers)\`\n\n` +
+    `> -# **Automod Servers:** \`${m.automodServers} active\` | **Word Filter:** \`${m.wordFilterServers}\` (${m.blacklistedWordsCount} words)\n` +
+    `> -# **Granular Shields:** \`Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, Flood: ${m.antiFloodServers}, Mention: ${m.antiMentionServers}, Link: ${m.antiLinkServers}\`\n` +
+    `> -# **Bypasses:** \`${m.allowedLinksCount} allowed links, ${m.inviteBypassChannels} invite channels, ${m.automodBypassRolesCount || 0} role bypasses (${m.automodBypassServers || 0} servers)\`\n\n` +
 
-    `**AutoRole & Vanity Engine:**\n` +
-    `> -# **AutoRole Deployments:** \`${m.autoroleHumanServers || 0} human autorole servers, ${m.autoroleBotServers || 0} bot autorole servers (${m.totalAutoroleBindings || 0} roles assigned)\`\n` +
-    `> -# **Vanity Status Rewards:** \`${m.vanityRewardServers || 0} servers actively rewarding vanity status URLs\`\n\n` +
-
-    `**YouTube Stats & ModMail Support Bridge:**\n` +
-    `> -# **YouTube Stats VC Engine:** \`${m.ytStatsChannelsCount || 0} dynamic stat VCs active across ${m.ytStatsServers || 0} servers\`\n` +
-    `> -# **ModMail Support Bridge:** \`${m.modmailServers || 0} servers active (${m.modmailChannelsCount || 0} dispatch channels bound)\`\n\n` +
+    `**AutoRole, Vanity & Media Integrations:**\n` +
+    `> -# **AutoRoles:** \`${m.autoroleHumanServers || 0} human, ${m.autoroleBotServers || 0} bot servers (${m.totalAutoroleBindings || 0} roles assigned)\`\n` +
+    `> -# **Vanity Rewards:** \`${m.vanityRewardServers || 0} servers rewarding vanity status\`\n` +
+    `> -# **YouTube Stats:** \`${m.ytStatsChannelsCount || 0} stat VCs (${m.ytStatsServers || 0} servers) | ModMail: ${m.modmailServers || 0} servers\`\n\n` +
 
     `**Moderation, Warnings & Enforcement:**\n` +
-    `> -# **Max Warning Thresholds:** \`${m.maxWarningsSet} guilds configured (Avg strike limit: ${m.maxWarningsAvg} warnings)\`\n` +
-    `> -# **Active Records:** \`${m.warnings} warning records, ${m.tempBans} tempbans\`\n` +
+    `> -# **Warnings & Bans:** \`${m.warnings} warnings, ${m.tempBans} tempbans, ${m.maxWarningsSet} servers with max strike limits\`\n` +
     `> -# **Quarantine System:** \`${m.quarantines} quarantined users | Roles: ${m.quarantineRolesCount}, Channels: ${m.quarantineChannelsCount}, VCs: ${m.quarantineVcsCount}\`\n\n` +
 
-    `**Whitelists, Bypasses & Ownership:**\n` +
-    `> -# **Extra Owners & Whitelists:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users, ${m.botWhitelist} bot whitelists)\`\n` +
-    `> -# **Bypasses & Security Whitelist:** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} whitelisted users\`\n` +
-    `> -# **Blacklisted Entities:** \`${m.botBlacklistUsers} blocked users/guilds\`\n\n` +
+    `**Whitelists & Administrative Ownership:**\n` +
+    `> -# **Extra Owners:** \`${m.extraOwners} servers (${m.extraOwnersTotal} users) | Bot Whitelist: ${m.botWhitelist}\`\n` +
+    `> -# **Security Whitelists:** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} whitelisted users\`\n` +
+    `> -# **Blacklisted Users/Guilds:** \`${m.botBlacklistUsers} blocked entities\`\n\n` +
 
     `**Welcome, Leave & Invite Tracking:**\n` +
-    `> -# **Welcome System Settings:** \`${m.welcomeActive} channels | ${m.welcomeEmbeds} custom embeds (Author/Title/Footer), ${m.welcomeGifs} GIFs, ${m.welcomeColors} colors, ${m.welcomeMessages} messages\`\n` +
-    `> -# **Leave System Settings:** \`${m.leaveActive} channels | ${m.leaveEmbeds} custom embeds, ${m.leaveGifs} GIFs, ${m.leaveMessages} messages\`\n` +
-    `> -# **Invite Tracking Engine:** \`${m.inviteLogChannels} invite log channels | Live join detection & inviter attribution\`\n\n` +
+    `> -# **Welcome System:** \`${m.welcomeActive} channels | ${m.welcomeEmbeds} custom embeds, ${m.welcomeGifs} GIFs, ${m.welcomeMessages} messages\`\n` +
+    `> -# **Leave System:** \`${m.leaveActive} channels | ${m.leaveEmbeds} custom embeds, ${m.leaveGifs} GIFs, ${m.leaveMessages} messages\`\n` +
+    `> -# **Invite Tracking:** \`${m.inviteLogChannels} invite log channels with live inviter attribution\`\n\n` +
 
-    `**Automated Feeds, Media & Utilities:**\n` +
-    `> -# **News Feed System:** \`${m.newsChannels} news channels | ${m.newsFeedsCount} active RSS feeds, ${m.newsRolesCount} ping roles\`\n` +
-    `> -# **Auto-Quote Engine:** \`${m.quoteChannels} dedicated canvas quote channels\`\n` +
-    `> -# **Auto-React Channels:** \`${m.autoReactChannels} channels across ${m.autoReactServers} servers (${m.autoReactEmojisCount} emojis bound)\`\n` +
-    `> -# **Auto-Media Downloader:** \`${m.mediaChannels} media extraction channels bound\`\n\n` +
+    `**Automated Feeds, Community & Engagement:**\n` +
+    `> -# **News Feeds:** \`${m.newsChannels} channels (${m.newsFeedsCount} feeds, ${m.newsRolesCount} roles) | Auto-React: ${m.autoReactChannels} channels\`\n` +
+    `> -# **Tickets & Community:** \`${m.ticketSetups || 0} setups (${m.ticketsActive || 0} active, ${m.ticketsTotalCreated || 0} total) | Giveaways: ${m.giveaways}\`\n` +
+    `> -# **Suggestions, Leveling & Starboard:** \`${m.suggestionChannels || 0} suggestions, ${m.starboardChannels || 0} starboards, XP: ${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
+    `> -# **Counting Engine:** \`${m.countingActive || 0} channels (${m.countingGuilds || 0} guilds) | Peak: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak, ${m.countingTotalUsers || 0} counters\`\n` +
+    `> -# **Auto-Quotes & Sticky:** \`${m.quoteChannels} quote channels, ${m.stickyMessages} sticky channels, ${m.adel} auto-delete channels\`\n\n` +
 
-    `**Community, Leveling & Triggers:**\n` +
-    `> -# **XP & Leveling Systems:** \`${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-    `> -# **Server Stats & Triggers:** \`${m.serverStats} stats setups, ${m.triggers} custom triggers\`\n` +
-    `> -# **Support Tickets:** \`${m.ticketSetups || m.tickets || 0} setups | ${m.ticketsActive || 0} active tickets, ${m.ticketsTotalCreated || 0} total tickets created, ${m.ticketStaffRolesCount || 0} staff roles\`\n` +
-    `> -# **Suggestions, Starboard & Voice:** \`${m.suggestionChannels || 0} suggestion channels, ${m.starboardChannels || 0} starboard channels, ${m.voiceRolesCount || 0} voice roles\`\n` +
-    `> -# **Verification & Giveaways:** \`${m.verification} verification setups, ${m.giveaways} active giveaways, ${m.reactionRoles} menus\`\n` +
-    `> -# **Auto-Delete & Sticky:** \`${m.stickyMessages} sticky channels, ${m.adel} auto-delete channels (ADEL/RADEL)\`\n` +
-    `> -# **Birthday System Settings:** \`${m.birthdayChannels} announcement channels | ${m.birthdayServers} servers, ${m.birthdayUsers} birthdays\`\n` +
-    `> -# **Staff Applications:** \`${m.apps} application setups\`\n` +
-    `> -# **Counting Engine (Across Guilds):** \`${m.countingActive || 0} active channels (${m.countingGuilds || 0} guilds) | Peak Record: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak count, ${m.countingTotalValidatedCounts || 0} validated numbers | ${m.countingTotalUsers || 0} counters, ${m.countingTotalRuins || 0} ruins, ${m.countingTotalSaves || 0} active server saves\`\n\n` +
-
-    `**Diagnostic Logs & Voice Systems:**\n` +
-    `> -# **Global Action Monitor:** \`${m.globalActionLogServers || 0} cross-server action logger channels bound\`\n` +
-    `> -# **Message Deletions & Edits:** \`${m.msgDeleteLogChannels} message delete channels (${m.msgDeleteServers} servers), ${m.msgEditLogChannels} edit channels\`\n` +
-    `> -# **Server Logs & Audits:** \`${m.serverLogsCount} server logs, ${m.logChannelsCount} mod audit channels, ${m.voiceLogs} voice logs\`\n` +
-    `> -# **Voice Hubs:** \`${m.homeVc} home VCs, ${m.theaterModeVcs} theater mode VCs\`\n` +
-    `> -# **Join to Create (JTC):** \`${m.jtc} lobby setups, ${m.jtcChannels} active temp channels\`\n` +
-    `> -# **VC Drag & Voice Protection:** \`${m.vcDrags} active drag sessions, ${m.vcProtection} protected users\`\n\n` +
-
-    `**Storage, Backups & Analytics:**\n` +
-    `> -# **Server Backups:** \`${m.serverBackups} saved templates\`\n` +
-    `> -# **No-Prefix (NP) System:** \`${m.npUsers} users, ${m.npServers} servers, ${m.npManagers} managers\`\n` +
-    `> -# **Voice & Message Analytics:** \`SQLite stats.db (WAL mode active)\`\n`;
+    `**Voice Systems, Audits & Analytics:**\n` +
+    `> -# **Voice Hubs & JTC:** \`${m.homeVc} home VCs, ${m.theaterModeVcs} theater VCs, ${m.jtc} JTC hubs (${m.jtcChannels} temp VCs)\`\n` +
+    `> -# **Server Logs & Audits:** \`${m.serverLogsCount} server logs, ${m.logChannelsCount} mod audit channels, ${m.msgDeleteLogChannels} delete channels\`\n` +
+    `> -# **No-Prefix & Storage:** \`${m.npUsers} NP users | SQLite stats.db (WAL active), ${m.serverBackups} server templates\`\n`;
 
   if (sizeKb !== undefined) text += `> -# **Snapshot Size:** \`${sizeKb} KB\`\n`;
   if (timestamp) {

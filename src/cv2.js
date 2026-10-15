@@ -47,14 +47,35 @@ function buildContainer(title, description, fields, customFooter) {
   }
 
   // Grey bold description with smart bullets
+  // Grey bold description with smart bullets
   if (description) {
     var lines = description.split('\n');
     var plainCount = lines.filter(function(l) {
       return l.trim() && !isPreformatted(l) && !hasEmojiStart(l);
     }).length;
     var multiLine = plainCount > 1;
-    var formatted = lines.map(function(l) { return styleLine(l, multiLine); }).join('\n');
-    comps.push({ type: 10, content: formatted.trim() || '\u200b' });
+    var formatted = lines.map(function(l) { return styleLine(l, multiLine); }).join('\n').trim() || '\u200b';
+
+    if (formatted.length <= 3900) {
+      comps.push({ type: 10, content: formatted });
+    } else {
+      var splitLines = formatted.split('\n');
+      var currentChunk = '';
+      for (var j = 0; j < splitLines.length; j++) {
+        var nextLine = splitLines[j];
+        if (currentChunk.length + nextLine.length + 1 > 3800) {
+          if (currentChunk.trim()) {
+            comps.push({ type: 10, content: currentChunk.trim() });
+            comps.push(SEP);
+            currentChunk = '';
+          }
+        }
+        currentChunk += (currentChunk ? '\n' : '') + nextLine;
+      }
+      if (currentChunk.trim()) {
+        comps.push({ type: 10, content: currentChunk.trim() });
+      }
+    }
   }
 
   // Fields
@@ -96,7 +117,26 @@ function buildContainer(title, description, fields, customFooter) {
   var fieldText = fieldLines.join('\n').trim();
   if (fieldText) {
     comps.push(SEP);
-    comps.push({ type: 10, content: fieldText });
+    if (fieldText.length <= 3900) {
+      comps.push({ type: 10, content: fieldText });
+    } else {
+      var fLines = fieldText.split('\n');
+      var fChunk = '';
+      for (var k = 0; k < fLines.length; k++) {
+        var nextFLine = fLines[k];
+        if (fChunk.length + nextFLine.length + 1 > 3800) {
+          if (fChunk.trim()) {
+            comps.push({ type: 10, content: fChunk.trim() });
+            comps.push(SEP);
+            fChunk = '';
+          }
+        }
+        fChunk += (fChunk ? '\n' : '') + nextFLine;
+      }
+      if (fChunk.trim()) {
+        comps.push({ type: 10, content: fChunk.trim() });
+      }
+    }
   }
 
   // Bottom divider
