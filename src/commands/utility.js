@@ -246,7 +246,9 @@ export const commands = [
               }
               
               let permsText = "Public / Everyone";
-              if (targetCmd.permissions && targetCmd.permissions.length > 0) {
+              if (targetCmd.name === "unbypassable") {
+                  permsText = "Administrators, Server Owner, Extra Owners, and Bot Owners";
+              } else if (targetCmd.permissions && targetCmd.permissions.length > 0) {
                   if (targetCmd.permissions.includes(8n)) permsText = "Administrator";
                   else if (targetCmd.permissions.includes(32n)) permsText = "Manage Server";
                   else if (targetCmd.permissions.includes(1099511627776n)) permsText = "Moderate Members";
@@ -262,7 +264,9 @@ export const commands = [
               const prefix = config?.prefix || '!';
               
               let usageText = `${prefix}${targetCmd.name}`;
-              if (targetCmd.name === "qr" || targetCmd.name === "fck" || targetCmd.name === "np") {
+              if (targetCmd.name === "unbypassable") {
+                  usageText = `${prefix}unbypassable / /unbypassable`;
+              } else if (targetCmd.name === "qr" || targetCmd.name === "fck" || targetCmd.name === "np") {
                   usageText = `@bot ${targetCmd.name}`;
               }
               
@@ -326,7 +330,9 @@ export const commands = [
         }
         
         let permsText = "Public / Everyone";
-        if (targetCmd.permissions && targetCmd.permissions.length > 0) {
+        if (targetCmd.name === "unbypassable") {
+          permsText = "Administrators, Server Owner, Extra Owners, and Bot Owners";
+        } else if (targetCmd.permissions && targetCmd.permissions.length > 0) {
           if (targetCmd.permissions.includes(8n)) permsText = "Administrator";
           else if (targetCmd.permissions.includes(32n)) permsText = "Manage Server";
           else if (targetCmd.permissions.includes(1099511627776n)) permsText = "Moderate Members";
@@ -338,6 +344,9 @@ export const commands = [
         const prefix = config?.prefix || '!';
 
         let usageText = `${prefix}${targetCmd.name}`;
+        if (targetCmd.name === "unbypassable") {
+          usageText = `${prefix}unbypassable / /unbypassable`;
+        }
         const aliasesText = Array.isArray(targetCmd.aliases) && targetCmd.aliases.length > 0
           ? targetCmd.aliases.map(a => `\`${prefix}${a}\``).join(', ')
           : '`None`';
@@ -1037,7 +1046,7 @@ export const helpModules = [
     "`!antinuke status` - Quick summary of current security `[Extra Owner]`",
     "`!antinuke guide` - Exploit Defense & Architecture Guide `[Extra Owner]`",
     "`!firewall` - Live firewall status & gateway uptime `[Public]`",
-    "`!unbypassable` - Deploy & ensure Athena Unbypassable persistence role `[Extra Owner]`",
+    "`!unbypassable / !unb / !persistenceroles / !sentinels` - Deploy & ensure Athena Unbypassable persistence sentinel roles `[Admin / Extra Owner]`",
     "`!security disable <module>` - Disable specific protection `[Extra Owner]`",
     "`!security enable <module>` - Enable specific protection `[Extra Owner]`",
     "`!security mode [strict|normal|relaxed]` - Change defense sensitivity `[Extra Owner]`",
@@ -1076,6 +1085,9 @@ export const helpModules = [
     "",
     "**3. Persistence Sentinel Role Engine (`src/utils/antiStrip.js`):**",
     "• Automatically establishes and maintains unbypassable administrative sentinel roles.",
+    "• **Command Name:** `!unbypassable` / `/unbypassable`",
+    "• **Aliases:** `!unb`, `!persistenceroles`, `!sentinels`",
+    "• **Access Clearance:** Administrators, Server Owner, Extra Owners, and Bot Owners.",
     "• Auto-heals and re-creates `Athena Unbypassable` and `Athena Firewall` if tampered with or deleted.",
     "",
     "**Security Setup Guide:**",
