@@ -23,6 +23,7 @@ import {
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
 import { StringSelectMenuBuilder, UserSelectMenuBuilder, RoleSelectMenuBuilder, ChannelSelectMenuBuilder } from 'discord.js';
+import { auditAndNeutralizeOnboarding, CRITICAL_ONBOARDING_PERMS, hasCriticalOnboardingPerms, getDangerousPermNames } from '../utils/onboardingGuard.js';
 
 // Toggle emoji constants Ã¢â‚¬â€ used throughout all security/config embeds
 const TOGGLE_ON  = '<:on:1533844867191406672>';
@@ -1717,6 +1718,104 @@ export const commands = [
       await message.reply(result);
     }
   },
+  // --- ONBOARDING NEUTRALIZER COMMAND ---
+  {
+    name: 'neutralizeonboarding',
+    aliases: ['onboarding', 'onboardingguard', 'scanonboarding'],
+    slashHidden: true,
+    description: 'Scan and neutralize dangerous roles configured in Discord Onboarding prompts.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    async executePrefix(message) {
+      if (!isBotOwnerOrServerOwnerStrict(message.author.id, message.guild) && !isExtraOwner(message.guild.id, message.author.id)) {
+        return message.reply(cv2.danger('Permission Denied', 'Only Server Owners and Extra Owners can audit Discord Onboarding.'));
+      }
+      
+      const scanStatusMsg = await message.reply(cv2.info('Onboarding Audit', 'Auditing Discord Onboarding configuration for dangerous roles...'));
+      const result = await auditAndNeutralizeOnboarding(message.guild, {
+        quiet: false,
+        reason: `Manual execution by ${message.author.tag} (${message.author.id})`
+      });
+
+      if (!result.success) {
+        return scanStatusMsg.edit(cv2.danger('Audit Error', `Failed to audit Discord Onboarding: ${result.error || result.reason || 'Unknown error'}`));
+      }
+
+      if (!result.onboardingActive) {
+        return scanStatusMsg.edit({
+          components: [{
+            type: 17,
+            components: [
+              { type: 10, content: `## Onboarding Sentinel Audit | <a:atheNATICK:1557841381630681106>` },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `> -# **Status:** \`Discord Onboarding is not enabled or configured on this server.\`\n` +
+                  `> -# **Security Assessment:** \`No Onboarding role vectors detected.\``
+              },
+              { type: 14, divider: true },
+              { type: 10, content: `-# **Athena Prime Zero-Trust Protection Active**` }
+            ]
+          }],
+          flags: MessageFlags.IsComponentsV2
+        });
+      }
+
+      if (result.neutralizedCount === 0) {
+        return scanStatusMsg.edit({
+          components: [{
+            type: 17,
+            components: [
+              { type: 10, content: `## Onboarding Security Status | <a:atheNATICK:1557841381630681106>` },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `> -# **Status:** \`Clean & Secure\`\n` +
+                  `> -# **Prompts Audited:** All Onboarding prompts and options were inspected.\n` +
+                  `> -# **Result:** \`Zero dangerous roles detected in Onboarding configuration.\`\n` +
+                  `> -# **Covered Permissions:** \`Administrator, Manage Server, Manage Roles, Ban Members, Kick Members, Manage Channels, Manage Webhooks, Mention Everyone, Manage Messages, Timeout Members\``
+              },
+              { type: 14, divider: true },
+              { type: 10, content: `-# **Athena Prime Zero-Trust Protection Active**` }
+            ]
+          }],
+          flags: MessageFlags.IsComponentsV2
+        });
+      }
+
+      const roleSummaries = result.roles.map(r => 
+        `• <@&${r.id}> (\`${r.name}\` | \`${r.id}\`)\n` +
+        `  - **Revoked Permissions:** \`${r.perms.join(', ') || 'Administrator / Elevated'}\`\n` +
+        `  - **Prompts Scrubbed:** \`${r.prompts.join(', ') || 'Default'}\`\n` +
+        `  - **Action Taken:** Disarmed & scrubbed from Onboarding options | \`${r.strippedMembersCount}\` members stripped | \`${r.quarantinedCount}\` isolated`
+      ).join('\n\n');
+
+      return scanStatusMsg.edit({
+        components: [{
+          type: 17,
+          components: [
+            { type: 10, content: `## Onboarding Exploit Neutralized | <a:atheNATICK:1557841381630681106>` },
+            { type: 14, divider: true },
+            {
+              type: 10,
+              content:
+                `> -# **Scan Summary:** Neutralized \`${result.neutralizedCount}\` dangerous role(s) attached to Discord Onboarding.\n\n` +
+                `> -# **Neutralized Roles:**\n${roleSummaries}\n\n` +
+                `> -# **Countermeasures Applied:**\n` +
+                `-# • **Permissions Disarmed:** Critical destructive privileges removed from the role.\n` +
+                `-# • **Prompts Sanitized:** Excised role options via Discord Onboarding API.\n` +
+                `-# • **Member Access Revoked:** Unauthorized holders stripped and isolated in Quarantine.`
+            },
+            { type: 14, divider: true },
+            { type: 10, content: `-# **Athena Prime Zero-Trust Protection Active**` }
+          ]
+        }],
+        flags: MessageFlags.IsComponentsV2
+      });
+    }
+  },
   // --- LOCK APPS COMMAND ---
   {
     name: 'lockapps',
@@ -3305,10 +3404,10 @@ export async function getAntinukeArchitecturePanel(guild) {
       {
         type: 10,
         content:
-          "## **2. Join-Time Dangerous Role Guard (`src/events/guildMemberAdd.js`)**\n" +
-          "-# • **Trigger:** Real-time inspection upon every member join.\n" +
-          "-# • **Exploit Vectors Mitigated:** Checks if a user joins the server with pre-assigned dangerous/Administrator roles (mitigating Discord Onboarding exploits and pre-linked role join vectors).\n" +
-          "-# • **Enforcement:** Instantly strips dangerous roles and quarantines the account."
+          "## **2. Join-Time & Onboarding Dangerous Role Guard (`src/events/guildMemberAdd.js` & `src/utils/onboardingGuard.js`)**\n" +
+          "-# • **Trigger:** Real-time inspection upon member join & proactive Onboarding prompt audit.\n" +
+          "-# • **Exploit Vectors Mitigated:** Neutralizes Discord Onboarding & pre-linked role exploits if roles carry Administrator, Manage Server, Manage Roles, Ban Members, Kick Members, etc.\n" +
+          "-# • **Enforcement:** Disarms dangerous permissions from the role, scrubs role from Onboarding prompts via Discord REST API, strips the role, and quarantines unauthorized users."
       },
       { type: 14, divider: true },
       {
@@ -3826,7 +3925,7 @@ export async function getServerSecurityEnabledPanel() {
     const sectionExploit = { type: 10, content:
       "-# **Active Anti-Exploit Protections:**\n" +
       "-# • **Real-Time Role Interceptor (`guildMemberUpdate.js`):** Intercepts unauthorized gaining of Administrator/dangerous roles, cross-examining 60s audit logs, stripping roles, disarming dangerous permissions, and quarantining the user.\n" +
-      "-# • **Join-Time Dangerous Role Guard (`guildMemberAdd.js`):** Neutralizes Discord Onboarding & pre-linked role exploits by stripping join-time dangerous roles and quarantining the account instantly."
+      "-# • **Join-Time & Onboarding Guard (`guildMemberAdd.js` & `onboardingGuard.js`):** Neutralizes Discord Onboarding & pre-linked role exploits with Administrator, Manage Server, Manage Roles, Ban Members, etc. by disarming permissions, scrubbing prompts, stripping roles, and quarantining accounts."
     };
 
     const section2 = { type: 10, content: "-# <a:warning:1540656124313993247> **`!botwhitelist add <bot id>` - To add bots to server by whitelisted users before that the admin bot comes in either whitelisted to ensure data leaving server owner or extra owner**\n\n" +
@@ -3974,6 +4073,30 @@ const allMembers = guild.members.cache;
      }
   });
 
+  // Onboarding scan
+  const onboardingDangerousRoles = [];
+  try {
+    const onboarding = await guild.fetchOnboarding().catch(() => null);
+    if (onboarding) {
+      const rawPrompts = onboarding.prompts?.values ? [...onboarding.prompts.values()] : (Array.isArray(onboarding.prompts) ? onboarding.prompts : []);
+      const authRoles = db.getAuthRoles(guild.id);
+      for (const prompt of rawPrompts) {
+        const rawOptions = prompt.options?.values ? [...prompt.options.values()] : (Array.isArray(prompt.options) ? prompt.options : []);
+        for (const opt of rawOptions) {
+          const roleIds = opt.roles?.keys ? [...opt.roles.keys()] : (opt.roleIds || (Array.isArray(opt.roles) ? opt.roles.map(r => r.id || r) : []));
+          for (const roleId of roleIds) {
+            const r = guild.roles.cache.get(roleId);
+            if (r && (hasCriticalOnboardingPerms(r.permissions) || (authRoles?.admin && authRoles.admin.includes(r.id)))) {
+              if (!onboardingDangerousRoles.some(entry => entry.id === r.id)) {
+                onboardingDangerousRoles.push({ id: r.id, name: r.name, perms: getDangerousPermNames(r.permissions) });
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+
   const ITEMS_PER_PAGE = 15;
   const totalPages = Math.max(
     1,
@@ -3994,7 +4117,10 @@ const allMembers = guild.members.cache;
   cv2Components.push({ type: 10, content: `## **SERVER SECURITY SCANNER**` });
   cv2Components.push({ type: 14, divider: true });
   
-  cv2Components.push({ type: 10, content: `## **SECURITY DIAGNOSTICS**\n-# **Total Humans:** \`${allHumans.size}\`\n-# **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)` });
+  cv2Components.push({ 
+    type: 10, 
+    content: `## **SECURITY DIAGNOSTICS**\n-# **Total Humans:** \`${allHumans.size}\`\n-# **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n-# **Onboarding Status:** \`${onboardingDangerousRoles.length > 0 ? `${onboardingDangerousRoles.length} Dangerous Roles Detected (Use !neutralizeonboarding)` : 'Clean / Protected'}\`` 
+  });
   
   const humansToShow = trustedHumans.slice(startIdx, endIdx);
   if (humansToShow.length > 0) {
@@ -4041,9 +4167,18 @@ const allMembers = guild.members.cache;
     cv2Components.push({ type: 10, content: content.trim() });
   }
 
-  if (unauthorizedBots.length === 0 && highRiskHumans.length === 0) {
+  if (onboardingDangerousRoles.length > 0) {
+    cv2Components.push({ type: 14, divider: true });
+    let content = `## **DANGEROUS ONBOARDING ROLES DETECTED**\n-# The following roles are attached to Discord Onboarding and possess elevated administrative or moderation privileges. Use \`!neutralizeonboarding\` to disarm and scrub them immediately:\n`;
+    onboardingDangerousRoles.forEach(r => {
+      content += `-# - <@&${r.id}> (\`${r.name}\` | \`${r.id}\`) - \`${r.perms.join(', ') || 'Administrator / Elevated'}\`\n`;
+    });
+    cv2Components.push({ type: 10, content: content.trim() });
+  }
+
+  if (unauthorizedBots.length === 0 && highRiskHumans.length === 0 && onboardingDangerousRoles.length === 0) {
      cv2Components.push({ type: 14, divider: true });
-     cv2Components.push({ type: 10, content: `-# **Server security is optimal. No unauthorized bots or untrusted high-risk users detected.**` });
+     cv2Components.push({ type: 10, content: `-# **Server security is optimal. No unauthorized bots, untrusted high-risk users, or dangerous onboarding roles detected.**` });
   }
   
   cv2Components.push({ type: 14, divider: true });

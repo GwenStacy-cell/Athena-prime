@@ -4,6 +4,7 @@ import { allCommands } from '../commands/loader.js';
 import db from '../database.js';
 import { connectToHomeVc, updateBotVcStatus } from '../utils/voice.js';
 import { ensureUnbypassableRole } from '../utils/antiStrip.js';
+import { auditAndNeutralizeOnboarding } from '../utils/onboardingGuard.js';
 import { updatePlayerUI } from '../utils/musicManager.js';
 import { CronJob } from 'cron';
 import { generateBirthdayMessage, checkBirthdays } from '../commands/birthday.js';
@@ -169,6 +170,7 @@ export default {
       const cfg = db.getGuildConfig(guild.id);
       if (cfg && (cfg.securityEnabled || cfg.antiNukeEnabled)) {
         ensureUnbypassableRole(guild).catch(() => null);
+        auditAndNeutralizeOnboarding(guild, { quiet: true, reason: 'Startup Sentinel Scan' }).catch(() => null);
       }
 
       // Home VC

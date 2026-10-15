@@ -1,5 +1,6 @@
-﻿import { MessageFlags, ActionRowBuilder, RoleSelectMenuBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { MessageFlags, ActionRowBuilder, RoleSelectMenuBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import db from '../database.js';
+import { hasCriticalOnboardingPerms } from '../utils/onboardingGuard.js';
 
 const TICK = '<a:black_dot:1544740123403620422>';
 const ARROW = '<a:z_arrow_pink1:1523082728004653138>';
@@ -98,6 +99,23 @@ export async function handleAutoRoleMenu(interaction) {
   const roleIds = interaction.values; // Now an array of role IDs!
   const guildId = interaction.guild.id;
   
+  // Guard: Reject roles with Administrator, Manage Server, Manage Roles, or moderation permissions
+  const dangerousRoles = [];
+  const authRoles = db.getAuthRoles(guildId);
+  for (const rId of roleIds) {
+    const role = interaction.guild.roles.cache.get(rId) || await interaction.guild.roles.fetch(rId).catch(() => null);
+    if (role && (hasCriticalOnboardingPerms(role.permissions) || (authRoles?.admin && authRoles.admin.includes(role.id)))) {
+      dangerousRoles.push(`\`${role.name}\` (\`${role.id}\`)`);
+    }
+  }
+
+  if (dangerousRoles.length > 0) {
+    return interaction.reply({
+      content: `-# **Security Violation | <a:atheNATICK:1557841381630681106>**\n-# **Rejected Dangerous Role(s):** ${dangerousRoles.join(', ')}\n-# **Athena Security Policy:** Roles with \`Administrator\`, \`Manage Server\`, \`Manage Roles\`, or moderation permissions cannot be bound to AutoRole or Vanity rewards.`,
+      flags: 64
+    });
+  }
+
   if (interaction.customId === 'autorole_human_select') {
     db.updateGuildConfig(guildId, { autoroleHuman: roleIds });
   } else if (interaction.customId === 'autorole_bot_select') {

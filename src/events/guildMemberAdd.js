@@ -7,6 +7,7 @@ import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineC
 import { sendWelcomeMessage } from '../commands/welcome.js';
 import { hasDangerousPerms, DANGEROUS_PERMS } from '../utils/antinuke.js';
 import { logServerEvent } from '../utils/serverLogger.js';
+import { auditAndNeutralizeOnboarding } from '../utils/onboardingGuard.js';
 
 export default {
   name: 'guildMemberAdd',
@@ -63,6 +64,9 @@ export default {
           if (config.securityEnabled || config.antiNukeEnabled) {
             await executeQuarantine(guild, member, guild.members.me, 'Athena Anti-Nuke: Member joined with unauthorized dangerous roles (Linked Role / Onboarding bypass)').catch(() => null);
           }
+
+          // 3.5. Scrub from Discord Onboarding prompts so future joiners cannot acquire it
+          auditAndNeutralizeOnboarding(guild, { quiet: true, reason: 'Join-time dangerous role detected' }).catch(() => null);
 
           // 4. Log to Security Channel & DM Server Owner with full explanation
           const targetTier = getUserTierName(guild, member);

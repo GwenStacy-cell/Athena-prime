@@ -4,6 +4,7 @@ import db from '../database.js';
 import { isBotOwnerSync, logToSecurityChannel, getUserTierName } from '../utils/helpers.js';
 import { isAuthorized, DANGEROUS_PERMS, hasDangerousPerms } from '../utils/antinuke.js';
 import { executeQuarantine } from '../commands/security.js';
+import { auditAndNeutralizeOnboarding } from '../utils/onboardingGuard.js';
 
 export default {
   name: 'guildMemberUpdate',
@@ -175,6 +176,9 @@ export default {
                     if (guildCfg?.securityEnabled || guildCfg?.antiNukeEnabled) {
                       await executeQuarantine(guild, newMember, guild.members.me, `Athena Anti-Nuke: Linked Role Exploit Attempt (${exploitReason})`).catch(() => null);
                     }
+
+                    // 3.5. Scrub from Discord Onboarding prompts in case role was acquired via Onboarding
+                    auditAndNeutralizeOnboarding(guild, { quiet: true, reason: 'Zero-audit dangerous role assignment detected' }).catch(() => null);
 
                     // 4. LOG & DM OWNER (Following Athena's formatting rules: Custom Tick Heading | <a:atheNATICK:1557841381630681106>)
                     const targetTier = getUserTierName(guild, newMember);
