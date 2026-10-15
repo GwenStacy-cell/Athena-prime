@@ -1264,6 +1264,8 @@ async function getStatusEmbed(client, guild) {
   { id: 'community', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Community', label: 'Community Tools', emoji: 'community', commands: [
     "`!rate / !edit` - Rate recent server edits with custom stars `[Public]`",
     "`!ratelb / !editlb` - View the edit rating leaderboard `[Public]`",
+    "`!counting / !count` - Interactive Counting Engine Dashboard & Controls `[Extra Owner]`",
+    "`!countlb / !counting lb` - Server Counting records & leaderboard `[Public]`",
     "`!voicerole @role` - Role assigned automatically when joining any VC `[Extra Owner]`",
     "`!music / !play <query>` - Open Music Dashboard (Play, Skip, Queue, Volume) `[Public]`",
     "`!setupmusic` - Deploy 24/7 compact music controller channel `[Extra Owner]`",

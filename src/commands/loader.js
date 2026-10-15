@@ -84,8 +84,10 @@ import { commands as globalcontrolsCmds } from './globalcontrols.js';
 import { commands as autovcstatusCmds } from './autovcstatus.js';
 import { commands as shipCmds } from './ship.js';
 import { commands as databaseAdminCmds } from './databaseadmin.js';
+import { commands as countingCmds } from './counting.js';
 
 export const allCommands = [
+  ...countingCmds,
   ...firewallCmds,
   ...ccmdCmds,
   ...qrCmds,

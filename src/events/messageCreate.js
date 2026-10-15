@@ -18,6 +18,7 @@ import { scanImageForScam, scanTextForScam, flaggedMessages } from '../utils/ant
 import { createMockInteraction } from '../utils/mockInteraction.js';
 import { processMediaLink } from '../utils/mediaDownloader.js';
 import { buildAutoReplyPreview } from '../commands/trigger.js';
+import { handleCountingMessage } from '../utils/countingEngine.js';
 
 function matchesTrigger(messageContent, triggerKeyword) {
   if (!messageContent || !triggerKeyword) return false;
@@ -230,6 +231,20 @@ export default {
             rawDeleteWebhook(message.webhookId, message.client.token, '[ATHENA SENTINEL] Rogue Webhook Spam Intercepted').catch(() => null);
             return;
           }
+        }
+      }
+    }
+
+    // --- COUNTING CHANNEL SYSTEM ---
+    if (message.guild && !message.author.bot) {
+      const countingCfg = db.getCounting(message.guild.id);
+      if (countingCfg && countingCfg.channelId === message.channel.id) {
+        const cfg = db.getGuildConfig(message.guild.id);
+        const prefix = cfg?.prefix || '!';
+        const isCmd = message.content.startsWith(prefix) || message.content.startsWith('!');
+        if (!isCmd) {
+          await handleCountingMessage(message, countingCfg);
+          return;
         }
       }
     }

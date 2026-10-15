@@ -79,6 +79,20 @@ export default {
       return;
     }
 
+    // --- COUNTING ENGINE INTERACTIONS ---
+    if (interaction.customId && interaction.customId.startsWith('counting_')) {
+      import('../commands/counting.js').then(m => {
+        if (interaction.isButton() && m.handleCountingButton) {
+          m.handleCountingButton(interaction).catch(e => console.error(e));
+        } else if (interaction.isAnySelectMenu() && m.handleCountingMenu) {
+          m.handleCountingMenu(interaction).catch(e => console.error(e));
+        } else if (interaction.isModalSubmit() && m.handleCountingModal) {
+          m.handleCountingModal(interaction).catch(e => console.error(e));
+        }
+      }).catch(e => console.error(e));
+      return;
+    }
+
     // --- SUGGESTION BUTTONS ---
     if (interaction.isButton() && interaction.customId.startsWith('ticket_')) {
       import('../commands/ticket.js').then(m => {

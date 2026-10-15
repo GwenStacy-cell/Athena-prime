@@ -65,7 +65,8 @@ const DEFAULT_SCHEMA = {
   bannedServers: [],  // [guildIds]
   tts: { users: {}, autoTts: {} },
   dbBackupChannelId: null,
-  vcDrags: {}         // guildId -> { userId -> { initiatorId, targetTag, startedAt, intervalSec } }
+  vcDrags: {},        // guildId -> { userId -> { initiatorId, targetTag, startedAt, intervalSec } }
+  counting: {}        // guildId -> counting config
 };
 
 class Database {
@@ -153,6 +154,7 @@ class Database {
         this.cache.bannedServers  = this.cache.bannedServers  || [];
         this.cache.dbBackupChannelId = this.cache.dbBackupChannelId || null;
         this.cache.vcDrags        = this.cache.vcDrags        || {};
+        this.cache.counting       = this.cache.counting       || {};
       } else {
         this.save();
       }
@@ -2113,6 +2115,42 @@ class Database {
       delete this.cache.vcDrags[guildId];
     }
     this.save();
+  }
+
+  // --- Counting Engine ---
+  getCounting(guildId) {
+    if (!this.cache.counting) this.cache.counting = {};
+    if (!this.cache.counting[guildId]) {
+      this.cache.counting[guildId] = {
+        channelId: null,
+        currentCount: 0,
+        highScore: 0,
+        lastUserId: null,
+        lastMessageId: null,
+        saves: 2,
+        maxSaves: 2,
+        allowMath: true,
+        autoTopic: true,
+        users: {}
+      };
+    }
+    return this.cache.counting[guildId];
+  }
+
+  updateCounting(guildId, data) {
+    const config = this.getCounting(guildId);
+    this.cache.counting[guildId] = { ...config, ...data };
+    this.save();
+    return this.cache.counting[guildId];
+  }
+
+  resetCounting(guildId) {
+    const config = this.getCounting(guildId);
+    config.currentCount = 0;
+    config.lastUserId = null;
+    config.lastMessageId = null;
+    this.save();
+    return config;
   }
 
 }
