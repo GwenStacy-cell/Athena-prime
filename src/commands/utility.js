@@ -1066,36 +1066,12 @@ export const helpModules = [
     "`!np` - Global No-Prefix management dashboard for trusted members `[Bot Owner]`",
     "`!modmode` - Temporarily pause restore for server edits `[Server Owner]`",
     "",
-    "**1. Real-Time Role Interceptor (`src/events/guildMemberUpdate.js`):**",
-    "• Fires whenever any member's roles change.",
-    "• Checks if the user gained any dangerous role (`Administrator`, `Manage Server`, `Manage Roles`, `Manage Channels`, `Ban Members`, `Kick Members`, `Manage Webhooks`, `Mention Everyone`, or Admin Tier roles).",
-    "• Skips only the Server Owner, Bot Owner, and Extra Owners.",
-    "• **60-Second Audit Log Cross-Examination:**",
-    "  • Scans audit logs for an authorized `MemberRoleUpdate` within the last 60 seconds.",
-    "  • If no audit log exists, or if the executor is empty/self-assigned, or if the executor is unauthorized:",
-    "    1. **Instant Role Strip**: Immediately strips the dangerous role(s) from the member via direct API.",
-    "    2. **Disarms Compromised Role**: Revokes dangerous permissions from the role so no other user can exploit it via linked connection.",
-    "    3. **Quarantine Containment**: Automatically places the exploiter into Quarantine isolation.",
-    "    4. **Security Log & Owner Alert**: Dispatches a high-priority alert container to the server's security channel and DMs the Server Owner directly.",
-    "",
-    "**2. Join-Time & Onboarding Dangerous Role Guard (`src/events/guildMemberAdd.js` & `src/utils/onboardingGuard.js`):**",
-    "• Neutralizes Discord Onboarding & pre-linked role exploits by stripping join-time dangerous roles and isolating the user.",
-    "• Proactively audits and neutralizes Onboarding prompt roles with Administrator, Manage Server, Manage Roles, Ban Members, Kick Members, etc.",
-    "• Excises dangerous roles from Discord Onboarding prompt options, disarms role permissions, and quarantines unauthorized holders.",
-    "",
-    "**3. Persistence Sentinel Role Engine (`src/utils/antiStrip.js`):**",
-    "• Automatically establishes and maintains unbypassable administrative sentinel roles.",
-    "• **Command Name:** `!unbypassable` / `/unbypassable`",
-    "• **Aliases:** `!unb`, `!persistenceroles`, `!sentinels`",
-    "• **Access Clearance:** Administrators, Server Owner, Extra Owners, and Bot Owners.",
-    "• Auto-heals and re-creates `Athena Unbypassable` and `Athena Firewall` if tampered with or deleted.",
-    "",
-    "**Security Setup Guide:**",
-    "Step 1: Run `!security enable all` to turn on base protections",
-    "Step 2: Use `!antinuke config` to tweak individual limits",
-    "Step 3: Setup `!spampermit` for trusted webhook bots",
-    "-# **God-Tier Security Architecture:**",
-    "-# **Raw Websocket Wiretap** (<1ms zero-day execution) & **10ms API polling** ensures perfect channel/role restoration instantly."
+    "**Sentinel Exploit Mitigations & Hardening:**",
+    "• **Role Interceptor**: Real-time dangerous role strip, quarantine containment & owner DM alerts.",
+    "• **Onboarding Guard**: Join-time dangerous role neutralization & automatic onboarding prompt sanitization.",
+    "• **Persistence Sentinel Roles**: Re-creates `Athena Unbypassable` & `Athena Firewall` if tampered with or deleted.",
+    "• Use `!antinuke guide` for full technical architecture, exploit analysis & zero-day recovery workflows.",
+    "-# **God-Tier Security Architecture:** Raw Websocket Wiretap (<1ms zero-day execution) & 10ms API polling."
   ] },
   { id: 'filters', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Filters', label: 'Automod Filters', emoji: 'filters', commands: [
     "`!automod` - Open Automated Moderation & Security Dashboard `[Extra Owner]`",
@@ -1569,6 +1545,36 @@ export function buildHelpContainer(client, guildId, moduleId) {
     rawComponents.push(row2.toJSON());
     rawComponents.push({ type: 14, divider: true });
     rawComponents.push({ type: 10, content: '-# **Athena Prime Unbypassable Security !!**' });
+
+    // Discord Aggregate Displayable Text Limit Safeguard (Hard ceiling: 4,000 characters)
+    let totalTextLength = 0;
+    for (const comp of rawComponents) {
+      if (comp.type === 10 && comp.content) {
+        totalTextLength += comp.content.length;
+      }
+    }
+    if (totalTextLength > 3800) {
+      let runningTotal = 0;
+      for (let i = 0; i < rawComponents.length; i++) {
+        const comp = rawComponents[i];
+        if (comp.type === 10 && comp.content) {
+          if (runningTotal + comp.content.length > 3700) {
+            const allowed = Math.max(0, 3700 - runningTotal - 50);
+            comp.content = comp.content.substring(0, allowed) + '\n\n> *...[Truncated for Discord display limits]*';
+            runningTotal += comp.content.length;
+            for (let j = i + 1; j < rawComponents.length; j++) {
+              if (rawComponents[j].type === 10) {
+                rawComponents[j].content = '';
+              }
+            }
+            break;
+          } else {
+            runningTotal += comp.content.length;
+          }
+        }
+      }
+      rawComponents = rawComponents.filter(c => c.type !== 10 || (c.content && c.content.trim().length > 0));
+    }
 
     const rawContainer = {
       type: 17,
