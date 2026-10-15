@@ -1,7 +1,7 @@
 import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
-import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';
+import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner, getUserTierName } from '../utils/helpers.js';
 import { executeQuarantine } from './security.js';
 import { logServerEvent } from '../utils/serverLogger.js'; // We will implement security.js next
 
@@ -1382,7 +1382,12 @@ async function handleMuteAll(guild, moderator) {
   }
 
   const resEmbed = cv2.danger('Voice Mute Completed', `Successfully server-muted **${mutedCount}** member(s) in **${vc.name}**.`);
-  logToSecurityChannel(guild, cv2.log('MuteAll Voice Channel', `Moderator **${moderator.user.tag}** muted all **${mutedCount}** members in **${vc.name}**.`, [], 'warning'));
+  const modTier = getUserTierName(guild, moderator);
+  logToSecurityChannel(guild, cv2.log('MuteAll Voice Channel', `Moderator **${moderator.user.tag}** [${modTier}] muted all **${mutedCount}** members in **${vc.name}**.`, [
+    { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
+    { name: 'Channel', value: `${vc.name}`, inline: true },
+    { name: 'Muted Count', value: `\`${mutedCount}\``, inline: true }
+  ], 'warning'));
   return resEmbed;
 }
 
@@ -1399,7 +1404,12 @@ async function handleUnmuteAll(guild, moderator) {
   }
 
   const resEmbed = cv2.success('Voice Unmute Completed', `Successfully removed server-mute from **${unmutedCount}** member(s) in **${vc.name}**.`);
-  logToSecurityChannel(guild, cv2.log('UnmuteAll Voice Channel', `Moderator **${moderator.user.tag}** unmuted all **${unmutedCount}** members in **${vc.name}**.`, [], 'success'));
+  const modTier = getUserTierName(guild, moderator);
+  logToSecurityChannel(guild, cv2.log('UnmuteAll Voice Channel', `Moderator **${moderator.user.tag}** [${modTier}] unmuted all **${unmutedCount}** members in **${vc.name}**.`, [
+    { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
+    { name: 'Channel', value: `${vc.name}`, inline: true },
+    { name: 'Unmuted Count', value: `\`${unmutedCount}\``, inline: true }
+  ], 'success'));
   return resEmbed;
 }
 
@@ -1438,12 +1448,14 @@ export async function handleWarn(guild, moderator, target, reason, force = false
     ] };
 
   // Log to logs channel
+  const modTier = getUserTierName(guild, moderator);
+  const targetTier = getUserTierName(guild, target);
   logToSecurityChannel(guild, cv2.log(
     'Warning Issued', 
     `Moderator warned user.`,
     [
-      { name: 'Target', value: `${target.user.tag} (${target.id})`, inline: true },
-      { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+      { name: 'Target', value: `${target.user.tag} (${target.id}) [${targetTier}]`, inline: true },
+      { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
       { name: 'Reason', value: reason },
       { name: 'Active Warns', value: `${warns.length}` }
     ],
@@ -1497,11 +1509,17 @@ async function handleClearWarns(guild, moderator, target) {
 
   db.clearWarnings(guild.id, target.id);
 
+  const modTier = getUserTierName(guild, moderator);
+  const targetTier = getUserTierName(guild, target);
   const resEmbed = cv2.success('Warnings Cleared', `Successfully cleared all active warnings for **${target.user.tag}**.`);
   logToSecurityChannel(guild, cv2.log(
     'Warnings Wiped',
-    `Moderator **${moderator.user.tag}** cleared **${activeCount}** active warnings for **${target.user.tag}** (${target.id}).`,
-    [],
+    `Moderator **${moderator.user.tag}** [${modTier}] cleared **${activeCount}** active warnings for **${target.user.tag}** (${target.id}) [${targetTier}].`,
+    [
+      { name: 'Target', value: `${target.user.tag} (${target.id}) [${targetTier}]`, inline: true },
+      { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
+      { name: 'Cleared Warns', value: `\`${activeCount}\`` }
+    ],
     'success'
   ));
   return resEmbed;
@@ -1538,12 +1556,14 @@ async function handleTimeout(guild, moderator, target, durationStr, reason) {
       { name: 'Reason', value: reason }
     ]);
 
+    const modTier = getUserTierName(guild, moderator);
+    const targetTier = getUserTierName(guild, target);
     logToSecurityChannel(guild, cv2.log(
       'Member Timeout',
       `Moderator timed out member.`,
       [
-        { name: 'Target', value: `${target.user.tag} (${target.id})`, inline: true },
-        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+        { name: 'Target', value: `${target.user.tag} (${target.id}) [${targetTier}]`, inline: true },
+        { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
         { name: 'Duration', value: durationStr, inline: true },
         { name: 'Reason', value: reason }
       ],
@@ -1586,12 +1606,14 @@ async function handleUntimeout(guild, moderator, target, reason) {
       { name: 'Reason', value: reason, inline: true }
     ]);
 
+    const modTier = getUserTierName(guild, moderator);
+    const targetTier = getUserTierName(guild, target);
     logToSecurityChannel(guild, cv2.log(
       'Member Timeout Removed',
       `Moderator removed timeout from member.`,
       [
-        { name: 'Target', value: `${target.user.tag} (${target.id})`, inline: true },
-        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+        { name: 'Target', value: `${target.user.tag} (${target.id}) [${targetTier}]`, inline: true },
+        { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
         { name: 'Reason', value: reason }
       ],
       'info'
@@ -1633,12 +1655,14 @@ async function handleKick(guild, moderator, target, reason) {
       { name: 'Reason', value: reason, inline: true }
     ]);
 
+    const modTier = getUserTierName(guild, moderator);
+    const targetTier = getUserTierName(guild, target);
     logToSecurityChannel(guild, cv2.log(
       'Member Kicked',
       `Moderator kicked member.`,
       [
-        { name: 'Target', value: `${target.user.tag} (${target.id})`, inline: true },
-        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+        { name: 'Target', value: `${target.user.tag} (${target.id}) [${targetTier}]`, inline: true },
+        { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
         { name: 'Reason', value: reason }
       ],
       'danger'
@@ -1680,12 +1704,14 @@ async function handleBan(guild, moderator, target, reason) {
       { name: 'Reason', value: reason, inline: true }
     ]);
 
+    const modTier = getUserTierName(guild, moderator);
+    const targetTier = getUserTierName(guild, target);
     logToSecurityChannel(guild, cv2.log(
       'Member Banned',
       `Moderator banned member.`,
       [
-        { name: 'Target', value: `${target.user.tag} (${target.id})`, inline: true },
-        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+        { name: 'Target', value: `${target.user.tag} (${target.id}) [${targetTier}]`, inline: true },
+        { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
         { name: 'Reason', value: reason }
       ],
       'danger'
@@ -1713,6 +1739,7 @@ async function handleCreateRole(guild, moderator, name, color) {
 
       
 
+    const modTier = getUserTierName(guild, moderator);
     const resEmbed = cv2.success('Role Created', `Successfully created server role **${role.name}**.`, [
       { name: 'Role ID', value: `\`${role.id}\``, inline: true },
       { name: 'Hex Color', value: `\`${role.hexColor}\``, inline: true }
@@ -1723,7 +1750,7 @@ async function handleCreateRole(guild, moderator, name, color) {
       `Moderator created a new role.`,
       [
         { name: 'Role Name', value: `${role.name}`, inline: true },
-        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
+        { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true }
       ],
       'success'
     ));
@@ -1749,6 +1776,7 @@ async function handleDeleteRole(guild, moderator, role) {
     const roleId = role.id;
     await role.delete(`Deleted by ${moderator.user.tag}`);
 
+    const modTier = getUserTierName(guild, moderator);
     const resEmbed = cv2.success('Role Deleted', `Successfully deleted role **${roleName}** (ID: ${roleId}).`);
 
     logToSecurityChannel(guild, cv2.log(
@@ -1756,7 +1784,7 @@ async function handleDeleteRole(guild, moderator, role) {
       `Moderator deleted a role.`,
       [
         { name: 'Role Name', value: `${roleName}`, inline: true },
-        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
+        { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true }
       ],
       'danger'
     ));
@@ -1785,6 +1813,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     }, 15000);
 
     const actualAmount = triggerMessage && deleted.has(triggerMessage.id) ? deleted.size - 1 : deleted.size;
+    const modTier = getUserTierName(guild, moderator);
 
     const resEmbed = cv2.success('Messages Purged', `Successfully deleted **${actualAmount}** messages from this channel.`, [
       { name: 'Requested', value: `\`${amount}\``, inline: true },
@@ -1798,7 +1827,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
       [
         { name: 'Channel', value: `<#${channel.id}>`, inline: true },
         { name: 'Count', value: `${actualAmount}`, inline: true },
-        { name: 'Moderator', value: `${moderator.user ? moderator.user.tag : moderator}`, inline: true }
+        { name: 'Moderator', value: `${moderator.user ? moderator.user.tag : moderator} [${modTier}]`, inline: true }
       ]
     ));
 
@@ -1806,7 +1835,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     logComps.push({ type: 10, content: `-# **Message Sniped via Purge Command**` });
     logComps.push({ type: 14, divider: true });
     logComps.push({ type: 10, content: `-# **Action:** Bulk Delete (Purge)` });
-    logComps.push({ type: 10, content: `-# **Executed By:** [${moderator.displayName || moderator.user?.username || 'Moderator'}](https://discord.com/users/${moderator.id || moderator})` });
+    logComps.push({ type: 10, content: `-# **Executed By:** [${moderator.displayName || moderator.user?.username || 'Moderator'}](https://discord.com/users/${moderator.id || moderator}) [${modTier}]` });
     let safeChannel = channel.name.replace(/[^a-zA-Z0-9\- ]/g, '').trim();
     if (!safeChannel) safeChannel = 'Channel';
     logComps.push({ type: 10, content: `-# **Channel:** [\# ${safeChannel}](https://discord.com/channels/${guild.id}/${channel.id})` });
@@ -1869,13 +1898,14 @@ async function handleSlowmode(guild, channel, moderator, seconds) {
           { name: 'Rate Limit', value: `\`${seconds}s\``, inline: true }
         ]);
 
+    const modTier = getUserTierName(guild, moderator);
     logToSecurityChannel(guild, cv2.log(
       'Slowmode Updated',
       `Moderator adjusted channel slowmode.`,
       [
         { name: 'Channel', value: `#${channel.name}`, inline: true },
         { name: 'Seconds', value: `${seconds}`, inline: true },
-        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
+        { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true }
       ],
       seconds === 0 ? 'success' : 'warning'
     ));
@@ -1907,12 +1937,14 @@ async function handleUnban(guild, moderator, userId, reason) {
       { name: 'Reason', value: reason }
     ]);
 
+    const modTier = getUserTierName(guild, moderator);
+    const targetTier = getUserTierName(guild, ban.user || userId);
     logToSecurityChannel(guild, cv2.log(
       'User Unbanned',
       `Moderator unbanned a user.`,
       [
-        { name: 'Target', value: `${ban.user.tag} (${userId})`, inline: true },
-        { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+        { name: 'Target', value: `${ban.user.tag} (${userId}) [${targetTier}]`, inline: true },
+        { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
         { name: 'Reason', value: reason }
       ],
       'success'
@@ -1953,9 +1985,11 @@ async function handleBanById(guild, moderator, userId, reason, userObj = null) {
       { name: 'Banned by', value: `${moderator}`, inline: true }
     ]);
 
+    const modTier = getUserTierName(guild, moderator);
+    const targetTier = getUserTierName(guild, userObj || userId);
     logToSecurityChannel(guild, cv2.log('Member Banned by ID', `Moderator banned a user not currently in the server.`, [
-      { name: 'Target', value: `${userObj ? userObj.tag : 'Unknown'} (\`${userId}\`)`, inline: true },
-      { name: 'Moderator', value: `${moderator.user.tag}`, inline: true },
+      { name: 'Target', value: `${userObj ? userObj.tag : 'Unknown'} (\`${userId}\`) [${targetTier}]`, inline: true },
+      { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true },
       { name: 'Reason', value: reason }
     ], 'danger'));
 
@@ -1988,15 +2022,16 @@ async function handleUnbanAll(guild, moderator) {
     }
 
     const resEmbed = cv2.success('All Bans Cleared', `Processed **${bans.size}** ban(s).`, [
-      { name: '\u2705 Unbanned', value: `\`${unbanned}\``, inline: true },
+      { name: '<a:uptime:1552608831060844575> Unbanned', value: `\`${unbanned}\``, inline: true },
       { name: '<:off:1533844858983157851> Failed', value: `\`${failed}\``, inline: true },
       { name: 'Executed by', value: `${moderator}`, inline: true }
     ]);
 
+    const modTier = getUserTierName(guild, moderator);
     logToSecurityChannel(guild, cv2.log('UnbanAll Executed', 'A mass unban operation was performed.', [
       { name: 'Total Processed', value: `${bans.size}`, inline: true },
       { name: 'Unbanned', value: `${unbanned}`, inline: true },
-      { name: 'Moderator', value: `${moderator.user.tag}`, inline: true }
+      { name: 'Moderator', value: `${moderator.user.tag} [${modTier}]`, inline: true }
     ], 'success'));
 
     return resEmbed;

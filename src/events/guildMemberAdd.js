@@ -2,9 +2,10 @@ import db from '../database.js';
 import statsDB from '../statsDB.js';
 import embed from '../embed.js';
 import { executeQuarantine } from '../commands/security.js';
-import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel } from '../utils/helpers.js';
+import { PermissionFlagsBits } from 'discord.js';
+import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel, isBotOwnerSync, getUserTierName } from '../utils/helpers.js';
 import { sendWelcomeMessage } from '../commands/welcome.js';
-
+import { hasDangerousPerms, DANGEROUS_PERMS } from '../utils/antinuke.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 
 export default {
@@ -37,11 +38,9 @@ export default {
     // 0.5. PRE-ASSIGNED DANGEROUS ROLE GUARD (ONBOARDING / PRE-LINKED)
     // ==========================================
     if (!member.user.bot && member.id !== guild.ownerId) {
-      const { isBotOwnerSync } = await import('../utils/helpers.js');
       const isOwner = isBotOwnerSync(member.id);
       const isExtra = db.isExtraOwner(guild.id, member.id);
       if (!isOwner && !isExtra) {
-        const { hasDangerousPerms } = await import('../utils/antinuke.js');
         const authRoles = db.getAuthRoles(guild.id);
         const dangerousJoinRoles = member.roles.cache.filter(r => 
           r.id !== guild.id && 
@@ -49,10 +48,116 @@ export default {
         );
 
         if (dangerousJoinRoles.size > 0) {
+          // 1. Remove dangerous roles from member immediately
           await member.roles.remove(dangerousJoinRoles, '[ATHENA ANTINUKE] Stripped dangerous roles acquired on join (Linked Role / Onboarding bypass)').catch(() => null);
+
+          // 2. Disarm dangerous permissions from the roles themselves
+          for (const role of dangerousJoinRoles.values()) {
+            if (role.editable && hasDangerousPerms(role.permissions)) {
+              const safePerms = role.permissions.remove(DANGEROUS_PERMS);
+              await role.setPermissions(safePerms, '[ATHENA ANTINUKE] Disarming dangerous permissions from join-exploited role').catch(() => null);
+            }
+          }
+
+          // 3. Quarantine the member
           if (config.securityEnabled || config.antiNukeEnabled) {
             await executeQuarantine(guild, member, guild.members.me, 'Athena Anti-Nuke: Member joined with unauthorized dangerous roles (Linked Role / Onboarding bypass)').catch(() => null);
           }
+
+          // 4. Log to Security Channel & DM Server Owner with full explanation
+          const targetTier = getUserTierName(guild, member);
+          const roleNames = dangerousJoinRoles.map(r => `\`${r.name}\` (\`${r.id}\`)`).join(', ');
+          const dangerousPermList = [];
+          for (const r of dangerousJoinRoles.values()) {
+            for (const p of DANGEROUS_PERMS) {
+              if (r.permissions.has(p)) {
+                const flagName = Object.keys(PermissionFlagsBits).find(k => PermissionFlagsBits[k] === p);
+                if (flagName && !dangerousPermList.includes(flagName)) dangerousPermList.push(flagName);
+              }
+            }
+          }
+
+          const alertContainer = {
+            type: 17,
+            components: [
+              { type: 10, content: `## Linked Role Exploit on Join Neutralized | <a:atheNATICK:1557841381630681106>` },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `-# **Exploit Vector:** \`Pre-Assigned Roles on Join (Discord Linked Role / Onboarding Bypass)\`\n` +
+                  `-# **Target Member:** ${member} (\`${member.id}\` | \`${member.user.tag}\`)\n` +
+                  `-# **Target Clearance Tier:** \`[${targetTier}]\`\n` +
+                  `-# **Intercepted Roles:** ${roleNames}\n` +
+                  `-# **Escalated Permissions:** \`${dangerousPermList.join(', ') || 'Administrator / Elevated'}\`\n` +
+                  `-# **Audit Trail Status:** \`Role pre-assigned upon guild entry without authorized moderator command\`\n` +
+                  `-# **Countermeasures Executed:** Dangerous roles stripped, member quarantined, role permissions disarmed.`
+              },
+              { type: 14, divider: true },
+              { type: 10, content: `-# **Athena Prime Zero-Trust Sentinel Active**` }
+            ]
+          };
+          await logToSecurityChannel(guild, alertContainer);
+
+          const ownerExplainingDM = {
+            type: 17,
+            components: [
+              { type: 10, content: `## Critical Alert: Join-Time Linked Role Exploit Neutralized | <a:atheNATICK:1557841381630681106>` },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `### Incident Summary\n` +
+                  `> **Server:** **${guild.name}** (\`${guild.id}\`)\n` +
+                  `> **Offending Member:** ${member} (\`${member.user.tag}\` | \`${member.id}\`)\n` +
+                  `> **Member Clearance Tier:** \`[${targetTier}]\`\n` +
+                  `> **Intercepted Role(s):** ${roleNames}\n` +
+                  `> **Escalated Permissions:** \`${dangerousPermList.join(', ') || 'Administrator / Elevated'}\`\n` +
+                  `> **Detection Vector:** \`Member joined with pre-assigned dangerous roles via Linked Role connection or Onboarding\``
+              },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `### How Does This Exploit Work?\n` +
+                  `> **What are Linked Roles?** Discord's Linked Roles (Application Connections) allow users to obtain roles automatically by connecting external accounts in **User Settings > Connections**.\n` +
+                  `>\n` +
+                  `> **The Join Backdoor:** When a user with pre-linked connections joins a server that has connection requirements configured on administrative roles, Discord awards that role immediately upon joining with **zero audit logs**.\n` +
+                  `>\n` +
+                  `> **Athena Detection:** Athena intercepted ${member} entering the server with elevated privileges (${dangerousPermList.join(', ') || 'Administrator'}) and took immediate protective action.`
+              },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `### Defensive Countermeasures Taken\n` +
+                  `> <a:atheNATICK:1557841381630681106> **Roles Revoked:** Dangerous roles stripped from member immediately upon joining.\n` +
+                  `> <a:atheNATICK:1557841381630681106> **Role Disarmed:** Dangerous permissions stripped from the role itself.\n` +
+                  `> <a:atheNATICK:1557841381630681106> **Member Quarantined:** Offender isolated from all channels pending review.\n` +
+                  `> <a:atheNATICK:1557841381630681106> **Security Audit:** Telemetry logged to your security audit channel.`
+              },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `### Required Owner Remediation Steps\n` +
+                  `> 1. Open **Server Settings** > **Roles**.\n` +
+                  `> 2. Select the affected role(s): ${roleNames}.\n` +
+                  `> 3. Click the **Links** tab at the top.\n` +
+                  `> 4. **Delete / Remove all Connection Requirements** on this role.\n` +
+                  `> 5. **Best Practice:** Never put Linked Role connection requirements on roles with administrative, management, or moderation permissions.\n` +
+                  `> 6. Check the quarantined user in your quarantine channel or via \`!quarantine\`.\n` +
+                  `-# **Athena Prime Zero-Trust Sentinel Protection Active**`
+              }
+            ]
+          };
+
+          try {
+            const owner = await guild.fetchOwner().catch(() => null);
+            if (owner) {
+              await owner.send({ components: [ownerExplainingDM], flags: 32768 }).catch(() => null);
+            }
+          } catch {}
         }
       }
     }

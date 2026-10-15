@@ -8,7 +8,8 @@ import commandMap from '../commands/loader.js';
 import { executeQuarantine } from '../commands/security.js';
 import { handleEzal, handleBackup } from '../commands/ezal.js';
 import statsDB from '../statsDB.js';
-import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand } from '../utils/helpers.js';
+import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand, getUserTierName } from '../utils/helpers.js';
+import { logServerEvent } from '../utils/serverLogger.js';
 import { isBotAuthorized, rawDeleteWebhook } from '../utils/antinuke.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
 import { Client } from 'nekos-best.js';
@@ -1241,12 +1242,13 @@ export default {
       const maxWarnings = dbConfig.maxWarnings || 3;
       
       const applyWarning = async (logReason, actionStr, headingStr) => {
+          const authorTier = getUserTierName(message.guild, message.member || message.author);
           const warns = db.addWarning(guildId, userId, message.client.user.id, logReason);
           logToSecurityChannel(message.guild, cv2.log(
             headingStr,
             logReason,
             [
-              { name: 'Member', value: `${message.author.tag} (${userId})`, inline: true },
+              { name: 'Member', value: `${message.author.tag} (${userId}) [${authorTier}]`, inline: true },
               { name: 'Channel', value: `${message.channel}`, inline: true },
               { name: 'Warn Increment', value: `\`${warns.length}\` / ${maxWarnings}` }
             ],
@@ -1312,10 +1314,79 @@ export default {
       const isInviteAllowedChannel = dbConfig.inviteAllowedChannel === message.channel.id;
       
       if (!isGlobalInviteAllowed && !isInviteAllowedChannel && dbConfig.antiInviteEnabled && !checkBypass('Anti Invite', hasAntiInviteImmunity)) {
-        const inviteRegex = /(discord\.(gg|io|me|li)\/|discord(app)?\.com\/invite\/)/gi;
-        if (inviteRegex.test(message.content)) {
+        const inviteRegex = /(?:https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|io|me|li)|discord(?:app)?\.com\/invite)\/[a-zA-Z0-9-]+/gi;
+        const fallbackRegex = /(discord\.(gg|io|me|li)\/|discord(app)?\.com\/invite\/)/gi;
+        if (inviteRegex.test(message.content) || fallbackRegex.test(message.content)) {
+          const rawMatches = message.content.match(inviteRegex) || [];
+          const detectedInvites = rawMatches.length > 0 ? rawMatches : ['Discord Invite Link'];
+          
+          let highlightedContent = message.content;
+          for (const inv of detectedInvites) {
+            const escaped = inv.replace(/[.*+?^$!()|[\]\\]/g, '\\$&');
+            highlightedContent = highlightedContent.replace(new RegExp(`(${escaped})`, 'gi'), '**||$1||**');
+          }
+          if (highlightedContent.length > 1000) {
+            highlightedContent = highlightedContent.substring(0, 997) + '...';
+          }
+
+          const authorTier = getUserTierName(message.guild, message.member || message.author);
+          const inviteList = detectedInvites.map(m => `\`||${m}||\``).join(', ');
+
+          // Suppress redundant generic messageDelete event log
+          if (!message.client.ignoredDeletes) message.client.ignoredDeletes = new Set();
+          message.client.ignoredDeletes.add(message.id);
+
           await message.delete().catch(() => null);
-          await applyWarning(`Deleted invite promotion from member.`, `Posted Discord Invite`, 'Warned Sending Invites');
+
+          // 1. Detailed Security Channel Log
+          const securityLog = {
+            type: 17,
+            components: [
+              { type: 10, content: `## Discord Invite Link Blocked | <a:atheNATICK:1557841381630681106>` },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `-# **Offending Member:** ${message.author} (\`${message.author.id}\` | \`${message.author.tag}\`)\n` +
+                  `-# **Author Clearance Tier:** \`[${authorTier}]\`\n` +
+                  `-# **Channel:** <#${message.channel.id}>\n` +
+                  `-# **Detected Invite URL(s):** ${inviteList}\n` +
+                  `-# **Action Taken:** \`Invite Deleted & Auto-Mod Strike Recorded\``
+              },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content: `### Highlighted Content:\n> ${highlightedContent}`
+              },
+              { type: 14, divider: true },
+              { type: 10, content: `-# **Athena Prime Auto-Mod Sentinel Active**` }
+            ]
+          };
+          await logToSecurityChannel(message.guild, { components: [securityLog], flags: 32768 });
+
+          // 2. Detailed Message Delete Log
+          let delInnerComps = [
+            { type: 10, content: `## Message Deleted | <a:uptime:1552608831060844575>` },
+            { type: 14, divider: true },
+            { type: 10, content: `-# **Author:** [${message.author.displayName || message.author.username}](https://discord.com/users/${message.author.id}) (\`${message.author.id}\`) [${authorTier}]` },
+            { type: 10, content: `-# **Deleted By:** Athena Prime (Anti-Invite Auto-Mod)` },
+            { type: 10, content: `-# **Reason:** Unauthorized Discord invite promotion: ${inviteList}` },
+            { type: 10, content: `-# **Channel:** [\# ${message.channel.name}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` },
+            { type: 14, divider: true },
+            { type: 10, content: `-# **Message Content (Highlighted):**` }
+          ];
+          for (const line of highlightedContent.split('\n')) {
+            delInnerComps.push({ type: 10, content: `-# ${line}` });
+          }
+          delInnerComps.push({ type: 14, divider: true });
+          delInnerComps.push({ type: 10, content: `-# **Athena Diagnostic Logs**` });
+
+          await logServerEvent(message.guild, 'msgDeletes', {
+            components: [{ type: 17, components: delInnerComps }],
+            flags: 32768
+          });
+
+          await applyWarning(`Deleted invite promotion from member. Detected: ${inviteList}`, `Posted Discord Invite`, 'Warned Sending Invites');
           return;
         }
       }
@@ -1372,8 +1443,73 @@ export default {
             return new RegExp(`(?:^|\\W)${escapedWord}(?:$|\\W)`, 'i').test(msgLower);
           });
           if (matchedWords.length > 0) {
+            let highlightedContent = message.content;
+            for (const word of matchedWords) {
+              const escaped = word.replace(/[.*+?^$!()|[\]\\]/g, '\\$&');
+              highlightedContent = highlightedContent.replace(new RegExp(`(${escaped})`, 'gi'), '**||$1||**');
+            }
+            if (highlightedContent.length > 1000) {
+              highlightedContent = highlightedContent.substring(0, 997) + '...';
+            }
+
+            const authorTier = getUserTierName(message.guild, message.member || message.author);
+            const wordList = matchedWords.map(w => `\`||${w}||\``).join(', ');
+
+            // Suppress redundant generic messageDelete event log
+            if (!message.client.ignoredDeletes) message.client.ignoredDeletes = new Set();
+            message.client.ignoredDeletes.add(message.id);
+
             await message.delete().catch(() => null);
-            await applyWarning(`Matched blacklisted phrase(s): ${matchedWords.join(', ')}`, `Used Swear Words`, 'Warned Using Swear Words');
+
+            // 1. Comprehensive Security Channel Log
+            const securityLog = {
+              type: 17,
+              components: [
+                { type: 10, content: `## Blacklisted Word Neutralized | <a:atheNATICK:1557841381630681106>` },
+                { type: 14, divider: true },
+                {
+                  type: 10,
+                  content:
+                    `-# **Offending Member:** ${message.author} (\`${message.author.id}\` | \`${message.author.tag}\`)\n` +
+                    `-# **Author Clearance Tier:** \`[${authorTier}]\`\n` +
+                    `-# **Channel:** <#${message.channel.id}>\n` +
+                    `-# **Violating Phrase(s):** ${wordList}\n` +
+                    `-# **Action Taken:** \`Message Deleted & Auto-Mod Strike Recorded\``
+                },
+                { type: 14, divider: true },
+                {
+                  type: 10,
+                  content: `### Highlighted Content:\n> ${highlightedContent}`
+                },
+                { type: 14, divider: true },
+                { type: 10, content: `-# **Athena Prime Auto-Mod Sentinel Active**` }
+              ]
+            };
+            await logToSecurityChannel(message.guild, { components: [securityLog], flags: 32768 });
+
+            // 2. Comprehensive Message Delete Log
+            let delInnerComps = [
+              { type: 10, content: `## Message Deleted | <a:uptime:1552608831060844575>` },
+              { type: 14, divider: true },
+              { type: 10, content: `-# **Author:** [${message.author.displayName || message.author.username}](https://discord.com/users/${message.author.id}) (\`${message.author.id}\`) [${authorTier}]` },
+              { type: 10, content: `-# **Deleted By:** Athena Prime (Blacklisted Word Auto-Mod)` },
+              { type: 10, content: `-# **Reason:** Blacklisted phrase matched: ${wordList}` },
+              { type: 10, content: `-# **Channel:** [\# ${message.channel.name}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` },
+              { type: 14, divider: true },
+              { type: 10, content: `-# **Message Content (Highlighted):**` }
+            ];
+            for (const line of highlightedContent.split('\n')) {
+              delInnerComps.push({ type: 10, content: `-# ${line}` });
+            }
+            delInnerComps.push({ type: 14, divider: true });
+            delInnerComps.push({ type: 10, content: `-# **Athena Diagnostic Logs**` });
+
+            await logServerEvent(message.guild, 'msgDeletes', {
+              components: [{ type: 17, components: delInnerComps }],
+              flags: 32768
+            });
+
+            await applyWarning(`Matched blacklisted phrase(s): ${wordList}`, `Used Swear Words`, 'Warned Using Swear Words');
             return;
           }
         }

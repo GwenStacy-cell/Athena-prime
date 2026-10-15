@@ -16,7 +16,8 @@ import {
   isBotOwnerSync,
   isExtraOwner,
   isServerAdmin,
-  syncQuarantinePermissions
+  syncQuarantinePermissions,
+  getUserTierName
 } from '../utils/helpers.js';
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
@@ -1745,12 +1746,14 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
     await quarantineChannel.send(welcomeEmbed).catch((e) => console.error('QUARANTINE_SEND_ERROR:', e));
 
     // 8. Log the event to logs channel
+    const enforcerTier = (moderator.id === guild.members.me.id || !moderator.user) ? 'Athena Prime' : getUserTierName(guild, moderator);
+    const targetTier = getUserTierName(guild, targetMember);
     logToSecurityChannel(guild, cv2.log(
       'Quarantine Applied',
       `Member has been isolated.`,
       [
-        { name: 'Target', value: `${targetMember.user.tag} (${targetMember.id})`, inline: true },
-        { name: 'Enforcer', value: `${moderator.user?.tag || 'System'}`, inline: true },
+        { name: 'Target', value: `${targetMember.user.tag} (${targetMember.id}) [${targetTier}]`, inline: true },
+        { name: 'Enforcer', value: `${moderator.user?.tag || 'System'} [${enforcerTier}]`, inline: true },
         { name: 'Reason', value: reason }
       ],
       'danger'
@@ -1824,18 +1827,20 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     await targetMember.send(dmEmbed).catch(() => null);
 
     // Log the event
+    const unqEnforcerTier = (moderator.id === guild.members.me.id || !moderator.user) ? 'Athena Prime' : getUserTierName(guild, moderator);
+    const unqTargetTier = getUserTierName(guild, targetMember);
     if (context === 'auto') {
       logToSecurityChannel(guild, cv2.info(
         'Auto-Unquarantine',
-        `<@${targetMember.id}>'s quarantine duration expired - automatically released.`
+        `<@${targetMember.id}> [${unqTargetTier}]'s quarantine duration expired - automatically released.`
       ));
     } else {
       logToSecurityChannel(guild, cv2.log(
         'Quarantine Lifted',
         `Member has been restored.`,
         [
-          { name: 'Target', value: `${targetMember.user.tag} (${targetMember.id})`, inline: true },
-          { name: 'Moderator', value: `${moderator.user?.tag || 'System'}`, inline: true }
+          { name: 'Target', value: `${targetMember.user.tag} (${targetMember.id}) [${unqTargetTier}]`, inline: true },
+          { name: 'Moderator', value: `${moderator.user?.tag || 'System'} [${unqEnforcerTier}]`, inline: true }
         ],
         'success'
       ));
@@ -1955,7 +1960,8 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     db.saveEmergencyState(guild.id, stateToSave);
 
-    logToSecurityChannel(guild, cv2.log('Emergency Mode Activated', `**${moderator.user.tag}** has triggered Emergency Mode! All roles below the bot have been stripped of permissions and channels are hidden.`, [], 'danger'));
+    const modTier = getUserTierName(guild, moderator);
+    logToSecurityChannel(guild, cv2.log('Emergency Mode Activated', `**${moderator.user.tag}** [${modTier}] has triggered Emergency Mode! All roles below the bot have been stripped of permissions and channels are hidden.`, [], 'danger'));
 
     try {
       const owner = await guild.members.fetch(guild.ownerId);
@@ -2020,7 +2026,8 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     db.clearEmergencyState(guild.id);
 
-    logToSecurityChannel(guild, cv2.log('Emergency Mode Ended', `**${moderator.user.tag}** has ended Emergency Mode. Restored ${rolesRestored} roles and ${channelsRestored} channels.`, [], 'success'));
+    const endModTier = getUserTierName(guild, moderator);
+    logToSecurityChannel(guild, cv2.log('Emergency Mode Ended', `**${moderator.user.tag}** [${endModTier}] has ended Emergency Mode. Restored ${rolesRestored} roles and ${channelsRestored} channels.`, [], 'success'));
 
     try {
       const owner = await guild.members.fetch(guild.ownerId);
@@ -2042,6 +2049,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
 async function handleLockdown(guild, channel, moderator, mode) {
   try {
+    const modTier = getUserTierName(guild, moderator);
     if (mode === 'on') {
       await channel.permissionOverwrites.edit(guild.roles.everyone, {
         SendMessages: false
@@ -2050,7 +2058,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
         'Lockdown Activated', 
         `<a:uptime:1552608831060844575> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
       );
-      logToSecurityChannel(guild, cv2.log('Channel Locked', `Moderator **${moderator.user.tag}** locked down channel **#${channel.name}**.`, [], 'warning'));
+      logToSecurityChannel(guild, cv2.log('Channel Locked', `Moderator **${moderator.user.tag}** [${modTier}] locked down channel **#${channel.name}**.`, [], 'warning'));
       return lockEmbed;
     } else {
       await channel.permissionOverwrites.edit(guild.roles.everyone, {
@@ -2060,7 +2068,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
         'Lockdown Deactivated', 
         `<a:uptime:1552608831060844575> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
       );
-      logToSecurityChannel(guild, cv2.log('Channel Unlocked', `Moderator **${moderator.user.tag}** unlocked channel **#${channel.name}**.`, [], 'success'));
+      logToSecurityChannel(guild, cv2.log('Channel Unlocked', `Moderator **${moderator.user.tag}** [${modTier}] unlocked channel **#${channel.name}**.`, [], 'success'));
       return unlockEmbed;
     }
   } catch (error) {
@@ -2072,6 +2080,7 @@ async function handleLockdown(guild, channel, moderator, mode) {
 async function handleRaidMode(guild, moderator, mode) {
   const enabled = mode === 'on';
   db.updateGuildConfig(guild.id, { raidMode: enabled });
+  const modTier = getUserTierName(guild, moderator);
 
   if (enabled) {
     const resEmbed = cv2.raid(
@@ -2079,7 +2088,7 @@ async function handleRaidMode(guild, moderator, mode) {
       `<a:alert1:1533860044154732704> **Server Raid Protection is now ACTIVE.**\nAll joining accounts will be automatically quarantined immediately to protect the server until deactivated.`,
       [{ name: 'Enforced by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
     );
-    logToSecurityChannel(guild, cv2.log('Raid Mode Active', `Administrator **${moderator.user.tag}** turned ON Guild Raid Mode.`, [], 'raid'));
+    logToSecurityChannel(guild, cv2.log('Raid Mode Active', `Administrator **${moderator.user.tag}** [${modTier}] turned ON Guild Raid Mode.`, [], 'raid'));
     return resEmbed;
   } else {
     // Automatically mass unquarantine everyone caught in the raid
@@ -2099,7 +2108,7 @@ async function handleRaidMode(guild, moderator, mode) {
     );
     logToSecurityChannel(guild, cv2.log(
       'Raid Mode Off', 
-      `Administrator **${moderator.user.tag}** turned OFF Guild Raid Mode.`, 
+      `Administrator **${moderator.user.tag}** [${modTier}] turned OFF Guild Raid Mode.`, 
       [], 
       'success'
     ));

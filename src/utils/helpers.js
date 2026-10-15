@@ -29,6 +29,59 @@ export function isServerStaff(member, guildId) {
   return authRoles.staff.some(roleId => member.roles.cache.has(roleId));
 }
 
+/**
+ * Resolves the highest authorization / clearance tier of a user or guild member.
+ * Returns: 'Bot Owner' | 'Server Owner' | 'Extra Owner' | 'Admin Tier' | 'Mod Tier' | 'Staff Tier' | 'Member'
+ */
+export function getUserTierName(guild, userOrMember) {
+  if (!userOrMember) return 'Member';
+  const userId = userOrMember.id || userOrMember.user?.id || (typeof userOrMember === 'string' ? userOrMember : null);
+  if (!userId) return 'Member';
+
+  // 1. Bot Owner
+  if (isBotOwnerSync(userId)) return 'Bot Owner';
+
+  // 2. Server Owner
+  const guildObj = (typeof guild === 'object' && guild !== null) ? guild : null;
+  const guildId = guildObj?.id || (typeof guild === 'string' ? guild : null);
+  if (guildObj && guildObj.ownerId === userId) return 'Server Owner';
+
+  // 3. Extra Owner (Always fetch from database)
+  if (guildId && db.isExtraOwner(guildId, userId)) return 'Extra Owner';
+
+  // 4. Role-based / Permission-based tiers
+  const member = (userOrMember.roles && userOrMember.permissions)
+    ? userOrMember
+    : (guildObj?.members?.cache?.get(userId) || null);
+
+  if (member && guildId) {
+    const authRoles = db.getAuthRoles(guildId) || { admin: [], mod: [], staff: [] };
+    const memberRoles = member.roles?.cache;
+
+    // Admin Tier
+    if (member.permissions?.has?.(PermissionFlagsBits.Administrator) ||
+        (authRoles.admin && authRoles.admin.some(r => memberRoles?.has(r)))) {
+      return 'Admin Tier';
+    }
+
+    // Mod Tier
+    if ((authRoles.mod && authRoles.mod.some(r => memberRoles?.has(r))) ||
+        member.permissions?.has?.(PermissionFlagsBits.BanMembers) ||
+        member.permissions?.has?.(PermissionFlagsBits.KickMembers) ||
+        member.permissions?.has?.(PermissionFlagsBits.ModerateMembers)) {
+      return 'Mod Tier';
+    }
+
+    // Staff Tier
+    if ((authRoles.staff && authRoles.staff.some(r => memberRoles?.has(r))) ||
+        member.permissions?.has?.(PermissionFlagsBits.ManageMessages)) {
+      return 'Staff Tier';
+    }
+  }
+
+  return 'Member';
+}
+
 
 /**
  * Parses simple duration strings (e.g. 10s, 5m, 2h, 1d) into milliseconds

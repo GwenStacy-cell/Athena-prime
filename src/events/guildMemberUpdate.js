@@ -1,7 +1,7 @@
 import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
 import { AuditLogEvent, PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
-import { isBotOwnerSync, logToSecurityChannel } from '../utils/helpers.js';
+import { isBotOwnerSync, logToSecurityChannel, getUserTierName } from '../utils/helpers.js';
 import { isAuthorized, DANGEROUS_PERMS, hasDangerousPerms } from '../utils/antinuke.js';
 import { executeQuarantine } from '../commands/security.js';
 
@@ -177,6 +177,7 @@ export default {
                     }
 
                     // 4. LOG & DM OWNER (Following Athena's formatting rules: Custom Tick Heading | <a:atheNATICK:1557841381630681106>)
+                    const targetTier = getUserTierName(guild, newMember);
                     const roleNames = dangerousRoles.map(r => `\`${r.name}\` (\`${r.id}\`)`).join(', ');
                     const dangerousPermList = [];
                     for (const r of dangerousRoles.values()) {
@@ -188,6 +189,7 @@ export default {
                       }
                     }
 
+                    // Security audit channel log
                     const alertContainer = {
                       type: 17,
                       components: [
@@ -197,10 +199,11 @@ export default {
                           type: 10,
                           content:
                             `-# **Exploit Vector:** \`${exploitReason}\`\n` +
-                            `-# **Target Member:** ${newMember} (\`${newMember.id}\`)\n` +
+                            `-# **Target Member:** ${newMember} (\`${newMember.id}\` | \`${newMember.user?.tag || newMember.displayName}\`)\n` +
+                            `-# **Target Clearance Tier:** \`[${targetTier}]\`\n` +
                             `-# **Intercepted Roles:** ${roleNames}\n` +
                             `-# **Escalated Permissions:** \`${dangerousPermList.join(', ') || 'Administrator / Elevated'}\`\n` +
-                            `-# **Audit Threshold:** \`No authorized audit log found under 60-second window\`\n` +
+                            `-# **Audit Trail Status:** \`No authorized audit log found under 60-second window (Zero-Audit Grant)\`\n` +
                             `-# **Countermeasures Executed:** Roles stripped instantly, exploiter quarantined, role permissions disarmed.`
                         },
                         { type: 14, divider: true },
@@ -210,10 +213,64 @@ export default {
 
                     await logToSecurityChannel(guild, alertContainer);
 
+                    // Comprehensive explanatory DM to Server Owner
+                    const ownerExplainingDM = {
+                      type: 17,
+                      components: [
+                        { type: 10, content: `## Critical Alert: Linked Role Exploit Neutralized | <a:atheNATICK:1557841381630681106>` },
+                        { type: 14, divider: true },
+                        {
+                          type: 10,
+                          content:
+                            `### Incident Summary\n` +
+                            `> **Server:** **${guild.name}** (\`${guild.id}\`)\n` +
+                            `> **Offending Member:** ${newMember} (\`${newMember.user?.tag || newMember.displayName}\` | \`${newMember.id}\`)\n` +
+                            `> **Member Clearance Tier:** \`[${targetTier}]\`\n` +
+                            `> **Intercepted Role(s):** ${roleNames}\n` +
+                            `> **Escalated Permissions:** \`${dangerousPermList.join(', ') || 'Administrator / Elevated'}\`\n` +
+                            `> **Detection Vector:** \`${exploitReason}\``
+                        },
+                        { type: 14, divider: true },
+                        {
+                          type: 10,
+                          content:
+                            `### How Does This Exploit Work?\n` +
+                            `> **What are Linked Roles?** Discord's Linked Roles (Application Role Connections) allow users to obtain roles automatically by connecting external accounts (Steam, GitHub, Twitter, Reddit, or custom connection bots) in **User Settings > Connections**.\n` +
+                            `>\n` +
+                            `> **The Zero-Audit Backdoor:** When a server role has Connection requirements enabled, Discord grants the role directly to any user meeting the criteria. **Discord NEVER creates an audit log entry** for this role assignment (executor is null or self). If an administrative or privileged role has connections attached, any user can silently grant themselves full Administrator access without any moderator or bot intervention!\n` +
+                            `>\n` +
+                            `> **Athena Detection:** Athena detected that ${newMember} acquired dangerous privileges (${dangerousPermList.join(', ') || 'Administrator'}) with zero valid moderator audit logs within the 60-second threshold.`
+                        },
+                        { type: 14, divider: true },
+                        {
+                          type: 10,
+                          content:
+                            `### Defensive Countermeasures Taken\n` +
+                            `> <a:atheNATICK:1557841381630681106> **Roles Revoked:** Dangerous roles stripped from member immediately.\n` +
+                            `> <a:atheNATICK:1557841381630681106> **Role Disarmed:** Dangerous permissions stripped from the role itself so no one else can exploit it.\n` +
+                            `> <a:atheNATICK:1557841381630681106> **Member Quarantined:** Offender placed into server isolation pending your review.\n` +
+                            `> <a:atheNATICK:1557841381630681106> **Security Audit:** Telemetry logged to your security log channel.`
+                        },
+                        { type: 14, divider: true },
+                        {
+                          type: 10,
+                          content:
+                            `### Required Owner Remediation Steps\n` +
+                            `> 1. Open **Server Settings** > **Roles**.\n` +
+                            `> 2. Select the affected role(s): ${roleNames}.\n` +
+                            `> 3. Click the **Links** tab at the top.\n` +
+                            `> 4. **Delete / Remove all Connection Requirements** on this role.\n` +
+                            `> 5. **Best Practice:** Never put Linked Role connection requirements on roles with administrative, management, or moderation permissions. Linked roles should strictly be used for cosmetic badges.\n` +
+                            `> 6. Check the quarantined user in your quarantine channel or via \`!quarantine\`.\n` +
+                            `-# **Athena Prime Zero-Trust Sentinel Protection Active**`
+                        }
+                      ]
+                    };
+
                     try {
                       const owner = await guild.fetchOwner().catch(() => null);
                       if (owner) {
-                        await owner.send({ components: [alertContainer], flags: 32768 }).catch(() => null);
+                        await owner.send({ components: [ownerExplainingDM], flags: 32768 }).catch(() => null);
                       }
                     } catch {}
                   }
