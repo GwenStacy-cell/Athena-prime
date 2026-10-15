@@ -1,6 +1,9 @@
 import { UNBYPASSABLE_ROLE_NAME, FIREWALL_ROLE_NAME, handleAntiStab } from '../utils/antiStrip.js';
-import { AuditLogEvent } from 'discord.js';
+import { AuditLogEvent, PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
+import { isBotOwnerSync, logToSecurityChannel } from '../utils/helpers.js';
+import { isAuthorized, DANGEROUS_PERMS, hasDangerousPerms } from '../utils/antinuke.js';
+import { executeQuarantine } from '../commands/security.js';
 
 export default {
   name: 'guildMemberUpdate',
@@ -93,6 +96,134 @@ export default {
             console.error('Error in bot role protection:', e);
           }
         }, 1500); // Give Audit Logs time to populate
+      }
+
+      // ==========================================
+      // 3. LINKED ROLE EXPLOIT & DANGEROUS ROLE GUARD
+      // Under 60 seconds threshold: If a user gets a dangerous / Administrator role
+      // without an authorized audit log entry, it is a Linked Role Exploit
+      // (Discord connection verification bypass).
+      // ==========================================
+      const allAddedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
+      if (allAddedRoles.size > 0 && newMember.id !== newMember.guild.ownerId) {
+        const isOwner = isBotOwnerSync(newMember.id);
+        const isExtra = db.isExtraOwner(newMember.guild.id, newMember.id);
+
+        if (!isOwner && !isExtra) {
+          const authRoles = db.getAuthRoles(newMember.guild.id);
+          const dangerousRoles = allAddedRoles.filter(role => 
+            hasDangerousPerms(role.permissions) || 
+            (authRoles?.admin && authRoles.admin.includes(role.id))
+          );
+
+          if (dangerousRoles.size > 0) {
+            const guild = newMember.guild;
+            const guildCfg = db.getGuildConfig(guild.id);
+            const mods = guildCfg?.antinukeModules || {};
+
+            // Only run if antiLinkedRole or antiMemberRoleUpdate is enabled
+            if (mods.antiLinkedRole !== false || mods.antiMemberRoleUpdate !== false) {
+              setTimeout(async () => {
+                try {
+                  const auditLogs = await guild.fetchAuditLogs({
+                    limit: 10,
+                    type: AuditLogEvent.MemberRoleUpdate
+                  }).catch(() => null);
+
+                  // 60-SECOND THRESHOLD:
+                  // Check if an authorized admin issued this role assignment
+                  const matchingEntry = auditLogs?.entries?.find(entry => {
+                    if (entry.targetId !== newMember.id) return false;
+                    const ageMs = Date.now() - entry.createdTimestamp;
+                    if (ageMs > 60_000) return false; // 60 seconds threshold
+                    const roleChanges = entry.changes?.find(c => c.key === '$add');
+                    if (!roleChanges || !Array.isArray(roleChanges.new)) return false;
+                    return roleChanges.new.some(r => dangerousRoles.has(r.id));
+                  });
+
+                  let isExploit = false;
+                  let exploitReason = '';
+
+                  if (!matchingEntry) {
+                    // ZERO AUDIT LOG FOUND IN 60s -> DISCORD LINKED ROLE EXPLOIT
+                    isExploit = true;
+                    exploitReason = 'Zero Audit Footprint (Discord Linked Role / Connection Bypass)';
+                  } else if (!matchingEntry.executor || matchingEntry.executor.id === newMember.id) {
+                    // Self-assigned or null executor -> LINKED ROLE EXPLOIT
+                    isExploit = true;
+                    exploitReason = 'Self-Assigned / Null Audit Executor (Linked Role Connection Bypass)';
+                  } else if (!isAuthorized(guild, matchingEntry.executor, 'antiMemberRoleUpdate')) {
+                    // Assigned by an unauthorized rogue member or bot
+                    isExploit = true;
+                    exploitReason = `Unauthorized Grant by <@${matchingEntry.executor.id}> (\`${matchingEntry.executor.tag || matchingEntry.executor.id}\`)`;
+                  }
+
+                  if (isExploit) {
+                    // 1. INSTANT STRIKE: Remove dangerous roles from member
+                    await newMember.roles.remove(dangerousRoles, `[ATHENA ANTINUKE] Linked Role Exploit Neutralized: ${exploitReason}`).catch(() => null);
+
+                    // 2. DISARM THE COMPROMISED LINKED ROLE:
+                    // If the role itself still has dangerous perms, remove them so nobody else can claim it via connections
+                    for (const role of dangerousRoles.values()) {
+                      if (role.editable && hasDangerousPerms(role.permissions)) {
+                        const safePerms = role.permissions.remove(DANGEROUS_PERMS);
+                        await role.setPermissions(safePerms, '[ATHENA ANTINUKE] Disarming dangerous permissions from exploited role').catch(() => null);
+                      }
+                    }
+
+                    // 3. QUARANTINE / CONTAIN THE USER
+                    if (guildCfg?.securityEnabled || guildCfg?.antiNukeEnabled) {
+                      await executeQuarantine(guild, newMember, guild.members.me, `Athena Anti-Nuke: Linked Role Exploit Attempt (${exploitReason})`).catch(() => null);
+                    }
+
+                    // 4. LOG & DM OWNER (Following Athena's formatting rules: Custom Tick Heading | <a:atheNATICK:1557841381630681106>)
+                    const roleNames = dangerousRoles.map(r => `\`${r.name}\` (\`${r.id}\`)`).join(', ');
+                    const dangerousPermList = [];
+                    for (const r of dangerousRoles.values()) {
+                      for (const p of DANGEROUS_PERMS) {
+                        if (r.permissions.has(p)) {
+                          const flagName = Object.keys(PermissionFlagsBits).find(k => PermissionFlagsBits[k] === p);
+                          if (flagName && !dangerousPermList.includes(flagName)) dangerousPermList.push(flagName);
+                        }
+                      }
+                    }
+
+                    const alertContainer = {
+                      type: 17,
+                      components: [
+                        { type: 10, content: `## Linked Role Exploit Neutralized | <a:atheNATICK:1557841381630681106>` },
+                        { type: 14, divider: true },
+                        {
+                          type: 10,
+                          content:
+                            `-# **Exploit Vector:** \`${exploitReason}\`\n` +
+                            `-# **Target Member:** ${newMember} (\`${newMember.id}\`)\n` +
+                            `-# **Intercepted Roles:** ${roleNames}\n` +
+                            `-# **Escalated Permissions:** \`${dangerousPermList.join(', ') || 'Administrator / Elevated'}\`\n` +
+                            `-# **Audit Threshold:** \`No authorized audit log found under 60-second window\`\n` +
+                            `-# **Countermeasures Executed:** Roles stripped instantly, exploiter quarantined, role permissions disarmed.`
+                        },
+                        { type: 14, divider: true },
+                        { type: 10, content: `-# **Athena Prime Zero-Trust Sentinel Active**` }
+                      ]
+                    };
+
+                    await logToSecurityChannel(guild, alertContainer);
+
+                    try {
+                      const owner = await guild.fetchOwner().catch(() => null);
+                      if (owner) {
+                        await owner.send({ components: [alertContainer], flags: 32768 }).catch(() => null);
+                      }
+                    } catch {}
+                  }
+                } catch (err) {
+                  console.error('[AntiLinkedRole] Error in linked role guard:', err);
+                }
+              }, 1500);
+            }
+          }
+        }
       }
     }
 

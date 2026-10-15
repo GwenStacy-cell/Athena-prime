@@ -2144,7 +2144,8 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     antiBan: 'Anti Ban',
     antiKick: 'Anti Kick',
     antiUnban: 'Anti Unban',
-    antiInvite: 'Anti Invite'
+    antiInvite: 'Anti Invite',
+    antiLinkedRole: 'Anti Linked Role Exploit'
   };
 
   const emojiOn = '<:on:1533844867191406672>'; 
@@ -2579,7 +2580,7 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
     antinukeModules:   {}
   };
 
-  const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands'];
+  const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands', 'antiLinkedRole'];
   for (const key of allKeys) {
     if (key === 'antiInvite') {
       updates.antinukeModules[key] = false;
@@ -2898,7 +2899,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
       allowAllLinks:            false,
       allowInvitesGlobally:     false,
       blacklistWords:           [],
-      antinukeModules:          Object.fromEntries(['antiRoleCreate','antiRoleDelete','antiRoleUpdate','antiRolePermUpdate','antiMemberRoleUpdate','antiRoleReorder','antiChannelCreate','antiChannelDelete','antiChannelUpdate','antiChannelPermUpdate','antiChannelReorder','antiChannelNameMod','antiEmojiCreate','antiEmojiDelete','antiEmojiUpdate','antiWebhooks','antiBotAdd','antiServerUpdate','antiBan','antiKick','antiUnban','antiInvite','antiScheduledEvents','antiMemberPurge','antiMassBan','antiAutomodUpdate','antiAppCommands'].map(k => [k, false])),
+      antinukeModules:          Object.fromEntries(['antiRoleCreate','antiRoleDelete','antiRoleUpdate','antiRolePermUpdate','antiMemberRoleUpdate','antiRoleReorder','antiChannelCreate','antiChannelDelete','antiChannelUpdate','antiChannelPermUpdate','antiChannelReorder','antiChannelNameMod','antiEmojiCreate','antiEmojiDelete','antiEmojiUpdate','antiWebhooks','antiBotAdd','antiServerUpdate','antiBan','antiKick','antiUnban','antiInvite','antiScheduledEvents','antiMemberPurge','antiMassBan','antiAutomodUpdate','antiAppCommands','antiLinkedRole'].map(k => [k, false])),
       dashboardChannelId:       null,
       dashboardMessageIds:      []
     });
@@ -2972,7 +2973,8 @@ export async function getSecurityStatusPanel(guild) {
     antiMemberPurge: 'Anti Member Purge',
     antiMassBan: 'Anti Mass Ban',
     antiAutomodUpdate: 'Anti Automod Update',
-    antiAppCommands: 'Anti App Commands'
+    antiAppCommands: 'Anti App Commands',
+    antiLinkedRole: 'Anti Linked Role Exploit'
   };
 
   const emojiOn  = '<:on:1533844867191406672>';
@@ -3499,7 +3501,7 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
       const db = (await import("../database.js")).default;
       const config = db.getGuildConfig(guild.id);
       const modules = config.antinukeModules || {};
-      const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands'];
+      const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands', 'antiLinkedRole'];
       for (const k of allKeys) {
         modules[k] = true;
       }

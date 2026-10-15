@@ -188,7 +188,7 @@ function lockPunishment(guildId, userId) {
 // ==========================================
 // DANGEROUS PERMISSIONS
 // ==========================================
-const DANGEROUS_PERMS = [
+export const DANGEROUS_PERMS = [
   PermissionFlagsBits.Administrator,
   PermissionFlagsBits.ManageGuild,
   PermissionFlagsBits.ManageChannels,
@@ -200,7 +200,7 @@ const DANGEROUS_PERMS = [
   PermissionFlagsBits.MentionEveryone,
 ];
 
-function hasDangerousPerms(permissions) {
+export function hasDangerousPerms(permissions) {
   return DANGEROUS_PERMS.some(p => permissions.has(p));
 }
 
@@ -252,6 +252,9 @@ const EVENT_TO_MODULE_MAP = {
   'antirolereorder': 'antiRoleReorder',
   'unauthorized dangerous role grant': 'antiMemberRoleUpdate',
   'antimemberroleupdate': 'antiMemberRoleUpdate',
+  'linked role exploit': 'antiLinkedRole',
+  'antilinkedrole': 'antiLinkedRole',
+  'linked role bypass': 'antiLinkedRole',
   'emoji deletion': 'antiEmojiDelete',
   'antiemojidelete': 'antiEmojiDelete',
   'emoji creation': 'antiEmojiCreate',

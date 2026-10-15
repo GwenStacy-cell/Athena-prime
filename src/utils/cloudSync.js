@@ -53,6 +53,7 @@ export function getDatabaseMetrics() {
 
   // Antinuke & Security detailed modules breakdown
   const antiBotAddServers = guilds.filter(g => g && g.antinukeModules?.antiBotAdd).length;
+  const antiLinkedRoleServers = guilds.filter(g => g && g.antinukeModules?.antiLinkedRole !== false).length;
   const antiRoleModulesServers = guilds.filter(g => g && (g.antinukeModules?.antiRoleCreate || g.antinukeModules?.antiRoleDelete)).length;
   const antiChannelModulesServers = guilds.filter(g => g && (g.antinukeModules?.antiChannelCreate || g.antinukeModules?.antiChannelDelete)).length;
   const antiWebhookServers = guilds.filter(g => g && g.antinukeModules?.antiWebhooks).length;
@@ -130,6 +131,7 @@ export function getDatabaseMetrics() {
 
     securityServers: guilds.filter(g => g && (g.securityEnabled || g.antiNukeEnabled)).length,
     antiBotAddServers,
+    antiLinkedRoleServers,
     antiRoleModulesServers,
     antiChannelModulesServers,
     antiWebhookServers,
@@ -251,7 +253,7 @@ export function formatDatabaseMetrics(m, options = {}) {
 
     `**Security & Anti-Nuke Engine:**\n` +
     `> -# **Security & Anti-Nuke:** \`${m.securityServers} servers active\`\n` +
-    `> -# **Core Modules:** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bot Add: ${m.antiBotAddServers}\`\n` +
+    `> -# **Core Modules:** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bot Add: ${m.antiBotAddServers}, Linked Role Guard: ${m.antiLinkedRoleServers || 0}\`\n` +
     `> -# **Thresholds & Traps:** \`${m.antiNukeThresholds} configured limits, ${m.honeypots} honeypots, Raid Mode: ${m.raidModeServers}\`\n\n` +
 
     `**Automod Protection Matrix:**\n` +

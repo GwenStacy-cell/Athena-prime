@@ -34,6 +34,30 @@ export default {
     }
 
     // ==========================================
+    // 0.5. PRE-ASSIGNED DANGEROUS ROLE GUARD (ONBOARDING / PRE-LINKED)
+    // ==========================================
+    if (!member.user.bot && member.id !== guild.ownerId) {
+      const { isBotOwnerSync } = await import('../utils/helpers.js');
+      const isOwner = isBotOwnerSync(member.id);
+      const isExtra = db.isExtraOwner(guild.id, member.id);
+      if (!isOwner && !isExtra) {
+        const { hasDangerousPerms } = await import('../utils/antinuke.js');
+        const authRoles = db.getAuthRoles(guild.id);
+        const dangerousJoinRoles = member.roles.cache.filter(r => 
+          r.id !== guild.id && 
+          (hasDangerousPerms(r.permissions) || (authRoles?.admin && authRoles.admin.includes(r.id)))
+        );
+
+        if (dangerousJoinRoles.size > 0) {
+          await member.roles.remove(dangerousJoinRoles, '[ATHENA ANTINUKE] Stripped dangerous roles acquired on join (Linked Role / Onboarding bypass)').catch(() => null);
+          if (config.securityEnabled || config.antiNukeEnabled) {
+            await executeQuarantine(guild, member, guild.members.me, 'Athena Anti-Nuke: Member joined with unauthorized dangerous roles (Linked Role / Onboarding bypass)').catch(() => null);
+          }
+        }
+      }
+    }
+
+    // ==========================================
     // 1. QUARANTINE BYPASS PROTECTION
     // ==========================================
     const quarantineRecord = db.getQuarantine(guild.id, userId);
@@ -233,7 +257,7 @@ export default {
             const inviteEmbed = {
               type: 17,
               components: [
-                { type: 10, content: `## 🔴 **MEMBER JOINED**` },
+                { type: 10, content: `## <a:uptime:1552608831060844575> **MEMBER JOINED**` },
                 { type: 14, divider: true },
                 { 
                   type: 9, 

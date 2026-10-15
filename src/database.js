@@ -294,7 +294,8 @@ class Database {
           antiMemberPurge: true,
           antiMassBan: true,
           antiAutomodUpdate: true,
-          antiAppCommands: true
+          antiAppCommands: true,
+          antiLinkedRole: true
         },
         antiNukePunishment: 'ban',
         antiNukeThreshold: 1,
@@ -339,8 +340,12 @@ class Database {
           antiChannelCreate: true, antiChannelDelete: true, antiChannelUpdate: true, antiChannelPermUpdate: true, antiChannelReorder: true, antiChannelNameMod: true,
           antiEmojiCreate: true, antiEmojiDelete: true, antiEmojiUpdate: true, antiWebhooks: true, antiBotAdd: true, antiServerUpdate: true,
           antiBan: true, antiKick: true, antiUnban: true, antiInvite: false, antiScheduledEvents: true, antiMemberPurge: true,
-          antiMassBan: true, antiAutomodUpdate: true, antiAppCommands: true
+          antiMassBan: true, antiAutomodUpdate: true, antiAppCommands: true, antiLinkedRole: true
         };
+        updated = true;
+      }
+      if (cfg.antinukeModules.antiLinkedRole === undefined) {
+        cfg.antinukeModules.antiLinkedRole = true;
         updated = true;
       }
       if (cfg.maxWarnings === undefined) { cfg.maxWarnings = 3; updated = true; }
