@@ -204,8 +204,18 @@ export function getDatabaseMetrics() {
     birthdayUsers,
 
     apps: Object.keys(cache.apps || {}).length,
+    countingGuilds: Object.keys(cache.counting || {}).length,
     countingActive: Object.values(cache.counting || {}).filter(c => c && c.channelId).length,
     countingTotalCounts: Object.values(cache.counting || {}).reduce((acc, c) => acc + (c?.currentCount || 0), 0),
+    countingPeakRecord: Object.values(cache.counting || {}).reduce((max, c) => Math.max(max, c?.highScore || 0), 0),
+    countingTotalUsers: Object.values(cache.counting || {}).reduce((acc, c) => acc + Object.keys(c?.users || {}).length, 0),
+    countingTotalValidatedCounts: Object.values(cache.counting || {}).reduce((acc, c) => 
+      acc + Object.values(c?.users || {}).reduce((uAcc, u) => uAcc + (u?.count || 0), 0), 0),
+    countingTotalRuins: Object.values(cache.counting || {}).reduce((acc, c) => 
+      acc + Object.values(c?.users || {}).reduce((uAcc, u) => uAcc + (u?.ruins || 0), 0), 0),
+    countingTotalSaves: Object.values(cache.counting || {}).reduce((acc, c) => acc + (c?.saves ?? 0), 0),
+    countingMathEnabled: Object.values(cache.counting || {}).filter(c => c && c.allowMath !== false).length,
+    countingAutoTopicEnabled: Object.values(cache.counting || {}).filter(c => c && c.autoTopic !== false).length,
     serverLogsCount: guilds.filter(g => g && g.serverLogs && (g.serverLogs.enabled || g.serverLogs.defaultChannelId)).length,
     logChannelsCount,
     voiceLogs: guilds.filter(g => g && g.voiceLogChannel).length,
@@ -278,7 +288,7 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **Auto-Delete & Sticky:** \`${m.stickyMessages} sticky channels, ${m.adel} auto-delete channels (ADEL/RADEL)\`\n` +
     `> -# **Birthday System Settings:** \`${m.birthdayChannels} announcement channels | ${m.birthdayServers} servers, ${m.birthdayUsers} birthdays\`\n` +
     `> -# **Staff Applications:** \`${m.apps} application setups\`\n` +
-    `> -# **Counting Engine:** \`${m.countingActive || 0} active channels | ${m.countingTotalCounts || 0} total counts registered\`\n\n` +
+    `> -# **Counting Engine (Across Guilds):** \`${m.countingActive || 0} active channels (${m.countingGuilds || 0} guilds) | Peak Record: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak count, ${m.countingTotalValidatedCounts || 0} validated numbers | ${m.countingTotalUsers || 0} counters, ${m.countingTotalRuins || 0} ruins, ${m.countingTotalSaves || 0} active server saves\`\n\n` +
 
     `**Diagnostic Logs & Voice Systems:**\n` +
     `> -# **Message Deletions & Edits:** \`${m.msgDeleteLogChannels} message delete channels (${m.msgDeleteServers} servers), ${m.msgEditLogChannels} edit channels\`\n` +

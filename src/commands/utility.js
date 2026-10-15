@@ -218,6 +218,11 @@ export const commands = [
         try {
           if (args && args.length > 0) {
               const cmdName = args[0].toLowerCase();
+              const matchingModule = helpModules.find(m => m.id === cmdName || m.shortLabel.toLowerCase() === cmdName || (cmdName === 'count' && m.id === 'counting'));
+              if (matchingModule) {
+                const container = buildHelpContainer(message.client, message.guild.id, matchingModule.id);
+                return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+              }
               const { default: commandMap } = await import('./loader.js');
               let targetCmd = commandMap.get(cmdName);
               
@@ -1241,6 +1246,22 @@ async function getStatusEmbed(client, guild) {
     "Step 3: Use the multiplier dropdown to boost XP for server boosters or VIPs.",
     "Step 4: Set the **Announce Channel** where level-up messages will be sent."
   ] },
+  { id: 'counting', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Counting', label: 'Counting Engine', emoji: 'counting', commands: [
+    "`!counting` - Open interactive Counting Control Panel `[Extra Owner]`",
+    "`!counting setup <#channel>` - Bind counting to a specific channel `[Extra Owner]`",
+    "`!counting reset` - Reset the current count back to 0 `[Extra Owner]`",
+    "`!counting setsaves <0-20>` - Set available server saves `[Extra Owner]`",
+    "`!counting math <on|off>` - Toggle arithmetic math expressions `[Extra Owner]`",
+    "`!counting autotopic <on|off>` - Toggle auto-updating channel topic `[Extra Owner]`",
+    "`!counting disable` - Turn off counting in the server `[Extra Owner]`",
+    "`!countlb / !counting lb` - View server counting records & top counters `[Public]`",
+    "",
+    "**Counting Engine Guide:**",
+    "Step 1: Run `!counting setup #channel` or type `!counting` to open the interactive panel.",
+    "Step 2: Members count consecutively starting from **1**.",
+    "Step 3: If someone counts twice in a row or types the wrong number, a server save is consumed.",
+    "Step 4: If no saves remain, the count ruins back to 1 and the all-time high score is updated!"
+  ] },
   { id: 'voice', category: 'VOICE & MEDIA', shortLabel: 'Voice', label: 'Voice Utilities', emoji: 'voice', commands: [
     "`!jtcsetup` - Configure Join-to-Create voice channels `[Extra Owner]`",
     "`!secondaryjtc` - Setup a secondary JTC hub `[Extra Owner]`",
@@ -1354,6 +1375,7 @@ function buildHelpContainer(client, guildId, moduleId) {
         'tracking': '<a:uptime:1552608831060844575>',
         'config': '<:config:1533844853048209489>',
         'community': '<a:redrose:1539251705579966557>',
+        'counting': '<a:atheNATICK:1557841381630681106>',
         'utilities': '<:pencil:1523770653528817835>',
         'black_dot': '<a:black_dot:1544740123403620422>',
         'home': '<:on:1533844867191406672>'
