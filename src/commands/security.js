@@ -17,7 +17,8 @@ import {
   isExtraOwner,
   isServerAdmin,
   syncQuarantinePermissions,
-  getUserTierName
+  getUserTierName,
+  cleanDisplayName
 } from '../utils/helpers.js';
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
@@ -1736,7 +1737,7 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
           type: 9,
           components: [{
             type: 10,
-            content: `-# **You Have Been Quarantined |** <a:uptime:1552608831060844575>\n> -# **Hello [${targetMember.displayName}](https://discord.com/users/${targetMember.id}) , Security Isolation Active**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Please wait patiently for an Administrator or Moderator to review your case. Any further spamming or rule violations will result in a permanent ban.\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Reason:** ${reason}`
+            content: `-# **You Have Been Quarantined |** <a:uptime:1552608831060844575>\n> -# **Hello [${cleanDisplayName(targetMember.displayName)}](https://discord.com/users/${targetMember.id}) , Security Isolation Active**\n> -# \u2800\u2800\u2800\u2800\u2570\u203A Please wait patiently for an Administrator or Moderator to review your case. Any further spamming or rule violations will result in a permanent ban.\n> -# \u2800\u2800\u2800\u2800\u2570\u203A **Reason:** ${reason}`
           }],
           accessory: { type: 11, media: { url: targetMember.user.displayAvatarURL({ dynamic: true }) } }
         }]
@@ -1765,8 +1766,8 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
       'User Quarantined',
       `Successfully quarantined **${targetMember.user.tag}**.`,
       [
-        { name: 'Member',      value: `[${targetMember.displayName}](https://discord.com/users/${targetMember.id})`,           inline: true },
-        { name: 'Enforced by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,              inline: true },
+        { name: 'Member',      value: `[${cleanDisplayName(targetMember.displayName)}](https://discord.com/users/${targetMember.id})`,           inline: true },
+        { name: 'Enforced by', value: `[${cleanDisplayName(moderator.displayName || moderator.user?.username || 'System')}](https://discord.com/users/${moderator.id || moderator.user?.id})`,              inline: true },
         { name: 'Duration',    value: durationLabel,               inline: true },
         { name: 'Channel',     value: `<#${quarantineChannel.id}>`, inline: true },
         { name: 'Reason',      value: reason }
@@ -1847,7 +1848,7 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     }
 
         const c = new ContainerBuilder();
-    const textContent = `**Quarantine Lifted | <a:uptime:1552608831060844575>**\n-# > Successfully restored **${targetMember.displayName}** and recovered their original role structure.\n-# > \u2800\u2800\u2800\u2800\u2570\u203A User: [${targetMember.displayName}](https://discord.com/users/${targetMember.id}) • Moderator: [${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`;
+    const textContent = `**Quarantine Lifted | <a:uptime:1552608831060844575>**\n-# > Successfully restored **${cleanDisplayName(targetMember.displayName)}** and recovered their original role structure.\n-# > \u2800\u2800\u2800\u2800\u2570\u203A User: [${cleanDisplayName(targetMember.displayName)}](https://discord.com/users/${targetMember.id}) • Moderator: [${cleanDisplayName(moderator.displayName || moderator.user?.username || 'System')}](https://discord.com/users/${moderator.id || moderator.user?.id})`;
     c.addTextDisplayComponents(new TextDisplayBuilder().setContent(textContent));
     
     const responseEmbed = { components: [c.toJSON ? c.toJSON() : c], flags: MessageFlags.IsComponentsV2 };
@@ -2086,7 +2087,7 @@ async function handleRaidMode(guild, moderator, mode) {
     const resEmbed = cv2.raid(
       'Raid Mode Engaged',
       `<a:alert1:1533860044154732704> **Server Raid Protection is now ACTIVE.**\nAll joining accounts will be automatically quarantined immediately to protect the server until deactivated.`,
-      [{ name: 'Enforced by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
+      [{ name: 'Enforced by', value: `[${cleanDisplayName(moderator.displayName || moderator.user?.username || 'System')}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
     );
     logToSecurityChannel(guild, cv2.log('Raid Mode Active', `Administrator **${moderator.user.tag}** [${modTier}] turned ON Guild Raid Mode.`, [], 'raid'));
     return resEmbed;
@@ -2104,7 +2105,7 @@ async function handleRaidMode(guild, moderator, mode) {
     const resEmbed = cv2.success(
       'Raid Mode Disengaged',
       ` **Server Raid Protection is now OFF.**\nNew accounts can join normally.${releaseNote}`,
-      [{ name: 'Lifted by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
+      [{ name: 'Lifted by', value: `[${cleanDisplayName(moderator.displayName || moderator.user?.username || 'System')}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
     );
     logToSecurityChannel(guild, cv2.log(
       'Raid Mode Off', 
@@ -2628,13 +2629,13 @@ export async function handleAntinukeToggleAll(guild, moderator, enable) {
           { name: '<a:uptime:1552608831060844575> Anti-Invite', value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: '<a:uptime:1552608831060844575> Anti-Link',  value: `${TOGGLE_ON} ACTIVE`, inline: true },
           { name: '<a:uptime:1552608831060844575> Word Filter', value: `${TOGGLE_ON} ACTIVE`, inline: true },
-          { name: 'Enforced by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`, inline: true }
+          { name: 'Enforced by', value: `[${cleanDisplayName(moderator.displayName || moderator.user?.username || 'System')}](https://discord.com/users/${moderator.id || moderator.user?.id})`, inline: true }
         ]
       )
     : cv2.warn(
         'All Shields Disengaged',
         `Athena Prime firewall layers have been **DEACTIVATED** server-wide. The server is now unprotected.`,
-        [{ name: 'Lifted by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
+        [{ name: 'Lifted by', value: `[${cleanDisplayName(moderator.displayName || moderator.user?.username || 'System')}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
       );
 
   logToSecurityChannel(guild, cv2.log(
@@ -2764,7 +2765,7 @@ async function handleAntiLink(guild, moderator, mode) {
   const resEmbed = cv2.success(
     'Anti-Link Configured',
     `External URL auto-mod filter is now **${modeDesc}**.\n\n${enabled ? 'The following links will now be **strictly blocked**:\n> <a:uptime:1552608831060844575> Discord Invites\n> <a:uptime:1552608831060844575> NSFW Links\n> <a:uptime:1552608831060844575> Scam/Phishing Links\n> <a:uptime:1552608831060844575> Standard URLs (unless whitelisted)\n\nUse `/linksallow add` to whitelist specific domains like YouTube or Tenor.' : 'Users can freely share external links.'}`,
-    [{ name: 'Changed by', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
+    [{ name: 'Changed by', value: `[${cleanDisplayName(moderator.displayName || moderator.user?.username || 'System')}](https://discord.com/users/${moderator.id || moderator.user?.id})` }]
   );
 
   logToSecurityChannel(guild, cv2.log(
@@ -3327,7 +3328,7 @@ async function handleMassQuarantine(guild, moderator, targetRole, reason) {
         { name: 'Failed',       value: `\`${failed}\``,   inline: true },
         { name: 'Skipped',      value: `\`${skipped}\``,  inline: true },
         { name: 'Reason',       value: reason,            inline: false },
-        { name: 'Executed By',  value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
+        { name: 'Executed By',  value: `[${cleanDisplayName(moderator.displayName || moderator.user?.username || 'System')}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
       ]
     );
 }
@@ -3385,7 +3386,7 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
       [
         { name: 'Released',    value: `\`${success}\``, inline: true },
         { name: 'Failed',      value: `\`${failed}\``,  inline: true },
-        { name: 'Executed By', value: `[${moderator.displayName || moderator.user?.username || 'System'}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
+        { name: 'Executed By', value: `[${cleanDisplayName(moderator.displayName || moderator.user?.username || 'System')}](https://discord.com/users/${moderator.id || moderator.user?.id})`,    inline: true }
       ]
     );
 }

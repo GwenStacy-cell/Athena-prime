@@ -3,7 +3,7 @@ import statsDB from '../statsDB.js';
 import embed from '../embed.js';
 import { executeQuarantine } from '../commands/security.js';
 import { PermissionFlagsBits } from 'discord.js';
-import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel, isBotOwnerSync, getUserTierName } from '../utils/helpers.js';
+import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel, isBotOwnerSync, getUserTierName, cleanDisplayName } from '../utils/helpers.js';
 import { sendWelcomeMessage } from '../commands/welcome.js';
 import { hasDangerousPerms, DANGEROUS_PERMS } from '../utils/antinuke.js';
 import { logServerEvent } from '../utils/serverLogger.js';
@@ -351,10 +351,8 @@ export default {
           const maxUses = usedInvite ? (usedInvite.maxUses === 0 ? 'Infinite' : usedInvite.maxUses) : 'N/A';
           const maxAge = usedInvite ? (usedInvite.maxAge === 0 ? 'Permanent' : `${usedInvite.maxAge} seconds`) : 'N/A';
           const createdTime = usedInvite?.createdTimestamp ? `<t:${Math.floor(usedInvite.createdTimestamp / 1000)}:F>` : 'N/A';
-          const bullet = '<a:61589pinkglock:1451707353450676265>';
-          
-          const memberDisplayName = member.nickname || member.user.displayName || member.user.username;
-          const inviterDisplayName = inviter ? (inviter.displayName || inviter.username) : null;
+          const memberDisplayName = cleanDisplayName(member.nickname || member.user.displayName || member.user.username);
+          const inviterDisplayName = inviter ? cleanDisplayName(inviter.displayName || inviter.username) : null;
           const inviterLine = inviter ? `[${inviterDisplayName}](https://discord.com/users/${inviter.id})`
             : 'Unknown / Vanity URL / Temp Invite';
 
@@ -362,7 +360,7 @@ export default {
             const inviteEmbed = {
               type: 17,
               components: [
-                { type: 10, content: `## <a:uptime:1552608831060844575> **MEMBER JOINED**` },
+                { type: 10, content: `## **MEMBER JOINED**` },
                 { type: 14, divider: true },
                 { 
                   type: 9, 

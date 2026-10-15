@@ -1,4 +1,5 @@
 import db from '../database.js';
+import { cleanDisplayName } from './helpers.js';
 
 export async function postGlobalActionLog(client, opts) {
   const { action, guildId, guildName, guildIconUrl, targetId, targetTag, executorId, executorTag, reason, _isSample } = opts;
@@ -24,8 +25,8 @@ export async function postGlobalActionLog(client, opts) {
 
   if (!attachment) return;
 
-  const cleanTarget = String(targetTag || targetId).replace(/[`\[\]\(\)]/g, '').trim();
-  const cleanExecutor = String(executorTag || 'Anti-Nuke / Bot').replace(/[`\[\]\(\)]/g, '').trim();
+  const cleanTarget = cleanDisplayName(targetTag || targetId);
+  const cleanExecutor = cleanDisplayName(executorTag || 'Anti-Nuke / Bot');
 
   const card = {
     type: 17,

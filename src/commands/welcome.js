@@ -2,7 +2,7 @@ import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, But
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { convertMp4ToGif, uploadGifToDiscord } from '../utils/mediaConverter.js';
-import { isBotOwnerSync } from '../utils/helpers.js';
+import { isBotOwnerSync, cleanDisplayName } from '../utils/helpers.js';
 
 // ============================================================
 // PLACEHOLDER RESOLVER
@@ -11,8 +11,8 @@ function resolve(text, member, cfg = {}) {
   if (!text) return '';
   const guild = member.guild;
   const user = member.user || member;
-  const username = user.username || 'User';
-  const displayName = member.displayName || username;
+  const username = cleanDisplayName(user.username || 'User');
+  const displayName = cleanDisplayName(member.displayName || username);
   let userFormat = `<@${member.id}>`;
   if (cfg.nameFormat === 'user_link') {
     userFormat = `[${username}](https://discord.com/users/${member.id})`;

@@ -2,7 +2,7 @@ import { PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, Strin
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { processMp3Link } from '../utils/mediaDownloader.js';
-import { isAuthorized } from '../utils/helpers.js';
+import { isAuthorized, cleanDisplayName } from '../utils/helpers.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -442,7 +442,7 @@ export const commands = [
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
         
         const rawName = message.member?.displayName || message.author.displayName || message.author.username;
-        const cleanNick = rawName.replace(/[`\[\]\(\)\*_~|]/g, '').trim() || 'User';
+        const cleanNick = cleanDisplayName(rawName);
 
         const pingContainer = {
           type: 17,
@@ -489,7 +489,7 @@ export const commands = [
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
         
         const rawName = interaction.member?.displayName || interaction.user.displayName || interaction.user.username;
-        const cleanNick = rawName.replace(/[`\[\]\(\)\*_~|]/g, '').trim() || 'User';
+        const cleanNick = cleanDisplayName(rawName);
 
         const pingContainer = {
           type: 17,
@@ -1815,7 +1815,7 @@ commands.push({
       {
         type: 10,
         content: '# __ELITE DEVELOPER INTELLIGENCE__\n### • Lead Architect\n' +
-                 `-# **Athena Prime was systematically engineered and deployed by [${ownerName}](https://discord.com/users/${ownerId}). Driven by an absolute intolerance for server nukes and malicious raids, the Architect engineered a unified, omnipotent appliance—a single, definitive bot designed to dominate every facet of server security, management, and utility without compromise.**`
+                 `-# **Athena Prime was systematically engineered and deployed by [${cleanDisplayName(ownerName)}](https://discord.com/users/${ownerId}). Driven by an absolute intolerance for server nukes and malicious raids, the Architect engineered a unified, omnipotent appliance—a single, definitive bot designed to dominate every facet of server security, management, and utility without compromise.**`
       },
       { type: 14, divider: true },
       {

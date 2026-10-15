@@ -1,7 +1,7 @@
 import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
-import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner, getUserTierName } from '../utils/helpers.js';
+import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner, getUserTierName, cleanDisplayName } from '../utils/helpers.js';
 import { executeQuarantine } from './security.js';
 import { logServerEvent } from '../utils/serverLogger.js'; // We will implement security.js next
 
@@ -1835,7 +1835,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
     logComps.push({ type: 10, content: `-# **Message Sniped via Purge Command**` });
     logComps.push({ type: 14, divider: true });
     logComps.push({ type: 10, content: `-# **Action:** Bulk Delete (Purge)` });
-    logComps.push({ type: 10, content: `-# **Executed By:** [${moderator.displayName || moderator.user?.username || 'Moderator'}](https://discord.com/users/${moderator.id || moderator}) [${modTier}]` });
+    logComps.push({ type: 10, content: `-# **Executed By:** [${cleanDisplayName(moderator.displayName || moderator.user?.username || 'Moderator')}](https://discord.com/users/${moderator.id || moderator}) [${modTier}]` });
     let safeChannel = channel.name.replace(/[^a-zA-Z0-9\- ]/g, '').trim();
     if (!safeChannel) safeChannel = 'Channel';
     logComps.push({ type: 10, content: `-# **Channel:** [\# ${safeChannel}](https://discord.com/channels/${guild.id}/${channel.id})` });
@@ -1855,7 +1855,7 @@ async function handlePurge(guild, channel, moderator, amount, triggerMessage = n
       userCounts[id] = (userCounts[id] || 0) + 1;
       if (m.author && id !== 'Unknown') {
         const mem = guild.members.cache.get(id);
-        userNames[id] = mem?.displayName || m.author.globalName || m.author.username;
+        userNames[id] = cleanDisplayName(mem?.displayName || m.author.globalName || m.author.username);
       }
     });
     

@@ -1,6 +1,7 @@
 import db from '../database.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 import { AuditLogEvent } from 'discord.js';
+import { cleanDisplayName } from '../utils/helpers.js';
 
 export default {
   name: 'messageDelete',
@@ -41,7 +42,7 @@ if (!message.guild) return;
     const formatUser = (id) => {
       const mem = message.guild.members.cache.get(id);
       const u = message.client.users.cache.get(id);
-      const name = (mem?.displayName || u?.globalName || u?.username || 'Unknown').replace(/[\x5B\x5D|*~_]/g, '').trim();
+      const name = cleanDisplayName(mem?.displayName || u?.globalName || u?.username || 'Unknown');
       return `[${name}](https://discord.com/users/${id})`;
     };
 

@@ -9,29 +9,7 @@ function patchDeferReply(cls) {
   if (!cls || !cls.prototype || !cls.prototype.deferReply) return;
   const originalDefer = cls.prototype.deferReply;
   cls.prototype.deferReply = async function(options = {}) {
-    
-    const loadingStates = [
-      "Synchronizing neural network parameters...",
-      "Querying regional database shards...",
-      "Allocating memory buffers for task execution...",
-      "Validating security payload hashes...",
-      "Compiling component view hierarchies...",
-      "Establishing secure websocket handshake...",
-      "Fetching remote assets..."
-    ];
-    const randomText = loadingStates[Math.floor(Math.random() * loadingStates.length)];
-    const isEphemeral = options.ephemeral || options.flags === 64;
-    const payload = { 
-      content: `-# <a:loading:1542155051286396938> **Athena Prime:** ${randomText}`,
-      flags: isEphemeral ? 64 : undefined,
-      withResponse: options.withResponse !== undefined ? options.withResponse : Boolean(options.fetchReply)
-    };
-    try {
-      const res = await this.reply(payload);
-      return res;
-    } catch(e) {
-      return await originalDefer.call(this, options);
-    }
+    return await originalDefer.call(this, options);
   };
 }
 
@@ -518,9 +496,9 @@ function interceptPayload(body) {
     }
 
     if ((target.flags & 32768) || (body.flags & 32768) || (body.json?.flags & 32768)) {
-      delete target.content;
-      if (body.json) delete body.json.content;
-      delete body.content;
+      target.content = '';
+      if (body.json) body.json.content = '';
+      if (body.content !== undefined) body.content = '';
       stripAccentColors(target);
       stripAccentColors(body);
     }

@@ -876,7 +876,7 @@ export function getPresenceStatus(guild, ownerId) {
 
     switch (presence.status) {
       case 'online': return { text: 'ONLINE', emoji: '<a:uptime:1552608831060844575>' };
-      case 'idle': return { text: 'IDLE', emoji: 'ðŸŸ¡' };
+      case 'idle': return { text: 'IDLE', emoji: '' };
       case 'dnd': return { text: 'DO NOT DISTURB', emoji: '' };
       case 'offline': return { text: 'OFFLINE', emoji: '' };
       default: return { text: 'UNKNOWN', emoji: '' };
@@ -884,6 +884,21 @@ export function getPresenceStatus(guild, ownerId) {
   } catch {
     return { text: 'UNKNOWN', emoji: '' };
   }
+}
+
+/**
+ * Strips all native emojis, custom Discord emojis, and markdown breaking characters
+ * from a user or member display name, ensuring clean text and unbreakable markdown links.
+ */
+export function cleanDisplayName(name) {
+  if (!name) return 'User';
+  let clean = String(name)
+    .replace(/<a?:[a-zA-Z0-9_]+:\d+>/g, '') // Custom discord emojis <:name:id>
+    .replace(/\p{Extended_Pictographic}|\p{Emoji_Presentation}|\p{Emoji}\uFE0F?/gu, '') // Unicode/native emojis
+    .replace(/[\[\]\(\)\\*~_`|]/g, '') // Markdown formatting / bracket characters
+    .replace(/\s+/g, ' ')
+    .trim();
+  return clean || 'User';
 }
 
 export function formatNickname(layout, name) {

@@ -8,7 +8,7 @@ import commandMap from '../commands/loader.js';
 import { executeQuarantine } from '../commands/security.js';
 import { handleEzal, handleBackup } from '../commands/ezal.js';
 import statsDB from '../statsDB.js';
-import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand, getUserTierName } from '../utils/helpers.js';
+import { canModerate, logToSecurityChannel, isAuthorized, isBotOwnerSync, getPresenceStatus, findClosestCommand, getUserTierName, cleanDisplayName } from '../utils/helpers.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 import { isBotAuthorized, rawDeleteWebhook } from '../utils/antinuke.js';
 import { calculateLevel, getRandomXp, getRoleMultiplier, processLevelUp } from '../utils/xpEngine.js';
@@ -434,9 +434,10 @@ export default {
       if (afkStatus) {
         db.removeAfk(message.author.id);
         const timeAgoStr = `<t:${Math.floor(afkStatus.timestamp / 1000)}:R>`;
+        const authorName = cleanDisplayName(message.member?.displayName || message.author.displayName || message.author.username);
         const textContent = 
           `# Welcome Back\n` +
-          `-# **[${message.member?.displayName || message.author.displayName}](https://discord.com/users/${message.author.id}) removed their Afk**\n` +
+          `-# **[${authorName}](https://discord.com/users/${message.author.id}) removed their Afk**\n` +
           `-# **Was AFK for: ${timeAgoStr}**`;
           
         const wbDisplay = new TextDisplayBuilder().setContent(textContent);
@@ -450,9 +451,10 @@ export default {
           const mentionedAfk = db.getAfk(user.id);
           if (mentionedAfk && user.id !== message.author.id) {
             const timeAgoStr = `<t:${Math.floor(mentionedAfk.timestamp / 1000)}:R>`;
+            const targetName = cleanDisplayName(message.guild?.members.cache.get(user.id)?.displayName || user.displayName || user.username);
             const textContent = 
               `# User is AFK\n` +
-              `-# **[${message.guild?.members.cache.get(user.id)?.displayName || user.displayName}](https://discord.com/users/${user.id}) is Afk**\n` +
+              `-# **[${targetName}](https://discord.com/users/${user.id}) is Afk**\n` +
               `-# **Reason: ${mentionedAfk.reason}**\n` +
               `-# **Went AFK: ${timeAgoStr}**`;
               
@@ -1368,7 +1370,7 @@ export default {
           let delInnerComps = [
             { type: 10, content: `## Message Deleted | <a:uptime:1552608831060844575>` },
             { type: 14, divider: true },
-            { type: 10, content: `-# **Author:** [${message.author.displayName || message.author.username}](https://discord.com/users/${message.author.id}) (\`${message.author.id}\`) [${authorTier}]` },
+            { type: 10, content: `-# **Author:** [${cleanDisplayName(message.author.displayName || message.author.username)}](https://discord.com/users/${message.author.id}) (\`${message.author.id}\`) [${authorTier}]` },
             { type: 10, content: `-# **Deleted By:** Athena Prime (Anti-Invite Auto-Mod)` },
             { type: 10, content: `-# **Reason:** Unauthorized Discord invite promotion: ${inviteList}` },
             { type: 10, content: `-# **Channel:** [\# ${message.channel.name}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` },
@@ -1491,7 +1493,7 @@ export default {
             let delInnerComps = [
               { type: 10, content: `## Message Deleted | <a:uptime:1552608831060844575>` },
               { type: 14, divider: true },
-              { type: 10, content: `-# **Author:** [${message.author.displayName || message.author.username}](https://discord.com/users/${message.author.id}) (\`${message.author.id}\`) [${authorTier}]` },
+              { type: 10, content: `-# **Author:** [${cleanDisplayName(message.author.displayName || message.author.username)}](https://discord.com/users/${message.author.id}) (\`${message.author.id}\`) [${authorTier}]` },
               { type: 10, content: `-# **Deleted By:** Athena Prime (Blacklisted Word Auto-Mod)` },
               { type: 10, content: `-# **Reason:** Blacklisted phrase matched: ${wordList}` },
               { type: 10, content: `-# **Channel:** [\# ${message.channel.name}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` },
