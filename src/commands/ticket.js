@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
+import { isBotOwnerSync } from '../utils/helpers.js';
 
 export const commands = [
   {
@@ -159,12 +160,97 @@ export const commands = [
 
         const roleMentions = staffRoles.map(id => `<@&${id}>`).join(', ');
         await message.reply(cv2.success('Ticket System Deployed', `Tickets will be created under <#${category.id}> and ${roleMentions} will be pinged.`));
+      } else if (args[0]?.toLowerCase() === 'close') {
+        return executeTicketClose(message.guild, message.channel, message.member, (p) => message.reply(p));
       } else {
         return message.reply(cv2.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...]`\n\nFor advanced customization (dropdowns, images, etc.), use the `!ticketpanel` command!'));
       }
     }
+  },
+
+  // --- CLOSE COMMAND ---
+  {
+    name: 'close',
+    description: 'Close the current support ticket.',
+    category: 'tickets',
+    permissions: [],
+    options: [],
+    async executePrefix(message) {
+      return executeTicketClose(message.guild, message.channel, message.member, (p) => message.reply(p));
+    },
+    async executeSlash(interaction) {
+      return executeTicketClose(interaction.guild, interaction.channel, interaction.member, (p) => interaction.reply(p));
+    }
+  },
+
+  // --- RENAME COMMAND ---
+  {
+    name: 'rename',
+    description: 'Rename the current support ticket channel.',
+    category: 'tickets',
+    permissions: [],
+    options: [
+      { name: 'name', description: 'New name for the ticket', type: 3, required: true }
+    ],
+    async executePrefix(message, args) {
+      const newName = args.join('-').trim();
+      if (!newName) return message.reply(cv2.warn('Missing Name', 'Usage: `!rename <new-name>`'));
+      return executeTicketRename(message.guild, message.channel, message.member, newName, (p) => message.reply(p));
+    },
+    async executeSlash(interaction) {
+      const newName = interaction.options.getString('name');
+      return executeTicketRename(interaction.guild, interaction.channel, interaction.member, newName, (p) => interaction.reply(p));
+    }
   }
 ];
+
+async function executeTicketClose(guild, channel, member, replyFn) {
+  const isTicket = channel && (channel.name.startsWith('ticket-') || (db.getTickets(guild.id).activeTickets && Object.values(db.getTickets(guild.id).activeTickets).some(t => t.textId === channel.id)));
+  if (!isTicket) {
+    return replyFn(cv2.warn('Invalid Channel', 'This command can only be used inside a ticket channel.'));
+  }
+
+  const config = db.getTickets(guild.id);
+  if (config.closeTicketRoleIds && config.closeTicketRoleIds.length > 0) {
+    const hasRole = member.roles.cache.some(r => config.closeTicketRoleIds.includes(r.id));
+    if (!hasRole && !member.permissions.has(PermissionFlagsBits.Administrator) && !isBotOwnerSync(member.id)) {
+      return replyFn(cv2.danger('Permission Denied', 'You do not have permission to close tickets.'));
+    }
+  }
+
+  await replyFn({ content: '-# **Closing ticket in 5 seconds...**' });
+
+  setTimeout(async () => {
+    const tId = channel.name.replace('ticket-', '');
+    let vId = null;
+    if (config.activeTickets && config.activeTickets[tId]) {
+      vId = config.activeTickets[tId].voiceId;
+    }
+    if (vId) {
+      const voiceChannel = guild.channels.cache.get(vId) || await guild.channels.fetch(vId).catch(() => null);
+      if (voiceChannel) await voiceChannel.delete().catch(() => null);
+    } else {
+      const vcName = `Ticket ${tId} VC`;
+      const voiceChannel = guild.channels.cache.find(c => c.name === vcName && c.parentId === channel.parentId);
+      if (voiceChannel) await voiceChannel.delete().catch(() => null);
+    }
+    await channel.delete().catch(() => null);
+    if (db.closeTicket) {
+      db.closeTicket(guild.id, tId);
+    }
+  }, 5000);
+}
+
+async function executeTicketRename(guild, channel, member, newName, replyFn) {
+  const isTicket = channel && (channel.name.startsWith('ticket-') || (db.getTickets(guild.id).activeTickets && Object.values(db.getTickets(guild.id).activeTickets).some(t => t.textId === channel.id)));
+  if (!isTicket) {
+    return replyFn(cv2.warn('Invalid Channel', 'This command can only be used inside a ticket channel.'));
+  }
+  const clean = newName.replace(/[^a-zA-Z0-9_\-]/g, '').toLowerCase().slice(0, 30);
+  const finalName = `ticket-${clean || 'named'}`;
+  await channel.setName(finalName, `Ticket renamed by ${member.user.tag}`).catch(() => null);
+  return replyFn(cv2.success('Ticket Renamed | <a:atheNATICK:1557841381630681106>', `Ticket channel has been renamed to \`${finalName}\`.`));
+}
 
 export async function handleTicketButtons(interaction) {
   const { customId, guild, user } = interaction;

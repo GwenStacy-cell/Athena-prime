@@ -13,42 +13,9 @@ export const commands = [
     category: 'moderation',
     permissions: [PermissionFlagsBits.MuteMembers],
     options: [],
-    async executePrefix(message, args) {
-      if (!args.length) {
-        return message.reply(cv2.warn('Command Error', `${message.author} Please mention the roles or provide their IDs.\n\n**Usage:** \`!deleterole <@role1> <@role2> ...\``));
-      }
-      
-      const inputString = args.join(' ');
-      let targets = inputString.includes(',') ? inputString.split(',').map(s => s.trim()).filter(Boolean) : inputString.split(/\s+/).filter(Boolean);
-      
-      if (!inputString.includes(',') && targets.length > 1 && !inputString.includes('<@&')) {
-         const exactMatch = message.guild.roles.cache.find(r => r.name.toLowerCase() === inputString.toLowerCase());
-         if (exactMatch) targets = [inputString];
-      }
-      
-      let deletedCount = 0;
-      let failedCount = 0;
-      
-      for (const search of targets) {
-        const roleId = search.replace(/<@&|>/g, '');
-        let role = message.guild.roles.cache.get(roleId) || 
-                   message.guild.roles.cache.find(r => r.name.toLowerCase() === search.toLowerCase());
-                   
-        if (role) {
-           const result = await handleDeleteRole(message.guild, message.member, role);
-           if (JSON.stringify(result).includes('Successfully deleted')) deletedCount++;
-           else failedCount++;
-        } else {
-           failedCount++;
-        }
-      }
-      
-      if (deletedCount === 0) {
-        return message.reply(cv2.danger('Error', 'Could not delete any of the specified roles. Check permissions and hierarchy.'));
-      }
-      
-      const msg = `Successfully deleted **${deletedCount}** role(s).` + (failedCount > 0 ? `\nFailed to delete **${failedCount}**.` : '');
-      await message.reply(cv2.success('Roles Deleted', msg)).catch(() => null);
+    async executePrefix(message) {
+      const result = await handleMuteAll(message.guild, message.member);
+      await message.reply(result);
     },
     async executeSlash(interaction) {
       const result = await handleMuteAll(interaction.guild, interaction.member);
@@ -1360,12 +1327,346 @@ export const commands = [
 
       await interaction.editReply(cv2.success('Sync Complete', `**${success}** channels synced.\n**${failed}** channels failed (missing permissions).`));
     }
+  },
+
+  // --- NUKE COMMAND ---
+  {
+    name: 'nuke',
+    description: 'Clone and delete the current channel.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.ManageChannels],
+    options: [],
+    async executePrefix(message) {
+      const allowed = isExtraOwner(message.guild.id, message.author.id) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || message.member.permissions.has(PermissionFlagsBits.ManageChannels) || message.member.permissions.has(PermissionFlagsBits.Administrator);
+      if (!allowed) {
+        return message.reply(cv2.danger('Access Denied', 'Only Extra Owners, Server Owner, Bot Owner, or staff with Manage Channels can nuke this channel.'));
+      }
+      return executeNuke(message.channel, message.member, message.guild);
+    },
+    async executeSlash(interaction) {
+      const allowed = isExtraOwner(interaction.guild.id, interaction.user.id) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || interaction.member.permissions.has(PermissionFlagsBits.ManageChannels) || interaction.member.permissions.has(PermissionFlagsBits.Administrator);
+      if (!allowed) {
+        return interaction.reply(cv2.danger('Access Denied', 'Only Extra Owners, Server Owner, Bot Owner, or staff with Manage Channels can nuke this channel.'));
+      }
+      await interaction.reply(cv2.info('Channel Nuke', 'Initiating channel nuke sequence...'));
+      return executeNuke(interaction.channel, interaction.member, interaction.guild);
+    }
+  },
+
+  // --- MASSBAN COMMAND ---
+  {
+    name: 'massban',
+    description: 'Ban all members with a specific role.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.BanMembers],
+    options: [
+      { name: 'role', description: 'The role whose members will be banned', type: 8, required: true },
+      { name: 'reason', description: 'Reason for the mass ban', type: 3, required: false }
+    ],
+    async executePrefix(message, args) {
+      const allowed = isExtraOwner(message.guild.id, message.author.id) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || message.member.permissions.has(PermissionFlagsBits.Administrator);
+      if (!allowed) {
+        return message.reply(cv2.danger('Access Denied', 'Only Administrators, Server Owner, Extra Owners, or Bot Owner can mass ban.'));
+      }
+      const role = message.mentions.roles.first() || (args[0] ? message.guild.roles.cache.get(args[0].replace(/<@&|>/g, '')) : null);
+      if (!role) {
+        return message.reply(cv2.warn('Usage', `Usage: \`!massban <@role> [reason]\``));
+      }
+      const reason = args.slice(1).join(' ').trim() || 'Mass ban by administrator';
+      const statusMsg = await message.reply(cv2.info('Mass Ban Initiated', `Processing members with role <@&${role.id}>...`));
+      const result = await handleMassBan(message.guild, message.member, role, reason);
+      await cv2.edit(statusMsg, result);
+    },
+    async executeSlash(interaction) {
+      const allowed = isExtraOwner(interaction.guild.id, interaction.user.id) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || interaction.member.permissions.has(PermissionFlagsBits.Administrator);
+      if (!allowed) {
+        return interaction.reply(cv2.danger('Access Denied', 'Only Administrators, Server Owner, Extra Owners, or Bot Owner can mass ban.'));
+      }
+      const role = interaction.options.getRole('role');
+      const reason = interaction.options.getString('reason') || 'Mass ban by administrator';
+      await interaction.reply(cv2.info('Mass Ban Initiated', `Processing members with role <@&${role.id}>...`));
+      const result = await handleMassBan(interaction.guild, interaction.member, role, reason);
+      await cv2.edit(interaction, result);
+    }
+  },
+
+  // --- MASSKICK COMMAND ---
+  {
+    name: 'masskick',
+    description: 'Kick all members with a specific role.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.KickMembers],
+    options: [
+      { name: 'role', description: 'The role whose members will be kicked', type: 8, required: true },
+      { name: 'reason', description: 'Reason for the mass kick', type: 3, required: false }
+    ],
+    async executePrefix(message, args) {
+      const allowed = isExtraOwner(message.guild.id, message.author.id) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || message.member.permissions.has(PermissionFlagsBits.Administrator);
+      if (!allowed) {
+        return message.reply(cv2.danger('Access Denied', 'Only Administrators, Server Owner, Extra Owners, or Bot Owner can mass kick.'));
+      }
+      const role = message.mentions.roles.first() || (args[0] ? message.guild.roles.cache.get(args[0].replace(/<@&|>/g, '')) : null);
+      if (!role) {
+        return message.reply(cv2.warn('Usage', `Usage: \`!masskick <@role> [reason]\``));
+      }
+      const reason = args.slice(1).join(' ').trim() || 'Mass kick by administrator';
+      const statusMsg = await message.reply(cv2.info('Mass Kick Initiated', `Processing members with role <@&${role.id}>...`));
+      const result = await handleMassKick(message.guild, message.member, role, reason);
+      await cv2.edit(statusMsg, result);
+    },
+    async executeSlash(interaction) {
+      const allowed = isExtraOwner(interaction.guild.id, interaction.user.id) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || interaction.member.permissions.has(PermissionFlagsBits.Administrator);
+      if (!allowed) {
+        return interaction.reply(cv2.danger('Access Denied', 'Only Administrators, Server Owner, Extra Owners, or Bot Owner can mass kick.'));
+      }
+      const role = interaction.options.getRole('role');
+      const reason = interaction.options.getString('reason') || 'Mass kick by administrator';
+      await interaction.reply(cv2.info('Mass Kick Initiated', `Processing members with role <@&${role.id}>...`));
+      const result = await handleMassKick(interaction.guild, interaction.member, role, reason);
+      await cv2.edit(interaction, result);
+    }
+  },
+
+  // --- MASSTIMEOUT COMMAND ---
+  {
+    name: 'masstimeout',
+    description: 'Timeout all members with a specific role.',
+    category: 'moderation',
+    permissions: [PermissionFlagsBits.ModerateMembers],
+    options: [
+      { name: 'role', description: 'The role whose members will be timed out', type: 8, required: true },
+      { name: 'duration', description: 'Timeout duration (e.g. 10m, 1h, 1d)', type: 3, required: true },
+      { name: 'reason', description: 'Reason for the mass timeout', type: 3, required: false }
+    ],
+    async executePrefix(message, args) {
+      const allowed = isExtraOwner(message.guild.id, message.author.id) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || message.member.permissions.has(PermissionFlagsBits.Administrator);
+      if (!allowed) {
+        return message.reply(cv2.danger('Access Denied', 'Only Administrators, Server Owner, Extra Owners, or Bot Owner can mass timeout.'));
+      }
+      const role = message.mentions.roles.first() || (args[0] ? message.guild.roles.cache.get(args[0].replace(/<@&|>/g, '')) : null);
+      if (!role) {
+        return message.reply(cv2.warn('Usage', `Usage: \`!masstimeout <@role> <time> [reason]\``));
+      }
+      const durationStr = args[1];
+      const durationMs = parseDuration(durationStr);
+      if (!durationMs) {
+        return message.reply(cv2.warn('Invalid Duration', 'Please specify a valid duration (e.g. `10m`, `1h`, `1d`).'));
+      }
+      const reason = args.slice(2).join(' ').trim() || 'Mass timeout by administrator';
+      const statusMsg = await message.reply(cv2.info('Mass Timeout Initiated', `Processing members with role <@&${role.id}>...`));
+      const result = await handleMassTimeout(message.guild, message.member, role, durationMs, reason);
+      await cv2.edit(statusMsg, result);
+    },
+    async executeSlash(interaction) {
+      const allowed = isExtraOwner(interaction.guild.id, interaction.user.id) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || interaction.member.permissions.has(PermissionFlagsBits.Administrator);
+      if (!allowed) {
+        return interaction.reply(cv2.danger('Access Denied', 'Only Administrators, Server Owner, Extra Owners, or Bot Owner can mass timeout.'));
+      }
+      const role = interaction.options.getRole('role');
+      const durationStr = interaction.options.getString('duration');
+      const durationMs = parseDuration(durationStr);
+      if (!durationMs) {
+        return interaction.reply(cv2.warn('Invalid Duration', 'Please specify a valid duration (e.g. `10m`, `1h`, `1d`).'));
+      }
+      const reason = interaction.options.getString('reason') || 'Mass timeout by administrator';
+      await interaction.reply(cv2.info('Mass Timeout Initiated', `Processing members with role <@&${role.id}>...`));
+      const result = await handleMassTimeout(interaction.guild, interaction.member, role, durationMs, reason);
+      await cv2.edit(interaction, result);
+    }
   }
 ];
 
 // ==========================================
 // CORE EXECUTION HANDLERS (DRY APPROACH)
 // ==========================================
+
+async function executeNuke(channel, moderator, guild) {
+  try {
+    if (!channel || channel.isDMBased()) return;
+    const pos = channel.position;
+    const author = moderator.user || moderator;
+    const modTier = getUserTierName(guild, moderator);
+    const cloned = await channel.clone({
+      name: channel.name,
+      reason: `Channel nuked by ${author.tag || author.username}`
+    });
+    await cloned.setPosition(pos).catch(() => null);
+    await channel.delete(`Channel nuked by ${author.tag || author.username}`).catch(() => null);
+    await cloned.send(cv2.success(
+      'Channel Nuked | <a:atheNATICK:1557841381630681106>',
+      `Successfully cloned and nuked this channel.\n-# Initiated by <@${author.id}>`
+    ));
+    logToSecurityChannel(guild, cv2.log(
+      'Channel Nuked',
+      `Channel **${cloned.name}** was cloned and nuked.`,
+      [
+        { name: 'Moderator', value: `${author.tag} [${modTier}]`, inline: true },
+        { name: 'Channel', value: `<#${cloned.id}>`, inline: true }
+      ],
+      'moderation'
+    ));
+  } catch (err) {
+    console.error('[Nuke] Error:', err);
+    try {
+      await channel.send(cv2.danger('Nuke Failed', `Could not nuke channel: \`${err.message}\``));
+    } catch {}
+  }
+}
+
+async function handleMassBan(guild, moderator, role, reason) {
+  if (role.id === guild.id) {
+    return cv2.danger('Action Blocked', 'You cannot mass ban the `@everyone` role.');
+  }
+  await guild.members.fetch().catch(() => null);
+  const targets = role.members.filter(m => 
+    m.id !== guild.client.user.id &&
+    !isBotOwnerSync(m.id) &&
+    m.id !== guild.ownerId &&
+    !db.isExtraOwner(guild.id, m.id) &&
+    !db.isWhitelisted(guild, m.id, 'ban') &&
+    canModerate(moderator, m) &&
+    m.bannable
+  );
+
+  if (targets.size === 0) {
+    return cv2.warn('No Eligible Members', `No bannable members found with role <@&${role.id}>.`);
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+  const author = moderator.user || moderator;
+  const modTier = getUserTierName(guild, moderator);
+
+  for (const [, target] of targets) {
+    try {
+      await target.ban({ reason: `Mass ban by ${author.tag || author.username}: ${reason}` });
+      successCount++;
+    } catch {
+      failCount++;
+    }
+  }
+
+  logToSecurityChannel(guild, cv2.log(
+    'Mass Ban Executed',
+    `Mass ban executed on role **${role.name}**.`,
+    [
+      { name: 'Moderator', value: `${author.tag} [${modTier}]`, inline: true },
+      { name: 'Role', value: `<@&${role.id}>`, inline: true },
+      { name: 'Banned', value: `\`${successCount}\``, inline: true },
+      { name: 'Failed', value: `\`${failCount}\``, inline: true },
+      { name: 'Reason', value: reason }
+    ],
+    'moderation'
+  ));
+
+  return cv2.success(
+    'Mass Ban Complete | <a:atheNATICK:1557841381630681106>',
+    `Successfully banned **${successCount}** member(s) with role <@&${role.id}>.` + (failCount > 0 ? `\nFailed: **${failCount}**.` : '')
+  );
+}
+
+async function handleMassKick(guild, moderator, role, reason) {
+  if (role.id === guild.id) {
+    return cv2.danger('Action Blocked', 'You cannot mass kick the `@everyone` role.');
+  }
+  await guild.members.fetch().catch(() => null);
+  const targets = role.members.filter(m => 
+    m.id !== guild.client.user.id &&
+    !isBotOwnerSync(m.id) &&
+    m.id !== guild.ownerId &&
+    !db.isExtraOwner(guild.id, m.id) &&
+    !db.isWhitelisted(guild, m.id, 'kick') &&
+    canModerate(moderator, m) &&
+    m.kickable
+  );
+
+  if (targets.size === 0) {
+    return cv2.warn('No Eligible Members', `No kickable members found with role <@&${role.id}>.`);
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+  const author = moderator.user || moderator;
+  const modTier = getUserTierName(guild, moderator);
+
+  for (const [, target] of targets) {
+    try {
+      await target.kick(`Mass kick by ${author.tag || author.username}: ${reason}`);
+      successCount++;
+    } catch {
+      failCount++;
+    }
+  }
+
+  logToSecurityChannel(guild, cv2.log(
+    'Mass Kick Executed',
+    `Mass kick executed on role **${role.name}**.`,
+    [
+      { name: 'Moderator', value: `${author.tag} [${modTier}]`, inline: true },
+      { name: 'Role', value: `<@&${role.id}>`, inline: true },
+      { name: 'Kicked', value: `\`${successCount}\``, inline: true },
+      { name: 'Failed', value: `\`${failCount}\``, inline: true },
+      { name: 'Reason', value: reason }
+    ],
+    'moderation'
+  ));
+
+  return cv2.success(
+    'Mass Kick Complete | <a:atheNATICK:1557841381630681106>',
+    `Successfully kicked **${successCount}** member(s) with role <@&${role.id}>.` + (failCount > 0 ? `\nFailed: **${failCount}**.` : '')
+  );
+}
+
+async function handleMassTimeout(guild, moderator, role, durationMs, reason) {
+  if (role.id === guild.id) {
+    return cv2.danger('Action Blocked', 'You cannot mass timeout the `@everyone` role.');
+  }
+  await guild.members.fetch().catch(() => null);
+  const targets = role.members.filter(m => 
+    m.id !== guild.client.user.id &&
+    !isBotOwnerSync(m.id) &&
+    m.id !== guild.ownerId &&
+    !db.isExtraOwner(guild.id, m.id) &&
+    canModerate(moderator, m) &&
+    m.moderatable
+  );
+
+  if (targets.size === 0) {
+    return cv2.warn('No Eligible Members', `No members eligible for timeout with role <@&${role.id}>.`);
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+  const author = moderator.user || moderator;
+  const modTier = getUserTierName(guild, moderator);
+
+  for (const [, target] of targets) {
+    try {
+      await target.timeout(durationMs, `Mass timeout by ${author.tag || author.username}: ${reason}`);
+      successCount++;
+    } catch {
+      failCount++;
+    }
+  }
+
+  logToSecurityChannel(guild, cv2.log(
+    'Mass Timeout Executed',
+    `Mass timeout executed on role **${role.name}**.`,
+    [
+      { name: 'Moderator', value: `${author.tag} [${modTier}]`, inline: true },
+      { name: 'Role', value: `<@&${role.id}>`, inline: true },
+      { name: 'Timed Out', value: `\`${successCount}\``, inline: true },
+      { name: 'Failed', value: `\`${failCount}\``, inline: true },
+      { name: 'Reason', value: reason }
+    ],
+    'moderation'
+  ));
+
+  return cv2.success(
+    'Mass Timeout Complete | <a:atheNATICK:1557841381630681106>',
+    `Successfully timed out **${successCount}** member(s) with role <@&${role.id}>.` + (failCount > 0 ? `\nFailed: **${failCount}**.` : '')
+  );
+}
 
 async function handleMuteAll(guild, moderator) {
   const vc = moderator.voice.channel;

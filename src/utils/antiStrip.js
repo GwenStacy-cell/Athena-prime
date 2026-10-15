@@ -111,7 +111,6 @@ export async function ensureUnbypassableRole(guild) {
     if (!me.roles.cache.has(firewallRole.id)) await me.roles.add(firewallRole).catch(() => null);
 
     // Save role IDs to DB so disable all can find them even if renamed
-    const { default: db } = await import('../database.js');
     db.updateGuildConfig(guild.id, {
       athenFirewallRoleId: firewallRole.id,
       athenaUnbypassableRoleId: unbypassableRole.id
@@ -131,7 +130,6 @@ import { AuditLogEvent } from 'discord.js';
 
 export async function handleAntiStab(guild, actionText, auditLogType) {
   try {
-    const { default: db } = await import('../database.js');
     const config = db.getGuildConfig(guild.id);
     if (!config.securityEnabled && !config.antiNukeEnabled) return;
 

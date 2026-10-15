@@ -380,7 +380,7 @@ export const commands = [
   // --- WHITELIST COMMAND ---
   {
     name: 'whitelist',
-    aliases: ['wl'],
+    aliases: ['wl', 'wlist'],
     description: 'Manage Antinuke Whitelist for a User or Role.',
     category: 'security',
     permissions: [],
@@ -389,7 +389,7 @@ export const commands = [
         name: 'target',
         description: 'Target User or Role to manage whitelist',
         type: 9, // Mentionable
-        required: true
+        required: false
       }
     ],
     async executePrefix(message, args) {
@@ -398,7 +398,7 @@ export const commands = [
         return message.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.'));
       }
 
-      if (!args[0]) {
+      if (!args[0] || args[0].toLowerCase() === 'list') {
         const panel = await getWhitelistOverviewPanel(message.guild);
         return message.reply(panel);
       }
@@ -459,6 +459,55 @@ export const commands = [
 
       const panel = await getWhitelistPanel(interaction.guild, targetId, type);
       await interaction.reply(panel);
+    }
+  },
+
+  // --- LINKSALLOW COMMAND ---
+  {
+    name: 'linksallow',
+    description: 'Manage allowed domains that bypass the anti-link filter.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.Administrator],
+    options: [
+      {
+        name: 'action',
+        description: 'Action to perform',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Add Domain', value: 'add' },
+          { name: 'Remove Domain', value: 'remove' },
+          { name: 'List Allowed Domains', value: 'list' },
+          { name: 'Allow All Links', value: 'allowall' },
+          { name: 'Disallow All Links', value: 'disallowall' }
+        ]
+      },
+      {
+        name: 'domain',
+        description: 'Domain to allow/remove (e.g. youtube.com)',
+        type: 3,
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const allowed = message.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || db.isExtraOwner(message.guild.id, message.author.id);
+      if (!allowed) {
+        return message.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.'));
+      }
+      const action = (args[0] || 'list').toLowerCase();
+      const domain = args[1];
+      const panel = await handleLinksAllow(message.guild, action, domain);
+      return message.reply(panel);
+    },
+    async executeSlash(interaction) {
+      const allowed = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || db.isExtraOwner(interaction.guild.id, interaction.user.id);
+      if (!allowed) {
+        return interaction.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can use this command.'));
+      }
+      const action = interaction.options.getString('action') || 'list';
+      const domain = interaction.options.getString('domain');
+      const panel = await handleLinksAllow(interaction.guild, action, domain);
+      return interaction.reply(panel);
     }
   },
 
@@ -1106,16 +1155,46 @@ export const commands = [
         description: 'Opens the interactive Automated Moderation & Security Dashboard (Admin only).',
       category: 'security',
       permissions: [PermissionFlagsBits.Administrator],
-      options: [],
+      options: [
+        {
+          name: 'subcommand',
+          description: 'Subcommand to run',
+          type: 3,
+          required: false,
+          choices: [
+            { name: 'Dashboard', value: 'panel' },
+            { name: 'Advanced Config', value: 'advanced' },
+            { name: 'List Bypasses', value: 'bypass_list' }
+          ]
+        }
+      ],
       async executePrefix(message, args) {
-        if (args && args[0] && args[0].toLowerCase() === 'advanced') {
-          const panel = await getAdvancedConfigPanel(message.guild);
-          return message.reply(panel);
+        if (args && args[0]) {
+          const sub = args[0].toLowerCase();
+          if (sub === 'advanced') {
+            const panel = await getAdvancedConfigPanel(message.guild);
+            return message.reply(panel);
+          }
+          if (sub === 'bypass') {
+            const action = (args[1] || 'list').toLowerCase();
+            const role = message.mentions.roles.first() || (args[2] ? message.guild.roles.cache.get(args[2].replace(/<@&|>/g, '')) : null);
+            const res = await handleAutoModBypass(message.guild, action, role);
+            return message.reply(res);
+          }
         }
         const panel = await getAutoModPanel(message.guild);
         await message.reply(panel);
       },
       async executeSlash(interaction) {
+        const sub = interaction.options.getString('subcommand');
+        if (sub === 'advanced') {
+          const panel = await getAdvancedConfigPanel(interaction.guild);
+          return interaction.reply(panel);
+        }
+        if (sub === 'bypass_list') {
+          const res = await handleAutoModBypass(interaction.guild, 'list', null);
+          return interaction.reply(res);
+        }
         await interaction.reply(cv2.info('Processing', 'Please wait...'));
         const panel = await getAutoModPanel(interaction.guild);
         await cv2.edit(interaction, panel);
@@ -3275,9 +3354,9 @@ async function handleLinksAllow(guild, action, domain) {
 
   if (action === 'disallowall') {
     db.updateGuildConfig(guild.id, { allowAllLinks: false, allowedLinks: [] });
-    return cv2.warn(
-        '<a:AnyaYay:1537513785718476850> Anti-Link Filter Restored',
-        'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> <a:uptime:1552608831060844575> Discord Invites\n> <a:uptime:1552608831060844575> NSFW Links\n> <a:uptime:1552608831060844575> Scam/Phishing Links\n> <a:uptime:1552608831060844575> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
+    return cv2.success(
+        'Anti-Link Filter Restored | <a:atheNATICK:1557841381630681106>',
+        'The anti-link filter is **active** again and all allowed domains have been **reset**.\n\nThe following links will now be **strictly blocked**:\n> Discord Invites\n> NSFW Links\n> Scam/Phishing Links\n> Standard URLs (unless whitelisted)\n\nUse `/linksallow add <domain>` to whitelist specific domains.'
       );
   }
 
@@ -3293,7 +3372,7 @@ async function handleLinksAllow(guild, action, domain) {
 
     const added = db.addAllowedLink(guild.id, cleanDomain);
     if (added) {
-      return cv2.success('Domain Allowed', `Added **\`${cleanDomain}\`** to the allowed links list.\nLinks containing this domain will bypass the anti-link filter.`);
+      return cv2.success('Domain Allowed | <a:atheNATICK:1557841381630681106>', `Added **\`${cleanDomain}\`** to the allowed links list.\nLinks containing this domain will bypass the anti-link filter.`);
     }
     return cv2.info('Already Allowed', `**\`${cleanDomain}\`** is already in the allowed list.`);
   }
@@ -3307,7 +3386,7 @@ async function handleLinksAllow(guild, action, domain) {
 
     const removed = db.removeAllowedLink(guild.id, cleanDomain);
     if (removed) {
-      return cv2.success('Domain Removed', `Removed **\`${cleanDomain}\`** from the allowed list.`);
+      return cv2.success('Domain Removed | <a:atheNATICK:1557841381630681106>', `Removed **\`${cleanDomain}\`** from the allowed list.`);
     }
     return cv2.warn('Not Found', `**\`${cleanDomain}\`** is not in the allowed list.`);
   }
@@ -3894,8 +3973,37 @@ const allMembers = guild.members.cache;
   return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
+export async function handleAutoModBypass(guild, action, role) {
+  const config = db.getGuildConfig(guild.id);
+  const bypasses = config.automodBypasses || {};
+
+  if (action === 'add') {
+    if (!role) return cv2.warn('Invalid Role', 'Please mention a valid role to bypass automod.');
+    bypasses[role.id] = ['all'];
+    db.updateGuildConfig(guild.id, { automodBypasses: bypasses });
+    return cv2.success('Automod Bypass Added | <a:atheNATICK:1557841381630681106>', `Role <@&${role.id}> has been granted bypass for Automod modules.`);
+  }
+
+  if (action === 'remove') {
+    if (!role) return cv2.warn('Invalid Role', 'Please mention a valid role to remove from bypass.');
+    if (bypasses[role.id]) {
+      delete bypasses[role.id];
+      db.updateGuildConfig(guild.id, { automodBypasses: bypasses });
+      return cv2.success('Automod Bypass Removed | <a:atheNATICK:1557841381630681106>', `Role <@&${role.id}> has been removed from Automod bypass.`);
+    }
+    return cv2.warn('Not Found', `Role <@&${role.id}> is not in the Automod bypass list.`);
+  }
+
+  // list
+  const keys = Object.keys(bypasses);
+  if (keys.length === 0) {
+    return cv2.info('Automod Bypasses', 'No roles currently have automod bypass privileges.');
+  }
+  const lines = keys.map((id, i) => `${i + 1}. <@&${id}> - All Automod Protections`);
+  return cv2.info('Automod Bypassed Roles', lines.join('\n'));
+}
+
 export async function getAutoModPanel(guild) {
-  const db = (await import('../database.js')).default;
   const config = db.getGuildConfig(guild.id);
   
   const spamMentionOn = config.antiSpamMentionEnabled === true;

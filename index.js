@@ -496,9 +496,9 @@ function interceptPayload(body) {
     }
 
     if ((target.flags & 32768) || (body.flags & 32768) || (body.json?.flags & 32768)) {
-      target.content = '';
-      if (body.json) body.json.content = '';
-      if (body.content !== undefined) body.content = '';
+      delete target.content;
+      if (body.json) delete body.json.content;
+      delete body.content;
       stripAccentColors(target);
       stripAccentColors(body);
     }

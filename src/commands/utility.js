@@ -31,9 +31,19 @@ async function optimizeEmojiBuffer(buffer, isAnimated = false) {
       for (const vf of presets) {
         try {
           await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+              try { proc.kill(); } catch {}
+              reject(new Error('ffmpeg timeout'));
+            }, 6000);
             const proc = spawn(ffmpegPath, ['-y', '-i', inPath, '-vf', vf, outPath]);
-            proc.on('close', code => code === 0 ? resolve() : reject(new Error('exit ' + code)));
-            proc.on('error', reject);
+            proc.on('close', code => {
+              clearTimeout(timer);
+              code === 0 ? resolve() : reject(new Error('exit ' + code));
+            });
+            proc.on('error', err => {
+              clearTimeout(timer);
+              reject(err);
+            });
           });
           if (fs.existsSync(outPath)) {
             const compressed = await fs.promises.readFile(outPath);
@@ -235,8 +245,6 @@ export const commands = [
                   return message.reply({ content: `-! <:cross_red:1533860128015519895> **Command Not Found:** ` + cmdName });
               }
               
-              const { TextDisplayBuilder, MessageFlags } = await import('discord.js');
-              
               let permsText = "Public / Everyone";
               if (targetCmd.permissions && targetCmd.permissions.length > 0) {
                   if (targetCmd.permissions.includes(8n)) permsText = "Administrator";
@@ -250,7 +258,6 @@ export const commands = [
                   catStr = "@Bot Commands (Direct @Bot Mention Commands)";
               }
               
-              const db = (await import('../database.js')).default;
               const config = db.getGuildConfig(message.guild.id);
               const prefix = config?.prefix || '!';
               
@@ -322,14 +329,22 @@ export const commands = [
       const cmdArg = interaction.options?.getString?.('command');
       if (cmdArg) {
         const cmdName = cmdArg.toLowerCase().trim();
+        const matchingModule = helpModules.find(m => 
+          m.id === cmdName || 
+          m.shortLabel.toLowerCase() === cmdName || 
+          (cmdName === 'count' && m.id === 'counting') ||
+          ((cmdName === 'antinuke' || cmdName === 'an') && m.id === 'security')
+        );
+        if (matchingModule) {
+          const container = buildHelpContainer(interaction.client, interaction.guild?.id, matchingModule.id);
+          return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        }
         const { default: commandMap } = await import('./loader.js');
         let targetCmd = commandMap.get(cmdName);
         
         if (!targetCmd) {
           return interaction.reply({ content: `-! <:cross_red:1533860128015519895> **Command Not Found:** ` + cmdName, flags: MessageFlags.Ephemeral });
         }
-
-        const { TextDisplayBuilder, MessageFlags } = await import('discord.js');
         
         let permsText = "Public / Everyone";
         if (targetCmd.permissions && targetCmd.permissions.length > 0) {
@@ -340,7 +355,6 @@ export const commands = [
         }
         
         let catStr = targetCmd.category ? targetCmd.category.charAt(0).toUpperCase() + targetCmd.category.slice(1) : "General";
-        const db = (await import('../database.js')).default;
         const config = interaction.guild ? db.getGuildConfig(interaction.guild.id) : null;
         const prefix = config?.prefix || '!';
 
@@ -650,28 +664,48 @@ export const commands = [
       await this._processSteal(message.content, message, message.guild, args);
     },
     async executeSlash(interaction) {
-      await interaction.deferReply().catch(() => null);
-      const inputs = [
-        interaction.options.getString('emoji1'),
-        interaction.options.getString('emoji2'),
-        interaction.options.getString('emoji3'),
-        interaction.options.getString('emoji4'),
-        interaction.options.getString('emoji5'),
-        interaction.options.getString('emoji6')
-      ].filter(Boolean).join(' ');
+      try {
+        await interaction.deferReply().catch(() => null);
+        const inputs = [
+          interaction.options.getString('emoji1'),
+          interaction.options.getString('emoji2'),
+          interaction.options.getString('emoji3'),
+          interaction.options.getString('emoji4'),
+          interaction.options.getString('emoji5'),
+          interaction.options.getString('emoji6')
+        ].filter(Boolean).join(' ');
 
-      const file = interaction.options.getAttachment('file');
-      const customName = interaction.options.getString('name');
+        const file = interaction.options.getAttachment('file');
+        const customName = interaction.options.getString('name');
 
-      await this._processSteal(inputs, interaction, interaction.guild, customName ? [customName] : [], file);
+        await this._processSteal(inputs, interaction, interaction.guild, customName ? [customName] : [], file);
+      } catch (err) {
+        console.error('[Steal] executeSlash error:', err);
+        try {
+          await cv2.edit(interaction, cv2.danger('Steal Error', `An error occurred while executing steal: \`${err.message}\``));
+        } catch {}
+      }
     },
     async _processSteal(input, context, guild, args = [], directAttachment = null) {
-      const sendReply = (payload) => {
-        if (context.isCommand?.() && (context.deferred || context.replied)) {
-          return context.editReply(payload).catch(() => null);
+      const sendReply = async (payload) => {
+        try {
+          if (context.isCommand?.() || context.isChatInputCommand?.() || context.deferred || context.replied) {
+            return await cv2.edit(context, payload);
+          }
+          return await context.reply(payload);
+        } catch (err) {
+          console.error('[Steal] sendReply error:', err);
+          try {
+            if (context.deferred || context.replied) {
+              return await context.followUp(payload);
+            }
+          } catch (e2) {
+            console.error('[Steal] followUp fallback error:', e2);
+          }
         }
-        return context.reply(payload).catch(() => null);
       };
+
+      try {
 
       const user = context.user || context.author;
       const items = [];
@@ -934,6 +968,10 @@ export const commands = [
         'Steal Failed',
         lines.join('\n\n')
       ));
+      } catch (err) {
+        console.error('[Steal] Unexpected error:', err);
+        return await sendReply(cv2.danger('Steal Failed', `An unexpected error occurred: \`${err.message}\``));
+      }
     }
   },
   {
