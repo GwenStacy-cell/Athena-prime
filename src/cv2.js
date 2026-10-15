@@ -3,7 +3,7 @@ import { MessageFlags } from 'discord.js';
 // Returns true if a line already has discord markdown — skip auto-formatting
 function isPreformatted(line) {
   if (!line.trim()) return true;
-  return /^(-#|#{1,3} |> )/.test(line);
+  return /^(-#|#{1,3} |> |```)/.test(line);
 }
 
 // Returns true if line starts with a custom or unicode emoji
@@ -47,14 +47,25 @@ function buildContainer(title, description, fields, customFooter) {
   }
 
   // Grey bold description with smart bullets
-  // Grey bold description with smart bullets
   if (description) {
     var lines = description.split('\n');
-    var plainCount = lines.filter(function(l) {
-      return l.trim() && !isPreformatted(l) && !hasEmojiStart(l);
-    }).length;
-    var multiLine = plainCount > 1;
-    var formatted = lines.map(function(l) { return styleLine(l, multiLine); }).join('\n').trim() || '\u200b';
+    var inDescCode = false;
+    var formattedLines = [];
+    for (var d = 0; d < lines.length; d++) {
+      var dLine = lines[d];
+      var dTrimmed = dLine.trim();
+      if (dTrimmed.startsWith('```')) {
+        inDescCode = !inDescCode;
+        formattedLines.push(dLine);
+        continue;
+      }
+      if (inDescCode) {
+        formattedLines.push(dLine);
+        continue;
+      }
+      formattedLines.push(styleLine(dLine, false));
+    }
+    var formatted = formattedLines.join('\n').trim() || '\u200b';
 
     if (formatted.length <= 3900) {
       comps.push({ type: 10, content: formatted });
@@ -102,7 +113,21 @@ function buildContainer(title, description, fields, customFooter) {
       }
     } else {
       flushInline();
-      if (val.includes('\n')) {
+      if (val.includes('```')) {
+        var inFieldCode = false;
+        var subLines = val.split('\n').map(function(l) {
+          var trimmed = l.trim();
+          if (trimmed.startsWith('```')) {
+            inFieldCode = !inFieldCode;
+            return trimmed;
+          }
+          if (inFieldCode) {
+            return l;
+          }
+          return trimmed ? (trimmed.startsWith('-#') ? trimmed : '-# ' + trimmed) : '';
+        });
+        fieldLines.push('-# **' + name + ':**\n' + subLines.join('\n'));
+      } else if (val.includes('\n')) {
         var subLines = val.split('\n').map(function(l) {
           return l.trim() ? (l.startsWith('-#') ? l : '-# ' + l) : '';
         });
@@ -141,7 +166,7 @@ function buildContainer(title, description, fields, customFooter) {
 
   // Bottom divider
   comps.push(SEP);
-  let footerText = customFooter ? customFooter : 'Athena Bulletproof Defense Matrix \u00b7 V1.0.0';
+  let footerKey = (customFooter || '').toLowerCase().trim();
   
   const footers = {
       'success': 'System Operation Successfully Completed.',
@@ -158,10 +183,22 @@ function buildContainer(title, description, fields, customFooter) {
       'owner': 'Executive Override Command Authorized.',
       'engagement': 'Community Engagement and Interaction Module Active.',
       'utility': 'System Utility and Diagnostic Tools Deployed.',
-      'configuration': 'System Core Configuration and Settings Modified.'
+      'utilities': 'System Utility and Diagnostic Tools Deployed.',
+      'configuration': 'System Core Configuration and Settings Modified.',
+      'config': 'System Core Configuration and Settings Modified.',
+      'enuke': 'Emergency Defense Protocol Active.',
+      'modmode': 'Server Maintenance and ModMode Active.',
+      'general': 'System Data Retrieval and Analysis Complete.'
   };
 
-  if (footers[footerText]) footerText = footers[footerText];
+  let footerText;
+  if (footers[footerKey]) {
+    footerText = footers[footerKey];
+  } else if (!customFooter) {
+    footerText = 'Athena Bulletproof Defense Matrix \u00b7 V1.0.0';
+  } else {
+    footerText = customFooter;
+  }
 
   comps.push({ type: 10, content: `-# **${footerText}**` });
 

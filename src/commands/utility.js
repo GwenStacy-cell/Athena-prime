@@ -597,7 +597,8 @@ export const commands = [
   // --- SETUP COMMAND ---
   {
     name: 'setup',
-    description: 'Configures bot logs channel, quarantine voice, or settings.',
+    aliases: ['setlogs', 'setquarantine', 'configsetup'],
+    description: 'Configures bot logs channel, quarantine voice, or quarantine role by ID or mention.',
     category: 'utility',
     permissions: [PermissionFlagsBits.Administrator],
     options: [],
@@ -605,17 +606,114 @@ export const commands = [
       if (args[0] && args[0].toLowerCase() === 'music') {
         return message.reply(cv2.warn('Command Redirect', 'To setup the Music Player, please use the `!setupmusic` command instead!'));
       }
-      const channel = message.mentions.channels.first();
-      const role = message.mentions.roles.first();
-      
-      // Resolve first mentioned or matched voice channel in args
-      const voiceChannel = message.guild.channels.cache.find(
-        c => c.type === ChannelType.GuildVoice && 
-        args.some(arg => arg.includes(c.id) || arg.toLowerCase() === c.name.toLowerCase())
-      );
+
+      const config = db.getGuildConfig(message.guild.id) || {};
+      const prefix = config.prefix || '!';
+
+      // If no arguments provided: Show Current Configuration Dashboard
+      if (!args || args.length === 0) {
+        const logChId = config.securityLogChannelId || config.logChannel;
+        const qRoleId = config.quarantineRoleId;
+        const qVcId = config.quarantineVcId;
+
+        const logCh = logChId ? (message.guild.channels.cache.get(logChId) || await message.guild.channels.fetch(logChId).catch(() => null)) : null;
+        const qRole = qRoleId ? (message.guild.roles.cache.get(qRoleId) || await message.guild.roles.fetch(qRoleId).catch(() => null)) : null;
+        const qVc = qVcId ? (message.guild.channels.cache.get(qVcId) || await message.guild.channels.fetch(qVcId).catch(() => null)) : null;
+
+        const fields = [
+          {
+            name: 'Security Logs Channel',
+            value: logCh ? `${logCh} (\`${logCh.id}\`)` : '`Not Configured`',
+            inline: false
+          },
+          {
+            name: 'Quarantine Role',
+            value: qRole ? `${qRole} (\`${qRole.id}\`)` : '`Not Configured`',
+            inline: true
+          },
+          {
+            name: 'Quarantine Voice Channel',
+            value: qVc ? `${qVc} (\`${qVc.id}\`)` : '`Not Configured`',
+            inline: true
+          },
+          {
+            name: 'Configuration Syntax & Examples',
+            value: 
+`• **Security Logs:** \`${prefix}setup <#channel | ID>\` or \`${prefix}setup logs <#channel | ID>\`
+• **Quarantine Role:** \`${prefix}setup <@role | ID>\` or \`${prefix}setup role <@role | ID>\`
+• **Quarantine Voice:** \`${prefix}setup <#voiceChannel | ID>\` or \`${prefix}setup vc <#voiceChannel | ID>\``,
+            inline: false
+          }
+        ];
+
+        return message.reply(cv2.success(
+          `Server Setup & Entity Configuration | ${cv2.TICK_EMOJI}`,
+          'Current server bindings stored in SQLite database. Entity detection is strictly ID-backed.',
+          fields,
+          'utility'
+        ));
+      }
+
+      // Parse Subcommands or Auto-Detect Arguments
+      let channel = message.mentions.channels.first() || null;
+      let role = message.mentions.roles.first() || null;
+      let voiceChannel = null;
+
+      // Extract all raw snowflake IDs in arguments
+      const idMatches = args.join(' ').match(/\d{17,20}/g) || [];
+
+      // Check subcommands: logs, role, vc
+      const sub = args[0].toLowerCase();
+      if (['logs', 'log', 'security-logs', 'logchannel'].includes(sub) && idMatches.length > 0) {
+        const targetId = idMatches[0];
+        const ch = message.guild.channels.cache.get(targetId) || await message.guild.channels.fetch(targetId).catch(() => null);
+        if (ch && ch.isTextBased()) channel = ch;
+      } else if (['role', 'quarantine-role', 'quarantinerole', 'qrole'].includes(sub) && idMatches.length > 0) {
+        const targetId = idMatches[0];
+        const r = message.guild.roles.cache.get(targetId) || await message.guild.roles.fetch(targetId).catch(() => null);
+        if (r) role = r;
+      } else if (['vc', 'voice', 'quarantine-vc', 'quarantinevc', 'qvc'].includes(sub) && idMatches.length > 0) {
+        const targetId = idMatches[0];
+        const vc = message.guild.channels.cache.get(targetId) || await message.guild.channels.fetch(targetId).catch(() => null);
+        if (vc && vc.isVoiceBased()) voiceChannel = vc;
+      } else {
+        // Auto-detect each extracted ID
+        for (const rawId of idMatches) {
+          if (!channel && !voiceChannel) {
+            const ch = message.guild.channels.cache.get(rawId) || await message.guild.channels.fetch(rawId).catch(() => null);
+            if (ch) {
+              if (ch.isVoiceBased()) {
+                voiceChannel = ch;
+              } else if (ch.isTextBased()) {
+                channel = ch;
+              }
+              continue;
+            }
+          }
+          if (!role) {
+            const r = message.guild.roles.cache.get(rawId) || await message.guild.roles.fetch(rawId).catch(() => null);
+            if (r) {
+              role = r;
+              continue;
+            }
+          }
+        }
+      }
+
+      // Fallback voice channel search by name in args if no ID was matched
+      if (!voiceChannel) {
+        voiceChannel = message.guild.channels.cache.find(
+          c => c.isVoiceBased() && args.some(arg => arg.toLowerCase() === c.name.toLowerCase())
+        );
+      }
 
       if (!channel && !role && !voiceChannel) {
-        return message.reply(cv2.warn('Setup Info', `${message.author} Usage: \`!setup <#logChannel>\` or \`!setup <quarantineVoiceChannelName>\` or \`!setup <@quarantineRole>\``));
+        return message.reply(cv2.warn(
+          'Setup Resolution Error',
+          `Could not resolve any valid Channel, Role, or Voice Channel from \`${args.join(' ')}\`.\n\n` +
+          `• Provide a mention (e.g. \`<#channel>\`, \`<@&role>\`) or a valid snowflake ID (e.g. \`1516865574985273536\`).\n` +
+          `• Type \`${prefix}setup\` to view current server bindings.`
+        ));
       }
 
       const result = await handleSetup(message.guild, channel, role, voiceChannel);
@@ -1684,25 +1782,27 @@ async function handleSetup(guild, channel, role, voiceChannel) {
 
   if (channel) {
     updates.logChannel = channel.id;
-    fields.push({ name: 'Security Logs Channel', value: `${channel} (ID: ${channel.id})` });
+    updates.securityLogChannelId = channel.id;
+    fields.push({ name: 'Security Logs Channel', value: `${channel} (\`${channel.id}\`)`, inline: false });
   }
 
   if (voiceChannel) {
     updates.quarantineVcId = voiceChannel.id;
-    fields.push({ name: 'Quarantine Voice Channel', value: `${voiceChannel} (ID: ${voiceChannel.id})` });
+    fields.push({ name: 'Quarantine Voice Channel', value: `${voiceChannel} (\`${voiceChannel.id}\`)`, inline: true });
   }
 
   if (role) {
     updates.quarantineRoleId = role.id;
-    fields.push({ name: 'Quarantine Role', value: `${role} (ID: ${role.id})` });
+    fields.push({ name: 'Quarantine Role', value: `${role} (\`${role.id}\`)`, inline: true });
   }
 
   db.updateGuildConfig(guild.id, updates);
 
   const resEmbed = cv2.success(
-    'Configuration Updated',
-    'Successfully saved server adjustments to database cache.',
-    fields
+    `Configuration Updated | ${cv2.TICK_EMOJI}`,
+    'Successfully saved server adjustments to database cache. Entities are bound by unique Discord ID.',
+    fields,
+    'configuration'
   );
 
   return resEmbed;

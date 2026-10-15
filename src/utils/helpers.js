@@ -230,23 +230,18 @@ export async function logToSecurityChannel(guild, embedObject) {
     }
 
     if (!channel) {
-      // Fallback search by name
-      channel = guild.channels.cache.find(c => c.name === 'security-logs' && c.type === ChannelType.GuildText);
-      
-      // If still not found, create it dynamically
-      if (!channel) {
-        channel = await guild.channels.create({
-          name: 'security-logs',
-          type: ChannelType.GuildText,
-          topic: 'Automated security audits and moderation records - Athena Prime',
-          permissionOverwrites: [
-            {
-              id: guild.roles.everyone.id,
-              deny: [PermissionFlagsBits.ViewChannel] // Hide from normal members
-            }
-          ]
-        }).catch(() => null);
-      }
+      // Create dynamically and immediately bind ID in database
+      channel = await guild.channels.create({
+        name: 'security-logs',
+        type: ChannelType.GuildText,
+        topic: 'Automated security audits and moderation records - Athena Prime',
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id,
+            deny: [PermissionFlagsBits.ViewChannel] // Hide from normal members
+          }
+        ]
+      }).catch(() => null);
 
       if (channel) {
         db.updateGuildConfig(guild.id, { logChannel: channel.id, securityLogChannelId: channel.id });
