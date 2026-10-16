@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType, EmbedBuilder } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner, getUserTierName, cleanDisplayName } from '../utils/helpers.js';
@@ -620,7 +620,7 @@ export const commands = [
             {
               type: 10,
               content:
-                `# Member Temporarily Banned\n` +
+                `# Member Temporarily Banned | <a:atheNATICK:1557841381630681106>\n` +
                 `-# • **Target:** <@${finalId}> (\`${finalId}\`)\n` +
                 `-# • **Duration:** \`${durationStr}\`\n` +
                 `-# • **Unban Expiration:** <t:${expiryDate}:R> (<t:${expiryDate}:F>)\n` +
@@ -699,7 +699,7 @@ export const commands = [
             components: [{
               type: 10,
               content:
-                `# Member Temporarily Banned\n` +
+                `# Member Temporarily Banned | <a:atheNATICK:1557841381630681106>\n` +
                 `-# • **Target:** <@${targetUser.id}> (\`${targetUser.id}\`)\n` +
                 `-# • **Duration:** \`${durationStr}\`\n` +
                 `-# • **Unban Expiration:** <t:${expiryDate}:R> (<t:${expiryDate}:F>)\n` +
@@ -799,7 +799,7 @@ export const commands = [
             {
               type: 10,
               content:
-                `# Member Timed Out\n` +
+                `# Member Timed Out | <a:atheNATICK:1557841381630681106>\n` +
                 `-# • **Target:** ${target} (\`${target.id}\`)\n` +
                 `-# • **Duration:** \`${durationStr}\`\n` +
                 `-# • **Lift Expiration:** <t:${expiryDate}:R> (<t:${expiryDate}:F>)\n` +
@@ -882,7 +882,7 @@ export const commands = [
             components: [{
               type: 10,
               content:
-                `# Member Timed Out\n` +
+                `# Member Timed Out | <a:atheNATICK:1557841381630681106>\n` +
                 `-# • **Target:** ${target} (\`${target.id}\`)\n` +
                 `-# • **Duration:** \`${durationStr}\`\n` +
                 `-# • **Lift Expiration:** <t:${expiryDate}:R> (<t:${expiryDate}:F>)\n` +
