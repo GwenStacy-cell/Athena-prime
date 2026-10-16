@@ -8,7 +8,7 @@ export const ARCHITECTURE_TOPICS = {
   security: {
     id: 'security',
     label: 'Security & Exploit Defense',
-    aliases: ['antinuke', 'firewall', 'roleexploit', 'linkedroles', 'linkedrole', 'exploit', 'defense', 'sentinel'],
+    aliases: ['antinuke', 'roleexploit', 'linkedroles', 'linkedrole', 'exploit', 'defense'],
     title: 'Security & Zero-Day Exploit Defense Architecture | <a:atheNATICK:1557841381630681106>',
     description: 'Autonomous zero-day exploit mitigation, Linked Role interception, and raw API defense mechanics.',
     pages: [
@@ -364,14 +364,17 @@ export const DETAILED_COMMANDS = {
 
   firewall: {
     name: 'firewall',
-    aliases: ['fw'],
-    category: 'Security & Access Control',
+    aliases: ['fw', 'telemetry', 'ping', 'statusnet'],
+    category: 'Network Diagnostics & Defense Telemetry',
     clearance: 'Public / Everyone',
     syntax: '!firewall',
-    purpose: 'Displays live gateway telemetry, strike engine uptime, and active antinuke defense shield status.',
+    purpose: 'Inspects real-time Discord Gateway WebSocket telemetry, REST rate-limit synchronization, SQLite WAL integrity, and active antinuke defense shield status.',
     architecture: 
-`• **Telemetry Inspection:** Computes gateway heartbeat latency, websocket ping, active module bitmasks, and cached audit thresholds.
-• **Read-Only Container:** Formatted via Components V2 with live uptime indicator ticks.`,
+`• **WebSocket TLS 443 Wiretap:** Directly hooks the Discord Gateway socket client to sample round-trip heartbeat ping in real-time (<20ms nominal). Tracks lifecycle states (Ready, Identifying, Resuming, Reconnecting) to ensure zero silent socket deadlocks during traffic bursts.
+• **REST Rate-Limit Bucket Synchronization:** Interrogates internal Axios/REST sequential request queues. Confirms rate-limit tokens are synchronized across global and route-specific buckets (/guilds, /channels, /bans) before firing mass moderation actions.
+• **Database WAL Mode Verification:** Runs non-blocking pragmas against the local SQLite database to confirm Write-Ahead Logging (WAL mode) and synchronous disk flushing, preventing lock contention during heavy event logging.
+• **Defense Shield Heartbeat:** Evaluates whether autonomous Antinuke Sentinels are active across all indexed guilds, detecting config corruption or disabled tripwires.
+• **Ephemeral Clean-Up Daemon:** Schedules an automated 60-second garbage-collection timer to un-link and purge telemetry messages from public channels, keeping moderation logs clean.`,
     example: '!firewall'
   },
 
