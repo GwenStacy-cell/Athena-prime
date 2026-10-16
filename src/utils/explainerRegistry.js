@@ -1243,47 +1243,47 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
   const selectOptions = [
     {
       label: 'Security & Role Exploits',
-      description: 'Linked Roles, 60s solution, and zero-day interceptor',
+      description: 'Linked Roles, 60s audit threshold & zero-day wiretap',
       value: 'security'
     },
     {
       label: 'Persistence Sentinel Roles',
-      description: 'Athena Unbypassable, hierarchy & self-healing',
+      description: 'Athena Unbypassable hierarchy & persistence sentinels',
       value: 'unbypassable'
     },
     {
       label: 'Onboarding Exploit Guard',
-      description: 'Neutralizing dangerous onboarding prompt roles',
+      description: 'Neutralize dangerous onboarding prompt roles',
       value: 'onboarding'
     },
     {
       label: 'Voice Grid & Channel Drag',
-      description: 'High-velocity loop dragging, mass move & mass dc',
+      description: 'High-velocity loop dragging & mass relocation',
       value: 'voice'
     },
     {
       label: 'Moderation & Mass Actions',
-      description: 'Anti-raid throttling, rogue admin detection, modmode',
+      description: 'Action velocity throttling & rogue admin defense',
       value: 'moderation'
     },
     {
       label: 'Automod & Filter Engine',
-      description: 'Real-time regex, link whitelists, and word filters',
+      description: 'Real-time regex, invite neutralization & filters',
       value: 'automod'
     },
     {
       label: 'Quarantine Containment',
-      description: 'Zero-trust isolation, role strip caching, permissions',
+      description: 'Zero-trust isolation & role strip caching',
       value: 'quarantine'
     },
     {
       label: 'Cloud Backup & Manifest',
-      description: 'Encrypted snapshot serialization and 1-click restore',
+      description: 'Encrypted snapshot serialization & 1-click restore',
       value: 'cloudsync'
     },
     {
       label: 'Access Control & Tiers',
-      description: 'Admin, Mod, and Staff role authorization tiers',
+      description: 'Database-backed three-tier authorization matrix',
       value: 'auth'
     }
   ];
@@ -1294,44 +1294,44 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
       content: 
 `# Architecture & Command Deep-Dive Explainer | <a:atheNATICK:1557841381630681106>
 > <a:uptime:1552608831060844575> **Welcome to the Athena Prime Architecture Explainer Engine!**
-> This engine provides full under-the-hood technical breakdowns, raw WebSocket wiretaps, velocity throttling mechanics, zero-day exploit mitigations, and execution internals for all core subsystems.
-> -# **To inspect any specific command:** Type \`${prefix}explain <command>\` (e.g. \`${prefix}explain kick\`, \`${prefix}explain vcdrag\`, \`${prefix}explain massmove\`, \`${prefix}explain unbypassable\`)`
+> Full technical breakdowns of Gateway wiretaps, velocity throttling, zero-day exploit mitigations, and execution mechanics.
+> -# **To inspect any command:** Type \`${prefix}explain <command>\` (e.g. \`${prefix}explain kick\`, \`${prefix}explain vcdrag\`)`
     },
     { type: 14, divider: true },
     {
       type: 10,
       content:
-`### 1. Autonomous Security & Zero-Day Antinuke Architecture
-> **Under-the-Hood Mechanics:** Operates on raw WebSocket wiretaps (<1ms processing) to intercept unauthorized guild modifications before they take effect. Employs a strict 60-second unlogged audit log correlation threshold to neutralize zero-audit Linked Role and Onboarding privilege escalations. Sentinel roles and channels are self-healed instantaneously via internal state mirrors.
-• **Covered Commands:** \`${prefix}explain unbypassable\`, \`${prefix}explain antinuke\`, \`${prefix}explain firewall\`, \`${prefix}explain neutralizeonboarding\`, \`${prefix}explain scanserver\`, \`${prefix}explain panic\`, \`${prefix}explain quarantine\`, \`${prefix}explain botwhitelist\`, \`${prefix}explain spampermit\`, \`${prefix}explain autonick\`, \`${prefix}explain learn\`, \`${prefix}explain modmode\`
+`### 1. Autonomous Security & Antinuke Architecture
+> **Under-the-Hood:** Raw WebSocket wiretap (<1ms) intercepts unlogged Linked Role and Onboarding escalations via 60s audit threshold. Reinstates sentinel roles and quarantines offenders.
+• **Commands:** \`unbypassable\`, \`antinuke\`, \`firewall\`, \`neutralizeonboarding\`, \`scanserver\`, \`panic\`, \`quarantine\`, \`botwhitelist\`, \`spampermit\`, \`autonick\`, \`learn\`, \`modmode\`
 
 ### 2. Voice Grid Control & Channel Drag Architecture
-> **Under-the-Hood Mechanics:** Hooks directly into Discord Voice State Gateway packets (\`VOICE_STATE_UPDATE\`). Commands execute high-velocity sequential state modifications via \`PATCH /guilds/{id}/members/{user}\` with non-blocking timers, rate-limit buffers (150ms), and automated caller/owner immunity enforcement to prevent self-targeting or bot disruption.
-• **Covered Commands:** \`${prefix}explain vcdrag\`, \`${prefix}explain vcdragstop\`, \`${prefix}explain massmove\`, \`${prefix}explain massdc\`, \`${prefix}explain muteall\`, \`${prefix}explain unmuteall\`, \`${prefix}explain deafenall\`, \`${prefix}explain undeafenall\`, \`${prefix}explain jtc\`, \`${prefix}explain vcprotect\`
+> **Under-the-Hood:** Voice gateway wiretap updates state via PATCH /guilds/{id}/members/{user}. Executes drag loops, mass moves, and mass disconnects with 150ms buffers and caller immunity.
+• **Commands:** \`vcdrag\`, \`vcdragstop\`, \`massmove\`, \`massdc\`, \`muteall\`, \`unmuteall\`, \`deafenall\`, \`undeafenall\`, \`jtc\`, \`vcprotect\`
 
 ### 3. Mass Moderation & Action Velocity Architecture
-> **Under-the-Hood Mechanics:** Leverages batched REST execution pipelines with strict hierarchy boundary checks. Disciplinary actions (kicks, bans, timeouts) verify caller and bot role positions against target bitfields, dispatch pre-action DM notifications, record persistent forensics into SQLite, and tripwire rogue staff accounts exceeding velocity limits (>3 actions/10s).
-• **Covered Commands:** \`${prefix}explain kick\`, \`${prefix}explain ban\`, \`${prefix}explain unban\`, \`${prefix}explain tempban\`, \`${prefix}explain massban\`, \`${prefix}explain masskick\`, \`${prefix}explain timeout\`, \`${prefix}explain untimeout\`, \`${prefix}explain warn\`, \`${prefix}explain warnings\`, \`${prefix}explain clearwarns\`, \`${prefix}explain purge\`, \`${prefix}explain slowmode\`, \`${prefix}explain nuke\``
+> **Under-the-Hood:** Sequential REST execution with hierarchy checks. Velocity tripwires (>3 actions/10s) quarantine rogue staff, while pre-action DMs and SQLite forensics record accountability.
+• **Commands:** \`kick\`, \`ban\`, \`unban\`, \`tempban\`, \`massban\`, \`masskick\`, \`timeout\`, \`untimeout\`, \`warn\`, \`warnings\`, \`clearwarns\`, \`purge\`, \`slowmode\`, \`nuke\``
     },
     { type: 14, divider: true },
     {
       type: 10,
       content:
-`### 4. Channel Lifecycle & Access Control List (ACL) Architecture
-> **Under-the-Hood Mechanics:** Manipulates explicit \`@everyone\` and role overwrite bitmasks (\`PermissionOverwrites\`). Channels locked, hidden, or quarantined have their permission bitfields rewritten via direct REST patches without deleting channel history. Nuclear wipes snapshot full metadata before atomic re-creation.
-• **Covered Commands:** \`${prefix}explain lock\`, \`${prefix}explain unlock\`, \`${prefix}explain hide\`, \`${prefix}explain unhide\`, \`${prefix}explain nuke\`, \`${prefix}explain quarantine\`
+`### 4. Channel Lifecycle & ACL Isolation Architecture
+> **Under-the-Hood:** Manipulates explicit @everyone and role overwrite bitmasks. Rewrites channel ACLs dynamically during lockdown, quarantine isolation, and metadata-preserving clones.
+• **Commands:** \`lock\`, \`unlock\`, \`hide\`, \`unhide\`, \`nuke\`, \`quarantine\`
 
 ### 5. Role Hierarchy & Identity Persistence Architecture
-> **Under-the-Hood Mechanics:** Bound to SQLite database tables strictly by Discord Snowflake IDs—eliminating role name or display spoofing vulnerabilities. Handles join-time autoroles, dynamic member stripping, anti-strip self-healing triggers, and three-tier clearance verification.
-• **Covered Commands:** \`${prefix}explain addrole\`, \`${prefix}explain removerole\`, \`${prefix}explain striproles\`, \`${prefix}explain autorole\`, \`${prefix}explain auth\`, \`${prefix}explain tier\`
+> **Under-the-Hood:** Strict database ID binding immune to display spoofing. Manages join-time autoroles, dynamic member stripping, anti-strip self-healing triggers, and three-tier clearance.
+• **Commands:** \`addrole\`, \`removerole\`, \`striproles\`, \`autorole\`, \`auth\`, \`tier\`
 
 ### 6. Automod, Regex & Phishing Defense Architecture
-> **Under-the-Hood Mechanics:** Pre-dispatch synchronous message content processing. De-cloaks punycode URLs, executes compiled regex dictionaries against spam/phishing patterns, neutralizes unauthorized Discord invites in <1ms, and evaluates role-based bypass caches.
-• **Covered Commands:** \`${prefix}explain automod\`, \`${prefix}explain spampermit\`
+> **Under-the-Hood:** Pre-dispatch inspection. De-cloaks punycode URLs, executes compiled regex dictionaries, intercepts Discord invites in <1ms, and evaluates role bypass caches.
+• **Commands:** \`automod\`, \`spampermit\`
 
 ### 7. Cloud Snapshot & State Restoration Architecture
-> **Under-the-Hood Mechanics:** Serializes comprehensive guild state (roles, permissions, categories, channels, topic strings, bot settings) into AES-encrypted JSON snapshots stored off-site in private backup channels for disaster recovery.
-• **Covered Commands:** \`${prefix}explain backup\`, \`${prefix}explain restore\`, \`${prefix}explain setup\``
+> **Under-the-Hood:** Serializes full guild state (roles, permissions, channels, settings) into AES-encrypted JSON snapshots stored off-site for 1-click disaster recovery.
+• **Commands:** \`backup\`, \`restore\`, \`setup\``
     },
     { type: 14, divider: true },
     {
