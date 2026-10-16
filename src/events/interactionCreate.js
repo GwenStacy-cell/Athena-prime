@@ -125,6 +125,21 @@ export default {
       }
     }
 
+    // ==========================================
+    // --- LEARN MODE & HEURISTICS INTERACTIONS ---
+    // ==========================================
+    if (interaction.customId && interaction.customId.startsWith('learn_')) {
+      try {
+        const { handleLearnInteraction } = await import('../commands/learn.js');
+        if (handleLearnInteraction) {
+          const handled = await handleLearnInteraction(interaction);
+          if (handled) return;
+        }
+      } catch (e) {
+        console.error('[InteractionCreate] Error handling learn interaction:', e);
+      }
+    }
+
     // --- COUNTING ENGINE INTERACTIONS ---
     if (interaction.customId && interaction.customId.startsWith('counting_')) {
       import('../commands/counting.js').then(m => {

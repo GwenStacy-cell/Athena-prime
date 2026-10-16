@@ -829,14 +829,17 @@ export const DETAILED_COMMANDS = {
 
   learn: {
     name: 'learn',
-    aliases: ['ai', 'behavioral'],
+    aliases: ['ai', 'heuristics', 'behavioral'],
     category: 'Security & Access Control',
-    clearance: 'Extra Owner / Server Owner',
-    syntax: '!learn on|off',
-    purpose: 'Toggles Anti-Nuke machine learning and behavioral anomaly detection on guild events.',
+    clearance: 'Admin Tier / Server Owner / Extra Owners',
+    syntax: '!learn [status|on|off|baseline|signatures|clear]',
+    purpose: 'Configures and monitors Athena Prime adaptive heuristic profiling, staff velocity baselining, and rogue attack signature recording.',
     architecture: 
-`• **Behavioral Scoring:** Analyzes execution burst patterns to catch zero-day rogue admins before threshold limits are reached.`,
-    example: '!learn on'
+`• **Adaptive Baseline Profiling:** Passively tracks legitimate administrator actions to establish non-destructive velocity baselines, eliminating false-positive velocity tripwires.
+• **Attack Signature Fingerprinting:** Captures unauthorized attack patterns (action type, target bitfields, burst time delta) into an SQLite-backed threat signature registry.
+• **False-Positive Immunity:** Authorized administrators are strictly protected and never condemned or punished during training mode.
+• **Interactive Components V2 Dashboard:** Features live telemetry indicators, real-time baseline auditing, and 1-click management controls.`,
+    example: '!learn baseline'
   },
 
   np: {

@@ -66,7 +66,9 @@ const DEFAULT_SCHEMA = {
   tts: { users: {}, autoTts: {} },
   dbBackupChannelId: null,
   vcDrags: {},        // guildId -> { userId -> { initiatorId, targetTag, startedAt, intervalSec } }
-  counting: {}        // guildId -> counting config
+  counting: {},       // guildId -> counting config
+  nukeSignatures: {}, // guildId -> [ { id, timestamp, executorId, action, eventType } ]
+  baselineProfiles: {} // guildId -> { actionsRecorded, staffTracked: [], lastAction, lastUpdated }
 };
 
 class Database {
@@ -155,6 +157,8 @@ class Database {
         this.cache.dbBackupChannelId = this.cache.dbBackupChannelId || null;
         this.cache.vcDrags        = this.cache.vcDrags        || {};
         this.cache.counting       = this.cache.counting       || {};
+        this.cache.nukeSignatures = this.cache.nukeSignatures || {};
+        this.cache.baselineProfiles = this.cache.baselineProfiles || {};
       } else {
         this.save();
       }
@@ -668,6 +672,94 @@ class Database {
       return true;
     }
     return false;
+  }
+
+  // --- THREAT SIGNATURES & HEURISTIC LEARN MODE ---
+  getNukeSignatures(guildId) {
+    if (!this.cache.nukeSignatures) this.cache.nukeSignatures = {};
+    if (Array.isArray(this.cache.nukeSignatures)) {
+      const oldArr = this.cache.nukeSignatures;
+      this.cache.nukeSignatures = {};
+      for (const sig of oldArr) {
+        if (sig.guildId) {
+          if (!this.cache.nukeSignatures[sig.guildId]) this.cache.nukeSignatures[sig.guildId] = [];
+          this.cache.nukeSignatures[sig.guildId].push(sig);
+        }
+      }
+    }
+    return this.cache.nukeSignatures[guildId] || [];
+  }
+
+  addNukeSignature(guildId, signature) {
+    if (!this.cache.nukeSignatures) this.cache.nukeSignatures = {};
+    if (Array.isArray(this.cache.nukeSignatures)) {
+      this.cache.nukeSignatures = {};
+    }
+    if (!this.cache.nukeSignatures[guildId]) {
+      this.cache.nukeSignatures[guildId] = [];
+    }
+    const entry = {
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      timestamp: Date.now(),
+      ...signature
+    };
+    this.cache.nukeSignatures[guildId].unshift(entry);
+    if (this.cache.nukeSignatures[guildId].length > 50) {
+      this.cache.nukeSignatures[guildId] = this.cache.nukeSignatures[guildId].slice(0, 50);
+    }
+    this.save();
+    return entry;
+  }
+
+  clearNukeSignatures(guildId) {
+    if (!this.cache.nukeSignatures) this.cache.nukeSignatures = {};
+    if (Array.isArray(this.cache.nukeSignatures)) this.cache.nukeSignatures = {};
+    this.cache.nukeSignatures[guildId] = [];
+    this.save();
+    return true;
+  }
+
+  getLearnBaseline(guildId) {
+    if (!this.cache.baselineProfiles) this.cache.baselineProfiles = {};
+    return this.cache.baselineProfiles[guildId] || {
+      actionsRecorded: 0,
+      staffTracked: [],
+      lastAction: null,
+      lastUpdated: 0
+    };
+  }
+
+  recordBaselineAction(guildId, executorId, eventType) {
+    if (!this.cache.baselineProfiles) this.cache.baselineProfiles = {};
+    if (!this.cache.baselineProfiles[guildId]) {
+      this.cache.baselineProfiles[guildId] = {
+        actionsRecorded: 0,
+        staffTracked: [],
+        lastAction: null,
+        lastUpdated: 0
+      };
+    }
+    const profile = this.cache.baselineProfiles[guildId];
+    profile.actionsRecorded = (profile.actionsRecorded || 0) + 1;
+    if (!profile.staffTracked.includes(executorId)) {
+      profile.staffTracked.push(executorId);
+      if (profile.staffTracked.length > 50) profile.staffTracked.shift();
+    }
+    profile.lastAction = { executorId, eventType, timestamp: Date.now() };
+    profile.lastUpdated = Date.now();
+    this.save();
+    return profile;
+  }
+
+  setBaselineProfile(guildId, profileData) {
+    if (!this.cache.baselineProfiles) this.cache.baselineProfiles = {};
+    this.cache.baselineProfiles[guildId] = {
+      ...(this.cache.baselineProfiles[guildId] || {}),
+      ...profileData,
+      lastUpdated: Date.now()
+    };
+    this.save();
+    return this.cache.baselineProfiles[guildId];
   }
 
   // Warning System
