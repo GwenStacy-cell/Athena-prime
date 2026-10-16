@@ -66,15 +66,31 @@ export default {
       
       try {
         const client = interaction.client;
-        const channel = await client.channels.fetch(channelId).catch(() => null);
+        const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
         if (channel) {
-          await channel.send({ content: replyText, reply: { messageReference: messageId } }).catch(() => null);
-          await interaction.update({ content: '-# <a:uptime:1552608831060844575> Reply sent successfully!', components: [] });
+          let sent = null;
+          if (messageId) {
+            sent = await channel.send({
+              content: replyText,
+              reply: { messageReference: messageId, failIfNotExists: false }
+            }).catch(() => null);
+          }
+          if (!sent) {
+            sent = await channel.send({ content: replyText }).catch(() => null);
+          }
+          if (sent) {
+            return interaction.reply({ content: '-# <a:atheNATICK:1557841381630681106> Reply sent successfully to the channel!', flags: 64 });
+          } else {
+            return interaction.reply({ content: '-# <:off:1533844858983157851> Failed to send message to the destination channel.', flags: 64 });
+          }
         } else {
-          await interaction.reply({ content: '-# <:off:1533844858983157851> Failed to send reply: Channel not found.', flags: 64 });
+          return interaction.reply({ content: '-# <:off:1533844858983157851> Failed to send reply: Channel not found.', flags: 64 });
         }
       } catch (e) {
-        await interaction.reply({ content: '-# <:off:1533844858983157851> Error sending reply.', flags: 64 });
+        console.error('[ping_modal_reply] Error:', e);
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({ content: '-# <:off:1533844858983157851> Error sending reply.', flags: 64 }).catch(() => null);
+        }
       }
       return;
     }

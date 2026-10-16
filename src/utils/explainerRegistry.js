@@ -165,6 +165,32 @@ Athena's automod engine inspects every message across Discord Gateway at raw vel
     ]
   },
 
+  voice: {
+    id: 'voice',
+    label: 'Voice Grid & Channel Drag Architecture',
+    aliases: ['vcdrag', 'vcmove', 'massmove', 'massdc', 'voicegrid', 'voicecontrol'],
+    title: 'Voice Grid Control & Channel Drag Architecture | <a:atheNATICK:1557841381630681106>',
+    description: 'High-velocity loop dragging, mass channel evacuations, voice state severing, and anti-drag protections.',
+    pages: [
+      {
+        pageTitle: 'Voice Drag Loops & Mass Relocation Mechanics',
+        content:
+`# High-Velocity Voice Dragging (\`!vcdrag\`)
+• **Objective:** Disrupts, confuses, or contains rogue actors across voice channels.
+• **Execution Mechanics:**
+  1. Cycles the target member through all active voice channels sequentially.
+  2. Runs via a managed non-blocking interval (\`activeDrags\` map) with configurable delays (default: 2s).
+  3. Dispatches Discord REST \`PATCH /guilds/{id}/members/{user}\` setting successive \`channel_id\` values.
+  4. Halted safely via \`!vcdragstop\`.
+• **Immunity:** Automatically rejects dragging the Server Owner, Bot Owner, or Extra Owners.
+
+# Mass Relocation & Disconnect (\`!massmove\` & \`!massdc\`)
+• **Mass Move:** Atomically gathers all occupants of a source voice channel and transfers them to a destination channel with a 150ms buffer to respect Discord voice rate-limiting.
+• **Mass Disconnect:** Forcibly kicks all occupants out of a voice channel by patching \`channel_id: null\`, instantly clearing raided or sound-spammed voice channels.`
+      }
+    ]
+  },
+
   moderation: {
     id: 'moderation',
     label: 'Moderation & Mass Actions',
@@ -856,6 +882,149 @@ export const DETAILED_COMMANDS = {
     architecture: 
 `• **Bypass Memory Cache:** Evaluates message and webhook authors against bypass list to prevent false-positive spam mutes.`,
     example: '!spampermit @WebhookBot'
+  },
+
+  vcdrag: {
+    name: 'vcdrag',
+    aliases: ['loopdrag', 'vcloop'],
+    category: 'Voice Grid Control & Security',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!vcdrag <@user> [interval_seconds]',
+    purpose: 'Enforces an automated high-velocity drag loop on a target member across all voice channels in the guild.',
+    architecture: 
+`• **Voice Channel Enumeration:** Queries all cached guild voice channels (\`ChannelType.GuildVoice\` and \`GuildStageVoice\`).
+• **Gateway Patch Dispatch:** Sequentially updates target's voice state via \`PATCH /guilds/{id}/members/{user}\` with successive \`channel_id\` values.
+• **Threaded Interval Loop:** Holds interval reference in memory (\`activeDrags\` map) cycling channels every N seconds until terminated by \`!vcdragstop\`.
+• **Immunity Enforcement:** Asserts that target is subordinate; Server Owner, Bot Owner, and Extra Owners are completely immune.`,
+    example: '!vcdrag @user 2'
+  },
+
+  vcdragstop: {
+    name: 'vcdragstop',
+    aliases: ['dragstop', 'stopdrag'],
+    category: 'Voice Grid Control & Security',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!vcdragstop <@user>',
+    purpose: 'Immediately halts an active voice channel drag loop for the specified member.',
+    architecture: 
+`• **Timer Cancellation:** Clears the active \`setInterval\` timer associated with \`\${guildId}:\${userId}\`.
+• **Memory Garbage Collection:** Deletes the session key from \`activeDrags\` map to release memory and restore member stability.`,
+    example: '!vcdragstop @user'
+  },
+
+  massmove: {
+    name: 'massmove',
+    aliases: ['vcmove', 'moveall'],
+    category: 'Voice Grid Control & Security',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!massmove <destinationVC> [sourceVC]',
+    purpose: 'Atomically transfers all connected members from one voice channel into a destination voice channel.',
+    architecture: 
+`• **Voice State Resolution:** Collects all occupants of \`sourceVC\` (or caller's active voice channel if omitted).
+• **Throttled Batch Pipeline:** Dispatches \`member.voice.setChannel(destVc.id)\` sequentially with a 150ms buffer to respect Discord voice rate-limiting.
+• **Caller Immunity:** Does not relocate the executing owner unless explicitly configured.`,
+    example: '!massmove #StageChannel #WaitingRoom'
+  },
+
+  massdc: {
+    name: 'massdc',
+    aliases: ['vcdc', 'massdisconnect', 'dcall'],
+    category: 'Voice Grid Control & Security',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!massdc [voiceChannel]',
+    purpose: 'Forcibly disconnects all members from a voice channel in a single batched sweep.',
+    architecture: 
+`• **Voice State Severing:** Calls \`PATCH /guilds/{id}/members/{user}\` setting \`channel_id: null\` on each target member.
+• **Owner & Staff Immunity:** Automatically ignores the Server Owner, Bot Owner, and Extra Owners during the sweep.
+• **Raid Neutralization:** Instantly clears compromised, raided, or audio-spammed voice channels.`,
+    example: '!massdc #GeneralVC'
+  },
+
+  muteall: {
+    name: 'muteall',
+    aliases: ['vcmuteall', 'servermuteall'],
+    category: 'Voice Grid Control & Security',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!muteall [voiceChannel]',
+    purpose: 'Server-mutes every member in the active voice channel simultaneously.',
+    architecture: 
+`• **Bulk Voice Patching:** Dispatches \`member.voice.setMute(true)\` across all channel occupants via direct API calls.
+• **Security Audit Stamping:** Dispatches forensic event record to the security log channel detailing affected member count and executor tier.`,
+    example: '!muteall'
+  },
+
+  unmuteall: {
+    name: 'unmuteall',
+    aliases: ['vcunmuteall', 'serverunmuteall'],
+    category: 'Voice Grid Control & Security',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!unmuteall [voiceChannel]',
+    purpose: 'Lifts server-mute on all members in the voice channel.',
+    architecture: 
+`• **Voice State Restoration:** Iterates through members holding \`serverMute: true\` and calls \`member.voice.setMute(false)\`.`,
+    example: '!unmuteall'
+  },
+
+  deafenall: {
+    name: 'deafenall',
+    aliases: ['vcdeafenall', 'serverdeafenall'],
+    category: 'Voice Grid Control & Security',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!deafenall [voiceChannel]',
+    purpose: 'Server-deafens all occupants in the active voice channel to prevent audio interception during sensitive announcements.',
+    architecture: 
+`• **Bulk Deafen Dispatch:** Dispatches \`member.voice.setDeaf(true)\` on each occupant across the voice channel.`,
+    example: '!deafenall'
+  },
+
+  undeafenall: {
+    name: 'undeafenall',
+    aliases: ['vcundeafenall', 'serverundeafenall'],
+    category: 'Voice Grid Control & Security',
+    clearance: 'Extra Owner / Server Owner',
+    syntax: '!undeafenall [voiceChannel]',
+    purpose: 'Restores normal audio reception for all members in the voice channel.',
+    architecture: 
+`• **Voice State Restoration:** Clears \`serverDeaf\` attribute on all members in the target VC.`,
+    example: '!undeafenall'
+  },
+
+  vcprotect: {
+    name: 'vcprotect',
+    aliases: ['lockvc', 'protectvc'],
+    category: 'Voice Grid Control & Security',
+    clearance: 'Admin Tier / Extra Owner',
+    syntax: '!vcprotect <#vc|ID>',
+    purpose: 'Enforces anti-drag and anti-disconnect protection on sensitive voice channels.',
+    architecture: 
+`• **Voice State Wiretap:** Monitors \`voiceStateUpdate\` packets; if an unauthorized moderator disconnects or drags protected occupants, Athena immediately reverts the action and disciplines the offender.`,
+    example: '!vcprotect #ExecutiveRoom'
+  },
+
+  setup: {
+    name: 'setup',
+    aliases: ['setlogs', 'setquarantine', 'configsetup'],
+    category: 'Server Administration',
+    clearance: 'Administrator',
+    syntax: '!setup [logs|role|vc] <#channel|@role|ID>',
+    purpose: 'Binds and configures core server resources (Security Logs Channel, Quarantine Role, Quarantine Voice) strictly by Discord Snowflake IDs.',
+    architecture: 
+`• **Database ID Binding:** Extracts snowflake IDs from mentions or raw digits and queries guild cache/API. Writes \`securityLogChannelId\`, \`logChannel\`, \`quarantineRoleId\`, and \`quarantineVcId\` to SQLite.
+• **Zero Name Fallback:** Eliminates display name spoofing; all Athena modules detect bound entities exclusively by ID.`,
+    example: '!setup logs #security-logs'
+  },
+
+  restore: {
+    name: 'restore',
+    aliases: ['loadbackup', 'applysnapshot'],
+    category: 'Server Administration',
+    clearance: 'Server Owner / Extra Owner',
+    syntax: '!restore <backupId>',
+    purpose: 'Restores server structure, roles, permissions, and channel layouts from an encrypted cloud backup snapshot.',
+    architecture: 
+`• **Snapshot Deserialization:** Reads encrypted snapshot JSON from private cloud storage channel.
+• **Hierarchical Reconstruction:** Recreates roles in original hierarchy order with exact permission bitfields, then rebuilds categories, channels, and permission overwrites.`,
+    example: '!restore backup_123456'
   }
 };
 
@@ -1088,14 +1257,19 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
       value: 'onboarding'
     },
     {
-      label: 'Automod & Filter Engine',
-      description: 'Real-time regex, link whitelists, and word filters',
-      value: 'automod'
+      label: 'Voice Grid & Channel Drag',
+      description: 'High-velocity loop dragging, mass move & mass dc',
+      value: 'voice'
     },
     {
       label: 'Moderation & Mass Actions',
       description: 'Anti-raid throttling, rogue admin detection, modmode',
       value: 'moderation'
+    },
+    {
+      label: 'Automod & Filter Engine',
+      description: 'Real-time regex, link whitelists, and word filters',
+      value: 'automod'
     },
     {
       label: 'Quarantine Containment',
@@ -1120,19 +1294,44 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
       content: 
 `# Architecture & Command Deep-Dive Explainer | <a:atheNATICK:1557841381630681106>
 > <a:uptime:1552608831060844575> **Welcome to the Athena Prime Architecture Explainer Engine!**
-> This system provides full under-the-hood technical breakdowns, exploit vector analyses, and gateway mechanics for all core security and management systems.
+> This engine provides full under-the-hood technical breakdowns, raw WebSocket wiretaps, velocity throttling mechanics, zero-day exploit mitigations, and execution internals for all core subsystems.
+> -# **To inspect any specific command:** Type \`${prefix}explain <command>\` (e.g. \`${prefix}explain kick\`, \`${prefix}explain vcdrag\`, \`${prefix}explain massmove\`, \`${prefix}explain unbypassable\`)`
+    },
+    { type: 14, divider: true },
+    {
+      type: 10,
+      content:
+`### 1. Autonomous Security & Zero-Day Antinuke Architecture
+> **Under-the-Hood Mechanics:** Operates on raw WebSocket wiretaps (<1ms processing) to intercept unauthorized guild modifications before they take effect. Employs a strict 60-second unlogged audit log correlation threshold to neutralize zero-audit Linked Role and Onboarding privilege escalations. Sentinel roles and channels are self-healed instantaneously via internal state mirrors.
+• **Covered Commands:** \`${prefix}explain unbypassable\`, \`${prefix}explain antinuke\`, \`${prefix}explain firewall\`, \`${prefix}explain neutralizeonboarding\`, \`${prefix}explain scanserver\`, \`${prefix}explain panic\`, \`${prefix}explain quarantine\`, \`${prefix}explain botwhitelist\`, \`${prefix}explain spampermit\`, \`${prefix}explain autonick\`, \`${prefix}explain learn\`, \`${prefix}explain modmode\`
 
-### Available Architecture Topics:
-• **Security & Linked Role Exploits**: Deep dive on unlogged Linked Role bypasses & the 60s audit threshold.
-• **Persistence Sentinel Roles**: How \`!unbypassable\` maintains unstripable administrative hierarchy.
-• **Onboarding Exploit Guard**: How \`!neutralizeonboarding\` audits and neutralizes prompt roles.
-• **Automod & Link Filters**: Multi-tier regex, punycode de-masking, and role bypasses.
-• **Moderation & Mass Actions**: Rogue admin velocity throttling & emergency panic freezing.
-• **Quarantine Isolation**: Sub-millisecond channel permission containment & role caching.
-• **Cloud Backup & Sync**: Encrypted server state snapshots & instant disaster recovery.
-• **Access Control Tiers**: Three-tier database-enforced role authorization matrix.
+### 2. Voice Grid Control & Channel Drag Architecture
+> **Under-the-Hood Mechanics:** Hooks directly into Discord Voice State Gateway packets (\`VOICE_STATE_UPDATE\`). Commands execute high-velocity sequential state modifications via \`PATCH /guilds/{id}/members/{user}\` with non-blocking timers, rate-limit buffers (150ms), and automated caller/owner immunity enforcement to prevent self-targeting or bot disruption.
+• **Covered Commands:** \`${prefix}explain vcdrag\`, \`${prefix}explain vcdragstop\`, \`${prefix}explain massmove\`, \`${prefix}explain massdc\`, \`${prefix}explain muteall\`, \`${prefix}explain unmuteall\`, \`${prefix}explain deafenall\`, \`${prefix}explain undeafenall\`, \`${prefix}explain jtc\`, \`${prefix}explain vcprotect\`
 
-> -# **To inspect any specific command:** Type \`${prefix}explain <command>\` (e.g. \`${prefix}explain unbypassable\`, \`${prefix}explain antinuke\`, \`${prefix}explain kick\`)`
+### 3. Mass Moderation & Action Velocity Architecture
+> **Under-the-Hood Mechanics:** Leverages batched REST execution pipelines with strict hierarchy boundary checks. Disciplinary actions (kicks, bans, timeouts) verify caller and bot role positions against target bitfields, dispatch pre-action DM notifications, record persistent forensics into SQLite, and tripwire rogue staff accounts exceeding velocity limits (>3 actions/10s).
+• **Covered Commands:** \`${prefix}explain kick\`, \`${prefix}explain ban\`, \`${prefix}explain unban\`, \`${prefix}explain tempban\`, \`${prefix}explain massban\`, \`${prefix}explain masskick\`, \`${prefix}explain timeout\`, \`${prefix}explain untimeout\`, \`${prefix}explain warn\`, \`${prefix}explain warnings\`, \`${prefix}explain clearwarns\`, \`${prefix}explain purge\`, \`${prefix}explain slowmode\`, \`${prefix}explain nuke\``
+    },
+    { type: 14, divider: true },
+    {
+      type: 10,
+      content:
+`### 4. Channel Lifecycle & Access Control List (ACL) Architecture
+> **Under-the-Hood Mechanics:** Manipulates explicit \`@everyone\` and role overwrite bitmasks (\`PermissionOverwrites\`). Channels locked, hidden, or quarantined have their permission bitfields rewritten via direct REST patches without deleting channel history. Nuclear wipes snapshot full metadata before atomic re-creation.
+• **Covered Commands:** \`${prefix}explain lock\`, \`${prefix}explain unlock\`, \`${prefix}explain hide\`, \`${prefix}explain unhide\`, \`${prefix}explain nuke\`, \`${prefix}explain quarantine\`
+
+### 5. Role Hierarchy & Identity Persistence Architecture
+> **Under-the-Hood Mechanics:** Bound to SQLite database tables strictly by Discord Snowflake IDs—eliminating role name or display spoofing vulnerabilities. Handles join-time autoroles, dynamic member stripping, anti-strip self-healing triggers, and three-tier clearance verification.
+• **Covered Commands:** \`${prefix}explain addrole\`, \`${prefix}explain removerole\`, \`${prefix}explain striproles\`, \`${prefix}explain autorole\`, \`${prefix}explain auth\`, \`${prefix}explain tier\`
+
+### 6. Automod, Regex & Phishing Defense Architecture
+> **Under-the-Hood Mechanics:** Pre-dispatch synchronous message content processing. De-cloaks punycode URLs, executes compiled regex dictionaries against spam/phishing patterns, neutralizes unauthorized Discord invites in <1ms, and evaluates role-based bypass caches.
+• **Covered Commands:** \`${prefix}explain automod\`, \`${prefix}explain spampermit\`
+
+### 7. Cloud Snapshot & State Restoration Architecture
+> **Under-the-Hood Mechanics:** Serializes comprehensive guild state (roles, permissions, categories, channels, topic strings, bot settings) into AES-encrypted JSON snapshots stored off-site in private backup channels for disaster recovery.
+• **Covered Commands:** \`${prefix}explain backup\`, \`${prefix}explain restore\`, \`${prefix}explain setup\``
     },
     { type: 14, divider: true },
     {
@@ -1151,9 +1350,9 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
       type: 1,
       components: [
         { type: 2, custom_id: 'arch_topic_security', label: 'Security & Exploits', style: 2 },
+        { type: 2, custom_id: 'arch_topic_voice', label: 'Voice Grid Control', style: 2 },
         { type: 2, custom_id: 'arch_topic_unbypassable', label: 'Sentinel Roles', style: 2 },
-        { type: 2, custom_id: 'arch_topic_onboarding', label: 'Onboarding Guard', style: 2 },
-        { type: 2, custom_id: 'arch_topic_automod', label: 'Automod Engine', style: 2 },
+        { type: 2, custom_id: 'arch_topic_moderation', label: 'Mass Moderation', style: 2 },
         { type: 2, custom_id: 'arch_close', label: 'Close', style: 2, emoji: { id: '1523766340752642109' } }
       ]
     },

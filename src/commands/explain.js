@@ -77,6 +77,7 @@ export const commands = [
           { name: 'Security: Zero-Day & Linked Role Exploits', value: 'security' },
           { name: 'Persistence: Unbypassable Sentinel Roles', value: 'unbypassable' },
           { name: 'Onboarding: Neutralize Dangerous Prompt Roles', value: 'onboarding' },
+          { name: 'Voice: Voice Grid Control & Channel Drag', value: 'voice' },
           { name: 'Automod: Multi-Tier Filter & Regex Engine', value: 'automod' },
           { name: 'Moderation: Rogue Admin & Mass Action Defense', value: 'moderation' },
           { name: 'Quarantine: Zero-Trust Containment & Role Strip', value: 'quarantine' },
@@ -84,6 +85,11 @@ export const commands = [
           { name: 'Auth: Three-Tier Role Authorization Matrix', value: 'auth' },
           { name: 'Command: !antinuke (Defense Panel & Wiretap)', value: 'antinuke' },
           { name: 'Command: !unbypassable (Sentinel Persistence)', value: 'unbypassable' },
+          { name: 'Command: !vcdrag (Voice Loop Drag Engine)', value: 'vcdrag' },
+          { name: 'Command: !massmove (Atomic Voice Relocation)', value: 'massmove' },
+          { name: 'Command: !massdc (Mass Voice Disconnection)', value: 'massdc' },
+          { name: 'Command: !muteall (Voice Grid Mute Engine)', value: 'muteall' },
+          { name: 'Command: !deafenall (Voice Grid Deafen Engine)', value: 'deafenall' },
           { name: 'Command: !kick (Hierarchy Kick Engine)', value: 'kick' },
           { name: 'Command: !ban (Mass Ban & Wiretap Eviction)', value: 'ban' },
           { name: 'Command: !timeout (Gateway Duration Mute)', value: 'timeout' },
@@ -98,7 +104,8 @@ export const commands = [
           { name: 'Command: !neutralizeonboarding (Onboarding Audit)', value: 'neutralizeonboarding' },
           { name: 'Command: !panic (Instant Server Lockdown)', value: 'panic' },
           { name: 'Command: !scanserver (Dangerous Permissions Audit)', value: 'scanserver' },
-          { name: 'Command: !backup (Cloud Snapshot Serialization)', value: 'backup' }
+          { name: 'Command: !setup (ID-Backed Resource Binding)', value: 'setup' },
+          { name: 'Command: !backup / !restore (Cloud Snapshot Serialization)', value: 'backup' }
         ];
 
         const filtered = choices
