@@ -720,7 +720,17 @@ export default {
           comps.unshift({ type: 17, components: [{ type: 10, content: options.content }] });
         }
       }
-      return { components: comps, flags };
+      const data = { components: comps, flags };
+      if (options.attachments && Array.isArray(options.attachments)) {
+        data.attachments = options.attachments;
+      } else if (options.files && Array.isArray(options.files)) {
+        data.attachments = options.files.map((f, i) => ({
+          id: String(i),
+          filename: f.name || (typeof f === 'string' ? f.split(/[\\/]/).pop() : `file_${i}`),
+          description: f.description
+        }));
+      }
+      return data;
     };
 
     const _editReply = interaction.editReply.bind(interaction);

@@ -258,7 +258,15 @@ export var cv2 = Object.assign(_m(false), {
         }
       }
       body = { components: comps, flags: payload.flags };
-      if (payload.files) body.files = payload.files;
+      if (payload.attachments && Array.isArray(payload.attachments)) {
+        body.attachments = payload.attachments;
+      } else if (payload.files && Array.isArray(payload.files)) {
+        body.attachments = payload.files.map((f, i) => ({
+          id: String(i),
+          filename: f.name || (typeof f === 'string' ? f.split(/[\\/]/).pop() : `file_${i}`),
+          description: f.description
+        }));
+      }
     }
     
     if (ctx.replied || ctx.deferred) {
@@ -267,7 +275,7 @@ export var cv2 = Object.assign(_m(false), {
 
     // type 4 = ChannelMessageWithSource (Reply)
     // type 7 = UpdateMessage (Update)
-    return ctx.client.rest.post(`/interactions/${ctx.id}/${ctx.token}/callback`, { body: { type: type, data: body } });
+    return ctx.client.rest.post(`/interactions/${ctx.id}/${ctx.token}/callback`, { body: { type: type, data: body }, files: payload.files });
   },
   edit: async function(ctx, payload) {
     if (typeof payload === 'string') payload = { content: payload };
@@ -277,11 +285,20 @@ export var cv2 = Object.assign(_m(false), {
     let body = payload;
     if (isCV2) {
       body = { components: payload.components, flags: payload.flags };
+      if (payload.attachments && Array.isArray(payload.attachments)) {
+        body.attachments = payload.attachments;
+      } else if (payload.files && Array.isArray(payload.files)) {
+        body.attachments = payload.files.map((f, i) => ({
+          id: String(i),
+          filename: f.name || (typeof f === 'string' ? f.split(/[\\/]/).pop() : `file_${i}`),
+          description: f.description
+        }));
+      }
     }
     if (ctx.editReply) {
-      return ctx.client.rest.patch(`/webhooks/${ctx.client.user.id}/${ctx.token}/messages/@original`, { body });
+      return ctx.client.rest.patch(`/webhooks/${ctx.client.user.id}/${ctx.token}/messages/@original`, { body, files: payload.files });
     } else if (ctx.edit) {
-      return ctx.client.rest.patch(`/channels/${ctx.channel.id}/messages/${ctx.id}`, { body });
+      return ctx.client.rest.patch(`/channels/${ctx.channel.id}/messages/${ctx.id}`, { body, files: payload.files });
     }
   },
 });

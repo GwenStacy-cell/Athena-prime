@@ -572,12 +572,11 @@ export const commands = [
         };
 
         if (interaction.deferred || interaction.replied) {
-          const editMsg = await interaction.editReply({ files: [attachment] });
-          const directUrl = editMsg?.attachments?.first()?.url;
-          if (directUrl) {
-            pingContainer.components[1].items[0].media.url = directUrl;
-          }
-          await interaction.editReply({ components: [pingContainer] });
+          await interaction.editReply({
+            components: [pingContainer],
+            files: [attachment],
+            flags: 32768
+          });
         } else {
           await interaction.reply({
             components: [pingContainer],
