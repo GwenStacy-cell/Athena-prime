@@ -4,17 +4,9 @@ import cv2 from '../cv2.js';
 import { generateAIResponse, formatAIToGreyMarkdown } from '../utils/ai.js';
 
 /**
- * Resolves the primary loading emoji (loading1 or fallback loading)
+ * Resolves the primary loading animated emoji (:loading~1: from security enable all)
  */
-function resolveLoadingEmoji(guild, client) {
-  const found =
-    guild?.emojis?.cache?.find(e => e.name.toLowerCase() === 'loading1') ||
-    client?.emojis?.cache?.find(e => e.name.toLowerCase() === 'loading1') ||
-    guild?.emojis?.cache?.find(e => e.name.toLowerCase() === 'loading') ||
-    client?.emojis?.cache?.find(e => e.name.toLowerCase() === 'loading');
-  if (found) {
-    return `<${found.animated ? 'a:' : ':'}${found.name}:${found.id}>`;
-  }
+function resolveLoadingEmoji() {
   return '<a:loading:1542155051286396938>';
 }
 

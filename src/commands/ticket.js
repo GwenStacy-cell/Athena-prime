@@ -325,7 +325,7 @@ export async function handleTicketButtons(interaction) {
       return interaction.reply({ content: '-# **Rate Limit:** You already have an open ticket!', flags: 64 }).catch(()=>null);
     }
     
-    await interaction.reply({ content: '-# <a:Loading:1537404628826587207> **Creating your ticket...**', flags: 64 }).catch(()=>null);
+    await interaction.reply({ content: '-# <a:loading:1542155051286396938> **Creating your ticket...**', flags: 64 }).catch(()=>null);
     
     try {
       // First generate the ID
@@ -450,7 +450,7 @@ export async function handleTicketButtons(interaction) {
       }
     }
     
-    await interaction.reply({ content: '-# <a:Loading:1537404628826587207> **Closing ticket in 5 seconds...**' }).catch(()=>null);
+    await interaction.reply({ content: '-# <a:loading:1542155051286396938> **Closing ticket in 5 seconds...**' }).catch(()=>null);
     
     setTimeout(async () => {
       const textChannel = interaction.channel;
@@ -537,7 +537,7 @@ export async function handleTicketModals(interaction) {
     const category = guild.channels.cache.get(config.categoryId);
     if (!category) return interaction.reply({ content: '-# **Configuration Error:** Ticket category not found.', flags: 64 }).catch(()=>null);
     
-    await interaction.reply({ content: '-# <a:Loading:1537404628826587207> **Creating your ticket...**', flags: 64 }).catch(()=>null);
+    await interaction.reply({ content: '-# <a:loading:1542155051286396938> **Creating your ticket...**', flags: 64 }).catch(()=>null);
     
     try {
       config.ticketCount = (config.ticketCount || 0) + 1;

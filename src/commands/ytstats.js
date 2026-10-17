@@ -174,7 +174,7 @@ export async function handleYtStatsButton(interaction) {
 
 export async function handleYtStatsModal(interaction) {
   if (interaction.customId === 'ytstats_auto_modal') {
-    await interaction.reply({ content: '-# <a:Loading:1537404628826587207> **Building YouTube Layout...**', flags: 64 }).catch(()=>null);
+    await interaction.reply({ content: '-# <a:loading:1542155051286396938> **Building YouTube Layout...**', flags: 64 }).catch(()=>null);
     let ytHandle = interaction.fields.getTextInputValue('yt_handle').trim();
     if (ytHandle.includes('youtube.com/')) {
       const parts = ytHandle.split('youtube.com/');
