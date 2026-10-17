@@ -111,7 +111,8 @@ export const commands = [
           { name: 'Command: !panic (Instant Server Lockdown)', value: 'panic' },
           { name: 'Command: !scanserver (Dangerous Permissions Audit)', value: 'scanserver' },
           { name: 'Command: !setup (ID-Backed Resource Binding)', value: 'setup' },
-          { name: 'Command: !backup / !restore (Cloud Snapshot Serialization)', value: 'backup' }
+          { name: 'Command: !backup / !restore (Cloud Snapshot Serialization)', value: 'backup' },
+          { name: 'Command: !db (Database Cloud Sync & Recovery)', value: 'db' }
         ];
 
         const filtered = choices

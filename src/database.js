@@ -166,6 +166,27 @@ class Database {
         this.cache.counting       = this.cache.counting       || {};
         this.cache.nukeSignatures = this.cache.nukeSignatures || {};
         this.cache.baselineProfiles = this.cache.baselineProfiles || {};
+        this.cache.economy        = this.cache.economy        || {};
+        this.cache.shopItems      = this.cache.shopItems      || {};
+        this.cache.userRankThemes = this.cache.userRankThemes || {};
+        this.cache.lockdownSnapshots = this.cache.lockdownSnapshots || {};
+        this.cache.studioTemplates = this.cache.studioTemplates || {};
+        this.cache.minigamesStats = this.cache.minigamesStats || {};
+        this.cache.voiceAnalytics = this.cache.voiceAnalytics || {};
+        this.cache.bumpReminders  = this.cache.bumpReminders  || {};
+        this.cache.stickyMessages = this.cache.stickyMessages || {};
+
+        // Dynamic safety: ensure every key defined in DEFAULT_SCHEMA exists in this.cache
+        let needsSave = false;
+        for (const [key, defaultVal] of Object.entries(DEFAULT_SCHEMA)) {
+          if (this.cache[key] === undefined) {
+            this.cache[key] = Array.isArray(defaultVal) ? [] : typeof defaultVal === 'object' && defaultVal !== null ? { ...defaultVal } : defaultVal;
+            needsSave = true;
+          }
+        }
+        if (needsSave) {
+          this.save();
+        }
       } else {
         this.save();
       }

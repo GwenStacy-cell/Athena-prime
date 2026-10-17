@@ -166,6 +166,45 @@ export function getDatabaseMetrics() {
   const msgDeleteServers = guilds.filter(g => g && g.serverLogs?.modules?.msgDeletes?.enabled).length;
   const msgEditLogChannels = guilds.filter(g => g && (g.serverLogs?.modules?.msgEdits?.channelId || (g.serverLogs?.modules?.msgEdits?.enabled && g.serverLogs?.defaultChannelId))).length;
 
+  // Heuristic threat engine & profiling breakdown (!learn)
+  const nukeSignaturesCount = Object.values(cache.nukeSignatures || {}).reduce((acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0), 0);
+  const nukeSignatureServers = Object.keys(cache.nukeSignatures || {}).filter(k => (cache.nukeSignatures[k] || []).length > 0).length;
+  const baselineProfiles = Object.keys(cache.baselineProfiles || {}).length;
+  const staffBaselinedCount = Object.values(cache.baselineProfiles || {}).reduce((acc, p) => acc + (Array.isArray(p?.staffTracked) ? p.staffTracked.length : 0), 0);
+
+  // Role Tier Authorization matrix (!auth / !tiers)
+  const authTierServers = guilds.filter(g => g && g.authRoles && (
+    (Array.isArray(g.authRoles.admin) && g.authRoles.admin.length > 0) || 
+    (Array.isArray(g.authRoles.mod) && g.authRoles.mod.length > 0) || 
+    (Array.isArray(g.authRoles.staff) && g.authRoles.staff.length > 0)
+  )).length;
+  const authTierRolesCount = guilds.reduce((acc, g) => {
+    let count = 0;
+    if (Array.isArray(g?.authRoles?.admin)) count += g.authRoles.admin.length;
+    if (Array.isArray(g?.authRoles?.mod)) count += g.authRoles.mod.length;
+    if (Array.isArray(g?.authRoles?.staff)) count += g.authRoles.staff.length;
+    return acc + count;
+  }, 0);
+
+  // Emergencies, 2FA & Spam Permits
+  const emergencySnapshots = Object.keys(cache.emergencies || {}).length;
+  const spamPermittedUsers = (cache.spamPermitted || []).length;
+  const twoFactorServers = guilds.filter(g => g && g.twoFactorVerified).length;
+
+  // Music, Liked Songs & TTS
+  const musicChannels = guilds.filter(g => g && g.musicChannelId).length;
+  const likedSongsUsers = Object.keys(cache.likedSongs || {}).length;
+  const likedSongsTotal = Object.values(cache.likedSongs || {}).reduce((acc, songs) => acc + (Array.isArray(songs) ? songs.length : 0), 0);
+  const ttsUsers = Object.keys(cache.tts?.users || {}).length;
+  const autoTtsChannels = Object.keys(cache.tts?.autoTts || {}).length;
+
+  // AFK, Bump Reminders, Edit Ratings & Sticky Messages
+  const afkUsers = Object.keys(cache.afk || {}).length;
+  const bumpReminderGuilds = Object.keys(cache.bumpReminders || {}).length;
+  const editRatingMessages = Object.keys(cache.editRatings || {}).length;
+  const rateChannels = Object.keys(cache.rateChannels || {}).length;
+  const stickyChannels = Object.values(cache.stickyMessages || {}).reduce((acc, g) => acc + Object.keys(g || {}).length, 0);
+
   return {
     guilds: Object.keys(cache.guilds || {}).length,
     customPrefixes: guilds.filter(g => g && g.prefix && g.prefix !== '!').length,
@@ -316,7 +355,30 @@ export function getDatabaseMetrics() {
     minigamesWagered: Object.values(cache.minigamesStats || {}).reduce((acc, g) => acc + Object.values(g || {}).reduce((uAcc, u) => uAcc + (u?.totalWagered || 0), 0), 0),
     studioTemplates: Object.values(cache.studioTemplates || {}).reduce((acc, g) => acc + Object.keys(g || {}).length, 0),
     voiceAnalyticsServers: Object.keys(cache.voiceAnalytics || {}).length,
-    captchaVerification: Object.values(cache.verification || {}).filter(v => v && (v.mode === 'captcha' || v.mode === 'math')).length
+    captchaVerification: Object.values(cache.verification || {}).filter(v => v && (v.mode === 'captcha' || v.mode === 'math')).length,
+
+    nukeSignaturesCount,
+    nukeSignatureServers,
+    baselineProfiles,
+    staffBaselinedCount,
+
+    authTierServers,
+    authTierRolesCount,
+    emergencySnapshots,
+    spamPermittedUsers,
+    twoFactorServers,
+
+    musicChannels,
+    likedSongsUsers,
+    likedSongsTotal,
+    ttsUsers,
+    autoTtsChannels,
+
+    afkUsers,
+    bumpReminderGuilds,
+    editRatingMessages,
+    rateChannels,
+    stickyChannels
   };
 }
 
@@ -334,14 +396,19 @@ export function formatDatabaseMetrics(m, options = {}) {
   text += 
     `**Server Profiles & Configurations:**\n` +
     `> -# **Tracked Servers:** \`${m.guilds}\` | **Prefixes:** \`${m.customPrefixes}\` | **Auto-Nicks:** \`${m.autoNicks}\`\n` +
-    `> -# **Accent Colors:** \`${m.accentColors}\` | **Dashboards:** \`${m.dashboardChannels}\`\n\n` +
+    `> -# **Accent Colors:** \`${m.accentColors}\` | **Dashboards:** \`${m.dashboardChannels}\` | **2FA Gates:** \`${m.twoFactorServers || 0} servers\`\n\n` +
 
     `**Security & Anti-Nuke Engine:**\n` +
     `> -# **Security Active:** \`${m.securityServers} servers\` | **Honeypots:** \`${m.honeypots}\` | **Raid Mode:** \`${m.raidModeServers}\`\n` +
     `> -# **Shield Modules:** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bots: ${m.antiBotAddServers}, Linked Role: ${m.antiLinkedRoleServers || 0}\`\n` +
     `> -# **Persistence Roles:** \`${m.unbypassableRolesCount || 0} Unbypassable, ${m.firewallRolesCount || 0} Firewall bound\`\n` +
-    `> -# **Emergency Shield:** \`${m.lockdownSnapshots || 0} panic lockdown snapshots | Anti-Phishing: Active | CAPTCHA Gates: ${m.captchaVerification || 0}\`\n` +
+    `> -# **Emergency Shield:** \`${m.lockdownSnapshots || 0} panic lockdown snapshots | Emergency Snapshots: ${m.emergencySnapshots || 0} | CAPTCHA Gates: ${m.captchaVerification || 0}\`\n` +
     `> -# **Thresholds:** \`${m.antiNukeThresholds} configured limits\`\n\n` +
+
+    `**Heuristic Threat Engine & Role Clearances:**\n` +
+    `> -# **Heuristic Baselines:** \`${m.baselineProfiles || 0} velocity baselines (${m.staffBaselinedCount || 0} staff tracked)\`\n` +
+    `> -# **Threat Signatures:** \`${m.nukeSignaturesCount || 0} anomaly signatures (${m.nukeSignatureServers || 0} servers active)\`\n` +
+    `> -# **Role Clearances:** \`${m.authTierServers || 0} servers with 3-tier authorizations (${m.authTierRolesCount || 0} roles assigned) | Spam Permits: ${m.spamPermittedUsers || 0}\`\n\n` +
 
     `**Automod Protection Matrix:**\n` +
     `> -# **Automod Servers:** \`${m.automodServers} active\` | **Word Filter:** \`${m.wordFilterServers}\` (${m.blacklistedWordsCount} words)\n` +
@@ -351,7 +418,8 @@ export function formatDatabaseMetrics(m, options = {}) {
     `**AutoRole, Vanity & Media Integrations:**\n` +
     `> -# **AutoRoles:** \`${m.autoroleHumanServers || 0} human, ${m.autoroleBotServers || 0} bot servers (${m.totalAutoroleBindings || 0} roles assigned)\`\n` +
     `> -# **Vanity Rewards:** \`${m.vanityRewardServers || 0} servers rewarding vanity status\`\n` +
-    `> -# **YouTube Stats:** \`${m.ytStatsChannelsCount || 0} stat VCs (${m.ytStatsServers || 0} servers) | ModMail: ${m.modmailServers || 0} servers\`\n\n` +
+    `> -# **YouTube Stats:** \`${m.ytStatsChannelsCount || 0} stat VCs (${m.ytStatsServers || 0} servers) | ModMail: ${m.modmailServers || 0} servers\`\n` +
+    `> -# **Audio & Media:** \`${m.musicChannels || 0} 24/7 music controller channels | Liked Songs: ${m.likedSongsTotal || 0} tracks saved (${m.likedSongsUsers || 0} users) | Media: ${m.mediaChannels || 0} channels\`\n\n` +
 
     `**Moderation, Warnings & Enforcement:**\n` +
     `> -# **Warnings & Bans:** \`${m.warnings} warnings, ${m.tempBans} tempbans, ${m.maxWarningsSet} servers with max strike limits\`\n` +
@@ -375,7 +443,8 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **Neural AI & Themes:** \`AI Mode: ${m.aiModeServers || 0} servers (${m.aiDedicatedChannels || 0} channels, ${m.aiToxicityServers || 0} toxicity filters) | Rank Roles: ${m.rankRewardsCount || 0} milestones, ${m.customThemesCount || 0} themed profiles\`\n` +
     `> -# **Suggestions, Leveling & Starboard:** \`${m.suggestionChannels || 0} suggestions, ${m.starboardChannels || 0} starboards, XP: ${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
     `> -# **Counting Engine:** \`${m.countingActive || 0} channels (${m.countingGuilds || 0} guilds) | Peak: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak, ${m.countingTotalUsers || 0} counters\`\n` +
-    `> -# **Auto-Quotes & Sticky:** \`${m.quoteChannels} quote channels, ${m.stickyMessages} sticky channels, ${m.adel} auto-delete channels\`\n\n` +
+    `> -# **Auto-Quotes & Sticky:** \`${m.quoteChannels} quote channels, ${m.stickyChannels || 0} sticky channels, ${m.adel} auto-delete channels\`\n` +
+    `> -# **Community State:** \`AFK: ${m.afkUsers || 0} users | Bump Reminders: ${m.bumpReminderGuilds || 0} | Ratings: ${m.editRatingMessages || 0} (${m.rateChannels || 0} channels) | TTS: ${m.ttsUsers || 0} users (${m.autoTtsChannels || 0} channels)\`\n\n` +
 
     `**Voice Systems, Audits & Analytics:**\n` +
     `> -# **Voice Hubs & JTC:** \`${m.homeVc} home VCs, ${m.theaterModeVcs} theater VCs, ${m.jtc} JTC hubs (${m.jtcChannels} temp VCs)\`\n` +
@@ -685,6 +754,11 @@ export async function checkAndAutoRestore(client) {
     console.log(chalk.green.bold(`  • Blacklisted Words & Triggers: Intact (${m.triggers} triggers)`));
     console.log(chalk.green.bold(`  • Quarantine & Autoroles: Intact (${m.quarantines} records)`));
     console.log(chalk.green.bold(`  • Tickets & Giveaways: Intact (${m.tickets} tickets, ${m.giveaways} giveaways)`));
+    console.log(chalk.green.bold(`  • Heuristics & Signatures: Intact (${m.baselineProfiles || 0} baselines, ${m.nukeSignaturesCount || 0} signatures)`));
+    console.log(chalk.green.bold(`  • Role Authorizations: Intact (${m.authTierServers || 0} servers, ${m.authTierRolesCount || 0} tiered roles)`));
+    console.log(chalk.green.bold(`  • Economy & Role Shop: Intact (${m.economyUsers || 0} ledgers, ${m.shopItemsCount || 0} shop items)`));
+    console.log(chalk.green.bold(`  • Custom Rank Themes: Intact (${m.customThemesCount || 0} themed profiles)`));
+    console.log(chalk.green.bold(`  • Emergency Lockdown Bitmasks: Intact (${m.lockdownSnapshots || 0} snapshots)`));
     console.log(chalk.green.bold(`======================================================\n`));
 
     // Notify backup channel

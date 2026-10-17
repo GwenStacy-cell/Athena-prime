@@ -277,6 +277,24 @@ Athena Prime guarantees server survival even against total guild wipeouts:
 
 # 3. Sub-Second Disaster Recovery
 • Running \`!backup load <id>\` restores 100% of server channels, permissions, and roles in exact hierarchical sequence.`
+      },
+      {
+        pageTitle: 'Database Cloud Sync & Host Migration Engine',
+        content:
+`# 1. Automated Persistent Snapshots (\`src/utils/cloudSync.js\` & \`!db\`)
+• **Dual Data Storage Dispatch:** Every 20 minutes (and on boot), flushes in-memory \`db.cache\` to \`data/db.json\` and executes \`wal_checkpoint(TRUNCATE)\` on SQLite \`data/stats.db\`.
+• **Complete Schema Coverage (53+ Categories):**
+  • **Guild Configurations:** Prefixes, antinuke modules, thresholds, 2FA gates, autoroles, whitelists, auto-nicks.
+  • **Heuristic Intelligence:** Staff velocity baselines and anomaly threat signatures from \`!learn\`.
+  • **Role Authorization Matrix:** Three-tier role clearances (Admin, Mod, Staff) and global spam permits.
+  • **Commerce & Themes:** Economy ledgers, role shop perks, wagers, and custom canvas rank themes (Hogwarts, Athena, Cyberpunk, Anime).
+  • **Emergency Bitmasks:** Serialized channel permission bitmasks for 1-click zero-loss \`!unlockdown\` recovery.
+  • **Community Data:** Tickets, XP leveling, counting streaks, giveaways, birthdays, auto-reacts, news feeds, sticky messages.
+
+# 2. Zero-Downtime Host Migration Engine (\`checkAndAutoRestore\`)
+• **Autonomous Detection:** When migrating the bot to a new VPS or cloud provider, boot-time check detects an empty database (0 guilds).
+• **Instant Cloud Restoration:** Interrogates the designated Discord cloud backup channel, downloads the latest \`athena_db_*.json\` and \`stats_*.db\`, reconstructs local files, and hot-reloads memory without requiring a bot restart.
+• **Forensic Manifest Diagnostics:** Posts structured breakdown cards confirming server count, security shields, and restored records directly to the backup channel.`
       }
     ]
   },
@@ -729,6 +747,20 @@ export const DETAILED_COMMANDS = {
 `• **Channel ID Binding:** Binds dedicated channel ID to SQLite guild configuration.
 • **Strict Isolation:** In all standard channels, AI replies are strictly restricted to the !ask command to prevent unwanted chatter.`,
     example: '!aimode channel #ai-chat'
+  },
+
+  db: {
+    name: 'db',
+    aliases: ['botdb', 'dbbackup', 'dbrestore', 'dbexport', 'database'],
+    category: 'Utilities & Integrations',
+    clearance: 'Bot Owner',
+    syntax: '!db [status|backup|restore|export|setchannel #channel]',
+    purpose: 'Manage automated Discord database cloud backups, SQLite WAL checkpoints, and zero-downtime host recovery.',
+    architecture:
+`• **Dual-Payload Serialization:** Flushes memory cache to JSON and triggers wal_checkpoint(TRUNCATE) on SQLite database.
+• **Cloud Discord Storage:** Uploads timestamped snapshots (db.json + stats.db) with structured diagnostic metrics cards.
+• **Zero-Downtime Auto-Restore:** Detects fresh host migrations upon boot and automatically pulls and restores database state from Discord without manual copying.`,
+    example: '!db backup'
   },
 
   balance: {
