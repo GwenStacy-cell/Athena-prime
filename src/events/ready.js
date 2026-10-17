@@ -186,6 +186,14 @@ export default {
         if (config.musicChannelId && config.musicMessageId) {
           updatePlayerUI(guild.id).catch(() => null);
         }
+
+        // Voice Role Startup Sync across all active voice channels
+        const vrId = db.getVoiceRole(guild.id);
+        if (vrId) {
+          import('../commands/community.js').then(({ syncVoiceRoles }) => {
+            syncVoiceRoles(guild, vrId, false).catch(() => null);
+          }).catch(() => null);
+        }
       }
     });
 

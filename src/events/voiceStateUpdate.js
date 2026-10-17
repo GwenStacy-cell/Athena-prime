@@ -35,11 +35,12 @@ export default {
 
     // ==========================================
     // VOICE ROLE ENFORCEMENT (Auto Assign / Remove)
+    // Applies to ALL members: Server Owner, Bot Owner, Users & Bots
     // ==========================================
     const voiceRoleId = db.getVoiceRole ? db.getVoiceRole(guild.id) : guildCfg?.voiceRoleId;
     if (voiceRoleId) {
       const targetMember = newState.member || oldState.member || guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
-      if (targetMember && !targetMember.user.bot) {
+      if (targetMember) {
         try {
           const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
           if (botMember && botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
