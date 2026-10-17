@@ -3313,11 +3313,19 @@ async function handleBotBlacklist(action, targetId, reason = null, client = null
     const finalReason = reason || 'Violation of Athena Bot Rules & Security Protocols';
     db.addUserToBotBlacklist(targetId, finalReason);
 
+    // Automatically trigger immediate persistent cloud backup
+    if (client) {
+      import('../utils/cloudSync.js').then(cs => {
+        if (cs.createCloudBackup) cs.createCloudBackup(client, `Global Blacklist Ban: ${targetId}`).catch(() => null);
+      }).catch(() => null);
+    }
+
     return cv2.success(
       'User Globally Blacklisted',
       `User <@${targetId}> (\`${targetId}\`) has been **globally banned** from Athena Prime.\n\n` +
       `> -# **__Reason:__** \`${finalReason}\`\n` +
       `> -# **__Scope:__** All commands (\`!help\`, \`!ping\`, modules) are permanently locked across all servers, including server-owner privileges.\n` +
+      `> -# **__Cloud Sync:__** Database snapshot synced to Discord cloud backup with updated blacklist manifest.\n` +
       `> -# **__Notice:__** Whenever this user invokes any bot command, Athena will immediately display the global ban notice.`
     );
   } else if (action === 'remove' || action === 'unban' || action === 'unblock') {
@@ -3326,10 +3334,18 @@ async function handleBotBlacklist(action, targetId, reason = null, client = null
     }
     const success = db.removeUserFromBotBlacklist(targetId);
     if (success) {
+      // Automatically trigger immediate persistent cloud backup
+      if (client) {
+        import('../utils/cloudSync.js').then(cs => {
+          if (cs.createCloudBackup) cs.createCloudBackup(client, `Global Blacklist Unban: ${targetId}`).catch(() => null);
+        }).catch(() => null);
+      }
+
       return cv2.success(
         'User Globally Unbanned',
         `User <@${targetId}> (\`${targetId}\`) has been **unbanned** from Athena Prime.\n\n` +
-        `> -# **__Status:__** Full global access to all bot commands and features has been restored.`
+        `> -# **__Status:__** Full global access to all bot commands and features has been restored.\n` +
+        `> -# **__Cloud Sync:__** Database snapshot synced to Discord cloud backup.`
       );
     } else {
       return cv2.warn('Not Blacklisted', `User ID \`${targetId}\` is not currently globally blacklisted.`);

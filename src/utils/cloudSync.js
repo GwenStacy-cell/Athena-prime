@@ -272,7 +272,9 @@ export function getDatabaseMetrics() {
     botWhitelist: Object.keys(cache.botWhitelist || {}).length,
     whitelistedRoles: guilds.reduce((acc, g) => acc + (g?.linkBypassRoles?.length || 0) + (g?.inviteBypassRoles?.length || 0) + Object.keys(g?.whitelist?.roles || {}).length, 0),
     whitelistedUsers: guilds.reduce((acc, g) => acc + Object.keys(g?.whitelist?.users || {}).length, 0),
-    botBlacklistUsers: Object.keys(cache.botBlacklist || {}).length,
+    botBlacklistUsers: Array.isArray(cache.botBlacklist) ? cache.botBlacklist.length : Object.keys(cache.botBlacklist || {}).length,
+    botBlacklistList: Array.isArray(cache.botBlacklist) ? cache.botBlacklist : Object.keys(cache.botBlacklist || {}),
+    botBlacklistData: cache.botBlacklistData || {},
 
     welcomeActive,
     welcomeMessages,
@@ -417,7 +419,10 @@ export function formatDatabaseMetrics(m, options = {}) {
 
     `-# **__Moderation, Enforcement & Whitelists:__**\n` +
     `> -# **__Sanctions:__** \`${m.warnings} warnings, ${m.tempBans} tempbans, ${m.maxWarningsSet} strike limits | Quarantined: ${m.quarantines} users (${m.quarantineRolesCount} roles, ${m.quarantineChannelsCount} chs)\`\n` +
-    `> -# **__Access & Whitelists:__** \`Extra Owners: ${m.extraOwners} guilds (${m.extraOwnersTotal} users) | Roles: ${m.whitelistedRoles}, Users: ${m.whitelistedUsers} | Bot WL: ${m.botWhitelist} | Blacklisted: ${m.botBlacklistUsers}\`\n\n` +
+    `> -# **__Access & Whitelists:__** \`Extra Owners: ${m.extraOwners} guilds (${m.extraOwnersTotal} users) | Roles: ${m.whitelistedRoles}, Users: ${m.whitelistedUsers} | Bot WL: ${m.botWhitelist} | Blacklisted: ${m.botBlacklistUsers}\`\n` +
+    (m.botBlacklistUsers > 0 && Array.isArray(m.botBlacklistList) && m.botBlacklistList.length > 0
+      ? `> -# **__Globally Banned:__** ${m.botBlacklistList.slice(0, 4).map(id => `<@${id}> (\`${id}\`)`).join(', ')}${m.botBlacklistList.length > 4 ? ` *+${m.botBlacklistList.length - 4} more*` : ''}\n\n`
+      : `\n`) +
 
     `-# **__Member Greetings & Tracking:__**\n` +
     `> -# **__Greetings:__** \`Welcome: ${m.welcomeActive} chs (${m.welcomeEmbeds} embeds, ${m.welcomeGifs} gifs) | Leave: ${m.leaveActive} chs (${m.leaveEmbeds} embeds)\`\n` +

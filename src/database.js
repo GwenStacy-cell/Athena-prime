@@ -41,6 +41,7 @@ const DEFAULT_SCHEMA = {
   usersXp: {},       // guildId -> { userId -> { xp: 0, level: 0, lastMessageAt: 0, voiceJoinAt: 0 } }
   moveProtection: {},// guildId -> [userIds]
   botBlacklist: [],  // global list of userIds
+  botBlacklistData: {}, // userId -> { userId, reason, timestamp }
   bumpReminders: {}, // guildId -> { channelId, bumperId, expiresAt }
   editRatings: {},   // messageId -> { authorId, authorName, mediaUrl, votes: {} }
   rateChannels: {},  // guildId -> channelId
@@ -128,6 +129,7 @@ class Database {
         this.cache.globalTriggers = this.cache.globalTriggers || [];
         this.cache.jtc            = this.cache.jtc            || {};
         this.cache.botBlacklist   = this.cache.botBlacklist   || [];
+        this.cache.botBlacklistData = this.cache.botBlacklistData || {};
         this.cache.jtcChannels    = this.cache.jtcChannels    || {};
         this.cache.botWhitelist   = this.cache.botWhitelist   || {};
         this.cache.emergencies    = this.cache.emergencies    || {};

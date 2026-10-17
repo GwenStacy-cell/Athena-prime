@@ -22,7 +22,7 @@ const STATS_FILE = path.join(DATA_DIR, 'stats.db');
 export const commands = [
   {
     name: 'db',
-    aliases: ['botdb', 'dbbackup', 'dbrestore', 'dbexport', 'database'],
+    aliases: ['botdb', 'dbbackup', 'dbrestore', 'dbexport', 'database', 'cloudbackup', 'cloudsync', 'dblist'],
     description: 'Manage bot database cloud backups, exports, and instant recovery.',
     category: 'utility',
     options: [
@@ -33,6 +33,7 @@ export const commands = [
         required: true,
         choices: [
           { name: 'backup (Force cloud backup now)', value: 'backup' },
+          { name: 'list (View cloud backup snapshots & blacklist)', value: 'list' },
           { name: 'export (Download db.json & stats.db)', value: 'export' },
           { name: 'restore (Restore from cloud or uploaded file)', value: 'restore' },
           { name: 'status (View database health & cloud sync)', value: 'status' },
@@ -124,7 +125,51 @@ export const commands = [
         return sendReply(successPayload);
       }
 
-      // 2. EXPORT ACTION
+      // 1.5 LIST ACTION
+      if (action === 'list' || action === 'backups' || action === 'snapshots' || action === 'cloudlist') {
+        const channel = await getBackupChannel(context.client);
+        if (!channel) {
+          return sendReply(cv2.warn('Backup Channel Not Found', 'No cloud backup channel is configured or accessible. Use `!db setchannel #channel` to configure one.'));
+        }
+
+        const messages = await channel.messages.fetch({ limit: 15 }).catch(() => null);
+        const backupMessages = messages
+          ? messages.filter(m => m.attachments.some(a => a.name?.endsWith('.json') && (a.name.includes('athena_db_') || a.name === 'db.json')))
+          : null;
+
+        if (!backupMessages || backupMessages.size === 0) {
+          return sendReply(cv2.info('No Cloud Backups Found', `No database snapshots were found in <#${channel.id}>.\n\nUse \`!db backup\` to create the first cloud backup now.`));
+        }
+
+        const sorted = [...backupMessages.values()].sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+        const entries = sorted.slice(0, 6).map((msg, index) => {
+          const jsonAtt = msg.attachments.find(a => a.name?.endsWith('.json'));
+          const dbAtt = msg.attachments.find(a => a.name?.endsWith('.db'));
+          const sizeKb = jsonAtt ? (jsonAtt.size / 1024).toFixed(1) : '?';
+          const timeSec = Math.floor(msg.createdTimestamp / 1000);
+          const hasDb = dbAtt ? ' + stats.db' : '';
+          return `> -# **__#${index + 1}:__** \`${jsonAtt?.name || 'snapshot.json'}\` (${sizeKb} KB${hasDb})\n` +
+                 `> -# <t:${timeSec}:F> (<t:${timeSec}:R>)`;
+        });
+
+        const flagged = db.getBotBlacklist();
+        const data = (db.getBotBlacklistData ? db.getBotBlacklistData() : db.cache.botBlacklistData) || {};
+        const blSummary = flagged.length > 0
+          ? `\n\n-# **__Synced Global Blacklist (${flagged.length} accounts):__**\n` +
+            flagged.slice(0, 5).map(id => `> -# <@${id}> (\`${id}\`)${data[id]?.reason ? ` - \`${data[id].reason}\`` : ''}`).join('\n') +
+            (flagged.length > 5 ? `\n> -# *+${flagged.length - 5} more blacklisted accounts*` : '')
+          : `\n\n-# **__Synced Global Blacklist:__** \`0 accounts\``;
+
+        return sendReply(cv2.info(
+          `Database Cloud Backup List | <a:atheNATICK:1557841381630681106>`,
+          `-# **__Backup Channel:__** <#${channel.id}>\n` +
+          `-# **__Total Snapshots Available:__** \`${backupMessages.size}\`\n\n` +
+          `-# **__Recent Cloud Snapshots:__**\n` +
+          entries.join('\n\n') +
+          blSummary +
+          `\n\n-# **Restore Command:** \`!db restore latest\` or reply to any snapshot message with \`!db restore\``
+        ));
+      }
       if (action === 'export' || action === 'download') {
         if (!fs.existsSync(DB_FILE)) {
           return sendReply(cv2.warn('Database Not Found', 'No local `data/db.json` file found on this host.'));
