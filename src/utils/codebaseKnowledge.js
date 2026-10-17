@@ -44,16 +44,23 @@ export function extractFileMetadata(relPath = '', content = '', lines = []) {
 
     for (let i = 0; i < len; i++) {
       const line = fileLines[i];
-      const nameMatch = line.match(/^\s*name:\s*['"]([a-zA-Z0-9_-]+)['"]/);
+      const nameMatch = line.match(/^(\s{2,6})name:\s*['"]([a-zA-Z0-9_-]+)['"]/);
       if (nameMatch) {
-        const cmdName = nameMatch[1];
+        const indent = nameMatch[1].length;
+        const cmdName = nameMatch[2];
         let description = '';
         let category = '';
         let aliases = [];
-        let isTopLevel = false;
+        let choices = [];
+        let isExecutable = false;
 
-        for (let j = i + 1; j < Math.min(len, i + 18); j++) {
+        for (let j = i + 1; j < Math.min(len, i + 300); j++) {
           const l = fileLines[j];
+          const nextCmdMatch = l.match(/^(\s{2,6})name:\s*['"]([a-zA-Z0-9_-]+)['"]/);
+          if (nextCmdMatch && nextCmdMatch[1].length <= indent) {
+            break;
+          }
+
           if (!description) {
             const descMatch = l.match(/description:\s*['"]([^'"]+)['"]/);
             if (descMatch) description = descMatch[1];
@@ -68,20 +75,16 @@ export function extractFileMetadata(relPath = '', content = '', lines = []) {
               aliases = aliasMatch[1].split(',').map(s => s.replace(/['"\s]/g, '')).filter(Boolean);
             }
           }
-          if (l.includes('executePrefix') || l.includes('executeSlash') || l.includes('category:')) {
-            isTopLevel = true;
+          const chMatch = l.match(/value:\s*['"]([a-zA-Z0-9_-]+)['"]/);
+          if (chMatch && !choices.includes(chMatch[1])) {
+            choices.push(chMatch[1]);
+          }
+          if (l.includes('executePrefix') || l.includes('executeSlash')) {
+            isExecutable = true;
           }
         }
 
-        if (isTopLevel && !commands.some(c => c.name === cmdName)) {
-          const choices = [];
-          for (let k = i; k < Math.min(len, i + 45); k++) {
-            const chMatch = fileLines[k].match(/value:\s*['"]([a-zA-Z0-9_-]+)['"]/);
-            if (chMatch && !choices.includes(chMatch[1])) {
-              choices.push(chMatch[1]);
-            }
-          }
-
+        if (isExecutable && !commands.some(c => c.name === cmdName)) {
           commands.push({
             name: cmdName,
             description,
@@ -91,6 +94,21 @@ export function extractFileMetadata(relPath = '', content = '', lines = []) {
             lineNum: i + 1
           });
         }
+      }
+    }
+
+    // Fallback if no command matched isExecutable, but file declares name: '...'
+    if (commands.length === 0) {
+      const singleName = content.match(/name:\s*['"]([a-zA-Z0-9_-]+)['"]/);
+      if (singleName) {
+        commands.push({
+          name: singleName[1],
+          description: '',
+          category: baseName,
+          aliases: [],
+          choices: [],
+          lineNum: 1
+        });
       }
     }
 
@@ -253,6 +271,55 @@ export function extractSearchTokens(query = '') {
 }
 
 /**
+ * Authoritative semantic intents that map natural-language user queries to real bot commands
+ */
+export const SEMANTIC_INTENTS = [
+  { match: /\b(rate\s*edit|rateedit|edit\s*rate|editrate|star\s*rating|rate\s*an?\s*edit)\b/i, commands: ['rate', 'ratelb'] },
+  { match: /\b(ticket\s*panel|ticketpanel|support\s*ticket|open\s*ticket|smart\s*triage|ban\s*appeal\s*ticket)\b/i, commands: ['ticketpanel', 'ticket'] },
+  { match: /\b(slow\s*mode|slowmode|slow\s*down|slow\s*chat|chat\s*delay|rate\s*limit\s*per\s*user|channel\s*speed)\b/i, commands: ['slowmode'] },
+  { match: /\b(antinuke|anti\s*nuke|bulletproof|firewall|anti\s*raid|anti\s*bot|mass\s*ban\s*protect|damage\s*repair)\b/i, commands: ['security', 'antinuke'] },
+  { match: /\b(backup|restore\s*server|server\s*backup|cloud\s*backup)\b/i, commands: ['db', 'backup'] },
+  { match: /\b(change\s*prefix|bot\s*prefix|set\s*prefix)\b/i, commands: ['prefix'] },
+  { match: /\b(rank\s*theme|ranktheme|rank\s*card|xp\s*theme|god\s*of\s*war\s*theme|hogwarts\s*theme)\b/i, commands: ['ranktheme', 'leveling', 'profile'] },
+  { match: /\b(rank\s*rewards?|level\s*roles?|role\s*rewards?)\b/i, commands: ['rankrewards', 'leveling'] },
+  { match: /\b(quarantine|isolate\s*user|quarantined\s*role)\b/i, commands: ['quarantine', 'setupquarantine'] },
+  { match: /\b(youtube\s*stats?|ytstats|sub\s*counter|subscriber\s*vc)\b/i, commands: ['ytstats'] },
+  { match: /\b(server\s*stats?|stats\s*vc|member\s*count\s*vc)\b/i, commands: ['serverstats'] },
+  { match: /\b(voice\s*drag|vcdrag|mass\s*move|mass\s*dc|mass\s*disconnect)\b/i, commands: ['vcdrag', 'massmove', 'massdc'] },
+  { match: /\b(auto\s*media|setmedia|media\s*downloader|download\s*reels?|tiktok\s*downloader)\b/i, commands: ['setmedia', 'utility'] },
+  { match: /\b(auto\s*quote|setquote|quote\s*channel|quotemaker)\b/i, commands: ['quote', 'quotemaker'] },
+  { match: /\b(counting|count\s*channel|counting\s*game)\b/i, commands: ['counting'] },
+  { match: /\b(auto\s*role|autorole|join\s*role)\b/i, commands: ['autorole'] },
+  { match: /\b(welcome|welcomer|greet|leave\s*message)\b/i, commands: ['welcome'] },
+  { match: /\b(server\s*logs?|log\s*channel|audit\s*logs?|bind\s*logs?)\b/i, commands: ['serverlogs'] },
+  { match: /\b(reaction\s*roles?|rr\s*setup|button\s*roles?)\b/i, commands: ['rr'] },
+  { match: /\b(sticky\s*message|stick\s*message)\b/i, commands: ['sticky'] },
+  { match: /\b(snipe|deleted\s*messages?|sniped)\b/i, commands: ['snipe'] },
+  { match: /\b(24\s*7\s*vc|sethomevc|stay\s*in\s*vc|voice\s*bot)\b/i, commands: ['sethomevc', 'utility'] },
+  { match: /\b(mod\s*mode|modmode|maintenance\s*mode)\b/i, commands: ['modmode'] },
+  { match: /\b(panic|lockdown|emergency\s*lock)\b/i, commands: ['panic', 'lockdown', 'moderation'] }
+];
+
+/**
+ * Returns all top-level executable commands discovered in the codebase
+ */
+export async function getAllBotCommands() {
+  const cache = await loadCodebaseCache();
+  const allCmds = [];
+  for (const [relPath, data] of cache.entries()) {
+    if (data.meta && data.meta.commands) {
+      for (const cmd of data.meta.commands) {
+        allCmds.push({
+          ...cmd,
+          file: relPath
+        });
+      }
+    }
+  }
+  return allCmds;
+}
+
+/**
  * Searches the real codebase dynamically for code snippets relevant to the query
  * @param {string} query - The user query
  * @param {object} options - Search configuration
@@ -264,6 +331,16 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
 
   if (phrases.length === 0 && keywords.length === 0) {
     return [];
+  }
+
+  // Detect semantic intents matching the query
+  const matchedIntentCmds = new Set();
+  for (const intent of SEMANTIC_INTENTS) {
+    if (intent.match.test(query)) {
+      for (const cmd of intent.commands) {
+        matchedIntentCmds.add(cmd.toLowerCase());
+      }
+    }
   }
 
   const matches = [];
@@ -288,9 +365,17 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
       fileMultiplier *= 2.2;
     }
 
-    // Check if command metadata or aliases match
+    // Check if command metadata or aliases match keywords
     if (fileData.meta?.commands?.some(c => keywords.includes(c.name.toLowerCase()) || (c.aliases || []).some(a => keywords.includes(a.toLowerCase())))) {
       fileMultiplier *= 2.0;
+    }
+
+    // Apply high multiplier if file satisfies user's semantic intent
+    if (matchedIntentCmds.size > 0) {
+      const hasIntentCmd = fileData.meta?.commands?.some(c => matchedIntentCmds.has(c.name.toLowerCase()) || (c.aliases || []).some(a => matchedIntentCmds.has(a.toLowerCase())));
+      if (hasIntentCmd || matchedIntentCmds.has(baseName)) {
+        fileMultiplier *= 3.5;
+      }
     }
 
     // De-prioritize internal/hidden or owner-only commands (e.g., enuke.js) unless explicitly queried by name

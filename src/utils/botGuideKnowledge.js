@@ -1,7 +1,7 @@
 import { ARCHITECTURE_TOPICS, COMMAND_EXPLAINERS } from './explainerRegistry.js';
 import { helpModules } from '../commands/utility.js';
 import { generateAIResponse, formatAIToGreyMarkdown } from './ai.js';
-import { searchCodebase, formatCodebaseContext, describeFileRole } from './codebaseKnowledge.js';
+import { searchCodebase, formatCodebaseContext, describeFileRole, getAllBotCommands, SEMANTIC_INTENTS } from './codebaseKnowledge.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
@@ -12,7 +12,7 @@ const UPTIME = '<a:uptime:1552608831060844575>';
  * Searches the live command explainers, architecture deep-dives, and categorized help modules
  * to extract authoritative ground truth for any user query or doubt.
  */
-export function findRelevantKnowledge(query = '', prefix = '!') {
+export function findRelevantKnowledge(query = '', prefix = '!', allCommands = []) {
   const cleanQuery = query.toLowerCase().trim();
   const tokens = cleanQuery.split(/\s+/).filter(t => t.length > 2);
   const isSecurityQuery = cleanQuery.includes('security') || cleanQuery.includes('antinuke') || cleanQuery.includes('anti-nuke') || cleanQuery.includes('protect') || cleanQuery.includes('bulletproof') || cleanQuery.includes('defense') || cleanQuery.includes('defend');
@@ -21,11 +21,23 @@ export function findRelevantKnowledge(query = '', prefix = '!') {
   const matchedTopics = [];
   const matchedModules = [];
 
+  // Match semantic intents
+  const intentMatchedCmds = new Set();
+  for (const intent of SEMANTIC_INTENTS) {
+    if (intent.match.test(cleanQuery)) {
+      for (const c of intent.commands) intentMatchedCmds.add(c.toLowerCase());
+    }
+  }
+
   // 1. Search COMMAND_EXPLAINERS
   for (const [cmdKey, cmdData] of Object.entries(COMMAND_EXPLAINERS)) {
     let score = 0;
     const nameMatch = cmdData.name.toLowerCase() === cleanQuery || (cmdData.aliases || []).some(a => a.toLowerCase() === cleanQuery);
-    if (nameMatch) score += 20;
+    if (nameMatch) score += 40;
+
+    if (intentMatchedCmds.has(cmdData.name.toLowerCase()) || (cmdData.aliases || []).some(a => intentMatchedCmds.has(a.toLowerCase()))) {
+      score += 50;
+    }
 
     if (isSecurityQuery) {
       if (cmdData.name === 'security' || cmdData.name === 'antinuke') score += 100;
@@ -33,8 +45,10 @@ export function findRelevantKnowledge(query = '', prefix = '!') {
     }
 
     for (const token of tokens) {
-      if (cmdData.name.toLowerCase().includes(token)) score += 8;
-      if ((cmdData.aliases || []).some(a => a.toLowerCase().includes(token))) score += 5;
+      if (cmdData.name.toLowerCase() === token) score += 20;
+      else if (cmdData.name.toLowerCase().includes(token)) score += 8;
+      if ((cmdData.aliases || []).some(a => a.toLowerCase() === token)) score += 15;
+      else if ((cmdData.aliases || []).some(a => a.toLowerCase().includes(token))) score += 5;
       if (cmdData.purpose && cmdData.purpose.toLowerCase().includes(token)) score += 3;
       if (cmdData.architecture && cmdData.architecture.toLowerCase().includes(token)) score += 3;
       if (cmdData.category && cmdData.category.toLowerCase().includes(token)) score += 2;
@@ -42,6 +56,46 @@ export function findRelevantKnowledge(query = '', prefix = '!') {
 
     if (score > 0) {
       matchedCommands.push({ ...cmdData, score });
+    }
+  }
+
+  // 1b. Search full catalog of 250+ bot commands extracted dynamically from codebase
+  if (Array.isArray(allCommands) && allCommands.length > 0) {
+    for (const cmd of allCommands) {
+      const cleanName = cmd.name.toLowerCase();
+      // Skip if already in matchedCommands from COMMAND_EXPLAINERS
+      if (matchedCommands.some(c => c.name.toLowerCase() === cleanName)) continue;
+
+      let score = 0;
+      const nameMatch = cleanName === cleanQuery || (cmd.aliases || []).some(a => a.toLowerCase() === cleanQuery);
+      if (nameMatch) score += 40;
+
+      if (intentMatchedCmds.has(cleanName) || (cmd.aliases || []).some(a => intentMatchedCmds.has(a.toLowerCase()))) {
+        score += 50;
+      }
+
+      for (const token of tokens) {
+        if (cleanName === token) score += 20;
+        else if (cleanName.includes(token)) score += 8;
+        if ((cmd.aliases || []).some(a => a.toLowerCase() === token)) score += 15;
+        else if ((cmd.aliases || []).some(a => a.toLowerCase().includes(token))) score += 5;
+        if (cmd.description && cmd.description.toLowerCase().includes(token)) score += 4;
+        if (cmd.category && cmd.category.toLowerCase().includes(token)) score += 2;
+      }
+
+      if (score > 0) {
+        matchedCommands.push({
+          name: cmd.name,
+          aliases: cmd.aliases || [],
+          category: cmd.category,
+          clearance: cmd.category === 'owner' ? 'Server Owner / Bot Owner' : 'Server Administration / Staff',
+          syntax: `${prefix}${cmd.name}${cmd.choices && cmd.choices.length > 0 ? ` [${cmd.choices.slice(0, 3).join('|')}]` : ''}`,
+          purpose: cmd.description || `Execute ${cmd.name} command operations.`,
+          architecture: `• **Implementation Location:** \`${cmd.file}\` (Line ${cmd.lineNum}).`,
+          example: `${prefix}${cmd.name}`,
+          score
+        });
+      }
     }
   }
 
@@ -154,8 +208,9 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     };
   }
 
-  // 1. Fetch live ground truth context and search real codebase
-  const knowledge = findRelevantKnowledge(cleanPrompt, prefix);
+  // 1. Fetch all real commands from codebase catalog and live ground truth context
+  const allCommands = await getAllBotCommands();
+  const knowledge = findRelevantKnowledge(cleanPrompt, prefix, allCommands);
   const codeSnippets = await searchCodebase(cleanPrompt, { maxSnippets: 5, snippetLines: 45 });
   const codeContext = formatCodebaseContext(codeSnippets);
 
@@ -164,8 +219,10 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     'You are Athena Prime, the sovereign AI security assistant, bot specialist, and protector for Discord servers.',
     'Your goal is to answer questions about Athena Prime by conducting a thorough deep-dive analysis of the bot\'s codebase, and providing a fully prepared, comprehensive step-by-step output to help the user.',
     '',
-    'CRITICAL SOURCE CODE PROVENANCE & DEEP DIVE RULES:',
+    'CRITICAL GROUND TRUTH & ANTI-HALLUCINATION RULES:',
     '- Ground every command, feature, parameter, option, and theme STRICTLY in the provided BOT SOURCE CODE and Ground Truth Knowledge Base.',
+    '- ZERO TOLERANCE FOR FAKE COMMANDS: Never invent, guess, or fabricate fake commands (such as inventing `!rateedit` when the real command is `!rate <#channel>`, or inventing `!setup security` when the real command is `!security enable all`). If a user asks with an incorrect command name, typo, or alias, you MUST guide them directly to the real command name and syntax.',
+    '- If a requested feature genuinely does not exist in Athena, honestly state that Athena does not have this capability rather than inventing fake steps.',
     '- Conduct a deep-dive analysis into the provided source code, explaining both the user-facing command instructions AND the underlying code architecture.',
     '- You MUST ALWAYS include a dedicated section at the end of your response explicitly citing where in the source code you deep-dived and analyzed the answer from, including file paths and line ranges.',
     '- Structure your response clearly with these sections:',
