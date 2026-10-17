@@ -438,11 +438,19 @@ export default {
         const botMention = `<@${botId}>`;
         const botMentionNick = `<@!${botId}>`;
 
-        const isPrefixed = cleanContent.startsWith(prefix);
+        const isPrefixed = cleanContent.startsWith(prefix) || 
+                           cleanContent.startsWith('!') || 
+                           cleanContent.startsWith('?') || 
+                           cleanContent.startsWith('.') || 
+                           cleanContent.startsWith('$') || 
+                           cleanContent.startsWith('+') || 
+                           cleanContent.startsWith('-') || 
+                           cleanContent.startsWith('>');
         const isMention = botId ? (cleanContent.startsWith(botMention) || cleanContent.startsWith(botMentionNick)) : false;
         const isDM = !message.guild;
-        const firstWord = cleanContent.split(/ +/)[0].toLowerCase();
-        const isKnownCmd = commandMap.has(firstWord);
+        const stripped = cleanContent.replace(/^[!?.+$>\-#@%^&*~]+/, '').trim();
+        const firstWord = stripped.split(/ +/)[0].toLowerCase();
+        const isKnownCmd = commandMap.has(firstWord) || commandMap.has(cleanContent.split(/ +/)[0].toLowerCase());
 
         // If blacklisted user attempts to run ANY command (even !help, !ping, whatever it is, even if server owner)
         if (isPrefixed || isMention || isDM || isKnownCmd) {
@@ -2092,6 +2100,21 @@ export default {
         );
         return message.reply(notFoundEmbed).catch(() => null);
       }
+    }
+
+    // --- ABSOLUTE GATE FOR GLOBALLY BLACKLISTED USERS ---
+    if (db.isUserBotBlacklisted(message.author.id) && !isBotOwnerSync(message.author.id)) {
+      const bData = db.cache.botBlacklistData?.[message.author.id];
+      const reason = bData?.reason || 'Violation of Athena Bot Rules & Security Protocols';
+      return message.reply(cv2.danger(
+        'Globally Blacklisted',
+        `-# **__Security Notice:__** You are globally banned from using Athena.\n\n` +
+        `> -# **__Account:__** <@${message.author.id}> (\`${message.author.id}\`)\n` +
+        `> -# **__Status:__** \`Permanently Blacklisted\`\n` +
+        `> -# **__Reason:__** \`${reason}\`\n` +
+        `> -# **__Enforcement:__** All commands (\`!help\`, \`!ping\`, modules) are permanently locked for your account across all servers, including server-owner privileges.\n` +
+        `> -# **__Appeal:__** If you believe this is an error, please contact the Bot Owner.`
+      )).catch(() => null);
     }
 
     // Verify moderator permissions - bot owner, server owner, and extra owners bypass ALL checks
