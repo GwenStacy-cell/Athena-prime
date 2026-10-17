@@ -510,17 +510,15 @@ export const commands = [
         let generatePingGraph; try { generatePingGraph = (await import('../utils/graph.js')).generatePingGraph; } catch(e) { }
         const cfg = db.getGuildConfig(interaction.guild?.id || '0');
         const accentHex = cfg?.accentColor || '#00e5ff';
-  
-        await interaction.deferReply();
-        const sentMessage = await interaction.fetchReply().catch(() => null);
-        const apiMs = sentMessage ? Math.max(1, sentMessage.createdTimestamp - interaction.createdTimestamp) : Math.max(1, Date.now() - interaction.createdTimestamp);
+
+        const apiMs = Math.max(1, Date.now() - interaction.createdTimestamp);
         const wsMs  = Math.max(5, Math.round(interaction.client.ws.ping) || 17);
-  
+
         const dbStart = process.hrtime.bigint();
         db.getGuildConfig(interaction.guild?.id || '0');
         const dbNanos = Number(process.hrtime.bigint() - dbStart);
         const dbMs = (Math.max(0.2, dbNanos / 1e6) + (Math.random() * 0.4)).toFixed(1);
-  
+
         const rSet = (0.7 + Math.random() * 1.5).toFixed(1);
         const rGet = (0.3 + Math.random() * 1.2).toFixed(1);
         const rDel = (0.5 + Math.random() * 1.4).toFixed(1);
@@ -528,10 +526,10 @@ export const commands = [
         if (!interaction.client.pingHistory) interaction.client.pingHistory = [];
         interaction.client.pingHistory.push(wsMs);
         if (interaction.client.pingHistory.length > 25) interaction.client.pingHistory.shift();
-  
+
         const buffer = await generatePingGraph(interaction.client.pingHistory, accentHex, interaction.client.guilds.cache.size);
         const attachment = new AttachmentBuilder(buffer, { name: 'ping_graph.png' });
-        
+
         const rawName = interaction.member?.displayName || interaction.user.displayName || interaction.user.username;
         const cleanNick = cleanDisplayName(rawName);
 
@@ -548,12 +546,21 @@ export const commands = [
             }
           ]
         };
-    
-        await interaction.editReply({
-          components: [pingContainer],
-          files: [attachment],
-          flags: 32768
-        });
+
+        if (interaction.deferred || interaction.replied) {
+          const editMsg = await interaction.editReply({ files: [attachment] });
+          const directUrl = editMsg?.attachments?.first()?.url;
+          if (directUrl) {
+            pingContainer.components[1].items[0].media.url = directUrl;
+          }
+          await interaction.editReply({ components: [pingContainer] });
+        } else {
+          await interaction.reply({
+            components: [pingContainer],
+            files: [attachment],
+            flags: 32768
+          });
+        }
       }
     },
     // --- TIME COMMAND ---
