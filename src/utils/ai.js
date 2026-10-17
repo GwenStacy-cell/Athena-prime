@@ -245,50 +245,88 @@ export async function generateAIResponse(prompt, context = {}) {
     '- Do not use any standard unicode emojis (no checkmarks, crosses, warning signs).'
   ].join(' ');
 
-  // Tier 1: Check for Google Gemini API Key
-  const geminiKey = process.env.GEMINI_API_KEY;
+  // Tier 1: Advanced Google Gemini Model Cascade (Gemini 2.5 Flash -> 2.0 Flash -> 1.5 Flash / Pro)
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_KEY;
   if (geminiKey) {
-    try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
-      const payload = {
-        contents: [
-          { role: 'user', parts: [{ text: `${systemInstructions}\n\nUser Question: ${cleanPrompt}` }] }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1024
-        }
-      };
+    const userModel = process.env.GEMINI_MODEL?.trim();
+    const candidateModels = [
+      ...(userModel ? [userModel] : []),
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro'
+    ].filter((v, i, a) => a.indexOf(v) === i);
 
-      const res = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        timeout: 10000
-      });
+    const modelDisplayNames = {
+      'gemini-2.5-flash': 'Gemini 2.5 Flash',
+      'gemini-2.5-pro': 'Gemini 2.5 Pro',
+      'gemini-2.0-flash': 'Gemini 2.0 Flash',
+      'gemini-2.0-pro-exp-02-05': 'Gemini 2.0 Pro',
+      'gemini-1.5-pro': 'Gemini 1.5 Pro',
+      'gemini-1.5-flash': 'Gemini 1.5 Flash'
+    };
 
-      if (res.ok) {
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text && text.trim()) {
-          const latencyMs = Date.now() - startTime;
-          const cleanedText = formatAIToGreyMarkdown(text.trim());
-          responseCache.set(cacheKey, { text: cleanedText, model: 'Gemini 1.5 Flash', timestamp: Date.now() });
-          return {
-            success: true,
-            text: cleanedText,
-            model: 'Gemini 1.5 Flash',
-            latencyMs
-          };
+    for (const modelId of candidateModels) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${geminiKey}`;
+        
+        // Structured payload with native system_instruction, optimal sampling, and safety settings
+        const payload = {
+          system_instruction: {
+            parts: [{ text: systemInstructions }]
+          },
+          contents: [
+            { role: 'user', parts: [{ text: cleanPrompt }] }
+          ],
+          generationConfig: {
+            temperature: 0.6,
+            topP: 0.95,
+            maxOutputTokens: 2048
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+          ]
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+        const res = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text && text.trim()) {
+            const latencyMs = Date.now() - startTime;
+            const cleanedText = formatAIToGreyMarkdown(text.trim());
+            const displayModel = modelDisplayNames[modelId] || `Gemini (${modelId})`;
+            responseCache.set(cacheKey, { text: cleanedText, model: displayModel, timestamp: Date.now() });
+            return {
+              success: true,
+              text: cleanedText,
+              model: displayModel,
+              latencyMs
+            };
+          }
         }
+      } catch (err) {
+        // Continue to next model in cascade
       }
-    } catch (err) {
-      console.warn('[AI] Gemini API failed, falling back to neural edge provider:', err.message);
     }
   }
 
   // Tier 2: Resilient Neural Edge Provider (Pollinations.ai via POST JSON)
-  const models = ['openai', 'mistral', 'deepseek'];
+  const models = ['openai-fast', 'openai'];
   for (const model of models) {
     try {
       const controller = new AbortController();

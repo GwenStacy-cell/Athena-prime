@@ -395,7 +395,7 @@ A Honeypot is a designated text channel configured with permissions hidden or si
         pageTitle: 'AI Engine & Container Architecture',
         content:
 `# 1. Multi-Provider Fallback Matrix
-• **Primary:** Google Gemini 1.5 Flash API for high-reasoning tasks when \`GEMINI_API_KEY\` is configured.
+• **Primary:** Google Gemini 2.5 Flash API (with Gemini 2.0 Flash & Pro reasoning cascade) for advanced reasoning when \`GEMINI_API_KEY\` is configured.
 • **Autonomous Fallback:** High-speed edge inference (Workers AI / Pollinations) providing zero-key, instant responses.
 • **Native Emoji Scrubbing:** Filters out unicode Discord emojis to strictly uphold Athena's brand identity.
 
