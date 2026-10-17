@@ -2,8 +2,25 @@ import { ARCHITECTURE_TOPICS, COMMAND_EXPLAINERS } from './explainerRegistry.js'
 import { helpModules } from '../commands/utility.js';
 import { generateAIResponse, formatAIToGreyMarkdown } from './ai.js';
 import { searchCodebase, formatCodebaseContext, describeFileRole, getAllBotCommands, SEMANTIC_INTENTS } from './codebaseKnowledge.js';
+import { 
+  getGuideSession, 
+  recordGuideTurn, 
+  clearGuideSession, 
+  formatSessionHeader, 
+  formatSessionContextForPrompt, 
+  augmentQueryWithSession 
+} from './conversationSession.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
+
+export { 
+  getGuideSession, 
+  recordGuideTurn, 
+  clearGuideSession, 
+  formatSessionHeader, 
+  formatSessionContextForPrompt, 
+  augmentQueryWithSession 
+};
 
 const TICK = '<a:atheNATICK:1557841381630681106>';
 const UPTIME = '<a:uptime:1552608831060844575>';
@@ -226,7 +243,7 @@ export function findRelevantKnowledge(query = '', prefix = '!', allCommands = []
 /**
  * Generates an instructive, step-by-step guidance response speaking as Athena Prime
  */
-export async function generateAthenaGuideResponse(userQuestion, { guild, user, prefix = '!', onProgress = null } = {}) {
+export async function generateAthenaGuideResponse(userQuestion, { guild, user, channelId, prefix = '!', onProgress = null } = {}) {
   const startTime = Date.now();
   const cleanPrompt = (userQuestion || '').trim();
   const shortPrompt = cleanPrompt.length > 45 ? cleanPrompt.slice(0, 42) + '...' : cleanPrompt;
@@ -248,15 +265,24 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     };
   }
 
+  // Retrieve active multi-turn conversational session
+  const activeSession = getGuideSession(guild?.id, user?.id, channelId);
+  const searchQuery = augmentQueryWithSession(cleanPrompt, activeSession);
+
   // 1. Fetch all real commands from codebase catalog and live ground truth context
+  const sessionExpSec = activeSession ? Math.floor(activeSession.expiresAt / 1000) : 0;
   await reportProgress(
-    `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
-    `Analyzing command catalog and matching user keywords across system registries...`
+    activeSession && activeSession.turnCount >= 1
+      ? `Scanning catalog & analyzing follow-up (Turn #${activeSession.turnCount + 1}) for: "${shortPrompt}"...`
+      : `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
+    activeSession && activeSession.turnCount >= 1
+      ? `Thread active (rolling timer expires <t:${sessionExpSec}:R>) • Correlating with previous turns...`
+      : `Analyzing command catalog and matching user keywords across system registries...`
   );
 
   const allCommands = await getAllBotCommands();
-  const knowledge = findRelevantKnowledge(cleanPrompt, prefix, allCommands);
-  const codeSnippets = await searchCodebase(cleanPrompt, { maxSnippets: 5, snippetLines: 45 });
+  const knowledge = findRelevantKnowledge(searchQuery, prefix, allCommands);
+  const codeSnippets = await searchCodebase(searchQuery, { maxSnippets: 5, snippetLines: 45 });
   const codeContext = formatCodebaseContext(codeSnippets);
 
   // Check if requested capability exists in Athena Prime's command matrix
@@ -333,6 +359,19 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     'You are Athena Prime, the sovereign AI security assistant, bot specialist, and protector for Discord servers.',
     'Your goal is to answer questions about Athena Prime by conducting a thorough deep-dive analysis of the bot\'s codebase, and providing a fully prepared, comprehensive step-by-step output to help the user.',
     '',
+    activeSession && activeSession.turns.length > 0
+      ? [
+          'CRITICAL MULTI-TURN CONVERSATION THREAD CONTEXT:',
+          `This user is in an active multi-turn session with you in this channel (Turn #${activeSession.turnCount + 1}).`,
+          formatSessionContextForPrompt(activeSession),
+          '',
+          'FOLLOW-UP CONTINUITY INSTRUCTIONS:',
+          '- The user\'s question is a natural continuation of the previous turn(s) above.',
+          '- Resolve pronouns ("it", "that", "those", "buttons", "permissions", "steps") using the previous context.',
+          '- Provide the next exact steps seamlessly without requiring the user to re-explain the whole topic.',
+          ''
+        ].join('\n')
+      : '',
     'CRITICAL GROUND TRUTH & ANTI-HALLUCINATION RULES:',
     '- Ground every command, feature, parameter, option, and theme STRICTLY in the provided BOT SOURCE CODE and Ground Truth Knowledge Base.',
     '- ZERO TOLERANCE FOR FAKE COMMANDS: Never invent, guess, or fabricate fake commands (such as inventing `!rateedit` when the real command is `!rate <#channel>`, or inventing `!setup security` when the real command is `!security enable all`). If a user asks with an incorrect command name, typo, or alias, you MUST guide them directly to the real command name and syntax.',
@@ -408,7 +447,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     codeContext ? codeContext + '\n' : '',
     'Ground Truth Knowledge Base (Current Live State):',
     knowledge.rawContext
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 
   // 3. Delegate to neural engine
   const fullPrompt = `User's Question / Need: ${cleanPrompt}\n\nPlease read the provided bot source code and knowledge base carefully, and explain, clarify, and provide a comprehensive deep-dive response with step-by-step instructions and source code references on how to accomplish this with Athena Prime.`;
@@ -436,14 +475,23 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     clearTimeout(almostDoneTimer);
   }
 
+  const primaryCmd = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0].name : '';
+
   if (!aiResult.success) {
     // Dynamic codebase synthesizer in case all external AI edge endpoints are offline
     const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets);
+    const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
+      matchedCommands: knowledge.matchedCommands,
+      primaryCommand: primaryCmd,
+      text: fallbackText
+    });
+
     return {
       success: true,
       text: formatAIToGreyMarkdown(fallbackText),
       model: 'Athena Dynamic Code Engine (Local Deep-Dive)',
       latencyMs: Math.max(12, Date.now() - startTime),
+      session: updatedSession,
       matchedTopics: knowledge.matchedTopics,
       sourceReferences: codeSnippets.map(s => ({
         file: s.file,
@@ -454,11 +502,18 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     };
   }
 
+  const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
+    matchedCommands: knowledge.matchedCommands,
+    primaryCommand: primaryCmd,
+    text: aiResult.text
+  });
+
   return {
     success: true,
     text: formatAIToGreyMarkdown(aiResult.text),
     model: aiResult.model,
     latencyMs: Math.max(20, Date.now() - startTime),
+    session: updatedSession,
     matchedTopics: knowledge.matchedTopics,
     sourceReferences: codeSnippets.map(s => ({
       file: s.file,
@@ -726,11 +781,19 @@ export function buildGuideHubContainer(guild, user, prefix = '!') {
 /**
  * Builds the CV2 accent borderless container for Athena Assistant responses
  */
-export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '#00e5ff', prefix = '!') {
+/**
+ * Builds the CV2 accent borderless container for Athena Assistant responses
+ */
+export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '#00e5ff', prefix = '!', session = null) {
+  const currentSession = session || aiResult.session || null;
   const content = formatAIToGreyMarkdown(aiResult.text || 'No instructions generated.');
   const sources = aiResult.sourceReferences || [];
   const sourceLine = sources.length > 0 
     ? `\n-# **• Codebase Deep Dive:** ${sources.map(s => `\`${s.file.replace(/^src\//, '')}#L${s.lines}\``).slice(0, 3).join(', ')}` 
+    : '';
+
+  const threadLine = currentSession
+    ? `\n-# • **Conversation Thread:** ${formatSessionHeader(currentSession)}`
     : '';
 
   const comps = [
@@ -739,7 +802,7 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
       content:
         `## Athena System Guide & Intelligence | ${TICK}\n` +
         `-# **• Member:** <@${user.id}> \u00b7 **Model:** \`${aiResult.model}\` \u00b7 **Latency:** \`${aiResult.latencyMs}ms\`\n` +
-        `-# **• Question:** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}`
+        `-# **• Question:** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}${threadLine}`
     },
     { type: 14, divider: true }
   ];
@@ -772,18 +835,34 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
   comps.push({ type: 14, divider: true });
 
   // Quick navigation row
+  const navButtons = [
+    { type: 2, custom_id: 'athena_guide_hub', label: 'Guidance Hub', style: 2, emoji: { id: '1523765738655973589' } },
+    { type: 2, custom_id: 'arch_home', label: 'Architecture Topics', style: 2, emoji: { id: '1523766065576935475' } }
+  ];
+
+  if (currentSession && currentSession.turnCount > 1) {
+    navButtons.push({
+      type: 2,
+      custom_id: 'athena_reset_thread',
+      label: 'Reset Thread Memory',
+      style: 4
+    });
+  }
+
   comps.push({
     type: 1,
-    components: [
-      { type: 2, custom_id: 'athena_guide_hub', label: 'Guidance Hub', style: 2, emoji: { id: '1523765738655973589' } },
-      { type: 2, custom_id: 'arch_home', label: 'Architecture Topics', style: 2, emoji: { id: '1523766065576935475' } }
-    ]
+    components: navButtons
   });
 
   comps.push({ type: 14, divider: true });
+
+  const footerText = currentSession
+    ? `-# **Athena Prime \u00b7 Active Session (rolling timer expires <t:${Math.floor(currentSession.expiresAt / 1000)}:R>) \u00b7 Ask follow-ups directly**`
+    : `-# **Athena Prime \u00b7 Autonomous Server Assistance & Intelligence Engine**`;
+
   comps.push({
     type: 10,
-    content: `-# **Athena Prime \u00b7 Autonomous Server Assistance & Intelligence Engine**`
+    content: footerText
   });
 
   return {
@@ -795,9 +874,12 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
 /**
  * Builds the CV2 loading / thinking container with dynamic real-time status and subtext
  */
-export function buildThinkingContainer(title, detail = '') {
+export function buildThinkingContainer(title, detail = '', session = null) {
   const loadingEmoji = '<a:loading:1542155051286396938>';
   let text = `-# ${loadingEmoji} **${title}**`;
+  if (session && session.turnCount >= 1) {
+    text += `\n-# • **Thread Context Active (Turn #${session.turnCount + 1}):** Rolling session expires <t:${Math.floor(session.expiresAt / 1000)}:R>`;
+  }
   if (detail) {
     text += `\n-# ${detail}`;
   }

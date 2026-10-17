@@ -5,13 +5,17 @@ import {
   generateAthenaGuideResponse, 
   buildGuideHubContainer, 
   buildAthenaGuideContainer,
-  buildThinkingContainer
+  buildThinkingContainer,
+  getGuideSession,
+  clearGuideSession
 } from '../utils/botGuideKnowledge.js';
+
+const TICK = '<a:atheNATICK:1557841381630681106>';
 
 /**
  * Creates a rate-limited real-time progress handler that edits the thinking container smoothly
  */
-function createProgressHandler(target) {
+function createProgressHandler(target, session = null) {
   let lastEditTime = Date.now();
   let isEditing = false;
   let pendingUpdate = null;
@@ -23,7 +27,7 @@ function createProgressHandler(target) {
     isEditing = true;
     lastEditTime = Date.now();
     try {
-      const container = buildThinkingContainer(update.title, update.detail);
+      const container = buildThinkingContainer(update.title, update.detail, session);
       await cv2.edit(target, {
         components: [container],
         flags: MessageFlags.IsComponentsV2
@@ -94,16 +98,37 @@ export const commands = [
       const accentColor = cfg?.accentColor || '#00e5ff';
       const prompt = args.join(' ').trim();
 
+      // Reset / Clear Thread Memory Command
+      if (prompt.toLowerCase() === 'reset' || prompt.toLowerCase() === 'clear') {
+        clearGuideSession(message.guild?.id || '0', message.author.id, message.channel.id);
+        const resetContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `### **Conversation Thread Cleared | ${TICK}**\n-# Conversation memory has been reset for this channel. Your next query will start a fresh session.`
+            }
+          ]
+        };
+        return message.reply({ components: [resetContainer], flags: MessageFlags.IsComponentsV2 });
+      }
+
       // If no prompt provided, show the interactive Guidance Hub
       if (!prompt) {
         const hub = buildGuideHubContainer(message.guild, message.author, prefix);
         return message.reply(hub);
       }
 
+      const activeSession = getGuideSession(message.guild?.id || '0', message.author.id, message.channel.id);
       const shortPrompt = prompt.length > 45 ? prompt.slice(0, 42) + '...' : prompt;
       const initialContainer = buildThinkingContainer(
-        `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
-        `Analyzing command catalog and matching user keywords across system registries...`
+        activeSession && activeSession.turnCount >= 1
+          ? `Scanning catalog & analyzing follow-up (Turn #${activeSession.turnCount + 1}) for: "${shortPrompt}"...`
+          : `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
+        activeSession && activeSession.turnCount >= 1
+          ? `Thread active (rolling timer expires <t:${Math.floor(activeSession.expiresAt / 1000)}:R>) • Correlating with previous turns...`
+          : `Analyzing command catalog and matching user keywords across system registries...`,
+        activeSession
       );
 
       const thinkingMsg = await message.reply({
@@ -111,13 +136,14 @@ export const commands = [
         flags: MessageFlags.IsComponentsV2
       }).catch(() => null);
 
-      const progress = createProgressHandler(thinkingMsg);
+      const progress = createProgressHandler(thinkingMsg, activeSession);
 
       let aiResult;
       try {
         aiResult = await generateAthenaGuideResponse(prompt, {
           guild: message.guild,
           user: message.author,
+          channelId: message.channel.id,
           prefix,
           onProgress: progress.onProgress
         });
@@ -125,7 +151,7 @@ export const commands = [
         progress.stop();
       }
 
-      const container = buildAthenaGuideContainer(message.author, prompt, aiResult, accentColor, prefix);
+      const container = buildAthenaGuideContainer(message.author, prompt, aiResult, accentColor, prefix, aiResult.session);
 
       if (thinkingMsg) {
         try {
@@ -147,6 +173,21 @@ export const commands = [
       const accentColor = cfg?.accentColor || '#00e5ff';
       const prompt = interaction.options.getString('query')?.trim();
 
+      // Reset / Clear Thread Memory Command
+      if (prompt && (prompt.toLowerCase() === 'reset' || prompt.toLowerCase() === 'clear')) {
+        clearGuideSession(interaction.guild?.id || '0', interaction.user.id, interaction.channelId);
+        const resetContainer = {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `### **Conversation Thread Cleared | ${TICK}**\n-# Conversation memory has been reset for this channel. Your next query will start a fresh session.`
+            }
+          ]
+        };
+        return interaction.reply({ components: [resetContainer], flags: MessageFlags.IsComponentsV2 });
+      }
+
       if (!prompt) {
         const hub = buildGuideHubContainer(interaction.guild, interaction.user, prefix);
         return interaction.reply(hub);
@@ -154,10 +195,16 @@ export const commands = [
 
       await interaction.deferReply();
 
+      const activeSession = getGuideSession(interaction.guild?.id || '0', interaction.user.id, interaction.channelId);
       const shortPrompt = prompt.length > 45 ? prompt.slice(0, 42) + '...' : prompt;
       const initialContainer = buildThinkingContainer(
-        `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
-        `Analyzing command catalog and matching user keywords across system registries...`
+        activeSession && activeSession.turnCount >= 1
+          ? `Scanning catalog & analyzing follow-up (Turn #${activeSession.turnCount + 1}) for: "${shortPrompt}"...`
+          : `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
+        activeSession && activeSession.turnCount >= 1
+          ? `Thread active (rolling timer expires <t:${Math.floor(activeSession.expiresAt / 1000)}:R>) • Correlating with previous turns...`
+          : `Analyzing command catalog and matching user keywords across system registries...`,
+        activeSession
       );
 
       await cv2.edit(interaction, {
@@ -165,13 +212,14 @@ export const commands = [
         flags: MessageFlags.IsComponentsV2
       }).catch(() => null);
 
-      const progress = createProgressHandler(interaction);
+      const progress = createProgressHandler(interaction, activeSession);
 
       let aiResult;
       try {
         aiResult = await generateAthenaGuideResponse(prompt, {
           guild: interaction.guild,
           user: interaction.user,
+          channelId: interaction.channelId,
           prefix,
           onProgress: progress.onProgress
         });
@@ -179,7 +227,7 @@ export const commands = [
         progress.stop();
       }
 
-      const container = buildAthenaGuideContainer(interaction.user, prompt, aiResult, accentColor, prefix);
+      const container = buildAthenaGuideContainer(interaction.user, prompt, aiResult, accentColor, prefix, aiResult.session);
       return cv2.edit(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => {
         return interaction.editReply({ components: [container], flags: MessageFlags.IsComponentsV2 });
       });
@@ -192,6 +240,24 @@ export async function handleAthenaGuideButtons(interaction) {
   const cfg = db.getGuildConfig(guild?.id || '0');
   const prefix = cfg?.prefix || '!';
   const accentColor = cfg?.accentColor || '#00e5ff';
+
+  if (customId === 'athena_reset_thread') {
+    clearGuideSession(guild?.id || '0', user.id, interaction.channelId);
+    return cv2.respond(interaction, {
+      components: [
+        {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `### **Conversation Thread Cleared | ${TICK}**\n-# Conversation memory has been reset for this channel. You can now start a fresh topic with \`${prefix}athena <question>\`.`
+            }
+          ]
+        }
+      ],
+      flags: MessageFlags.IsComponentsV2
+    }, 7).catch(() => null);
+  }
 
   if (customId === 'athena_guide_hub') {
     const hub = buildGuideHubContainer(guild, user, prefix);
@@ -211,9 +277,11 @@ export async function handleAthenaGuideButtons(interaction) {
     await interaction.deferUpdate().catch(() => null);
     const query = topicPrompts[customId];
 
+    const activeSession = getGuideSession(guild?.id || '0', user.id, interaction.channelId);
     const initialContainer = buildThinkingContainer(
       `Athena Prime is scanning module architecture & system domain...`,
-      `Reading deep-dive specifications and real source files...`
+      `Reading deep-dive specifications and real source files...`,
+      activeSession
     );
 
     await cv2.edit(interaction, {
@@ -221,13 +289,14 @@ export async function handleAthenaGuideButtons(interaction) {
       flags: MessageFlags.IsComponentsV2
     }).catch(() => null);
 
-    const progress = createProgressHandler(interaction);
+    const progress = createProgressHandler(interaction, activeSession);
 
     let aiResult;
     try {
       aiResult = await generateAthenaGuideResponse(query, {
         guild,
         user,
+        channelId: interaction.channelId,
         prefix,
         onProgress: progress.onProgress
       });
@@ -235,7 +304,7 @@ export async function handleAthenaGuideButtons(interaction) {
       progress.stop();
     }
 
-    const container = buildAthenaGuideContainer(user, query, aiResult, accentColor, prefix);
+    const container = buildAthenaGuideContainer(user, query, aiResult, accentColor, prefix, aiResult.session);
     return cv2.edit(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
   }
 
