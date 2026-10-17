@@ -4180,20 +4180,47 @@ async function runSecurityEnableSequence(guild, updateMessageFn) {
       const db = (await import("../database.js")).default;
       const config = db.getGuildConfig(guild.id);
       const modules = config.antinukeModules || {};
-      const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands', 'antiLinkedRole'];
+      const allKeys = [
+        'antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate',
+        'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete',
+        'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod',
+        'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks',
+        'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban',
+        'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan',
+        'antiAutomodUpdate', 'antiAppCommands', 'antiLinkedRole'
+      ];
       for (const k of allKeys) {
         modules[k] = true;
       }
       db.updateGuildConfig(guild.id, {
         securityEnabled: true,
         antiNukeEnabled: true,
+        antiNukePunishment: 'ban',
+        antiNukeThreshold: 1,
+        antiSpamEnabled: true,
         antiInviteEnabled: true,
         antiSpamMentionEnabled: true,
         antiLinkEnabled: true,
         antiFloodEnabled: true,
         wordFilterEnabled: true,
+        automodAIEnabled: true,
+        automodDoxxingEnabled: true,
+        automodToxicityEnabled: true,
         antinukeModules: modules
       });
+
+      // Ensure quarantine role & security logs channel are initialized and bound in DB
+      const { getOrCreateQuarantineRole, logToSecurityChannel } = await import("../utils/helpers.js");
+      await getOrCreateQuarantineRole(guild).catch(() => null);
+      await logToSecurityChannel(guild, {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `## Athena Prime Defense Matrix Online | <a:atheNATICK:1557841381630681106>\n-# **Server Security & Antinuke:** \`100% Bulletproof Active\`\n-# **Enforcement Mode:** \`Instant Ban (Threshold 1)\`\n-# **Monitored Vectors:** \`All 28 Antinuke Modules + AI Toxicity/Doxxing Shield\``
+          }
+        ]
+      }).catch(() => null);
     
       await sendPayload(true, false);
       return true;

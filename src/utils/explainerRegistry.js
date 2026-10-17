@@ -577,6 +577,42 @@ A Honeypot is a designated text channel configured with permissions hidden or si
  * Detailed command mechanics, parameters, permissions, and internal architecture.
  */
 export const DETAILED_COMMANDS = {
+  security: {
+    name: 'security',
+    aliases: ['ss'],
+    category: 'Security & Antinuke Defense',
+    clearance: 'Server Owner / Extra Owner',
+    syntax: '!security enable all / !security disable all / !security status',
+    purpose: 'The master unbypassable command to deploy 100% bulletproof antinuke defense across the server in one single command.',
+    architecture:
+`• **The Fast, One-Click Method (!security enable all):** You do NOT need to manually configure channels or individual settings. Running "!security enable all" turns on ALL server defenses simultaneously in a single automated sequence:
+  1. Creates and binds persistence backup roles ("Athena Unbypassable", "Athena Firewall") to Athena so rogue admins cannot remove or strip her permissions.
+  2. Creates and deploys "#athenas-dashboard" with real-time status and interactive module toggles.
+  3. Binds and activates "#security-logs" for forensic audit trails.
+  4. Activates ALL 28 antinuke modules (Anti-Ban, Anti-Kick, Anti-Channel Delete/Create/Update, Anti-Role Delete/Create/Update, Anti-Bot Add, Anti-Webhook, Anti-Member Purge, Anti-Linked Role, etc.).
+  5. Turns on 100% zero-tolerance defenses: threshold 1, instant ban punishment, anti-invite, anti-link, anti-spam, and AI toxicity/doxxing shields.
+• **Prerequisites:**
+  • Athena's highest role must be placed among the Top 3 highest roles in Discord Server Settings (Role Hierarchy) so she can override rogue admin actions.
+  • Must be executed by the Server Owner, Extra Owner, or Bot Owner. (Server requires 200+ members; Bot Owners bypass).
+• **Whitelist Staff:** Grant trusted staff immunity using "!whitelist @user", "!whitelist @role", or "!botwhitelist add <bot_id>".
+• **Status Check:** Type "!security status" (or "!ss") at any time to verify active shields.`,
+    example: '!security enable all'
+  },
+
+  antinuke: {
+    name: 'antinuke',
+    aliases: ['an', 'anti-nuke'],
+    category: 'Security & Antinuke Defense',
+    clearance: 'Server Owner / Extra Owner',
+    syntax: '!security enable all / !security status',
+    purpose: 'Autonomous zero-day exploit and antinuke defense engine.',
+    architecture:
+`• **Enabling Antinuke:** Enabled directly via "!security enable all". There is no separate "!antinuke config" command. Running "!security enable all" turns on all 28 antinuke modules and safeguards the server against all nuke vectors.
+• **Autonomous Interception:** WebSocket wiretap intercepts unauthorized role changes, channel deletions, and webhook additions in <1ms, banning the attacker and restoring destroyed assets instantly.
+• **Role Exploit Immunity:** 60-second audit log cross-examination detects and neutralizes Linked Role exploits and rogue admin assignments.`,
+    example: '!security enable all'
+  },
+
   athena: {
     name: 'athena',
     aliases: ['guide', 'howto', 'askathena', 'assistant', 'athenahelp'],

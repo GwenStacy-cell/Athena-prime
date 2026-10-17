@@ -1188,17 +1188,31 @@ async function handleSecurityGlobal(message, args) {
       try {
         const config = db.getGuildConfig(guild.id);
         const modules = config.antinukeModules || {};
-        const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands'];
+        const allKeys = [
+          'antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate',
+          'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete',
+          'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod',
+          'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks',
+          'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban',
+          'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan',
+          'antiAutomodUpdate', 'antiAppCommands', 'antiLinkedRole'
+        ];
         for (const k of allKeys) modules[k] = true;
         
         db.updateGuildConfig(guild.id, {
           securityEnabled: true,
           antiNukeEnabled: true,
+          antiNukePunishment: 'ban',
+          antiNukeThreshold: 1,
+          antiSpamEnabled: true,
           antiInviteEnabled: true,
           antiSpamMentionEnabled: true,
           antiLinkEnabled: true,
           antiFloodEnabled: true,
           wordFilterEnabled: true,
+          automodAIEnabled: true,
+          automodDoxxingEnabled: true,
+          automodToxicityEnabled: true,
           antinukeModules: modules
         });
 

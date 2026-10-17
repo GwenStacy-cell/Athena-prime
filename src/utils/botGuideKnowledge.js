@@ -14,6 +14,7 @@ const UPTIME = '<a:uptime:1552608831060844575>';
 export function findRelevantKnowledge(query = '', prefix = '!') {
   const cleanQuery = query.toLowerCase().trim();
   const tokens = cleanQuery.split(/\s+/).filter(t => t.length > 2);
+  const isSecurityQuery = cleanQuery.includes('security') || cleanQuery.includes('antinuke') || cleanQuery.includes('anti-nuke') || cleanQuery.includes('protect') || cleanQuery.includes('bulletproof') || cleanQuery.includes('defense') || cleanQuery.includes('defend');
 
   const matchedCommands = [];
   const matchedTopics = [];
@@ -24,6 +25,11 @@ export function findRelevantKnowledge(query = '', prefix = '!') {
     let score = 0;
     const nameMatch = cmdData.name.toLowerCase() === cleanQuery || (cmdData.aliases || []).some(a => a.toLowerCase() === cleanQuery);
     if (nameMatch) score += 20;
+
+    if (isSecurityQuery) {
+      if (cmdData.name === 'security' || cmdData.name === 'antinuke') score += 100;
+      if (cmdData.name === 'setup') score -= 50; // Channel binding !setup is not the security enable command
+    }
 
     for (const token of tokens) {
       if (cmdData.name.toLowerCase().includes(token)) score += 8;
@@ -153,16 +159,34 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
   // 2. Build the persona and instruction prompt
   const systemInstructions = [
     'You are Athena Prime, the sovereign AI security assistant, bot specialist, and protector for Discord servers.',
-    'Your goal is to answer questions about Athena Prime, explain bot commands, clarify doubts, and instruct the user step-by-step on how to handle the bot as per their needs.',
-    'Tone & Persona:',
-    '- Speak directly in first-person as Athena Prime ("I am designed to...", "To configure me for this...", "Here is the exact step-by-step method...").',
-    '- Be instructive, structured, clear, authoritative, and helpful.',
-    '- Give clear, step-by-step walkthroughs (e.g. Step 1: Run this command, Step 2: Configure this role).',
-    `- Always use the server's active command prefix ("${prefix}") when suggesting commands.`,
-    '- Mention the required administrator permissions or clearance tiers for commands (e.g. [Admin Tier], [Extra Owner], [Server Owner], [Public]).',
-    'Formatting & Style Rules:',
+    'Your goal is to answer questions about Athena Prime, explain bot commands, clarify doubts, and instruct the user with 100% accurate, concise, straightforward instructions.',
+    '',
+    'CRITICAL KNOWLEDGE GROUNDING RULES:',
+    '- Ground every command, flag, and parameter STRICTLY in the provided Ground Truth Knowledge Base.',
+    '- NEVER hallucinate, invent, or suggest fake subcommands (such as `!setup security`, `!setup security logs`, `!setup security quarantine`, `!setup security bind`, `!antinuke config`, `!scanserver`, etc.). If a command is not in the Ground Truth Knowledge Base, DO NOT mention it.',
+    '- For enabling server security or full antinuke protection, the ONE and ONLY short, straightforward, master command is: `' + prefix + 'security enable all` (or `security enable all`).',
+    '- Do NOT give confusing, fragmented, multi-step channel configuration guides when a user asks how to enable security or protect their server. Always provide the single master command `' + prefix + 'security enable all`.',
+    '',
+    'SECURITY & ANTINUKE GROUND TRUTH:',
+    '- The Master Command: `' + prefix + 'security enable all` (Clearance: Server Owner / Extra Owner).',
+    '- What it does in 1 click: Automatically deploys 100% bulletproof protection across the server:',
+    '  • Creates and assigns unbypassable backup admin roles (`Athena Unbypassable` and `Athena Firewall`) so rogue admins cannot remove or strip Athena\'s admin powers.',
+    '  • Automatically generates `#athenas-dashboard` for live monitoring and quick toggles.',
+    '  • Automatically activates and binds `#security-logs` for audit forensics.',
+    '  • Activates ALL 28 antinuke modules (Anti-Ban, Anti-Kick, Anti-Channel Delete/Create/Update, Anti-Role Delete/Create/Update, Anti-Bot Add, Anti-Webhook, Anti-Member Purge, Anti-Linked Role, etc.).',
+    '  • Sets instant ban punishment on threshold 1 (zero tolerance), plus anti-invite, anti-link, anti-spam, and AI toxicity/doxxing shields.',
+    '- Role Hierarchy Prerequisite: Athena\'s highest role must be placed among the Top 3 highest roles in Discord Server Settings so she can override rogue admins.',
+    '- Management & Whitelisting:',
+    '  • `' + prefix + 'security status` (or `' + prefix + 'ss`): Inspect live shield status and active modules.',
+    '  • `' + prefix + 'whitelist @user` or `' + prefix + 'whitelist @role`: Give trusted staff immunity.',
+    '  • `' + prefix + 'botwhitelist add <bot_id>`: Whitelist authorized bots.',
+    '  • `' + prefix + 'security disable all`: Turn off security (requires 2FA email verification).',
+    '',
+    'Tone & Style Rules:',
+    '- Speak directly in first-person as Athena Prime ("I am designed to...", "To enable complete security on your server...", "Here is the direct, straightforward method...").',
+    '- Be concise, straightforward, authoritative, and helpful. Avoid unnecessary fluff or bloated steps.',
     '- Always prefix every line with "-# " for Discord small grey font.',
-    '- Highlight headings, steps, and key concepts using grey bold and underline: "-# **__Step 1: Heading__**" or "-# • **__Command:__** `syntax`".',
+    '- Highlight key headings, commands, and steps using grey bold and underline: "-# **__Master Command:__** `' + prefix + 'security enable all`".',
     '- Never output horizontal rules, dashed underlines, or divider lines (DO NOT use "---", "===", or "-----").',
     '- Never use Discord native unicode emojis (no checkmarks, crosses, warning signs). Only use standard bullet characters or clean text.',
     '- Complete all sentences cleanly. Never cut off or truncate.',
@@ -205,6 +229,26 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
  * Deterministic fallback builder in case all AI edge endpoints are offline
  */
 function buildDeterministicGuide(prompt, knowledge, prefix) {
+  const cleanPrompt = (prompt || '').toLowerCase();
+  if (cleanPrompt.includes('security') || cleanPrompt.includes('antinuke') || cleanPrompt.includes('anti-nuke') || cleanPrompt.includes('protect') || cleanPrompt.includes('bulletproof')) {
+    return [
+      `**__Enabling 100% Bulletproof Server Security & Antinuke__**`,
+      `• **__Master Command:__** \`${prefix}security enable all\` (Clearance: \`Server Owner / Extra Owner\`)`,
+      `• **__Fast One-Click Deployment:__** You do not need to configure channels manually. Running \`${prefix}security enable all\` executes an automated sequence that activates ALL server defenses simultaneously:`,
+      `  1. Creates and binds persistence backup roles (\`Athena Unbypassable\` and \`Athena Firewall\`) to prevent rogue admins from stripping Athena's administrative authority.`,
+      `  2. Automatically deploys \`#athenas-dashboard\` with real-time defense status and interactive shield controls.`,
+      `  3. Automatically binds and activates \`#security-logs\` for forensic audit trails.`,
+      `  4. Activates ALL 28 antinuke modules (Anti-Ban, Anti-Kick, Anti-Channel Delete/Create, Anti-Role Delete/Create, Anti-Bot Add, Anti-Webhook, Anti-Member Purge, Anti-Linked Role, etc.).`,
+      `  5. Sets 100% zero-tolerance enforcement: threshold 1, instant ban punishment, anti-invite, anti-link, anti-spam, and AI toxicity/doxxing shields.`,
+      `• **__Prerequisite:__** Place Athena's bot role among the **Top 3 highest roles** in Discord Server Settings (Role Hierarchy) so she can override rogue admin actions.`,
+      `• **__Management & Whitelist:__**`,
+      `  • \`${prefix}security status\` (or \`${prefix}ss\`): Inspect live shield status.`,
+      `  • \`${prefix}whitelist @user\` / \`${prefix}whitelist @role\`: Grant trusted staff immunity.`,
+      `  • \`${prefix}botwhitelist add <bot_id>\`: Whitelist authorized bots.`,
+      `  • \`${prefix}security disable all\`: Disable security (protected by 2FA email verification).`
+    ].join('\n');
+  }
+
   const parts = [];
   parts.push(`**__Athena Prime Guidance & Command Walkthrough__**\n`);
 
