@@ -317,32 +317,73 @@ export const commands = [
   // --- LOCKDOWN COMMAND ---
   {
     name: 'lockdown',
-    aliases: ['ld', 'lock', 'lockchannel'],
-    slashHidden: true,
-    description: 'Toggles text channel lockdown (on/off) preventing anyone from sending messages.',
+    aliases: ['ld', 'lock', 'lockchannel', 'paniclockdown'],
+    slashHidden: false,
+    description: 'Server Panic Lockdown (Tier 1 Soft, Tier 2 Medium, Tier 3 Nuclear) or channel lock',
     category: 'security',
     permissions: [PermissionFlagsBits.ManageChannels],
     options: [
       {
-        name: 'mode',
-        description: 'Lock or Unlock the channel',
+        name: 'tier',
+        description: 'Lockdown level: 1 (Soft), 2 (Medium), 3 (Nuclear), channel, or off',
         type: 3,
-        required: true,
+        required: false,
         choices: [
-          { name: 'Enable Lockdown', value: 'on' },
-          { name: 'Disable Lockdown', value: 'off' }
+          { name: 'Tier 1 (Soft Lockdown - Mute text & voice)', value: '1' },
+          { name: 'Tier 2 (Medium Lockdown - Strip reactions/apps & Raid Mode)', value: '2' },
+          { name: 'Tier 3 (Nuclear Lockdown - Complete server blackout)', value: '3' },
+          { name: 'Current Channel Only', value: 'channel' },
+          { name: 'Lift Lockdown (Restore DB Snapshot)', value: 'off' }
         ]
       }
     ],
     async executePrefix(message, args) {
-      const mode = args[0]?.toLowerCase() === 'off' ? 'off' : 'on';
-      const result = await handleLockdown(message.guild, message.channel, message.member, mode);
-      await message.reply(result);
+      const arg = args[0]?.toLowerCase();
+      if (arg === 'off' || arg === 'lift' || arg === 'disable' || arg === 'unlock') {
+        const result = await handleUnlockdown(message.guild, message.member);
+        return message.reply(result);
+      }
+      if (arg === 'channel') {
+        const result = await handleLockdown(message.guild, message.channel, message.member, 'on');
+        return message.reply(result);
+      }
+      const tier = (arg === '2' || arg === 'medium') ? '2' : (arg === '3' || arg === 'nuclear') ? '3' : '1';
+      const result = await handlePanicLockdown(message.guild, message.member, tier);
+      return message.reply(result);
     },
     async executeSlash(interaction) {
-      const mode = interaction.options.getString('mode');
-      const result = await handleLockdown(interaction.guild, interaction.channel, interaction.member, mode);
-      await interaction.reply(result);
+      const tierOption = interaction.options.getString('tier') || '1';
+      if (tierOption === 'off') {
+        const result = await handleUnlockdown(interaction.guild, interaction.member);
+        return interaction.reply(result);
+      }
+      if (tierOption === 'channel') {
+        const result = await handleLockdown(interaction.guild, interaction.channel, interaction.member, 'on');
+        return interaction.reply(result);
+      }
+      await interaction.deferReply();
+      const result = await handlePanicLockdown(interaction.guild, interaction.member, tierOption);
+      return interaction.editReply(result);
+    }
+  },
+
+  // --- UNLOCKDOWN COMMAND ---
+  {
+    name: 'unlockdown',
+    aliases: ['unld', 'unlockserver', 'liftlockdown'],
+    slashHidden: false,
+    description: 'Lift server panic lockdown and restore exact pre-lockdown state from database snapshot',
+    category: 'security',
+    permissions: [PermissionFlagsBits.ManageChannels],
+    options: [],
+    async executePrefix(message) {
+      const result = await handleUnlockdown(message.guild, message.member);
+      return message.reply(result);
+    },
+    async executeSlash(interaction) {
+      await interaction.deferReply();
+      const result = await handleUnlockdown(interaction.guild, interaction.member);
+      return interaction.editReply(result);
     }
   },
 
@@ -2420,6 +2461,207 @@ async function handleLockdown(guild, channel, moderator, mode) {
     console.error(error);
     return cv2.danger('<:off:1533844858983157851> Failed', 'Could not modify permissions for this channel.');
   }
+}
+
+export async function handlePanicLockdown(guild, moderator, tier = '1', updateProgress) {
+  const isAuthorizedAdmin = isBotOwnerSync(moderator.id) || moderator.id === guild.ownerId || isExtraOwner(guild.id, moderator.id) || moderator.permissions.has(PermissionFlagsBits.Administrator);
+  if (!isAuthorizedAdmin) {
+    return cv2.danger('Access Denied', 'You lack authorization to engage server panic lockdown. Administrator or higher clearance required.');
+  }
+
+  const existingSnapshot = db.getLockdownSnapshot(guild.id);
+  if (existingSnapshot) {
+    return cv2.warn('Lockdown Already Active', `A Tier **${existingSnapshot.tier}** lockdown is already active on this server. Use \`!unlockdown\` to lift it.`);
+  }
+
+  const tierNormalized = String(tier).toLowerCase();
+  let tierNum = 1;
+  let tierLabel = 'Tier 1 (Soft Lockdown)';
+  if (tierNormalized === '2' || tierNormalized === 'medium' || tierNormalized === 'med') {
+    tierNum = 2;
+    tierLabel = 'Tier 2 (Medium Lockdown)';
+  } else if (tierNormalized === '3' || tierNormalized === 'nuclear' || tierNormalized === 'nuke') {
+    tierNum = 3;
+    tierLabel = 'Tier 3 (Nuclear Lockdown)';
+  }
+
+  if (updateProgress) await updateProgress(cv2.warn('Panic Lockdown Protocol Engaged', `Snapshotting channel hierarchy and deploying **${tierLabel}**...`)).catch(() => null);
+
+  await guild.channels.fetch().catch(() => null);
+  const currentConfig = db.getGuildConfig(guild.id);
+  const preRaidMode = Boolean(currentConfig?.raidMode);
+
+  const snapshotChannels = [];
+  const modifiedChannels = [];
+
+  guild.channels.cache.forEach(channel => {
+    if (!channel.permissionOverwrites) return;
+    const overwrites = channel.permissionOverwrites.cache.map(ow => ({
+      id: ow.id,
+      type: ow.type,
+      allow: ow.allow.bitfield.toString(),
+      deny: ow.deny.bitfield.toString()
+    }));
+    snapshotChannels.push({ id: channel.id, overwrites });
+    modifiedChannels.push(channel);
+  });
+
+  // Save snapshot to database immediately
+  db.saveLockdownSnapshot(guild.id, {
+    tier: tierNum,
+    tierLabel,
+    moderatorId: moderator.id,
+    preRaidMode,
+    channels: snapshotChannels
+  });
+
+  let modifiedCount = 0;
+  for (const channel of modifiedChannels) {
+    try {
+      const isRulesOrPublic = (channel.id === guild.rulesChannelId || channel.id === guild.publicUpdatesChannelId);
+      if (tierNum === 1) {
+        if (channel.isTextBased()) {
+          await channel.permissionOverwrites.edit(guild.roles.everyone, {
+            SendMessages: false,
+            SendMessagesInThreads: false,
+            CreatePublicThreads: false,
+            CreatePrivateThreads: false
+          }).catch(() => null);
+        } else if (channel.isVoiceBased()) {
+          await channel.permissionOverwrites.edit(guild.roles.everyone, {
+            Speak: false
+          }).catch(() => null);
+        }
+      } else if (tierNum === 2) {
+        if (channel.isTextBased()) {
+          await channel.permissionOverwrites.edit(guild.roles.everyone, {
+            SendMessages: false,
+            SendMessagesInThreads: false,
+            CreatePublicThreads: false,
+            CreatePrivateThreads: false,
+            AddReactions: false,
+            UseApplicationCommands: false,
+            AttachFiles: false,
+            EmbedLinks: false
+          }).catch(() => null);
+        } else if (channel.isVoiceBased()) {
+          await channel.permissionOverwrites.edit(guild.roles.everyone, {
+            Speak: false
+          }).catch(() => null);
+        }
+      } else if (tierNum === 3) {
+        if (isRulesOrPublic) {
+          await channel.permissionOverwrites.edit(guild.roles.everyone, {
+            SendMessages: false,
+            AddReactions: false
+          }).catch(() => null);
+        } else if (channel.isTextBased()) {
+          await channel.permissionOverwrites.edit(guild.roles.everyone, {
+            ViewChannel: false,
+            SendMessages: false
+          }).catch(() => null);
+        } else if (channel.isVoiceBased()) {
+          await channel.permissionOverwrites.edit(guild.roles.everyone, {
+            ViewChannel: false,
+            Connect: false
+          }).catch(() => null);
+        }
+      }
+      modifiedCount++;
+    } catch (err) {
+      // Continue modifying rest of channels
+    }
+  }
+
+  // If Tier 2 or Tier 3, engage server-wide Raid Mode to quarantine incoming accounts
+  if (tierNum >= 2) {
+    db.updateGuildConfig(guild.id, { raidMode: true });
+  }
+
+  const modTier = getUserTierName(guild, moderator);
+  logToSecurityChannel(guild, cv2.log(
+    'Panic Lockdown Engaged',
+    `**${moderator.user.tag}** [${modTier}] engaged **${tierLabel}** across ${modifiedCount} channels. Pre-lockdown bitmasks snapshotted in DB.`,
+    [
+      { name: 'Tier', value: tierLabel, inline: true },
+      { name: 'Enforcer', value: `<@${moderator.id}>`, inline: true },
+      { name: 'Raid Mode', value: tierNum >= 2 ? 'Active' : 'Standby', inline: true }
+    ],
+    'danger'
+  ));
+
+  return cv2.danger(
+    `Emergency Panic Lockdown Engaged | <a:atheNATICK:1557841381630681106>`,
+    `Athena Defense Matrix has placed the entire server under **${tierLabel}**.\n\n` +
+    `-# \u2022 **Channels Affected:** \`${modifiedCount}\` channels secured\n` +
+    `-# \u2022 **State Snapshot:** Pre-lockdown permissions securely persisted to database\n` +
+    `-# \u2022 **Raid Mode:** ${tierNum >= 2 ? 'Enabled (Auto-quarantine active)' : 'Preserved'}\n` +
+    `-# \u2022 **Restoration:** Type \`!unlockdown\` or \`/unlockdown\` to restore exact pre-lockdown state.`
+  );
+}
+
+export async function handleUnlockdown(guild, moderator, updateProgress) {
+  const isAuthorizedAdmin = isBotOwnerSync(moderator.id) || moderator.id === guild.ownerId || isExtraOwner(guild.id, moderator.id) || moderator.permissions.has(PermissionFlagsBits.Administrator);
+  if (!isAuthorizedAdmin) {
+    return cv2.danger('Access Denied', 'You lack authorization to lift server panic lockdown. Administrator or higher clearance required.');
+  }
+
+  const snapshot = db.getLockdownSnapshot(guild.id);
+  if (!snapshot || !snapshot.channels || snapshot.channels.length === 0) {
+    return cv2.warn('No Active Lockdown Snapshot', 'No active emergency panic lockdown snapshot was found in the database for this server.');
+  }
+
+  if (updateProgress) await updateProgress(cv2.info('Restoring Server State', `Restoring pre-lockdown channel overwrites from snapshot...`)).catch(() => null);
+
+  await guild.channels.fetch().catch(() => null);
+  let restoredCount = 0;
+  let errorCount = 0;
+
+  for (const cData of snapshot.channels) {
+    const channel = guild.channels.cache.get(cData.id);
+    if (channel) {
+      try {
+        const overwrites = cData.overwrites.map(ow => ({
+          id: ow.id,
+          type: ow.type,
+          allow: BigInt(ow.allow),
+          deny: BigInt(ow.deny)
+        }));
+        await channel.permissionOverwrites.set(overwrites, `Panic Lockdown Lifted by ${moderator.user.tag}`);
+        restoredCount++;
+      } catch (e) {
+        errorCount++;
+      }
+    }
+  }
+
+  // Restore raidMode state
+  if (snapshot.preRaidMode !== undefined) {
+    db.updateGuildConfig(guild.id, { raidMode: snapshot.preRaidMode });
+  }
+
+  // Clear snapshot from DB
+  db.clearLockdownSnapshot(guild.id);
+
+  const modTier = getUserTierName(guild, moderator);
+  logToSecurityChannel(guild, cv2.log(
+    'Panic Lockdown Lifted',
+    `**${moderator.user.tag}** [${modTier}] deactivated panic lockdown. Restored ${restoredCount} channels from DB snapshot.`,
+    [
+      { name: 'Restored Channels', value: `${restoredCount}`, inline: true },
+      { name: 'Enforcer', value: `<@${moderator.id}>`, inline: true }
+    ],
+    'success'
+  ));
+
+  return cv2.success(
+    `Server Lockdown Lifted`,
+    `Successfully recovered and restored all channel permissions from database snapshot.\n\n` +
+    `-# \u2022 **Channels Restored:** \`${restoredCount}\` channels\n` +
+    `-# \u2022 **Original Permissions:** Bitmasks fully synchronized\n` +
+    `-# \u2022 **Raid Mode:** Reverted to pre-lockdown state\n` +
+    `-# \u2022 **Snapshot:** Flushed from database memory.`
+  );
 }
 
 async function handleRaidMode(guild, moderator, mode) {

@@ -20,6 +20,7 @@ import { createMockInteraction } from '../utils/mockInteraction.js';
 import { processMediaLink, cacheMediaUrl } from '../utils/mediaDownloader.js';
 import { buildAutoReplyPreview } from '../commands/trigger.js';
 import { handleCountingMessage } from '../utils/countingEngine.js';
+import { scanForPhishing } from '../utils/phishingShield.js';
 
 function matchesTrigger(messageContent, triggerKeyword) {
   if (!messageContent || !triggerKeyword) return false;
@@ -1250,17 +1251,35 @@ export default {
       if (dbConfig.honeypotChannelId && message.channel.id === dbConfig.honeypotChannelId) {
         if (!checkBypass('Honeypot Trap')) {
           await message.delete().catch(() => null);
-          const timeoutMinutes = dbConfig.honeypotTimeoutMinutes || 15;
-          const timeoutMs = timeoutMinutes * 60 * 1000;
-          await message.member?.timeout(timeoutMs, 'Automod: Honeypot Trap Triggered').catch(() => null);
+          const action = dbConfig.honeypotAction || 'quarantine';
+          let actionTaken = `Timeout (${dbConfig.honeypotTimeoutMinutes || 15}m)`;
+
+          if (action === 'ban' && message.member?.bannable) {
+            await message.member.ban({ reason: '[Honeypot Trap] Unauthorized message in decoy channel' }).catch(() => null);
+            actionTaken = 'Banned';
+          } else if (action === 'quarantine') {
+            const qRole = await getOrCreateQuarantineRole(message.guild).catch(() => null);
+            if (qRole && message.member) {
+              await message.member.roles.set([qRole.id], 'Honeypot Trap Triggered').catch(() => null);
+              actionTaken = 'Quarantined';
+            } else if (message.member?.moderatable) {
+              await message.member.timeout(15 * 60 * 1000, 'Automod: Honeypot Trap Triggered').catch(() => null);
+              actionTaken = 'Timeout (15m)';
+            }
+          } else if (message.member?.moderatable) {
+            const timeoutMinutes = dbConfig.honeypotTimeoutMinutes || 15;
+            await message.member.timeout(timeoutMinutes * 60 * 1000, 'Automod: Honeypot Trap Triggered').catch(() => null);
+            actionTaken = `Timeout (${timeoutMinutes}m)`;
+          }
+
           const authorTier = getUserTierName(message.guild, message.member || message.author);
           logToSecurityChannel(message.guild, cv2.log(
             'Honeypot Trap Triggered',
-            `Member triggered honeypot trap channel <#${message.channel.id}>. Message instantly purged and offender timed out for ${timeoutMinutes}m.`,
+            `Member triggered honeypot trap channel <#${message.channel.id}>. Message instantly purged and offender penalized.`,
             [
               { name: 'Offender', value: `${message.author.tag} (\`${userId}\`) [${authorTier}]`, inline: true },
               { name: 'Trap Channel', value: `<#${message.channel.id}> (\`${message.channel.id}\`)`, inline: true },
-              { name: 'Penalty Action', value: `\`Timeout (${timeoutMinutes}m)\``, inline: true },
+              { name: 'Penalty Action', value: `\`${actionTaken}\``, inline: true },
               { name: 'Intercepted Content', value: `\`\`\`${(message.content || 'No text content').slice(0, 250)}\`\`\`` }
             ],
             'danger'
@@ -1335,6 +1354,38 @@ export default {
                  }
              }
          }
+      }
+
+      // ==========================================
+      // AUTOMATED ANTI-PHISHING & ANTI-SCAM SHIELD
+      // ==========================================
+      const phishScan = scanForPhishing(message.content);
+      if (phishScan.isPhishing && !checkBypass('Anti Phishing')) {
+        await message.delete().catch(() => null);
+        const authorTier = getUserTierName(message.guild, message.member || message.author);
+        await message.member?.timeout(60 * 60 * 1000, `Automod: Phishing / Scam Link Detected (${phishScan.reason})`).catch(() => null);
+
+        const securityLog = {
+          type: 17,
+          components: [
+            { type: 10, content: `## Anti-Phishing & Scam Shield Triggered | <a:atheNATICK:1557841381630681106>` },
+            { type: 14, divider: true },
+            {
+              type: 10,
+              content:
+                `-# **Offending Member:** ${message.author} (\`${message.author.id}\` | \`${message.author.tag}\`)\n` +
+                `-# **Author Clearance Tier:** \`[${authorTier}]\`\n` +
+                `-# **Channel:** <#${message.channel.id}>\n` +
+                `-# **Threat Type:** \`${phishScan.reason}\`\n` +
+                `-# **Detected Domain/Payload:** \`||${phishScan.matchedDomain}||\`\n` +
+                `-# **Action Taken:** \`Message Purged & Member Timed Out (1 Hour)\``
+            },
+            { type: 14, divider: true },
+            { type: 10, content: `-# **Athena Prime Enterprise Anti-Raid Defense Matrix**` }
+          ]
+        };
+        await logToSecurityChannel(message.guild, securityLog);
+        return;
       }
 
       // 1. ANTI-INVITE

@@ -426,6 +426,108 @@ A Honeypot is a designated text channel configured with permissions hidden or si
 • **ID-Based Role Assignment:** When a member purchases an item (\`!shop buy <itemId>\`), coins are deducted atomically and the role is assigned by Role ID.`
       }
     ]
+  },
+
+  lockdown: {
+    id: 'lockdown',
+    label: 'One-Click Panic Lockdown',
+    aliases: ['paniclockdown', 'unlockdown', 'tierlockdown'],
+    title: 'One-Click Emergency Panic Lockdown Architecture | <a:atheNATICK:1557841381630681106>',
+    description: 'Tiered 1-click server blackout defense and pre-lockdown bitmask recovery.',
+    pages: [
+      {
+        pageTitle: 'Tiered Lockdown Protocols (Tiers 1, 2, 3)',
+        content:
+`# Emergency Panic Lockdown Tiers
+• **Tier 1 (Soft Lockdown):** Denies \`SendMessages\`, thread creation, and voice \`Speak\` across all public channels for \`@everyone\`.
+• **Tier 2 (Medium Lockdown):** Tier 1 + Denies \`AddReactions\`, \`UseApplicationCommands\`, \`AttachFiles\`, and \`EmbedLinks\`. Automatically engages Server Raid Mode to isolate incoming accounts.
+• **Tier 3 (Nuclear Lockdown):** Total server dark mode. Denies \`ViewChannel\` across all channels (keeping rules/quarantine visible with Send denied) and disallows voice connections.
+• **Pre-Lockdown Snapshot Persistence:** Prior to altering any permissions, Athena serializes all channel overwrite bitmasks into \`db.cache.lockdownSnapshots\` on disk.`
+      },
+      {
+        pageTitle: 'Zero-Loss State Restoration Engine',
+        content:
+`# State Restoration Engine (\`!unlockdown\` / \`/unlockdown\`)
+• **Database Snapshot Lookup:** Retrieves the exact bitmasks snapshotted prior to panic lockdown engagement.
+• **Bitmask Reconstruction:** Iterates through channels and restores pre-lockdown permissions via \`channel.permissionOverwrites.set()\`.
+• **Raid Mode Normalization:** Automatically restores raid protection state to its pre-lockdown toggle.
+• **Database Flush:** Clears the temporary snapshot once all channels are verified healthy.`
+      }
+    ]
+  },
+
+  phishing: {
+    id: 'phishing',
+    label: 'Automated Phishing & Scam Shield',
+    aliases: ['phishingshield', 'antiscam', 'fakegift', 'nitroshield'],
+    title: 'Real-Time Anti-Phishing & Token Stealer Shield | <a:atheNATICK:1557841381630681106>',
+    description: 'High-speed regex domain classifier and token stealer neutralizer.',
+    pages: [
+      {
+        pageTitle: 'Phishing Heuristics & Domain Spoofing Mitigations',
+        content:
+`# Automated Threat Classifier (\`src/utils/phishingShield.js\`)
+• **Domain Spoofing Interception:** Inspects lookalike domains mimicking Discord (e.g., \`discorcl\`, \`dlscord\`, \`discord-nitro-gift\`, \`steam-community\`).
+• **Zero-Day Token Stealer Regex:** Detects browser credential snatchers, token grabber links, and fake Steam trade authorization traps.
+• **Sub-Millisecond Wiretap:** Intercepts message packets inside \`messageCreate.js\` before members can click malicious URLs.
+• **Immediate Neutralization:** Deletes malicious link in <1ms, applies a 1-hour timeout quarantine to the infected account, and dispatches an alert container to the security log channel.`
+      }
+    ]
+  },
+
+  captcha: {
+    id: 'captcha',
+    label: 'Graphic CAPTCHA & Math Verification',
+    aliases: ['verify', 'mathcaptcha', 'graphiccaptcha'],
+    title: 'Graphic CAPTCHA & Math Verification Engine | <a:atheNATICK:1557841381630681106>',
+    description: 'Canvas noise distortion and zero false-positive raid barrier.',
+    pages: [
+      {
+        pageTitle: 'Algorithmic Noise & Distortion Verification',
+        content:
+`# Graphic CAPTCHA Engine (\`src/utils/captchaEngine.js\`)
+• **Canvas Noise Injection:** Generates high-entropy multi-colored distortion lines and dot clusters preventing OCR evasion.
+• **Rotational Character Jitter:** Applies randomized degree rotation (-15° to +15°) to alphanumeric glyphs.
+• **In-Memory TTL Cryptography:** Stores generated answers in multi-guild memory maps with automatic 5-minute expiration timers.
+• **Interactive Modal Flow:** Members view the generated graphic challenge and submit solutions via Discord interactive text modals.`
+      }
+    ]
+  },
+
+  minigames: {
+    id: 'minigames',
+    label: 'Casino Minigames & Tournaments',
+    aliases: ['blackjack', 'roulette', 'trivia', 'casinostats'],
+    title: 'Casino Minigames & Server Economy Architecture | <a:atheNATICK:1557841381630681106>',
+    description: 'Interactive Components V2 casino card tables, roulette wheels, and trivia tournaments.',
+    pages: [
+      {
+        pageTitle: 'Blackjack, Roulette & Trivia Mechanics',
+        content:
+`# Minigames & Economy Suite (\`src/commands/minigames.js\`)
+• **Blackjack Table:** Standard 52-card deck with Fisher-Yates shuffling, Ace valuation (1/11), interactive \`Hit\`, \`Stand\`, and \`Double Down\` Components V2 buttons, and 3:2 Natural 21 payouts.
+• **European Roulette:** Provably fair wheel selection (numbers 0 through 36) supporting Red/Black (2x), Even/Odd (2x), Green Zero (14x), and Single Number (36x) bets.
+• **Trivia Tournaments:** Multi-topic question bank rendered with 4 shuffled Discord action buttons and 25-second countdown timers.
+• **Ledger Persistence:** Atomic wallet balance deduction, recorded tournament stats in SQLite, and Discord Cloud Backup synchronization.`
+      }
+    ]
+  },
+
+  studio: {
+    id: 'studio',
+    label: 'Container Studio & Forensic Audits',
+    aliases: ['auditlogs', 'embedstudio', 'forensics'],
+    title: 'Container Studio & Forensic Audit Logs Architecture | <a:atheNATICK:1557841381630681106>',
+    description: 'Visual container announcement builder and deep Gateway audit log inspection.',
+    pages: [
+      {
+        pageTitle: 'Container Studio & Forensic Inspection',
+        content:
+`# Container Studio & Forensic Audit Logs (\`src/commands/studio.js\`)
+• **Interactive Studio Builder:** Allows staff to compose title, description, custom fields, and footers via Discord modals, with live ephemeral previews and persistent template storage on disk.
+• **Forensic Audit Log Engine:** Direct Gateway API interrogation of \`GuildAuditLogs\` with member/executor filtering, action classifier mapping, and relative timestamp analysis.`
+      }
+    ]
   }
 };
 
@@ -509,6 +611,120 @@ export const DETAILED_COMMANDS = {
     architecture:
 `• **Atomic Ledger Verification:** Deducts bet before coin execution and credits 2x payout immediately on victory.`,
     example: '!coinflip heads 100'
+  },
+
+  blackjack: {
+    name: 'blackjack',
+    aliases: ['bj', '21'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!blackjack <bet> / /blackjack bet: <amount>',
+    purpose: 'Interactive casino card table with Components V2 buttons and 3:2 Natural 21 payouts.',
+    architecture:
+`• **Deck & Dealer Logic:** 52-card deck with Fisher-Yates shuffling, Ace valuation (1/11), and dealer stand on 17.
+• **Components V2 Controls:** Live \`Hit\`, \`Stand\`, and \`Double Down\` button collectors with atomic wallet deduction and cloud backup sync.`,
+    example: '!blackjack 250'
+  },
+
+  roulette: {
+    name: 'roulette',
+    aliases: ['roul', 'wheel'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!roulette <bet> <red|black|green|even|odd|0-36>',
+    purpose: 'European roulette wheel betting with proportional payout odds.',
+    architecture:
+`• **Wheel Mechanics:** Numbers 0-36 (0 is Green 14x, Red/Black 2x, Even/Odd 2x, Straight number 36x).
+• **Ledger Sync:** Deducts bet upfront and reconciles winnings immediately upon spin completion.`,
+    example: '!roulette 500 red'
+  },
+
+  trivia: {
+    name: 'trivia',
+    aliases: ['quiz', 'tournament'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!trivia [wager] / /trivia [wager]',
+    purpose: 'Interactive 4-choice knowledge tournament with coin rewards and bounty payouts.',
+    architecture:
+`• **Randomized Options:** Shuffles question choices across 4 Components V2 buttons with 25-second countdown collectors.
+• **Bounty Mode:** Awards 50 coins on free trivia, or doubles wagered coin balance upon correct answer.`,
+    example: '!trivia 100'
+  },
+
+  gamestats: {
+    name: 'gamestats',
+    aliases: ['mgstats', 'casinostats'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!gamestats [@user] / /gamestats [user]',
+    purpose: 'View your personal or another user\'s casino records, wins, and net earnings.',
+    architecture:
+`• **Telemetry Matrix:** Pulls blackjack, roulette, and trivia wins, total wagered, total won, and net profit from \`db.cache.minigamesStats\`.`,
+    example: '!gamestats @User'
+  },
+
+  lockdown: {
+    name: 'lockdown',
+    aliases: ['ld', 'paniclockdown'],
+    category: 'Security & Access Control',
+    clearance: 'Administrator / Extra Owner',
+    syntax: '!lockdown <1|2|3|off> / /lockdown tier: <tier>',
+    purpose: 'One-click emergency server panic lockdown with tiered intensity and pre-lockdown bitmask snapshots.',
+    architecture:
+`• **Tier 1 (Soft):** Mutes text \`SendMessages\` and voice \`Speak\` across public channels for \`@everyone\`.
+• **Tier 2 (Medium):** Tier 1 + Denies reactions, commands, attachments, embeds, and auto-engages Raid Mode.
+• **Tier 3 (Nuclear):** Total blackout. Denies \`ViewChannel\` across all channels (rules/quarantine visible but muted).
+• **Pre-Lockdown Snapshot:** Persists all pre-lockdown channel overwrites to database disk before applying changes.`,
+    example: '!lockdown 2'
+  },
+
+  unlockdown: {
+    name: 'unlockdown',
+    aliases: ['unld', 'unlockserver', 'liftlockdown'],
+    category: 'Security & Access Control',
+    clearance: 'Administrator / Extra Owner',
+    syntax: '!unlockdown / /unlockdown',
+    purpose: 'Lifts panic lockdown and recovers exact pre-lockdown channels and role bitmasks from database snapshot.',
+    architecture:
+`• **Snapshot Reconstruction:** Re-applies exact saved \`allow\` and \`deny\` bitfields to all channels and normalizes Raid Mode.`,
+    example: '!unlockdown'
+  },
+
+  voiceanalytics: {
+    name: 'voiceanalytics',
+    aliases: ['va', 'vcstats', 'voiceheatmap'],
+    category: 'Voice Utilities',
+    clearance: 'Staff / Manage Channels',
+    syntax: '!voiceanalytics / /voiceanalytics',
+    purpose: '24-hour diurnal voice activity heatmaps, peak engagement windows, and channel telemetry.',
+    architecture:
+`• **Live Session Tracking:** Monitored via \`voiceStateUpdate.js\` sessions with minute-accurate diurnal bucket aggregation in SQLite/DB.`,
+    example: '!voiceanalytics'
+  },
+
+  studio: {
+    name: 'studio',
+    aliases: ['embedstudio', 'containerstudio'],
+    category: 'Server Administration',
+    clearance: 'Manage Server',
+    syntax: '!studio [create|list|send|delete] / /studio action: <action>',
+    purpose: 'Interactive container, embed & announcement builder studio with persistent template storage.',
+    architecture:
+`• **Modal Builder & Preview:** Composes Discord Components V2 borderless containers with ephemeral live preview and disk persistence.`,
+    example: '!studio list'
+  },
+
+  auditlogs: {
+    name: 'auditlogs',
+    aliases: ['audit', 'forensics'],
+    category: 'Server Administration',
+    clearance: 'View Audit Log',
+    syntax: '!auditlogs [@user] [limit] / /auditlogs [user] [limit]',
+    purpose: 'Forensic audit log search with member filtering, action classifier, and relative timestamps.',
+    architecture:
+`• **Gateway Interrogation:** Fetches \`GuildAuditLogs\` filtered by moderator or target, mapping action types to clear telemetry events.`,
+    example: '!auditlogs @RogueMod 10'
   },
 
   ranktheme: {

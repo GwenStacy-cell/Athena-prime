@@ -12,7 +12,47 @@ export default {
         await reaction.fetch();
       } catch (error) {
         console.error('Something went wrong when fetching the reaction:', error);
-        return;
+      }
+    }
+
+    // ==========================================
+    // HONEYPOT REACTION INTERCEPT
+    // ==========================================
+    const guild = reaction.message.guild;
+    if (guild) {
+      const config = db.getGuildConfig(guild.id);
+      if (config && config.honeypotChannelId && reaction.message.channelId === config.honeypotChannelId) {
+        reaction.users.remove(user.id).catch(() => null);
+
+        const member = await guild.members.fetch(user.id).catch(() => null);
+        if (member) {
+          const isOwner = member.id === guild.ownerId || member.id === process.env.OWNER_ID;
+          const isImmune = isOwner || (config.automodImmuneRoleIds || []).some(rId => member.roles.cache.has(rId));
+
+          if (!isImmune) {
+            const action = config.honeypotAction || 'quarantine';
+            if (action === 'ban' && member.bannable) {
+              await member.ban({ reason: '[Honeypot Trap] Unauthorized Reaction in Hidden Decoy Channel' }).catch(() => null);
+            } else if (action === 'quarantine') {
+              const qRole = await import('../utils/helpers.js').then(h => h.getOrCreateQuarantineRole(guild)).catch(() => null);
+              if (qRole) {
+                await member.roles.set([qRole.id], 'Honeypot Reaction Trap Triggered').catch(() => null);
+              } else if (member.moderatable) {
+                await member.timeout(15 * 60 * 1000, 'Honeypot Reaction Trap Triggered').catch(() => null);
+              }
+            } else if (member.moderatable) {
+              const minutes = config.honeypotTimeoutMinutes || 15;
+              await member.timeout(minutes * 60 * 1000, 'Honeypot Reaction Trap Triggered').catch(() => null);
+            }
+
+            import('../utils/helpers.js').then(h => {
+              h.logToSecurityChannel(guild, {
+                content: `-# <a:uptime:1552608831060844575> **Honeypot Trap Triggered (Reaction)**\n-# • **Member:** <@${user.id}> \`(${user.id})\`\n-# • **Channel:** <#${config.honeypotChannelId}>\n-# • **Action Taken:** \`${action.toUpperCase()}\``
+              }).catch(() => null);
+            });
+            return;
+          }
+        }
       }
     }
 

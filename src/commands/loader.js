@@ -88,10 +88,16 @@ import { commands as countingCmds } from './counting.js';
 import { commands as explainCmds } from './explain.js';
 import { commands as askCmds } from './ask.js';
 import { commands as economyCmds } from './economy.js';
+import { commands as minigamesCmds } from './minigames.js';
+import { commands as voicestudioCmds } from './voicestudio.js';
+import { commands as studioCmds } from './studio.js';
 
 export const allCommands = [
   ...askCmds,
   ...economyCmds,
+  ...minigamesCmds,
+  ...voicestudioCmds,
+  ...studioCmds,
   ...explainCmds,
   ...countingCmds,
   ...firewallCmds,

@@ -71,7 +71,11 @@ const DEFAULT_SCHEMA = {
   baselineProfiles: {}, // guildId -> { actionsRecorded, staffTracked: [], lastAction, lastUpdated }
   economy: {},        // guildId -> { userId -> { wallet, bank, lastDaily, streak } }
   shopItems: {},      // guildId -> [ { id, name, price, roleId, description } ]
-  userRankThemes: {}  // userId -> themeName ('hogwarts' | 'athena')
+  userRankThemes: {}, // userId -> themeName ('hogwarts' | 'athena')
+  lockdownSnapshots: {}, // guildId -> { tier, timestamp, channels: [], roles: [] }
+  studioTemplates: {},   // guildId -> { templateId -> { id, name, title, description, color, fields, footer } }
+  minigamesStats: {},    // guildId -> { userId -> { blackjackWins, rouletteWins, triviaWins, totalWagered, totalWon } }
+  voiceAnalytics: {}     // guildId -> { hourly: {}, channels: {}, users: {} }
 };
 
 class Database {
@@ -2342,6 +2346,108 @@ class Database {
     return theme;
   }
 
+  // ==========================================
+  // LOCKDOWN SNAPSHOTS
+  // ==========================================
+  getLockdownSnapshot(guildId) {
+    if (!this.cache.lockdownSnapshots) this.cache.lockdownSnapshots = {};
+    return this.cache.lockdownSnapshots[guildId] || null;
+  }
+
+  saveLockdownSnapshot(guildId, data) {
+    if (!this.cache.lockdownSnapshots) this.cache.lockdownSnapshots = {};
+    this.cache.lockdownSnapshots[guildId] = { ...data, timestamp: Date.now() };
+    this.save();
+    return this.cache.lockdownSnapshots[guildId];
+  }
+
+  clearLockdownSnapshot(guildId) {
+    if (!this.cache.lockdownSnapshots) this.cache.lockdownSnapshots = {};
+    const old = this.cache.lockdownSnapshots[guildId];
+    delete this.cache.lockdownSnapshots[guildId];
+    this.save();
+    return old;
+  }
+
+  // ==========================================
+  // EMBED & CONTAINER STUDIO
+  // ==========================================
+  getStudioTemplates(guildId) {
+    if (!this.cache.studioTemplates) this.cache.studioTemplates = {};
+    if (!this.cache.studioTemplates[guildId]) this.cache.studioTemplates[guildId] = {};
+    return this.cache.studioTemplates[guildId];
+  }
+
+  saveStudioTemplate(guildId, templateId, template) {
+    if (!this.cache.studioTemplates) this.cache.studioTemplates = {};
+    if (!this.cache.studioTemplates[guildId]) this.cache.studioTemplates[guildId] = {};
+    this.cache.studioTemplates[guildId][templateId] = {
+      ...template,
+      id: templateId,
+      updatedAt: Date.now()
+    };
+    this.save();
+    return this.cache.studioTemplates[guildId][templateId];
+  }
+
+  deleteStudioTemplate(guildId, templateId) {
+    if (!this.cache.studioTemplates?.[guildId]) return false;
+    delete this.cache.studioTemplates[guildId][templateId];
+    this.save();
+    return true;
+  }
+
+  // ==========================================
+  // MINIGAMES STATS
+  // ==========================================
+  getMinigameStats(guildId, userId) {
+    if (!this.cache.minigamesStats) this.cache.minigamesStats = {};
+    if (!this.cache.minigamesStats[guildId]) this.cache.minigamesStats[guildId] = {};
+    if (!this.cache.minigamesStats[guildId][userId]) {
+      this.cache.minigamesStats[guildId][userId] = {
+        blackjackWins: 0,
+        rouletteWins: 0,
+        triviaWins: 0,
+        totalWagered: 0,
+        totalWon: 0
+      };
+    }
+    return this.cache.minigamesStats[guildId][userId];
+  }
+
+  recordMinigameResult(guildId, userId, game, won, amount) {
+    const stats = this.getMinigameStats(guildId, userId);
+    stats.totalWagered += Number(amount) || 0;
+    if (won) {
+      stats.totalWon += Number(amount) || 0;
+      if (game === 'blackjack') stats.blackjackWins = (stats.blackjackWins || 0) + 1;
+      else if (game === 'roulette') stats.rouletteWins = (stats.rouletteWins || 0) + 1;
+      else if (game === 'trivia') stats.triviaWins = (stats.triviaWins || 0) + 1;
+    }
+    this.save();
+    return stats;
+  }
+
+  // ==========================================
+  // VOICE ANALYTICS
+  // ==========================================
+  recordVoiceActivity(guildId, channelId, userId, durationMinutes) {
+    if (!this.cache.voiceAnalytics) this.cache.voiceAnalytics = {};
+    if (!this.cache.voiceAnalytics[guildId]) {
+      this.cache.voiceAnalytics[guildId] = { hourly: {}, channels: {}, users: {} };
+    }
+    const va = this.cache.voiceAnalytics[guildId];
+    const hour = new Date().getHours();
+    va.hourly[hour] = (va.hourly[hour] || 0) + durationMinutes;
+    va.channels[channelId] = (va.channels[channelId] || 0) + durationMinutes;
+    va.users[userId] = (va.users[userId] || 0) + durationMinutes;
+    this.save();
+  }
+
+  getVoiceAnalytics(guildId) {
+    if (!this.cache.voiceAnalytics) this.cache.voiceAnalytics = {};
+    return this.cache.voiceAnalytics[guildId] || { hourly: {}, channels: {}, users: {} };
+  }
 }
 const dbInstance = new Database();
 export default dbInstance;

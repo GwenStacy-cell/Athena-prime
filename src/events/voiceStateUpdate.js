@@ -34,6 +34,34 @@ export default {
     const guildCfg = db.getGuildConfig(guild.id);
 
     // ==========================================
+    // VOICE ANALYTICS DURATION TRACKING
+    // ==========================================
+    const sessionKey = `${guild.id}-${userId}`;
+    if (oldState.channelId && oldState.channelId !== newState.channelId) {
+      const joinTime = client.vcSessions.get(sessionKey);
+      if (joinTime) {
+        const elapsedMinutes = Math.max(1, Math.round((Date.now() - joinTime) / 60000));
+        db.recordVoiceActivity(guild.id, oldState.channelId, userId, elapsedMinutes);
+        client.vcSessions.delete(sessionKey);
+      }
+    }
+    if (newState.channelId && oldState.channelId !== newState.channelId) {
+      client.vcSessions.set(sessionKey, Date.now());
+
+      // JTC Welcome Chime Alert
+      const activeJtc = db.getJtcChannel(newState.channelId);
+      if (activeJtc && (activeJtc.chime || guildCfg?.jtcChime)) {
+        try {
+          const targetTextCh = activeJtc.textChannelId ? (guild.channels.cache.get(activeJtc.textChannelId) || await guild.channels.fetch(activeJtc.textChannelId).catch(() => null)) : newState.channel;
+          if (targetTextCh && targetTextCh.isTextBased()) {
+            const chimeMsg = `**Entrance Chime | <a:uptime:1552608831060844575>**\n-# > Welcome <@${userId}> to **${newState.channel.name}**!`;
+            targetTextCh.send({ content: chimeMsg }).catch(() => null);
+          }
+        } catch {}
+      }
+    }
+
+    // ==========================================
     // VOICE ROLE ENFORCEMENT (Auto Assign / Remove)
     // Applies to ALL members: Server Owner, Bot Owner, Users & Bots
     // ==========================================

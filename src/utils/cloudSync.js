@@ -305,7 +305,14 @@ export function getDatabaseMetrics() {
     aiModeServers: guilds.filter(g => g && g.aiModeEnabled).length,
     aiDedicatedChannels: guilds.filter(g => g && g.aiChannelId).length,
     rankRewardsCount: Object.values(cache.xpSystems || {}).reduce((acc, s) => acc + Object.keys(s?.roleRewards || {}).length, 0),
-    customThemesCount: Object.keys(cache.userRankThemes || {}).length
+    customThemesCount: Object.keys(cache.userRankThemes || {}).length,
+
+    lockdownSnapshots: Object.keys(cache.lockdownSnapshots || {}).length,
+    minigamesUsers: Object.values(cache.minigamesStats || {}).reduce((acc, g) => acc + Object.keys(g || {}).length, 0),
+    minigamesWagered: Object.values(cache.minigamesStats || {}).reduce((acc, g) => acc + Object.values(g || {}).reduce((uAcc, u) => uAcc + (u?.totalWagered || 0), 0), 0),
+    studioTemplates: Object.values(cache.studioTemplates || {}).reduce((acc, g) => acc + Object.keys(g || {}).length, 0),
+    voiceAnalyticsServers: Object.keys(cache.voiceAnalytics || {}).length,
+    captchaVerification: Object.values(cache.verification || {}).filter(v => v && (v.mode === 'captcha' || v.mode === 'math')).length
   };
 }
 
@@ -329,6 +336,7 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **Security Active:** \`${m.securityServers} servers\` | **Honeypots:** \`${m.honeypots}\` | **Raid Mode:** \`${m.raidModeServers}\`\n` +
     `> -# **Shield Modules:** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bots: ${m.antiBotAddServers}, Linked Role: ${m.antiLinkedRoleServers || 0}\`\n` +
     `> -# **Persistence Roles:** \`${m.unbypassableRolesCount || 0} Unbypassable, ${m.firewallRolesCount || 0} Firewall bound\`\n` +
+    `> -# **Emergency Shield:** \`${m.lockdownSnapshots || 0} panic lockdown snapshots | Anti-Phishing: Active | CAPTCHA Gates: ${m.captchaVerification || 0}\`\n` +
     `> -# **Thresholds:** \`${m.antiNukeThresholds} configured limits\`\n\n` +
 
     `**Automod Protection Matrix:**\n` +
@@ -359,6 +367,7 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **News Feeds:** \`${m.newsChannels} channels (${m.newsFeedsCount} feeds, ${m.newsRolesCount} roles) | Auto-React: ${m.autoReactChannels} channels\`\n` +
     `> -# **Tickets & Community:** \`${m.ticketSetups || 0} setups (${m.ticketsActive || 0} active, ${m.ticketsTotalCreated || 0} total) | Giveaways: ${m.giveaways}\`\n` +
     `> -# **Economy & Commerce:** \`${m.economyUsers || 0} active ledgers | Shop Items: ${m.shopItemsCount || 0} perks listed across ${m.shopGuilds || 0} servers\`\n` +
+    `> -# **Casino & Minigames:** \`${m.minigamesUsers || 0} players (${m.minigamesWagered ? m.minigamesWagered.toLocaleString() : 0} coins wagered) | Studio Templates: ${m.studioTemplates || 0} layouts\`\n` +
     `> -# **Neural AI & Themes:** \`AI Mode: ${m.aiModeServers || 0} servers (${m.aiDedicatedChannels || 0} channels) | Rank Roles: ${m.rankRewardsCount || 0} milestones, ${m.customThemesCount || 0} themed profiles\`\n` +
     `> -# **Suggestions, Leveling & Starboard:** \`${m.suggestionChannels || 0} suggestions, ${m.starboardChannels || 0} starboards, XP: ${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
     `> -# **Counting Engine:** \`${m.countingActive || 0} channels (${m.countingGuilds || 0} guilds) | Peak: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak, ${m.countingTotalUsers || 0} counters\`\n` +
@@ -366,6 +375,7 @@ export function formatDatabaseMetrics(m, options = {}) {
 
     `**Voice Systems, Audits & Analytics:**\n` +
     `> -# **Voice Hubs & JTC:** \`${m.homeVc} home VCs, ${m.theaterModeVcs} theater VCs, ${m.jtc} JTC hubs (${m.jtcChannels} temp VCs)\`\n` +
+    `> -# **Voice Telemetry:** \`${m.voiceAnalyticsServers || 0} servers with live diurnal heatmaps & peak velocity tracking\`\n` +
     `> -# **Server Logs & Audits:** \`${m.serverLogsCount} server logs, ${m.logChannelsCount} mod audit channels, ${m.msgDeleteLogChannels} delete channels\`\n` +
     `> -# **No-Prefix & Storage:** \`${m.npUsers} NP users | SQLite stats.db (WAL active), ${m.serverBackups} server templates\`\n`;
 

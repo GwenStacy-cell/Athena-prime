@@ -865,42 +865,100 @@ export const commands = [
             required: true
           }
         ]
+      },
+      {
+        name: 'chime',
+        description: 'Toggle entrance chime soundboard alerts when users enter your voice room',
+        type: 1,
+        options: [
+          {
+            name: 'status',
+            description: 'Enable or disable entrance chime',
+            type: 3,
+            required: true,
+            choices: [
+              { name: 'Enable Chime', value: 'on' },
+              { name: 'Disable Chime', value: 'off' }
+            ]
+          }
+        ]
       }
     ],
     async executePrefix(message, args) {
-      if (args && args.length > 0 && args[0].toLowerCase() === 'add') {
-        const targetUser = message.mentions.users.first();
-        if (!targetUser) return message.reply(cv2.warn('Missing User', 'Please mention a user: `!jtc add @user`'));
-        const vcChannel = message.member?.voice?.channel;
-        if (!vcChannel) return message.reply(cv2.warn('Not In Voice', 'You must be in a voice channel to use this.'));
-        const jtcData = db.getJtcChannel(vcChannel.id);
-        if (!jtcData) return message.reply(cv2.warn('Not A JTC Channel', 'This only works in a Join to Create channel.'));
-        if (jtcData.ownerId !== message.author.id && !message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-          return message.reply(cv2.warn('Unauthorized', 'Only the channel owner can permit users.'));
+      if (args && args.length > 0) {
+        const action = args[0].toLowerCase();
+        if (action === 'add') {
+          const targetUser = message.mentions.users.first();
+          if (!targetUser) return message.reply(cv2.warn('Missing User', 'Please mention a user: `!jtc add @user`'));
+          const vcChannel = message.member?.voice?.channel;
+          if (!vcChannel) return message.reply(cv2.warn('Not In Voice', 'You must be in a voice channel to use this.'));
+          const jtcData = db.getJtcChannel(vcChannel.id);
+          if (!jtcData) return message.reply(cv2.warn('Not A JTC Channel', 'This only works in a Join to Create channel.'));
+          if (jtcData.ownerId !== message.author.id && !message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            return message.reply(cv2.warn('Unauthorized', 'Only the channel owner can permit users.'));
+          }
+          await vcChannel.permissionOverwrites.edit(targetUser.id, { Connect: true, ViewChannel: true });
+          return message.reply(cv2.success('User Permitted', `<@${targetUser.id}> can now join your channel even when locked or ghosted.`));
         }
-        await vcChannel.permissionOverwrites.edit(targetUser.id, { Connect: true, ViewChannel: true });
-        return message.reply(cv2.success('User Permitted | <a:atheNATICK:1557841381630681106>', `<@${targetUser.id}> can now join your channel even when locked or ghosted.`));
+
+        if (action === 'chime') {
+          const enable = args[1]?.toLowerCase() === 'on';
+          const vcChannel = message.member?.voice?.channel;
+          const jtcData = vcChannel ? db.getJtcChannel(vcChannel.id) : null;
+          if (jtcData) {
+            if (jtcData.ownerId !== message.author.id && !message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+              return message.reply(cv2.warn('Unauthorized', 'Only the channel owner can configure channel chimes.'));
+            }
+            if (!db.cache.jtcChannels[vcChannel.id]) db.cache.jtcChannels[vcChannel.id] = {};
+            db.cache.jtcChannels[vcChannel.id].chime = enable;
+            db.save();
+            return message.reply(cv2.success('Welcome Chime Updated', `Entrance welcome chimes have been **${enable ? 'enabled' : 'disabled'}** for **${vcChannel.name}**.`));
+          } else {
+            if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(message.author.id)) {
+              return message.reply(cv2.warn('Unauthorized', 'You need Manage Server permissions to toggle server-wide JTC chimes.'));
+            }
+            db.updateGuildConfig(message.guild.id, { jtcChime: enable });
+            return message.reply(cv2.success('Welcome Chime Configured', `Server-wide JTC entrance welcome chime set to **${enable ? 'ON' : 'OFF'}**.`));
+          }
+        }
       }
-      return message.reply(cv2.info('Join to Create', 'Use `!jtcsetup` to configure the system, or `!jtc add @user` to permit a user into your temp VC.'));
+      return message.reply(cv2.info('Join to Create', 'Commands:\n-# \u2022 `!jtc add @user` - Permit user into locked VC\n-# \u2022 `!jtc chime on|off` - Toggle entrance chime soundboard alerts\n-# \u2022 `!jtcsetup` - Deploy primary JTC hub'));
     },
     async executeSlash(interaction) {
       const sub = interaction.options.getSubcommand();
       const member = interaction.member;
       const vcChannel = member.voice?.channel;
 
-      if (!vcChannel) return interaction.reply(cv2.warn('Not In Voice', 'You must be in a voice channel to use this.'));
-      const jtcData = db.getJtcChannel(vcChannel.id);
-      if (!jtcData) return interaction.reply(cv2.warn('Not A JTC Channel', 'This only works in a Join to Create channel.'));
-
-      // Only the channel owner or an admin can permit someone
-      if (jtcData.ownerId !== member.id && !member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return interaction.reply(cv2.warn('Unauthorized', 'Only the channel owner can permit users.'));
-      }
-
       if (sub === 'add') {
+        if (!vcChannel) return interaction.reply(cv2.warn('Not In Voice', 'You must be in a voice channel to use this.'));
+        const jtcData = db.getJtcChannel(vcChannel.id);
+        if (!jtcData) return interaction.reply(cv2.warn('Not A JTC Channel', 'This only works in a Join to Create channel.'));
+        if (jtcData.ownerId !== member.id && !member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return interaction.reply(cv2.warn('Unauthorized', 'Only the channel owner can permit users.'));
+        }
         const targetUser = interaction.options.getUser('user');
         await vcChannel.permissionOverwrites.edit(targetUser.id, { Connect: true, ViewChannel: true });
-        return interaction.reply(cv2.success('User Permitted ', `<@${targetUser.id}> can now join your channel even when locked or ghosted.`));
+        return interaction.reply(cv2.success('User Permitted', `<@${targetUser.id}> can now join your channel even when locked or ghosted.`));
+      }
+
+      if (sub === 'chime') {
+        const enable = interaction.options.getString('status') === 'on';
+        const jtcData = vcChannel ? db.getJtcChannel(vcChannel.id) : null;
+        if (jtcData) {
+          if (jtcData.ownerId !== member.id && !member.permissions.has(PermissionFlagsBits.Administrator)) {
+            return interaction.reply(cv2.warn('Unauthorized', 'Only the channel owner can configure channel chimes.'));
+          }
+          if (!db.cache.jtcChannels[vcChannel.id]) db.cache.jtcChannels[vcChannel.id] = {};
+          db.cache.jtcChannels[vcChannel.id].chime = enable;
+          db.save();
+          return interaction.reply(cv2.success('Welcome Chime Updated', `Entrance welcome chimes have been **${enable ? 'enabled' : 'disabled'}** for **${vcChannel.name}**.`));
+        } else {
+          if (!member.permissions.has(PermissionFlagsBits.ManageGuild) && !isBotOwnerSync(member.id)) {
+            return interaction.reply(cv2.warn('Unauthorized', 'You need Manage Server permissions to toggle server-wide JTC chimes.'));
+          }
+          db.updateGuildConfig(interaction.guild.id, { jtcChime: enable });
+          return interaction.reply(cv2.success('Welcome Chime Configured', `Server-wide JTC entrance welcome chime set to **${enable ? 'ON' : 'OFF'}**.`));
+        }
       }
     }
   }

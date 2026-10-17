@@ -1,4 +1,5 @@
-import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessagePayload } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessagePayload, AttachmentBuilder } from 'discord.js';
+import { generateImageCaptcha, generateMathCaptcha, validateAnswer } from '../utils/captchaEngine.js';
 import { buildXpDashboard } from '../commands/leveling.js';
 import commandMap from '../commands/loader.js';
 import cv2 from '../cv2.js';
@@ -93,6 +94,109 @@ export default {
         }
       }
       return;
+    }
+
+    // ==========================================
+    // CAPTCHA & MATH VERIFICATION MODAL SUBMISSION
+    // ==========================================
+    if (interaction.isModalSubmit() && (interaction.customId === 'verify_captcha_modal' || interaction.customId === 'verify_math_modal')) {
+      const isMath = interaction.customId === 'verify_math_modal';
+      const input = interaction.fields.getTextInputValue(isMath ? 'math_solution' : 'captcha_solution');
+      const isValid = validateAnswer(interaction.guild.id, interaction.user.id, input);
+
+      const verifyData = db.getVerification(interaction.guild.id);
+      if (!isValid) {
+        return interaction.reply({
+          ...cv2.asEphemeral(cv2.danger('Verification Failed', 'Incorrect challenge answer. Please click Authenticate Identity again to receive a fresh verification challenge.')),
+          flags: MessageFlags.Ephemeral
+        }).catch(() => null);
+      }
+
+      if (!verifyData || !verifyData.roleId) {
+        return interaction.reply({ content: '-# **Verification system is not configured.**', flags: MessageFlags.Ephemeral }).catch(() => null);
+      }
+
+      try {
+        const role = interaction.guild.roles.cache.get(verifyData.roleId) || await interaction.guild.roles.fetch(verifyData.roleId).catch(() => null);
+        if (!role) {
+          return interaction.reply({ content: '-# **The verification role no longer exists.**', flags: MessageFlags.Ephemeral }).catch(() => null);
+        }
+        await interaction.member.roles.add(role);
+        return interaction.reply({
+          ...cv2.asEphemeral(cv2.success('Identity Authenticated', 'Challenge solution validated! You have been granted access to the server.')),
+          flags: MessageFlags.Ephemeral
+        }).catch(() => null);
+      } catch (err) {
+        return interaction.reply({ content: '-# **Failed to assign verification role. Ensure bot role is higher than the verification role.**', flags: MessageFlags.Ephemeral }).catch(() => null);
+      }
+    }
+
+    // ==========================================
+    // STUDIO CONTAINER MODAL & BUTTON
+    // ==========================================
+    if (interaction.isButton() && interaction.customId === 'studio_open_builder') {
+      const modal = new ModalBuilder()
+        .setCustomId(`studio_modal_${Date.now()}`)
+        .setTitle('Container & Embed Studio');
+      const titleInput = new TextInputBuilder()
+        .setCustomId('studio_title')
+        .setLabel('Container Heading / Title')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('e.g. Official Server Announcement')
+        .setRequired(true)
+        .setMaxLength(100);
+      const descInput = new TextInputBuilder()
+        .setCustomId('studio_description')
+        .setLabel('Body Description (Markdown supported)')
+        .setStyle(TextInputStyle.Paragraph)
+        .setPlaceholder('Enter your formatted message body here...')
+        .setRequired(true)
+        .setMaxLength(3000);
+      const templateIdInput = new TextInputBuilder()
+        .setCustomId('studio_template_id')
+        .setLabel('Save as Template ID (lowercase, no spaces)')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('e.g. rules_update or welcome_event')
+        .setRequired(false)
+        .setMaxLength(32);
+      const footerInput = new TextInputBuilder()
+        .setCustomId('studio_footer')
+        .setLabel('Custom Footer Note')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('e.g. Athena Bulletproof Defense')
+        .setRequired(false)
+        .setMaxLength(100);
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(titleInput),
+        new ActionRowBuilder().addComponents(descInput),
+        new ActionRowBuilder().addComponents(templateIdInput),
+        new ActionRowBuilder().addComponents(footerInput)
+      );
+      return interaction.showModal(modal).catch(() => null);
+    }
+
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('studio_')) {
+      const title = interaction.fields.getTextInputValue('studio_title');
+      const description = interaction.fields.getTextInputValue('studio_description');
+      const templateId = interaction.fields.getTextInputValue('studio_template_id')?.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      const footer = interaction.fields.getTextInputValue('studio_footer')?.trim();
+
+      if (templateId) {
+        db.saveStudioTemplate(interaction.guild.id, templateId, {
+          title,
+          description,
+          footer
+        });
+      }
+
+      const previewPayload = cv2.make(title, description, [], false, footer || 'Studio Container Preview');
+      const confirmText = templateId ? `\n-# Saved to server templates as \`${templateId}\`. Dispatch with \`/studio action: send template_id: ${templateId}\`.` : '';
+
+      return interaction.reply({
+        content: `-# <a:atheNATICK:1557841381630681106> **Container Studio Preview Generated:**${confirmText}`,
+        components: previewPayload.components,
+        flags: MessageFlags.Ephemeral
+      }).catch(() => null);
     }
 
     // ==========================================
@@ -1579,18 +1683,75 @@ if (interaction.customId === "modal_2fa_setup") {
         }
         
         try {
-          const role = interaction.guild.roles.cache.get(verifyData.roleId);
+          const role = interaction.guild.roles.cache.get(verifyData.roleId) || await interaction.guild.roles.fetch(verifyData.roleId).catch(() => null);
           if (!role) {
              return await interaction.reply({ content: '-# **The verification role no longer exists.**', flags: MessageFlags.Ephemeral }).catch(() => null);
           }
           if (interaction.member.roles.cache.has(verifyData.roleId)) {
              return await interaction.reply({ content: '-# **You are already verified.**', flags: MessageFlags.Ephemeral }).catch(() => null);
           }
+
+          // If Image Captcha mode
+          if (verifyData.mode === 'captcha') {
+            const buffer = generateImageCaptcha(interaction.guild.id, interaction.user.id);
+            const attachment = new AttachmentBuilder(buffer, { name: 'captcha.png' });
+            const promptRow = new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                .setCustomId('verify_captcha_open_modal')
+                .setLabel('Enter CAPTCHA Solution')
+                .setStyle(ButtonStyle.Primary)
+            );
+            const container = cv2.info(
+              'Security Verification Challenge',
+              'Please view the image below and click **Enter CAPTCHA Solution** to submit the 6 characters displayed.\n-# \u2022 This verification challenge blocks automated bot raids with zero false positives.'
+            );
+            return await interaction.reply({
+              components: [container.components[0], promptRow],
+              files: [attachment],
+              flags: MessageFlags.Ephemeral
+            }).catch(() => null);
+          }
+
+          // If Math mode
+          if (verifyData.mode === 'math') {
+            const question = generateMathCaptcha(interaction.guild.id, interaction.user.id);
+            const modal = new ModalBuilder()
+              .setCustomId('verify_math_modal')
+              .setTitle('Arithmetic Verification');
+            const mathInput = new TextInputBuilder()
+              .setCustomId('math_solution')
+              .setLabel(question)
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+              .setMaxLength(5);
+            modal.addComponents(new ActionRowBuilder().addComponents(mathInput));
+            return await interaction.showModal(modal).catch(() => null);
+          }
+
+          // Default Button Mode
           await interaction.member.roles.add(role);
-          return await interaction.reply({ content: '-# <:emoji_16:1533860111704002665> **Identity Authenticated! You have been granted access to the server.**', flags: MessageFlags.Ephemeral }).catch(() => null);
+          return await interaction.reply({ 
+            ...cv2.asEphemeral(cv2.success('Identity Authenticated', 'You have been granted access to the server.')),
+            flags: MessageFlags.Ephemeral 
+          }).catch(() => null);
         } catch (err) {
           return await interaction.reply({ content: '-# **Failed to assign the verification role. Ensure my role is higher than the verification role.**', flags: MessageFlags.Ephemeral }).catch(() => null);
         }
+      }
+
+      if (interaction.customId === 'verify_captcha_open_modal') {
+        const modal = new ModalBuilder()
+          .setCustomId('verify_captcha_modal')
+          .setTitle('Submit CAPTCHA Solution');
+        const codeInput = new TextInputBuilder()
+          .setCustomId('captcha_solution')
+          .setLabel('Enter the 6 characters from image')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+          .setMinLength(5)
+          .setMaxLength(8);
+        modal.addComponents(new ActionRowBuilder().addComponents(codeInput));
+        return await interaction.showModal(modal).catch(() => null);
       }
 
 
