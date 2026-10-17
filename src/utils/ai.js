@@ -57,12 +57,37 @@ export function formatAIToGreyMarkdown(rawText) {
       continue;
     }
 
-    // Strip any pre-existing '-#' to re-standardize
-    trimmed = trimmed.replace(/^-#\s*/, '');
-
     // Skip any leftover pure dash/symbol line
     if (/^[=\-_*~]{2,}$/.test(trimmed)) {
       continue;
+    }
+
+    let isBullet = false;
+    let numberPrefix = '';
+
+    // Check if numbered list (e.g. "1. ", "2) ")
+    const numMatch = trimmed.match(/^(\d+[\.\)])\s+/);
+    if (numMatch) {
+      numberPrefix = numMatch[1];
+      trimmed = trimmed.slice(numMatch[0].length).trim();
+    }
+
+    // Aggressively clean out nested/repeated combinations of "-#", "•", "*", "-", ">" without stripping bold **
+    let prev;
+    do {
+      prev = trimmed;
+      if (/^(?:[-•]|\*(?!\*))\s+/i.test(trimmed)) isBullet = true;
+      trimmed = trimmed.replace(/^(?:-#\s*|(?:[-•>]|\*(?!\*))\s*)+/i, '').trim();
+    } while (trimmed !== prev);
+
+    if (!trimmed) continue;
+
+    // Balance backticks on the line to prevent broken markdown tags
+    const backticks = (trimmed.match(/`/g) || []).length;
+    if (backticks % 2 !== 0) {
+      if (trimmed.endsWith('`')) trimmed = trimmed.slice(0, -1);
+      else if (trimmed.startsWith('`')) trimmed = trimmed.slice(1);
+      else trimmed += '`';
     }
 
     // Check if line was a heading: # Heading, ## Heading, ### Heading
@@ -73,28 +98,30 @@ export function formatAIToGreyMarkdown(rawText) {
       continue;
     }
 
-    // Check if line was a bullet point: * Item, - Item, • Item
-    const bulletMatch = trimmed.match(/^[\*\-•]\s+(.+)$/);
-    if (bulletMatch) {
-      let itemContent = bulletMatch[1].trim();
-      // Highlight bold labels inside bullet items with underline: **Label**: -> **__Label:__**
-      itemContent = itemContent.replace(/\*\*([^*]+)\*\*:\s*/g, '**__$1:__** ');
-      formatted.push(`-# • ${itemContent}`);
+    // Check if line was already a bold/underlined heading
+    const boldUnderlineMatch = trimmed.match(/^\*\*__([^_]+)__\*\*:?$/) || trimmed.match(/^__([^_]+)__:?$/);
+    if (boldUnderlineMatch) {
+      const title = boldUnderlineMatch[1].trim();
+      formatted.push(`-# **__${title}__**`);
       continue;
     }
 
-    // If line starts with bold title like **Title**:
+    // If line starts with bold title like **Title**: -> **__Title:__**
     if (/^\*\*([^*]+)\*\*:\s*/.test(trimmed)) {
       trimmed = trimmed.replace(/^\*\*([^*]+)\*\*:\s*/, '**__$1:__** ');
-    } else if (/^[A-Z][A-Za-z0-9\s\(\)\/]{3,50}:$/.test(trimmed)) {
-      // Like "Current Opposition Parties in Tamil Nadu:"
-      trimmed = `**__${trimmed}__**`;
-    } else if (/^[A-Z][A-Za-z0-9\s\(\)\/]{3,50}$/.test(trimmed) && !trimmed.endsWith('.')) {
-      // Like "Current Opposition Parties in Tamil Nadu"
-      trimmed = `**__${trimmed}__**`;
+    } else if (/^[A-Z][A-Za-z0-9\s\(\)\/\-]{3,50}:$/.test(trimmed)) {
+      const cleanTitle = trimmed.replace(/:$/, '');
+      formatted.push(`-# **__${cleanTitle}:__**`);
+      continue;
     }
 
-    formatted.push(`-# ${trimmed}`);
+    if (numberPrefix) {
+      formatted.push(`-# **${numberPrefix}** ${trimmed}`);
+    } else if (isBullet) {
+      formatted.push(`-# • ${trimmed}`);
+    } else {
+      formatted.push(`-# ${trimmed}`);
+    }
   }
 
   // Collapse multiple consecutive blank lines into one and return

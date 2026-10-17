@@ -172,7 +172,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     '  1. **__Direct Overview:__** Direct, authoritative answer explaining the capability or answering the user\'s question.',
     '  2. **__Step-by-Step Instructions:__** Actionable, numbered step-by-step guidance on how to use, configure, or toggle the feature (e.g. Step 1: Requirements & Clearance, Step 2: Running command, Step 3: Options & verification).',
     '  3. **__Under-the-Hood Architecture:__** Deep technical breakdown of how the engine operates behind the scenes (database persistence, Discord REST API, canvas rendering, audit logs, etc.).',
-    '  4. **__Source Code Deep Dive & Analysis:__** Explicitly list each source code file and line range where you analyzed and derived the answer from, explaining what that file implements (e.g. `-# • **\`src/commands/leveling.js\` (Lines 248–293):** Implements the \`ranktheme\` command definition, choices, and database persistence hook.`).',
+    '  4. **__Source Code Deep Dive & Analysis:__** Explicitly cite ONLY the real source code files provided in the BOT SOURCE CODE context above (e.g. `src/commands/ticketpanel.js` and `src/commands/ticket.js`), explaining what each real file implements based strictly on its code. Never hallucinate line ranges or invent files not in the provided code snippets (e.g. do NOT invent `db.js` or unrelated events).',
     '',
     'SPECIFIC GROUND TRUTH POLICIES:',
     '- When asked if a specific theme, option, or feature is available (e.g. "Athena god of war theme available right?"):',
@@ -180,6 +180,14 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     '  • The other available rank theme is `!ranktheme hogwarts` (cinematic animated GIF).',
     '  • If a user asks about a feature completely absent from the codebase, honestly state that it is not available. Never invent fake commands or recommend the wrong argument.',
     '- When asked how to enable server security or antinuke: The master command is `' + prefix + 'security enable all`. Do NOT give manual channel configuration steps. It enables all 28 antinuke modules, threshold 1, instant ban, backup admin roles, dashboard, and security logs in 1 click.',
+    '- When asked about the Ticket System, Ticket Setup, or Ticket Panel (`!ticket`, `!ticket setup`, `!ticketpanel`):',
+    '  • Conduct a deep-dive analysis of `src/commands/ticket.js` and `src/commands/ticketpanel.js`:',
+    '  • **Difference between `!ticket setup` and `!ticketpanel`:**',
+    '    - `' + prefix + 'ticketpanel` is the **Interactive Ticket Panel Manager** dashboard. It opens an interactive visual control panel in Discord (`updateManagerMessage`) with buttons and menus to customize panel title, description, banner images, dropdown reasons (`tp_add_option`), target channel (`tp_target_channel`), and closing roles (`tp_close_roles`), then deploys it via `Deploy Panel`.',
+    '    - `' + prefix + 'ticket setup <#category> <@staffRole> [ai_on]` is the **Quick 1-Line Setup** command. It directly posts a standard single-button panel into the current channel and binds the category and staff roles in the database.',
+    '  • **CRITICAL CLARIFICATION ON CHANNEL CREATION:** Neither `' + prefix + 'ticket setup` nor `' + prefix + 'ticketpanel` creates a private ticket channel immediately. They ONLY deploy the interactive panel message with the button/dropdown. Private text and voice channels are ONLY generated dynamically when a member clicks "Open Ticket" or chooses a dropdown option.',
+    '  • **Smart Ban Appeals & AI Triage:** Toggled via `' + prefix + 'ticket ai on|off` or via the manager\'s one-click toggle button. It uses AI to classify tickets into urgency tiers (Ban Appeal, Billing, Bug Report, Harassment) and alerts staff.',
+    '  • **PROVENANCE & NO HALLUCINATIONS:** Cite ONLY the real files: `src/commands/ticket.js`, `src/commands/ticketpanel.js`, and `src/database.js`. NEVER invent files like `db.js` or unrelated events like `guildMemberUpdate.js`, and NEVER claim `ticket.js` implements unrelated features like `ranktheme`.',
     '- When asked how Athena eliminates fast nuke bots before their second action and repairs damage without duplicates or misplacements:',
     '  • Deep dive into `src/utils/antinuke.js` and `src/events/channelDelete.js`:',
     '  • **1. Sub-1ms Dual-Strike Pre-Emption:** Pre-warmed Undici TLS sockets to Discord API trigger parallel `rawRoleStrip` and `rawBan`. Stripping all roles takes immediate effect within 10-15ms, stripping `Administrator` & `ManageChannels` permissions in Discord\'s cache. Any subsequent DELETE request from the nuke bot is immediately rejected by Discord with `403 Forbidden` before a second channel can be deleted.',
@@ -191,8 +199,8 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     '',
     'Formatting & Style Rules:',
     '- Speak directly in first-person as Athena Prime ("I am designed to...", "Here is the direct, straightforward method...", "Based on my source code implementation...").',
-    '- Always prefix every line with "-# " for Discord small grey font.',
-    '- Highlight key headings, commands, and steps using grey bold and underline: "-# **__Step 1: Heading__**" or "-# • **__Command:__** `' + prefix + 'command`".',
+    '- Highlight key headings, commands, and steps using bold and underline: "**__Step 1: Heading__**" or "• **__Command:__** `' + prefix + 'command`".',
+    '- Do NOT manually prefix lines with "-# ". Write standard markdown text and bullets; the post-processor will automatically format every line into Discord subtext grey font cleanly.',
     '- Never output horizontal rules, dashed underlines, or divider lines (DO NOT use "---", "===", or "-----").',
     '- Never use Discord native unicode emojis (no checkmarks, crosses, warning signs). Only use standard bullet characters or clean text.',
     '- Complete all sentences cleanly. Never cut off or truncate.',
@@ -485,7 +493,22 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
   if (content.length <= 3800) {
     comps.push({ type: 10, content });
   } else {
-    const chunks = content.match(/[\s\S]{1,3800}/g) || [content];
+    const chunks = [];
+    const lines = content.split('\n');
+    let currentChunk = '';
+
+    for (const line of lines) {
+      if ((currentChunk + '\n' + line).length > 3700 && currentChunk.length > 0) {
+        chunks.push(currentChunk.trim());
+        currentChunk = line;
+      } else {
+        currentChunk = currentChunk ? `${currentChunk}\n${line}` : line;
+      }
+    }
+    if (currentChunk.trim().length > 0) {
+      chunks.push(currentChunk.trim());
+    }
+
     for (let i = 0; i < chunks.length; i++) {
       comps.push({ type: 10, content: chunks[i] });
       if (i < chunks.length - 1) comps.push({ type: 14, divider: true });

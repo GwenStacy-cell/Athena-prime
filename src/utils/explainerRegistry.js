@@ -1278,16 +1278,38 @@ export const DETAILED_COMMANDS = {
 
   ticket: {
     name: 'ticket',
-    aliases: ['ticketpanel', 'newticket'],
+    aliases: ['newticket', 'tickets'],
     category: 'Community & Engagement',
-    clearance: 'Public / Everyone',
-    syntax: '!ticket [setup|ai|close|rename|panel]',
-    purpose: 'Interactive private ticket support system with Smart Ban Appeals & AI Ticket Triage.',
+    clearance: 'Administrator (Setup & AI Toggle) / Public (Opening Tickets)',
+    syntax: '!ticket setup <#category> <@staffRole> [@additionalRoles...] [ai_on] | !ticket ai on|off',
+    purpose: 'Quick one-command ticket system deployment and AI triage configuration.',
     architecture: 
-`• **Dynamic Channel Creation:** Creates private locked text channel under ticket category with explicit staff permissions.
-• **Smart Ban Appeals & AI Triage:** Automatically summarizes inquiries and categorizes tickets into Urgency Tiers (Ban Appeal, Billing, Bug Report, Harassment). Optional via \`!ticket ai on|off\` or setup flag.
-• **Transcript Archival:** On close, serializes full conversation into HTML transcript and posts to log channel.`,
+`• **Fast Deployment (!ticket setup):** Directly posts a standard single-button panel into the current channel with the "Open Ticket" button (\`ticket_open_general\`). Permanently stores the Category ID and Staff Role IDs in SQLite (\`db.updateTicketConfig\`). NOTE: Running this command does NOT create private channels immediately; it only deploys the panel.
+• **Dynamic Channel Generation:** A private text channel (\`ticket-username\`) and private voice channel (\`ticket-username-voice\`) are ONLY generated when a member actually clicks the "Open Ticket" button or selects a reason. Permissions dynamically isolate \`@everyone\` (deny View/Connect) while explicitly allowing the ticket author and configured staff roles.
+• **Smart Ban Appeals & AI Triage (!ticket ai on|off):** Toggles neural ticket classification. When enabled, prompts users with an appeal/inquiry modal, categorizes urgency (Ban Appeal, Billing, Bug Report, Harassment), and posts an executive summary for staff.
+• **Transcript Archival & Lifecycle:** In-ticket buttons allow staff to claim tickets (\`ticket_claim\`) and close tickets (\`ticket_close\`), archiving the full chat history into HTML transcripts before deleting the channels.`,
     example: '!ticket setup #tickets @Staff ai_on'
+  },
+
+  ticketpanel: {
+    name: 'ticketpanel',
+    aliases: ['tp', 'ticket-panel', 'ticketmgr'],
+    category: 'Community & Engagement',
+    clearance: 'Administrator',
+    syntax: '!ticketpanel',
+    purpose: 'Interactive visual Ticket Panel Manager dashboard with real-time UI controls to customize and deploy bespoke ticket panels.',
+    architecture: 
+`• **Interactive Manager UI:** Running \`!ticketpanel\` opens the management control panel in Discord (\`updateManagerMessage\`) with buttons, select menus, and modals to customize settings in real-time.
+• **Visual Customization Modals:** 
+  - \`Edit Title & Desc\` (\`tp_edit_text\`): Customize the panel's title, greeting, and support guidelines.
+  - \`Edit Media & Placeholder\` (\`tp_edit_media\`): Configure banner image URLs, thumbnail URLs, and dropdown placeholder text.
+• **Dropdown Reasons Builder (\`tp_add_option\` / \`tp_reset_options\`):** Allows admins to add custom ticket category reasons (e.g. "General Support", "Billing & Store", "Ban Appeal", "Report User"). When options exist, the deployed panel automatically uses a Discord String Select Menu instead of a basic button!
+• **Target Channel & Closing Roles Selectors:**
+  - \`Target Channel\` (\`tp_target_channel\`): Pick any specific text channel to deploy the panel into.
+  - \`Closing Roles\` (\`tp_close_roles\`): Select specific staff roles authorized to close tickets.
+• **Deploy Panel (\`tp_send\`):** Compiles all settings from SQLite (\`db.getTickets\`) and deploys the finished interactive panel to the target channel.
+• **Clarification on Channel Creation:** Like \`!ticket setup\`, deploying a panel does NOT create a private ticket channel immediately. Private channels are ONLY created dynamically when a user clicks the button or chooses an option from the dropdown menu.`,
+    example: '!ticketpanel'
   },
 
   welcome: {
