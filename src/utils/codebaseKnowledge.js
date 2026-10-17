@@ -52,7 +52,14 @@ export function extractFileMetadata(relPath = '', content = '', lines = []) {
         let category = '';
         let aliases = [];
         let choices = [];
+        let options = [];
+        let hasPrefix = false;
+        let hasSlash = false;
+        let slashHidden = false;
         let isExecutable = false;
+
+        let inOptions = false;
+        let currOpt = null;
 
         for (let j = i + 1; j < Math.min(len, i + 300); j++) {
           const l = fileLines[j];
@@ -79,10 +86,70 @@ export function extractFileMetadata(relPath = '', content = '', lines = []) {
           if (chMatch && !choices.includes(chMatch[1])) {
             choices.push(chMatch[1]);
           }
-          if (l.includes('executePrefix') || l.includes('executeSlash')) {
+
+          if (l.includes('options:') && l.includes('[')) {
+            inOptions = true;
+          }
+          if (inOptions) {
+            const optMatch = l.match(/name:\s*['"]([a-zA-Z0-9_-]+)['"]/);
+            if (optMatch && optMatch[1] !== cmdName) {
+              currOpt = { name: optMatch[1], required: false };
+              options.push(currOpt);
+            }
+            if (currOpt && l.includes('required: true')) {
+              currOpt.required = true;
+            }
+            if (l.includes('executePrefix') || l.includes('executeSlash')) {
+              inOptions = false;
+            }
+          }
+
+          if (l.includes('executePrefix')) {
+            hasPrefix = true;
             isExecutable = true;
           }
+          if (l.includes('executeSlash')) {
+            hasSlash = true;
+            isExecutable = true;
+          }
+          if (l.includes('slashHidden: true') || l.includes('slashHidden:true')) {
+            slashHidden = true;
+          }
         }
+
+        if (slashHidden) {
+          hasSlash = false;
+        }
+
+        if (!hasPrefix && !hasSlash) {
+          if (content.includes('executePrefix')) hasPrefix = true;
+          if (content.includes('executeSlash') && !content.includes('slashHidden: true')) hasSlash = true;
+          if (hasPrefix || hasSlash) isExecutable = true;
+        }
+
+        let executionMode = 'Prefix Only';
+        if (hasPrefix && hasSlash) {
+          executionMode = 'Dual Execution (Prefix & Slash Supported)';
+        } else if (hasPrefix && !hasSlash) {
+          executionMode = 'Prefix Only';
+        } else if (!hasPrefix && hasSlash) {
+          executionMode = 'Slash Command Only';
+        } else {
+          executionMode = 'Prefix Supported';
+          hasPrefix = true;
+        }
+
+        let optionsSyntax = '';
+        if (options.length > 0) {
+          optionsSyntax = options.map(o => o.required ? `<${o.name}>` : `[${o.name}]`).join(' ');
+        } else if (choices.length > 0) {
+          optionsSyntax = `[${choices.slice(0, 4).join('|')}]`;
+        }
+
+        const primaryPrefixSyntax = optionsSyntax ? `!${cmdName} ${optionsSyntax}` : `!${cmdName}`;
+        const slashAlternative = hasSlash 
+          ? `/${cmdName}${optionsSyntax ? ' ' + optionsSyntax : ''} (Slash Command Available)`
+          : 'Not Available as a Slash Command (Prefix Only)';
 
         if (isExecutable && !commands.some(c => c.name === cmdName)) {
           commands.push({
@@ -91,6 +158,14 @@ export function extractFileMetadata(relPath = '', content = '', lines = []) {
             category: category || baseName,
             aliases,
             choices,
+            options,
+            hasPrefix,
+            hasSlash,
+            slashHidden,
+            executionMode,
+            optionsSyntax,
+            primaryPrefixSyntax,
+            slashAlternative,
             lineNum: i + 1
           });
         }
@@ -101,12 +176,24 @@ export function extractFileMetadata(relPath = '', content = '', lines = []) {
     if (commands.length === 0) {
       const singleName = content.match(/name:\s*['"]([a-zA-Z0-9_-]+)['"]/);
       if (singleName) {
+        const cmdName = singleName[1];
+        const hasP = content.includes('executePrefix');
+        const hasS = content.includes('executeSlash') && !content.includes('slashHidden: true');
+        const mode = (hasP && hasS) ? 'Dual Execution (Prefix & Slash Supported)' : (hasP ? 'Prefix Only' : (hasS ? 'Slash Command Only' : 'Prefix Supported'));
         commands.push({
-          name: singleName[1],
+          name: cmdName,
           description: '',
           category: baseName,
           aliases: [],
           choices: [],
+          options: [],
+          hasPrefix: hasP || !hasS,
+          hasSlash: hasS,
+          slashHidden: !hasS,
+          executionMode: mode,
+          optionsSyntax: '',
+          primaryPrefixSyntax: `!${cmdName}`,
+          slashAlternative: hasS ? `/${cmdName} (Slash Command Available)` : 'Not Available as a Slash Command (Prefix Only)',
           lineNum: 1
         });
       }

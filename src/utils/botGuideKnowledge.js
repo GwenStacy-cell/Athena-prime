@@ -55,7 +55,25 @@ export function findRelevantKnowledge(query = '', prefix = '!', allCommands = []
     }
 
     if (score > 0) {
-      matchedCommands.push({ ...cmdData, score });
+      const codeMatch = Array.isArray(allCommands)
+        ? allCommands.find(c => c.name.toLowerCase() === cmdData.name.toLowerCase() || (cmdData.aliases || []).some(a => c.name.toLowerCase() === a.toLowerCase()))
+        : null;
+
+      const executionMode = codeMatch?.executionMode || (cmdData.syntax && cmdData.syntax.includes('/') ? 'Dual Execution (Prefix & Slash Supported)' : 'Prefix Supported');
+      const hasPrefix = codeMatch ? codeMatch.hasPrefix : true;
+      const hasSlash = codeMatch ? codeMatch.hasSlash : (executionMode.includes('Dual') || (cmdData.syntax && cmdData.syntax.includes('/')));
+      const slashAlternative = codeMatch?.slashAlternative || (hasSlash ? `/${cmdData.name} (Slash Command Available)` : 'Not Available as a Slash Command (Prefix Only)');
+      const primaryPrefixSyntax = cmdData.syntax ? cmdData.syntax.replace(/!/g, prefix) : `${prefix}${cmdData.name}`;
+
+      matchedCommands.push({
+        ...cmdData,
+        executionMode,
+        hasPrefix,
+        hasSlash,
+        slashAlternative,
+        primaryPrefixSyntax,
+        score
+      });
     }
   }
 
@@ -84,15 +102,24 @@ export function findRelevantKnowledge(query = '', prefix = '!', allCommands = []
       }
 
       if (score > 0) {
+        const primaryPrefixSyntax = cmd.primaryPrefixSyntax
+          ? cmd.primaryPrefixSyntax.replace(/!/g, prefix)
+          : `${prefix}${cmd.name}${cmd.optionsSyntax ? ` ${cmd.optionsSyntax}` : (cmd.choices && cmd.choices.length > 0 ? ` [${cmd.choices.slice(0, 3).join('|')}]` : '')}`;
+
         matchedCommands.push({
           name: cmd.name,
           aliases: cmd.aliases || [],
           category: cmd.category,
           clearance: cmd.category === 'owner' ? 'Server Owner / Bot Owner' : 'Server Administration / Staff',
-          syntax: `${prefix}${cmd.name}${cmd.choices && cmd.choices.length > 0 ? ` [${cmd.choices.slice(0, 3).join('|')}]` : ''}`,
+          syntax: primaryPrefixSyntax,
+          primaryPrefixSyntax,
+          slashAlternative: cmd.slashAlternative || (cmd.hasSlash ? `/${cmd.name}${cmd.optionsSyntax ? ` ${cmd.optionsSyntax}` : ''} (Slash Command Available)` : 'Not Available as a Slash Command (Prefix Only)'),
+          executionMode: cmd.executionMode || 'Prefix Supported',
+          hasPrefix: cmd.hasPrefix !== undefined ? cmd.hasPrefix : true,
+          hasSlash: !!cmd.hasSlash,
           purpose: cmd.description || `Execute ${cmd.name} command operations.`,
           architecture: `• **Implementation Location:** \`${cmd.file}\` (Line ${cmd.lineNum}).`,
-          example: `${prefix}${cmd.name}`,
+          example: `${prefix}${cmd.name}${cmd.optionsSyntax ? ` ${cmd.optionsSyntax}` : ''}`,
           score
         });
       }
@@ -151,11 +178,13 @@ export function findRelevantKnowledge(query = '', prefix = '!', allCommands = []
 
   // Add top matched commands
   if (matchedCommands.length > 0) {
-    contextLines.push('--- RELEVANT BOT COMMANDS ---');
+    contextLines.push('--- RELEVANT BOT COMMANDS & EXECUTION MODALITIES ---');
     for (const cmd of matchedCommands.slice(0, 5)) {
-      contextLines.push(`Command: ${prefix}${cmd.name} (Aliases: ${(cmd.aliases || []).map(a => prefix + a).join(', ') || 'None'})`);
+      contextLines.push(`Command: ${cmd.name} (Aliases: ${(cmd.aliases || []).map(a => prefix + a).join(', ') || 'None'})`);
+      contextLines.push(`Execution Modality: ${cmd.executionMode || 'Prefix Supported'}`);
+      contextLines.push(`Primary Execution (Prefix): ${cmd.primaryPrefixSyntax || cmd.syntax.replace(/!/g, prefix)}`);
+      contextLines.push(`Slash Command Availability: ${cmd.slashAlternative || (cmd.hasSlash ? `/${cmd.name}` : 'Not Available as a Slash Command (Prefix Only)')}`);
       contextLines.push(`Category: ${cmd.category} | Clearance: ${cmd.clearance}`);
-      contextLines.push(`Syntax: ${cmd.syntax.replace(/!/g, prefix)}`);
       contextLines.push(`Purpose: ${cmd.purpose}`);
       if (cmd.architecture) contextLines.push(`Under-the-Hood Architecture:\n${cmd.architecture}`);
       if (cmd.example) contextLines.push(`Example Usage: ${cmd.example.replace(/!/g, prefix)}`);
@@ -316,6 +345,19 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     '  3. **__Under-the-Hood Architecture:__** Deep technical breakdown of how the engine operates behind the scenes (database persistence, Discord REST API, canvas rendering, audit logs, etc.).',
     '  4. **__Source Code Deep Dive & Analysis:__** Explicitly cite ONLY the real source code files provided in the BOT SOURCE CODE context above (e.g. `src/commands/news.js`, `src/commands/ticketpanel.js`, `src/commands/rate.js`), explaining what each real file implements based strictly on its code. Never hallucinate line ranges or invent files not in the provided code snippets.',
     '',
+    'CRITICAL EXECUTION MODALITY & PREFIX-FIRST TEACHING RULES:',
+    '- 1. UNIVERSAL PREFIX-FIRST INSTRUCTION MANDATE: You MUST ALWAYS teach the user how to configure, execute, and use features using the server\'s prefix (`' + prefix + 'command <args>`) FIRST as the primary, universal instruction method. In Discord, global slash commands are capped at 100, meaning many commands are Prefix-Only. Furthermore, prefix commands are 100% reliable, immediate, and never fail registration.',
+    '- 2. EXPLICIT SLASH COMMAND STATUS & AVAILABILITY: For EVERY command or feature you explain, you MUST explicitly inform the user whether a Discord slash command (`/command`) is available or if the feature is Prefix-Only:',
+    '  • If Dual Execution (Prefix & Slash Supported): Mention that the user can also execute it as a slash command (`/command <args>`) if they prefer slash interactions.',
+    '  • If Prefix Only: State explicitly: "Slash command is NOT available for this feature; execute it using the prefix command `' + prefix + 'command <args>`."',
+    '  • If Slash Only: State that it is executed via `/command <args>`.',
+    '- 3. COMPLETE STEP-BY-STEP OPERATIONAL DETAILS: For every command/feature, provide all practical details to make it work:',
+    '  • Clearance & Prerequisites: exact permission (Server Owner, Extra Owner, Administrator, Moderate Members, or standard Member) and role hierarchy requirement (Athena role above managed roles).',
+    '  • Exact Arguments: clearly differentiate between `<required>` and `[optional]` parameters, noting expected formats (channel mentions `<#channel>`, user mentions `<@user>`, durations `5m/1h`, URLs, choices).',
+    '  • Interactive UI Steps: if the command opens an interactive dashboard, button row, or modal (e.g. `!ticketpanel`, `!rate`, `!learn`), describe what buttons/dropdowns appear and what to click.',
+    '  • Database State & Persistence: mention which SQLite database methods or tables persist the configuration (e.g. `db.setNewsSetup`, `db.setRateChannel`, `db.updateGuildConfig`).',
+    '  • Live Verification: tell the user how to test and verify that the command took effect (e.g. checking confirmation embed, checking `#security-logs`, or running a status command).',
+    '',
     'SPECIFIC GROUND TRUTH POLICIES:',
     '- When asked about Automated News Feeds or RSS News (!news, /news, news setup, news disable):',
     '  • Conduct a deep-dive analysis of `src/commands/news.js`, `src/database.js`, and `src/jobs/newsJob.js`:',
@@ -448,6 +490,9 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
         let category = '';
         let choices = [];
         let isTopLevel = false;
+        let hasPrefix = false;
+        let hasSlash = false;
+        let slashHidden = false;
 
         for (let j = Math.max(0, i - 4); j < Math.min(lines.length, i + 35); j++) {
           const l = lines[j];
@@ -457,10 +502,33 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
           if (cm && !category) category = cm[1];
           const chm = l.match(/value:\s*['"]([a-zA-Z0-9_-]+)['"]/);
           if (chm && !choices.includes(chm[1])) choices.push(chm[1]);
-          if (l.includes('executePrefix') || l.includes('executeSlash') || l.includes('category:')) {
+          if (l.includes('executePrefix')) {
+            hasPrefix = true;
+            isTopLevel = true;
+          }
+          if (l.includes('executeSlash')) {
+            hasSlash = true;
+            isTopLevel = true;
+          }
+          if (l.includes('slashHidden: true') || l.includes('slashHidden:true')) {
+            slashHidden = true;
+          }
+          if (l.includes('category:')) {
             isTopLevel = true;
           }
         }
+
+        if (slashHidden) hasSlash = false;
+        let executionMode = 'Prefix Only';
+        if (hasPrefix && hasSlash) executionMode = 'Dual Execution (Prefix & Slash Supported)';
+        else if (hasPrefix && !hasSlash) executionMode = 'Prefix Only';
+        else if (!hasPrefix && hasSlash) executionMode = 'Slash Command Only';
+        else {
+          executionMode = 'Prefix Supported';
+          hasPrefix = true;
+        }
+
+        const slashAlternative = hasSlash ? `/${cmdName} (Slash Command Available)` : 'Not Available as a Slash Command (Prefix Only)';
 
         if (isTopLevel && !detectedCmds.some(c => c.name === cmdName)) {
           const entry = {
@@ -468,6 +536,10 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
             description: desc,
             category: category || snip.role,
             choices,
+            hasPrefix,
+            hasSlash,
+            executionMode,
+            slashAlternative,
             file: snip.file,
             lineNum: snip.startLine + i
           };
@@ -487,6 +559,9 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
       category: kCmd.category,
       choices: [],
       syntax: kCmd.syntax,
+      primaryPrefixSyntax: kCmd.primaryPrefixSyntax,
+      executionMode: kCmd.executionMode,
+      slashAlternative: kCmd.slashAlternative,
       clearance: kCmd.clearance,
       architecture: kCmd.architecture
     };
@@ -531,8 +606,10 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
 
   // Step 2: Running command & choices
   if (primaryCmd) {
-    const cmdSyntax = primaryCmd.syntax ? primaryCmd.syntax.replace(/!/g, prefix) : `${prefix}${primaryCmd.name}`;
-    parts.push(`  -# • **__Step 2: Command Syntax:__** \`${cmdSyntax}\``);
+    const cmdSyntax = primaryCmd.primaryPrefixSyntax || (primaryCmd.syntax ? primaryCmd.syntax.replace(/!/g, prefix) : `${prefix}${primaryCmd.name}`);
+    parts.push(`  -# • **__Step 2: Primary Execution (Prefix First):__** \`${cmdSyntax}\``);
+    parts.push(`    -# • **Execution Modality:** \`${primaryCmd.executionMode || 'Prefix Supported'}\``);
+    parts.push(`    -# • **Slash Command Availability:** \`${primaryCmd.slashAlternative || (primaryCmd.hasSlash ? `/${primaryCmd.name}` : 'Not Available as a Slash Command (Prefix Only)')}\``);
 
     if (primaryCmd.choices && primaryCmd.choices.length > 0) {
       parts.push(`    -# Supported choices & subcommands: ${primaryCmd.choices.map(c => `\`${c}\``).join(', ')}.`);
@@ -543,9 +620,11 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
     }
   } else if (knowledge.matchedCommands.length > 0) {
     const cmd = knowledge.matchedCommands[0];
-    parts.push(`  -# • **__Step 2: Primary Command:__** \`${cmd.syntax.replace(/!/g, prefix)}\` \u2014 ${cmd.purpose}`);
+    parts.push(`  -# • **__Step 2: Primary Execution (Prefix First):__** \`${(cmd.primaryPrefixSyntax || cmd.syntax).replace(/!/g, prefix)}\` \u2014 ${cmd.purpose}`);
+    parts.push(`    -# • **Execution Modality:** \`${cmd.executionMode || 'Prefix Supported'}\``);
+    parts.push(`    -# • **Slash Command Availability:** \`${cmd.slashAlternative || (cmd.hasSlash ? `/${cmd.name}` : 'Not Available as a Slash Command (Prefix Only)')}\``);
   } else {
-    parts.push(`  -# • **__Step 2: Command Execution:__** Execute the relevant module command as identified in the source snippets below.`);
+    parts.push(`  -# • **__Step 2: Command Execution:__** Execute the relevant module command using the server prefix \`${prefix}\` as identified in the source snippets below.`);
   }
 
   // Step 3: Verification & Inspection
