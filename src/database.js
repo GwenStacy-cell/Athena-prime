@@ -68,7 +68,10 @@ const DEFAULT_SCHEMA = {
   vcDrags: {},        // guildId -> { userId -> { initiatorId, targetTag, startedAt, intervalSec } }
   counting: {},       // guildId -> counting config
   nukeSignatures: {}, // guildId -> [ { id, timestamp, executorId, action, eventType } ]
-  baselineProfiles: {} // guildId -> { actionsRecorded, staffTracked: [], lastAction, lastUpdated }
+  baselineProfiles: {}, // guildId -> { actionsRecorded, staffTracked: [], lastAction, lastUpdated }
+  economy: {},        // guildId -> { userId -> { wallet, bank, lastDaily, streak } }
+  shopItems: {},      // guildId -> [ { id, name, price, roleId, description } ]
+  userRankThemes: {}  // userId -> themeName ('hogwarts' | 'athena')
 };
 
 class Database {
@@ -2259,6 +2262,84 @@ class Database {
     config.lastMessageId = null;
     this.save();
     return config;
+  }
+
+  // ==========================================
+  // ECONOMY & SERVER SHOP SYSTEM
+  // ==========================================
+  getUserEconomy(guildId, userId) {
+    if (!this.cache.economy) this.cache.economy = {};
+    if (!this.cache.economy[guildId]) this.cache.economy[guildId] = {};
+    if (!this.cache.economy[guildId][userId]) {
+      this.cache.economy[guildId][userId] = {
+        wallet: 250,
+        bank: 0,
+        lastDaily: 0,
+        streak: 0
+      };
+    }
+    return this.cache.economy[guildId][userId];
+  }
+
+  updateUserEconomy(guildId, userId, data) {
+    const eco = this.getUserEconomy(guildId, userId);
+    this.cache.economy[guildId][userId] = { ...eco, ...data };
+    this.save();
+    return this.cache.economy[guildId][userId];
+  }
+
+  addWallet(guildId, userId, amount) {
+    const eco = this.getUserEconomy(guildId, userId);
+    eco.wallet = Math.max(0, (eco.wallet || 0) + Number(amount));
+    this.save();
+    return eco.wallet;
+  }
+
+  removeWallet(guildId, userId, amount) {
+    const eco = this.getUserEconomy(guildId, userId);
+    if ((eco.wallet || 0) < amount) return false;
+    eco.wallet -= Number(amount);
+    this.save();
+    return true;
+  }
+
+  getShopItems(guildId) {
+    if (!this.cache.shopItems) this.cache.shopItems = {};
+    if (!this.cache.shopItems[guildId]) this.cache.shopItems[guildId] = [];
+    return this.cache.shopItems[guildId];
+  }
+
+  addShopItem(guildId, { name, price, roleId, description }) {
+    const items = this.getShopItems(guildId);
+    const id = 'item_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+    const newItem = { id, name, price: Number(price), roleId, description: description || '' };
+    items.push(newItem);
+    this.save();
+    return newItem;
+  }
+
+  removeShopItem(guildId, itemId) {
+    const items = this.getShopItems(guildId);
+    const idx = items.findIndex(it => it.id === itemId);
+    if (idx === -1) return false;
+    items.splice(idx, 1);
+    this.save();
+    return true;
+  }
+
+  // ==========================================
+  // RANK THEMES
+  // ==========================================
+  getUserRankTheme(userId) {
+    if (!this.cache.userRankThemes) this.cache.userRankThemes = {};
+    return this.cache.userRankThemes[userId] || 'hogwarts';
+  }
+
+  setUserRankTheme(userId, theme) {
+    if (!this.cache.userRankThemes) this.cache.userRankThemes = {};
+    this.cache.userRankThemes[userId] = theme;
+    this.save();
+    return theme;
   }
 
 }

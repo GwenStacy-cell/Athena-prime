@@ -297,7 +297,15 @@ export function getDatabaseMetrics() {
     serverBackups: Object.keys(cache.backups || {}).length,
     npUsers: Object.keys(cache.npUsers || {}).length,
     npServers: Object.keys(cache.npServers || {}).length,
-    npManagers: (cache.npManagers || []).length
+    npManagers: (cache.npManagers || []).length,
+
+    economyUsers: Object.values(cache.economy || {}).reduce((acc, g) => acc + Object.keys(g || {}).length, 0),
+    shopItemsCount: Object.values(cache.shopItems || {}).reduce((acc, g) => acc + (Array.isArray(g) ? g.length : 0), 0),
+    shopGuilds: Object.keys(cache.shopItems || {}).filter(k => (cache.shopItems[k] || []).length > 0).length,
+    aiModeServers: guilds.filter(g => g && g.aiModeEnabled).length,
+    aiDedicatedChannels: guilds.filter(g => g && g.aiChannelId).length,
+    rankRewardsCount: Object.values(cache.xpSystems || {}).reduce((acc, s) => acc + Object.keys(s?.roleRewards || {}).length, 0),
+    customThemesCount: Object.keys(cache.userRankThemes || {}).length
   };
 }
 
@@ -350,6 +358,8 @@ export function formatDatabaseMetrics(m, options = {}) {
     `**Automated Feeds, Community & Engagement:**\n` +
     `> -# **News Feeds:** \`${m.newsChannels} channels (${m.newsFeedsCount} feeds, ${m.newsRolesCount} roles) | Auto-React: ${m.autoReactChannels} channels\`\n` +
     `> -# **Tickets & Community:** \`${m.ticketSetups || 0} setups (${m.ticketsActive || 0} active, ${m.ticketsTotalCreated || 0} total) | Giveaways: ${m.giveaways}\`\n` +
+    `> -# **Economy & Commerce:** \`${m.economyUsers || 0} active ledgers | Shop Items: ${m.shopItemsCount || 0} perks listed across ${m.shopGuilds || 0} servers\`\n` +
+    `> -# **Neural AI & Themes:** \`AI Mode: ${m.aiModeServers || 0} servers (${m.aiDedicatedChannels || 0} channels) | Rank Roles: ${m.rankRewardsCount || 0} milestones, ${m.customThemesCount || 0} themed profiles\`\n` +
     `> -# **Suggestions, Leveling & Starboard:** \`${m.suggestionChannels || 0} suggestions, ${m.starboardChannels || 0} starboards, XP: ${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
     `> -# **Counting Engine:** \`${m.countingActive || 0} channels (${m.countingGuilds || 0} guilds) | Peak: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak, ${m.countingTotalUsers || 0} counters\`\n` +
     `> -# **Auto-Quotes & Sticky:** \`${m.quoteChannels} quote channels, ${m.stickyMessages} sticky channels, ${m.adel} auto-delete channels\`\n\n` +

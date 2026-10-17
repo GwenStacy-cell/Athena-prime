@@ -241,5 +241,249 @@ export const commands = [
       const attachment = await generateLeaderboard(interaction.guild, paginatedUsers, page, totalPages);
       await interaction.editReply({ content: `${TROPHY} **Server Leaderboard** ${COIN}`, files: [attachment] });
     }
+  },
+
+  // --- RANK THEME COMMAND ---
+  {
+    name: 'ranktheme',
+    description: 'Switch your personalized XP rank card visual theme (e.g. Hogwarts Animated GIF or Athena Classic).',
+    category: 'leveling',
+    aliases: ['setranktheme', 'cardtheme'],
+    options: [
+      {
+        name: 'theme',
+        description: 'Choose your card visual theme',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Hogwarts (Animated Looping GIF)', value: 'hogwarts' },
+          { name: 'Athena Classic (Obsidian Stone)', value: 'athena' }
+        ]
+      }
+    ],
+    async executePrefix(message, args) {
+      const choice = (args[0] || '').toLowerCase();
+      if (choice !== 'hogwarts' && choice !== 'athena' && choice !== 'classic') {
+        const current = db.getUserRankTheme(message.author.id);
+        return message.reply({
+          components: [
+            cv2.buildContainer(
+              'Rank Theme Settings | <a:uptime:1552608831060844575>',
+              `-# • **Active Theme:** \`${current.toUpperCase()}\`\n\n` +
+              `-# • \`!ranktheme hogwarts\` \u2014 Cinematic Animated GIF with soaring Hedwig & flaming altar\n` +
+              `-# • \`!ranktheme athena\` \u2014 Sleek Obsidian & God of War stone card`
+            )
+          ],
+          flags: MessageFlags.IsComponentsV2
+        });
+      }
+
+      const selected = (choice === 'athena' || choice === 'classic') ? 'athena' : 'hogwarts';
+      db.setUserRankTheme(message.author.id, selected);
+
+      return message.reply({
+        components: [
+          cv2.buildContainer(
+            'Rank Theme Updated | <a:atheNATICK:1557841381630681106>',
+            `Your rank card theme has been switched to **\`${selected.toUpperCase()}\`**.\nRun \`!rank\` to preview your card.`
+          )
+        ],
+        flags: MessageFlags.IsComponentsV2
+      });
+    },
+    async executeSlash(interaction) {
+      const theme = interaction.options.getString('theme');
+      db.setUserRankTheme(interaction.user.id, theme);
+
+      return interaction.reply({
+        components: [
+          cv2.buildContainer(
+            'Rank Theme Updated | <a:atheNATICK:1557841381630681106>',
+            `Your rank card theme has been switched to **\`${theme.toUpperCase()}\`**.\nRun \`/rank\` to preview your card.`
+          )
+        ],
+        flags: MessageFlags.IsComponentsV2
+      });
+    }
+  },
+
+  // --- RANK REWARDS COMMAND ---
+  {
+    name: 'rankrewards',
+    description: 'Configure and view automatic role rewards granted upon reaching specific levels.',
+    category: 'leveling',
+    aliases: ['levelrewards', 'lvlaur', 'xprewards'],
+    options: [
+      {
+        name: 'list',
+        description: 'View all active level role rewards',
+        type: 1
+      },
+      {
+        name: 'add',
+        description: 'Bind a role reward to a specific level (Admin)',
+        type: 1,
+        options: [
+          { name: 'level', description: 'Target level', type: 4, required: true },
+          { name: 'role', description: 'Role granted', type: 8, required: true }
+        ]
+      },
+      {
+        name: 'remove',
+        description: 'Remove role reward for a level (Admin)',
+        type: 1,
+        options: [
+          { name: 'level', description: 'Level milestone to unbind', type: 4, required: true }
+        ]
+      }
+    ],
+    async executePrefix(message, args) {
+      const guildId = message.guild.id;
+      const system = db.getXpSystem(guildId);
+      const sub = (args[0] || '').toLowerCase();
+
+      if (sub === 'add') {
+        if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return message.reply({ components: [cv2.buildContainer('Permission Denied', 'Only Server Administrators can add level rewards.')], flags: MessageFlags.IsComponentsV2 });
+        }
+        const level = parseInt(args[1]);
+        const role = message.mentions.roles.first() || (args[2] ? message.guild.roles.cache.get(args[2]) : null);
+        if (isNaN(level) || level < 1 || !role) {
+          return message.reply({
+            components: [cv2.buildContainer('Usage', '`!rankrewards add <level> <@role>`\n-# Example: `!rankrewards add 10 @Veteran`')],
+            flags: MessageFlags.IsComponentsV2
+          });
+        }
+        const rewards = system.roleRewards || {};
+        rewards[String(level)] = role.id;
+        db.setXpSystem(guildId, { ...system, roleRewards: rewards });
+
+        return message.reply({
+          components: [
+            cv2.buildContainer(
+              'Level Reward Registered | <a:atheNATICK:1557841381630681106>',
+              `Members reaching **Level ${level}** will now automatically receive the <@&${role.id}> role.`
+            )
+          ],
+          flags: MessageFlags.IsComponentsV2
+        });
+      }
+
+      if (sub === 'remove' || sub === 'delete') {
+        if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return message.reply({ components: [cv2.buildContainer('Permission Denied', 'Only Server Administrators can remove level rewards.')], flags: MessageFlags.IsComponentsV2 });
+        }
+        const level = parseInt(args[1]);
+        if (isNaN(level)) {
+          return message.reply({ components: [cv2.buildContainer('Usage', '`!rankrewards remove <level>`')], flags: MessageFlags.IsComponentsV2 });
+        }
+        const rewards = system.roleRewards || {};
+        delete rewards[String(level)];
+        db.setXpSystem(guildId, { ...system, roleRewards: rewards });
+
+        return message.reply({
+          components: [
+            cv2.buildContainer(
+              'Level Reward Purged | <a:atheNATICK:1557841381630681106>',
+              `Milestone role reward for **Level ${level}** was removed.`
+            )
+          ],
+          flags: MessageFlags.IsComponentsV2
+        });
+      }
+
+      // Default: List
+      const rewards = system.roleRewards || {};
+      const entries = Object.entries(rewards).sort((a, b) => Number(a[0]) - Number(b[0]));
+      if (entries.length === 0) {
+        return message.reply({
+          components: [
+            cv2.buildContainer(
+              'Level Role Milestones | <a:uptime:1552608831060844575>',
+              'No level role rewards are configured on this server yet.\n\n-# **Administrators:** Use `!rankrewards add <level> <@role>`'
+            )
+          ],
+          flags: MessageFlags.IsComponentsV2
+        });
+      }
+
+      const listStr = entries.map(([lvl, roleId]) => `-# • **Level ${lvl}** \u2192 <@&${roleId}> \`(${roleId})\``).join('\n');
+      return message.reply({
+        components: [
+          cv2.buildContainer(
+            'Level Role Milestones | <a:uptime:1552608831060844575>',
+            `### **Configured Milestone Role Rewards**\n\n${listStr}`
+          )
+        ],
+        flags: MessageFlags.IsComponentsV2
+      });
+    },
+
+    async executeSlash(interaction) {
+      const guildId = interaction.guild.id;
+      const system = db.getXpSystem(guildId);
+      const sub = interaction.options.getSubcommand();
+
+      if (sub === 'add') {
+        const level = interaction.options.getInteger('level');
+        const role = interaction.options.getRole('role');
+        const rewards = system.roleRewards || {};
+        rewards[String(level)] = role.id;
+        db.setXpSystem(guildId, { ...system, roleRewards: rewards });
+
+        return interaction.reply({
+          components: [
+            cv2.buildContainer(
+              'Level Reward Registered | <a:atheNATICK:1557841381630681106>',
+              `Members reaching **Level ${level}** will automatically receive <@&${role.id}>.`
+            )
+          ],
+          flags: MessageFlags.IsComponentsV2
+        });
+      }
+
+      if (sub === 'remove') {
+        const level = interaction.options.getInteger('level');
+        const rewards = system.roleRewards || {};
+        delete rewards[String(level)];
+        db.setXpSystem(guildId, { ...system, roleRewards: rewards });
+
+        return interaction.reply({
+          components: [
+            cv2.buildContainer(
+              'Level Reward Purged | <a:atheNATICK:1557841381630681106>',
+              `Milestone role reward for **Level ${level}** was removed.`
+            )
+          ],
+          flags: MessageFlags.IsComponentsV2
+        });
+      }
+
+      // List
+      const rewards = system.roleRewards || {};
+      const entries = Object.entries(rewards).sort((a, b) => Number(a[0]) - Number(b[0]));
+      if (entries.length === 0) {
+        return interaction.reply({
+          components: [
+            cv2.buildContainer(
+              'Level Role Milestones | <a:uptime:1552608831060844575>',
+              'No level role rewards configured yet.\n\n-# **Administrators:** Use `/rankrewards add`.'
+            )
+          ],
+          flags: MessageFlags.IsComponentsV2
+        });
+      }
+
+      const listStr = entries.map(([lvl, roleId]) => `-# • **Level ${lvl}** \u2192 <@&${roleId}> \`(${roleId})\``).join('\n');
+      return interaction.reply({
+        components: [
+          cv2.buildContainer(
+            'Level Role Milestones | <a:uptime:1552608831060844575>',
+            `### **Configured Milestone Role Rewards**\n\n${listStr}`
+          )
+        ],
+        flags: MessageFlags.IsComponentsV2
+      });
+    }
   }
 ];

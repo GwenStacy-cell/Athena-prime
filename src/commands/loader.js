@@ -86,8 +86,12 @@ import { commands as shipCmds } from './ship.js';
 import { commands as databaseAdminCmds } from './databaseadmin.js';
 import { commands as countingCmds } from './counting.js';
 import { commands as explainCmds } from './explain.js';
+import { commands as askCmds } from './ask.js';
+import { commands as economyCmds } from './economy.js';
 
 export const allCommands = [
+  ...askCmds,
+  ...economyCmds,
   ...explainCmds,
   ...countingCmds,
   ...firewallCmds,

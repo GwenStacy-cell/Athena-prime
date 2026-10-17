@@ -360,6 +360,72 @@ Athena Prime supports full parity across standard text prefixes (\`!learn\`) and
 • Registered as a Discord Chat Input command with an \`action\` option choice: \`status\`, \`enable\`, \`disable\`, \`baseline\`, \`signatures\`, and \`clear\`.`
       }
     ]
+  },
+  honeypot: {
+    id: 'honeypot',
+    label: 'Honeypot Trap Security',
+    aliases: ['trap', 'honeypots', 'antispam_trap'],
+    title: 'Honeypot Channel Trap & Zero-Tolerance Defense | <a:atheNATICK:1557841381630681106>',
+    description: 'Decoy channel baiting automated raiders and selfbots into instant timeout and message purge.',
+    pages: [
+      {
+        pageTitle: 'Under-the-Hood Honeypot Mechanics',
+        content:
+`# 1. What is a Honeypot Trap?
+A Honeypot is a designated text channel configured with permissions hidden or silenced for human users, but left visible to automated selfbots, token scrapers, and mass raid accounts that spam every channel.
+
+# 2. Athena's Zero-Latency Tripwire Protocol
+• **Channel ID Binding:** The designated channel is tracked strictly by ID (\`dbConfig.honeypotChannelId\`) in SQLite.
+• **Instant Message Interception:** In \`src/events/messageCreate.js\`, any message received in the honeypot channel triggers an instant security response:
+  1. **Purge:** Message is deleted from Discord in sub-millisecond execution.
+  2. **Automated Timeout:** Offender is immediately timed out for \`honeypotTimeoutMinutes\` (default 15 minutes).
+  3. **Security Audit Log:** Comprehensive security incident logged with user ID, channel ID, and message snippet.
+  4. **Immunity Validation:** Server Owner, Bot Owner, and Extra Owners are bypassed safely.`
+      }
+    ]
+  },
+  neural: {
+    id: 'neural',
+    label: 'Athena Neural AI Matrix',
+    aliases: ['ai', 'ask', 'gemini', 'neuralengine'],
+    title: 'Athena Prime Neural AI Matrix & Accent Borderless Containers | <a:atheNATICK:1557841381630681106>',
+    description: 'Multi-provider AI intelligence with accent borderless CV2 container rendering.',
+    pages: [
+      {
+        pageTitle: 'AI Engine & Container Architecture',
+        content:
+`# 1. Multi-Provider Fallback Matrix
+• **Primary:** Google Gemini 1.5 Flash API for high-reasoning tasks when \`GEMINI_API_KEY\` is configured.
+• **Autonomous Fallback:** High-speed edge inference (Pollinations) providing zero-key, instant responses.
+• **Native Emoji Scrubbing:** Filters out unicode Discord emojis to strictly uphold Athena's brand identity.
+
+# 2. Strict AI Invocation Protocol
+• **Dedicated Invocations:** AI answers are strictly restricted to the \`!ask\` and \`/ask\` commands.
+• **AI Mode:** Server owners can toggle conversational channel mode (\`!aimode channel #channel\`) to bind AI chat to a specific channel.
+• **Accent Borderless CV2 Container:** Formats responses with server accent colors, section dividers, and markdown styling.`
+      }
+    ]
+  },
+  economy: {
+    id: 'economy',
+    label: 'Commerce & Role Fulfillment Engine',
+    aliases: ['shop', 'coins', 'balance', 'daily'],
+    title: 'Server Commerce & Role Privilege Matrix | <a:atheNATICK:1557841381630681106>',
+    description: 'Persistent currency ledger, interactive coinflip wagering, and automated role shop.',
+    pages: [
+      {
+        pageTitle: 'Economy & Shop Mechanics',
+        content:
+`# 1. Persistent Currency Ledger
+• **SQLite & JSON Storage:** Tracks wallet, vault reserves, and daily streak counters per guild.
+• **Daily Stipends:** Consecutive streak bonus rewarding active members up to +600 bonus coins.
+• **Cloud Backup Sync:** All economy balances and shop item mappings are continuously synchronized into Discord Cloud Backups.
+
+# 2. Role Shop & Instant Fulfillment
+• **Item Registration:** Administrators list purchasable perks with \`!shop add <name> <price> <@role>\`.
+• **ID-Based Role Assignment:** When a member purchases an item (\`!shop buy <itemId>\`), coins are deducted atomically and the role is assigned by Role ID.`
+      }
+    ]
   }
 };
 
@@ -367,6 +433,110 @@ Athena Prime supports full parity across standard text prefixes (\`!learn\`) and
  * Detailed command mechanics, parameters, permissions, and internal architecture.
  */
 export const DETAILED_COMMANDS = {
+  ask: {
+    name: 'ask',
+    aliases: ['ai', 'athena', 'neural', 'gemini'],
+    category: 'Utilities & Integrations',
+    clearance: 'Public / Everyone',
+    syntax: '!ask <prompt> / /ask <prompt>',
+    purpose: 'Query Athena Prime Neural AI Engine for intelligent answers, analysis, and assistance.',
+    architecture:
+`• **Multi-Provider Fallback:** Evaluates prompt against Google Gemini API with seamless fallback to high-speed neural edge provider.
+• **Accent Borderless CV2 Container:** Dynamically formats answer using guild accent color, divider components, and sanitized markdown.
+• **Security Protocol:** Native unicode emojis are automatically scrubbed from responses to adhere to brand guidelines.`,
+    example: '!ask explain quantum computing in simple terms'
+  },
+
+  aimode: {
+    name: 'aimode',
+    aliases: ['aimode'],
+    category: 'Utilities & Integrations',
+    clearance: 'Administrator',
+    syntax: '!aimode [status|on|off|channel #channel]',
+    purpose: 'Configure conversational AI assistant mode and bind dedicated chat channels.',
+    architecture:
+`• **Channel ID Binding:** Binds dedicated channel ID to SQLite guild configuration.
+• **Strict Isolation:** In all standard channels, AI replies are strictly restricted to the !ask command to prevent unwanted chatter.`,
+    example: '!aimode channel #ai-chat'
+  },
+
+  balance: {
+    name: 'balance',
+    aliases: ['bal', 'coins', 'money'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!balance / !bal [@user] / /balance [user]',
+    purpose: 'Displays wallet balance, vault reserves, and daily streak progress in Athena Coins.',
+    architecture:
+`• **Ledger Resolution:** Queries SQLite economy tables with atomic fallback to default starting stipend.
+• **CV2 Container:** Renders financial status inside a dark borderless Components V2 panel.`,
+    example: '!bal @user'
+  },
+
+  daily: {
+    name: 'daily',
+    aliases: ['claimdaily'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!daily / /daily',
+    purpose: 'Claim 24-hour coin dividend with consecutive day streak multipliers.',
+    architecture:
+`• **Streak Clock:** Enforces 24-hour cooldown with 48-hour streak protection window.
+• **Multiplier Calculation:** Awards +300 base coins plus up to +600 streak bonus coins.`,
+    example: '!daily'
+  },
+
+  shop: {
+    name: 'shop',
+    aliases: ['shop'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Admin (for adding/removing)',
+    syntax: '!shop [buy <id>|add <name> <price> <@role>|remove <id>]',
+    purpose: 'Browse and purchase server role privileges and exclusive perks using earned Athena coins.',
+    architecture:
+`• **ID-Based Role Assignment:** Strictly maps items to Discord Role IDs stored in database.
+• **Atomic Purchase Flow:** Verifies wallet balance, deducts coins, and assigns the target role immediately via Discord REST API.`,
+    example: '!shop buy item_vip'
+  },
+
+  coinflip: {
+    name: 'coinflip',
+    aliases: ['cf', 'flip'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!coinflip <heads|tails> <amount>',
+    purpose: 'Wager coins in a provably fair 50/50 double-or-nothing coin toss.',
+    architecture:
+`• **Atomic Ledger Verification:** Deducts bet before coin execution and credits 2x payout immediately on victory.`,
+    example: '!coinflip heads 100'
+  },
+
+  ranktheme: {
+    name: 'ranktheme',
+    aliases: ['setranktheme', 'cardtheme'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Everyone',
+    syntax: '!ranktheme <hogwarts|athena> / /ranktheme [theme]',
+    purpose: 'Switch personalized XP rank card visual theme between Hogwarts Looping Animated GIF and Athena Classic.',
+    architecture:
+`• **Theme Persistence:** Stores user aesthetic choice in database cache.
+• **Canvas/FFmpeg Pipeline:** Hogwarts theme renders 12-frame 10 FPS palettegen GIF; Athena theme renders static stone card.`,
+    example: '!ranktheme hogwarts'
+  },
+
+  rankrewards: {
+    name: 'rankrewards',
+    aliases: ['levelrewards', 'lvlaur', 'xprewards'],
+    category: 'Community & Engagement',
+    clearance: 'Public / Admin',
+    syntax: '!rankrewards [list|add <level> <@role>|remove <level>]',
+    purpose: 'Configure automatic role rewards granted upon reaching specific XP levels.',
+    architecture:
+`• **Level Ascension Hook:** Processed during processLevelUp in xpEngine.js.
+• **Role ID Verification:** Fetches and assigns roles strictly by Discord Role ID with bot hierarchy validation.`,
+    example: '!rankrewards add 10 @Veteran'
+  },
+
   unbypassable: {
     name: 'unbypassable',
     aliases: ['unb', 'persistenceroles', 'sentinels'],

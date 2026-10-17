@@ -1449,13 +1449,17 @@ export const helpModules = [
   { id: 'leveling', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'XP', label: 'Leveling & XP', emoji: 'leveling', commands: [
     "`!xpsetup` - Open the XP Dashboard `[Extra Owner]`",
     "`!rank [@user]` - View level and XP progress `[Public]`",
+    "`!ranktheme <hogwarts|athena>` - Switch personalized rank card aesthetic (Looping Animated GIF vs Obsidian Stone) `[Public]`",
+    "`!rankrewards list` - View active level milestone role rewards `[Public]`",
+    "`!rankrewards add <level> <@role>` - Bind automated role reward to milestone `[Admin]`",
+    "`!rankrewards remove <level>` - Unbind milestone role reward `[Admin]`",
     "`!givexp @user <amount>` - Manually grant XP `[Extra Owner]`",
     "`!removexp @user <amount>` - Manually remove XP `[Extra Owner]`",
     "",
     "**XP Setup Guide:**",
     "Step 1: Run `!xpsetup` and click **Enable System**.",
-    "Step 2: Use the dropdown to assign Role Rewards for specific levels.",
-    "Step 3: Use the multiplier dropdown to boost XP for server boosters or VIPs.",
+    "Step 2: Use `!rankrewards add <lvl> <@role>` to configure milestone role rewards.",
+    "Step 3: Members choose between **Hogwarts Looping GIF** or **Athena Classic** via `!ranktheme`.",
     "Step 4: Set the **Announce Channel** where level-up messages will be sent."
   ] },
   { id: 'counting', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Counting', label: 'Counting Engine', emoji: 'counting', commands: [
@@ -1473,6 +1477,20 @@ export const helpModules = [
     "Step 2: Members count consecutively starting from **1**.",
     "Step 3: If someone counts twice in a row or types the wrong number, a server save is consumed.",
     "Step 4: If no saves remain, the count ruins back to 1 and the all-time high score is updated!"
+  ] },
+  { id: 'economy', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Economy', label: 'Economy & Shop', emoji: 'coins', commands: [
+    "`!balance / !bal [@user]` - View wallet, vault reserves, and net worth `[Public]`",
+    "`!daily` - Claim daily stipend with consecutive day streak multipliers `[Public]`",
+    "`!pay @user <amount>` - Transfer coins directly to another member `[Public]`",
+    "`!coinflip <heads|tails> <bet>` - Double or nothing 50/50 coin wager `[Public]`",
+    "`!shop` - Browse server role and privilege catalog `[Public]`",
+    "`!shop buy <itemId>` - Purchase role perk with coins `[Public]`",
+    "`!shop add <name> <price> <@role>` - List new purchasable role perk `[Admin]`",
+    "`!shop remove <itemId>` - Purge item from catalog `[Admin]`",
+    "",
+    "**Commerce Architecture:**",
+    "- Persistent ledger stored in SQLite & synchronized with Discord Cloud Backups.",
+    "- Roles purchased via shop are fulfilled and audited instantly by Role ID."
   ] },
   { id: 'voice', category: 'VOICE & MEDIA', shortLabel: 'Voice', label: 'Voice Utilities', emoji: 'voice', commands: [
     "`!voicerole <@role|ID|Name|disable> / !vcrole` - Auto-assign role in VC for all members & bots `[Extra Owner]`",
@@ -1528,6 +1546,8 @@ export const helpModules = [
   
   { id: 'utilities', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Utilities', label: 'General Utilities', emoji: 'utilities', commands: [
     "`!help [module/command]` - Displays this interactive menu `[Public]`",
+    "`!ask <prompt> / /ask <prompt>` - Query Athena Prime Neural AI Engine `[Public]`",
+    "`!aimode status|on|off|channel` - Configure conversational AI channel mode `[Admin]`",
     "`!dev` - Displays developer information and credits `[Public]`",
     "`!ping / !p` - View bot latency and heartbeat graph `[Public]`",
     "`!status` - Live bot engine performance, cluster health & security telemetry `[Public]`",

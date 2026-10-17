@@ -2,6 +2,7 @@ import { createCanvas, loadImage, registerFont } from './canvas.js';
 import { AttachmentBuilder } from 'discord.js';
 import path from 'path';
 import fs from 'fs';
+import db from '../database.js';
 import { exec } from 'child_process';
 import util from 'util';
 import ffmpegPath from 'ffmpeg-static';
@@ -85,7 +86,142 @@ for (let i = 0; i < NUM_EMBERS; i++) {
   });
 }
 
+export async function generateAthenaClassicRankCard(member, xp, level, rank, requiredXp) {
+  const W = 1024;
+  const H = 342;
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext('2d');
+
+  // Background obsidian gradient
+  const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+  bgGrad.addColorStop(0, '#0f1117');
+  bgGrad.addColorStop(0.5, '#161922');
+  bgGrad.addColorStop(1, '#0a0b0e');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle grid texture
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Border frame
+  ctx.strokeStyle = 'rgba(230, 40, 40, 0.4)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(6, 6, W - 12, H - 12);
+
+  // Avatar setup
+  const avatarCX = 150;
+  const avatarCY = 171;
+  const avatarR = 85;
+
+  // Outer glowing ring
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(avatarCX, avatarCY, avatarR + 8, 0, Math.PI * 2);
+  ctx.strokeStyle = '#e62828';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = 'rgba(230, 40, 40, 0.8)';
+  ctx.shadowBlur = 14;
+  ctx.stroke();
+  ctx.restore();
+
+  // Draw Avatar
+  try {
+    const avatarUrl = member?.user?.displayAvatarURL ? member.user.displayAvatarURL({ extension: 'png', size: 256 }) : null;
+    if (avatarUrl) {
+      const av = await loadImage(avatarUrl);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(av, avatarCX - avatarR, avatarCY - avatarR, avatarR * 2, avatarR * 2);
+      ctx.restore();
+    }
+  } catch {}
+
+  // Name
+  let rawName = member?.displayName?.replace(/[^\x00-\x7F]/g, '').trim()
+             || member?.user?.username?.replace(/[^\x00-\x7F]/g, '').trim()
+             || 'MEMBER';
+  if (rawName.length > 20) rawName = rawName.substring(0, 20) + '...';
+
+  ctx.font = 'bold 36px "Cinzel", "Montserrat", serif';
+  ctx.fillStyle = '#f1f5f9';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 8;
+  ctx.fillText(rawName.toUpperCase(), 290, 110);
+  ctx.shadowBlur = 0;
+
+  // Level & Rank
+  ctx.font = '22px "Cinzel", "Montserrat", serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(`Rank #${rank}`, 290, 160);
+
+  ctx.font = 'bold 36px "Cinzel", "Montserrat", serif';
+  ctx.fillStyle = '#ef4444';
+  ctx.shadowColor = 'rgba(239, 68, 68, 0.7)';
+  ctx.shadowBlur = 10;
+  ctx.fillText(`Level ${level}`, 480, 160);
+  ctx.shadowBlur = 0;
+
+  // XP Progress Bar
+  const barX = 290;
+  const barY = 205;
+  const barW = 660;
+  const barH = 24;
+  const r = 12;
+
+  rrPath(ctx, barX, barY, barW, barH, r);
+  ctx.fillStyle = '#1e2330';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  const pct = Math.max(0.02, Math.min(1, xp / Math.max(1, requiredXp)));
+  const fillW = Math.max(r * 2, barW * pct);
+
+  ctx.save();
+  rrPath(ctx, barX, barY, fillW, barH, r);
+  const fillGrad = ctx.createLinearGradient(barX, barY, barX + fillW, barY);
+  fillGrad.addColorStop(0, '#b91c1c');
+  fillGrad.addColorStop(1, '#ef4444');
+  ctx.fillStyle = fillGrad;
+  ctx.shadowColor = 'rgba(239, 68, 68, 0.8)';
+  ctx.shadowBlur = 10;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.font = 'bold 15px "Montserrat", "Roboto", sans-serif';
+  ctx.fillStyle = '#cbd5e1';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${xp.toLocaleString()} / ${requiredXp.toLocaleString()} XP (${Math.round(pct * 100)}%)`, barX + barW, barY - 8);
+  ctx.textAlign = 'left';
+
+  ctx.font = '13px "Cinzel", "Montserrat", serif';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('Athena Prime Defense & Leveling Engine', 290, 275);
+
+  return new AttachmentBuilder(canvas.toBuffer('image/png'), { name: 'rank-card.png' });
+}
+
 export async function generateRankCard(member, xp, level, rank, requiredXp) {
+  const userId = member?.user?.id || member?.id;
+  const theme = db.getUserRankTheme(userId);
+  if (theme === 'athena' || theme === 'classic') {
+    return generateAthenaClassicRankCard(member, xp, level, rank, requiredXp);
+  }
+  return generateHogwartsRankGif(member, xp, level, rank, requiredXp);
+}
+
+export async function generateHogwartsRankGif(member, xp, level, rank, requiredXp) {
   const W = 1024;
   const H = 342;
   const numFrames = 12;

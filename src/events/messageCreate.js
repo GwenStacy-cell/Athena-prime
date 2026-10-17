@@ -1243,6 +1243,31 @@ export default {
       };
 
       const maxWarnings = dbConfig.maxWarnings || 3;
+
+      // ==========================================
+      // HONEYPOT TRAP PROTOCOL
+      // ==========================================
+      if (dbConfig.honeypotChannelId && message.channel.id === dbConfig.honeypotChannelId) {
+        if (!checkBypass('Honeypot Trap')) {
+          await message.delete().catch(() => null);
+          const timeoutMinutes = dbConfig.honeypotTimeoutMinutes || 15;
+          const timeoutMs = timeoutMinutes * 60 * 1000;
+          await message.member?.timeout(timeoutMs, 'Automod: Honeypot Trap Triggered').catch(() => null);
+          const authorTier = getUserTierName(message.guild, message.member || message.author);
+          logToSecurityChannel(message.guild, cv2.log(
+            'Honeypot Trap Triggered',
+            `Member triggered honeypot trap channel <#${message.channel.id}>. Message instantly purged and offender timed out for ${timeoutMinutes}m.`,
+            [
+              { name: 'Offender', value: `${message.author.tag} (\`${userId}\`) [${authorTier}]`, inline: true },
+              { name: 'Trap Channel', value: `<#${message.channel.id}> (\`${message.channel.id}\`)`, inline: true },
+              { name: 'Penalty Action', value: `\`Timeout (${timeoutMinutes}m)\``, inline: true },
+              { name: 'Intercepted Content', value: `\`\`\`${(message.content || 'No text content').slice(0, 250)}\`\`\`` }
+            ],
+            'danger'
+          ));
+          return;
+        }
+      }
       
       const applyWarning = async (logReason, actionStr, headingStr) => {
           const authorTier = getUserTierName(message.guild, message.member || message.author);
@@ -1857,6 +1882,28 @@ export default {
         import('../commands/tts.js').then(module => {
           module.queueTtsMessage(message.member, message.content).catch(() => null);
         });
+      }
+    }
+
+    // --- CONVERSATIONAL AI MODE IN DEDICATED CHANNEL ---
+    if (!usedPrefix && !message.author.bot && dbConfig.aiModeEnabled && dbConfig.aiChannelId && message.channel.id === dbConfig.aiChannelId) {
+      const prompt = message.content.trim();
+      if (prompt.length > 0) {
+        import('../utils/ai.js').then(async ({ generateAIResponse }) => {
+          import('../commands/ask.js').then(async ({ buildAICV2Container }) => {
+            const aiResult = await generateAIResponse(prompt, {
+              guildId: message.guild.id,
+              userTag: message.author.tag,
+              serverName: message.guild.name
+            });
+            if (aiResult.success) {
+              const accentColor = dbConfig.accentColor || '#00e5ff';
+              const container = buildAICV2Container(message.author, prompt, aiResult, accentColor);
+              await message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+            }
+          });
+        }).catch(() => null);
+        return;
       }
     }
 
