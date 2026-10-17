@@ -1,13 +1,13 @@
 import { PermissionFlagsBits, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
-import { generateAIResponse } from '../utils/ai.js';
+import { generateAIResponse, formatAIToGreyMarkdown } from '../utils/ai.js';
 
 /**
  * Builds an accent borderless CV2 container for Athena AI responses
  */
 export function buildAICV2Container(user, prompt, aiResult, accentColor = '#00e5ff') {
-  const content = aiResult.text || 'No response generated.';
+  const content = formatAIToGreyMarkdown(aiResult.text || 'No response generated.');
   const comps = [
     {
       type: 10,

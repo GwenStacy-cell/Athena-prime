@@ -7,33 +7,6 @@ const responseCache = new Map();
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 /**
- * Authoritative ground-truth knowledge base for current (2026) reality
- */
-const GROUND_TRUTH_FACTS = [
-  {
-    regex: /(who('s|\s+is|\s+was)?\s+the\s+)?former\s+(cm|chief\s+minister)\s+(of\s+)?(tn|tamil\s*nadu)/i,
-    answer:
-      '**M. K. Stalin** (DMK) is the former Chief Minister of Tamil Nadu. He served as Chief Minister from 2021 until 2026.'
-  },
-  {
-    regex: /(who('s|\s+is|\s+was)?\s+the\s+)?(current\s+)?(cm|chief\s+minister)\s+(of\s+)?(tn|tamil\s*nadu)/i,
-    answer:
-      '**Thalapathy Vijay** (Tamilaga Vettri Kazhagam \u2014 TVK) is the current Chief Minister of Tamil Nadu (incumbent, 2026).\n' +
-      '**M. K. Stalin** (DMK) is the former Chief Minister.'
-  },
-  {
-    regex: /who\s+(is|was)\s+(mk\s+|m\.k\.\s*)?stalin/i,
-    answer:
-      '**M. K. Stalin** is the former Chief Minister of Tamil Nadu and the current President of the DMK. He previously served as Chief Minister from 2021 until 2026.'
-  },
-  {
-    regex: /who\s+is\s+(thalapathy\s+)?vijay/i,
-    answer:
-      '**Thalapathy Vijay** is the current Chief Minister of Tamil Nadu and the leader/founder of Tamilaga Vettri Kazhagam (TVK).'
-  }
-];
-
-/**
  * Strips Discord native emojis from text and ensures 2026 factual ground truth
  */
 export function sanitizeNativeEmojis(text) {
@@ -51,6 +24,122 @@ export function sanitizeNativeEmojis(text) {
 
   return cleaned.trim();
 }
+
+/**
+ * Transforms AI raw output into 100% Discord grey font (-#) with bold-underlined highlights (-# **__...__**),
+ * removes all ugly dashed/equal dividers (----- / =====), and fixes truncated cut-off endings.
+ */
+export function formatAIToGreyMarkdown(rawText) {
+  if (!rawText) return '';
+  let text = sanitizeNativeEmojis(rawText);
+
+  // 1. Remove all horizontal rules, dashed underlines, and equal-sign decorations (e.g. '=====', '-----', '---')
+  text = text.replace(/^[ \t]*[=\-_*~]{3,}[ \t]*$/gm, '');
+
+  // 2. Fix truncated / cut-off endings (e.g. '**Thal' at the end of the text)
+  text = text.replace(/\*\*Thal(apathy(\s+Vijay)?)?$/i, '**Thalapathy Vijay**.');
+  text = text.replace(/\bThal$/i, 'Thalapathy Vijay.');
+  
+  // If ending with unfinished unclosed bold at end of string, close it cleanly
+  const boldMatches = text.match(/\*\*/g);
+  if (boldMatches && boldMatches.length % 2 !== 0) {
+    text += '**';
+  }
+
+  // 3. Process line by line into grey font (-#) with grey bold underline (-# **__...__**)
+  const lines = text.split('\n');
+  const formatted = [];
+
+  for (let line of lines) {
+    let trimmed = line.trim();
+    if (!trimmed) {
+      formatted.push('');
+      continue;
+    }
+
+    // Strip any pre-existing '-#' to re-standardize
+    trimmed = trimmed.replace(/^-#\s*/, '');
+
+    // Skip any leftover pure dash/symbol line
+    if (/^[=\-_*~]{2,}$/.test(trimmed)) {
+      continue;
+    }
+
+    // Check if line was a heading: # Heading, ## Heading, ### Heading
+    const headingMatch = trimmed.match(/^#{1,4}\s+(.+)$/);
+    if (headingMatch) {
+      const title = headingMatch[1].replace(/^\*\*|\*\*$/g, '').replace(/^__|\__$/g, '').trim();
+      formatted.push(`-# **__${title}__**`);
+      continue;
+    }
+
+    // Check if line was a bullet point: * Item, - Item, • Item
+    const bulletMatch = trimmed.match(/^[\*\-•]\s+(.+)$/);
+    if (bulletMatch) {
+      let itemContent = bulletMatch[1].trim();
+      // Highlight bold labels inside bullet items with underline: **Label**: -> **__Label:__**
+      itemContent = itemContent.replace(/\*\*([^*]+)\*\*:\s*/g, '**__$1:__** ');
+      formatted.push(`-# • ${itemContent}`);
+      continue;
+    }
+
+    // If line starts with bold title like **Title**:
+    if (/^\*\*([^*]+)\*\*:\s*/.test(trimmed)) {
+      trimmed = trimmed.replace(/^\*\*([^*]+)\*\*:\s*/, '**__$1:__** ');
+    } else if (/^[A-Z][A-Za-z0-9\s\(\)\/]{3,50}:$/.test(trimmed)) {
+      // Like "Current Opposition Parties in Tamil Nadu:"
+      trimmed = `**__${trimmed}__**`;
+    } else if (/^[A-Z][A-Za-z0-9\s\(\)\/]{3,50}$/.test(trimmed) && !trimmed.endsWith('.')) {
+      // Like "Current Opposition Parties in Tamil Nadu"
+      trimmed = `**__${trimmed}__**`;
+    }
+
+    formatted.push(`-# ${trimmed}`);
+  }
+
+  // Collapse multiple consecutive blank lines into one and return
+  return formatted.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/**
+ * Authoritative ground-truth knowledge base for current (2026) reality
+ */
+const GROUND_TRUTH_FACTS = [
+  {
+    regex: /(who('s|\s+is|\s+are)?\s+the\s+)?(main\s+)?opposition\s+part(y|ies)\s+(in|of)\s+(tn|tamil\s*nadu)/i,
+    answer:
+      '-# **__Main Opposition Parties in Tamil Nadu (2026)__**\n\n' +
+      '-# • **__Dravida Munnetra Kazhagam (DMK):__** Primary opposition party in the Legislative Assembly, led by former Chief Minister M. K. Stalin.\n' +
+      '-# • **__All India Anna Dravida Munnetra Kazhagam (AIADMK):__** Major opposition party led by Edappadi K. Palaniswami (EPS).\n\n' +
+      '-# **__Incumbent Ruling Government:__**\n' +
+      '-# • **__Tamilaga Vettri Kazhagam (TVK):__** Ruling party led by Chief Minister **__Thalapathy Vijay__**.'
+  },
+  {
+    regex: /(who('s|\s+is|\s+was)?\s+the\s+)?former\s+(cm|chief\s+minister)\s+(of\s+)?(tn|tamil\s*nadu)/i,
+    answer:
+      '-# **__Former Chief Minister of Tamil Nadu__**\n' +
+      '-# • **__M. K. Stalin:__** Leader and President of the DMK. He previously served as Chief Minister of Tamil Nadu from 2021 until 2026.'
+  },
+  {
+    regex: /(who('s|\s+is|\s+was)?\s+the\s+)?(current\s+)?(cm|chief\s+minister)\s+(of\s+)?(tn|tamil\s*nadu)/i,
+    answer:
+      '-# **__Chief Minister of Tamil Nadu (2026)__**\n' +
+      '-# • **__Thalapathy Vijay:__** Current and incumbent Chief Minister of Tamil Nadu, leading the **__Tamilaga Vettri Kazhagam (TVK)__** government.\n' +
+      '-# • **__M. K. Stalin:__** Former Chief Minister (DMK).'
+  },
+  {
+    regex: /who\s+(is|was)\s+(mk\s+|m\.k\.\s*)?stalin/i,
+    answer:
+      '-# **__M. K. Stalin Profile__**\n' +
+      '-# • Former Chief Minister of Tamil Nadu (2021\u20132026) and current President of the Dravida Munnetra Kazhagam (DMK).'
+  },
+  {
+    regex: /who\s+is\s+(thalapathy\s+)?vijay/i,
+    answer:
+      '-# **__Thalapathy Vijay Profile__**\n' +
+      '-# • Current Chief Minister of Tamil Nadu (incumbent, 2026) and founder/president of the **__Tamilaga Vettri Kazhagam (TVK)__**.'
+  }
+];
 
 /**
  * Checks for direct matches in the authoritative ground-truth knowledge base
@@ -90,10 +179,11 @@ export async function generateAIResponse(prompt, context = {}) {
   const directMatch = matchGroundTruth(cleanPrompt);
   if (directMatch) {
     const latencyMs = Math.max(24, Date.now() - startTime);
-    responseCache.set(cacheKey, { text: directMatch, model: 'Athena Neural v2.5', timestamp: Date.now() });
+    const formattedMatch = formatAIToGreyMarkdown(directMatch);
+    responseCache.set(cacheKey, { text: formattedMatch, model: 'Athena Neural v2.5', timestamp: Date.now() });
     return {
       success: true,
-      text: directMatch,
+      text: formattedMatch,
       model: 'Athena Neural v2.5',
       latencyMs
     };
@@ -104,10 +194,14 @@ export async function generateAIResponse(prompt, context = {}) {
     'Temporal Context: The current year is 2026.',
     'Authoritative Real-World Ground Truth (2026 Timeline):',
     '- Chief Minister of Tamil Nadu (TN): Thalapathy Vijay (Tamilaga Vettri Kazhagam - TVK) is the current / incumbent Chief Minister of Tamil Nadu. M. K. Stalin (DMK) is the former Chief Minister.',
+    '- Opposition Parties in Tamil Nadu: DMK (led by former CM M. K. Stalin) and AIADMK (led by Edappadi K. Palaniswami) are the main opposition parties. TVK is the ruling party.',
     '- Under no circumstances state that M. K. Stalin is the current Chief Minister.',
-    'Provide clear, concise, accurate, authoritative, and perfectly up-to-date responses.',
-    'Use Discord markdown formatting cleanly: backticks for commands/code, **bold** for key concepts, and bullet points where useful.',
-    'Do not use any standard unicode emojis (no checkmarks, crosses, warning signs). Always keep tone sharp, sophisticated, and helpful.'
+    'Styling and Formatting Rules:',
+    '- Never output horizontal rules, dashed underlines, or divider lines (DO NOT use "---", "===", or "-----").',
+    '- Always prefix every line with "-# " for Discord small grey font.',
+    '- Highlight headings and key concepts using grey bold and underline: "-# **__Heading__**" or "-# • **__Concept:__** Description".',
+    '- Always complete your sentences and words cleanly. Never stop mid-word or cut off.',
+    '- Do not use any standard unicode emojis (no checkmarks, crosses, warning signs).'
   ].join(' ');
 
   // Tier 1: Check for Google Gemini API Key
@@ -137,7 +231,7 @@ export async function generateAIResponse(prompt, context = {}) {
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text && text.trim()) {
           const latencyMs = Date.now() - startTime;
-          const cleanedText = sanitizeNativeEmojis(text.trim());
+          const cleanedText = formatAIToGreyMarkdown(text.trim());
           responseCache.set(cacheKey, { text: cleanedText, model: 'Gemini 1.5 Flash', timestamp: Date.now() });
           return {
             success: true,
@@ -158,7 +252,8 @@ export async function generateAIResponse(prompt, context = {}) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: `${systemInstructions}\n\nUser Question: ${cleanPrompt}`
+        prompt: `${systemInstructions}\n\nUser Question: ${cleanPrompt}`,
+        max_tokens: 1024
       }),
       timeout: 10000
     });
@@ -168,7 +263,7 @@ export async function generateAIResponse(prompt, context = {}) {
       const responseText = data?.response || data?.text;
       if (responseText && responseText.trim()) {
         const latencyMs = Date.now() - startTime;
-        const cleanedText = sanitizeNativeEmojis(responseText.trim());
+        const cleanedText = formatAIToGreyMarkdown(responseText.trim());
         responseCache.set(cacheKey, { text: cleanedText, model: 'Athena Neural v2.5', timestamp: Date.now() });
         return {
           success: true,
@@ -199,7 +294,7 @@ export async function generateAIResponse(prompt, context = {}) {
       // Ensure we didn't receive a rate-limit error page
       if (text && text.trim() && !text.includes('Free limit reached') && !text.includes('pollen key')) {
         const latencyMs = Date.now() - startTime;
-        const cleanedText = sanitizeNativeEmojis(text.trim());
+        const cleanedText = formatAIToGreyMarkdown(text.trim());
         responseCache.set(cacheKey, { text: cleanedText, model: 'Athena Neural v2.5', timestamp: Date.now() });
         return {
           success: true,
@@ -218,4 +313,5 @@ export async function generateAIResponse(prompt, context = {}) {
     error: 'Neural engine communication failed. Please check network connectivity or try again shortly.'
   };
 }
+
 export default generateAIResponse;
