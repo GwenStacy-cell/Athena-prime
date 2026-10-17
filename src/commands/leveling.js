@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, AttachmentBuilder } from 'discord.js';
+import { PermissionFlagsBits, AttachmentBuilder, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { calculateXpForLevel } from '../utils/xpEngine.js';

@@ -279,8 +279,7 @@ export const SEMANTIC_INTENTS = [
   { match: /\b(slow\s*mode|slowmode|slow\s*down|slow\s*chat|chat\s*delay|rate\s*limit\s*per\s*user|channel\s*speed)\b/i, commands: ['slowmode'] },
   { match: /\b(antinuke|anti\s*nuke|bulletproof|firewall|anti\s*raid|anti\s*bot|mass\s*ban\s*protect|damage\s*repair)\b/i, commands: ['security', 'antinuke'] },
   { match: /\b(backup|restore\s*server|server\s*backup|cloud\s*backup)\b/i, commands: ['db', 'backup'] },
-  { match: /\b(change\s*prefix|bot\s*prefix|set\s*prefix)\b/i, commands: ['prefix'] },
-  { match: /\b(rank\s*theme|ranktheme|rank\s*card|xp\s*theme|god\s*of\s*war\s*theme|hogwarts\s*theme)\b/i, commands: ['ranktheme', 'leveling', 'profile'] },
+  { match: /\b(rank(s)?\s*(card|theme|reward|xp)s?|(card|theme|xp|reward)s?\s*(for\s*)?rank(s)?|ranktheme|god\s*of\s*war\s*theme|hogwarts\s*theme)\b/i, commands: ['ranktheme', 'leveling', 'profile'] },
   { match: /\b(rank\s*rewards?|level\s*roles?|role\s*rewards?)\b/i, commands: ['rankrewards', 'leveling'] },
   { match: /\b(quarantine|isolate\s*user|quarantined\s*role)\b/i, commands: ['quarantine', 'setupquarantine'] },
   { match: /\b(youtube\s*stats?|ytstats|sub\s*counter|subscriber\s*vc)\b/i, commands: ['ytstats'] },
@@ -388,6 +387,16 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
       }
     }
 
+    // Isolate domain-specific commands: do not match chess.js unless user query actually mentions chess/board/checkmate
+    if (baseName === 'chess' && !rawTokens.some(t => ['chess', 'board', 'move', 'checkmate', 'lichess', 'stockfish'].includes(t))) {
+      fileMultiplier *= 0.02;
+    }
+
+    // De-prioritize server activity statsDB unless querying message/voice activity tracking
+    if (baseName === 'statsdb' && !rawTokens.some(t => ['activity', 'voice_seconds', 'messages', 'tracking', 'history', 'retention'].includes(t))) {
+      fileMultiplier *= 0.05;
+    }
+
     const lowerContent = fileData.content.toLowerCase();
 
     // 1. Exact phrase matches (e.g. "god of war", "security enable all", "panic lockdown")
@@ -415,8 +424,12 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
 
       for (const kw of keywords) {
         // High priority: Command definition name match (e.g. name: 'learn' or name: 'ranktheme')
-        if (line.includes(`name: '${kw}'`) || line.includes(`name: "${kw}"`)) {
-          lineScore += 260;
+        const nameDecl = line.match(/^\s*name:\s*['"]([a-zA-Z0-9_-]+)['"]/);
+        if (nameDecl) {
+          const declaredName = nameDecl[1].toLowerCase();
+          if (declaredName === kw || declaredName.includes(kw) || kw.includes(declaredName)) {
+            lineScore += 300;
+          }
         }
         // Exported utility engine function match (e.g. export async function rawBan, executeIntelligentChannelRepair)
         if ((line.includes('export async function') || line.includes('export function')) && line.includes(kw)) {
