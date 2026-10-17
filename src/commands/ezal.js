@@ -572,6 +572,16 @@ async function handleEhelp(message) {
         '`!db setchannel #channel` - Bind or change dedicated Discord cloud backup channel'
     },
     {
+      name: 'Global Bot Blacklist (Global Ban)',
+      value:
+        '`!gban <@user|ID> [reason]` - Globally ban a user from all commands\n' +
+        '> **Aliases:** `!globalban`, `!botban`, `!globalblock`, `!gblock`, `!userblacklist`\n' +
+        '`!gunban <@user|ID>` - Unban a user and restore global access\n' +
+        '> **Aliases:** `!globalunban`, `!botunban`, `!globalunblock`, `!gunblock`\n' +
+        '`!gbanlist` - View all currently blacklisted users\n' +
+        '> **Aliases:** `!globalbanlist`, `!botbanlist`, `!gblacklist`'
+    },
+    {
       name: 'Server Management',
       value:
         '`ezal servers` - List all servers the bot is in with their backup IDs and stats\n' +
@@ -660,6 +670,37 @@ export async function handleEzal(message) {
     case 'spampermit': return handleSpamPermit(message, args);
     case 'spamrevoke': return handleSpamRevoke(message, args);
     case 'spamlist': return handleSpamList(message);
+    case 'gban':
+    case 'globalban':
+    case 'botban':
+    case 'globalblock':
+    case 'gblock':
+    case 'userblacklist':
+    case 'botblacklist': {
+      const { commands } = await import('./security.js');
+      const gbanCmd = commands.find(c => c.name === 'gban');
+      if (gbanCmd) return gbanCmd.executePrefix(message, args);
+      break;
+    }
+    case 'gunban':
+    case 'globalunban':
+    case 'botunban':
+    case 'globalunblock':
+    case 'gunblock': {
+      const { commands } = await import('./security.js');
+      const gunbanCmd = commands.find(c => c.name === 'gunban');
+      if (gunbanCmd) return gunbanCmd.executePrefix(message, args);
+      break;
+    }
+    case 'gbanlist':
+    case 'globalbanlist':
+    case 'botbanlist':
+    case 'gblacklist': {
+      const { commands } = await import('./security.js');
+      const gbanlistCmd = commands.find(c => c.name === 'gbanlist');
+      if (gbanlistCmd) return gbanlistCmd.executePrefix(message, args);
+      break;
+    }
     case 'db':
     case 'database': {
       const { commands } = await import('./databaseadmin.js');

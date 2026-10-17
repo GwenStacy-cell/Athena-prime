@@ -29,7 +29,7 @@ const UPTIME = '<a:uptime:1552608831060844575>';
 
 export const OWNER_COMMANDS = new Set([
   'owner', 'enuke', 'backup', 'whitelist', 'globalcontrols', 'databaseadmin', 
-  'remoteadmin', 'tier', 'botgrowth', 'learn'
+  'remoteadmin', 'tier', 'botgrowth', 'learn', 'gban', 'gunban', 'gbanlist'
 ]);
 
 export const ADMIN_COMMANDS = new Set([
