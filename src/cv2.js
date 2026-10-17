@@ -213,6 +213,26 @@ function buildContainer(title, description, fields, customFooter) {
   comps.push({ type: 10, content: `-# **${footerText}**` });
 
   // Pure borderless CV2 container (no accent_color)
+  // Discord caps total displayable text across all components at 4,000 characters.
+  // Enforce a hard safety ceiling of 3,800 characters to prevent COMPONENT_DISPLAYABLE_TEXT_SIZE_EXCEEDED.
+  var currentTotal = 0;
+  for (var cIdx = 0; cIdx < comps.length; cIdx++) {
+    var cObj = comps[cIdx];
+    if (cObj.type === 10 && typeof cObj.content === 'string') {
+      currentTotal += cObj.content.length;
+    }
+  }
+  if (currentTotal > 3800) {
+    var excess = currentTotal - 3750;
+    for (var cIdx = 0; cIdx < comps.length; cIdx++) {
+      var cObj = comps[cIdx];
+      if (cObj.type === 10 && typeof cObj.content === 'string' && cObj.content.length > excess + 50) {
+        cObj.content = cObj.content.slice(0, cObj.content.length - excess - 40) + '\n-# **__[Truncated for display limit]__**';
+        break;
+      }
+    }
+  }
+
   return { type: 17, components: comps };
 }
 

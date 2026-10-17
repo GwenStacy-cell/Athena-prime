@@ -390,67 +390,48 @@ export function formatDatabaseMetrics(m, options = {}) {
 
   let text = '';
   if (prefixText) text += `${prefixText}\n\n`;
-  if (channelId) text += `> -# **Backup Channel:** <#${channelId}>\n\n`;
-  if (fileName) text += `> -# **Restored Snapshot:** \`${fileName}\`\n\n`;
+  if (channelId) text += `> -# **__Backup Channel:__** <#${channelId}>\n\n`;
+  if (fileName) text += `> -# **__Restored Snapshot:__** \`${fileName}\`\n\n`;
 
   text += 
     `-# **__Server Profiles & Configurations:__**\n` +
-    `> -# **__Tracked Servers:__** \`${m.guilds}\` | **__Prefixes:__** \`${m.customPrefixes}\` | **__Auto-Nicks:__** \`${m.autoNicks}\`\n` +
-    `> -# **__Accent Colors:__** \`${m.accentColors}\` | **__Dashboards:__** \`${m.dashboardChannels}\` | **__2FA Gates:__** \`${m.twoFactorServers || 0} servers\`\n\n` +
+    `> -# **__Guilds:__** \`${m.guilds}\` | **__Prefixes:__** \`${m.customPrefixes}\` | **__Auto-Nicks:__** \`${m.autoNicks}\` | **__Colors:__** \`${m.accentColors}\` | **__Dashboards:__** \`${m.dashboardChannels}\` | **__2FA:__** \`${m.twoFactorServers || 0}\`\n\n` +
 
     `-# **__Security & Anti-Nuke Engine:__**\n` +
-    `> -# **__Security Active:__** \`${m.securityServers} servers\` | **__Honeypots:__** \`${m.honeypots}\` | **__Raid Mode:__** \`${m.raidModeServers}\`\n` +
-    `> -# **__Shield Modules:__** \`Roles: ${m.antiRoleModulesServers}, Channels: ${m.antiChannelModulesServers}, Webhooks: ${m.antiWebhookServers}, Bots: ${m.antiBotAddServers}, Linked Role: ${m.antiLinkedRoleServers || 0}\`\n` +
-    `> -# **__Persistence Roles:__** \`${m.unbypassableRolesCount || 0} Unbypassable, ${m.firewallRolesCount || 0} Firewall bound\`\n` +
-    `> -# **__Emergency Shield:__** \`${m.lockdownSnapshots || 0} panic lockdown snapshots | Emergency Snapshots: ${m.emergencySnapshots || 0} | CAPTCHA Gates: ${m.captchaVerification || 0}\`\n` +
-    `> -# **__Thresholds:__** \`${m.antiNukeThresholds} configured limits\`\n\n` +
+    `> -# **__Active Defense:__** \`${m.securityServers} servers\` | **__Honeypots:__** \`${m.honeypots}\` | **__Raid Mode:__** \`${m.raidModeServers}\` | **__Thresholds:__** \`${m.antiNukeThresholds}\`\n` +
+    `> -# **__Shield Modules:__** \`Roles: ${m.antiRoleModulesServers}, Chs: ${m.antiChannelModulesServers}, Hooks: ${m.antiWebhookServers}, Bots: ${m.antiBotAddServers}, Linked: ${m.antiLinkedRoleServers || 0}\`\n` +
+    `> -# **__Persistence & Emergency:__** \`Unbypassable: ${m.unbypassableRolesCount || 0}, Firewall: ${m.firewallRolesCount || 0} | Panic: ${m.lockdownSnapshots || 0}, Snapshots: ${m.emergencySnapshots || 0}, CAPTCHA: ${m.captchaVerification || 0}\`\n\n` +
 
-    `-# **__Heuristic Threat Engine & Role Clearances:__**\n` +
-    `> -# **__Heuristic Baselines:__** \`${m.baselineProfiles || 0} velocity baselines (${m.staffBaselinedCount || 0} staff tracked)\`\n` +
-    `> -# **__Threat Signatures:__** \`${m.nukeSignaturesCount || 0} anomaly signatures (${m.nukeSignatureServers || 0} servers active)\`\n` +
-    `> -# **__Role Clearances:__** \`${m.authTierServers || 0} servers with 3-tier authorizations (${m.authTierRolesCount || 0} roles assigned) | Spam Permits: ${m.spamPermittedUsers || 0}\`\n\n` +
+    `-# **__Heuristic Threat Engine & Clearances:__**\n` +
+    `> -# **__Heuristics:__** \`${m.baselineProfiles || 0} baselines (${m.staffBaselinedCount || 0} staff)\` | **__Threat Sigs:__** \`${m.nukeSignaturesCount || 0} anomaly signatures (${m.nukeSignatureServers || 0} guilds)\`\n` +
+    `> -# **__Role Clearances:__** \`${m.authTierServers || 0} tier setups (${m.authTierRolesCount || 0} roles) | Spam Permits: ${m.spamPermittedUsers || 0}\`\n\n` +
 
     `-# **__Automod Protection Matrix:__**\n` +
-    `> -# **__Automod Servers:__** \`${m.automodServers} active\` | **__Word Filter:__** \`${m.wordFilterServers}\` (${m.blacklistedWordsCount} words)\n` +
-    `> -# **__Granular Shields:__** \`Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, Flood: ${m.antiFloodServers}, Mention: ${m.antiMentionServers}, Link: ${m.antiLinkServers}, AI Toxicity: ${m.aiToxicityServers || 0}\`\n` +
-    `> -# **__Bypasses:__** \`${m.allowedLinksCount} allowed links, ${m.inviteBypassChannels} invite channels, ${m.automodBypassRolesCount || 0} role bypasses (${m.automodBypassServers || 0} servers)\`\n\n` +
+    `> -# **__Automod:__** \`${m.automodServers} active\` | **__Word Filter:__** \`${m.wordFilterServers}\` (${m.blacklistedWordsCount} words)\n` +
+    `> -# **__Granular Shields:__** \`Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, Flood: ${m.antiFloodServers}, Mention: ${m.antiMentionServers}, Link: ${m.antiLinkServers}, Toxicity: ${m.aiToxicityServers || 0}\`\n` +
+    `> -# **__Bypasses:__** \`${m.allowedLinksCount} links, ${m.inviteBypassChannels} invite chs, ${m.automodBypassRolesCount || 0} roles (${m.automodBypassServers || 0} guilds)\`\n\n` +
 
     `-# **__AutoRole, Vanity & Media Integrations:__**\n` +
-    `> -# **__AutoRoles:__** \`${m.autoroleHumanServers || 0} human, ${m.autoroleBotServers || 0} bot servers (${m.totalAutoroleBindings || 0} roles assigned)\`\n` +
-    `> -# **__Vanity Rewards:__** \`${m.vanityRewardServers || 0} servers rewarding vanity status\`\n` +
-    `> -# **__YouTube Stats:__** \`${m.ytStatsChannelsCount || 0} stat VCs (${m.ytStatsServers || 0} servers) | ModMail: ${m.modmailServers || 0} servers\`\n` +
-    `> -# **__Audio & Media:__** \`${m.musicChannels || 0} 24/7 music controller channels | Liked Songs: ${m.likedSongsTotal || 0} tracks saved (${m.likedSongsUsers || 0} users) | Media: ${m.mediaChannels || 0} channels\`\n\n` +
+    `> -# **__AutoRoles:__** \`${m.autoroleHumanServers || 0} human, ${m.autoroleBotServers || 0} bot (${m.totalAutoroleBindings || 0} roles)\` | **__Vanity:__** \`${m.vanityRewardServers || 0} guilds\`\n` +
+    `> -# **__Media & Integrations:__** \`YT: ${m.ytStatsChannelsCount || 0} VCs | Mail: ${m.modmailServers || 0} | Music: ${m.musicChannels || 0} VCs (${m.likedSongsTotal || 0} songs, ${m.likedSongsUsers || 0} users) | Media: ${m.mediaChannels || 0}\`\n\n` +
 
-    `-# **__Moderation, Warnings & Enforcement:__**\n` +
-    `> -# **__Warnings & Bans:__** \`${m.warnings} warnings, ${m.tempBans} tempbans, ${m.maxWarningsSet} servers with max strike limits\`\n` +
-    `> -# **__Quarantine System:__** \`${m.quarantines} quarantined users | Roles: ${m.quarantineRolesCount}, Channels: ${m.quarantineChannelsCount}, VCs: ${m.quarantineVcsCount}\`\n\n` +
+    `-# **__Moderation, Enforcement & Whitelists:__**\n` +
+    `> -# **__Sanctions:__** \`${m.warnings} warnings, ${m.tempBans} tempbans, ${m.maxWarningsSet} strike limits | Quarantined: ${m.quarantines} users (${m.quarantineRolesCount} roles, ${m.quarantineChannelsCount} chs)\`\n` +
+    `> -# **__Access & Whitelists:__** \`Extra Owners: ${m.extraOwners} guilds (${m.extraOwnersTotal} users) | Roles: ${m.whitelistedRoles}, Users: ${m.whitelistedUsers} | Bot WL: ${m.botWhitelist} | Blacklisted: ${m.botBlacklistUsers}\`\n\n` +
 
-    `-# **__Whitelists & Administrative Ownership:__**\n` +
-    `> -# **__Extra Owners:__** \`${m.extraOwners} servers (${m.extraOwnersTotal} users) | Bot Whitelist: ${m.botWhitelist}\`\n` +
-    `> -# **__Security Whitelists:__** \`${m.whitelistedRoles} role bypasses, ${m.whitelistedUsers} whitelisted users\`\n` +
-    `> -# **__Blacklisted Users/Guilds:__** \`${m.botBlacklistUsers} blocked entities\`\n\n` +
-
-    `-# **__Welcome, Leave & Invite Tracking:__**\n` +
-    `> -# **__Welcome System:__** \`${m.welcomeActive} channels | ${m.welcomeEmbeds} custom embeds, ${m.welcomeGifs} GIFs, ${m.welcomeMessages} messages\`\n` +
-    `> -# **__Leave System:__** \`${m.leaveActive} channels | ${m.leaveEmbeds} custom embeds, ${m.leaveGifs} GIFs, ${m.leaveMessages} messages\`\n` +
+    `-# **__Member Greetings & Tracking:__**\n` +
+    `> -# **__Greetings:__** \`Welcome: ${m.welcomeActive} chs (${m.welcomeEmbeds} embeds, ${m.welcomeGifs} gifs) | Leave: ${m.leaveActive} chs (${m.leaveEmbeds} embeds)\`\n` +
     `> -# **__Invite Tracking:__** \`${m.inviteLogChannels} invite log channels with live inviter attribution\`\n\n` +
 
-    `-# **__Automated Feeds, Community & Engagement:__**\n` +
-    `> -# **__News Feeds:__** \`${m.newsChannels} channels (${m.newsFeedsCount} feeds, ${m.newsRolesCount} roles) | Auto-React: ${m.autoReactChannels} channels\`\n` +
-    `> -# **__Tickets & Community:__** \`${m.ticketSetups || 0} setups (${m.ticketsActive || 0} active, ${m.ticketAiTriageServers || 0} AI triage) | Giveaways: ${m.giveaways}\`\n` +
-    `> -# **__Economy & Commerce:__** \`${m.economyUsers || 0} active ledgers | Shop Items: ${m.shopItemsCount || 0} perks listed across ${m.shopGuilds || 0} servers\`\n` +
-    `> -# **__Neural AI Systems:__** \`AI Mode: ${m.aiModeServers || 0} servers (${m.aiDedicatedChannels || 0} channels) | Toxicity Filters: ${m.aiToxicityServers || 0} | AI Triage: ${m.ticketAiTriageServers || 0} servers | Athena AI Guide: 257+ cmds RAG & Action Buttons active\`\n` +
-    `> -# **__Custom Canvas Themes:__** \`${m.customThemesCount || 0} themed profiles (Hogwarts, Athena, Cyberpunk, Anime) | Rank Roles: ${m.rankRewardsCount || 0} milestones\`\n` +
-    `> -# **__Suggestions, Leveling & Starboard:__** \`${m.suggestionChannels || 0} suggestions, ${m.starboardChannels || 0} starboards, XP: ${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
-    `> -# **__Counting Engine:__** \`${m.countingActive || 0} channels (${m.countingGuilds || 0} guilds) | Peak: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak, ${m.countingTotalUsers || 0} counters\`\n` +
-    `> -# **__Auto-Quotes & Sticky:__** \`${m.quoteChannels} quote channels, ${m.stickyChannels || 0} sticky channels, ${m.adel} auto-delete channels\`\n` +
-    `> -# **__Community State:__** \`AFK: ${m.afkUsers || 0} users | Bump Reminders: ${m.bumpReminderGuilds || 0} | Ratings: ${m.editRatingMessages || 0} (${m.rateChannels || 0} channels) | TTS: ${m.ttsUsers || 0} users (${m.autoTtsChannels || 0} channels)\`\n\n` +
+    `-# **__Community, Economy & Neural AI:__**\n` +
+    `> -# **__Neural AI:__** \`Mode: ${m.aiModeServers || 0} guilds (${m.aiDedicatedChannels || 0} chs) | Toxicity: ${m.aiToxicityServers || 0} | Triage: ${m.ticketAiTriageServers || 0} | Guide: 257+ cmds RAG\`\n` +
+    `> -# **__Engagement:__** \`News: ${m.newsChannels} chs (${m.newsFeedsCount} feeds) | Auto-React: ${m.autoReactChannels} | Tickets: ${m.ticketSetups || 0} (${m.ticketsActive || 0} active) | Giveaways: ${m.giveaways}\`\n` +
+    `> -# **__Economy & Shop:__** \`${m.economyUsers || 0} ledgers | Shop Items: ${m.shopItemsCount || 0} perks (${m.shopGuilds || 0} guilds) | Themes: ${m.customThemesCount || 0} (${m.rankRewardsCount || 0} milestones)\`\n` +
+    `> -# **__Activity:__** \`XP: ${m.xpSystems} guilds (${m.xpUsers} users) | Counting: ${m.countingActive || 0} chs (Peak: ${m.countingPeakRecord || 0}, Streak: ${m.countingTotalCounts || 0}) | Quotes: ${m.quoteChannels} | Sticky: ${m.stickyChannels || 0} | AFK: ${m.afkUsers || 0}\`\n\n` +
 
     `-# **__Voice Systems, Audits & Analytics:__**\n` +
-    `> -# **__Voice Hubs & JTC:__** \`${m.homeVc} home VCs, ${m.theaterModeVcs} theater VCs, ${m.jtc} JTC hubs (${m.jtcChannels} temp VCs)\`\n` +
-    `> -# **__Voice Telemetry:__** \`${m.voiceAnalyticsServers || 0} servers with live diurnal heatmaps & peak velocity tracking\`\n` +
-    `> -# **__Server Logs & Audits:__** \`${m.serverLogsCount} server logs, ${m.logChannelsCount} mod audit channels, ${m.msgDeleteLogChannels} delete channels\`\n` +
-    `> -# **__No-Prefix & Storage:__** \`${m.npUsers} NP users | SQLite stats.db (WAL active), ${m.serverBackups} server templates\`\n`;
+    `> -# **__Voice & JTC:__** \`${m.homeVc} home VCs, ${m.theaterModeVcs} theater, ${m.jtc} JTC hubs (${m.jtcChannels} temp) | Telemetry: ${m.voiceAnalyticsServers || 0} guilds\`\n` +
+    `> -# **__Audits & Storage:__** \`${m.serverLogsCount} server logs, ${m.logChannelsCount} mod audit, ${m.msgDeleteLogChannels} delete logs | NP: ${m.npUsers} | Templates: ${m.serverBackups} | SQLite WAL active\`\n`;
 
   if (sizeKb !== undefined) text += `> -# **__Snapshot Size:__** \`${sizeKb} KB\`\n`;
   if (timestamp) {
@@ -595,14 +576,19 @@ export async function createCloudBackup(client, reason = 'Automated Schedule') {
     const sizeKb = (stats.size / 1024).toFixed(1);
     const m = getDatabaseMetrics();
 
+    let formattedText = formatDatabaseMetrics(m, {
+      prefixText: 'Automated persistent cloud snapshot stored.',
+      sizeKb,
+      timestamp,
+      reason
+    });
+    if (formattedText.length > 3600) {
+      formattedText = formattedText.slice(0, 3500) + '\n> -# **__[Snapshot manifest truncated for Discord display limits]__**';
+    }
+
     const payload = cv2.info(
       `Database Cloud Backup | <a:atheNATICK:1557841381630681106>`,
-      formatDatabaseMetrics(m, {
-        prefixText: 'Automated persistent cloud snapshot stored.',
-        sizeKb,
-        timestamp,
-        reason
-      })
+      formattedText
     );
     // Post diagnostics manifest container with files securely stored in Discord Cloud
     payload.files = files;
