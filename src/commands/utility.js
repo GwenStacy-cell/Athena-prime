@@ -1410,8 +1410,8 @@ export const helpModules = [
     "-# • **__Clearance-Aware Adaptive Guidance:__** Dynamically checks user permissions (Owner, Extra Owner, Admin, Mod, Public) and tailors instructions to their exact clearance.",
     "-# • **__One-Click Interactive Action Buttons:__** Provides neutral grey action buttons (`style: 2`) to instantly launch setups, view statuses, or switch themes with 1 click.",
     "-# • **__On-Demand Custom Button Generator:__** Need a specific button? Ask Athena in your question or follow-up and custom grey action buttons are generated on demand.",
-    "-# • **__Live Thinking Telemetry:__** Real-time progress timer showing elapsed seconds during Google Gemini 2.5 Flash neural processing.",
-    "-# **__Neural Intelligence Architecture:__** Powered by Google Gemini 2.5 Flash with multi-tier failover to Gemini 2.0 Flash and high-speed edge reasoning."
+    "-# • **__Live Thinking Telemetry:__** Real-time progress timer showing elapsed seconds during Google Gemini 3.8 Flash neural processing.",
+    "-# **__Neural Intelligence Architecture:__** Powered by Google Gemini 3.8 Flash with multi-tier failover and high-speed edge reasoning."
   ] },
 
   { id: 'tickets', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tickets', label: 'Ticket System', emoji: 'tickets', commands: [

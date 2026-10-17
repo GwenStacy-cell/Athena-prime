@@ -40,7 +40,7 @@ export function buildAICV2Container(user, prompt, aiResult, accentColor = '#00e5
   comps.push({ type: 14, divider: true });
   comps.push({
     type: 10,
-    content: `-# **Athena Intelligence Matrix \u00b7 Accelerated Neural Core \u00b7 V2.5**`
+    content: `-# **Athena Intelligence Matrix \u00b7 Accelerated Neural Core \u00b7 Gemini 3.8 Flash**`
   });
 
   return {

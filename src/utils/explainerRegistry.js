@@ -413,8 +413,8 @@ A Honeypot is a designated text channel configured with permissions hidden or si
         pageTitle: 'AI Engine & Container Architecture',
         content:
 `# 1. Multi-Provider Fallback Matrix
-• **Primary:** Google Gemini 2.5 Flash API (with Gemini 2.0 Flash & Pro reasoning cascade) for advanced reasoning when \`GEMINI_API_KEY\` is configured.
-• **Autonomous Fallback:** High-speed edge inference (Workers AI / Pollinations) providing zero-key, instant responses.
+• **Primary:** Google Gemini 3.8 Flash API for advanced reasoning when \`GEMINI_API_KEY\` is configured.
+• **Autonomous Fallback:** High-speed edge inference providing resilient fallback responses.
 • **Native Emoji Scrubbing:** Filters out unicode Discord emojis to strictly uphold Athena's brand identity.
 
 # 2. Strict AI Invocation Protocol
@@ -622,11 +622,10 @@ A Honeypot is a designated text channel configured with permissions hidden or si
 
 # 2. Live Thinking Telemetry & Multi-Tier AI Cascade (\`src/utils/ai.js\`)
 • **Live Progress Counter:** Emits a live-updating thinking banner with elapsed execution time (\`Thinking... (1.2s)\`) keeping users informed during external AI API processing.
-• **Google Gemini 2.5 Flash Flagship Pipeline:** Primary engine utilizing Google Generative Language REST \`system_instruction\` schema with relaxed cybersecurity moderation for technical bot administration.
+• **Google Gemini 3.8 Flash Flagship Pipeline:** Primary engine utilizing Google Generative Language REST \`system_instruction\` schema with relaxed cybersecurity moderation for technical bot administration.
 • **Cascade Fallback Matrix:**
-  • Tier 1: \`gemini-2.5-flash\`
-  • Tier 2: \`gemini-2.0-flash\` & \`gemini-1.5-pro\`
-  • Tier 3: Zero-key high-speed edge reasoning (\`openai-fast\`) responding in <3s.`
+  • Tier 1: \`gemini-3.8-flash\`
+  • Tier 2: Resilient neural edge failover responding in <3s.`
       },
       {
         pageTitle: 'One-Click Action Buttons & On-Demand Interactive Components',
@@ -718,7 +717,7 @@ export const DETAILED_COMMANDS = {
 • **Context-Aware Thread Memory:** Preserves multi-turn conversational context for 10 minutes with rolling sliding expiry.
 • **Clearance-Aware Guidance:** Adapts instructions to caller's authorization tier (Server Owner, Admin, Mod, Public).
 • **One-Click Grey Action Buttons:** Generates neutral grey interactive buttons (\`style: 2\`) and synthesizes custom buttons on demand.
-• **Flagship Gemini 2.5 Flash Pipeline:** High-reasoning AI backend with live elapsed progress telemetry and edge failover.`,
+• **Flagship Gemini 3.8 Flash Pipeline:** High-reasoning AI backend with live elapsed progress telemetry and edge failover.`,
     example: '!athena how do I setup tickets with AI triage?'
   },
 

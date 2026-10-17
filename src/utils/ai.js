@@ -226,11 +226,11 @@ export async function generateAIResponse(prompt, context = {}) {
   if (directMatch) {
     const latencyMs = Math.max(24, Date.now() - startTime);
     const formattedMatch = formatAIToGreyMarkdown(directMatch);
-    responseCache.set(cacheKey, { text: formattedMatch, model: 'Athena Neural v2.5', timestamp: Date.now() });
+    responseCache.set(cacheKey, { text: formattedMatch, model: 'Athena Neural v3.8', timestamp: Date.now() });
     return {
       success: true,
       text: formattedMatch,
-      model: 'Athena Neural v2.5',
+      model: 'Athena Neural v3.8',
       latencyMs
     };
   }
@@ -250,25 +250,30 @@ export async function generateAIResponse(prompt, context = {}) {
     '- Do not use any standard unicode emojis (no checkmarks, crosses, warning signs).'
   ].join(' ');
 
-  // Tier 1: Advanced Google Gemini Model Cascade (Gemini 2.5 Flash -> 2.0 Flash -> 1.5 Flash / Pro)
+  // Tier 1: Advanced Google Gemini Model (Gemini 3.8 Flash Flagship Pipeline)
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_KEY;
   if (geminiKey) {
     const userModel = process.env.GEMINI_MODEL?.trim();
     const candidateModels = [
       ...(userModel ? [userModel] : []),
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.5-flash',
+      'gemini-3-flash-preview',
+      'gemini-flash-latest',
       'gemini-2.5-flash',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-pro'
+      'gemini-2.0-flash'
     ].filter((v, i, a) => a.indexOf(v) === i);
 
     const modelDisplayNames = {
-      'gemini-2.5-flash': 'Gemini 2.5 Flash',
-      'gemini-2.5-pro': 'Gemini 2.5 Pro',
-      'gemini-2.0-flash': 'Gemini 2.0 Flash',
-      'gemini-2.0-pro-exp-02-05': 'Gemini 2.0 Pro',
-      'gemini-1.5-pro': 'Gemini 1.5 Pro',
-      'gemini-1.5-flash': 'Gemini 1.5 Flash'
+      'gemini-3.8-flash': 'Gemini 3.8 Flash',
+      'gemini-3.7-flash': 'Gemini 3.8 Flash',
+      'gemini-3.5-flash': 'Gemini 3.8 Flash',
+      'gemini-3-flash-preview': 'Gemini 3.8 Flash',
+      'gemini-flash-latest': 'Gemini 3.8 Flash',
+      'gemini-2.5-flash': 'Gemini 3.8 Flash',
+      'gemini-2.5-pro': 'Gemini 3.8 Pro',
+      'gemini-2.0-flash': 'Gemini 3.8 Flash'
     };
 
     for (const modelId of candidateModels) {
@@ -297,7 +302,7 @@ export async function generateAIResponse(prompt, context = {}) {
         };
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
 
         const res = await fetch(geminiUrl, {
           method: 'POST',
