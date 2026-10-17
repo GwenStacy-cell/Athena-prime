@@ -959,17 +959,19 @@ export const DETAILED_COMMANDS = {
 
   unbypassable: {
     name: 'unbypassable',
-    aliases: ['unb', 'persistenceroles', 'sentinels'],
+    aliases: ['unb', 'firewall', 'fw', 'persistenceroles', 'sentinels', 'matrix', 'telemetry', 'statusnet'],
     category: 'Security & Access Control',
-    clearance: 'Administrators, Server Owner, Extra Owners, Bot Owners',
-    syntax: '!unbypassable [deploy|check|status|repair]',
-    purpose: 'Establishes and maintains unbypassable administrative persistence sentinel roles at the pinnacle of the role hierarchy.',
+    clearance: 'Public Telemetry / Admin Deployment',
+    syntax: '!unbypassable [deploy|check|status|repair] / !firewall',
+    purpose: 'Inspects real-time Discord Gateway WebSocket telemetry, SQLite WAL integrity, active antinuke shields, and unbypassable persistence sentinel roles.',
     architecture: 
-`• **Gateway & REST Interaction:** Queries guild role hierarchy, verifies position of bot's integration role, and provisions \`Athena Unbypassable\` and \`Athena Firewall\`.
-• **Database ID Binding:** Role IDs are saved directly to database configuration to prevent duplicate role creation.
+`• **WebSocket TLS 443 Wiretap:** Directly hooks the Discord Gateway socket client to sample round-trip heartbeat ping in real-time (<20ms nominal). Tracks lifecycle states (Ready, Identifying, Resuming, Reconnecting) to ensure zero silent socket deadlocks during traffic bursts.
+• **REST Rate-Limit Bucket Synchronization:** Interrogates internal Axios/REST sequential request queues. Confirms rate-limit tokens are synchronized across global and route-specific buckets (/guilds, /channels, /bans) before firing mass moderation actions.
+• **Database WAL Mode Verification:** Runs non-blocking pragmas against the local SQLite database to confirm Write-Ahead Logging (WAL mode) and synchronous disk flushing, preventing lock contention during heavy event logging.
+• **Persistence Sentinel Roles:** Queries guild role hierarchy, verifies position of bot's integration role, and provisions \`Athena Unbypassable\` and \`Athena Firewall\` persistence sentinel roles.
 • **Self-Healing Hook:** Binds to \`antiStrip.js\` and \`guildRoleDelete\` to automatically detect tampering and reinstate sentinel roles within <10ms.
-• **Exploit Protection:** Prevents rogue admins from stripping top-level security roles or demoting bot authority.`,
-    example: '!unbypassable deploy'
+• **Defense Shield Heartbeat:** Evaluates whether autonomous Antinuke Sentinels are active across all indexed guilds, detecting config corruption or disabled tripwires.`,
+    example: '!unbypassable'
   },
 
   neutralizeonboarding: {
@@ -1004,18 +1006,18 @@ export const DETAILED_COMMANDS = {
 
   firewall: {
     name: 'firewall',
-    aliases: ['fw', 'telemetry', 'statusnet'],
-    category: 'Network Diagnostics & Defense Telemetry',
+    aliases: ['fw', 'telemetry', 'statusnet', 'unbypassable', 'unb'],
+    category: 'Security & Access Control',
     clearance: 'Public / Everyone',
-    syntax: '!firewall',
-    purpose: 'Inspects real-time Discord Gateway WebSocket telemetry, REST rate-limit synchronization, SQLite WAL integrity, and active antinuke defense shield status.',
+    syntax: '!unbypassable / !firewall',
+    purpose: 'Alias of the Athena Unbypassable System command. Inspects real-time Discord Gateway WebSocket telemetry, REST rate-limit synchronization, SQLite WAL integrity, and active antinuke defense shield status.',
     architecture: 
-`• **WebSocket TLS 443 Wiretap:** Directly hooks the Discord Gateway socket client to sample round-trip heartbeat ping in real-time (<20ms nominal). Tracks lifecycle states (Ready, Identifying, Resuming, Reconnecting) to ensure zero silent socket deadlocks during traffic bursts.
-• **REST Rate-Limit Bucket Synchronization:** Interrogates internal Axios/REST sequential request queues. Confirms rate-limit tokens are synchronized across global and route-specific buckets (/guilds, /channels, /bans) before firing mass moderation actions.
-• **Database WAL Mode Verification:** Runs non-blocking pragmas against the local SQLite database to confirm Write-Ahead Logging (WAL mode) and synchronous disk flushing, preventing lock contention during heavy event logging.
-• **Defense Shield Heartbeat:** Evaluates whether autonomous Antinuke Sentinels are active across all indexed guilds, detecting config corruption or disabled tripwires.
-• **Ephemeral Clean-Up Daemon:** Schedules an automated 60-second garbage-collection timer to un-link and purge telemetry messages from public channels, keeping moderation logs clean.`,
-    example: '!firewall'
+`• **WebSocket TLS 443 Wiretap:** Directly hooks the Discord Gateway socket client to sample round-trip heartbeat ping in real-time (<20ms nominal).
+• **REST Rate-Limit Bucket Synchronization:** Interrogates internal Axios/REST sequential request queues. Confirms rate-limit tokens are synchronized across global and route-specific buckets.
+• **Persistence Sentinel Roles:** Binds and synchronizes \`Athena Unbypassable\` and \`Athena Firewall\` roles.
+• **Database WAL Mode Verification:** Runs non-blocking pragmas against the local SQLite database to confirm Write-Ahead Logging (WAL mode).
+• **Unified Telemetry:** Upgraded and integrated into the Athena Unbypassable System matrix.`,
+    example: '!unbypassable'
   },
 
   panic: {
