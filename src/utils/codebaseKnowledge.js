@@ -6,12 +6,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const SRC_DIR = path.resolve(__dirname, '..');
 
-// In-memory cache of codebase files: Map<relativePath, { content: string, lines: string[], mtimeMs: number }>
+// In-memory cache of codebase files: Map<relativePath, { content: string, lines: string[], mtimeMs: number, meta?: object }>
 let codebaseCache = null;
 let lastCacheBuild = 0;
 const CACHE_TTL_MS = 60 * 1000; // 1 minute TTL for development refreshes
 
 const IGNORED_DIRS = new Set(['assets', 'fonts', 'node_modules', '.git']);
+
 const COMMON_STOPWORDS = new Set([
   'a', 'an', 'the', 'is', 'are', 'was', 'were', 'and', 'or', 'to', 'in', 'on', 'at', 'by',
   'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after',
@@ -21,13 +22,148 @@ const COMMON_STOPWORDS = new Set([
   'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will', 'just', 'should', 'now',
   'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'been', 'being',
   'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'right', 'available', 'available?',
-  'please', 'tell', 'me', 'bot', 'athena'
+  'please', 'tell', 'me', 'bot', 'athena', 'use', 'using', 'used', 'cmd', 'command', 'commands',
+  'work', 'works', 'working', 'help', 'explain', 'show', 'make', 'give', 'get', 'want', 'need', 'i'
 ]);
 
 /**
- * Loads all JS source files from src/ into memory cache
+ * Dynamically extracts metadata from any source file without hardcoded dictionaries
+ * @param {string} relPath - Relative path from src/
+ * @param {string} content - Full source text
+ * @param {string[]} lines - Split text lines
  */
-async function loadCodebaseCache(force = false) {
+export function extractFileMetadata(relPath = '', content = '', lines = []) {
+  const norm = relPath.replace(/^src\//, '').replace(/\\/g, '/');
+  const fileLines = lines.length > 0 ? lines : content.split('\n');
+  const baseName = path.basename(norm, '.js');
+
+  // 1. Commands module analysis
+  if (norm.startsWith('commands/')) {
+    const commands = [];
+    const len = fileLines.length;
+
+    for (let i = 0; i < len; i++) {
+      const line = fileLines[i];
+      const nameMatch = line.match(/^\s*name:\s*['"]([a-zA-Z0-9_-]+)['"]/);
+      if (nameMatch) {
+        const cmdName = nameMatch[1];
+        let description = '';
+        let category = '';
+        let aliases = [];
+        let isTopLevel = false;
+
+        for (let j = i + 1; j < Math.min(len, i + 18); j++) {
+          const l = fileLines[j];
+          if (!description) {
+            const descMatch = l.match(/description:\s*['"]([^'"]+)['"]/);
+            if (descMatch) description = descMatch[1];
+          }
+          if (!category) {
+            const catMatch = l.match(/category:\s*['"]([^'"]+)['"]/);
+            if (catMatch) category = catMatch[1];
+          }
+          if (aliases.length === 0) {
+            const aliasMatch = l.match(/aliases:\s*\[([^\]]*)\]/);
+            if (aliasMatch) {
+              aliases = aliasMatch[1].split(',').map(s => s.replace(/['"\s]/g, '')).filter(Boolean);
+            }
+          }
+          if (l.includes('executePrefix') || l.includes('executeSlash') || l.includes('category:')) {
+            isTopLevel = true;
+          }
+        }
+
+        if (isTopLevel && !commands.some(c => c.name === cmdName)) {
+          const choices = [];
+          for (let k = i; k < Math.min(len, i + 45); k++) {
+            const chMatch = fileLines[k].match(/value:\s*['"]([a-zA-Z0-9_-]+)['"]/);
+            if (chMatch && !choices.includes(chMatch[1])) {
+              choices.push(chMatch[1]);
+            }
+          }
+
+          commands.push({
+            name: cmdName,
+            description,
+            category: category || baseName,
+            aliases,
+            choices,
+            lineNum: i + 1
+          });
+        }
+      }
+    }
+
+    let summary = '';
+    if (commands.length > 0) {
+      const namesList = commands.map(c => {
+        if (c.choices.length > 0) {
+          return `!${c.name} [${c.choices.slice(0, 3).join('|')}${c.choices.length > 3 ? '...' : ''}]`;
+        }
+        return `!${c.name}`;
+      }).slice(0, 4).join(', ');
+      summary = `${(commands[0].category || baseName).toUpperCase()} Commands (${namesList}${commands.length > 4 ? ` +${commands.length - 4} more` : ''})`;
+    } else {
+      summary = `${baseName.toUpperCase()} Command Module`;
+    }
+
+    return { type: 'command', commands, summary };
+  }
+
+  // 2. Utils module analysis
+  if (norm.startsWith('utils/')) {
+    const exports = [];
+    for (let i = 0; i < fileLines.length; i++) {
+      const fnMatch = fileLines[i].match(/export\s+(?:async\s+)?(?:function|class|const)\s+([a-zA-Z0-9_]+)/);
+      if (fnMatch && !exports.includes(fnMatch[1])) {
+        exports.push(fnMatch[1]);
+      }
+    }
+
+    let topDesc = '';
+    const jsDocMatch = content.match(/^\/\*\*[\s\S]*?\*\//);
+    if (jsDocMatch) {
+      const docLines = jsDocMatch[0].split('\n').map(l => l.replace(/^\s*\/?\*+\/?\s*/, '').trim()).filter(Boolean);
+      if (docLines.length > 0) topDesc = docLines[0];
+    }
+
+    const summary = topDesc ? `${topDesc} (${baseName})` : `Utility Engine: ${exports.slice(0, 3).join(', ')} (${baseName})`;
+    return { type: 'util', exports, summary };
+  }
+
+  // 3. Database module analysis
+  if (norm === 'database.js') {
+    return {
+      type: 'database',
+      summary: 'SQLite Database Schema & State Persistence Store'
+    };
+  }
+
+  return { type: 'core', summary: `Core Bot Engine Module (${baseName})` };
+}
+
+/**
+ * Returns a dynamically computed role summary for any source file
+ * @param {string} relPath - File path
+ * @param {object} [fileData] - Pre-loaded file data
+ */
+export function describeFileRole(relPath = '', fileData = null) {
+  if (fileData && fileData.meta && fileData.meta.summary) {
+    return fileData.meta.summary;
+  }
+  if (codebaseCache) {
+    const cached = codebaseCache.get(relPath.replace(/^src\//, '').replace(/\\/g, '/'));
+    if (cached && cached.meta && cached.meta.summary) {
+      return cached.meta.summary;
+    }
+  }
+  return extractFileMetadata(relPath, fileData?.content || '', fileData?.lines || []).summary;
+}
+
+/**
+ * Loads all JS source files from src/ into memory cache and indexes metadata
+ */
+export async function loadCodebaseCache(force = false) {
   const now = Date.now();
   if (codebaseCache && !force && (now - lastCacheBuild < CACHE_TTL_MS)) {
     return codebaseCache;
@@ -55,11 +191,15 @@ async function loadCodebaseCache(force = false) {
           const stats = await fs.promises.stat(fullPath);
           const content = await fs.promises.readFile(fullPath, 'utf8');
           const relPath = path.relative(SRC_DIR, fullPath).replace(/\\/g, '/');
+          const lines = content.split('\n');
+          const meta = extractFileMetadata(relPath, content, lines);
+
           cache.set(relPath, {
             content,
-            lines: content.split('\n'),
+            lines,
             mtimeMs: stats.mtimeMs,
-            name: entry.name
+            name: entry.name,
+            meta
           });
         } catch {}
       }
@@ -73,58 +213,36 @@ async function loadCodebaseCache(force = false) {
 }
 
 /**
- * Extracts phrases and keywords from a user query
+ * Extracts substantive search tokens and phrases from a user query
  */
 export function extractSearchTokens(query = '') {
   const clean = query.toLowerCase().replace(/[?!.,;:()\[\]{}"'\\\/]/g, ' ').trim();
   const rawTokens = clean.split(/\s+/).filter(Boolean);
+  const keywords = rawTokens.filter(t => t.length > 2 && !COMMON_STOPWORDS.has(t));
 
-  // Exact 2-4 word phrases to search for
   const phrases = [];
   for (let len = 4; len >= 2; len--) {
     for (let i = 0; i <= rawTokens.length - len; i++) {
-      const phrase = rawTokens.slice(i, i + len).join(' ');
-      if (phrase.length > 5) phrases.push(phrase);
+      const first = rawTokens[i];
+      const last = rawTokens[i + len - 1];
+      if (!COMMON_STOPWORDS.has(first) && !COMMON_STOPWORDS.has(last)) {
+        const slice = rawTokens.slice(i, i + len);
+        if (slice.some(word => keywords.includes(word))) {
+          const phrase = slice.join(' ');
+          if (phrase.length > 4 && !phrases.includes(phrase)) phrases.push(phrase);
+        }
+      }
     }
   }
-
-  // Keywords excluding stopwords
-  const keywords = rawTokens.filter(t => t.length > 2 && !COMMON_STOPWORDS.has(t));
 
   return { phrases, keywords, rawTokens };
 }
 
 /**
- * Searches the real codebase for code snippets relevant to the query
- * @param {string} query - The user query
-/**
- * Returns a human-readable role summary for a source file
- */
-export function describeFileRole(relPath = '') {
-  const norm = relPath.replace(/^src\//, '').replace(/\\/g, '/');
-  if (norm.startsWith('commands/leveling.js')) return 'XP Leveling & Rank Card Theme System';
-  if (norm.startsWith('commands/security.js')) return 'Autonomous Antinuke & Server Defense Matrix';
-  if (norm.startsWith('commands/profile.js')) return 'God of War Canvas Profile Card Engine';
-  if (norm.startsWith('commands/ticket.js')) return 'Support Tickets & Smart AI Triage';
-  if (norm.startsWith('commands/automod.js')) return 'Automod & AI Toxicity/Doxxing Shield';
-  if (norm.startsWith('commands/lockdown.js')) return 'Server Panic Lockdown System';
-  if (norm.startsWith('commands/learn.js')) return 'Heuristic Staff Baseline Learn Mode';
-  if (norm.startsWith('commands/music.js')) return 'Audio Streaming & Music Queue System';
-  if (norm.startsWith('commands/utility.js')) return 'General Utilities & System Modules';
-  if (norm.startsWith('commands/casino.js') || norm.startsWith('commands/blackjack.js')) return 'Casino & Economy Minigames';
-  if (norm.startsWith('database.js')) return 'SQLite Core Configuration & State Store';
-  if (norm.startsWith('utils/antinuke.js')) return 'Sub-1ms Raw WebSocket & API Direct Strike Engine';
-  if (norm.startsWith('utils/canvasCards.js')) return 'Canvas Rendering & Theme Compositor';
-  if (norm.startsWith('utils/antiStrip.js')) return 'Persistence Roles & Anti-Admin Strip Guard';
-  if (norm.startsWith('utils/ai.js')) return 'Neural Engine Provider & Multi-Model Bridge';
-  return 'Core Bot Engine Module';
-}
-
-/**
- * Searches the real codebase for code snippets relevant to the query
+ * Searches the real codebase dynamically for code snippets relevant to the query
  * @param {string} query - The user query
  * @param {object} options - Search configuration
- * @returns {Promise<Array<{ file: string, startLine: number, endLine: number, code: string, score: number, reason: string }>>}
+ * @returns {Promise<Array<{ file: string, startLine: number, endLine: number, code: string, score: number, reason: string, role: string }>>}
  */
 export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines = 45 } = {}) {
   const cache = await loadCodebaseCache();
@@ -137,63 +255,75 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
   const matches = [];
 
   for (const [relPath, fileData] of cache.entries()) {
+    // Avoid self-matching internal meta search engine files
+    if (relPath.includes('botGuideKnowledge') || relPath.includes('codebaseKnowledge')) continue;
+
     const isCommand = relPath.startsWith('commands/');
     const isUtil = relPath.startsWith('utils/');
-    const isEvent = relPath.startsWith('events/');
     const isDatabase = relPath === 'database.js';
 
-    // Base multiplier: commands and utils have the highest value for user-facing instructions
     let fileMultiplier = 1.0;
     if (isCommand) fileMultiplier = 2.0;
-    else if (isUtil) fileMultiplier = 1.6;
+    else if (isUtil) fileMultiplier = 1.5;
     else if (isDatabase) fileMultiplier = 1.3;
-    else if (isEvent) fileMultiplier = 1.2;
+
+    // Check if filename matches a keyword (e.g. learn.js matches learn)
+    const baseName = path.basename(relPath, '.js').toLowerCase();
+    const fileNameMatch = keywords.some(k => baseName === k || (k.length > 3 && baseName.includes(k)));
+    if (fileNameMatch) {
+      fileMultiplier *= 2.2;
+    }
 
     const lowerContent = fileData.content.toLowerCase();
 
-    // 1. Check exact phrase matches (e.g. "god of war", "security enable all", "rank theme")
+    // 1. Exact phrase matches (e.g. "god of war", "security enable all", "panic lockdown")
     for (const phrase of phrases) {
       if (lowerContent.includes(phrase)) {
         let matchIdx = -1;
         while ((matchIdx = lowerContent.indexOf(phrase, matchIdx + 1)) !== -1) {
-          // Calculate line number
           const preText = fileData.content.slice(0, matchIdx);
           const lineNum = preText.split('\n').length;
           matches.push({
             file: relPath,
             lineNum,
-            score: (50 + phrase.length * 2) * fileMultiplier,
+            score: (120 + phrase.length * 3) * fileMultiplier,
             reason: `Exact phrase "${phrase}"`
           });
-          if (matches.length > 50) break;
+          if (matches.length > 60) break;
         }
       }
     }
 
-    // 2. Check keyword density in sliding line windows
+    // 2. Line by line keyword, definition, and choice matches
     for (let i = 0; i < fileData.lines.length; i++) {
       const line = fileData.lines[i].toLowerCase();
       let lineScore = 0;
-      let matchedWordCount = 0;
 
       for (const kw of keywords) {
-        if (line.includes(kw)) {
-          lineScore += (kw.length > 4 ? 8 : 4);
-          matchedWordCount++;
+        // High priority: Command definition name match (e.g. name: 'learn' or name: 'ranktheme')
+        if (line.includes(`name: '${kw}'`) || line.includes(`name: "${kw}"`)) {
+          lineScore += 260;
         }
-      }
-
-      // Check for command definition headers (e.g. name: 'ranktheme')
-      if (line.includes('name:') && keywords.some(k => line.includes(k))) {
-        lineScore += 25;
+        // Aliases match
+        if (line.includes(`'${kw}'`) && line.includes('aliases:')) {
+          lineScore += 160;
+        }
+        // Choices/options match
+        if (line.includes(`value: '${kw}'`) || line.includes(`value: "${kw}"`)) {
+          lineScore += 140;
+        }
+        // General keyword presence
+        if (line.includes(kw)) {
+          lineScore += (kw.length > 4 ? 10 : 5);
+        }
       }
 
       if (lineScore > 0) {
         matches.push({
           file: relPath,
           lineNum: i + 1,
-          score: (lineScore + (matchedWordCount > 1 ? matchedWordCount * 10 : 0)) * fileMultiplier,
-          reason: `Matched ${matchedWordCount} keywords`
+          score: lineScore * fileMultiplier,
+          reason: `Matched keyword & syntax definitions`
         });
       }
     }
@@ -201,9 +331,9 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
 
   if (matches.length === 0) return [];
 
-  // Group nearby line matches in the same file into cohesive blocks
   matches.sort((a, b) => b.score - a.score);
 
+  // Group nearby line matches in the same file into cohesive blocks
   const selectedBlocks = [];
   const coveredRanges = new Map(); // relPath -> Array<[start, end]>
 
@@ -213,10 +343,10 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
     const fileData = cache.get(match.file);
     if (!fileData) continue;
 
-    let startLine = Math.max(1, match.lineNum - 12);
+    let startLine = Math.max(1, match.lineNum - 10);
     // If it's a command file, expand backwards to the command declaration if nearby
     if (match.file.startsWith('commands/')) {
-      for (let j = match.lineNum - 1; j >= Math.max(0, match.lineNum - 30); j--) {
+      for (let j = match.lineNum - 1; j >= Math.max(0, match.lineNum - 28); j--) {
         const l = fileData.lines[j];
         if (l && (l.includes("name: '") || l.includes('name: "'))) {
           startLine = Math.max(1, j + 1);
@@ -242,6 +372,7 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
     coveredRanges.set(match.file, existing);
 
     const snippet = fileData.lines.slice(startLine - 1, endLine).join('\n');
+    const role = describeFileRole(match.file, fileData);
 
     selectedBlocks.push({
       file: `src/${match.file}`,
@@ -249,7 +380,8 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
       endLine,
       code: snippet,
       score: match.score,
-      reason: match.reason
+      reason: match.reason,
+      role
     });
   }
 
@@ -264,13 +396,12 @@ export function formatCodebaseContext(snippets = []) {
 
   const out = [];
   out.push('=== RELEVANT BOT SOURCE CODE FROM REPOSITORY (GROUND TRUTH) ===');
-  out.push('The following code snippets were searched and extracted directly from the bot codebase for this query.');
-  out.push('Use this source code as authoritative ground truth for command names, syntax, arguments, themes, and options.');
+  out.push('The following code snippets were dynamically extracted directly from the bot codebase for this query.');
+  out.push('Conduct an exhaustive deep-dive into this source code. Use it as authoritative ground truth for command names, syntax, arguments, execution logic, and options.');
   out.push('CRITICAL REQUIREMENT: In your final answer, you MUST include a dedicated section citing the exact source code files and line ranges where you deep-dived and analyzed the answer from.\n');
 
   for (const snip of snippets) {
-    const role = describeFileRole(snip.file);
-    out.push(`--- File: ${snip.file} (Lines ${snip.startLine}-${snip.endLine}) [Module: ${role} | Match: ${snip.reason}] ---`);
+    out.push(`--- File: ${snip.file} (Lines ${snip.startLine}-${snip.endLine}) [Module: ${snip.role} | Match: ${snip.reason}] ---`);
     out.push('```javascript');
     out.push(snip.code);
     out.push('```\n');

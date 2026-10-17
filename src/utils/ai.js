@@ -246,17 +246,64 @@ export async function generateAIResponse(prompt, context = {}) {
     }
   }
 
-  // Tier 2: Cloudflare Workers AI Edge Provider (Llama 3.2 3B)
+  // Tier 2: Resilient Neural Edge Provider (Pollinations.ai via POST JSON)
+  const models = ['openai', 'mistral', 'deepseek'];
+  for (const model of models) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 16000);
+
+      const res = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemInstructions },
+            { role: 'user', content: cleanPrompt }
+          ],
+          model,
+          seed: 42
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.trim() && !text.includes('Free limit reached') && !text.includes('pollen key')) {
+          const latencyMs = Date.now() - startTime;
+          const cleanedText = formatAIToGreyMarkdown(text.trim());
+          responseCache.set(cacheKey, { text: cleanedText, model: `Athena Neural (${model})`, timestamp: Date.now() });
+          return {
+            success: true,
+            text: cleanedText,
+            model: `Athena Neural (${model})`,
+            latencyMs
+          };
+        }
+      }
+    } catch (edgeErr) {
+      // Continue to next model
+    }
+  }
+
+  // Tier 3: Cloudflare Workers AI Edge Provider (Llama 3.2 3B)
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
     const workerRes = await fetch('https://devtoolbox-api.devtoolbox-api.workers.dev/ai/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: `${systemInstructions}\n\nUser Question: ${cleanPrompt}`,
-        max_tokens: 1024
+        max_tokens: 1200
       }),
-      timeout: 10000
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (workerRes.ok) {
       const data = await workerRes.json();
@@ -264,53 +311,22 @@ export async function generateAIResponse(prompt, context = {}) {
       if (responseText && responseText.trim()) {
         const latencyMs = Date.now() - startTime;
         const cleanedText = formatAIToGreyMarkdown(responseText.trim());
-        responseCache.set(cacheKey, { text: cleanedText, model: 'Athena Neural v2.5', timestamp: Date.now() });
+        responseCache.set(cacheKey, { text: cleanedText, model: 'Athena Neural Edge', timestamp: Date.now() });
         return {
           success: true,
           text: cleanedText,
-          model: 'Athena Neural v2.5',
+          model: 'Athena Neural Edge',
           latencyMs
         };
       }
     }
   } catch (workerErr) {
-    console.warn('[AI] Workers AI provider error, trying fallback:', workerErr.message);
-  }
-
-  // Tier 3: High-Speed Neural Edge Provider (Pollinations.ai)
-  try {
-    const encodedPrompt = encodeURIComponent(cleanPrompt);
-    const encodedSystem = encodeURIComponent(systemInstructions);
-    const edgeUrl = `https://text.pollinations.ai/${encodedPrompt}?model=openai&system=${encodedSystem}`;
-
-    const res = await fetch(edgeUrl, {
-      method: 'GET',
-      headers: { 'Accept': 'text/plain' },
-      timeout: 12000
-    });
-
-    if (res.ok) {
-      const text = await res.text();
-      // Ensure we didn't receive a rate-limit error page
-      if (text && text.trim() && !text.includes('Free limit reached') && !text.includes('pollen key')) {
-        const latencyMs = Date.now() - startTime;
-        const cleanedText = formatAIToGreyMarkdown(text.trim());
-        responseCache.set(cacheKey, { text: cleanedText, model: 'Athena Neural v2.5', timestamp: Date.now() });
-        return {
-          success: true,
-          text: cleanedText,
-          model: 'Athena Neural v2.5',
-          latencyMs
-        };
-      }
-    }
-  } catch (edgeErr) {
-    console.error('[AI] Neural edge provider error:', edgeErr.message);
+    // Edge failed
   }
 
   return {
     success: false,
-    error: 'Neural engine communication failed. Please check network connectivity or try again shortly.'
+    error: 'Neural engine edge providers currently unreachable.'
   };
 }
 
