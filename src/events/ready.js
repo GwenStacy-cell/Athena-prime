@@ -498,8 +498,18 @@ export default {
 
       console.log(chalk.blue(' Syncing slash commands globally...'));
 
-      const slashData = allCommands
-        .filter(cmd => !cmd.hidden && !cmd.slashHidden && typeof cmd.executeSlash === 'function') // Skip hidden and prefix-only commands
+      const prioritySlash = ['athena', 'ask', 'security', 'antinuke', 'news', 'ticket', 'ticketpanel', 'verify', 'welcome', 'autorole', 'panic', 'rate', 'stats'];
+      const eligibleSlash = allCommands.filter(cmd => !cmd.hidden && !cmd.slashHidden && typeof cmd.executeSlash === 'function');
+      eligibleSlash.sort((a, b) => {
+        const aPri = prioritySlash.indexOf(a.name);
+        const bPri = prioritySlash.indexOf(b.name);
+        if (aPri !== -1 && bPri !== -1) return aPri - bPri;
+        if (aPri !== -1) return -1;
+        if (bPri !== -1) return 1;
+        return 0;
+      });
+
+      const slashData = eligibleSlash
         .map(cmd => {
           // Map options and build proper REST format
           if (cmd.slashDef && typeof cmd.slashDef.toJSON === 'function') {

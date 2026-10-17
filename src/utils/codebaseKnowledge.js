@@ -297,7 +297,8 @@ export const SEMANTIC_INTENTS = [
   { match: /\b(snipe|deleted\s*messages?|sniped)\b/i, commands: ['snipe'] },
   { match: /\b(24\s*7\s*vc|sethomevc|stay\s*in\s*vc|voice\s*bot)\b/i, commands: ['sethomevc', 'utility'] },
   { match: /\b(mod\s*mode|modmode|maintenance\s*mode)\b/i, commands: ['modmode'] },
-  { match: /\b(panic|lockdown|emergency\s*lock)\b/i, commands: ['panic', 'lockdown', 'moderation'] }
+  { match: /\b(panic|lockdown|emergency\s*lock)\b/i, commands: ['panic', 'lockdown', 'moderation'] },
+  { match: /\b(news|newsfeed|rss\s*feed|rss|automated\s*news|bbc\s*news|news\s*channel|news\s*setup|news\s*disable)\b/i, commands: ['news'] }
 ];
 
 /**

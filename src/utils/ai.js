@@ -124,6 +124,20 @@ export function formatAIToGreyMarkdown(rawText) {
     }
   }
 
+  // Remove dangling teaser phrases at the end that were cut off mid-thought
+  while (formatted.length > 0) {
+    const last = formatted[formatted.length - 1].trim();
+    if (!last) {
+      formatted.pop();
+      continue;
+    }
+    if (/(?:following code|as follows|contains the|following implementation|code:?|is:?)$/i.test(last.replace(/[-#*_`]/g, '').trim())) {
+      formatted.pop();
+    } else {
+      break;
+    }
+  }
+
   // Collapse multiple consecutive blank lines into one and return
   return formatted.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -325,7 +339,7 @@ export async function generateAIResponse(prompt, context = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: `${systemInstructions}\n\nUser Question: ${cleanPrompt}`,
-        max_tokens: 1200
+        max_tokens: 2500
       }),
       signal: controller.signal
     });

@@ -492,6 +492,10 @@ class Database {
   }
 
   addNewsFeed(guildId, name, url) {
+    if (typeof name === 'object' && name !== null) {
+      url = name.url;
+      name = name.name;
+    }
     const cfg = this.getNewsConfig(guildId);
     if (!cfg.feeds.find(f => f.url === url)) {
       cfg.feeds.push({ name, url });
