@@ -31,10 +31,36 @@ export default {
     if (!client.jtcPanelLocks) client.jtcPanelLocks = new Set();
     if (!client.vcSessions) client.vcSessions = new Map();
 
-    // ==========================================
-    // THEATER MODE ("MOVIE MODE") ENFORCEMENT
-    // ==========================================
     const guildCfg = db.getGuildConfig(guild.id);
+
+    // ==========================================
+    // VOICE ROLE ENFORCEMENT (Auto Assign / Remove)
+    // ==========================================
+    const voiceRoleId = db.getVoiceRole ? db.getVoiceRole(guild.id) : guildCfg?.voiceRoleId;
+    if (voiceRoleId) {
+      const targetMember = newState.member || oldState.member || guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
+      if (targetMember && !targetMember.user.bot) {
+        try {
+          const botMember = guild.members.me || await guild.members.fetch(client.user.id).catch(() => null);
+          if (botMember && botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+            const role = guild.roles.cache.get(voiceRoleId) || await guild.roles.fetch(voiceRoleId).catch(() => null);
+            if (role && botMember.roles.highest.position > role.position) {
+              const isInVc = !!newState.channelId;
+              const hasRole = targetMember.roles.cache.has(voiceRoleId);
+
+              if (isInVc && !hasRole) {
+                await targetMember.roles.add(role, 'Athena VoiceRole: Connected to voice channel').catch(() => null);
+              } else if (!isInVc && hasRole) {
+                await targetMember.roles.remove(role, 'Athena VoiceRole: Disconnected from voice channel').catch(() => null);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[VoiceRole] Error enforcing voice role:', err);
+        }
+      }
+    }
+
     const theaterVcId = guildCfg?.theaterModeVcId;
     if (theaterVcId && member && !member.user.bot) {
       import('../utils/helpers.js').then(async ({ isAuthorized }) => {

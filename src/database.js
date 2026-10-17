@@ -328,7 +328,8 @@ class Database {
           enabled: false,
           prefix: '',
           suffix: ''
-        }
+        },
+        voiceRoleId: null
       };
       this.save();
     } else {
@@ -436,6 +437,16 @@ class Database {
     Object.assign(config, updates);
     this.save();
     return config;
+  }
+
+  getVoiceRole(guildId) {
+    if (!guildId) return null;
+    return this.getGuildConfig(guildId)?.voiceRoleId || null;
+  }
+
+  setVoiceRole(guildId, roleId) {
+    if (!guildId) return null;
+    return this.updateGuildConfig(guildId, { voiceRoleId: roleId || null });
   }
 
   // Reaction Roles

@@ -1,6 +1,133 @@
-﻿import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, RoleSelectMenuBuilder, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
+
+export function buildVoiceRolePanel(guild) {
+  const config = db.getGuildConfig(guild.id) || {};
+  const voiceRoleId = config.voiceRoleId;
+  const role = voiceRoleId ? (guild.roles.cache.get(voiceRoleId) || null) : null;
+  const isEnabled = !!(voiceRoleId && role);
+
+  const statusIndicator = isEnabled
+    ? '<a:uptime:1552608831060844575> **ACTIVE & ENFORCING**'
+    : '`OFFLINE / DISABLED`';
+
+  const roleDisplay = role
+    ? `${role} (\`${role.name}\` • ID: \`${role.id}\`)`
+    : (voiceRoleId ? `\`<Deleted Role: ${voiceRoleId}>\`` : '`None (Not configured)`');
+
+  const row1 = new ActionRowBuilder().addComponents(
+    new RoleSelectMenuBuilder()
+      .setCustomId('vcrole_select')
+      .setPlaceholder('Select Voice Role to auto-assign...')
+      .setMinValues(1)
+      .setMaxValues(1)
+  );
+
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('vcrole_disable')
+      .setLabel('Disable Voice Role')
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(!voiceRoleId),
+    new ButtonBuilder()
+      .setCustomId('vcrole_close')
+      .setLabel('Close')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  const container = {
+    type: 17,
+    components: [
+      {
+        type: 10,
+        content:
+          `# Voice Role Matrix | <a:atheNATICK:1557841381630681106>\n` +
+          `-# **__Automated Voice Channel Role Synchronization Engine__**\n\n` +
+          `-# • **System Status:** ${statusIndicator}\n` +
+          `-# • **Current Voice Role:** ${roleDisplay}\n` +
+          `-# • **Assignment Rule:** Instantly granted upon connecting to **any** voice channel; revoked automatically upon disconnect.\n` +
+          `-# • **Hierarchy Requirement:** Bot's highest role must be positioned above the bound role with **Manage Roles** permission.`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          `-# **__Command Syntax__**\n` +
+          `-# • \`!voicerole <@role / ID / Name>\` - Bind a specific voice role\n` +
+          `-# • \`!voicerole disable\` - Turn off automatic voice roles\n` +
+          `-# • Or use the dropdown menu below to select a role directly:`
+      },
+      { type: 14, divider: true },
+      row1.toJSON(),
+      row2.toJSON(),
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: '-# Athena Prime Defense Matrix • Voice Systems'
+      }
+    ]
+  };
+
+  return { components: [container], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function handleVoiceRoleInteraction(interaction) {
+  if (!interaction.customId.startsWith('vcrole_')) return;
+
+  const { isExtraOwner, isBotOwnerSync } = await import('../utils/helpers.js');
+  const isAuthorized = interaction.guild.ownerId === interaction.user.id ||
+    isBotOwnerSync(interaction.user.id) ||
+    isExtraOwner(interaction.guild.id, interaction.user.id) ||
+    interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) ||
+    interaction.member.permissions.has(PermissionFlagsBits.ManageRoles);
+
+  if (!isAuthorized) {
+    return interaction.reply({ content: '-# **You do not possess the required permissions to manage this system.**', flags: 64 });
+  }
+
+  if (interaction.customId === 'vcrole_close') {
+    return interaction.message.delete().catch(() => {
+      interaction.update({ components: [] }).catch(() => null);
+    });
+  }
+
+  if (interaction.customId === 'vcrole_disable') {
+    db.setVoiceRole(interaction.guild.id, null);
+    const payload = buildVoiceRolePanel(interaction.guild);
+    return interaction.update(payload).catch(() => null);
+  }
+
+  if (interaction.customId === 'vcrole_select') {
+    const roleId = interaction.values[0];
+    const role = interaction.guild.roles.cache.get(roleId);
+
+    if (!role) {
+      return interaction.reply({ content: '-# **Error:** Selected role was not found.', flags: 64 });
+    }
+
+    if (role.id === interaction.guild.id) {
+      return interaction.reply({ content: '-# **Error:** You cannot set `@everyone` as a voice role.', flags: 64 });
+    }
+
+    if (role.managed) {
+      return interaction.reply({ content: '-# **Error:** You cannot set an integration, bot, or booster managed role as a voice role.', flags: 64 });
+    }
+
+    const botMember = interaction.guild.members.me;
+    if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+      return interaction.reply({ content: '-# **Error:** The bot requires the **Manage Roles** permission to assign voice roles.', flags: 64 });
+    }
+
+    if (botMember.roles.highest.position <= role.position) {
+      return interaction.reply({ content: `-# **Error:** The role ${role} is positioned higher than or equal to the bot's highest role. Please move the bot's role above ${role} in Server Settings.`, flags: 64 });
+    }
+
+    db.setVoiceRole(interaction.guild.id, role.id);
+    const payload = buildVoiceRolePanel(interaction.guild);
+    return interaction.update(payload).catch(() => null);
+  }
+}
 
 export const commands = [
   {
@@ -77,20 +204,125 @@ export const commands = [
   },
   {
     name: 'voicerole',
-    description: 'Set a role to be given when users join a voice channel.',
+    aliases: ['vcrole', 'voice-role'],
+    description: 'Configure a role to be automatically assigned to members in voice channels.',
     category: 'admin',
     permissions: [PermissionFlagsBits.ManageGuild],
+    options: [
+      {
+        name: 'role',
+        description: 'The role to automatically assign to members in voice channels (leave empty to view panel)',
+        type: 8,
+        required: false
+      },
+      {
+        name: 'disable',
+        description: 'Disable the automatic voice role system',
+        type: 5,
+        required: false
+      }
+    ],
     async executePrefix(message, args) {
-      if (args[0] === 'disable') {
-        db.updateGuildConfig(message.guild.id, { voiceRoleId: null });
+      const { isExtraOwner, isBotOwnerSync } = await import('../utils/helpers.js');
+      const isAuthorized = message.guild.ownerId === message.author.id ||
+        isBotOwnerSync(message.author.id) ||
+        isExtraOwner(message.guild.id, message.author.id) ||
+        message.member.permissions.has(PermissionFlagsBits.ManageGuild) ||
+        message.member.permissions.has(PermissionFlagsBits.ManageRoles);
+
+      if (!isAuthorized) {
+        return message.reply(cv2.danger('Access Denied', 'You do not possess the required permissions to execute this command.'));
+      }
+
+      if (!args.length) {
+        const payload = buildVoiceRolePanel(message.guild);
+        return message.reply(payload);
+      }
+
+      const sub = args[0].toLowerCase();
+      if (['disable', 'off', 'remove', 'clear', 'reset', 'none'].includes(sub)) {
+        db.setVoiceRole(message.guild.id, null);
         return message.reply(cv2.success('Voice Role Disabled', 'The automatic voice role system has been disabled.'));
       }
-      
-      const role = message.mentions.roles.first();
-      if (!role) return message.reply(cv2.info('Voice Role Setup', 'Usage: `!voicerole <@role>`\nTo disable: `!voicerole disable`'));
-      
-      db.updateGuildConfig(message.guild.id, { voiceRoleId: role.id });
-      await message.reply(cv2.success('Voice Role Enabled', `The ${role} role will now be automatically given to members when they join a voice channel, and removed when they leave.`));
+
+      let role = message.mentions.roles.first();
+      if (!role && args[0]) {
+        const cleanId = args[0].replace(/[<@&>]/g, '');
+        role = message.guild.roles.cache.get(cleanId);
+      }
+      if (!role && args.length > 0) {
+        const query = args.join(' ').toLowerCase();
+        role = message.guild.roles.cache.find(r => r.name.toLowerCase() === query);
+      }
+
+      if (!role) {
+        return message.reply(cv2.warn('Invalid Role', `Could not find a valid role matching \`${args.join(' ')}\`.\n\nUsage: \`!voicerole <@role / ID / Name>\`\nTo disable: \`!voicerole disable\``));
+      }
+
+      if (role.id === message.guild.id) {
+        return message.reply(cv2.danger('Invalid Role', 'You cannot assign `@everyone` as a voice role.'));
+      }
+
+      if (role.managed) {
+        return message.reply(cv2.danger('Managed Role', 'You cannot set an integration, bot, or booster managed role as a voice role.'));
+      }
+
+      const botMember = message.guild.members.me;
+      if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+        return message.reply(cv2.danger('Missing Permissions', 'The bot requires the **Manage Roles** permission to assign voice roles.'));
+      }
+
+      if (botMember.roles.highest.position <= role.position) {
+        return message.reply(cv2.danger('Role Hierarchy Error', `The role ${role} is positioned higher than or equal to the bot's highest role. Please move the bot's role above ${role} in Server Settings.`));
+      }
+
+      db.setVoiceRole(message.guild.id, role.id);
+      await message.reply(cv2.success('Voice Role Enabled', `The role ${role} (\`${role.name}\`) will now be automatically given to members when they join any voice channel, and revoked when they disconnect.`));
+    },
+
+    async executeSlash(interaction) {
+      const { isExtraOwner, isBotOwnerSync } = await import('../utils/helpers.js');
+      const isAuthorized = interaction.guild.ownerId === interaction.user.id ||
+        isBotOwnerSync(interaction.user.id) ||
+        isExtraOwner(interaction.guild.id, interaction.user.id) ||
+        interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) ||
+        interaction.member.permissions.has(PermissionFlagsBits.ManageRoles);
+
+      if (!isAuthorized) {
+        return interaction.reply({ ...cv2.danger('Access Denied', 'You do not possess the required permissions to execute this command.'), flags: 64 });
+      }
+
+      const shouldDisable = interaction.options.getBoolean('disable');
+      if (shouldDisable) {
+        db.setVoiceRole(interaction.guild.id, null);
+        return interaction.reply(cv2.success('Voice Role Disabled', 'The automatic voice role system has been disabled.'));
+      }
+
+      const role = interaction.options.getRole('role');
+      if (!role) {
+        const payload = buildVoiceRolePanel(interaction.guild);
+        return interaction.reply(payload);
+      }
+
+      if (role.id === interaction.guild.id) {
+        return interaction.reply({ ...cv2.danger('Invalid Role', 'You cannot assign `@everyone` as a voice role.'), flags: 64 });
+      }
+
+      if (role.managed) {
+        return interaction.reply({ ...cv2.danger('Managed Role', 'You cannot set an integration, bot, or booster managed role as a voice role.'), flags: 64 });
+      }
+
+      const botMember = interaction.guild.members.me;
+      if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+        return interaction.reply({ ...cv2.danger('Missing Permissions', 'The bot requires the **Manage Roles** permission to assign voice roles.'), flags: 64 });
+      }
+
+      if (botMember.roles.highest.position <= role.position) {
+        return interaction.reply({ ...cv2.danger('Role Hierarchy Error', `The role ${role} is positioned higher than or equal to the bot's highest role. Please move the bot's role above ${role} in Server Settings.`), flags: 64 });
+      }
+
+      db.setVoiceRole(interaction.guild.id, role.id);
+      await interaction.reply(cv2.success('Voice Role Enabled', `The role ${role} (\`${role.name}\`) will now be automatically given to members when they join any voice channel, and revoked when they disconnect.`));
     }
   }
 ];

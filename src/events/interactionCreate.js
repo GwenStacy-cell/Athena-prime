@@ -204,6 +204,13 @@ export default {
       return;
     }
 
+    if (interaction.customId && interaction.customId.startsWith('vcrole_')) {
+      import('../commands/community.js').then(m => {
+        if (m.handleVoiceRoleInteraction) m.handleVoiceRoleInteraction(interaction).catch(()=>{});
+      }).catch(()=>{});
+      return;
+    }
+
     // --- CHESS THEME DROPDOWN ---
     if (interaction.isStringSelectMenu() && interaction.customId === 'chess_theme_select') {
       import('../commands/chess.js').then(m => {
