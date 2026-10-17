@@ -201,6 +201,51 @@ function matchGroundTruth(prompt) {
 }
 
 /**
+ * Resolves live real-time meteorological sensor feeds for any city globally
+ */
+export async function fetchLiveWeatherTelemetry(query) {
+  try {
+    const isWeather = /(?:weather|wheather|temp|temperature|climate|forecast|rain|humidity)\b/i.test(query);
+    if (!isWeather) return null;
+
+    const match = query.match(/(?:weather|wheather|temp|temperature|climate|forecast|rain)\s+(?:now\s+|current\s+|today\s+)?(?:in|at|for|of)?\s*([a-zA-Z\s]+)/i) ||
+                  query.match(/(?:in|at|for)\s+([a-zA-Z\s]+)/i);
+    const city = match ? match[1].trim().replace(/[?.!]+$/, '') : null;
+    if (!city || city.length < 2) return null;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+    const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`, {
+      headers: { 'User-Agent': 'curl/7.68.0' },
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const cur = data.current_condition?.[0];
+    if (!cur) return null;
+    const area = data.nearest_area?.[0];
+    const locName = `${area?.areaName?.[0]?.value || city}, ${area?.region?.[0]?.value || ''}, ${area?.country?.[0]?.value || ''}`.replace(/,\s*,/g, ',');
+    return {
+      location: locName,
+      tempC: cur.temp_C,
+      tempF: cur.temp_F,
+      feelsLikeC: cur.FeelsLikeC,
+      condition: cur.weatherDesc?.[0]?.value || 'Clear',
+      humidity: cur.humidity,
+      windSpeedKmph: cur.windspeedKmph,
+      windDir: cur.winddir16Point,
+      uvIndex: cur.uvIndex,
+      visibilityKm: cur.visibility
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
  * Generates an intelligent AI response for the Athena Prime Neural Engine
  */
 export async function generateAIResponse(prompt, context = {}) {
@@ -233,6 +278,13 @@ export async function generateAIResponse(prompt, context = {}) {
       model: 'Athena Neural v3.8',
       latencyMs
     };
+  }
+
+  // Live Meteorological Ground-Truth Resolver
+  let activePrompt = cleanPrompt;
+  const liveWeather = await fetchLiveWeatherTelemetry(cleanPrompt);
+  if (liveWeather) {
+    activePrompt += `\n\n[Live Meteorological Sensor Telemetry (Current Verified Ground Truth)]: Location: ${liveWeather.location} | Temperature: ${liveWeather.tempC}°C (${liveWeather.tempF}°F) | Feels Like: ${liveWeather.feelsLikeC}°C | Condition: ${liveWeather.condition} | Humidity: ${liveWeather.humidity}% | Wind: ${liveWeather.windSpeedKmph} km/h ${liveWeather.windDir} | Visibility: ${liveWeather.visibilityKm} km. Answer the user's weather inquiry using this exact live data with grey bold underlined headings.`;
   }
 
   const systemInstructions = context.customSystem || [
@@ -286,7 +338,7 @@ export async function generateAIResponse(prompt, context = {}) {
             parts: [{ text: systemInstructions }]
           },
           contents: [
-            { role: 'user', parts: [{ text: cleanPrompt }] }
+            { role: 'user', parts: [{ text: activePrompt }] }
           ],
           generationConfig: {
             temperature: 0.6,
@@ -348,7 +400,7 @@ export async function generateAIResponse(prompt, context = {}) {
         body: JSON.stringify({
           messages: [
             { role: 'system', content: systemInstructions },
-            { role: 'user', content: cleanPrompt }
+            { role: 'user', content: activePrompt }
           ],
           model,
           seed: 42
@@ -386,7 +438,7 @@ export async function generateAIResponse(prompt, context = {}) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: `${systemInstructions}\n\nUser Question: ${cleanPrompt}`,
+        prompt: `${systemInstructions}\n\nUser Question: ${activePrompt}`,
         max_tokens: 2500
       }),
       signal: controller.signal
