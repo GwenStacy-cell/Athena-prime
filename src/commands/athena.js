@@ -143,6 +143,7 @@ export const commands = [
         aiResult = await generateAthenaGuideResponse(prompt, {
           guild: message.guild,
           user: message.author,
+          member: message.member,
           channelId: message.channel.id,
           prefix,
           onProgress: progress.onProgress
@@ -219,6 +220,7 @@ export const commands = [
         aiResult = await generateAthenaGuideResponse(prompt, {
           guild: interaction.guild,
           user: interaction.user,
+          member: interaction.member,
           channelId: interaction.channelId,
           prefix,
           onProgress: progress.onProgress
@@ -236,7 +238,7 @@ export const commands = [
 ];
 
 export async function handleAthenaGuideButtons(interaction) {
-  const { customId, guild, user } = interaction;
+  const { customId, guild, user, member } = interaction;
   const cfg = db.getGuildConfig(guild?.id || '0');
   const prefix = cfg?.prefix || '!';
   const accentColor = cfg?.accentColor || '#00e5ff';
@@ -310,6 +312,7 @@ export async function handleAthenaGuideButtons(interaction) {
       aiResult = await generateAthenaGuideResponse(userDoubt, {
         guild,
         user,
+        member,
         channelId: interaction.channelId,
         prefix,
         onProgress: progress.onProgress
@@ -351,6 +354,7 @@ export async function handleAthenaGuideButtons(interaction) {
       aiResult = await generateAthenaGuideResponse(query, {
         guild,
         user,
+        member,
         channelId: interaction.channelId,
         prefix,
         onProgress: progress.onProgress
@@ -395,6 +399,7 @@ export async function handleAthenaGuideButtons(interaction) {
       aiResult = await generateAthenaGuideResponse(query, {
         guild,
         user,
+        member,
         channelId: interaction.channelId,
         prefix,
         onProgress: progress.onProgress

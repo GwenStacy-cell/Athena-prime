@@ -13,6 +13,8 @@ import {
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
+import { PermissionFlagsBits } from 'discord.js';
+
 export { 
   getGuideSession, 
   recordGuideTurn, 
@@ -24,6 +26,169 @@ export {
 
 const TICK = '<a:atheNATICK:1557841381630681106>';
 const UPTIME = '<a:uptime:1552608831060844575>';
+
+export const OWNER_COMMANDS = new Set([
+  'owner', 'enuke', 'backup', 'whitelist', 'globalcontrols', 'databaseadmin', 
+  'remoteadmin', 'tier', 'botgrowth', 'learn'
+]);
+
+export const ADMIN_COMMANDS = new Set([
+  'security', 'antinuke', 'automod', 'ticketpanel', 'welcome', 'autorole', 
+  'firewall', 'spam', 'customrole', 'accent', 'embed', 'logging', 'serverlogs', 
+  'jtc', 'tempvoice', 'vcpanel', 'vcprotect', 'moveprotect', 'adel', 'fck', 'ezal', 
+  'app', 'announce', 'buildserver', 'channeladmin', 'rolemanager', 'setdeletelog', 
+  'wipeemojis', 'auth', 'verify', 'news'
+]);
+
+export const MOD_COMMANDS = new Set([
+  'moderation', 'ban', 'kick', 'timeout', 'mute', 'warn', 'quarantine', 'snipe', 
+  'ignore', 'hide'
+]);
+
+/**
+ * Resolves the executing member's permissions, ownership status, and administrative clearance.
+ */
+export async function resolveMemberClearance(guild, user, member = null) {
+  if (!user) {
+    return {
+      level: 'public',
+      label: 'Community Member',
+      isServerOwner: false,
+      isBotOwner: false,
+      isExtraOwner: false,
+      isAdmin: false,
+      isMod: false,
+      permissions: []
+    };
+  }
+
+  const userId = user.id;
+  const isServerOwner = guild?.ownerId === userId;
+  const isBotOwner = process.env.OWNER_ID && userId === process.env.OWNER_ID;
+  const isExtraOwner = (guild?.id && db?.isExtraOwner) ? db.isExtraOwner(guild.id, userId) : false;
+
+  let resolvedMember = member;
+  if (!resolvedMember && guild?.members) {
+    resolvedMember = guild.members.cache?.get(userId);
+    if (!resolvedMember && guild.members.fetch) {
+      try {
+        resolvedMember = await guild.members.fetch(userId);
+      } catch {}
+    }
+  }
+
+  const permissions = [];
+  let isAdmin = false;
+  let isMod = false;
+
+  if (isServerOwner || isBotOwner || isExtraOwner) {
+    isAdmin = true;
+    isMod = true;
+    permissions.push('Server Owner / Highest Authority');
+  } else if (resolvedMember && resolvedMember.permissions) {
+    if (resolvedMember.permissions.has(PermissionFlagsBits.Administrator)) {
+      isAdmin = true;
+      isMod = true;
+      permissions.push('Administrator');
+    }
+    if (resolvedMember.permissions.has(PermissionFlagsBits.ManageGuild)) {
+      permissions.push('Manage Server');
+      isAdmin = true;
+    }
+    if (resolvedMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+      permissions.push('Manage Roles');
+    }
+    if (resolvedMember.permissions.has(PermissionFlagsBits.ManageChannels)) {
+      permissions.push('Manage Channels');
+    }
+    if (
+      resolvedMember.permissions.has(PermissionFlagsBits.ModerateMembers) ||
+      resolvedMember.permissions.has(PermissionFlagsBits.KickMembers) ||
+      resolvedMember.permissions.has(PermissionFlagsBits.BanMembers) ||
+      resolvedMember.permissions.has(PermissionFlagsBits.ManageMessages)
+    ) {
+      isMod = true;
+      permissions.push('Moderation Clearance');
+    }
+  }
+
+  let level = 'member';
+  let label = 'Community Member';
+
+  if (isServerOwner) {
+    level = 'owner';
+    label = 'Server Owner';
+  } else if (isBotOwner || isExtraOwner) {
+    level = 'owner';
+    label = 'Bot / Extra Owner';
+  } else if (isAdmin) {
+    level = 'admin';
+    label = 'Server Administrator';
+  } else if (isMod) {
+    level = 'moderator';
+    label = 'Server Moderator';
+  }
+
+  return {
+    level,
+    label,
+    isServerOwner,
+    isBotOwner,
+    isExtraOwner,
+    isAdmin,
+    isMod,
+    permissions
+  };
+}
+
+/**
+ * Determines required clearance level for any command or metadata.
+ */
+export function getCommandClearanceRequirement(commandName = '', commandMeta = null) {
+  const clean = (commandName || '').toLowerCase().trim();
+  if (!clean) return { level: 'public', label: 'Public / Everyone' };
+
+  if (OWNER_COMMANDS.has(clean)) {
+    return { level: 'owner', label: 'Server Owner' };
+  }
+  if (ADMIN_COMMANDS.has(clean)) {
+    return { level: 'admin', label: 'Administrator' };
+  }
+  if (MOD_COMMANDS.has(clean)) {
+    return { level: 'moderator', label: 'Moderator / Staff' };
+  }
+
+  if (commandMeta?.category === 'owner') {
+    return { level: 'owner', label: 'Server Owner' };
+  }
+  if (commandMeta?.clearance) {
+    const clr = commandMeta.clearance.toLowerCase();
+    if (clr.includes('owner')) return { level: 'owner', label: 'Server Owner' };
+    if (clr.includes('admin')) return { level: 'admin', label: 'Administrator' };
+    if (clr.includes('mod') || clr.includes('staff')) return { level: 'moderator', label: 'Moderator / Staff' };
+  }
+
+  return { level: 'public', label: 'Public / Everyone' };
+}
+
+/**
+ * Checks if the member has permission to execute the command.
+ */
+export function canMemberExecuteCommand(memberClearance, commandRequirement) {
+  if (!commandRequirement || commandRequirement.level === 'public') return true;
+  if (!memberClearance) return false;
+
+  if (commandRequirement.level === 'moderator') {
+    return memberClearance.isMod || memberClearance.isAdmin || memberClearance.isServerOwner;
+  }
+  if (commandRequirement.level === 'admin') {
+    return memberClearance.isAdmin || memberClearance.isServerOwner;
+  }
+  if (commandRequirement.level === 'owner') {
+    return memberClearance.isServerOwner || memberClearance.isBotOwner || memberClearance.isExtraOwner;
+  }
+  return true;
+}
 
 /**
  * Hand-curated contextual follow-up questions for core bot commands.
@@ -234,8 +399,17 @@ export const KNOWN_COMMAND_SUGGESTIONS = {
 /**
  * Dynamically synthesizes 2-3 contextual follow-up suggestions for EVERY command in Athena Prime.
  */
-export function generateFollowUpSuggestions(commandName = '', commandMeta = null, userQuery = '', aiText = '') {
+export function generateFollowUpSuggestions(commandName = '', commandMeta = null, userQuery = '', aiText = '', memberClearance = null, canExecute = true) {
   const cleanCmd = (commandName || '').toLowerCase().trim();
+
+  // If user cannot execute this administrative/staff command, offer member-focused questions
+  if (!canExecute && memberClearance && !memberClearance.isAdmin) {
+    return [
+      `Who can run !${cleanCmd || 'this command'}?`,
+      `How does !${cleanCmd || 'this feature'} protect members?`,
+      `What commands can members use?`
+    ];
+  }
 
   // 1. Direct match in dictionary
   if (cleanCmd && KNOWN_COMMAND_SUGGESTIONS[cleanCmd]) {
@@ -498,7 +672,7 @@ export function findRelevantKnowledge(query = '', prefix = '!', allCommands = []
 /**
  * Generates an instructive, step-by-step guidance response speaking as Athena Prime
  */
-export async function generateAthenaGuideResponse(userQuestion, { guild, user, channelId, prefix = '!', onProgress = null } = {}) {
+export async function generateAthenaGuideResponse(userQuestion, { guild, user, member, channelId, prefix = '!', onProgress = null } = {}) {
   const startTime = Date.now();
   const cleanPrompt = (userQuestion || '').trim();
   const shortPrompt = cleanPrompt.length > 45 ? cleanPrompt.slice(0, 42) + '...' : cleanPrompt;
@@ -539,6 +713,13 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
   const knowledge = findRelevantKnowledge(searchQuery, prefix, allCommands);
   const codeSnippets = await searchCodebase(searchQuery, { maxSnippets: 5, snippetLines: 45 });
   const codeContext = formatCodebaseContext(codeSnippets);
+
+  // Permissions-aware clearance evaluation
+  const primaryCmd = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0].name : (activeSession?.primaryCommand || '');
+  const primaryCmdMeta = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0] : null;
+  const memberClearance = await resolveMemberClearance(guild, user, member);
+  const requiredClearance = getCommandClearanceRequirement(primaryCmd, primaryCmdMeta);
+  const canExecute = canMemberExecuteCommand(memberClearance, requiredClearance);
 
   // Check if requested capability exists in Athena Prime's command matrix
   const maxCmdScore = knowledge.matchedCommands.length > 0 ? knowledge.matchedCommands[0].score : 0;
@@ -627,6 +808,28 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
           ''
         ].join('\n')
       : '',
+    'CRITICAL PERMISSIONS-AWARE ADAPTIVE GUIDANCE:',
+    `• Executing Member: ${user?.tag || 'Member'} (<@${user?.id}>) \u2014 Clearance: ${memberClearance.label} (Level: ${memberClearance.level.toUpperCase()})`,
+    `• Permissions Detected: [${memberClearance.permissions.join(', ') || 'Standard Member'}]`,
+    `• Target Command Required Clearance: ${requiredClearance.label} (Level: ${requiredClearance.level.toUpperCase()})`,
+    `• Authorization Status: ${canExecute ? 'FULLY AUTHORIZED' : 'UNAUTHORIZED (Elevated Permissions Required)'}`,
+    '',
+    !canExecute
+      ? [
+          'MANDATORY ADAPTIVE RULES FOR NON-AUTHORIZED MEMBERS:',
+          '1. You MUST begin your response by politely stating:',
+          `   "Note: This command requires ${requiredClearance.label} clearance. As a community member, you cannot run this command directly, but here is how the server's protection and system work under the hood:"`,
+          '2. DO NOT tell the user to execute administrative commands or configure the bot.',
+          '3. Explain how the system operates server-wide, how it protects the community, and what server staff/admins configure.',
+          '4. Highlight any member-accessible aspects (if any) or how members experience the feature.',
+          ''
+        ].join('\n')
+      : [
+          'MANDATORY ADAPTIVE RULES FOR AUTHORIZED USERS (ADMINS / OWNERS / STAFF):',
+          '1. The user has full clearance to run and configure this command.',
+          '2. Highlight direct administrative execution syntax, subcommands, database persistence, and one-click actions.',
+          ''
+        ].join('\n'),
     'CRITICAL GROUND TRUTH & ANTI-HALLUCINATION RULES:',
     '- Ground every command, feature, parameter, option, and theme STRICTLY in the provided BOT SOURCE CODE and Ground Truth Knowledge Base.',
     '- ZERO TOLERANCE FOR FAKE COMMANDS: Never invent, guess, or fabricate fake commands (such as inventing `!rateedit` when the real command is `!rate <#channel>`, or inventing `!setup security` when the real command is `!security enable all`). If a user asks with an incorrect command name, typo, or alias, you MUST guide them directly to the real command name and syntax.',
@@ -730,13 +933,10 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
     clearTimeout(almostDoneTimer);
   }
 
-  const primaryCmd = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0].name : (activeSession?.primaryCommand || '');
-  const primaryCmdMeta = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0] : null;
-
   if (!aiResult.success) {
     // Dynamic codebase synthesizer in case all external AI edge endpoints are offline
-    const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets);
-    const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, fallbackText);
+    const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets, memberClearance, requiredClearance, canExecute);
+    const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, fallbackText, memberClearance, canExecute);
     const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
       matchedCommands: knowledge.matchedCommands,
       primaryCommand: primaryCmd,
@@ -751,6 +951,9 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
       latencyMs: Math.max(12, Date.now() - startTime),
       session: updatedSession,
       suggestions,
+      clearance: memberClearance,
+      requiredClearance,
+      canExecute,
       matchedTopics: knowledge.matchedTopics,
       sourceReferences: codeSnippets.map(s => ({
         file: s.file,
@@ -761,7 +964,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
     };
   }
 
-  const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, aiResult.text);
+  const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, aiResult.text, memberClearance, canExecute);
   const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
     matchedCommands: knowledge.matchedCommands,
     primaryCommand: primaryCmd,
@@ -776,6 +979,9 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
     latencyMs: Math.max(20, Date.now() - startTime),
     session: updatedSession,
     suggestions,
+    clearance: memberClearance,
+    requiredClearance,
+    canExecute,
     matchedTopics: knowledge.matchedTopics,
     sourceReferences: codeSnippets.map(s => ({
       file: s.file,
@@ -790,7 +996,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
  * Dynamic codebase synthesizer that analyzes real source code snippets on the fly
  * without ANY hardcoded presets or query-specific if-branches.
  */
-function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = []) {
+function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [], memberClearance = null, requiredClearance = null, canExecute = true) {
   const cleanPrompt = (prompt || '').trim();
 
   // 1. Dynamically scan code snippets for primary command definitions
@@ -913,13 +1119,23 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
     parts.push(`• **__Direct Overview:__** Source code deep-dive conducted for: *${cleanPrompt}*. Extracted live parameters and execution flow directly from the repository.`);
   }
 
+  if (!canExecute && memberClearance) {
+    parts.push(`\n-# **Notice:** This command requires **${requiredClearance?.label || 'Administrator'}** clearance.`);
+    parts.push(`-# As a **${memberClearance.label}**, you do not possess administrative permissions to execute this command directly, but here is an overview of how the system operates server-wide:\n`);
+  } else if (memberClearance?.isAdmin || memberClearance?.isServerOwner) {
+    parts.push(`\n-# **Clearance: Authorized (${memberClearance.label})** • Full administrative privileges granted for this command.\n`);
+  }
+
   // --- Step-by-Step Guidance ---
   parts.push(`\n• **__Step-by-Step Instructions:__**`);
 
   // Step 1: Clearance & Prerequisites
   const isElevated = primaryCmd && (primaryCmd.category === 'security' || (primaryCmd.description || '').toLowerCase().includes('owner') || (primaryCmd.description || '').toLowerCase().includes('admin'));
-  const clearanceText = isElevated ? 'Server Owner / Extra Owner / Administrator' : '@everyone (Standard User)';
-  parts.push(`  -# • **__Step 1: Clearance & Role Hierarchy:__** Requires clearance: \`${clearanceText}\`. Ensure Athena's bot role is positioned above target managed roles in Server Settings.`);
+  const clearanceText = requiredClearance?.label || (isElevated ? 'Server Owner / Administrator' : '@everyone (Standard User)');
+  const memberStatus = canExecute 
+    ? `Authorized: ${memberClearance?.label || 'Authorized'}` 
+    : `Requires elevated clearance (Your role: ${memberClearance?.label || 'Community Member'})`;
+  parts.push(`  -# • **__Step 1: Clearance & Role Hierarchy:__** Requires clearance: \`${clearanceText}\` • [${memberStatus}]. Ensure Athena's bot role is positioned above target managed roles in Server Settings.`);
 
   // Step 2: Running command & choices
   if (primaryCmd) {
@@ -1058,13 +1274,19 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
     ? `\n-# • **Conversation Thread:** ${formatSessionHeader(currentSession)}`
     : '';
 
+  const memberClearance = aiResult.clearance;
+  const clearanceBadge = memberClearance?.label ? ` (${memberClearance.label})` : '';
+  const permissionNotice = (aiResult.canExecute === false && aiResult.requiredClearance)
+    ? `\n-# • **Clearance Notice:** Requires \`${aiResult.requiredClearance.label}\` (Viewing as ${memberClearance?.label || 'Community Member'})`
+    : '';
+
   const comps = [
     {
       type: 10,
       content:
         `## Athena System Guide & Intelligence | ${TICK}\n` +
-        `-# **• Member:** <@${user.id}> \u00b7 **Model:** \`${aiResult.model}\` \u00b7 **Latency:** \`${aiResult.latencyMs}ms\`\n` +
-        `-# **• Question:** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}${threadLine}`
+        `-# **• Member:** <@${user.id}>${clearanceBadge} \u00b7 **Model:** \`${aiResult.model}\` \u00b7 **Latency:** \`${aiResult.latencyMs}ms\`\n` +
+        `-# **• Question:** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}${threadLine}${permissionNotice}`
     },
     { type: 14, divider: true }
   ];
