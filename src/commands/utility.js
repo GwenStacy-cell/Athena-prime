@@ -273,6 +273,8 @@ export const commands = [
                   usageText = `${prefix}unbypassable / /unbypassable`;
               } else if (targetCmd.name === "learn") {
                   usageText = `${prefix}learn [status|on|off|baseline|signatures|clear] / /learn`;
+              } else if (targetCmd.name === "voicerole") {
+                  usageText = `${prefix}voicerole [@role|ID|Name|disable] / /voicerole [role] [disable]`;
               } else if (targetCmd.name === "qr" || targetCmd.name === "fck" || targetCmd.name === "np") {
                   usageText = `@bot ${targetCmd.name}`;
               }
@@ -291,6 +293,16 @@ export const commands = [
                     `> • \`${prefix}learn signatures / list\` - Displays recorded threat signatures & velocity spikes.\n` +
                     `> • \`${prefix}learn clear\` - Resets captured signature registry for the server.\n` +
                     `> • \`${prefix}learn status\` - Displays the live telemetry dashboard.`;
+              } else if (targetCmd.name === "voicerole") {
+                  descContent = `Automatically assigns a designated role to members the instant they connect to ANY voice channel, and strips it when they disconnect.\n\n` +
+                    `> -# **Universal Scope:**\n` +
+                    `> • Enforces role assignment & revocation for **ALL** entities: Server Owner, Bot Owner, Extra Owners, standard members, and integration bots.\n` +
+                    `> • Real-time live synchronization: instantly grants role to everyone sitting in VCs when configured, and instantly cleans up when disabled or when members leave.\n\n` +
+                    `> -# **Subcommands & Syntax:**\n` +
+                    `> • \`${prefix}voicerole\` - Open the interactive Components V2 Control Panel.\n` +
+                    `> • \`${prefix}voicerole <@role / ID / Name>\` - Bind a specific voice role.\n` +
+                    `> • \`${prefix}voicerole disable\` - Disable system & strip role from all active members.\n` +
+                    `> • \`/voicerole [role] [disable]\` - Slash command equivalent.`;
               }
 
               const display1 = new TextDisplayBuilder().setContent(
@@ -382,6 +394,8 @@ export const commands = [
           usageText = `${prefix}unbypassable / /unbypassable`;
         } else if (targetCmd.name === "learn") {
           usageText = `${prefix}learn [status|on|off|baseline|signatures|clear] / /learn`;
+        } else if (targetCmd.name === "voicerole") {
+          usageText = `${prefix}voicerole [@role|ID|Name|disable] / /voicerole [role] [disable]`;
         }
         const aliasesText = Array.isArray(targetCmd.aliases) && targetCmd.aliases.length > 0
           ? targetCmd.aliases.map(a => `\`${prefix}${a}\``).join(', ')
@@ -397,6 +411,16 @@ export const commands = [
             `> • \`${prefix}learn signatures / list\` - Displays recorded threat signatures & velocity spikes.\n` +
             `> • \`${prefix}learn clear\` - Resets captured signature registry for the server.\n` +
             `> • \`${prefix}learn status\` - Displays the live telemetry dashboard.`;
+        } else if (targetCmd.name === "voicerole") {
+          descContent = `Automatically assigns a designated role to members the instant they connect to ANY voice channel, and strips it when they disconnect.\n\n` +
+            `> -# **Universal Scope:**\n` +
+            `> • Enforces role assignment & revocation for **ALL** entities: Server Owner, Bot Owner, Extra Owners, standard members, and integration bots.\n` +
+            `> • Real-time live synchronization: instantly grants role to everyone sitting in VCs when configured, and instantly cleans up when disabled or when members leave.\n\n` +
+            `> -# **Subcommands & Syntax:**\n` +
+            `> • \`${prefix}voicerole\` - Open the interactive Components V2 Control Panel.\n` +
+            `> • \`${prefix}voicerole <@role / ID / Name>\` - Bind a specific voice role.\n` +
+            `> • \`${prefix}voicerole disable\` - Disable system & strip role from all active members.\n` +
+            `> • \`/voicerole [role] [disable]\` - Slash command equivalent.`;
         }
 
         const display1 = new TextDisplayBuilder().setContent(
@@ -1401,7 +1425,7 @@ export const helpModules = [
     "`!db status / backup / export / restore / setchannel` - Discord Cloud Backup & Persistence Manifest Suite `[Bot Owner]`",
     "`!setsuggestions / !suggestchannel <#channel>` - Set designated channel for suggestions `[Extra Owner]`",
     "`!starboard <#channel> [stars]` - Set starboard channel and star threshold `[Extra Owner]`",
-    "`!voicerole <@role>` - Role assigned automatically when joining any voice channel `[Extra Owner]`",
+    "`!voicerole <@role|ID|Name|disable> / !vcrole` - Auto-assign role in VC for all members & bots `[Extra Owner]`",
     "`!setstatschannel <#channel>` - Set dedicated channel for stats commands `[Extra Owner]`",
     "`!setup` - Interactive Server Setup Wizard for logs, quarantine, and core features `[Extra Owner]`",
     "`!setstatus <#channel>` - Deploy 24/7 live bot status and resource telemetry panel `[Bot Owner]`",
@@ -1452,6 +1476,7 @@ export const helpModules = [
     "Step 4: If no saves remain, the count ruins back to 1 and the all-time high score is updated!"
   ] },
   { id: 'voice', category: 'VOICE & MEDIA', shortLabel: 'Voice', label: 'Voice Utilities', emoji: 'voice', commands: [
+    "`!voicerole <@role|ID|Name|disable> / !vcrole` - Auto-assign role in VC for all members & bots `[Extra Owner]`",
     "`!jtcsetup` - Configure Join-to-Create voice channels `[Extra Owner]`",
     "`!secondaryjtc` - Setup a secondary JTC hub `[Extra Owner]`",
     "`!jtcdisable` - Disable JTC system `[Extra Owner]`",
@@ -1475,7 +1500,7 @@ export const helpModules = [
     "`!suggest / !suggestion <idea>` - Submit a suggestion `[Public]`",
     "`!setsuggestions / !suggestchannel <#channel>` - Set designated channel for suggestions `[Extra Owner]`",
     "`!starboard <#channel> [stars]` - Configure the starboard channel `[Extra Owner]`",
-    "`!voicerole <@role>` - Role assigned automatically when joining any VC `[Extra Owner]`",
+    "`!voicerole <@role|ID|Name|disable> / !vcrole` - Auto-assign role in VC for all members & bots `[Extra Owner]`",
     "`!rate / !edit` - Rate recent server edits with custom stars `[Public]`",
     "`!ratelb / !editlb` - View the edit rating leaderboard `[Public]`",
     "`!counting / !count` - Interactive Counting Engine Dashboard & Controls `[Extra Owner]`",

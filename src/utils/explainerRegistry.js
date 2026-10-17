@@ -841,6 +841,40 @@ export const DETAILED_COMMANDS = {
     example: '!jtc setup'
   },
 
+  voicerole: {
+    name: 'voicerole',
+    aliases: ['vcrole', 'voice-role'],
+    category: 'Voice & Community Systems',
+    clearance: 'Manage Server / Manage Roles / Extra Owner / Server Owner',
+    syntax: '!voicerole [@role|ID|Name|disable] / /voicerole [role] [disable]',
+    purpose: 'Automatically assigns a designated role to members the instant they connect to ANY voice channel, and strips it when they disconnect.',
+    architecture: 
+`• **Universal Scope & Permissive Matrix:**
+  - Enforces automatic role grant and revocation for **ALL** entities: **Server Owner**, **Bot Owner**, **Extra Owners**, **Standard Members**, and **Integration Bots** (music bots, utility bots, etc.).
+  - Hierarchy Safety: Requires bot's highest role to be positioned strictly above the target voice role with Manage Roles permissions.
+  - Safe Exception Containment: Wrapped in non-blocking API catches to eliminate gateway disruption if Discord hierarchy restrictions apply.
+
+• **Gateway Event Wiretap (\`src/events/voiceStateUpdate.js\`):**
+  - Real-time sub-millisecond voice connection and disconnection interceptor.
+  - Grants role upon connecting (\`isInVc && !hasRole\`).
+  - Strips role upon leaving voice channels (\`!isInVc && hasRole\`).
+  - Channel hopping immunity: Switching between channels does not trigger redundant remove/add API cycles.
+
+• **Live State Synchronization (\`syncVoiceRoles\`):**
+  - **On Role Enable/Switch:** Immediately iterates over all active voice states across the server and grants the role to everyone currently in VC without requiring them to leave and rejoin.
+  - **On Role Switch:** Strips the previous role from active holders and binds the new role.
+  - **On Disable:** Instantly revokes the voice role from all current holders guild-wide.
+  - **Inactive Cleanup:** Automatically strips the voice role from members who hold it while not connected to any voice channel.
+
+• **Cold-Start Resilience (\`src/events/ready.js\`):**
+  - Runs automated startup voice role sync across all indexed servers upon bot boot or gateway resume.
+
+• **Interactive Control Matrix & Database Compliance:**
+  - Running \`!voicerole\` without arguments opens an interactive Components V2 panel with live status, Role Select Menu, and one-click Disable/Close controls.
+  - Stored strictly by role snowflake ID in SQLite database (\`guildConfig.voiceRoleId\`).`,
+    example: '!voicerole @Active Voice'
+  },
+
   auth: {
     name: 'auth',
     aliases: ['tiers', 'setauth'],
