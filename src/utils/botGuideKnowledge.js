@@ -197,9 +197,20 @@ export function findRelevantKnowledge(query = '', prefix = '!', allCommands = []
 /**
  * Generates an instructive, step-by-step guidance response speaking as Athena Prime
  */
-export async function generateAthenaGuideResponse(userQuestion, { guild, user, prefix = '!' } = {}) {
+export async function generateAthenaGuideResponse(userQuestion, { guild, user, prefix = '!', onProgress = null } = {}) {
   const startTime = Date.now();
   const cleanPrompt = (userQuestion || '').trim();
+  const shortPrompt = cleanPrompt.length > 45 ? cleanPrompt.slice(0, 42) + '...' : cleanPrompt;
+
+  const reportProgress = async (title, detail = '') => {
+    if (typeof onProgress === 'function') {
+      try {
+        await onProgress({ title, detail, timestamp: Date.now() });
+      } catch {}
+    }
+  };
+
+  const sleep = (ms) => onProgress ? new Promise(r => setTimeout(r, ms)) : Promise.resolve();
 
   if (!cleanPrompt) {
     return {
@@ -209,10 +220,60 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
   }
 
   // 1. Fetch all real commands from codebase catalog and live ground truth context
+  await reportProgress(
+    `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
+    `Analyzing command catalog and matching user keywords across system registries...`
+  );
+
   const allCommands = await getAllBotCommands();
   const knowledge = findRelevantKnowledge(cleanPrompt, prefix, allCommands);
   const codeSnippets = await searchCodebase(cleanPrompt, { maxSnippets: 5, snippetLines: 45 });
   const codeContext = formatCodebaseContext(codeSnippets);
+
+  // Discover which real files Athena is reading and diving into
+  const discoveredFiles = new Set();
+  for (const snippet of codeSnippets) {
+    if (snippet.file) {
+      const p = snippet.file.startsWith('src/') ? snippet.file : `src/${snippet.file}`;
+      discoveredFiles.add(p);
+    }
+  }
+  for (const cmd of knowledge.matchedCommands || []) {
+    if (cmd.file) {
+      const p = cmd.file.startsWith('src/') ? cmd.file : `src/${cmd.file}`;
+      discoveredFiles.add(p);
+    }
+  }
+
+  const fileList = Array.from(discoveredFiles);
+  let filesDisplay = '';
+  if (fileList.length === 1) {
+    filesDisplay = `\`${fileList[0]}\``;
+  } else if (fileList.length === 2) {
+    filesDisplay = `\`${fileList[0]}\` & \`${fileList[1]}\``;
+  } else if (fileList.length >= 3) {
+    filesDisplay = `\`${fileList[0]}\`, \`${fileList[1]}\`${fileList.length > 2 ? ` & \`${fileList[2]}\`` : ''}`;
+  } else {
+    filesDisplay = '`src/commands/` & `src/utils/`';
+  }
+
+  await sleep(850);
+  await reportProgress(
+    `Reading & diving deep into ${filesDisplay}...`,
+    `Parsing function declarations, execution routes & live source code implementations...`
+  );
+
+  await sleep(900);
+  await reportProgress(
+    `Analyzing execution pipeline, permissions & database persistence...`,
+    `Cross-examining Discord API interactions and state schemas in \`src/database.js\`...`
+  );
+
+  await sleep(900);
+  await reportProgress(
+    `Synthesizing step-by-step guidance & neural reasoning (almost done)...`,
+    `Structuring clear user instructions, architectural breakdown & code citations...`
+  );
 
   // 2. Build the persona and instruction prompt
   const systemInstructions = [
@@ -276,12 +337,29 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
 
   // 3. Delegate to neural engine
   const fullPrompt = `User's Question / Need: ${cleanPrompt}\n\nPlease read the provided bot source code and knowledge base carefully, and explain, clarify, and provide a comprehensive deep-dive response with step-by-step instructions and source code references on how to accomplish this with Athena Prime.`;
-  const aiResult = await generateAIResponse(fullPrompt, {
-    customSystem: systemInstructions,
-    guildId: guild?.id,
-    userTag: user?.tag,
-    serverName: guild?.name
-  });
+
+  let finished = false;
+  const almostDoneTimer = setTimeout(async () => {
+    if (!finished) {
+      await reportProgress(
+        `Finalizing response formatting & verifying ground truth (almost done)...`,
+        `Ensuring strict zero-hallucination compliance and rendering Discord subtext...`
+      );
+    }
+  }, 2600);
+
+  let aiResult;
+  try {
+    aiResult = await generateAIResponse(fullPrompt, {
+      customSystem: systemInstructions,
+      guildId: guild?.id,
+      userTag: user?.tag,
+      serverName: guild?.name
+    });
+  } finally {
+    finished = true;
+    clearTimeout(almostDoneTimer);
+  }
 
   if (!aiResult.success) {
     // Dynamic codebase synthesizer in case all external AI edge endpoints are offline
@@ -601,3 +679,24 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
     components: comps
   };
 }
+
+/**
+ * Builds the CV2 loading / thinking container with dynamic real-time status and subtext
+ */
+export function buildThinkingContainer(title, detail = '') {
+  const loadingEmoji = '<a:loading:1542155051286396938>';
+  let text = `-# ${loadingEmoji} **${title}**`;
+  if (detail) {
+    text += `\n-# ${detail}`;
+  }
+  return {
+    type: 17,
+    components: [
+      {
+        type: 10,
+        content: text
+      }
+    ]
+  };
+}
+

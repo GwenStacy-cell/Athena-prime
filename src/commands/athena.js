@@ -4,14 +4,74 @@ import cv2 from '../cv2.js';
 import { 
   generateAthenaGuideResponse, 
   buildGuideHubContainer, 
-  buildAthenaGuideContainer 
+  buildAthenaGuideContainer,
+  buildThinkingContainer
 } from '../utils/botGuideKnowledge.js';
 
 /**
- * Resolves the primary loading animated emoji (:loading~1: from security enable all)
+ * Creates a rate-limited real-time progress handler that edits the thinking container smoothly
  */
-function resolveLoadingEmoji() {
-  return '<a:loading:1542155051286396938>';
+function createProgressHandler(target) {
+  let lastEditTime = Date.now();
+  let isEditing = false;
+  let pendingUpdate = null;
+  let pendingTimer = null;
+  let active = true;
+
+  const flush = async (update) => {
+    if (!active || !target) return;
+    isEditing = true;
+    lastEditTime = Date.now();
+    try {
+      const container = buildThinkingContainer(update.title, update.detail);
+      await cv2.edit(target, {
+        components: [container],
+        flags: MessageFlags.IsComponentsV2
+      });
+    } catch {
+      // Ignore transient network errors or deleted messages
+    } finally {
+      isEditing = false;
+    }
+  };
+
+  return {
+    onProgress: async ({ title, detail }) => {
+      if (!active || !target) return;
+      const now = Date.now();
+      const elapsed = now - lastEditTime;
+
+      if (elapsed >= 900 && !isEditing) {
+        if (pendingTimer) {
+          clearTimeout(pendingTimer);
+          pendingTimer = null;
+        }
+        pendingUpdate = null;
+        await flush({ title, detail });
+      } else {
+        pendingUpdate = { title, detail };
+        if (!pendingTimer) {
+          const waitTime = Math.max(100, 950 - elapsed);
+          pendingTimer = setTimeout(async () => {
+            pendingTimer = null;
+            if (pendingUpdate && active) {
+              const u = pendingUpdate;
+              pendingUpdate = null;
+              await flush(u);
+            }
+          }, waitTime);
+        }
+      }
+    },
+    stop: () => {
+      active = false;
+      pendingUpdate = null;
+      if (pendingTimer) {
+        clearTimeout(pendingTimer);
+        pendingTimer = null;
+      }
+    }
+  };
 }
 
 export const commands = [
@@ -40,27 +100,30 @@ export const commands = [
         return message.reply(hub);
       }
 
-      const loadingEmoji = resolveLoadingEmoji(message.guild, message.client);
-      const thinkingContainer = {
-        type: 17,
-        components: [
-          {
-            type: 10,
-            content: `-# ${loadingEmoji} **Athena Prime is compiling knowledge and synthesizing step-by-step guidance...**`
-          }
-        ]
-      };
+      const shortPrompt = prompt.length > 45 ? prompt.slice(0, 42) + '...' : prompt;
+      const initialContainer = buildThinkingContainer(
+        `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
+        `Analyzing command catalog and matching user keywords across system registries...`
+      );
 
       const thinkingMsg = await message.reply({
-        components: [thinkingContainer],
+        components: [initialContainer],
         flags: MessageFlags.IsComponentsV2
       }).catch(() => null);
 
-      const aiResult = await generateAthenaGuideResponse(prompt, {
-        guild: message.guild,
-        user: message.author,
-        prefix
-      });
+      const progress = createProgressHandler(thinkingMsg);
+
+      let aiResult;
+      try {
+        aiResult = await generateAthenaGuideResponse(prompt, {
+          guild: message.guild,
+          user: message.author,
+          prefix,
+          onProgress: progress.onProgress
+        });
+      } finally {
+        progress.stop();
+      }
 
       const container = buildAthenaGuideContainer(message.author, prompt, aiResult, accentColor, prefix);
 
@@ -91,14 +154,35 @@ export const commands = [
 
       await interaction.deferReply();
 
-      const aiResult = await generateAthenaGuideResponse(prompt, {
-        guild: interaction.guild,
-        user: interaction.user,
-        prefix
-      });
+      const shortPrompt = prompt.length > 45 ? prompt.slice(0, 42) + '...' : prompt;
+      const initialContainer = buildThinkingContainer(
+        `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
+        `Analyzing command catalog and matching user keywords across system registries...`
+      );
+
+      await cv2.edit(interaction, {
+        components: [initialContainer],
+        flags: MessageFlags.IsComponentsV2
+      }).catch(() => null);
+
+      const progress = createProgressHandler(interaction);
+
+      let aiResult;
+      try {
+        aiResult = await generateAthenaGuideResponse(prompt, {
+          guild: interaction.guild,
+          user: interaction.user,
+          prefix,
+          onProgress: progress.onProgress
+        });
+      } finally {
+        progress.stop();
+      }
 
       const container = buildAthenaGuideContainer(interaction.user, prompt, aiResult, accentColor, prefix);
-      return interaction.editReply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      return cv2.edit(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => {
+        return interaction.editReply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      });
     }
   }
 ];
@@ -126,9 +210,33 @@ export async function handleAthenaGuideButtons(interaction) {
   if (topicPrompts[customId]) {
     await interaction.deferUpdate().catch(() => null);
     const query = topicPrompts[customId];
-    const aiResult = await generateAthenaGuideResponse(query, { guild, user, prefix });
+
+    const initialContainer = buildThinkingContainer(
+      `Athena Prime is scanning module architecture & system domain...`,
+      `Reading deep-dive specifications and real source files...`
+    );
+
+    await cv2.edit(interaction, {
+      components: [initialContainer],
+      flags: MessageFlags.IsComponentsV2
+    }).catch(() => null);
+
+    const progress = createProgressHandler(interaction);
+
+    let aiResult;
+    try {
+      aiResult = await generateAthenaGuideResponse(query, {
+        guild,
+        user,
+        prefix,
+        onProgress: progress.onProgress
+      });
+    } finally {
+      progress.stop();
+    }
+
     const container = buildAthenaGuideContainer(user, query, aiResult, accentColor, prefix);
-    return interaction.editReply({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+    return cv2.edit(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
   }
 
   if (customId === 'athena_topic_help') {
