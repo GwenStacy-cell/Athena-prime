@@ -237,7 +237,8 @@ export const commands = [
                 m.id === cmdName || 
                 m.shortLabel.toLowerCase() === cmdName || 
                 (cmdName === 'count' && m.id === 'counting') ||
-                ((cmdName === 'antinuke' || cmdName === 'an') && m.id === 'security')
+                ((cmdName === 'antinuke' || cmdName === 'an') && m.id === 'security') ||
+                ((cmdName === 'athena' || cmdName === 'guide' || cmdName === 'neural' || cmdName === 'ai') && m.id === 'ai')
               );
               if (matchingModule) {
                 const container = buildHelpContainer(message.client, message.guild.id, matchingModule.id);
@@ -1392,6 +1393,27 @@ export const helpModules = [
     "- **Forensic Audit Logs:** Real-time Gateway API audit log inspection with moderator/target filtering."
   ] },
 
+  { id: 'ai', category: 'AI & SYSTEM INTELLIGENCE', shortLabel: 'AI Guide', label: 'AI & System Intelligence', emoji: 'ai', commands: [
+    "`!athena <question> / /athena <query>` - Interactive AI Specialist explaining all 257+ commands & step-by-step setups `[Public]`",
+    "`!athena` (no args) - Interactive Quick-Action Guidance Hub with one-click domain explainers `[Public]`",
+    "`!ask <prompt> / /ask <prompt>` - Direct conversational AI query engine for general questions and server queries `[Public]`",
+    "`!aimode channel [#channel]` - Lock conversational AI auto-replies to a specific channel `[Admin]`",
+    "`!aimode on|off|status` - Toggle and check server-wide conversational AI channel mode `[Admin]`",
+    "`!explain / !architecture [topic/cmd]` - Interactive multi-page architectural breakdowns & exploit analyses `[Public]`",
+    "`!explain athena / !explain guide` - Deep-dive architecture of Athena's AI Guide, RAG & button generator `[Public]`",
+    "",
+    "**Athena AI Specialist Capabilities & Architecture:**",
+    "• **257+ Command Deep-Dive & Knowledge Base**: Full awareness of all command parameters, syntax variations, permission tiers, and edge cases across every bot module.",
+    "• **Fuzzy Typo Auto-Correction**: Powered by Damerau-Levenshtein distance. Typo variations (e.g. `!athena how to use rnkthme`, `tcikets`, `atninuke`) are automatically recognized and resolved.",
+    "• **Prefix-First Step-by-Step Walkthroughs**: Guides users step-by-step with clean markdown codeblocks (`!command ...`) while clarifying if slash commands or dashboard alternatives exist.",
+    "• **Context-Aware Multi-Turn Thread Memory**: Retains conversation history for 10 minutes in each channel, allowing natural follow-up questions without re-typing context.",
+    "• **Clearance-Aware Adaptive Guidance**: Dynamically checks user permissions (Owner, Extra Owner, Admin, Mod, Public) and tailors instructions to their exact clearance.",
+    "• **One-Click Interactive Action Buttons**: Provides neutral grey action buttons (`style: 2`) to instantly launch setups, view statuses, or switch themes with 1 click.",
+    "• **On-Demand Custom Button Generator**: Need a specific button? Ask Athena in your question or follow-up and custom grey action buttons are generated on demand.",
+    "• **Live Thinking Telemetry**: Real-time progress timer showing elapsed seconds during Google Gemini 2.5 Flash neural processing.",
+    "-# **Neural Intelligence Architecture:** Powered by Google Gemini 2.5 Flash with multi-tier failover to Gemini 2.0 Flash and high-speed edge reasoning."
+  ] },
+
   { id: 'tickets', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tickets', label: 'Ticket System', emoji: 'tickets', commands: [
     "`!ticket setup <#category> <@staffRole> [ai_on]` - Configure category, staff roles & optional AI triage `[Administrator]`",
     "`!ticket ai on|off` - Toggle Smart Ban Appeals & AI Ticket Triage `[Administrator]`",
@@ -1646,6 +1668,7 @@ export function buildHelpContainer(client, guildId, moduleId) {
         'counting': '<a:atheNATICK:1557841381630681106>',
         'utilities': '<:pencil:1523770653528817835>',
         'black_dot': '<a:black_dot:1544740123403620422>',
+        'ai': '<a:uptime:1552608831060844575>',
         'home': '<:on:1533844867191406672>'
       };
       return customEmojiFallback[name] || fallback;
@@ -1665,6 +1688,7 @@ export function buildHelpContainer(client, guildId, moduleId) {
       const categories = [
         { name: 'SECURITY & ACCESS CONTROL', icon: '', catName: 'SECURITY & ACCESS CONTROL' },
         { name: 'SERVER ADMINISTRATION', icon: '', catName: 'SERVER ADMINISTRATION' },
+        { name: 'AI & SYSTEM INTELLIGENCE', icon: '', catName: 'AI & SYSTEM INTELLIGENCE' },
         { name: 'COMMUNITY & ENGAGEMENT', icon: '', catName: 'COMMUNITY & ENGAGEMENT' },
         { name: 'VOICE & MEDIA', icon: '', catName: 'VOICE & MEDIA' },
         { name: 'UTILITIES & INTEGRATIONS', icon: '', catName: 'UTILITIES & INTEGRATIONS' }
@@ -1769,7 +1793,7 @@ export function buildHelpContainer(client, guildId, moduleId) {
     const btnPrev = new ButtonBuilder().setCustomId(`help_prev_${moduleId}`).setEmoji('1523766004839088301').setStyle(ButtonStyle.Secondary);
     const btnNext = new ButtonBuilder().setCustomId(`help_next_${moduleId}`).setEmoji('1523766065576935475').setStyle(ButtonStyle.Secondary);
     const btnRefresh = new ButtonBuilder().setCustomId('help_home').setEmoji('1523765738655973589').setStyle(ButtonStyle.Secondary);
-    const btnDelete = new ButtonBuilder().setCustomId('help_delete').setEmoji('1523766340752642109').setStyle(ButtonStyle.Danger);
+    const btnDelete = new ButtonBuilder().setCustomId('help_delete').setEmoji('1523766340752642109').setStyle(ButtonStyle.Secondary);
     const btnExplain = new ButtonBuilder()
       .setCustomId(moduleId === 'home' ? 'arch_home' : `arch_topic_${moduleId}`)
       .setLabel('Explain Architecture')

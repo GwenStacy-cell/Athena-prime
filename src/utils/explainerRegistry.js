@@ -570,6 +570,65 @@ A Honeypot is a designated text channel configured with permissions hidden or si
 • **Forensic Audit Log Engine:** Direct Gateway API interrogation of \`GuildAuditLogs\` with member/executor filtering, action classifier mapping, and relative timestamp analysis.`
       }
     ]
+  },
+
+  athena: {
+    id: 'athena',
+    label: 'Athena AI Specialist & System Guide',
+    aliases: ['guide', 'botguide', 'aiguide', 'neuralguide', 'ai_guide', 'athena_guide', 'ai'],
+    title: 'Athena AI Specialist & System Guide Architecture | <a:atheNATICK:1557841381630681106>',
+    description: 'Dynamic codebase RAG, Damerau-Levenshtein typo correction, rolling thread memory, and 1-click action buttons.',
+    pages: [
+      {
+        pageTitle: 'Dynamic Knowledge RAG & Typo Auto-Correction',
+        content:
+`# 1. Dynamic Command Catalog Indexing (\`src/utils/botGuideKnowledge.js\`)
+• **Autonomous Codebase RAG:** Dynamically introspects and indexes all 257+ commands, slash schemas, parameter syntax, permission bitmasks, and subcommands directly from \`src/commands/loader.js\`.
+• **Subsystem Deep Dockets:** Generates domain dossiers for complex subsystems (Security & Antinuke, AutoMod & Filters, Quarantine Isolation, Ticket Management, Voice Grid, Economy, Leveling).
+• **Fuzzy Typo Auto-Correction (Damerau-Levenshtein Algorithm):**
+  • Automatically intercepts misspelled command names (e.g. \`!athena how to use rnkthme\`, \`tcikets\`, \`atninuke\`, \`qrmanager\`, \`vcdrg\`).
+  • Calculates transposition and edit distance against the command index; immediately matches and injects the canonical command definition and exact syntax into the retrieval-augmented generation (RAG) context.
+
+# 2. Clearance-Aware Adaptive Guidance
+• **Role Tier Cross-Examination:** Resolves caller's authorization tier (Server Owner, Extra Owner, Admin Tier, Mod Tier, Public Member).
+• **Adaptive Synthesized Instructions:** Automatically alerts members if elevated clearance (like Administrator or Extra Owner) is mandatory before attempting execution, preventing unauthorized privilege escalation confusion.
+• **Prefix-First Formatting:** Formats guidance with clean Discord markdown code blocks (\`!command <arg>\`) prioritizing the server's configured prefix while detailing slash command alternatives (\`/command\`).`
+      },
+      {
+        pageTitle: 'Conversational Memory, Thread Expiry & Streaming Telemetry',
+        content:
+`# 1. Multi-Turn Conversational Thread Memory
+• **Session State Preservation (\`athenaSessions\` Map):** Scopes multi-turn conversational context to \`channelId_userId\`. Users can ask natural follow-up questions (e.g., "how do I add a bypass for that?", "give me a button for that") without repeating the original command context.
+• **Rolling 10-Minute Expiry (Sliding TTL):** Every turn updates \`expiresAt = Date.now() + 10 * 60 * 1000\`.
+• **Garbage Collection Sweep:** Automatically evicts expired sessions from memory to guarantee zero heap degradation.
+
+# 2. Live Thinking Telemetry & Multi-Tier AI Cascade (\`src/utils/ai.js\`)
+• **Live Progress Counter:** Emits a live-updating thinking banner with elapsed execution time (\`Thinking... (1.2s)\`) keeping users informed during external AI API processing.
+• **Google Gemini 2.5 Flash Flagship Pipeline:** Primary engine utilizing Google Generative Language REST \`system_instruction\` schema with relaxed cybersecurity moderation for technical bot administration.
+• **Cascade Fallback Matrix:**
+  • Tier 1: \`gemini-2.5-flash\`
+  • Tier 2: \`gemini-2.0-flash\` & \`gemini-1.5-pro\`
+  • Tier 3: Zero-key high-speed edge reasoning (\`openai-fast\`) responding in <3s.`
+      },
+      {
+        pageTitle: 'One-Click Action Buttons & On-Demand Interactive Components',
+        content:
+`# 1. Interactive Action Buttons (\`style: 2\`)
+• **Strict Palette Compliance:** Every generated button strictly enforces Discord Secondary style (\`style: 2\`, grey), with literally no color.
+• **Domain Action Synthesis:** Automatically generates executable grey action buttons for queried commands:
+  • \`ranktheme\`: 1-Click buttons to preview and switch between Anime, Cyberpunk, and Hogwarts themes.
+  • \`ticket\`: 1-Click launch of the interactive Ticket Panel Manager.
+  • \`security\` / \`antinuke\`: 1-Click security overview dashboard.
+  • \`automod\`: 1-Click interactive AutoMod configuration toggle.
+  • \`quarantine\`: 1-Click quarantine deployment wizard.
+• **Proactive Invitation Protocol:** Informs users that interactive action buttons are attached and explicitly invites them to request custom buttons for any sub-feature.
+
+# 2. On-Demand Custom Button Generator (\`detectRequestedButton\`)
+• **Natural Language Intent Parsing:** Scans user prompts and follow-up replies for button requests (e.g., "give me a button for anime theme", "make a button to configure antinuke", "add a button to check security").
+• **Dynamic Component Synthesis:** On-the-fly component generator creates and binds the exact requested action buttons directly to the response container.
+• **Component Execution Pipeline (\`handleAthenaGuideButtons\` in \`src/commands/athena.js\`):** Directly validates caller permissions before executing database mutations, launching modals, or toggling subsystems.`
+      }
+    ]
   }
 };
 
@@ -631,14 +690,17 @@ export const DETAILED_COMMANDS = {
   athena: {
     name: 'athena',
     aliases: ['guide', 'howto', 'askathena', 'assistant', 'athenahelp'],
-    category: 'Utilities & Integrations',
+    category: 'AI & System Intelligence',
     clearance: 'Public / Everyone',
     syntax: '!athena [question] / /athena [query]',
-    purpose: 'Interactive Athena AI Specialist to explain bot commands, clarify doubts, and provide step-by-step setup guidance.',
+    purpose: 'Interactive Athena AI Specialist to explain all 257+ commands, resolve doubts, and provide 1-click grey action buttons.',
     architecture:
-`• **Live Knowledge Grounding:** Dynamically indexes 245+ commands, security architectures, and newly implemented features.
-• **Step-by-Step Guidance:** Synthesizes actionable walkthroughs, exact syntax, required permissions, and best practices tailored to user needs.
-• **Interactive Guidance Hub:** Spawns a Components V2 quick-action dashboard with one-click domain explainers when invoked without arguments.`,
+`• **Live Codebase RAG:** Dynamically indexes 257+ commands, permission bitmasks, syntax schemas, and domain dossiers.
+• **Fuzzy Typo Auto-Correction:** Employs Damerau-Levenshtein distance to automatically identify and correct misspelled commands (e.g. \`rnkthme\`, \`tcikets\`).
+• **Context-Aware Thread Memory:** Preserves multi-turn conversational context for 10 minutes with rolling sliding expiry.
+• **Clearance-Aware Guidance:** Adapts instructions to caller's authorization tier (Server Owner, Admin, Mod, Public).
+• **One-Click Grey Action Buttons:** Generates neutral grey interactive buttons (\`style: 2\`) and synthesizes custom buttons on demand.
+• **Flagship Gemini 2.5 Flash Pipeline:** High-reasoning AI backend with live elapsed progress telemetry and edge failover.`,
     example: '!athena how do I setup tickets with AI triage?'
   },
 
@@ -1900,6 +1962,11 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
       value: 'learn'
     },
     {
+      label: 'AI & System Intelligence',
+      description: 'Damerau-Levenshtein typo correction, dynamic RAG & action buttons',
+      value: 'athena'
+    },
+    {
       label: 'Security & Role Exploits',
       description: 'Linked Roles, 60s audit threshold & zero-day wiretap',
       value: 'security'
@@ -1989,7 +2056,11 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
 
 ### 7. Cloud Snapshot & State Restoration Architecture
 > **Under-the-Hood:** Serializes full guild state (roles, permissions, channels, settings) into AES-encrypted JSON snapshots stored off-site for 1-click disaster recovery.
-• **Commands:** \`backup\`, \`restore\`, \`setup\``
+• **Commands:** \`backup\`, \`restore\`, \`setup\`
+
+### 8. Athena AI Specialist & Neural Guide Architecture
+> **Under-the-Hood:** Multi-tier RAG indexing 257+ commands with Damerau-Levenshtein typo auto-correction, 10m rolling thread memory, and dynamic grey action button synthesis.
+• **Commands:** \`athena\`, \`ask\`, \`aimode\`, \`explain\``
     },
     { type: 14, divider: true },
     {
@@ -2008,7 +2079,7 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
       type: 1,
       components: [
         { type: 2, custom_id: 'arch_topic_security', label: 'Security & Exploits', style: 2 },
-        { type: 2, custom_id: 'arch_topic_voice', label: 'Voice Grid Control', style: 2 },
+        { type: 2, custom_id: 'arch_topic_athena', label: 'AI Architecture', style: 2 },
         { type: 2, custom_id: 'arch_topic_unbypassable', label: 'Sentinel Roles', style: 2 },
         { type: 2, custom_id: 'arch_topic_moderation', label: 'Mass Moderation', style: 2 },
         { type: 2, custom_id: 'arch_close', label: 'Close', style: 2, emoji: { id: '1523766340752642109' } }
