@@ -1,5 +1,12 @@
 import { AuditLogEvent } from 'discord.js';
-import { cacheDeletedItem, directStrike } from '../utils/antinuke.js';
+import { 
+  cacheDeletedItem, 
+  directStrike, 
+  isRestorationHandled, 
+  markRestorationQueued, 
+  executeIntelligentRoleRepair,
+  getRecentAuditEntry 
+} from '../utils/antinuke.js';
 import db from '../database.js';
 import embed from '../embed.js';
 import { logServerEvent } from '../utils/serverLogger.js';
@@ -24,42 +31,42 @@ export default {
 
     if (role.managed) return;
 
-    // ⚡ Cache immediately for restoration
+    // ⚡ STEP 1: Synchronous Deduplication Lock
+    if (isRestorationHandled(role.id)) return;
+    markRestorationQueued(role.id);
+
+    // ⚡ STEP 2: Cache role metadata immediately
     cacheDeletedItem(role.id, role);
 
-    // ⚡ DIRECT STRIKE — no audit log dispatch wait
+    // ⚡ STEP 3: Sub-1ms Direct Strike & Intelligent Hierarchy Repair
     directStrike(
       role.guild,
       AuditLogEvent.RoleDelete,
       'Role Deletion',
       role.id,
-      async () => {
-        try {
-          await role.guild.roles.create({
-            name: role.name,
-            colors: { primaryColor: role.color },
-            hoist: role.hoist,
-            position: role.rawPosition ?? role.position,
-            unicodeEmoji: role.unicodeEmoji || undefined,
-            permissions: role.permissions.bitfield,
-            mentionable: role.mentionable,
-            reason: 'Athena Anti-Nuke: Restored deleted role'
-          });
-        } catch {}
-      }
+      () => executeIntelligentRoleRepair(role.guild, role.id, role)
     ).catch(() => null);
 
-    // Server logging
-    const logs = await role.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.RoleDelete }).catch(() => null);
-    const entry = logs?.entries?.first();
-    let executor = 'Unknown';
-    if (entry && entry.target?.id === role.id) {
-      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
-    }
-    const delEmbed = embed.build({
-      description: `__**Role Deleted |**__ <a:uptime:1552608831060844575>\n> **Role Name:** ${role.name}\n>  **Executor:** ${executor}`,
-      color: '#2b2d31'
-    });
-    await logServerEvent(role.guild, 'roles', delEmbed);
+    // Non-blocking server logging
+    (async () => {
+      try {
+        const ring = getRecentAuditEntry(role.guild.id, AuditLogEvent.RoleDelete, role.id);
+        let executor = ring?.executor ? `${ring.executor.tag} (<@${ring.executor.id}>)` : 'Unknown';
+
+        if (executor === 'Unknown') {
+          const logs = await role.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.RoleDelete }).catch(() => null);
+          const entry = logs?.entries?.first();
+          if (entry && entry.target?.id === role.id && entry.executor) {
+            executor = `${entry.executor.tag} (<@${entry.executor.id}>)`;
+          }
+        }
+
+        const delEmbed = embed.build({
+          description: `__**Role Deleted |**__ <a:uptime:1552608831060844575>\n> **Role Name:** ${role.name}\n>  **Executor:** ${executor}`,
+          color: '#2b2d31'
+        });
+        await logServerEvent(role.guild, 'roles', delEmbed);
+      } catch {}
+    })().catch(() => null);
   }
 };

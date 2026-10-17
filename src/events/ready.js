@@ -19,6 +19,7 @@ import { initWebSub } from '../utils/websub.js';
 
 import { startYtStatsEngine } from '../utils/ytStatsEngine.js';
 import { checkAndAutoRestore, startCloudBackupScheduler } from '../utils/cloudSync.js';
+import { snapshotGuildInfrastructure } from '../utils/antinuke.js';
 
 export default {
   name: 'clientReady',
@@ -166,6 +167,9 @@ export default {
 
     // Auto-join Home VCs and ensure Unbypassable Role across all watching guilds
     client.guilds.cache.forEach(guild => {
+      // Take ground-truth infrastructure snapshot for zero-delay intelligent restoration
+      snapshotGuildInfrastructure(guild);
+
       // Unbypassable Role
       const cfg = db.getGuildConfig(guild.id);
       if (cfg && (cfg.securityEnabled || cfg.antiNukeEnabled)) {

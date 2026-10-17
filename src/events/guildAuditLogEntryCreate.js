@@ -1,11 +1,14 @@
-import { handleAuditLogEntry } from '../utils/antinuke.js';
+import { handleAuditLogEntry, recordAuditEntry } from '../utils/antinuke.js';
 
 export default {
   name: 'guildAuditLogEntryCreate',
   async execute(auditLogEntry, guild) {
     if (!guild) return;
     
-    // Pass the raw entry directly to the new antinuke handler
+    // ⚡ Ingest into 0ms WebSocket ring buffer
+    recordAuditEntry(guild.id, auditLogEntry);
+
+    // Pass the raw entry directly to the antinuke handler
     await handleAuditLogEntry(guild, auditLogEntry);
   }
 };

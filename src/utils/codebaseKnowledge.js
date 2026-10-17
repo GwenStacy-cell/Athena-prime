@@ -264,14 +264,23 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
 
     let fileMultiplier = 1.0;
     if (isCommand) fileMultiplier = 2.0;
-    else if (isUtil) fileMultiplier = 1.5;
-    else if (isDatabase) fileMultiplier = 1.3;
+    else if (isUtil) fileMultiplier = (relPath.includes('antinuke') || relPath.includes('antiStrip')) ? 2.5 : 1.6;
+    else if (isDatabase) fileMultiplier = 1.4;
 
-    // Check if filename matches a keyword (e.g. learn.js matches learn)
+    // Check if filename matches a keyword (e.g. learn.js matches learn, antinuke.js matches nuke)
     const baseName = path.basename(relPath, '.js').toLowerCase();
-    const fileNameMatch = keywords.some(k => baseName === k || (k.length > 3 && baseName.includes(k)));
+    const fileNameMatch = keywords.some(k => baseName === k || (k.length > 3 && baseName.includes(k)) || (baseName.length > 3 && k.includes(baseName)));
     if (fileNameMatch) {
       fileMultiplier *= 2.2;
+    }
+
+    // De-prioritize internal/hidden or owner-only commands (e.g., enuke.js) unless explicitly queried by name
+    const isHiddenOrOwner = fileData.content.includes('slashHidden: true') || fileData.content.includes('hidden: true') || fileData.content.includes("category: 'owner'") || fileData.content.includes('category: "owner"');
+    if (isHiddenOrOwner) {
+      const explicitMention = rawTokens.includes(baseName) || keywords.includes(baseName);
+      if (!explicitMention) {
+        fileMultiplier *= 0.05;
+      }
     }
 
     const lowerContent = fileData.content.toLowerCase();
@@ -286,7 +295,7 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
           matches.push({
             file: relPath,
             lineNum,
-            score: (120 + phrase.length * 3) * fileMultiplier,
+            score: (130 + phrase.length * 3) * fileMultiplier,
             reason: `Exact phrase "${phrase}"`
           });
           if (matches.length > 60) break;
@@ -294,7 +303,7 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
       }
     }
 
-    // 2. Line by line keyword, definition, and choice matches
+    // 2. Line by line keyword, definition, function export, and choice matches
     for (let i = 0; i < fileData.lines.length; i++) {
       const line = fileData.lines[i].toLowerCase();
       let lineScore = 0;
@@ -303,6 +312,10 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
         // High priority: Command definition name match (e.g. name: 'learn' or name: 'ranktheme')
         if (line.includes(`name: '${kw}'`) || line.includes(`name: "${kw}"`)) {
           lineScore += 260;
+        }
+        // Exported utility engine function match (e.g. export async function rawBan, executeIntelligentChannelRepair)
+        if ((line.includes('export async function') || line.includes('export function')) && line.includes(kw)) {
+          lineScore += 250;
         }
         // Aliases match
         if (line.includes(`'${kw}'`) && line.includes('aliases:')) {
