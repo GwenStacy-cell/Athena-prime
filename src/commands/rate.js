@@ -45,7 +45,7 @@ export const commands = [
     name: 'rate',
     slashHidden: true,
     description: 'Post an edit to be rated, or set the designated rating channel (Admin only).',
-    aliases: ['edit'],
+    aliases: ['edit', 'rateedit', 'editrate', 'rate-edit'],
     executePrefix: async (message, args) => {
       // Admin Setup Check
       if (args.length > 0) {
@@ -58,7 +58,7 @@ export const commands = [
           }
           const channelId = channelMatch ? channelMatch[1] : args[0];
           db.setRateChannel(message.guild.id, channelId);
-          return message.reply(cv2.success('Channel Configured', `The designated edit rating channel is now <#${channelId}>.`));
+          return message.reply(cv2.success('Channel Configured | <a:atheNATICK:1557841381630681106>', `The designated edit rating channel is now <#${channelId}>.`));
         }
       }
 
@@ -76,7 +76,10 @@ export const commands = [
       }
 
       if (!mediaUrl) {
-        return message.reply('Please attach an image/video or provide a link to your edit!').then(m => setTimeout(() => m.delete().catch(() => null), 5000));
+        const adminHint = message.member.permissions.has(PermissionFlagsBits.Administrator)
+          ? `\n-# **Admin Channel Binding:** Run \`!rate <#channel>\` (or \`!rateedit <#channel>\`) to bind the edit rating channel.`
+          : '';
+        return message.reply(`Please attach an image/video or provide a link to your edit!${adminHint}`).then(m => setTimeout(() => m.delete().catch(() => null), 7000));
       }
 
       await createRateMessage(message, mediaUrl);

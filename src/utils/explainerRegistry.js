@@ -1312,6 +1312,22 @@ export const DETAILED_COMMANDS = {
     example: '!ticketpanel'
   },
 
+  rate: {
+    name: 'rate',
+    aliases: ['edit', 'rateedit', 'editrate', 'rate-edit'],
+    category: 'Community & Engagement',
+    clearance: 'Administrator (Channel Binding) / Public (Rating Edits)',
+    syntax: '!rate <#channel | channel_id> (Bind Channel) | !rate <attachment | url> (Submit Edit)',
+    purpose: 'Community Edit Rating System with interactive 1-5 star voting cards, author stats, and designated channel binding.',
+    architecture: 
+`• **Channel Binding (!rate <#channel>):** Server Administrators bind the designated edit rating channel by running \`!rate <#channel>\` (or \`!rate <channelId>\` / \`!rateedit <#channel>\`). Athena saves the channel ID to SQLite via \`db.setRateChannel(guildId, channelId)\`.
+• **Enforced Channel Isolation:** Once configured, submitting edits and rating cards is restricted exclusively to the bound channel, keeping server chat clean.
+• **Interactive Rating Panel:** When a member shares their edit with an attachment or URL, Athena replies with the Components V2 "RATE USER'S EDIT" container featuring dynamic 1-5 star buttons (\`rate_edit_1\` through \`rate_edit_5\`) and a Remove button (\`rate_edit_delete\`).
+• **Live Vote Aggregation:** Stores votes dynamically in SQLite (\`db.createEditRating\`), updating the average rating (/5), total vote counter, and latest voter list in real time.
+• **Rating Leaderboard:** The top-rated server edits and creators are ranked and displayed via \`!ratelb\` / \`!editlb\`.`,
+    example: '!rate #edits'
+  },
+
   welcome: {
     name: 'welcome',
     aliases: ['welcomer', 'greet'],

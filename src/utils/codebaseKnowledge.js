@@ -220,6 +220,20 @@ export function extractSearchTokens(query = '') {
   const rawTokens = clean.split(/\s+/).filter(Boolean);
   const keywords = rawTokens.filter(t => t.length > 2 && !COMMON_STOPWORDS.has(t));
 
+  // Decompose compound tokens (e.g., "rateedit" -> "rate", "edit"; "ticketpanel" -> "ticket", "panel")
+  const compoundSubwords = ['rate', 'edit', 'ticket', 'panel', 'theme', 'rank', 'voice', 'channel', 'role', 'nuke', 'anti', 'lock', 'limit', 'slow', 'mode', 'stats', 'reward', 'quote', 'logs'];
+  for (const token of [...keywords]) {
+    for (const sub of compoundSubwords) {
+      if (token.length > sub.length + 2 && token.includes(sub)) {
+        if (!keywords.includes(sub)) keywords.push(sub);
+        const remainder = token.replace(sub, '');
+        if (remainder.length > 2 && !COMMON_STOPWORDS.has(remainder) && !keywords.includes(remainder)) {
+          keywords.push(remainder);
+        }
+      }
+    }
+  }
+
   const phrases = [];
   for (let len = 4; len >= 2; len--) {
     for (let i = 0; i <= rawTokens.length - len; i++) {
@@ -274,8 +288,13 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
       fileMultiplier *= 2.2;
     }
 
+    // Check if command metadata or aliases match
+    if (fileData.meta?.commands?.some(c => keywords.includes(c.name.toLowerCase()) || (c.aliases || []).some(a => keywords.includes(a.toLowerCase())))) {
+      fileMultiplier *= 2.0;
+    }
+
     // De-prioritize internal/hidden or owner-only commands (e.g., enuke.js) unless explicitly queried by name
-    const isHiddenOrOwner = fileData.content.includes('slashHidden: true') || fileData.content.includes('hidden: true') || fileData.content.includes("category: 'owner'") || fileData.content.includes('category: "owner"');
+    const isHiddenOrOwner = fileData.content.includes('hidden: true') || fileData.content.includes("category: 'owner'") || fileData.content.includes('category: "owner"');
     if (isHiddenOrOwner) {
       const explicitMention = rawTokens.includes(baseName) || keywords.includes(baseName);
       if (!explicitMention) {
