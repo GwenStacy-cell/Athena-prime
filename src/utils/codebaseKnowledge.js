@@ -627,3 +627,182 @@ export function formatCodebaseContext(snippets = []) {
 
   return out.join('\n');
 }
+
+/**
+ * Calculates Damerau-Levenshtein distance between two strings
+ * Handles insertions, deletions, substitutions, and adjacent character transpositions.
+ */
+export function damerauLevenshteinDistance(a = '', b = '') {
+  const al = a.length;
+  const bl = b.length;
+  if (!al) return bl;
+  if (!bl) return al;
+
+  const d = [];
+  for (let i = 0; i <= al; i++) d[i] = [i];
+  for (let j = 0; j <= bl; j++) d[0][j] = j;
+
+  for (let i = 1; i <= al; i++) {
+    for (let j = 1; j <= bl; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(
+        d[i - 1][j] + 1,       // deletion
+        d[i][j - 1] + 1,       // insertion
+        d[i - 1][j - 1] + cost // substitution
+      );
+
+      // Transposition
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+  }
+
+  return d[al][bl];
+}
+
+/**
+ * Checks if a string is a subsequence of another string
+ */
+function isSubsequence(sub = '', str = '') {
+  if (sub.length > str.length) return false;
+  let i = 0;
+  let j = 0;
+  while (i < sub.length && j < str.length) {
+    if (sub[i] === str[j]) i++;
+    j++;
+  }
+  return i === sub.length;
+}
+
+/**
+ * Fuzzy matches a candidate token against the bot command matrix and aliases
+ */
+export function findFuzzyCommandMatch(token = '', allCommands = [], minScoreThreshold = 0.65) {
+  const clean = token.toLowerCase().replace(/[^a-z0-9_-]/g, '').trim();
+  if (clean.length < 3) return null;
+
+  let bestMatch = null;
+  let highestScore = -999;
+
+  for (const cmd of allCommands) {
+    const candidates = [cmd.name, ...(cmd.aliases || [])];
+
+    for (const cand of candidates) {
+      const cleanCand = cand.toLowerCase().trim();
+      if (!cleanCand) continue;
+
+      // Exact match - not a typo
+      if (clean === cleanCand) {
+        return {
+          command: cmd,
+          matchedName: cleanCand,
+          isExact: true,
+          distance: 0,
+          score: 1.0
+        };
+      }
+
+      // Check distance and similarity
+      const dist = damerauLevenshteinDistance(clean, cleanCand);
+      const maxLen = Math.max(clean.length, cleanCand.length);
+      let score = 1 - (dist / maxLen);
+
+      // Bonus for subsequence (e.g. rkthme in ranktheme)
+      if (isSubsequence(clean, cleanCand)) {
+        score += 0.25;
+      }
+      // Bonus if starts with same 2 characters
+      if (clean.length >= 2 && cleanCand.startsWith(clean.slice(0, 2))) {
+        score += 0.15;
+      }
+
+      // Threshold check based on token length:
+      // If it is a subsequence (e.g. rkthme in ranktheme), allow up to 4 edits
+      const isSub = isSubsequence(clean, cleanCand);
+      const maxAllowedDist = isSub ? 4 : (clean.length <= 4 ? 1 : clean.length <= 7 ? 2 : 3);
+
+      if (dist <= maxAllowedDist && score >= minScoreThreshold && score > highestScore) {
+        highestScore = score;
+        bestMatch = {
+          command: cmd,
+          matchedName: cleanCand,
+          isExact: false,
+          distance: dist,
+          score
+        };
+      }
+    }
+  }
+
+  return bestMatch;
+}
+
+/**
+ * Detects and auto-corrects typos across a user prompt using the 254-command catalog.
+ */
+export function detectAndCorrectTypos(userQuery = '', allCommands = []) {
+  if (!userQuery || typeof userQuery !== 'string' || !allCommands || allCommands.length === 0) {
+    return { hasTypo: false, correctedQuery: userQuery, originalToken: '', correctedCommand: '', interpretedAs: '' };
+  }
+
+  // Tokenize user query while preserving words
+  const words = userQuery.split(/\s+/);
+  let detectedTypo = null;
+  let correctedWords = [...words];
+
+  for (let idx = 0; idx < words.length; idx++) {
+    const rawWord = words[idx];
+    const cleanWord = rawWord.toLowerCase().replace(/[^a-z0-9_-]/g, '').trim();
+
+    // Skip short words, stopwords, numbers, or prefix symbols
+    if (cleanWord.length < 4 || COMMON_STOPWORDS.has(cleanWord) || /^\d+$/.test(cleanWord)) {
+      continue;
+    }
+
+    // Check if word is already an exact match for any command/alias
+    const match = findFuzzyCommandMatch(cleanWord, allCommands);
+    if (match) {
+      if (match.isExact) {
+        // Word is already a real command, no correction needed for this word
+        continue;
+      } else if (!detectedTypo || match.score > detectedTypo.score) {
+        // High confidence typo found!
+        const topLevel = allCommands.find(c => c.name.toLowerCase() === match.matchedName.toLowerCase());
+        const resolvedName = topLevel ? topLevel.name : match.command.name;
+        detectedTypo = {
+          originalToken: cleanWord,
+          rawWord,
+          wordIndex: idx,
+          correctedCommand: resolvedName,
+          interpretedAs: `!${resolvedName}`,
+          score: match.score,
+          distance: match.distance
+        };
+      }
+    }
+  }
+
+  if (detectedTypo) {
+    // Replace the typo token in the query
+    correctedWords[detectedTypo.wordIndex] = detectedTypo.correctedCommand;
+    const correctedQuery = correctedWords.join(' ');
+
+    return {
+      hasTypo: true,
+      originalToken: detectedTypo.originalToken,
+      correctedCommand: detectedTypo.correctedCommand,
+      interpretedAs: detectedTypo.interpretedAs,
+      correctedQuery,
+      distance: detectedTypo.distance
+    };
+  }
+
+  return {
+    hasTypo: false,
+    correctedQuery: userQuery,
+    originalToken: '',
+    correctedCommand: '',
+    interpretedAs: ''
+  };
+}

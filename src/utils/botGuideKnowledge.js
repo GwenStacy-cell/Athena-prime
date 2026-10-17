@@ -1,7 +1,7 @@
 import { ARCHITECTURE_TOPICS, COMMAND_EXPLAINERS } from './explainerRegistry.js';
 import { helpModules } from '../commands/utility.js';
 import { generateAIResponse, formatAIToGreyMarkdown } from './ai.js';
-import { searchCodebase, formatCodebaseContext, describeFileRole, getAllBotCommands, SEMANTIC_INTENTS } from './codebaseKnowledge.js';
+import { searchCodebase, formatCodebaseContext, describeFileRole, getAllBotCommands, SEMANTIC_INTENTS, detectAndCorrectTypos } from './codebaseKnowledge.js';
 import { 
   getGuideSession, 
   recordGuideTurn, 
@@ -696,26 +696,36 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
 
   // Retrieve active multi-turn conversational session
   const activeSession = getGuideSession(guild?.id, user?.id, channelId);
-  const searchQuery = augmentQueryWithSession(cleanPrompt, activeSession);
 
   // 1. Fetch all real commands from codebase catalog and live ground truth context
-  const sessionExpSec = activeSession ? Math.floor(activeSession.expiresAt / 1000) : 0;
-  await reportProgress(
-    activeSession && activeSession.turnCount >= 1
-      ? `Scanning catalog & analyzing follow-up (Turn #${activeSession.turnCount + 1}) for: "${shortPrompt}"...`
-      : `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
-    activeSession && activeSession.turnCount >= 1
-      ? `Thread active (rolling timer expires <t:${sessionExpSec}:R>) • Correlating with previous turns...`
-      : `Analyzing command catalog and matching user keywords across system registries...`
-  );
-
   const allCommands = await getAllBotCommands();
+  const typoResult = detectAndCorrectTypos(cleanPrompt, allCommands);
+  const effectivePrompt = typoResult.hasTypo ? typoResult.correctedQuery : cleanPrompt;
+  const searchQuery = augmentQueryWithSession(effectivePrompt, activeSession);
+
+  const sessionExpSec = activeSession ? Math.floor(activeSession.expiresAt / 1000) : 0;
+  if (typoResult.hasTypo) {
+    await reportProgress(
+      `Fuzzy match: detected typo "${typoResult.originalToken}" \u2192 Interpreted as "!${typoResult.correctedCommand}"...`,
+      `Auto-correcting query across 254 commands and catalog of 400+ aliases...`
+    );
+  } else {
+    await reportProgress(
+      activeSession && activeSession.turnCount >= 1
+        ? `Scanning catalog & analyzing follow-up (Turn #${activeSession.turnCount + 1}) for: "${shortPrompt}"...`
+        : `Athena Prime is scanning catalog of 250+ commands & detecting intent for: "${shortPrompt}"...`,
+      activeSession && activeSession.turnCount >= 1
+        ? `Thread active (rolling timer expires <t:${sessionExpSec}:R>) • Correlating with previous turns...`
+        : `Analyzing command catalog and matching user keywords across system registries...`
+    );
+  }
+
   const knowledge = findRelevantKnowledge(searchQuery, prefix, allCommands);
   const codeSnippets = await searchCodebase(searchQuery, { maxSnippets: 5, snippetLines: 45 });
   const codeContext = formatCodebaseContext(codeSnippets);
 
   // Permissions-aware clearance evaluation
-  const primaryCmd = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0].name : (activeSession?.primaryCommand || '');
+  const primaryCmd = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0].name : (typoResult.hasTypo ? typoResult.correctedCommand : (activeSession?.primaryCommand || ''));
   const primaryCmdMeta = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0] : null;
   const memberClearance = await resolveMemberClearance(guild, user, member);
   const requiredClearance = getCommandClearanceRequirement(primaryCmd, primaryCmdMeta);
@@ -725,7 +735,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
   const maxCmdScore = knowledge.matchedCommands.length > 0 ? knowledge.matchedCommands[0].score : 0;
   const maxTopicScore = knowledge.matchedTopics.length > 0 ? knowledge.matchedTopics[0].score : 0;
   const hasStrongSnippets = codeSnippets.length > 0 && codeSnippets.some(s => s.score >= 20);
-  const isFoundInBot = (maxCmdScore >= 16) || (maxTopicScore >= 16) || hasStrongSnippets;
+  const isFoundInBot = (maxCmdScore >= 16) || (maxTopicScore >= 16) || hasStrongSnippets || typoResult.hasTypo;
 
   if (!isFoundInBot) {
     await sleep(700);
@@ -830,6 +840,18 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
           '2. Highlight direct administrative execution syntax, subcommands, database persistence, and one-click actions.',
           ''
         ].join('\n'),
+    typoResult.hasTypo
+      ? [
+          'CRITICAL TYPO AUTO-CORRECTION NOTICE:',
+          `• User submitted input with typo: "${typoResult.originalToken}"`,
+          `• Athena Fuzzy Match Engine auto-corrected this to: "!${typoResult.correctedCommand}"`,
+          '• MANDATORY INSTRUCTION: You MUST begin your response by stating explicitly:',
+          `  "Interpreted as \`!${typoResult.correctedCommand}\`..."`,
+          `  (e.g., "Interpreted as \`!${typoResult.correctedCommand}\` (auto-corrected from \`${typoResult.originalToken}\`)...")`,
+          `• Then proceed to provide the step-by-step instructions for !${typoResult.correctedCommand}.`,
+          ''
+        ].join('\n')
+      : '',
     'CRITICAL GROUND TRUTH & ANTI-HALLUCINATION RULES:',
     '- Ground every command, feature, parameter, option, and theme STRICTLY in the provided BOT SOURCE CODE and Ground Truth Knowledge Base.',
     '- ZERO TOLERANCE FOR FAKE COMMANDS: Never invent, guess, or fabricate fake commands (such as inventing `!rateedit` when the real command is `!rate <#channel>`, or inventing `!setup security` when the real command is `!security enable all`). If a user asks with an incorrect command name, typo, or alias, you MUST guide them directly to the real command name and syntax.',
@@ -935,7 +957,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
 
   if (!aiResult.success) {
     // Dynamic codebase synthesizer in case all external AI edge endpoints are offline
-    const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets, memberClearance, requiredClearance, canExecute);
+    const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets, memberClearance, requiredClearance, canExecute, typoResult);
     const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, fallbackText, memberClearance, canExecute);
     const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
       matchedCommands: knowledge.matchedCommands,
@@ -951,6 +973,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
       latencyMs: Math.max(12, Date.now() - startTime),
       session: updatedSession,
       suggestions,
+      typoCorrection: typoResult,
       clearance: memberClearance,
       requiredClearance,
       canExecute,
@@ -979,6 +1002,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     latencyMs: Math.max(20, Date.now() - startTime),
     session: updatedSession,
     suggestions,
+    typoCorrection: typoResult,
     clearance: memberClearance,
     requiredClearance,
     canExecute,
@@ -996,7 +1020,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
  * Dynamic codebase synthesizer that analyzes real source code snippets on the fly
  * without ANY hardcoded presets or query-specific if-branches.
  */
-function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [], memberClearance = null, requiredClearance = null, canExecute = true) {
+function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [], memberClearance = null, requiredClearance = null, canExecute = true, typoResult = null) {
   const cleanPrompt = (prompt || '').trim();
 
   // 1. Dynamically scan code snippets for primary command definitions
@@ -1110,9 +1134,13 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
 
   const parts = [];
 
+  if (typoResult?.hasTypo) {
+    parts.push(`> **Interpreted as \`!${typoResult.correctedCommand}\` (auto-corrected from \`${typoResult.originalToken}\`)**\n`);
+  }
+
   // --- Title & Overview ---
   if (primaryCmd) {
-    parts.push(`**__${primaryCmd.name.toUpperCase()} \u2014 Code Analysis & Step-by-Step Guide__**\n`);
+    parts.push(`**__${primaryCmd.name.toUpperCase()} — Code Analysis & Step-by-Step Guide__**\n`);
     parts.push(`• **__Direct Overview:__** ${primaryCmd.description || `Autonomous module implementation within Athena Prime.`}`);
   } else {
     parts.push(`**__Athena Code Analysis & Step-by-Step Guide__**\n`);
@@ -1280,13 +1308,17 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
     ? `\n-# • **Clearance Notice:** Requires \`${aiResult.requiredClearance.label}\` (Viewing as ${memberClearance?.label || 'Community Member'})`
     : '';
 
+  const typoLine = (aiResult.typoCorrection && aiResult.typoCorrection.hasTypo)
+    ? `\n-# • **Typo Auto-Corrected:** Interpreted \`${aiResult.typoCorrection.originalToken}\` as \`!${aiResult.typoCorrection.correctedCommand}\``
+    : '';
+
   const comps = [
     {
       type: 10,
       content:
         `## Athena System Guide & Intelligence | ${TICK}\n` +
         `-# **• Member:** <@${user.id}>${clearanceBadge} \u00b7 **Model:** \`${aiResult.model}\` \u00b7 **Latency:** \`${aiResult.latencyMs}ms\`\n` +
-        `-# **• Question:** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}${threadLine}${permissionNotice}`
+        `-# **• Question:** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}${threadLine}${permissionNotice}${typoLine}`
     },
     { type: 14, divider: true }
   ];
