@@ -1,7 +1,7 @@
 import { ARCHITECTURE_TOPICS, COMMAND_EXPLAINERS } from './explainerRegistry.js';
 import { helpModules } from '../commands/utility.js';
 import { generateAIResponse, formatAIToGreyMarkdown } from './ai.js';
-import { searchCodebase, formatCodebaseContext } from './codebaseKnowledge.js';
+import { searchCodebase, formatCodebaseContext, describeFileRole } from './codebaseKnowledge.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
@@ -156,44 +156,36 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
 
   // 1. Fetch live ground truth context and search real codebase
   const knowledge = findRelevantKnowledge(cleanPrompt, prefix);
-  const codeSnippets = await searchCodebase(cleanPrompt, { maxSnippets: 4, snippetLines: 40 });
+  const codeSnippets = await searchCodebase(cleanPrompt, { maxSnippets: 5, snippetLines: 45 });
   const codeContext = formatCodebaseContext(codeSnippets);
 
   // 2. Build the persona and instruction prompt
   const systemInstructions = [
     'You are Athena Prime, the sovereign AI security assistant, bot specialist, and protector for Discord servers.',
-    'Your goal is to answer questions about Athena Prime, explain bot commands, clarify doubts, and instruct the user with 100% accurate, concise, straightforward instructions based directly on the bot repository source code.',
+    'Your goal is to answer questions about Athena Prime by conducting a thorough deep-dive analysis of the bot\'s codebase, and providing a fully prepared, comprehensive step-by-step output to help the user.',
     '',
-    'CRITICAL BOT CODEBASE & TRUTH RULES:',
+    'CRITICAL SOURCE CODE PROVENANCE & DEEP DIVE RULES:',
     '- Ground every command, feature, parameter, option, and theme STRICTLY in the provided BOT SOURCE CODE and Ground Truth Knowledge Base.',
-    '- Read the provided source code snippets carefully before answering. Look at the exact command options, choices, parameters, and descriptions.',
-    '- If the user asks whether a specific theme, option, or feature is available (e.g. "Athena god of war theme available right?"):',
-    '  • Check the source code: in src/commands/leveling.js line 274, `!ranktheme athena` is explicitly the "Sleek Obsidian & God of War stone card" (and `!profile` is also an official God of War card). State clearly that YES, the God of War theme is available as the `athena` theme via `!ranktheme athena`.',
-    '  • The other available theme is `!ranktheme hogwarts` (cinematic animated GIF).',
-    '  • If a user asks about a feature that is completely absent from the codebase, honestly state that it is not available. NEVER invent fake commands or recommend the wrong argument (such as claiming `!ranktheme hogwarts` is God of War).',
-    '- For enabling server security or full antinuke protection, the ONE and ONLY short, straightforward, master command is `' + prefix + 'security enable all`. Do NOT give manual channel configuration steps.',
-    '- NEVER hallucinate, invent, or suggest fake subcommands (such as `!setup security`, `!setup security logs`, `!setup security quarantine`, `!setup security bind`, `!antinuke config`, `!scanserver`, etc.). If a command is not in the Ground Truth or Source Code, DO NOT mention it.',
+    '- Conduct a deep-dive analysis into the provided source code, explaining both the user-facing command instructions AND the underlying code architecture.',
+    '- You MUST ALWAYS include a dedicated section at the end of your response explicitly citing where in the source code you deep-dived and analyzed the answer from, including file paths and line ranges.',
+    '- Structure your response clearly with these sections:',
+    '  1. **__Direct Overview:__** Direct, authoritative answer explaining the capability or answering the user\'s question.',
+    '  2. **__Step-by-Step Instructions:__** Actionable, numbered step-by-step guidance on how to use, configure, or toggle the feature (e.g. Step 1: Requirements & Clearance, Step 2: Running command, Step 3: Options & verification).',
+    '  3. **__Under-the-Hood Architecture:__** Deep technical breakdown of how the engine operates behind the scenes (database persistence, Discord REST API, canvas rendering, audit logs, etc.).',
+    '  4. **__Source Code Deep Dive & Analysis:__** Explicitly list each source code file and line range where you analyzed and derived the answer from, explaining what that file implements (e.g. `-# • **\`src/commands/leveling.js\` (Lines 248–293):** Implements the \`ranktheme\` command definition, choices, and database persistence hook.`).',
     '',
-    'SECURITY & ANTINUKE GROUND TRUTH:',
-    '- The Master Command: `' + prefix + 'security enable all` (Clearance: Server Owner / Extra Owner).',
-    '- What it does in 1 click: Automatically deploys 100% bulletproof protection across the server:',
-    '  • Creates and assigns unbypassable backup admin roles (`Athena Unbypassable` and `Athena Firewall`) so rogue admins cannot remove or strip Athena\'s admin powers.',
-    '  • Automatically generates `#athenas-dashboard` for live monitoring and quick toggles.',
-    '  • Automatically activates and binds `#security-logs` for audit forensics.',
-    '  • Activates ALL 28 antinuke modules (Anti-Ban, Anti-Kick, Anti-Channel Delete/Create/Update, Anti-Role Delete/Create/Update, Anti-Bot Add, Anti-Webhook, Anti-Member Purge, Anti-Linked Role, etc.).',
-    '  • Sets instant ban punishment on threshold 1 (zero tolerance), plus anti-invite, anti-link, anti-spam, and AI toxicity/doxxing shields.',
-    '- Role Hierarchy Prerequisite: Athena\'s highest role must be placed among the Top 3 highest roles in Discord Server Settings so she can override rogue admins.',
-    '- Management & Whitelisting:',
-    '  • `' + prefix + 'security status` (or `' + prefix + 'ss`): Inspect live shield status and active modules.',
-    '  • `' + prefix + 'whitelist @user` or `' + prefix + 'whitelist @role`: Give trusted staff immunity.',
-    '  • `' + prefix + 'botwhitelist add <bot_id>`: Whitelist authorized bots.',
-    '  • `' + prefix + 'security disable all`: Turn off security (requires 2FA email verification).',
+    'SPECIFIC GROUND TRUTH POLICIES:',
+    '- When asked if a specific theme, option, or feature is available (e.g. "Athena god of war theme available right?"):',
+    '  • Deep dive into the code: in `src/commands/leveling.js`, `!ranktheme athena` is explicitly the "Sleek Obsidian & God of War stone card" (and `src/commands/profile.js` is also an official God of War profile card). State clearly that YES, God of War is available as the `athena` theme via `!ranktheme athena`.',
+    '  • The other available rank theme is `!ranktheme hogwarts` (cinematic animated GIF).',
+    '  • If a user asks about a feature completely absent from the codebase, honestly state that it is not available. Never invent fake commands or recommend the wrong argument.',
+    '- When asked how to enable server security or antinuke: The master command is `' + prefix + 'security enable all`. Do NOT give manual channel configuration steps. It enables all 28 antinuke modules, threshold 1, instant ban, backup admin roles, dashboard, and security logs in 1 click.',
+    '- NEVER hallucinate, invent, or suggest fake subcommands (such as `!setup security`, `!setup security logs`, `!setup security quarantine`, `!setup security bind`, `!antinuke config`, `!scanserver`, etc.).',
     '',
-    'Tone & Style Rules:',
-    '- Speak directly in first-person as Athena Prime ("I am designed to...", "Here is the direct, straightforward method...").',
-    '- Be concise, straightforward, authoritative, and helpful. Avoid unnecessary fluff or bloated steps.',
+    'Formatting & Style Rules:',
+    '- Speak directly in first-person as Athena Prime ("I am designed to...", "Here is the direct, straightforward method...", "Based on my source code implementation...").',
     '- Always prefix every line with "-# " for Discord small grey font.',
-    '- Highlight key headings, commands, and steps using grey bold and underline: "-# **__Master Command:__** `' + prefix + 'security enable all`".',
+    '- Highlight key headings, commands, and steps using grey bold and underline: "-# **__Step 1: Heading__**" or "-# • **__Command:__** `' + prefix + 'command`".',
     '- Never output horizontal rules, dashed underlines, or divider lines (DO NOT use "---", "===", or "-----").',
     '- Never use Discord native unicode emojis (no checkmarks, crosses, warning signs). Only use standard bullet characters or clean text.',
     '- Complete all sentences cleanly. Never cut off or truncate.',
@@ -204,7 +196,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
   ].join('\n');
 
   // 3. Delegate to neural engine
-  const fullPrompt = `User's Question / Need: ${cleanPrompt}\n\nPlease read the provided bot source code and knowledge base carefully, and explain, clarify, and provide accurate instructions on how to accomplish this with Athena Prime.`;
+  const fullPrompt = `User's Question / Need: ${cleanPrompt}\n\nPlease read the provided bot source code and knowledge base carefully, and explain, clarify, and provide a comprehensive deep-dive response with step-by-step instructions and source code references on how to accomplish this with Athena Prime.`;
   const aiResult = await generateAIResponse(fullPrompt, {
     customSystem: systemInstructions,
     guildId: guild?.id,
@@ -220,7 +212,13 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
       text: formatAIToGreyMarkdown(fallbackText),
       model: 'Athena Knowledge Matrix (Offline Fallback)',
       latencyMs: Math.max(12, Date.now() - startTime),
-      matchedTopics: knowledge.matchedTopics
+      matchedTopics: knowledge.matchedTopics,
+      sourceReferences: codeSnippets.map(s => ({
+        file: s.file,
+        lines: `${s.startLine}-${s.endLine}`,
+        role: describeFileRole(s.file),
+        reason: s.reason
+      }))
     };
   }
 
@@ -229,7 +227,13 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     text: formatAIToGreyMarkdown(aiResult.text),
     model: aiResult.model,
     latencyMs: Math.max(20, Date.now() - startTime),
-    matchedTopics: knowledge.matchedTopics
+    matchedTopics: knowledge.matchedTopics,
+    sourceReferences: codeSnippets.map(s => ({
+      file: s.file,
+      lines: `${s.startLine}-${s.endLine}`,
+      role: describeFileRole(s.file),
+      reason: s.reason
+    }))
   };
 }
 
@@ -238,22 +242,46 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
  */
 function buildDeterministicGuide(prompt, knowledge, prefix, codeSnippets = []) {
   const cleanPrompt = (prompt || '').toLowerCase();
+  
+  let srcCitation = '';
+  if (codeSnippets && codeSnippets.length > 0) {
+    const lines = [
+      '',
+      `• **__Source Code Deep Dive & Analysis:__**`
+    ];
+    for (const snip of codeSnippets.slice(0, 3)) {
+      const role = describeFileRole(snip.file);
+      lines.push(`  -# • \`${snip.file}\` (Lines ${snip.startLine}–${snip.endLine}) — ${role} (${snip.reason})`);
+    }
+    srcCitation = lines.join('\n');
+  }
+
   if (cleanPrompt.includes('god of war')) {
     return [
-      `**__God of War Theme Availability__**`,
-      `• **Availability:** Yes! The God of War aesthetic is fully available in Athena Prime.`,
-      `• **Rank Theme:** \`${prefix}ranktheme athena\` (or \`classic\`) \u2014 Switches to the sleek Obsidian & God of War stone card aesthetic.`,
-      `• **Profile Card:** \`${prefix}profile\` (or \`!card\`) \u2014 Renders an official God of War canvas profile card displaying your level, voice activity, and server stats.`,
-      `• **Alternative Theme:** \`${prefix}ranktheme hogwarts\` \u2014 Cinematic Animated Looping GIF with soaring Hedwig owl & flaming altar.`
+      `**__God of War Theme Availability & Deep-Dive Analysis__**`,
+      `• **Availability:** Yes! The God of War aesthetic is fully implemented and available in Athena Prime.`,
+      `• **__Step 1: Choose Your Aesthetic__**`,
+      `  -# To switch your rank card to the God of War stone card, use: \`${prefix}ranktheme athena\` (or \`${prefix}ranktheme classic\`).`,
+      `  -# To switch to the animated fantasy theme instead, use: \`${prefix}ranktheme hogwarts\`.`,
+      `• **__Step 2: Preview Your Card__**`,
+      `  -# Run \`${prefix}rank\` to generate and view your active XP card.`,
+      `• **__Step 3: God of War Profile Card__**`,
+      `  -# Run \`${prefix}profile\` (or \`${prefix}card\`) to render the full-scale God of War canvas card with levels, voice, and stats.`,
+      `• **__Under-the-Hood Architecture:__**`,
+      `  -# The theme selection is atomically saved in SQLite via \`db.setUserRankTheme(userId, theme)\`. When \`!rank\` is called, the canvas engine queries this ledger and renders the card with Cinzel stone typography.`,
+      srcCitation || `  -# • \`src/commands/leveling.js\` (Lines 248–293) — \`ranktheme\` command definition & God of War stone card selection.`
     ].join('\n');
   }
 
   if (cleanPrompt.includes('rank theme') || cleanPrompt.includes('ranktheme') || (cleanPrompt.includes('rank') && cleanPrompt.includes('theme'))) {
     return [
-      `**__Available Rank Card Themes__**`,
-      `• **Theme 1:** \`${prefix}ranktheme athena\` (or \`classic\`) \u2014 Sleek Obsidian & God of War stone card.`,
-      `• **Theme 2:** \`${prefix}ranktheme hogwarts\` \u2014 Cinematic Animated Looping GIF with soaring Hedwig owl & flaming altar.`,
-      `• **Switch Command:** \`${prefix}ranktheme <hogwarts|athena>\``
+      `**__Available Rank Card Themes & Deep Dive__**`,
+      `• **Theme 1:** \`${prefix}ranktheme athena\` (or \`classic\`) — Sleek Obsidian & God of War stone card.`,
+      `• **Theme 2:** \`${prefix}ranktheme hogwarts\` — Cinematic Animated Looping GIF with soaring Hedwig owl & flaming altar.`,
+      `• **Switch Command:** \`${prefix}ranktheme <hogwarts|athena>\``,
+      `• **Under-the-Hood Architecture:**`,
+      `  -# Persists your chosen theme in the \`userRankThemes\` table. Looping GIFs are encoded via a 12-frame 10 FPS palettegen pipeline; the Athena theme uses Cinzel God of War stone rendering.`,
+      srcCitation || `  -# • \`src/commands/leveling.js\` (Lines 248–293) — Declares \`ranktheme\` with choices and handles theme persistence.`
     ].join('\n');
   }
 
@@ -261,18 +289,20 @@ function buildDeterministicGuide(prompt, knowledge, prefix, codeSnippets = []) {
     return [
       `**__Enabling 100% Bulletproof Server Security & Antinuke__**`,
       `• **__Master Command:__** \`${prefix}security enable all\` (Clearance: \`Server Owner / Extra Owner\`)`,
-      `• **__Fast One-Click Deployment:__** You do not need to configure channels manually. Running \`${prefix}security enable all\` executes an automated sequence that activates ALL server defenses simultaneously:`,
-      `  1. Creates and binds persistence backup roles (\`Athena Unbypassable\` and \`Athena Firewall\`) to prevent rogue admins from stripping Athena's administrative authority.`,
-      `  2. Automatically deploys \`#athenas-dashboard\` with real-time defense status and interactive shield controls.`,
-      `  3. Automatically binds and activates \`#security-logs\` for forensic audit trails.`,
-      `  4. Activates ALL 28 antinuke modules (Anti-Ban, Anti-Kick, Anti-Channel Delete/Create, Anti-Role Delete/Create, Anti-Bot Add, Anti-Webhook, Anti-Member Purge, Anti-Linked Role, etc.).`,
-      `  5. Sets 100% zero-tolerance enforcement: threshold 1, instant ban punishment, anti-invite, anti-link, anti-spam, and AI toxicity/doxxing shields.`,
-      `• **__Prerequisite:__** Place Athena's bot role among the **Top 3 highest roles** in Discord Server Settings (Role Hierarchy) so she can override rogue admin actions.`,
-      `• **__Management & Whitelist:__**`,
-      `  • \`${prefix}security status\` (or \`${prefix}ss\`): Inspect live shield status.`,
-      `  • \`${prefix}whitelist @user\` / \`${prefix}whitelist @role\`: Grant trusted staff immunity.`,
-      `  • \`${prefix}botwhitelist add <bot_id>\`: Whitelist authorized bots.`,
-      `  • \`${prefix}security disable all\`: Disable security (protected by 2FA email verification).`
+      `• **__Step 1: Role Hierarchy Prerequisite__**`,
+      `  -# Place Athena's bot role among the **Top 3 highest roles** in Discord Server Settings so she has administrative authority over rogue admins.`,
+      `• **__Step 2: Execute Master Deployment__**`,
+      `  -# Type \`${prefix}security enable all\`. Athena runs an automated sequence that activates ALL server defenses simultaneously:`,
+      `    1. Creates & binds backup admin roles (\`Athena Unbypassable\`, \`Athena Firewall\`).`,
+      `    2. Deploys \`#athenas-dashboard\` with real-time controls.`,
+      `    3. Binds \`#security-logs\` for audit forensics.`,
+      `    4. Activates ALL 28 antinuke modules on threshold 1 with instant ban punishment.`,
+      `    5. Enables anti-invite, anti-link, anti-spam, and AI toxicity/doxxing shields.`,
+      `• **__Step 3: Verification & Whitelisting__**`,
+      `  -# Type \`${prefix}security status\` (or \`${prefix}ss\`) to inspect active shields.`,
+      `  -# Whitelist trusted staff: \`${prefix}whitelist @user\` / \`${prefix}whitelist @role\`.`,
+      `  -# Whitelist approved bots: \`${prefix}botwhitelist add <bot_id>\`.`,
+      srcCitation || `  -# • \`src/commands/security.js\` (Lines 1510–1534 & 4180–4220) — Master sequence & 28-module zero-tolerance enforcer.`
     ].join('\n');
   }
 
@@ -367,13 +397,18 @@ export function buildGuideHubContainer(guild, user, prefix = '!') {
  */
 export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '#00e5ff', prefix = '!') {
   const content = formatAIToGreyMarkdown(aiResult.text || 'No instructions generated.');
+  const sources = aiResult.sourceReferences || [];
+  const sourceLine = sources.length > 0 
+    ? `\n-# **• Codebase Deep Dive:** ${sources.map(s => `\`${s.file.replace(/^src\//, '')}#L${s.lines}\``).slice(0, 3).join(', ')}` 
+    : '';
+
   const comps = [
     {
       type: 10,
       content:
         `## Athena System Guide & Intelligence | ${TICK}\n` +
         `-# **• Member:** <@${user.id}> \u00b7 **Model:** \`${aiResult.model}\` \u00b7 **Latency:** \`${aiResult.latencyMs}ms\`\n` +
-        `-# **• Question:** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*`
+        `-# **• Question:** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}`
     },
     { type: 14, divider: true }
   ];

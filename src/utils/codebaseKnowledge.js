@@ -97,10 +97,36 @@ export function extractSearchTokens(query = '') {
 /**
  * Searches the real codebase for code snippets relevant to the query
  * @param {string} query - The user query
+/**
+ * Returns a human-readable role summary for a source file
+ */
+export function describeFileRole(relPath = '') {
+  const norm = relPath.replace(/^src\//, '').replace(/\\/g, '/');
+  if (norm.startsWith('commands/leveling.js')) return 'XP Leveling & Rank Card Theme System';
+  if (norm.startsWith('commands/security.js')) return 'Autonomous Antinuke & Server Defense Matrix';
+  if (norm.startsWith('commands/profile.js')) return 'God of War Canvas Profile Card Engine';
+  if (norm.startsWith('commands/ticket.js')) return 'Support Tickets & Smart AI Triage';
+  if (norm.startsWith('commands/automod.js')) return 'Automod & AI Toxicity/Doxxing Shield';
+  if (norm.startsWith('commands/lockdown.js')) return 'Server Panic Lockdown System';
+  if (norm.startsWith('commands/learn.js')) return 'Heuristic Staff Baseline Learn Mode';
+  if (norm.startsWith('commands/music.js')) return 'Audio Streaming & Music Queue System';
+  if (norm.startsWith('commands/utility.js')) return 'General Utilities & System Modules';
+  if (norm.startsWith('commands/casino.js') || norm.startsWith('commands/blackjack.js')) return 'Casino & Economy Minigames';
+  if (norm.startsWith('database.js')) return 'SQLite Core Configuration & State Store';
+  if (norm.startsWith('utils/antinuke.js')) return 'Sub-1ms Raw WebSocket & API Direct Strike Engine';
+  if (norm.startsWith('utils/canvasCards.js')) return 'Canvas Rendering & Theme Compositor';
+  if (norm.startsWith('utils/antiStrip.js')) return 'Persistence Roles & Anti-Admin Strip Guard';
+  if (norm.startsWith('utils/ai.js')) return 'Neural Engine Provider & Multi-Model Bridge';
+  return 'Core Bot Engine Module';
+}
+
+/**
+ * Searches the real codebase for code snippets relevant to the query
+ * @param {string} query - The user query
  * @param {object} options - Search configuration
  * @returns {Promise<Array<{ file: string, startLine: number, endLine: number, code: string, score: number, reason: string }>>}
  */
-export async function searchCodebase(query = '', { maxSnippets = 4, snippetLines = 35 } = {}) {
+export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines = 45 } = {}) {
   const cache = await loadCodebaseCache();
   const { phrases, keywords, rawTokens } = extractSearchTokens(query);
 
@@ -187,11 +213,19 @@ export async function searchCodebase(query = '', { maxSnippets = 4, snippetLines
     const fileData = cache.get(match.file);
     if (!fileData) continue;
 
-    const halfWindow = Math.floor(snippetLines / 2);
-    let startLine = Math.max(1, match.lineNum - 8);
-    let endLine = Math.min(fileData.lines.length, startLine + snippetLines - 1);
+    let startLine = Math.max(1, match.lineNum - 12);
+    // If it's a command file, expand backwards to the command declaration if nearby
+    if (match.file.startsWith('commands/')) {
+      for (let j = match.lineNum - 1; j >= Math.max(0, match.lineNum - 30); j--) {
+        const l = fileData.lines[j];
+        if (l && (l.includes("name: '") || l.includes('name: "'))) {
+          startLine = Math.max(1, j + 1);
+          break;
+        }
+      }
+    }
 
-    // If near end, shift start back
+    let endLine = Math.min(fileData.lines.length, startLine + snippetLines - 1);
     if (endLine - startLine < snippetLines - 1) {
       startLine = Math.max(1, endLine - snippetLines + 1);
     }
@@ -231,10 +265,12 @@ export function formatCodebaseContext(snippets = []) {
   const out = [];
   out.push('=== RELEVANT BOT SOURCE CODE FROM REPOSITORY (GROUND TRUTH) ===');
   out.push('The following code snippets were searched and extracted directly from the bot codebase for this query.');
-  out.push('Use this source code as authoritative ground truth for command names, syntax, arguments, themes, and options:\n');
+  out.push('Use this source code as authoritative ground truth for command names, syntax, arguments, themes, and options.');
+  out.push('CRITICAL REQUIREMENT: In your final answer, you MUST include a dedicated section citing the exact source code files and line ranges where you deep-dived and analyzed the answer from.\n');
 
   for (const snip of snippets) {
-    out.push(`--- File: ${snip.file} (Lines ${snip.startLine}-${snip.endLine}) [Match: ${snip.reason}] ---`);
+    const role = describeFileRole(snip.file);
+    out.push(`--- File: ${snip.file} (Lines ${snip.startLine}-${snip.endLine}) [Module: ${role} | Match: ${snip.reason}] ---`);
     out.push('```javascript');
     out.push(snip.code);
     out.push('```\n');
