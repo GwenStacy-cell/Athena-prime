@@ -243,9 +243,9 @@ export async function auditAndNeutralizeOnboarding(guild, options = {}) {
     if (!quiet) {
       const roleSummaries = neutralizedList.map(r => 
         `• <@&${r.id}> (\`${r.name}\` | \`${r.id}\`)\n` +
-        `  - **Prompts:** \`${r.prompts.join(', ') || 'Default'}\`\n` +
-        `  - **Revoked Permissions:** \`${r.perms.join(', ') || 'Administrator / Elevated'}\`\n` +
-        `  - **Neutralized Members:** \`${r.strippedMembersCount}\` members stripped | \`${r.quarantinedCount}\` isolated`
+        `  - **__Prompts:__** \`${r.prompts.join(', ') || 'Default'}\`\n` +
+        `  - **__Revoked Permissions:__** \`${r.perms.join(', ') || 'Administrator / Elevated'}\`\n` +
+        `  - **__Neutralized Members:__** \`${r.strippedMembersCount}\` members stripped | \`${r.quarantinedCount}\` isolated`
       ).join('\n\n');
 
       const alertContainer = {
@@ -259,13 +259,13 @@ export async function auditAndNeutralizeOnboarding(guild, options = {}) {
           {
             type: 10,
             content:
-              `> -# **Incident Classification:** \`Discord Onboarding Dangerous Role Vector\`\n` +
-              `> -# **Trigger Event:** \`${reason}\`\n\n` +
-              `> -# **Neutralized Onboarding Roles:**\n${roleSummaries}\n\n` +
-              `> -# **Countermeasures Applied:**\n` +
-              `-# • **Role Permissions Disarmed:** All Administrator, Manage Server, Manage Roles, and Ban/Kick privileges removed.\n` +
-              `-# • **Onboarding Configuration Scrubbed:** Roles excised from public prompt options.\n` +
-              `-# • **Member Access Revoked:** Unauthorized holders stripped of the role and quarantined immediately.`
+              `> -# **__Incident Classification:__** \`Discord Onboarding Dangerous Role Vector\`\n` +
+              `> -# **__Trigger Event:__** \`${reason}\`\n\n` +
+              `> -# **__Neutralized Onboarding Roles:__**\n${roleSummaries}\n\n` +
+              `> -# **__Countermeasures Applied:__**\n` +
+              `-# • **__Role Permissions Disarmed:__** All Administrator, Manage Server, Manage Roles, and Ban/Kick privileges removed.\n` +
+              `-# • **__Onboarding Configuration Scrubbed:__** Roles excised from public prompt options.\n` +
+              `-# • **__Member Access Revoked:__** Unauthorized holders stripped of the role and quarantined immediately.`
           },
           { type: 14, divider: true },
           {

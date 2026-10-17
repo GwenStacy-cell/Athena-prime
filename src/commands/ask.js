@@ -20,8 +20,8 @@ export function buildAICV2Container(user, prompt, aiResult, accentColor = '#00e5
       type: 10,
       content:
         `### **Athena Prime Neural Engine** | <a:uptime:1552608831060844575>\n` +
-        `-# **• Member:** <@${user.id}> \`(${user.id})\` \u00b7 **Model:** \`${aiResult.model}\` \u00b7 **Latency:** \`${aiResult.latencyMs}ms\`\n` +
-        `-# **• Prompt:** *${prompt.length > 120 ? prompt.slice(0, 117) + '...' : prompt}*`
+        `-# • **__Member:__** <@${user.id}> \`(${user.id})\` \u00b7 **__Model:__** \`${aiResult.model}\` \u00b7 **__Latency:__** \`${aiResult.latencyMs}ms\`\n` +
+        `-# • **__Prompt:__** *${prompt.length > 120 ? prompt.slice(0, 117) + '...' : prompt}*`
     },
     { type: 14, divider: true }
   ];
@@ -71,7 +71,7 @@ export const commands = [
           components: [
             cv2.buildContainer(
               'Athena Neural Engine',
-              'Please provide a question or instruction to query Athena AI.\n\n-# **Usage:** `!ask <your question>` or `/ask <prompt>`'
+              'Please provide a question or instruction to query Athena AI.\n\n-# **__Usage:__** `!ask <your question>` or `/ask <prompt>`'
             )
           ],
           flags: MessageFlags.IsComponentsV2
@@ -111,8 +111,8 @@ export const commands = [
               type: 10,
               content:
                 `### **Neural Engine Advisory** | <a:uptime:1552608831060844575>\n` +
-                `-# **• Status:** \`Failed to synthesize\`\n` +
-                `-# **• Error:** ${aiResult.error || 'Connection timed out'}`
+                `-# • **__Status:__** \`Failed to synthesize\`\n` +
+                `-# • **__Error:__** ${aiResult.error || 'Connection timed out'}`
             }
           ]
         };
@@ -180,8 +180,8 @@ export const commands = [
               type: 10,
               content:
                 `### **Neural Engine Advisory** | <a:uptime:1552608831060844575>\n` +
-                `-# **• Status:** \`Failed to synthesize\`\n` +
-                `-# **• Error:** ${aiResult.error || 'Connection timed out'}`
+                `-# • **__Status:__** \`Failed to synthesize\`\n` +
+                `-# • **__Error:__** ${aiResult.error || 'Connection timed out'}`
             }
           ]
         };
@@ -297,10 +297,10 @@ export const commands = [
       const isEnabled = Boolean(cfg.aiModeEnabled);
       const chId = cfg.aiChannelId;
       const statusText =
-        `-# • **System Status:** \`${isEnabled ? 'ACTIVE' : 'STANDBY'}\`\n` +
-        `-# • **Dedicated Channel:** ${chId ? `<#${chId}> (\`${chId}\`)` : '`None (Restricted to !ask only)`'}\n` +
-        `-# • **Container Styling:** \`Accent Borderless CV2 Container\`\n\n` +
-        `-# **Commands:**\n` +
+        `-# • **__System Status:__** \`${isEnabled ? 'ACTIVE' : 'STANDBY'}\`\n` +
+        `-# • **__Dedicated Channel:__** ${chId ? `<#${chId}> (\`${chId}\`)` : '`None (Restricted to !ask only)`'}\n` +
+        `-# • **__Container Styling:__** \`Accent Borderless CV2 Container\`\n\n` +
+        `-# **__Commands:__**\n` +
         `-# • \`!ask <prompt>\` - Direct query to Athena Neural Engine\n` +
         `-# • \`!aimode on / off\` - Toggle conversational mode\n` +
         `-# • \`!aimode channel #channel\` - Bind dedicated AI chat channel`;
@@ -364,9 +364,9 @@ export const commands = [
       const isEnabled = Boolean(cfg.aiModeEnabled);
       const chId = cfg.aiChannelId;
       const statusText =
-        `-# • **System Status:** \`${isEnabled ? 'ACTIVE' : 'STANDBY'}\`\n` +
-        `-# • **Dedicated Channel:** ${chId ? `<#${chId}>` : '`None (Restricted to /ask only)`'}\n` +
-        `-# • **Container Styling:** \`Accent Borderless CV2 Container\``;
+        `-# • **__System Status:__** \`${isEnabled ? 'ACTIVE' : 'STANDBY'}\`\n` +
+        `-# • **__Dedicated Channel:__** ${chId ? `<#${chId}>` : '`None (Restricted to /ask only)`'}\n` +
+        `-# • **__Container Styling:__** \`Accent Borderless CV2 Container\``;
 
       return interaction.reply({
         components: [

@@ -1144,7 +1144,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     '',
     'Formatting & Style Rules:',
     '- Speak directly in first-person as Athena Prime ("I am designed to...", "Here is the direct, straightforward method...", "Based on my source code implementation...").',
-    '- Highlight key headings, commands, and steps using bold and underline: "**__Step 1: Heading__**" or "• **__Command:__** `' + prefix + 'command`".',
+    '- Highlight key headings, commands, parameters, and steps using bold and underline: "**__Step 1: Heading__**" or "• **__Command:__** `' + prefix + 'command`". Any highlighted word MUST be formatted with bold underline: "**__word__**".',
     '- Do NOT manually prefix lines with "-# ". Write standard markdown text and bullets; the post-processor will automatically format every line into Discord subtext grey font cleanly.',
     '- Never output horizontal rules, dashed underlines, or divider lines (DO NOT use "---", "===", or "-----").',
     '- Never use Discord native unicode emojis (no checkmarks, crosses, warning signs). Only use standard bullet characters or clean text.',
@@ -1382,10 +1382,10 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
   }
 
   if (!canExecute && memberClearance) {
-    parts.push(`\n-# **Notice:** This command requires **${requiredClearance?.label || 'Administrator'}** clearance.`);
-    parts.push(`-# As a **${memberClearance.label}**, you do not possess administrative permissions to execute this command directly, but here is an overview of how the system operates server-wide:\n`);
+    parts.push(`\n-# **__Notice:__** This command requires **__${requiredClearance?.label || 'Administrator'}__** clearance.`);
+    parts.push(`-# As a **__${memberClearance.label}__**, you do not possess administrative permissions to execute this command directly, but here is an overview of how the system operates server-wide:\n`);
   } else if (memberClearance?.isAdmin || memberClearance?.isServerOwner) {
-    parts.push(`\n-# **Clearance: Authorized (${memberClearance.label})** • Full administrative privileges granted for this command.\n`);
+    parts.push(`\n-# **__Clearance:__** **__Authorized (${memberClearance.label})__** • Full administrative privileges granted for this command.\n`);
   }
 
   // --- Step-by-Step Guidance ---
@@ -1403,8 +1403,8 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
   if (primaryCmd) {
     const cmdSyntax = primaryCmd.primaryPrefixSyntax || (primaryCmd.syntax ? primaryCmd.syntax.replace(/!/g, prefix) : `${prefix}${primaryCmd.name}`);
     parts.push(`  -# • **__Step 2: Primary Execution (Prefix First):__** \`${cmdSyntax}\``);
-    parts.push(`    -# • **Execution Modality:** \`${primaryCmd.executionMode || 'Prefix Supported'}\``);
-    parts.push(`    -# • **Slash Command Availability:** \`${primaryCmd.slashAlternative || (primaryCmd.hasSlash ? `/${primaryCmd.name}` : 'Not Available as a Slash Command (Prefix Only)')}\``);
+    parts.push(`    -# • **__Execution Modality:__** \`${primaryCmd.executionMode || 'Prefix Supported'}\``);
+    parts.push(`    -# • **__Slash Command Availability:__** \`${primaryCmd.slashAlternative || (primaryCmd.hasSlash ? `/${primaryCmd.name}` : 'Not Available as a Slash Command (Prefix Only)')}\``);
 
     if (primaryCmd.choices && primaryCmd.choices.length > 0) {
       parts.push(`    -# Supported choices & subcommands: ${primaryCmd.choices.map(c => `\`${c}\``).join(', ')}.`);
@@ -1416,8 +1416,8 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
   } else if (knowledge.matchedCommands.length > 0) {
     const cmd = knowledge.matchedCommands[0];
     parts.push(`  -# • **__Step 2: Primary Execution (Prefix First):__** \`${(cmd.primaryPrefixSyntax || cmd.syntax).replace(/!/g, prefix)}\` \u2014 ${cmd.purpose}`);
-    parts.push(`    -# • **Execution Modality:** \`${cmd.executionMode || 'Prefix Supported'}\``);
-    parts.push(`    -# • **Slash Command Availability:** \`${cmd.slashAlternative || (cmd.hasSlash ? `/${cmd.name}` : 'Not Available as a Slash Command (Prefix Only)')}\``);
+    parts.push(`    -# • **__Execution Modality:__** \`${cmd.executionMode || 'Prefix Supported'}\``);
+    parts.push(`    -# • **__Slash Command Availability:__** \`${cmd.slashAlternative || (cmd.hasSlash ? `/${cmd.name}` : 'Not Available as a Slash Command (Prefix Only)')}\``);
   } else {
     parts.push(`  -# • **__Step 2: Command Execution:__** Execute the relevant module command using the server prefix \`${prefix}\` as identified in the source snippets below.`);
   }
@@ -1465,8 +1465,8 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
     : '`[Inspect Status]`';
 
   parts.push(`\n• **__Interactive One-Click Action Buttons:__**`);
-  parts.push(`  -# • **Available Buttons:** I've attached one-click grey action buttons below: ${buttonLabels}. Click any button to execute or open the setup panel on the spot.`);
-  parts.push(`  -# • **Need a Custom Button?** Even if you didn't ask, I can generate one-click buttons for any specific action or setting of \`!${cmdName}\`. Click **Ask Follow-Up Doubt** or tell me what action button you want (e.g. *"Give me a button to apply Hogwarts theme"* or *"Provide a button for ticket manager"*), and I'll generate the interactive button directly for you!`);
+  parts.push(`  -# • **__Available Buttons:__** I've attached one-click grey action buttons below: ${buttonLabels}. Click any button to execute or open the setup panel on the spot.`);
+  parts.push(`  -# • **__Need a Custom Button?__** Even if you didn't ask, I can generate one-click buttons for any specific action or setting of \`!${cmdName}\`. Click **__Ask Follow-Up Doubt__** or tell me what action button you want (e.g. *"Give me a button to apply Hogwarts theme"* or *"Provide a button for ticket manager"*), and I'll generate the interactive button directly for you!`);
 
   return parts.join('\n');
 }
@@ -1539,21 +1539,21 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
   const content = formatAIToGreyMarkdown(aiResult.text || 'No instructions generated.');
   const sources = aiResult.sourceReferences || [];
   const sourceLine = sources.length > 0 
-    ? `\n-# **• Codebase Deep Dive:** ${sources.map(s => `\`${s.file.replace(/^src\//, '')}#L${s.lines}\``).slice(0, 3).join(', ')}` 
+    ? `\n-# • **__Codebase Deep Dive:__** ${sources.map(s => `\`${s.file.replace(/^src\//, '')}#L${s.lines}\``).slice(0, 3).join(', ')}` 
     : '';
 
   const threadLine = currentSession
-    ? `\n-# • **Conversation Thread:** ${formatSessionHeader(currentSession)}`
+    ? `\n-# • **__Conversation Thread:__** ${formatSessionHeader(currentSession)}`
     : '';
 
   const memberClearance = aiResult.clearance;
   const clearanceBadge = memberClearance?.label ? ` (${memberClearance.label})` : '';
   const permissionNotice = (aiResult.canExecute === false && aiResult.requiredClearance)
-    ? `\n-# • **Clearance Notice:** Requires \`${aiResult.requiredClearance.label}\` (Viewing as ${memberClearance?.label || 'Community Member'})`
+    ? `\n-# • **__Clearance Notice:__** Requires \`${aiResult.requiredClearance.label}\` (Viewing as ${memberClearance?.label || 'Community Member'})`
     : '';
 
   const typoLine = (aiResult.typoCorrection && aiResult.typoCorrection.hasTypo)
-    ? `\n-# • **Typo Auto-Corrected:** Interpreted \`${aiResult.typoCorrection.originalToken}\` as \`!${aiResult.typoCorrection.correctedCommand}\``
+    ? `\n-# • **__Typo Auto-Corrected:__** Interpreted \`${aiResult.typoCorrection.originalToken}\` as \`!${aiResult.typoCorrection.correctedCommand}\``
     : '';
 
   const comps = [
@@ -1561,8 +1561,8 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
       type: 10,
       content:
         `## Athena System Guide & Intelligence | ${TICK}\n` +
-        `-# **• Member:** <@${user.id}>${clearanceBadge} \u00b7 **Model:** \`${aiResult.model}\` \u00b7 **Latency:** \`${aiResult.latencyMs}ms\`\n` +
-        `-# **• Question:** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}${threadLine}${permissionNotice}${typoLine}`
+        `-# • **__Member:__** <@${user.id}>${clearanceBadge} \u00b7 **__Model:__** \`${aiResult.model}\` \u00b7 **__Latency:__** \`${aiResult.latencyMs}ms\`\n` +
+        `-# • **__Question:__** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}${threadLine}${permissionNotice}${typoLine}`
     },
     { type: 14, divider: true }
   ];
@@ -1678,7 +1678,7 @@ export function buildThinkingContainer(title, detail = '', session = null) {
   const loadingEmoji = '<a:loading:1542155051286396938>';
   let text = `-# ${loadingEmoji} **${title}**`;
   if (session && session.turnCount >= 1) {
-    text += `\n-# • **Thread Context Active (Turn #${session.turnCount + 1}):** Rolling session expires <t:${Math.floor(session.expiresAt / 1000)}:R>`;
+    text += `\n-# • **__Thread Context Active (Turn #${session.turnCount + 1}):__** Rolling session expires <t:${Math.floor(session.expiresAt / 1000)}:R>`;
   }
   if (detail) {
     text += `\n-# ${detail}`;
@@ -1699,21 +1699,21 @@ export function buildThinkingContainer(title, detail = '', session = null) {
  */
 export function buildFeatureNotFoundResponse(query, prefix = '!') {
   return [
-    `• **__Direct Overview:__** Athena Prime does not currently support **"${query}"** — no matching command or module exists in my command matrix.`,
+    `• **__Direct Overview:__** Athena Prime does not currently support **__"${query}"__** — no matching command or module exists in my command matrix.`,
     `Athena Prime is an autonomous Discord security, antinuke, and server management engine engineered specifically for bulletproof server defense, staff automation, and community engagement.`,
     ``,
     `• **__System Matrix Scope & Closest Capabilities:__**`,
     `Athena's core architecture does not implement external features outside of Discord management. If you are looking to configure related server capabilities:`,
-    `> -# • **Server Protection:** \`${prefix}security enable all\` (Deploy 28 antinuke modules and unbypassable firewall)`,
-    `> -# • **Automated Alerts & Feeds:** \`${prefix}news setup\` (Automated RSS news syndication) / \`${prefix}setmedia\` (Social media auto-embed)`,
-    `> -# • **Community & Games:** \`${prefix}rank\` (Cinematic XP cards) / \`${prefix}rate\` (Edit rating) / \`${prefix}casino\` (Minigames)`,
-    `> -# • **Support & Staff:** \`${prefix}ticketpanel\` (Interactive tickets with smart AI triage) / \`${prefix}automod\` (AI toxic shield)`,
-    `> -# • **Full Command Catalog:** Run \`${prefix}help\` to explore all 250+ supported commands categorized by domain.`,
+    `> -# • **__Server Protection:__** \`${prefix}security enable all\` (Deploy 28 antinuke modules and unbypassable firewall)`,
+    `> -# • **__Automated Alerts & Feeds:__** \`${prefix}news setup\` (Automated RSS news syndication) / \`${prefix}setmedia\` (Social media auto-embed)`,
+    `> -# • **__Community & Games:__** \`${prefix}rank\` (Cinematic XP cards) / \`${prefix}rate\` (Edit rating) / \`${prefix}casino\` (Minigames)`,
+    `> -# • **__Support & Staff:__** \`${prefix}ticketpanel\` (Interactive tickets with smart AI triage) / \`${prefix}automod\` (AI toxic shield)`,
+    `> -# • **__Full Command Catalog:__** Run \`${prefix}help\` to explore all 250+ supported commands categorized by domain.`,
     ``,
     `• **__Source Code Deep Dive & Analysis:__**`,
-    `• **Repository Verification:** Full deep-dive scan conducted across 254 registered bot commands and core engines in \`src/\`.`,
-    `• **Match Status:** 0 matching command declarations or database schemas found for this query.`,
-    `• **Zero-Hallucination Policy:** Confirmed absence from codebase. No fake commands or imaginary steps are ever generated.`
+    `• **__Repository Verification:__** Full deep-dive scan conducted across 254 registered bot commands and core engines in \`src/\`.`,
+    `• **__Match Status:__** 0 matching command declarations or database schemas found for this query.`,
+    `• **__Zero-Hallucination Policy:__** Confirmed absence from codebase. No fake commands or imaginary steps are ever generated.`
   ].join('\n');
 }
 

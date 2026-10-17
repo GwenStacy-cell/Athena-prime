@@ -287,7 +287,7 @@ export const commands = [
               let descContent = targetCmd.description || "No description provided.";
               if (targetCmd.name === "learn") {
                   descContent = `${targetCmd.description}\n\n` +
-                    `> -# **Subcommands Supported:**\n` +
+                    `> -# **__Subcommands Supported:__**\n` +
                     `> • \`${prefix}learn on / enable\` - Engages continuous adaptive profiling.\n` +
                     `> • \`${prefix}learn off / disable\` - Disengages profiling mode.\n` +
                     `> • \`${prefix}learn baseline\` - Real-time audit scan of staff, roles & webhooks.\n` +
@@ -296,10 +296,10 @@ export const commands = [
                     `> • \`${prefix}learn status\` - Displays the live telemetry dashboard.`;
               } else if (targetCmd.name === "voicerole") {
                   descContent = `Automatically assigns a designated role to members the instant they connect to ANY voice channel, and strips it when they disconnect.\n\n` +
-                    `> -# **Universal Scope:**\n` +
+                    `> -# **__Universal Scope:__**\n` +
                     `> • Enforces role assignment & revocation for **ALL** entities: Server Owner, Bot Owner, Extra Owners, standard members, and integration bots.\n` +
                     `> • Real-time live synchronization: instantly grants role to everyone sitting in VCs when configured, and instantly cleans up when disabled or when members leave.\n\n` +
-                    `> -# **Subcommands & Syntax:**\n` +
+                    `> -# **__Subcommands & Syntax:__**\n` +
                     `> • \`${prefix}voicerole\` - Open the interactive Components V2 Control Panel.\n` +
                     `> • \`${prefix}voicerole <@role / ID / Name>\` - Bind a specific voice role.\n` +
                     `> • \`${prefix}voicerole disable\` - Disable system & strip role from all active members.\n` +
@@ -308,12 +308,12 @@ export const commands = [
 
               const display1 = new TextDisplayBuilder().setContent(
                 `# Command Name: \`${targetCmd.name}\`\n\n` +
-                `> -# **Command usage:** \`${usageText}\`\n` +
-                `> -# **Aliases:** ${aliasesText}\n` +
-                `> -# **Command Permissions:** \`${permsText}\``
+                `> -# **__Command usage:__** \`${usageText}\`\n` +
+                `> -# **__Aliases:__** ${aliasesText}\n` +
+                `> -# **__Command Permissions:__** \`${permsText}\``
               );
-              const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${descContent}`);
-              const display3 = new TextDisplayBuilder().setContent(`-# **Category:** ${catStr}`);
+              const display2 = new TextDisplayBuilder().setContent(`> -# **__Command Explain : What Is The Purpose of that command:__**\n> -# ${descContent}`);
+              const display3 = new TextDisplayBuilder().setContent(`-# **__Category:__** ${catStr}`);
               
               const actionRow = {
                 type: 1,
@@ -405,7 +405,7 @@ export const commands = [
         let descContent = targetCmd.description || "No description provided.";
         if (targetCmd.name === "learn") {
           descContent = `${targetCmd.description}\n\n` +
-            `> -# **Subcommands Supported:**\n` +
+            `> -# **__Subcommands Supported:__**\n` +
             `> • \`${prefix}learn on / enable\` - Engages continuous adaptive profiling.\n` +
             `> • \`${prefix}learn off / disable\` - Disengages profiling mode.\n` +
             `> • \`${prefix}learn baseline\` - Real-time audit scan of staff, roles & webhooks.\n` +
@@ -414,10 +414,10 @@ export const commands = [
             `> • \`${prefix}learn status\` - Displays the live telemetry dashboard.`;
         } else if (targetCmd.name === "voicerole") {
           descContent = `Automatically assigns a designated role to members the instant they connect to ANY voice channel, and strips it when they disconnect.\n\n` +
-            `> -# **Universal Scope:**\n` +
+            `> -# **__Universal Scope:__**\n` +
             `> • Enforces role assignment & revocation for **ALL** entities: Server Owner, Bot Owner, Extra Owners, standard members, and integration bots.\n` +
             `> • Real-time live synchronization: instantly grants role to everyone sitting in VCs when configured, and instantly cleans up when disabled or when members leave.\n\n` +
-            `> -# **Subcommands & Syntax:**\n` +
+            `> -# **__Subcommands & Syntax:__**\n` +
             `> • \`${prefix}voicerole\` - Open the interactive Components V2 Control Panel.\n` +
             `> • \`${prefix}voicerole <@role / ID / Name>\` - Bind a specific voice role.\n` +
             `> • \`${prefix}voicerole disable\` - Disable system & strip role from all active members.\n` +
@@ -426,12 +426,12 @@ export const commands = [
 
         const display1 = new TextDisplayBuilder().setContent(
           `# Command Name: \`${targetCmd.name}\`\n\n` +
-          `> -# **Command usage:** \`${usageText}\`\n` +
-          `> -# **Aliases:** ${aliasesText}\n` +
-          `> -# **Command Permissions:** \`${permsText}\``
+          `> -# **__Command usage:__** \`${usageText}\`\n` +
+          `> -# **__Aliases:__** ${aliasesText}\n` +
+          `> -# **__Command Permissions:__** \`${permsText}\``
         );
-        const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${descContent}`);
-        const display3 = new TextDisplayBuilder().setContent(`-# **Category:** ${catStr}`);
+        const display2 = new TextDisplayBuilder().setContent(`> -# **__Command Explain : What Is The Purpose of that command:__**\n> -# ${descContent}`);
+        const display3 = new TextDisplayBuilder().setContent(`-# **__Category:__** ${catStr}`);
 
         const actionRow = {
           type: 1,
@@ -1257,13 +1257,13 @@ export const helpModules = [
     "`!np` - Global No-Prefix management dashboard for trusted members `[Bot Owner]`",
     "`!modmode` - Temporarily pause restore for server edits `[Server Owner]`",
     "",
-    "**Sentinel Exploit Mitigations & Hardening:**",
-    "• **Role Interceptor**: Real-time dangerous role strip, quarantine containment & owner DM alerts.",
-    "• **Onboarding Guard**: Join-time dangerous role neutralization & automatic onboarding prompt sanitization.",
-    "• **Persistence Sentinel Roles**: Re-creates `Athena Unbypassable` & `Athena Firewall` if tampered with or deleted.",
-    "• **Heuristic Learn Engine**: Adaptive staff velocity profiling, false-positive protection & SQLite anomaly signatures.",
-    "• Use `!explain security`, `!explain learn`, or `!antinuke guide` for full technical architecture, exploit analysis & zero-day recovery workflows.",
-    "-# **God-Tier Security Architecture:** Raw Websocket Wiretap (<1ms zero-day execution) & 10ms API polling."
+    "-# **__Sentinel Exploit Mitigations & Hardening:__**",
+    "-# • **__Role Interceptor:__** Real-time dangerous role strip, quarantine containment & owner DM alerts.",
+    "-# • **__Onboarding Guard:__** Join-time dangerous role neutralization & automatic onboarding prompt sanitization.",
+    "-# • **__Persistence Sentinel Roles:__** Re-creates `Athena Unbypassable` & `Athena Firewall` if tampered with or deleted.",
+    "-# • **__Heuristic Learn Engine:__** Adaptive staff velocity profiling, false-positive protection & SQLite anomaly signatures.",
+    "-# • Use `!explain security`, `!explain learn`, or `!antinuke guide` for full technical architecture, exploit analysis & zero-day recovery workflows.",
+    "-# **__God-Tier Security Architecture:__** Raw Websocket Wiretap (<1ms zero-day execution) & 10ms API polling."
   ] },
   { id: 'filters', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Filters', label: 'Automod Filters', emoji: 'filters', commands: [
     "`!automod` - Open Automated Moderation & Security Dashboard `[Extra Owner]`",
@@ -1286,12 +1286,12 @@ export const helpModules = [
     "`!ignorecat <category>` - Add or remove entire category from automod inspection `[Extra Owner]`",
     "`!ignoreall / !unignoreall` - Ignore or unignore all text channels `[Extra Owner]`",
     "",
-    "**Filter Management:**",
-    "- **AI Toxicity AutoMod:** Autonomous neural filtering of doxxing attempts (IPs, SSNs, phone numbers) and severe violent harassment (Optional).",
-    "- Whitelisting domains overrides the anti-link filter for those specific links",
-    "- Automod bypass roles apply to spam, caps, and raid limits",
-    "-# **Advanced Threat Firewall:**",
-    "-# **Instant Anti-Spam** and **Malicious Link Filtering** engineered directly into Discord event stream."
+    "-# **__Filter Management:__**",
+    "-# • **__AI Toxicity AutoMod:__** Autonomous neural filtering of doxxing attempts (IPs, SSNs, phone numbers) and severe violent harassment (Optional).",
+    "-# • Whitelisting domains overrides the anti-link filter for those specific links.",
+    "-# • Automod bypass roles apply to spam, caps, and raid limits.",
+    "-# **__Advanced Threat Firewall:__**",
+    "-# **__Instant Anti-Spam__** and **__Malicious Link Filtering__** engineered directly into Discord event stream."
   ] },
   { id: 'quarantine', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Quarantine', label: 'Quarantine System', emoji: 'quarantine', commands: [
     "`!setupquarantine / !qrsetup / !quarantinesetup` - Auto-setup role, category, text & VC, sync permissions `[Extra Owner]`",
@@ -1305,12 +1305,12 @@ export const helpModules = [
     "`!lockdown / !ld on|off` - Restrict channel to staff only `[Extra Owner]`",
     "`!maxwarnings <amount>` - Configure warnings before auto-quarantine `[Extra Owner]`",
     "",
-    "**Quarantine Architecture:**",
-    "- **Smart Auto-Setup**: Creates leftover components, aligns them under `.      You Have Been Quarantined`, and syncs permissions.",
-    "- **Pure Font Naming**: All categories and channels use clean typography without emojis.",
-    "- **Role Color**: Dedicated red `#ff0000` Quarantined role with zero global permissions.",
-    "- **Full Isolation**: Isolated users cannot view, message, or connect to any normal channel.",
-    "- **Channel Sweeper**: Automatically syncs deny overwrites across all channels to prevent evasion."
+    "-# **__Quarantine Architecture:__**",
+    "-# • **__Smart Auto-Setup:__** Creates leftover components, aligns them under `.      You Have Been Quarantined`, and syncs permissions.",
+    "-# • **__Pure Font Naming:__** All categories and channels use clean typography without emojis.",
+    "-# • **__Role Color:__** Dedicated red `#ff0000` Quarantined role with zero global permissions.",
+    "-# • **__Full Isolation:__** Isolated users cannot view, message, or connect to any normal channel.",
+    "-# • **__Channel Sweeper:__** Automatically syncs deny overwrites across all channels to prevent evasion."
   ] },
   { id: 'whitelist', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Whitelist', label: 'Whitelist Manager', emoji: 'whitelist', commands: [
     "`!whitelist / !wl` - Opens Interactive Whitelist Overview Panel `[Extra Owner]`",
@@ -1320,9 +1320,9 @@ export const helpModules = [
     "`!extraowner add|remove @user` - Grant or revoke full system bypass `[Server Owner]`",
     "`!extraowner list` - View current server extra owners `[Extra Owner]`",
     "",
-    "**The Whitelist Interface:**",
-    "- Allows granting specific bypasses (e.g., allow Mass Ban but block Channel Delete).",
-    "- Supports **Custom Trigger Limits** (e.g., allowed to kick 5 members max per hour)."
+    "-# **__The Whitelist Interface:__**",
+    "-# • Allows granting specific bypasses (e.g., allow Mass Ban but block Channel Delete).",
+    "-# • Supports **__Custom Trigger Limits__** (e.g., allowed to kick 5 members max per hour)."
   ] },
   
   { id: 'moderation', category: 'SERVER ADMINISTRATION', shortLabel: 'Mods', label: 'Moderation Tools', emoji: 'mod', commands: [
@@ -1377,8 +1377,8 @@ export const helpModules = [
     "`!massrestore @role` - Restore stripped role to all members `[Extra Owner]`",
     "`!wipeemojis` - Bulk delete all custom emojis from server `[Server Owner]`",
     "",
-    "**Mass Mod Guidance:**",
-    "These commands spawn CV2 panels that allow selecting targets from specific voice channels, roles, or text channels. Protected and whitelisted users are automatically skipped."
+    "-# **__Mass Mod Guidance:__**",
+    "-# These commands spawn CV2 panels that allow selecting targets from specific voice channels, roles, or text channels. Protected and whitelisted users are automatically skipped."
   ] },
 
   { id: 'studio', category: 'SERVER ADMINISTRATION', shortLabel: 'Studio', label: 'Studio & Audits', emoji: 'config', commands: [
@@ -1388,9 +1388,9 @@ export const helpModules = [
     "`!studio delete <template_id>` - Permanently delete saved container template `[Admin]`",
     "`!auditlogs / !audit [@user] [limit]` - Forensic audit log search with action classification and time filters `[Staff]`",
     "",
-    "**Studio & Forensic Architecture:**",
-    "- **Custom Container Templates:** Create and persist reusable CV2 borderless layouts across reboots.",
-    "- **Forensic Audit Logs:** Real-time Gateway API audit log inspection with moderator/target filtering."
+    "-# **__Studio & Forensic Architecture:__**",
+    "-# • **__Custom Container Templates:__** Create and persist reusable CV2 borderless layouts across reboots.",
+    "-# • **__Forensic Audit Logs:__** Real-time Gateway API audit log inspection with moderator/target filtering."
   ] },
 
   { id: 'ai', category: 'AI & SYSTEM INTELLIGENCE', shortLabel: 'AI Guide', label: 'AI & System Intelligence', emoji: 'ai', commands: [
@@ -1402,16 +1402,16 @@ export const helpModules = [
     "`!explain / !architecture [topic/cmd]` - Interactive multi-page architectural breakdowns & exploit analyses `[Public]`",
     "`!explain athena / !explain guide` - Deep-dive architecture of Athena's AI Guide, RAG & button generator `[Public]`",
     "",
-    "**Athena AI Specialist Capabilities & Architecture:**",
-    "• **257+ Command Deep-Dive & Knowledge Base**: Full awareness of all command parameters, syntax variations, permission tiers, and edge cases across every bot module.",
-    "• **Fuzzy Typo Auto-Correction**: Powered by Damerau-Levenshtein distance. Typo variations (e.g. `!athena how to use rnkthme`, `tcikets`, `atninuke`) are automatically recognized and resolved.",
-    "• **Prefix-First Step-by-Step Walkthroughs**: Guides users step-by-step with clean markdown codeblocks (`!command ...`) while clarifying if slash commands or dashboard alternatives exist.",
-    "• **Context-Aware Multi-Turn Thread Memory**: Retains conversation history for 10 minutes in each channel, allowing natural follow-up questions without re-typing context.",
-    "• **Clearance-Aware Adaptive Guidance**: Dynamically checks user permissions (Owner, Extra Owner, Admin, Mod, Public) and tailors instructions to their exact clearance.",
-    "• **One-Click Interactive Action Buttons**: Provides neutral grey action buttons (`style: 2`) to instantly launch setups, view statuses, or switch themes with 1 click.",
-    "• **On-Demand Custom Button Generator**: Need a specific button? Ask Athena in your question or follow-up and custom grey action buttons are generated on demand.",
-    "• **Live Thinking Telemetry**: Real-time progress timer showing elapsed seconds during Google Gemini 2.5 Flash neural processing.",
-    "-# **Neural Intelligence Architecture:** Powered by Google Gemini 2.5 Flash with multi-tier failover to Gemini 2.0 Flash and high-speed edge reasoning."
+    "-# **__Athena AI Specialist Capabilities & Architecture:__**",
+    "-# • **__257+ Command Deep-Dive & Knowledge Base:__** Full awareness of all command parameters, syntax variations, permission tiers, and edge cases across every bot module.",
+    "-# • **__Fuzzy Typo Auto-Correction:__** Powered by Damerau-Levenshtein distance. Typo variations (e.g. `!athena how to use rnkthme`, `tcikets`, `atninuke`) are automatically recognized and resolved.",
+    "-# • **__Prefix-First Step-by-Step Walkthroughs:__** Guides users step-by-step with clean markdown codeblocks (`!command ...`) while clarifying if slash commands or dashboard alternatives exist.",
+    "-# • **__Context-Aware Multi-Turn Thread Memory:__** Retains conversation history for 10 minutes in each channel, allowing natural follow-up questions without re-typing context.",
+    "-# • **__Clearance-Aware Adaptive Guidance:__** Dynamically checks user permissions (Owner, Extra Owner, Admin, Mod, Public) and tailors instructions to their exact clearance.",
+    "-# • **__One-Click Interactive Action Buttons:__** Provides neutral grey action buttons (`style: 2`) to instantly launch setups, view statuses, or switch themes with 1 click.",
+    "-# • **__On-Demand Custom Button Generator:__** Need a specific button? Ask Athena in your question or follow-up and custom grey action buttons are generated on demand.",
+    "-# • **__Live Thinking Telemetry:__** Real-time progress timer showing elapsed seconds during Google Gemini 2.5 Flash neural processing.",
+    "-# **__Neural Intelligence Architecture:__** Powered by Google Gemini 2.5 Flash with multi-tier failover to Gemini 2.0 Flash and high-speed edge reasoning."
   ] },
 
   { id: 'tickets', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tickets', label: 'Ticket System', emoji: 'tickets', commands: [
@@ -1423,12 +1423,12 @@ export const helpModules = [
     "`!close` - Close and archive the active ticket channel `[Public]`",
     "`!rename <name>` - Rename an active ticket channel `[Staff]`",
     "",
-    "**Ticket System Capabilities:**",
-    "- Features **Dropdown Menus**, **Interactive Q&A Modals**, and **Beautiful CV2 Welcome Embeds**.",
-    "- **Smart Ban Appeals & AI Triage (Optional):** Categorizes inquiries (Ban Appeal, Store/Coins, Bugs, Harassment) and creates executive summaries for staff.",
-    "- Automatically creates paired Voice Channels and Text Channels per ticket.",
-    "**Step 1:** Run `!ticket setup <#category> <@staffRole> [ai_on]` to configure category and staff roles.",
-    "**Step 2:** Run `!ticketpanel` to deploy and customize the public interactive panel."
+    "-# **__Ticket System Capabilities:__**",
+    "-# • Features **__Dropdown Menus__**, **__Interactive Q&A Modals__**, and **__Beautiful CV2 Welcome Embeds__**.",
+    "-# • **__Smart Ban Appeals & AI Triage (Optional):__** Categorizes inquiries (Ban Appeal, Store/Coins, Bugs, Harassment) and creates executive summaries for staff.",
+    "-# • Automatically creates paired Voice Channels and Text Channels per ticket.",
+    "-# • **__Step 1:__** Run `!ticket setup <#category> <@staffRole> [ai_on]` to configure category and staff roles.",
+    "-# • **__Step 2:__** Run `!ticketpanel` to deploy and customize the public interactive panel."
   ] },
   { id: 'tracking', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tracking', label: 'Tracking & Logs', emoji: 'tracking', commands: [
     "`!serverlogs` - View interactive server event logs `[Extra Owner]`",
@@ -1484,10 +1484,10 @@ export const helpModules = [
     "`!verify mode <button|captcha|math>` - Switch active verification challenge type `[Admin]`",
     "`!verify disable` - Dismantle verification gate `[Admin]`",
     "",
-    "**Builder & Engine Features:**",
-    "- **AutoRole & Vanity Engine**: Automatically assigns human/bot roles on join and vanity URL reward roles.",
-    "- **Auto-React Engine**: Configure up to 5 custom or native reaction emojis per channel.",
-    "- Supports embedding images, setting custom CV2 borders, and placeholders like `{user}`, `{server}`, and `{membercount}`."
+    "-# **__Builder & Engine Features:__**",
+    "-# • **__AutoRole & Vanity Engine:__** Automatically assigns human/bot roles on join and vanity URL reward roles.",
+    "-# • **__Auto-React Engine:__** Configure up to 5 custom or native reaction emojis per channel.",
+    "-# • Supports embedding images, setting custom CV2 borders, and placeholders like `{user}`, `{server}`, and `{membercount}`."
   ] },
   { id: 'leveling', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'XP', label: 'Leveling & XP', emoji: 'leveling', commands: [
     "`!xpsetup` - Open the XP Dashboard `[Extra Owner]`",
@@ -1499,11 +1499,11 @@ export const helpModules = [
     "`!givexp @user <amount>` - Manually grant XP `[Extra Owner]`",
     "`!removexp @user <amount>` - Manually remove XP `[Extra Owner]`",
     "",
-    "**XP Setup Guide:**",
-    "Step 1: Run `!xpsetup` and click **Enable System**.",
-    "Step 2: Use `!rankrewards add <lvl> <@role>` to configure milestone role rewards.",
-    "Step 3: Members choose between **Hogwarts Looping GIF** or **Athena Classic** via `!ranktheme`.",
-    "Step 4: Set the **Announce Channel** where level-up messages will be sent."
+    "-# **__XP Setup Guide:__**",
+    "-# • **__Step 1:__** Run `!xpsetup` and click **__Enable System__**.",
+    "-# • **__Step 2:__** Use `!rankrewards add <lvl> <@role>` to configure milestone role rewards.",
+    "-# • **__Step 3:__** Members choose between **__Hogwarts Looping GIF__** or **__Athena Classic__** via `!ranktheme`.",
+    "-# • **__Step 4:__** Set the **__Announce Channel__** where level-up messages will be sent."
   ] },
   { id: 'counting', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Counting', label: 'Counting Engine', emoji: 'counting', commands: [
     "`!counting` - Open interactive Counting Control Panel `[Extra Owner]`",
@@ -1515,11 +1515,11 @@ export const helpModules = [
     "`!counting disable` - Turn off counting in the server `[Extra Owner]`",
     "`!countlb / !counting lb` - View server counting records & top counters `[Public]`",
     "",
-    "**Counting Engine Guide:**",
-    "Step 1: Run `!counting setup #channel` or type `!counting` to open the interactive panel.",
-    "Step 2: Members count consecutively starting from **1**.",
-    "Step 3: If someone counts twice in a row or types the wrong number, a server save is consumed.",
-    "Step 4: If no saves remain, the count ruins back to 1 and the all-time high score is updated!"
+    "-# **__Counting Engine Guide:__**",
+    "-# • **__Step 1:__** Run `!counting setup #channel` or type `!counting` to open the interactive panel.",
+    "-# • **__Step 2:__** Members count consecutively starting from **__1__**.",
+    "-# • **__Step 3:__** If someone counts twice in a row or types the wrong number, a server save is consumed.",
+    "-# • **__Step 4:__** If no saves remain, the count ruins back to 1 and the all-time high score is updated!"
   ] },
   { id: 'economy', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Economy', label: 'Economy & Shop', emoji: 'coins', commands: [
     "`!balance / !bal [@user]` - View wallet, vault reserves, and net worth `[Public]`",
@@ -1535,10 +1535,10 @@ export const helpModules = [
     "`!shop add <name> <price> <@role>` - List new purchasable role perk `[Admin]`",
     "`!shop remove <itemId>` - Purge item from catalog `[Admin]`",
     "",
-    "**Commerce & Minigames Architecture:**",
-    "- Persistent ledger stored in SQLite & synchronized with Discord Cloud Backups.",
-    "- Interactive casino buttons engineered via Discord Components V2 with instant balance reconciliation.",
-    "- Roles purchased via shop are fulfilled and audited instantly by Role ID."
+    "-# **__Commerce & Minigames Architecture:__**",
+    "-# • Persistent ledger stored in SQLite & synchronized with Discord Cloud Backups.",
+    "-# • Interactive casino buttons engineered via Discord Components V2 with instant balance reconciliation.",
+    "-# • Roles purchased via shop are fulfilled and audited instantly by Role ID."
   ] },
   { id: 'voice', category: 'VOICE & MEDIA', shortLabel: 'Voice', label: 'Voice Utilities', emoji: 'voice', commands: [
     "`!voiceanalytics / !va` - 24-hour diurnal voice activity heatmaps, peak windows & channel analytics `[Staff]`",
@@ -1626,9 +1626,9 @@ export const helpModules = [
     "`!tier / !mytier / !perms` - Check your current Athena Prime authorization tier `[Public]`",
     "`!profile / !card [@user]` - Official God of War canvas profile card `[Public]`",
     "",
-    "**News Feed System:**",
-    "- Supports Twitter (X), YouTube, Reddit, and standard RSS feeds.",
-    "- Automatically formats new posts as sleek CV2 embeds."
+    "-# **__News Feed System:__**",
+    "-# • Supports Twitter (X), YouTube, Reddit, and standard RSS feeds.",
+    "-# • Automatically formats new posts as sleek CV2 embeds."
   ] }
 ];
 
@@ -1743,8 +1743,24 @@ export function buildHelpContainer(client, guildId, moduleId) {
           
           let formatted = cmd.replace(/!/g, prefix);
           let line = '';
-          if (formatted.startsWith('**') || formatted.startsWith('-#') || formatted.startsWith('Step ') || formatted.startsWith('  -') || formatted.startsWith('- ') || formatted.startsWith('•') || formatted.startsWith('  •') || /^\s*\d+\./.test(formatted)) {
-            line = formatted;
+          if (formatted.startsWith('-#')) {
+            line = formatted
+              .replace(/__\*\*([^*_]+)\*\*__/g, '**__$1__**')
+              .replace(/\*\*(?!__)(.*?)(?<!__)\*\*/g, '**__$1__**');
+          } else if (
+            formatted.startsWith('**') ||
+            formatted.startsWith('Step ') ||
+            formatted.startsWith('  -') ||
+            formatted.startsWith('- ') ||
+            formatted.startsWith('•') ||
+            formatted.startsWith('  •') ||
+            /^\s*\d+\./.test(formatted)
+          ) {
+            let cleaned = formatted.replace(/^(?:[-•>]|\*(?!\*))\s*/, '').trim();
+            let underlined = cleaned
+              .replace(/__\*\*([^*_]+)\*\*__/g, '**__$1__**')
+              .replace(/\*\*(?!__)(.*?)(?<!__)\*\*/g, '**__$1__**');
+            line = `-# • ${underlined}`;
           } else {
             line = `> **${formatted}**`;
           }
@@ -2210,12 +2226,12 @@ commands.push({
       {
         type: 10,
         content: '### • Core Features\n' +
-                 '-# • **Anti-Nuke Engine:** **A predictive, zero-tolerance firewall that neutralizes structural threats in milliseconds and autonomously reconstructs deleted channels, roles, and server hierarchies via intelligent caching.**\n' +
-                 '-# • **Dynamic Voice Infrastructure:** **An auto-scaling Join-To-Create (JTC) architecture equipped with granular, real-time control panels.**\n' +
-                 '-# • **Advanced Threat Firewall:** **Heuristic anti-spam filtering, real-time malicious link scanning, and predictive quarantine protocols.**\n' +
-                 '-# • **Zero-Trust Verification Gateway:** **A strict, automated access-control layer that dynamically audits Discord Onboarding configurations and strips bypassing permissions to prevent unauthorized infiltration.**\n' +
-                 '-# • **Asynchronous Ticket Matrix:** **A highly-concurrent, transcript-generating support infrastructure built directly onto Discord\'s raw interaction API for seamless multi-channel thread management.**\n' +
-                 '-# • **Omniscient Audit Telemetry:** **A deeply-integrated logging engine that intercepts, parses, and permanently archives server mutations, deleted messages, and role hierarchy alterations.**'
+                 '-# • **__Anti-Nuke Engine:__** **A predictive, zero-tolerance firewall that neutralizes structural threats in milliseconds and autonomously reconstructs deleted channels, roles, and server hierarchies via intelligent caching.**\n' +
+                 '-# • **__Dynamic Voice Infrastructure:__** **An auto-scaling Join-To-Create (JTC) architecture equipped with granular, real-time control panels.**\n' +
+                 '-# • **__Advanced Threat Firewall:__** **Heuristic anti-spam filtering, real-time malicious link scanning, and predictive quarantine protocols.**\n' +
+                 '-# • **__Zero-Trust Verification Gateway:__** **A strict, automated access-control layer that dynamically audits Discord Onboarding configurations and strips bypassing permissions to prevent unauthorized infiltration.**\n' +
+                 '-# • **__Asynchronous Ticket Matrix:__** **A highly-concurrent, transcript-generating support infrastructure built directly onto Discord\'s raw interaction API for seamless multi-channel thread management.**\n' +
+                 '-# • **__Omniscient Audit Telemetry:__** **A deeply-integrated logging engine that intercepts, parses, and permanently archives server mutations, deleted messages, and role hierarchy alterations.**'
       },
       { type: 14, divider: true },
       {

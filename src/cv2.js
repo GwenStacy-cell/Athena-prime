@@ -11,13 +11,20 @@ function hasEmojiStart(line) {
   return /^<a?:[a-zA-Z0-9_]+:\d+>/.test(line) || /^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/u.test(line);
 }
 
+function convertBoldToBoldUnderline(str) {
+  if (!str || typeof str !== 'string') return str;
+  return str
+    .replace(/__\*\*([^*_]+)\*\*__/g, '**__$1__**')
+    .replace(/\*\*(?!__)(.*?)(?<!__)\*\*/g, '**__$1__**');
+}
+
 // Style a single line: grey, with optional bullet for plain text
 function styleLine(line, addBullet) {
   if (!line.trim()) return line;
   if (isPreformatted(line)) {
-    if (line.startsWith('-#') && !line.includes('**')) {
-      const rest = line.replace(/^-#\s*/, '');
-      return '-# **' + rest + '**';
+    const trimmed = line.trim();
+    if (trimmed.startsWith('-#') || trimmed.startsWith('> -#') || trimmed.startsWith('>')) {
+      return convertBoldToBoldUnderline(line);
     }
     return line;
   }
@@ -26,10 +33,11 @@ function styleLine(line, addBullet) {
   
   const bullet = (addBullet && !hasListMarker) ? '\u2022 ' : '';
   if (line.includes('**')) {
-    return '-# ' + bullet + line;
+    const formatted = convertBoldToBoldUnderline(line);
+    return '-# ' + bullet + formatted;
   }
   const cleanLine = line.replace(/^\*\*|\*\*$/g, '');
-  return '-# **' + bullet + cleanLine + '**';
+  return '-# **__' + bullet + cleanLine + '__**';
 }
 
 // Separator raw component
@@ -107,7 +115,7 @@ function buildContainer(title, description, fields, customFooter) {
     var val = String(f.value || '').trim();
 
     if (f.inline) {
-      inlineBuf.push('**' + name + ':** ' + val);
+      inlineBuf.push('**__' + name + ':__** ' + val);
       if (inlineBuf.length >= 3) {
         flushInline();
       }
@@ -124,16 +132,18 @@ function buildContainer(title, description, fields, customFooter) {
           if (inFieldCode) {
             return l;
           }
-          return trimmed ? (trimmed.startsWith('-#') ? trimmed : '-# ' + trimmed) : '';
+          var lineText = trimmed ? (trimmed.startsWith('-#') ? trimmed : '-# ' + trimmed) : '';
+          return convertBoldToBoldUnderline(lineText);
         });
-        fieldLines.push('-# **' + name + ':**\n' + subLines.join('\n'));
+        fieldLines.push('-# **__' + name + ':__**\n' + subLines.join('\n'));
       } else if (val.includes('\n')) {
         var subLines = val.split('\n').map(function(l) {
-          return l.trim() ? (l.startsWith('-#') ? l : '-# ' + l) : '';
+          var lineText = l.trim() ? (l.startsWith('-#') ? l : '-# ' + l) : '';
+          return convertBoldToBoldUnderline(lineText);
         });
-        fieldLines.push('-# **' + name + ':**\n' + subLines.join('\n'));
+        fieldLines.push('-# **__' + name + ':__**\n' + subLines.join('\n'));
       } else {
-        fieldLines.push('-# **' + name + ':** ' + val);
+        fieldLines.push('-# **__' + name + ':__** ' + convertBoldToBoldUnderline(val));
       }
     }
   }

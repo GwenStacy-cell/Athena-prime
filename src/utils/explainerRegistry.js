@@ -1827,6 +1827,88 @@ export function buildNotFoundContainer(query, prefix = '!') {
 }
 
 /**
+ * Formats architecture explanation markdown so all bullets, steps, and highlights
+ * render in grey bold underlined format (-# • **__Keyword:__** ...) in Discord.
+ */
+export function formatExplainerMarkdown(content) {
+  if (!content) return '';
+  const lines = content.split('\n');
+  const formatted = [];
+  let inCode = false;
+
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim();
+    if (trimmed.startsWith('```')) {
+      inCode = !inCode;
+      formatted.push(rawLine);
+      continue;
+    }
+    if (inCode) {
+      formatted.push(rawLine);
+      continue;
+    }
+    if (!trimmed) {
+      formatted.push('');
+      continue;
+    }
+
+    // Keep top-level markdown headers #, ##, ### as primary headings
+    if (/^#{1,3}\s+/.test(trimmed)) {
+      formatted.push(trimmed);
+      continue;
+    }
+
+    // If line already starts with -# or > -#
+    if (/^(?:>\s*)?-#/.test(trimmed)) {
+      formatted.push(
+        trimmed
+          .replace(/__\*\*([^*_]+)\*\*__/g, '**__$1__**')
+          .replace(/\*\*(?!__)(.*?)(?<!__)\*\*/g, '**__$1__**')
+      );
+      continue;
+    }
+
+    // Bullet point: • **Title**: or • **Title:** or - text
+    if (/^(?:[-•]|\*(?!\*))\s+/.test(trimmed)) {
+      let cleanBullet = trimmed.replace(/^(?:[-•]|\*(?!\*))\s+/, '');
+      cleanBullet = cleanBullet
+        .replace(/__\*\*([^*_]+)\*\*__/g, '**__$1__**')
+        .replace(/\*\*(?!__)(.*?)(?<!__)\*\*/g, '**__$1__**');
+      formatted.push(`-# • ${cleanBullet}`);
+      continue;
+    }
+
+    // Numbered list: 1. , 2.
+    const numMatch = trimmed.match(/^(\d+[\.\)])\s+(.+)$/);
+    if (numMatch) {
+      let numText = numMatch[2]
+        .replace(/__\*\*([^*_]+)\*\*__/g, '**__$1__**')
+        .replace(/\*\*(?!__)(.*?)(?<!__)\*\*/g, '**__$1__**');
+      formatted.push(`-# **__${numMatch[1]}__** ${numText}`);
+      continue;
+    }
+
+    // Blockquote
+    if (trimmed.startsWith('>')) {
+      let body = trimmed.replace(/^>\s*/, '');
+      body = body
+        .replace(/__\*\*([^*_]+)\*\*__/g, '**__$1__**')
+        .replace(/\*\*(?!__)(.*?)(?<!__)\*\*/g, '**__$1__**');
+      formatted.push(`> -# ${body}`);
+      continue;
+    }
+
+    // Standard body text with bold highlights
+    let body = trimmed
+      .replace(/__\*\*([^*_]+)\*\*__/g, '**__$1__**')
+      .replace(/\*\*(?!__)(.*?)(?<!__)\*\*/g, '**__$1__**');
+    formatted.push(`-# ${body}`);
+  }
+
+  return formatted.join('\n');
+}
+
+/**
  * Build a structured Components V2 container for an Architecture Topic or Command deep dive.
  */
 export function buildExplainContainer(topicOrCmd, pageIndex = 0, prefix = '!', commandMap = null) {
@@ -1852,14 +1934,14 @@ export function buildExplainContainer(topicOrCmd, pageIndex = 0, prefix = '!', c
     // Header
     rawComponents.push({
       type: 10,
-      content: `# ${matchedTopic.title}\n> -# **Topic Overview:** ${matchedTopic.description}\n> -# **Section [${safeIndex + 1}/${totalPages}]:** **${currentPage.pageTitle}**`
+      content: `# ${matchedTopic.title}\n> -# **__Topic Overview:__** ${matchedTopic.description}\n> -# **__Section [${safeIndex + 1}/${totalPages}]:__** **__${currentPage.pageTitle}__**`
     });
     rawComponents.push({ type: 14, divider: true });
 
     // Page Content
     rawComponents.push({
       type: 10,
-      content: currentPage.content
+      content: formatExplainerMarkdown(currentPage.content)
     });
     rawComponents.push({ type: 14, divider: true });
 
@@ -1940,20 +2022,20 @@ export function buildExplainContainer(topicOrCmd, pageIndex = 0, prefix = '!', c
         type: 10,
         content: 
 `# Command Architecture: \`${prefix}${matchedCmd.name}\` | <a:atheNATICK:1557841381630681106>
-> -# **Category:** ${matchedCmd.category}
-> -# **Required Clearance:** \`${matchedCmd.clearance}\`
-> -# **Aliases:** ${aliasesText}
-> -# **Syntax:** \`${matchedCmd.syntax.replace(/!/g, prefix)}\``
+> -# **__Category:__** ${matchedCmd.category}
+> -# **__Required Clearance:__** \`${matchedCmd.clearance}\`
+> -# **__Aliases:__** ${aliasesText}
+> -# **__Syntax:__** \`${matchedCmd.syntax.replace(/!/g, prefix)}\``
       },
       { type: 14, divider: true },
       {
         type: 10,
         content:
 `### Purpose & Functional Objective
-> **${matchedCmd.purpose}**
+> -# **__${matchedCmd.purpose}__**
 
 ### Internal Architecture & Gateway Mechanics
-${matchedCmd.architecture}
+${formatExplainerMarkdown(matchedCmd.architecture)}
 
 ### Verified Example
 > \`${matchedCmd.example.replace(/!/g, prefix)}\``
@@ -2052,47 +2134,47 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
 `# Architecture & Command Deep-Dive Explainer | <a:atheNATICK:1557841381630681106>
 > <a:uptime:1552608831060844575> **Welcome to the Athena Prime Architecture Explainer Engine!**
 > Full technical breakdowns of Gateway wiretaps, velocity throttling, zero-day exploit mitigations, and execution mechanics.
-> -# **To inspect any command:** Type \`${prefix}explain <command>\` (e.g. \`${prefix}explain kick\`, \`${prefix}explain vcdrag\`)`
+> -# **__To inspect any command:__** Type \`${prefix}explain <command>\` (e.g. \`${prefix}explain kick\`, \`${prefix}explain vcdrag\`)`
     },
     { type: 14, divider: true },
     {
       type: 10,
       content:
 `### 1. Autonomous Security & Antinuke Architecture
-> **Under-the-Hood:** Raw WebSocket wiretap (<1ms) intercepts unlogged Linked Role and Onboarding escalations via 60s audit threshold. Reinstates sentinel roles and quarantines offenders.
-• **Commands:** \`unbypassable\`, \`antinuke\`, \`firewall\`, \`neutralizeonboarding\`, \`scanserver\`, \`panic\`, \`quarantine\`, \`botwhitelist\`, \`spampermit\`, \`autonick\`, \`learn\`, \`modmode\`
+> -# **__Under-the-Hood:__** Raw WebSocket wiretap (<1ms) intercepts unlogged Linked Role and Onboarding escalations via 60s audit threshold. Reinstates sentinel roles and quarantines offenders.
+-# • **__Commands:__** \`unbypassable\`, \`antinuke\`, \`firewall\`, \`neutralizeonboarding\`, \`scanserver\`, \`panic\`, \`quarantine\`, \`botwhitelist\`, \`spampermit\`, \`autonick\`, \`learn\`, \`modmode\`
 
 ### 2. Voice Grid Control & Channel Drag Architecture
-> **Under-the-Hood:** Voice gateway wiretap updates state via PATCH /guilds/{id}/members/{user}. Executes drag loops, mass moves, and mass disconnects with 150ms buffers and caller immunity.
-• **Commands:** \`vcdrag\`, \`vcdragstop\`, \`massmove\`, \`massdc\`, \`muteall\`, \`unmuteall\`, \`deafenall\`, \`undeafenall\`, \`jtc\`, \`vcprotect\`
+> -# **__Under-the-Hood:__** Voice gateway wiretap updates state via PATCH /guilds/{id}/members/{user}. Executes drag loops, mass moves, and mass disconnects with 150ms buffers and caller immunity.
+-# • **__Commands:__** \`vcdrag\`, \`vcdragstop\`, \`massmove\`, \`massdc\`, \`muteall\`, \`unmuteall\`, \`deafenall\`, \`undeafenall\`, \`jtc\`, \`vcprotect\`
 
 ### 3. Mass Moderation & Action Velocity Architecture
-> **Under-the-Hood:** Sequential REST execution with hierarchy checks. Velocity tripwires (>3 actions/10s) quarantine rogue staff, while pre-action DMs and SQLite forensics record accountability.
-• **Commands:** \`kick\`, \`ban\`, \`unban\`, \`tempban\`, \`massban\`, \`masskick\`, \`timeout\`, \`untimeout\`, \`warn\`, \`warnings\`, \`clearwarns\`, \`purge\`, \`slowmode\`, \`nuke\``
+> -# **__Under-the-Hood:__** Sequential REST execution with hierarchy checks. Velocity tripwires (>3 actions/10s) quarantine rogue staff, while pre-action DMs and SQLite forensics record accountability.
+-# • **__Commands:__** \`kick\`, \`ban\`, \`unban\`, \`tempban\`, \`massban\`, \`masskick\`, \`timeout\`, \`untimeout\`, \`warn\`, \`warnings\`, \`clearwarns\`, \`purge\`, \`slowmode\`, \`nuke\``
     },
     { type: 14, divider: true },
     {
       type: 10,
       content:
 `### 4. Channel Lifecycle & ACL Isolation Architecture
-> **Under-the-Hood:** Manipulates explicit @everyone and role overwrite bitmasks. Rewrites channel ACLs dynamically during lockdown, quarantine isolation, and metadata-preserving clones.
-• **Commands:** \`lock\`, \`unlock\`, \`hide\`, \`unhide\`, \`nuke\`, \`quarantine\`
+> -# **__Under-the-Hood:__** Manipulates explicit @everyone and role overwrite bitmasks. Rewrites channel ACLs dynamically during lockdown, quarantine isolation, and metadata-preserving clones.
+-# • **__Commands:__** \`lock\`, \`unlock\`, \`hide\`, \`unhide\`, \`nuke\`, \`quarantine\`
 
 ### 5. Role Hierarchy & Identity Persistence Architecture
-> **Under-the-Hood:** Strict database ID binding immune to display spoofing. Manages join-time autoroles, dynamic member stripping, anti-strip self-healing triggers, and three-tier clearance.
-• **Commands:** \`addrole\`, \`removerole\`, \`striproles\`, \`autorole\`, \`auth\`, \`tier\`
+> -# **__Under-the-Hood:__** Strict database ID binding immune to display spoofing. Manages join-time autoroles, dynamic member stripping, anti-strip self-healing triggers, and three-tier clearance.
+-# • **__Commands:__** \`addrole\`, \`removerole\`, \`striproles\`, \`autorole\`, \`auth\`, \`tier\`
 
 ### 6. Automod, Regex & Phishing Defense Architecture
-> **Under-the-Hood:** Pre-dispatch inspection. De-cloaks punycode URLs, executes compiled regex dictionaries, intercepts Discord invites in <1ms, and evaluates role bypass caches.
-• **Commands:** \`automod\`, \`spampermit\`
+> -# **__Under-the-Hood:__** Pre-dispatch inspection. De-cloaks punycode URLs, executes compiled regex dictionaries, intercepts Discord invites in <1ms, and evaluates role bypass caches.
+-# • **__Commands:__** \`automod\`, \`spampermit\`
 
 ### 7. Cloud Snapshot & State Restoration Architecture
-> **Under-the-Hood:** Serializes full guild state (roles, permissions, channels, settings) into AES-encrypted JSON snapshots stored off-site for 1-click disaster recovery.
-• **Commands:** \`backup\`, \`restore\`, \`setup\`
+> -# **__Under-the-Hood:__** Serializes full guild state (roles, permissions, channels, settings) into AES-encrypted JSON snapshots stored off-site for 1-click disaster recovery.
+-# • **__Commands:__** \`backup\`, \`restore\`, \`setup\`
 
 ### 8. Athena AI Specialist & Neural Guide Architecture
-> **Under-the-Hood:** Multi-tier RAG indexing 257+ commands with Damerau-Levenshtein typo auto-correction, 10m rolling thread memory, and dynamic grey action button synthesis.
-• **Commands:** \`athena\`, \`ask\`, \`aimode\`, \`explain\``
+> -# **__Under-the-Hood:__** Multi-tier RAG indexing 257+ commands with Damerau-Levenshtein typo auto-correction, 10m rolling thread memory, and dynamic grey action button synthesis.
+-# • **__Commands:__** \`athena\`, \`ask\`, \`aimode\`, \`explain\``
     },
     { type: 14, divider: true },
     {

@@ -115,8 +115,13 @@ export function formatAIToGreyMarkdown(rawText) {
       continue;
     }
 
+    // Enforce grey bold underlined highlight formatting for all bold phrases in Discord
+    trimmed = trimmed
+      .replace(/__\*\*([^*_]+)\*\*__/g, '**__$1__**')
+      .replace(/\*\*(?!__)(.*?)(?<!__)\*\*/g, '**__$1__**');
+
     if (numberPrefix) {
-      formatted.push(`-# **${numberPrefix}** ${trimmed}`);
+      formatted.push(`-# **__${numberPrefix}__** ${trimmed}`);
     } else if (isBullet) {
       formatted.push(`-# • ${trimmed}`);
     } else {

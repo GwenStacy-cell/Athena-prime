@@ -283,7 +283,7 @@ export async function handleAthenaGuideButtons(interaction) {
               {
                 type: 10,
                 content: `## Rank Card Theme Updated | ${TICK}\n` +
-                  `-# **Applied Theme:** \`Hogwarts (Cinematic Animated Plate)\`\n` +
+                  `-# **__Applied Theme:__** \`Hogwarts (Cinematic Animated Plate)\`\n` +
                   `-# Your XP Rank Card is now equipped with Hogwarts Castle, soaring Hedwig the owl, and glowing altar candles.\n` +
                   `-# Run \`${prefix}rank\` in chat anytime to render your live animated XP card!`
               }
@@ -305,7 +305,7 @@ export async function handleAthenaGuideButtons(interaction) {
               {
                 type: 10,
                 content: `## Rank Card Theme Updated | ${TICK}\n` +
-                  `-# **Applied Theme:** \`Athena (Sleek Obsidian Stone)\`\n` +
+                  `-# **__Applied Theme:__** \`Athena (Sleek Obsidian Stone)\`\n` +
                   `-# Your XP Rank Card is now set to the classic Athena Obsidian theme.\n` +
                   `-# Run \`${prefix}rank\` in chat anytime to render your card!`
               }
@@ -327,9 +327,9 @@ export async function handleAthenaGuideButtons(interaction) {
               {
                 type: 10,
                 content: `## XP Rank Card Status | ${TICK}\n` +
-                  `-# **Member:** <@${user.id}> \`(${user.id})\`\n` +
-                  `-# **Active Theme:** \`${currentTheme}\`\n` +
-                  `-# **How to Render:** Run \`${prefix}rank\` in any text channel to generate your full high-res XP banner.\n` +
+                  `-# **__Member:__** <@${user.id}> \`(${user.id})\`\n` +
+                  `-# **__Active Theme:__** \`${currentTheme}\`\n` +
+                  `-# **__How to Render:__** Run \`${prefix}rank\` in any text channel to generate your full high-res XP banner.\n` +
                   `-# You can switch themes on the spot using the grey action buttons above.`
               }
             ]
@@ -419,7 +419,7 @@ export async function handleAthenaGuideButtons(interaction) {
               {
                 type: 10,
                 content: `## One-Click Security Enforcement | ${TICK}\n` +
-                  `-# **Server Owner Detected:** <@${user.id}>\n` +
+                  `-# **__Server Owner Detected:__** <@${user.id}>\n` +
                   `-# To initialize the full autonomous antinuke and anti-raid suite with role hierarchy checks, please execute \`${prefix}security enable all\` in this channel.\n` +
                   `-# This guarantees all roles, honeypots, and quarantine channels are bound directly to the database.`
               }
@@ -487,7 +487,7 @@ export async function handleAthenaGuideButtons(interaction) {
               {
                 type: 10,
                 content: `## AI Toxicity & Sentiment AutoMod | ${TICK}\n` +
-                  `-# **Status:** ${turnOn ? '`Active / Shielding`' : '`Disabled`'}\n` +
+                  `-# **__Status:__** ${turnOn ? '`Active / Shielding`' : '`Disabled`'}\n` +
                   `-# ${turnOn ? 'Doxxing attempts (IPs, SSNs, phone numbers), severe toxicity, and violent threats will be autonomously intercepted.' : 'AI Toxicity shield is now deactivated.'}`
               }
             ]
@@ -508,9 +508,9 @@ export async function handleAthenaGuideButtons(interaction) {
               {
                 type: 10,
                 content: `## Interactive Action Executed | ${TICK}\n` +
-                  `-# **Action Button:** \`[${label}]\`\n` +
-                  `-# **Executed By:** <@${user.id}>\n` +
-                  `-# Athena Prime processed your one-click action. You can ask further follow-up questions using **Ask Follow-Up Doubt** above!`
+                  `-# **__Action Button:__** \`[${label}]\`\n` +
+                  `-# **__Executed By:__** <@${user.id}>\n` +
+                  `-# Athena Prime processed your one-click action. You can ask further follow-up questions using **__Ask Follow-Up Doubt__** above!`
               }
             ]
           }
