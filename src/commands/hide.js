@@ -5,6 +5,7 @@ import { isAuthorized } from '../utils/helpers.js';
 export const commands = [
   {
     name: 'hide',
+    aliases: ['lockview'],
     description: 'Hides a channel (or your current VC/text channel) from @everyone.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageChannels],
@@ -61,6 +62,7 @@ export const commands = [
   },
   {
     name: 'unhide',
+    aliases: ['unlockview'],
     description: 'Unhides a channel (or your current VC/text channel) for @everyone.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageChannels],

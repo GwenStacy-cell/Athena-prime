@@ -176,6 +176,7 @@ export function buildCreateRolePanel(state) {
 export const commands = [
   {
     name: 'addrole',
+    aliases: ['roleadd', 'giverole'],
     description: 'Adds one or more roles to a user.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageRoles],
@@ -276,6 +277,7 @@ export const commands = [
   },
   {
     name: 'removerole',
+    aliases: ['roledel', 'takerole'],
     description: 'Removes one or more roles from a user.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageRoles],
@@ -376,6 +378,7 @@ export const commands = [
   },
   {
     name: 'striproles',
+    aliases: ['strip', 'wipeuserroles'],
     description: 'Removes ALL roles from a user (except @everyone and managed roles).',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageRoles],

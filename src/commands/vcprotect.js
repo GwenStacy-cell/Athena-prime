@@ -7,6 +7,7 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 export const commands = [
   {
     name: 'vcprotect',
+    aliases: ['lockvc', 'protectvc'],
     description: 'Manage mute/deafen protection for users (Server Owner & Bot Owner only).',
     category: 'admin',
     permissions: [PermissionFlagsBits.Administrator],

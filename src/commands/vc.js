@@ -135,6 +135,7 @@ export const commands = [
   },
   {
     name: 'deafenall',
+    aliases: ['vcdeafenall', 'serverdeafenall'],
     description: 'Deafens all members in your current voice channel.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.DeafenMembers],
@@ -187,6 +188,7 @@ export const commands = [
   },
   {
     name: 'undeafenall',
+    aliases: ['vcundeafenall', 'serverundeafenall'],
     description: 'Undeafens all members in your current voice channel.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.DeafenMembers],

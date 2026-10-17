@@ -1,11 +1,11 @@
-﻿import cv2 from '../cv2.js';
+import cv2 from '../cv2.js';
 import { isServerAdmin, isServerMod, isServerStaff, isBotOwnerSync, isExtraOwner } from '../utils/helpers.js';
 
 export const commands = [
   {
     name: 'tier',
     description: 'Check your current Athena Prime authorization tier.',
-    aliases: ['mytier', 'access', 'myaccess', 'perms'],
+    aliases: ['mytier', 'access', 'myaccess', 'perms', 'myperms'],
     category: 'utility',
     executePrefix: async (message, args) => {
       const member = message.member;

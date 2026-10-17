@@ -475,6 +475,7 @@ export async function handleWelcomeManagerModal(interaction) {
 export const commands = [
   {
     name: 'welcome',
+    aliases: ['welcomer', 'greet'],
     description: '<a:uptime:1552608831060844575> Open the Welcome Message Manager.',
     category: 'utility',
     permissions: [PermissionFlagsBits.ManageGuild],

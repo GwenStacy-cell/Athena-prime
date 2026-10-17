@@ -317,7 +317,7 @@ export const commands = [
   // --- LOCKDOWN COMMAND ---
   {
     name: 'lockdown',
-    aliases: ['ld', 'lock'],
+    aliases: ['ld', 'lock', 'lockchannel'],
     slashHidden: true,
     description: 'Toggles text channel lockdown (on/off) preventing anyone from sending messages.',
     category: 'security',
@@ -342,6 +342,24 @@ export const commands = [
     async executeSlash(interaction) {
       const mode = interaction.options.getString('mode');
       const result = await handleLockdown(interaction.guild, interaction.channel, interaction.member, mode);
+      await interaction.reply(result);
+    }
+  },
+
+  // --- UNLOCK COMMAND ---
+  {
+    name: 'unlock',
+    aliases: ['unld', 'unlockchannel'],
+    slashHidden: true,
+    description: 'Unlocks the channel allowing members to send messages.',
+    category: 'security',
+    permissions: [PermissionFlagsBits.ManageChannels],
+    async executePrefix(message, args) {
+      const result = await handleLockdown(message.guild, message.channel, message.member, 'off');
+      await message.reply(result);
+    },
+    async executeSlash(interaction) {
+      const result = await handleLockdown(interaction.guild, interaction.channel, interaction.member, 'off');
       await interaction.reply(result);
     }
   },
@@ -696,6 +714,7 @@ export const commands = [
   // --- AUTONICK COMMAND ---
   {
     name: 'autonick',
+    aliases: ['hoistcleaner'],
     description: 'Interactive Auto-nickname manager dashboard.',
     category: 'security',
     permissions: [PermissionFlagsBits.ManageNicknames],
@@ -1231,6 +1250,7 @@ export const commands = [
   // --- BOTWHITELIST COMMAND ---
   {
     name: 'botwhitelist',
+    aliases: ['trustedbots', 'bw'],
     description: 'Manages trusted bots that are allowed to be in the server (Anti-Nuke bot guard).',
     category: 'security',
     permissions: [],
@@ -1284,7 +1304,7 @@ export const commands = [
     // --- ANTILINK MODULE COMMAND ---
     {
       name: 'automod',
-        aliases: ['automoderator', 'antilink'],
+        aliases: ['automoderator', 'antilink', 'filters'],
         description: 'Opens the interactive Automated Moderation & Security Dashboard (Admin only).',
       category: 'security',
       permissions: [PermissionFlagsBits.Administrator],
@@ -1705,7 +1725,7 @@ export const commands = [
   // --- SCAN SERVER COMMAND ---
   {
     name: 'scanserver',
-    aliases: ['scan', 'bots'],
+    aliases: ['scan', 'bots', 'auditperms', 'secscan'],
     slashHidden: true,
     description: 'Scan the server for unauthorized bots and manage them.',
     category: 'security',
@@ -1721,7 +1741,7 @@ export const commands = [
   // --- ONBOARDING NEUTRALIZER COMMAND ---
   {
     name: 'neutralizeonboarding',
-    aliases: ['onboarding', 'onboardingguard', 'scanonboarding'],
+    aliases: ['onboarding', 'onboardingguard', 'scanonboarding', 'neutralize'],
     slashHidden: true,
     description: 'Scan and neutralize dangerous roles configured in Discord Onboarding prompts.',
     category: 'security',

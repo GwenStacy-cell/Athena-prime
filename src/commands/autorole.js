@@ -170,6 +170,7 @@ export async function handleAutoRoleModal(interaction) {
 
 export default {
   name: 'autorole',
+  aliases: ['joinrole'],
   description: 'Manage AutoRole and Vanity configurations',
   type: 1, // CHAT_INPUT
   async executePrefix(message) {

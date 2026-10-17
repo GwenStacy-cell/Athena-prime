@@ -1,4 +1,4 @@
-﻿import cv2 from '../cv2.js';
+import cv2 from '../cv2.js';
 import db from '../database.js';
 import { generateBackupId, serializeGuild, restoreGuild } from './ezal.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
@@ -6,7 +6,7 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 export const commands = [
   {
     name: 'backup',
-    aliases: ['bcp', 'save'],
+    aliases: ['bcp', 'save', 'cloudsync', 'snapshot'],
     description: 'Server infrastructure Backup and Recovery Suite.',
     category: 'utilities',
     options: [],
@@ -89,9 +89,22 @@ export const commands = [
         
         await loadingMsg.edit({
           content: null,
-          embeds: [new EmbedBuilder().setTitle('Restoration Complete').setDescription('Successfully restored the server from backup.').setColor('#00ff00')],
+          embeds: [new EmbedBuilder().setTitle('Restoration Complete | <a:atheNATICK:1557841381630681106>').setDescription('Successfully restored the server from backup.').setColor('#00ff00')],
           flags: 16384
         });
+      }
+    }
+  },
+  {
+    name: 'restore',
+    aliases: ['snapshotrestore', 'loadbackup', 'applysnapshot'],
+    description: 'Restore a server snapshot (Global Bot Owner Only).',
+    category: 'utilities',
+    options: [],
+    async executePrefix(message, args) {
+      const backupCmd = commands.find(c => c.name === 'backup');
+      if (backupCmd) {
+        return backupCmd.executePrefix(message, ['restore', ...args]);
       }
     }
   }

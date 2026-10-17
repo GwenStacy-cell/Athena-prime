@@ -6,6 +6,7 @@ import { isBotOwnerSync, parseDuration } from '../utils/helpers.js';
 export const commands = [
   {
     name: 'np',
+    aliases: ['noprefix'],
     description: 'Global No-Prefix Management System',
     category: 'security',
     permissions: [],
@@ -14,7 +15,7 @@ export const commands = [
       const isManager = db.isNpManager(message.author.id);
       
       if (!isOwner && !isManager) {
-        return message.reply({ content: 'You are not an authorized NP Manager.' }).catch(() => null);
+        return message.reply({ content: '-# You are not an authorized NP Manager.' }).catch(() => null);
       }
 
       const sub = args[0]?.toLowerCase();
@@ -25,43 +26,43 @@ export const commands = [
 
       if (sub === 'add') {
         const type = args[1]?.toLowerCase();
-        if (type !== 'user' && type !== 'server') return message.reply({ content: '❌ Usage: `np add user <@user|id> [duration]` or `np add server <id> [duration]`' });
+        if (type !== 'user' && type !== 'server') return message.reply({ content: '-# **Usage:** `np add user <@user|id> [duration]` or `np add server <id> [duration]`' });
         
         let targetId = args[2];
-        if (!targetId) return message.reply({ content: 'Provide an ID or mention.' });
+        if (!targetId) return message.reply({ content: '-# Provide an ID or mention.' });
         targetId = targetId.replace(/[<@!>]/g, '');
 
         let durationRaw = args.slice(3).join(' ') || 'lifetime';
         let expiresAt = null;
         if (durationRaw.toLowerCase() !== 'lifetime') {
           const ms = parseDuration(durationRaw);
-          if (!ms) return message.reply({ content: 'Invalid duration. Use formats like `1w`, `1m`, `lifetime`.' });
+          if (!ms) return message.reply({ content: '-# Invalid duration. Use formats like `1w`, `1m`, `lifetime`.' });
           expiresAt = Date.now() + ms;
         }
 
         if (type === 'user') {
           db.addNpUser(targetId, expiresAt, message.author.id);
-          return message.reply({ content: `✅ Successfully granted No-Prefix to User \`${targetId}\` for \`${durationRaw}\`.` });
+          return message.reply({ content: `No-Prefix Granted | <a:atheNATICK:1557841381630681106>\n-# Successfully granted No-Prefix to User \`${targetId}\` for \`${durationRaw}\`.` });
         } else {
           db.addNpServer(targetId, expiresAt, message.author.id);
-          return message.reply({ content: `✅ Successfully granted No-Prefix to Server \`${targetId}\` for \`${durationRaw}\`.` });
+          return message.reply({ content: `No-Prefix Granted | <a:atheNATICK:1557841381630681106>\n-# Successfully granted No-Prefix to Server \`${targetId}\` for \`${durationRaw}\`.` });
         }
       }
 
       if (sub === 'reset') {
         const type = args[1]?.toLowerCase();
-        if (type !== 'user' && type !== 'server') return message.reply({ content: '❌ Usage: `np reset user <id>` or `np reset server <id>`' });
+        if (type !== 'user' && type !== 'server') return message.reply({ content: '-# **Usage:** `np reset user <id>` or `np reset server <id>`' });
         
         let targetId = args[2];
-        if (!targetId) return message.reply({ content: 'Provide an ID or mention.' });
+        if (!targetId) return message.reply({ content: '-# Provide an ID or mention.' });
         targetId = targetId.replace(/[<@!>]/g, '');
 
         if (type === 'user') {
-          if (db.removeNpUser(targetId)) return message.reply({ content: `✅ Revoked No-Prefix from User \`${targetId}\`.` });
-          else return message.reply({ content: `❌ User \`${targetId}\` does not have No-Prefix.` });
+          if (db.removeNpUser(targetId)) return message.reply({ content: `No-Prefix Revoked | <a:atheNATICK:1557841381630681106>\n-# Revoked No-Prefix from User \`${targetId}\`.` });
+          else return message.reply({ content: `-# User \`${targetId}\` does not have No-Prefix.` });
         } else {
-          if (db.removeNpServer(targetId)) return message.reply({ content: `✅ Revoked No-Prefix from Server \`${targetId}\`.` });
-          else return message.reply({ content: `❌ Server \`${targetId}\` does not have No-Prefix.` });
+          if (db.removeNpServer(targetId)) return message.reply({ content: `No-Prefix Revoked | <a:atheNATICK:1557841381630681106>\n-# Revoked No-Prefix from Server \`${targetId}\`.` });
+          else return message.reply({ content: `-# Server \`${targetId}\` does not have No-Prefix.` });
         }
       }
 
@@ -81,11 +82,11 @@ export const commands = [
 
         if (action === 'add') {
           db.addNpManager(targetId);
-          return message.reply({ content: `✅ User \`${targetId}\` is now an NP Manager.` });
+          return message.reply({ content: `NP Manager Added | <a:atheNATICK:1557841381630681106>\n-# User \`${targetId}\` is now an NP Manager.` });
         }
         if (action === 'remove') {
           db.removeNpManager(targetId);
-          return message.reply({ content: `✅ User \`${targetId}\` is no longer an NP Manager.` });
+          return message.reply({ content: `NP Manager Removed | <a:atheNATICK:1557841381630681106>\n-# User \`${targetId}\` is no longer an NP Manager.` });
         }
       }
 
@@ -95,22 +96,22 @@ export const commands = [
         
         if (action === 'pause') {
           db.setNpPaused(true);
-          return message.reply({ content: `✅ NP System is now PAUSED globally.` });
+          return message.reply({ content: `NP System Paused | <a:atheNATICK:1557841381630681106>\n-# NP System is now PAUSED globally.` });
         }
         if (action === 'unpause') {
           db.setNpPaused(false);
-          return message.reply({ content: `✅ NP System is now ACTIVE globally.` });
+          return message.reply({ content: `NP System Active | <a:atheNATICK:1557841381630681106>\n-# NP System is now ACTIVE globally.` });
         }
         
-        if (!cmdName) return message.reply({ content: '❌ Usage: `np cmds ban/unban <command>`' });
+        if (!cmdName) return message.reply({ content: '-# **Usage:** `np cmds ban/unban <command>`' });
 
         if (action === 'ban') {
-          if (db.banNpCommand(cmdName)) return message.reply({ content: `✅ Banned command \`${cmdName}\` from NP bypass.` });
-          else return message.reply({ content: `Command \`${cmdName}\` is already banned.` });
+          if (db.banNpCommand(cmdName)) return message.reply({ content: `Command Banned | <a:atheNATICK:1557841381630681106>\n-# Banned command \`${cmdName}\` from NP bypass.` });
+          else return message.reply({ content: `-# Command \`${cmdName}\` is already banned.` });
         }
         if (action === 'unban') {
-          if (db.unbanNpCommand(cmdName)) return message.reply({ content: `✅ Unbanned command \`${cmdName}\` from NP bypass.` });
-          else return message.reply({ content: `Command \`${cmdName}\` is not banned.` });
+          if (db.unbanNpCommand(cmdName)) return message.reply({ content: `Command Unbanned | <a:atheNATICK:1557841381630681106>\n-# Unbanned command \`${cmdName}\` from NP bypass.` });
+          else return message.reply({ content: `-# Command \`${cmdName}\` is not banned.` });
         }
       }
 
@@ -120,13 +121,13 @@ export const commands = [
         targetId = targetId.replace(/[<@!>]/g, '');
 
         const npUser = db.getNpUser(targetId);
-        if (!npUser) return message.reply({ content: `User \`${targetId}\` does not have NP status.` });
+        if (!npUser) return message.reply({ content: `-# User \`${targetId}\` does not have NP status.` });
         
         let expStr = 'Lifetime (Expires: Never)';
         if (npUser.expiresAt) {
           expStr = `<t:${Math.floor(npUser.expiresAt/1000)}:R>`;
         }
-        return message.reply({ content: `✅ User \`${targetId}\` has NP status.\nExpires: ${expStr}\nAppointed by: <@${npUser.appointedBy}>` });
+        return message.reply({ content: `No-Prefix Status | <a:atheNATICK:1557841381630681106>\n-# User \`${targetId}\` has NP status.\n-# **Expires:** ${expStr}\n-# **Appointed by:** <@${npUser.appointedBy}>` });
       }
 
       // Fallback
@@ -225,14 +226,14 @@ export const commands = [
         if (page === 1) {
           comps.push({ type: 10, content: '## **NP Access Management**\n> `np add user <@user | id> [duration]` — Grant No-Prefix to user\n> `np add server <guild_id> [duration]` — Grant No-Prefix to server\n> `np reset user <id>` — Remove No-Prefix from user\n> `np reset server <id>` — Remove No-Prefix from server\n> `np list` / `np active` — View global active NP users & servers\n\n## **Command Ban Controls**\n> `np cmds ban <command>` — Ban a command from NP\n> `np cmds unban <command>` — Unban a command from NP\n> `np cmds pause` / `unpause` — Pause or unpause NP system\n\n## **Bot Server Assets**\n> `!setguildavatar <url | attachment>` — Set server bot avatar\n> `!setguildbanner <url | attachment>` — Set server bot banner' });
         } else {
-          comps.push({ type: 10, content: '## **Bot Growth & Analytics Commands**\n> `bjoins` / `bjoin` / `botjoins` — View recent bot join statistics\n> `bleaves` / `bleave` / `botleaves` — View recent bot leave statistics\n> `bsummary` / `bjoinssummary` / `bgrowth` — View bot join & growth summary\n> `bcmds` / `bcmd` / `botcmds` — View command usage analytics & execution logs\n> `btopcmds` / `btop` / `bcmdusers` — View top executed commands & active users\n> `bservers` / `bmem` / `bping` — View active bot servers, memory & latency\n\n## **View & Inspection Controls**\n> `ss` / `security status` — View security status (View Only)\n> `np actions [@user]` — View audit log of manager actions\n> `np manager list` / `np manager` — View active NP Managers\n> `np check <@user | id>` — Check a specific user\'s NP status\n\n🔒 **Restrictions:** Cannot restart the bot, modify NP Managers, or edit security settings.' });
+          comps.push({ type: 10, content: '## **Bot Growth & Analytics Commands**\n> `bjoins` / `bjoin` / `botjoins` — View recent bot join statistics\n> `bleaves` / `bleave` / `botleaves` — View recent bot leave statistics\n> `bsummary` / `bjoinssummary` / `bgrowth` — View bot join & growth summary\n> `bcmds` / `bcmd` / `botcmds` — View command usage analytics & execution logs\n> `btopcmds` / `btop` / `bcmdusers` — View top executed commands & active users\n> `bservers` / `bmem` / `bping` — View active bot servers, memory & latency\n\n## **View & Inspection Controls**\n> `ss` / `security status` — View security status (View Only)\n> `np actions [@user]` — View audit log of manager actions\n> `np manager list` / `np manager` — View active NP Managers\n> `np check <@user | id>` — Check a specific user\'s NP status\n\n**Restrictions:** Cannot restart the bot, modify NP Managers, or edit security settings.' });
         }
 
         comps.push({ type: 14, divider: true });
 
         const btnPrev = new ButtonBuilder().setCustomId('np_guide_prev').setLabel('<').setStyle(ButtonStyle.Secondary).setDisabled(page === 1);
         const btnNext = new ButtonBuilder().setCustomId('np_guide_next').setLabel('>').setStyle(ButtonStyle.Secondary).setDisabled(page === 2);
-        const btnDel = new ButtonBuilder().setCustomId('np_guide_del').setEmoji('🗑️').setStyle(ButtonStyle.Secondary);
+        const btnDel = new ButtonBuilder().setCustomId('np_guide_del').setLabel('Close').setStyle(ButtonStyle.Secondary);
         
         const row = new ActionRowBuilder().addComponents(btnPrev, btnNext, btnDel);
         comps.push(row.toJSON());

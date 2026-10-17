@@ -19,6 +19,7 @@ export const commands = [
   // ─────────────────────────────────────────────
   {
     name: 'vcdrag',
+    aliases: ['loopdrag', 'vcloop'],
     description: 'Drags a user across every voice channel in an endless loop until /vcdragstop.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.MoveMembers],
@@ -54,6 +55,7 @@ export const commands = [
   // ─────────────────────────────────────────────
   {
     name: 'vcdragstop',
+    aliases: ['dragstop', 'stopdrag'],
     description: 'Stops an active /vcdrag session for a user.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.MoveMembers],
@@ -108,6 +110,7 @@ export const commands = [
   // ─────────────────────────────────────────────
   {
     name: 'massdc',
+    aliases: ['vcdc', 'massdisconnect', 'dcall'],
     description: '[OWNER ONLY] Disconnects all users from a voice channel (you are immune).',
     category: 'security',
     permissions: [],
@@ -155,6 +158,7 @@ export const commands = [
   // ─────────────────────────────────────────────
   {
     name: 'massmove',
+    aliases: ['vcmove', 'moveall'],
     description: '[OWNER ONLY] Moves all users from one voice channel to another.',
     category: 'security',
     permissions: [],

@@ -848,6 +848,7 @@ export const commands = [
   },
   {
     name: 'jtc',
+    aliases: ['jointocreate', 'tempvc'],
     description: 'Join to Create management commands.',
     category: 'utility',
     permissions: [],
@@ -866,8 +867,21 @@ export const commands = [
         ]
       }
     ],
-    async executePrefix(message) {
-      return message.reply(cv2.info('Use Slash Command', 'Please use `/jtc add @user` to permit a user.'));
+    async executePrefix(message, args) {
+      if (args && args.length > 0 && args[0].toLowerCase() === 'add') {
+        const targetUser = message.mentions.users.first();
+        if (!targetUser) return message.reply(cv2.warn('Missing User', 'Please mention a user: `!jtc add @user`'));
+        const vcChannel = message.member?.voice?.channel;
+        if (!vcChannel) return message.reply(cv2.warn('Not In Voice', 'You must be in a voice channel to use this.'));
+        const jtcData = db.getJtcChannel(vcChannel.id);
+        if (!jtcData) return message.reply(cv2.warn('Not A JTC Channel', 'This only works in a Join to Create channel.'));
+        if (jtcData.ownerId !== message.author.id && !message.member.permissions.has(PermissionFlagsBits.Administrator)) {
+          return message.reply(cv2.warn('Unauthorized', 'Only the channel owner can permit users.'));
+        }
+        await vcChannel.permissionOverwrites.edit(targetUser.id, { Connect: true, ViewChannel: true });
+        return message.reply(cv2.success('User Permitted | <a:atheNATICK:1557841381630681106>', `<@${targetUser.id}> can now join your channel even when locked or ghosted.`));
+      }
+      return message.reply(cv2.info('Join to Create', 'Use `!jtcsetup` to configure the system, or `!jtc add @user` to permit a user into your temp VC.'));
     },
     async executeSlash(interaction) {
       const sub = interaction.options.getSubcommand();

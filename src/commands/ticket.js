@@ -6,6 +6,7 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 export const commands = [
   {
     name: 'ticket',
+    aliases: ['newticket', 'ticketpanel'],
     description: 'Configure the server support ticket system',
     type: 1, // CHAT_INPUT
     default_member_permissions: String(PermissionFlagsBits.Administrator),

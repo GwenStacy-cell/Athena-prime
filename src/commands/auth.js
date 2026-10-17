@@ -66,7 +66,7 @@ export const commands = [
   {
     name: 'auth',
     description: 'Manage role authorization tiers (Admin, Mod, Staff).',
-    aliases: ['tiers', 'authtiers'],
+    aliases: ['tiers', 'authtiers', 'setauth'],
     category: 'security',
     executePrefix: async (message, args) => {
       const { isServerAdmin } = await import('../utils/helpers.js');

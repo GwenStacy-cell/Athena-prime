@@ -90,6 +90,7 @@ async function handleFirewall(context, isSlash) {
 export const commands = [
   {
     name: 'firewall',
+    aliases: ['fw', 'telemetry', 'statusnet'],
     description: 'Displays the server firewall uptime and active status.',
     category: 'utility',
     permissions: [],

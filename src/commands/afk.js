@@ -3,6 +3,7 @@ import { MessageFlags } from 'discord.js';
 
 export const commands = [{
   name: 'afk',
+  aliases: ['brb'],
   slashHidden: true,
   description: 'Set your AFK status',
   async executePrefix(message, args) {

@@ -4,6 +4,7 @@ import cv2 from '../cv2.js';
 export const commands = [
   {
     name: 'snipe',
+    aliases: ['s'],
     description: 'Snipe the last deleted message in this channel.',
     category: 'utility',
     // Allowed for everyone by default, admins can restrict it via Discord permissions if needed

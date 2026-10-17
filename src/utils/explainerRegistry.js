@@ -364,7 +364,7 @@ export const DETAILED_COMMANDS = {
 
   firewall: {
     name: 'firewall',
-    aliases: ['fw', 'telemetry', 'ping', 'statusnet'],
+    aliases: ['fw', 'telemetry', 'statusnet'],
     category: 'Network Diagnostics & Defense Telemetry',
     clearance: 'Public / Everyone',
     syntax: '!firewall',

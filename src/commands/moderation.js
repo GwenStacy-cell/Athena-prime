@@ -9,6 +9,7 @@ export const commands = [
   // --- MUTEALL COMMAND ---
   {
     name: 'muteall',
+    aliases: ['vcmuteall', 'servermuteall'],
     description: 'Voice-mutes all members in your current voice channel.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.MuteMembers],
@@ -26,6 +27,7 @@ export const commands = [
   // --- UNMUTEALL COMMAND ---
   {
     name: 'unmuteall',
+    aliases: ['vcunmuteall', 'serverunmuteall'],
     description: 'Voice-unmutes all members in your current voice channel.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.MuteMembers],
@@ -246,7 +248,7 @@ export const commands = [
   // --- CLEARWARNS COMMAND ---
   {
     name: 'clearwarns',
-    aliases: ['cw', 'delwarns'],
+    aliases: ['cw', 'delwarns', 'resetwarns'],
     description: 'Clears all active warnings for a member.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -282,7 +284,7 @@ export const commands = [
   // --- TIMEOUT COMMAND ---
   {
     name: 'timeout',
-    aliases: ['to'],
+    aliases: ['to', 'mute', 'm', 'silence'],
     description: 'Places a member on timeout (native Discord mute).',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -339,7 +341,7 @@ export const commands = [
   // --- UNTIMEOUT / REMOVE TIMEOUT COMMAND ---
   {
     name: 'untimeout',
-    aliases: ['removetimeout', 'unto', 'cleartimeout'],
+    aliases: ['removetimeout', 'unto', 'cleartimeout', 'unmute', 'um'],
     description: 'Removes the timeout from a member.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ModerateMembers],
@@ -1129,6 +1131,7 @@ export const commands = [
   // --- SLOWMODE COMMAND ---
   {
     name: 'slowmode',
+    aliases: ['sm'],
     description: 'Sets the channel slowmode rate limit (0 to disable).',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageChannels],
@@ -1160,6 +1163,7 @@ export const commands = [
   // --- UNBAN COMMAND ---
   {
     name: 'unban',
+    aliases: ['ub'],
     description: 'Unbans a user from the server by User ID or @mention.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.BanMembers],
@@ -1332,6 +1336,7 @@ export const commands = [
   // --- NUKE COMMAND ---
   {
     name: 'nuke',
+    aliases: ['clonedelete'],
     description: 'Clone and delete the current channel.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.ManageChannels],
@@ -1356,6 +1361,7 @@ export const commands = [
   // --- MASSBAN COMMAND ---
   {
     name: 'massban',
+    aliases: ['mb'],
     description: 'Ban all members with a specific role.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.BanMembers],
@@ -1393,6 +1399,7 @@ export const commands = [
   // --- MASSKICK COMMAND ---
   {
     name: 'masskick',
+    aliases: ['mk'],
     description: 'Kick all members with a specific role.',
     category: 'moderation',
     permissions: [PermissionFlagsBits.KickMembers],

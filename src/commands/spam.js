@@ -191,6 +191,7 @@ export const commands = [
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {
     name: 'spampermit',
+    aliases: ['spambypass'],
     description: ' Grant a user permission to use the spam command. (Bot Owner only)',
     category: 'owner',
     permissions: [],
