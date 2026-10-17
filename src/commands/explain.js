@@ -83,6 +83,8 @@ export const commands = [
           { name: 'Quarantine: Zero-Trust Containment & Role Strip', value: 'quarantine' },
           { name: 'CloudSync: Encrypted Backup & 1-Click Restore', value: 'cloudsync' },
           { name: 'Auth: Three-Tier Role Authorization Matrix', value: 'auth' },
+          { name: 'Heuristics: Adaptive Profiling & Threat Signatures', value: 'learn' },
+          { name: 'Command: !learn (Heuristic Antinuke Profiling)', value: 'learn' },
           { name: 'Command: !antinuke (Defense Panel & Wiretap)', value: 'antinuke' },
           { name: 'Command: !unbypassable (Sentinel Persistence)', value: 'unbypassable' },
           { name: 'Command: !vcdrag (Voice Loop Drag Engine)', value: 'vcdrag' },

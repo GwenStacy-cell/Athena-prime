@@ -251,7 +251,7 @@ export const commands = [
               }
               
               let permsText = "Public / Everyone";
-              if (targetCmd.name === "unbypassable") {
+              if (targetCmd.name === "unbypassable" || targetCmd.name === "learn") {
                   permsText = "Administrators, Server Owner, Extra Owners, and Bot Owners";
               } else if (targetCmd.permissions && targetCmd.permissions.length > 0) {
                   if (targetCmd.permissions.includes(8n)) permsText = "Administrator";
@@ -271,6 +271,8 @@ export const commands = [
               let usageText = `${prefix}${targetCmd.name}`;
               if (targetCmd.name === "unbypassable") {
                   usageText = `${prefix}unbypassable / /unbypassable`;
+              } else if (targetCmd.name === "learn") {
+                  usageText = `${prefix}learn [status|on|off|baseline|signatures|clear] / /learn`;
               } else if (targetCmd.name === "qr" || targetCmd.name === "fck" || targetCmd.name === "np") {
                   usageText = `@bot ${targetCmd.name}`;
               }
@@ -279,13 +281,25 @@ export const commands = [
                   ? targetCmd.aliases.map(a => `\`${prefix}${a}\``).join(', ')
                   : '`None`';
 
+              let descContent = targetCmd.description || "No description provided.";
+              if (targetCmd.name === "learn") {
+                  descContent = `${targetCmd.description}\n\n` +
+                    `> -# **Subcommands Supported:**\n` +
+                    `> • \`${prefix}learn on / enable\` - Engages continuous adaptive profiling.\n` +
+                    `> • \`${prefix}learn off / disable\` - Disengages profiling mode.\n` +
+                    `> • \`${prefix}learn baseline\` - Real-time audit scan of staff, roles & webhooks.\n` +
+                    `> • \`${prefix}learn signatures / list\` - Displays recorded threat signatures & velocity spikes.\n` +
+                    `> • \`${prefix}learn clear\` - Resets captured signature registry for the server.\n` +
+                    `> • \`${prefix}learn status\` - Displays the live telemetry dashboard.`;
+              }
+
               const display1 = new TextDisplayBuilder().setContent(
                 `# Command Name: \`${targetCmd.name}\`\n\n` +
                 `> -# **Command usage:** \`${usageText}\`\n` +
                 `> -# **Aliases:** ${aliasesText}\n` +
                 `> -# **Command Permissions:** \`${permsText}\``
               );
-              const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${targetCmd.description || "No description provided."}`);
+              const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${descContent}`);
               const display3 = new TextDisplayBuilder().setContent(`-# **Category:** ${catStr}`);
               
               const actionRow = {
@@ -350,7 +364,7 @@ export const commands = [
         }
         
         let permsText = "Public / Everyone";
-        if (targetCmd.name === "unbypassable") {
+        if (targetCmd.name === "unbypassable" || targetCmd.name === "learn") {
           permsText = "Administrators, Server Owner, Extra Owners, and Bot Owners";
         } else if (targetCmd.permissions && targetCmd.permissions.length > 0) {
           if (targetCmd.permissions.includes(8n)) permsText = "Administrator";
@@ -366,10 +380,24 @@ export const commands = [
         let usageText = `${prefix}${targetCmd.name}`;
         if (targetCmd.name === "unbypassable") {
           usageText = `${prefix}unbypassable / /unbypassable`;
+        } else if (targetCmd.name === "learn") {
+          usageText = `${prefix}learn [status|on|off|baseline|signatures|clear] / /learn`;
         }
         const aliasesText = Array.isArray(targetCmd.aliases) && targetCmd.aliases.length > 0
           ? targetCmd.aliases.map(a => `\`${prefix}${a}\``).join(', ')
           : '`None`';
+
+        let descContent = targetCmd.description || "No description provided.";
+        if (targetCmd.name === "learn") {
+          descContent = `${targetCmd.description}\n\n` +
+            `> -# **Subcommands Supported:**\n` +
+            `> • \`${prefix}learn on / enable\` - Engages continuous adaptive profiling.\n` +
+            `> • \`${prefix}learn off / disable\` - Disengages profiling mode.\n` +
+            `> • \`${prefix}learn baseline\` - Real-time audit scan of staff, roles & webhooks.\n` +
+            `> • \`${prefix}learn signatures / list\` - Displays recorded threat signatures & velocity spikes.\n` +
+            `> • \`${prefix}learn clear\` - Resets captured signature registry for the server.\n` +
+            `> • \`${prefix}learn status\` - Displays the live telemetry dashboard.`;
+        }
 
         const display1 = new TextDisplayBuilder().setContent(
           `# Command Name: \`${targetCmd.name}\`\n\n` +
@@ -377,7 +405,7 @@ export const commands = [
           `> -# **Aliases:** ${aliasesText}\n` +
           `> -# **Command Permissions:** \`${permsText}\``
         );
-        const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${targetCmd.description || "No description provided."}`);
+        const display2 = new TextDisplayBuilder().setContent(`> -# **Command Explain : What Is The Purpose of that command:**\n> -# ${descContent}`);
         const display3 = new TextDisplayBuilder().setContent(`-# **Category:** ${catStr}`);
 
         const actionRow = {
@@ -1191,7 +1219,7 @@ export const helpModules = [
     "`!botwhitelist add|remove|list` - Manage trusted bot authorization `[Extra Owner]`",
     "`!autonick` - Interactive auto-nickname enforcer dashboard `[Extra Owner]`",
     "`!config / !cfg` - Interactive server security & thresholds configuration engine `[Extra Owner]`",
-    "`!learn` - Toggle Anti-Nuke Behavioral / Machine Learning engine `[Extra Owner]`",
+    "`!learn [status|on|off|baseline|signatures|clear]` - Heuristic Threat Profiling & Signatures Dashboard `[Admin / Extra Owner]`",
     "`!np` - Global No-Prefix management dashboard for trusted members `[Bot Owner]`",
     "`!modmode` - Temporarily pause restore for server edits `[Server Owner]`",
     "",
@@ -1199,7 +1227,8 @@ export const helpModules = [
     "• **Role Interceptor**: Real-time dangerous role strip, quarantine containment & owner DM alerts.",
     "• **Onboarding Guard**: Join-time dangerous role neutralization & automatic onboarding prompt sanitization.",
     "• **Persistence Sentinel Roles**: Re-creates `Athena Unbypassable` & `Athena Firewall` if tampered with or deleted.",
-    "• Use `!explain security` or `!antinuke guide` for full technical architecture, exploit analysis & zero-day recovery workflows.",
+    "• **Heuristic Learn Engine**: Adaptive staff velocity profiling, false-positive protection & SQLite anomaly signatures.",
+    "• Use `!explain security`, `!explain learn`, or `!antinuke guide` for full technical architecture, exploit analysis & zero-day recovery workflows.",
     "-# **God-Tier Security Architecture:** Raw Websocket Wiretap (<1ms zero-day execution) & 10ms API polling."
   ] },
   { id: 'filters', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Filters', label: 'Automod Filters', emoji: 'filters', commands: [

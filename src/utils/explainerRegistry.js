@@ -311,6 +311,56 @@ Athena Prime separates security administration into distinct, tamper-proof tiers
       }
     ]
   }
+  ,
+  learn: {
+    id: 'learn',
+    label: 'Heuristic Threat Profiling & Learn Engine',
+    aliases: ['heuristics', 'ai', 'behavioral', 'ml', 'profiling', 'signature', 'signatures'],
+    title: 'Adaptive Heuristic Profiling & Threat Signature Engine | <a:atheNATICK:1557841381630681106>',
+    description: 'Interactive dashboard, staff velocity baselining, and rogue attack signature recording.',
+    pages: [
+      {
+        pageTitle: 'Interactive Dashboard & Telemetry Metrics',
+        content:
+`# 1. Interactive Components V2 Dashboard (\`!learn\` / \`!learn status\`)
+The **Learn Mode Dashboard** provides real-time oversight of Athena's adaptive behavioral intelligence:
+• **Live Telemetry Status:**
+  - <a:uptime:1552608831060844575> **Active (Adaptive Profiling Engaged)**: Continuous profiling is actively indexing legitimate staff action velocity.
+  - <:off:1533844858983157851> **Inactive / Standby**: Threat learning is dormant while static deterministic velocity tripwires protect the guild.
+• **Core Telemetry Metrics Tracked:**
+  - **Threat Signatures Captured:** Rogue and anomalous attack patterns fingerprinted into SQLite storage.
+  - **Baseline Staff Actions Profiled:** Aggregate legitimate staff actions indexed across channels, roles, and webhooks.
+  - **Staff Accounts Indexed:** Whitelisted administrative accounts profiled for normal velocity baselines.
+  - **False-Positive Guard Status:** Active verification preventing legitimate administrators from being penalized during normal maintenance.
+  - **Last Recorded Event & Timestamp:** Discord relative timestamp and last logged event type.
+• **Interactive Components V2 Controls:**
+  - \`[Engage Learning]\` / \`[Disengage Learning]\`: Toggles continuous adaptive profiling on or off.
+  - \`[Run Baseline Scan]\`: Triggers on-demand full audit scan across current staff, elevated roles, and webhooks.
+  - \`[View Signatures]\`: Displays paginated view of fingerprinted anomaly records.
+  - \`[Clear History]\`: Resets captured signature registry for the server.
+  - \`[Refresh]\`: Re-fetches current live SQLite metrics and re-renders container.`
+      },
+      {
+        pageTitle: 'Subcommands, SQLite Engine & Slash Support',
+        content:
+`# 2. Comprehensive Subcommand Suite (Prefix & Slash Supported)
+Athena Prime supports full parity across standard text prefixes (\`!learn\`) and Discord slash commands (\`/learn\`):
+• \`!learn on\` / \`!learn enable\`: Engages continuous adaptive profiling.
+• \`!learn off\` / \`!learn disable\`: Disengages profiling mode.
+• \`!learn baseline\`: Performs a real-time audit scan of server staff members, elevated roles, and webhooks to establish a clean initial baseline.
+• \`!learn signatures\` / \`!learn list\`: Displays the recent threat signatures and velocity anomaly patterns recorded for the server.
+• \`!learn clear\`: Resets the recorded signature registry for the guild.
+• \`!learn status\`: Displays the live telemetry dashboard.
+
+# 3. Persistent SQLite Signature & Baseline Engine (\`src/database.js\`)
+• **Database Methods:** Powered by dedicated storage pipelines: \`getNukeSignatures()\`, \`addNukeSignature()\`, \`clearNukeSignatures()\`, \`getLearnBaseline()\`, and \`recordBaselineAction()\`.
+• **Infinite Bloat Protection:** Threat signatures and event history are cleanly capped and circular-buffered to maintain microsecond query performance without database degradation.
+
+# 4. Slash Command Support (\`/learn\`)
+• Registered as a Discord Chat Input command with an \`action\` option choice: \`status\`, \`enable\`, \`disable\`, \`baseline\`, \`signatures\`, and \`clear\`.`
+      }
+    ]
+  }
 };
 
 /**
@@ -833,12 +883,24 @@ export const DETAILED_COMMANDS = {
     category: 'Security & Access Control',
     clearance: 'Admin Tier / Server Owner / Extra Owners',
     syntax: '!learn [status|on|off|baseline|signatures|clear]',
-    purpose: 'Configures and monitors Athena Prime adaptive heuristic profiling, staff velocity baselining, and rogue attack signature recording.',
+    purpose: 'Interactive Heuristic Threat Profiling & Machine Learning engine that establishes staff velocity baselines and fingerprints rogue attack signatures.',
     architecture: 
-`• **Adaptive Baseline Profiling:** Passively tracks legitimate administrator actions to establish non-destructive velocity baselines, eliminating false-positive velocity tripwires.
-• **Attack Signature Fingerprinting:** Captures unauthorized attack patterns (action type, target bitfields, burst time delta) into an SQLite-backed threat signature registry.
-• **False-Positive Immunity:** Authorized administrators are strictly protected and never condemned or punished during training mode.
-• **Interactive Components V2 Dashboard:** Features live telemetry indicators, real-time baseline auditing, and 1-click management controls.`,
+`• **Interactive Components V2 Dashboard (\`!learn\` / \`!learn status\`):**
+  - **Live Telemetry Status:** <a:uptime:1552608831060844575> \`Active (Adaptive Profiling Engaged)\` vs <:off:1533844858983157851> \`Inactive / Standby\`.
+  - **Metrics Tracked:** Threat Signatures Captured, Baseline Staff Actions Profiled, Staff Accounts Indexed, False-Positive Guard Status, and Last Recorded Event & Timestamp.
+  - **Interactive 1-Click Buttons:** \`[Engage/Disengage Learning]\`, \`[Run Baseline Scan]\`, \`[View Signatures]\`, \`[Clear History]\`, and \`[Refresh]\`.
+• **Full Subcommand Suite (Prefix & Slash Supported):**
+  - \`!learn on\` / \`!learn enable\`: Engages continuous adaptive profiling.
+  - \`!learn off\` / \`!learn disable\`: Disengages profiling mode.
+  - \`!learn baseline\`: Real-time audit scan of server staff members, elevated roles, and webhooks to establish a clean initial baseline.
+  - \`!learn signatures\` / \`!learn list\`: Displays recent threat signatures and velocity anomaly patterns.
+  - \`!learn clear\`: Resets recorded signature registry for the guild.
+  - \`!learn status\`: Displays the live telemetry dashboard.
+• **Persistent SQLite Signature & Baseline Engine (\`src/database.js\`):**
+  - Powered by \`getNukeSignatures()\`, \`addNukeSignature()\`, \`clearNukeSignatures()\`, \`getLearnBaseline()\`, and \`recordBaselineAction()\`.
+  - Threat signatures are cleanly capped in a circular buffer to prevent database bloat.
+• **Slash Command Support (\`/learn\`):**
+  - Full slash command implementation with \`action\` choices (\`status\`, \`enable\`, \`disable\`, \`baseline\`, \`signatures\`, \`clear\`).`,
     example: '!learn baseline'
   },
 
@@ -1247,6 +1309,11 @@ ${matchedCmd.architecture}
  */
 export function buildTopicsDirectoryContainer(prefix = '!') {
   const selectOptions = [
+    {
+      label: 'Heuristic Threat Profiling',
+      description: 'Adaptive staff baselining, ML profiling & threat signatures',
+      value: 'learn'
+    },
     {
       label: 'Security & Role Exploits',
       description: 'Linked Roles, 60s audit threshold & zero-day wiretap',
