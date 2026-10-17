@@ -12,7 +12,7 @@ import {
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
-import { EMOJI_TICK, EMOJI_WRONG, EMOJI_WARN } from '../utils/countingEngine.js';
+
 
 export const EMOJI_STATUS = '<a:uptime:1552608831060844575>';
 
@@ -167,7 +167,7 @@ export async function handleCountingButton(interaction) {
           components: [{
             type: 17,
             components: [
-              { type: 10, content: `## Count Reset | ${EMOJI_TICK}` },
+              { type: 10, content: `## Count Reset | <a:atheNATICK:1557841381630681106>` },
               { type: 14, divider: true },
               { type: 10, content: `-# The count was reset back to **0** by ${interaction.user}.\n-# Next count is **1**!` }
             ]
@@ -243,7 +243,7 @@ export async function handleCountingMenu(interaction) {
     const welcomeContainer = {
       type: 17,
       components: [
-        { type: 10, content: `## Counting Channel Active | ${EMOJI_TICK}` },
+        { type: 10, content: `## Counting Channel Active | <a:atheNATICK:1557841381630681106>` },
         { type: 14, divider: true },
         { 
           type: 10, 
@@ -346,7 +346,7 @@ export const commands = [
         const welcomeContainer = {
           type: 17,
           components: [
-            { type: 10, content: `## Counting Channel Active | ${EMOJI_TICK}` },
+            { type: 10, content: `## Counting Channel Active | <a:atheNATICK:1557841381630681106>` },
             { type: 14, divider: true },
             { 
               type: 10, 
@@ -380,7 +380,7 @@ export const commands = [
               components: [{
                 type: 17,
                 components: [
-                  { type: 10, content: `## Count Reset | ${EMOJI_TICK}` },
+                  { type: 10, content: `## Count Reset | <a:atheNATICK:1557841381630681106>` },
                   { type: 14, divider: true },
                   { type: 10, content: `-# The count was reset back to **0** by ${message.author}.\n-# Next count is **1**!` }
                 ]

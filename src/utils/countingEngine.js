@@ -1,11 +1,11 @@
 import db from '../database.js';
 
-export const EMOJI_TICK = '<a:atheNATICK:1557841381630681106>';
-export const EMOJI_WRONG = '<a:Steal:1557873549266657290>';
+export const EMOJI_TICK = '<:Bold_White_Check_Mark_on_Black:1560884427620618341>';
+export const EMOJI_WRONG = '<:hedwig_wrong:1560881643869306982>';
 export const EMOJI_WARN = '<a:zzz_Exclamation:1533859965649817630>';
 
-export const ID_TICK = '1557841381630681106';
-export const ID_WRONG = '1557873549266657290';
+export const ID_TICK = '1560884427620618341';
+export const ID_WRONG = '1560881643869306982';
 export const ID_WARN = '1533859965649817630';
 
 /**
@@ -82,7 +82,7 @@ export async function handleCountingMessage(message, config) {
     }
 
     // RUINED
-    await message.react(ID_WRONG).catch(() => null);
+    await message.react(EMOJI_WRONG).catch(() => message.react(ID_WRONG)).catch(() => null);
     const finalCount = currentCount;
     const highScore = Math.max(config.highScore || 0, finalCount);
     
@@ -124,7 +124,7 @@ export async function handleCountingMessage(message, config) {
     }
 
     // RUINED
-    await message.react(ID_WRONG).catch(() => null);
+    await message.react(EMOJI_WRONG).catch(() => message.react(ID_WRONG)).catch(() => null);
     const finalCount = currentCount;
     const highScore = Math.max(config.highScore || 0, finalCount);
 
@@ -152,7 +152,7 @@ export async function handleCountingMessage(message, config) {
   }
 
   // 4. Correct number!
-  await message.react(ID_TICK).catch(() => null);
+  await message.react(EMOJI_TICK).catch(() => message.react(ID_TICK)).catch(() => null);
   config.currentCount = parsedNum;
   config.lastUserId = message.author.id;
   config.lastMessageId = message.id;

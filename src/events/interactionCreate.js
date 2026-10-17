@@ -1752,34 +1752,59 @@ if (interaction.customId === "modal_2fa_setup") {
       }
 
       // MEDIA PROMPT BUTTONS
-      if (interaction.customId === 'dl_mp4' || interaction.customId === 'dl_mp3') {
-        const originalMessageId = interaction.message.reference ? interaction.message.reference.messageId : null;
-        if (!originalMessageId) return interaction.reply({ content: 'Original message not found.', flags: MessageFlags.Ephemeral });
-        
-        try {
-          const originalMessage = await interaction.channel.messages.fetch(originalMessageId);
+      if (interaction.customId.startsWith('dl_mp4') || interaction.customId.startsWith('dl_mp3')) {
+        const isMp4 = interaction.customId.startsWith('dl_mp4');
+        const parts = interaction.customId.split('_');
+        const customMessageId = parts.length > 2 ? parts[2] : null;
+        const originalMessageId = customMessageId || (interaction.message.reference ? interaction.message.reference.messageId : null);
+
+        let url = customMessageId ? downloader.mediaUrlCache.get(customMessageId) : null;
+        let originalMessage = null;
+
+        if (originalMessageId) {
+          try {
+            originalMessage = await interaction.channel.messages.fetch(originalMessageId).catch(() => null);
+          } catch (e) {}
+        }
+
+        if (!url && originalMessage) {
           const urlMatch = originalMessage.content.match(/(https?:\/\/[^\s]+)/);
-          const url = urlMatch ? urlMatch[0] : null;
+          url = urlMatch ? urlMatch[0] : null;
+        }
 
-          if (!url) return interaction.reply({ content: 'Could not extract URL.', flags: MessageFlags.Ephemeral });
+        if (!url) {
+          return interaction.reply({ content: '-# **Could not retrieve media URL from that post.**', flags: MessageFlags.Ephemeral });
+        }
 
-          await interaction.update({ content: `-# **Downloading ${interaction.customId === 'dl_mp4' ? 'MP4' : 'MP3'}...**`, components: [] });
-          
-          let success = false;
-          if (interaction.customId === 'dl_mp4') {
+        if (!originalMessage) {
+          originalMessage = {
+            id: originalMessageId || interaction.id,
+            author: interaction.user,
+            channel: interaction.channel,
+            content: url,
+            delete: async () => {},
+            reply: async (data) => interaction.channel.send(data)
+          };
+        }
+
+        await interaction.update({ content: `-# **Downloading ${isMp4 ? 'MP4' : 'MP3'}...**`, components: [] });
+
+        let success = false;
+        try {
+          if (isMp4) {
             success = await downloader.processMediaLink(interaction.client, originalMessage, url);
           } else {
             success = await downloader.processMp3Link(interaction.client, originalMessage, url);
           }
-          
+
           if (!success) {
-            await interaction.message.edit({ content: `-# **Failed to download media.**` });
+            await interaction.message.edit({ content: `-# **Failed to download media.**` }).catch(() => null);
           } else {
             await interaction.message.delete().catch(() => null);
           }
         } catch (error) {
-          console.error('Media Prompt Error:', error);
-          await interaction.update({ content: `-# **An error occurred.**`, components: [] });
+          console.error('[Media Prompt Error]:', error);
+          await interaction.message.edit({ content: `-# **An error occurred while downloading.**` }).catch(() => null);
         }
         return;
       }
