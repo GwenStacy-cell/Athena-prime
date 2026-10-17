@@ -439,8 +439,8 @@ export function formatDatabaseMetrics(m, options = {}) {
     `> -# **News Feeds:** \`${m.newsChannels} channels (${m.newsFeedsCount} feeds, ${m.newsRolesCount} roles) | Auto-React: ${m.autoReactChannels} channels\`\n` +
     `> -# **Tickets & Community:** \`${m.ticketSetups || 0} setups (${m.ticketsActive || 0} active, ${m.ticketAiTriageServers || 0} AI triage) | Giveaways: ${m.giveaways}\`\n` +
     `> -# **Economy & Commerce:** \`${m.economyUsers || 0} active ledgers | Shop Items: ${m.shopItemsCount || 0} perks listed across ${m.shopGuilds || 0} servers\`\n` +
-    `> -# **Casino & Minigames:** \`${m.minigamesUsers || 0} players (${m.minigamesWagered ? m.minigamesWagered.toLocaleString() : 0} coins wagered) | Studio Templates: ${m.studioTemplates || 0} layouts\`\n` +
-    `> -# **Neural AI & Themes:** \`AI Mode: ${m.aiModeServers || 0} servers (${m.aiDedicatedChannels || 0} channels, ${m.aiToxicityServers || 0} toxicity filters) | Rank Roles: ${m.rankRewardsCount || 0} milestones, ${m.customThemesCount || 0} themed profiles\`\n` +
+    `> -# **Neural AI Systems:** \`AI Mode: ${m.aiModeServers || 0} servers (${m.aiDedicatedChannels || 0} channels) | Toxicity Filters: ${m.aiToxicityServers || 0} | AI Triage: ${m.ticketAiTriageServers || 0} servers | Athena AI Guide: 257+ cmds RAG & Action Buttons active\`\n` +
+    `> -# **Custom Canvas Themes:** \`${m.customThemesCount || 0} themed profiles (Hogwarts, Athena, Cyberpunk, Anime) | Rank Roles: ${m.rankRewardsCount || 0} milestones\`\n` +
     `> -# **Suggestions, Leveling & Starboard:** \`${m.suggestionChannels || 0} suggestions, ${m.starboardChannels || 0} starboards, XP: ${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
     `> -# **Counting Engine:** \`${m.countingActive || 0} channels (${m.countingGuilds || 0} guilds) | Peak: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak, ${m.countingTotalUsers || 0} counters\`\n` +
     `> -# **Auto-Quotes & Sticky:** \`${m.quoteChannels} quote channels, ${m.stickyChannels || 0} sticky channels, ${m.adel} auto-delete channels\`\n` +
