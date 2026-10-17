@@ -4,6 +4,21 @@ import cv2 from '../cv2.js';
 import { generateAIResponse, formatAIToGreyMarkdown } from '../utils/ai.js';
 
 /**
+ * Resolves the primary loading emoji (loading1 or fallback loading)
+ */
+function resolveLoadingEmoji(guild, client) {
+  const found =
+    guild?.emojis?.cache?.find(e => e.name.toLowerCase() === 'loading1') ||
+    client?.emojis?.cache?.find(e => e.name.toLowerCase() === 'loading1') ||
+    guild?.emojis?.cache?.find(e => e.name.toLowerCase() === 'loading') ||
+    client?.emojis?.cache?.find(e => e.name.toLowerCase() === 'loading');
+  if (found) {
+    return `<${found.animated ? 'a:' : ':'}${found.name}:${found.id}>`;
+  }
+  return '<a:loading:1542155051286396938>';
+}
+
+/**
  * Builds an accent borderless CV2 container for Athena AI responses
  */
 export function buildAICV2Container(user, prompt, aiResult, accentColor = '#00e5ff') {
@@ -73,9 +88,21 @@ export const commands = [
 
       const cfg = db.getGuildConfig(message.guild?.id || '0');
       const accentColor = cfg?.accentColor || '#00e5ff';
+      const loadingEmoji = resolveLoadingEmoji(message.guild, message.client);
+
+      const thinkingContainer = {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `-# ${loadingEmoji} **Athena Neural Engine is synthesizing response...**`
+          }
+        ]
+      };
 
       const thinkingMsg = await message.reply({
-        content: '-# <a:uptime:1552608831060844575> **Athena Neural Engine is synthesizing response...**'
+        components: [thinkingContainer],
+        flags: MessageFlags.IsComponentsV2
       }).catch(() => null);
 
       const aiResult = await generateAIResponse(prompt, {
@@ -98,7 +125,12 @@ export const commands = [
           ]
         };
         if (thinkingMsg) {
-          await thinkingMsg.delete().catch(() => null);
+          try {
+            await cv2.edit(thinkingMsg, { components: [errorContainer], flags: MessageFlags.IsComponentsV2 });
+            return;
+          } catch {
+            await thinkingMsg.delete().catch(() => null);
+          }
         }
         return message.reply({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
           return message.channel.send({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 });
@@ -107,7 +139,12 @@ export const commands = [
 
       const container = buildAICV2Container(message.author, prompt, aiResult, accentColor);
       if (thinkingMsg) {
-        await thinkingMsg.delete().catch(() => null);
+        try {
+          await cv2.edit(thinkingMsg, { components: [container], flags: MessageFlags.IsComponentsV2 });
+          return;
+        } catch {
+          await thinkingMsg.delete().catch(() => null);
+        }
       }
       return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => {
         return message.channel.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
@@ -115,7 +152,24 @@ export const commands = [
     },
 
     async executeSlash(interaction) {
-      await interaction.deferReply();
+      const loadingEmoji = resolveLoadingEmoji(interaction.guild, interaction.client);
+      const thinkingContainer = {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `-# ${loadingEmoji} **Athena Neural Engine is synthesizing response...**`
+          }
+        ]
+      };
+
+      await interaction.reply({
+        components: [thinkingContainer],
+        flags: MessageFlags.IsComponentsV2
+      }).catch(async () => {
+        await interaction.deferReply().catch(() => null);
+      });
+
       const prompt = interaction.options.getString('prompt');
       const cfg = db.getGuildConfig(interaction.guild?.id || '0');
       const accentColor = cfg?.accentColor || '#00e5ff';
