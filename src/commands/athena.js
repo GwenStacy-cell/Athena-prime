@@ -1,4 +1,4 @@
-import { MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from 'discord.js';
+import { MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { 
@@ -9,6 +9,8 @@ import {
   getGuideSession,
   clearGuideSession
 } from '../utils/botGuideKnowledge.js';
+import { getSecurityStatusPanel, getAutoModPanel } from './security.js';
+import { buildTicketManagerPayload, buildTicketPanelPayload } from './ticketpanel.js';
 
 const TICK = '<a:atheNATICK:1557841381630681106>';
 
@@ -266,6 +268,258 @@ export async function handleAthenaGuideButtons(interaction) {
     return cv2.respond(interaction, hub, 7).catch(() => null);
   }
 
+  // --- ONE-CLICK INTERACTIVE ACTION BUTTON HANDLERS ---
+  if (customId && customId.startsWith('athena_act_')) {
+    const act = customId.replace('athena_act_', '');
+
+    // 1. Apply Hogwarts Theme
+    if (act === 'ranktheme_hogwarts') {
+      db.setUserRankTheme(user.id, 'hogwarts');
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## Rank Card Theme Updated | ${TICK}\n` +
+                  `-# **Applied Theme:** \`Hogwarts (Cinematic Animated Plate)\`\n` +
+                  `-# Your XP Rank Card is now equipped with Hogwarts Castle, soaring Hedwig the owl, and glowing altar candles.\n` +
+                  `-# Run \`${prefix}rank\` in chat anytime to render your live animated XP card!`
+              }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 2. Apply Athena Theme
+    if (act === 'ranktheme_athena') {
+      db.setUserRankTheme(user.id, 'athena');
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## Rank Card Theme Updated | ${TICK}\n` +
+                  `-# **Applied Theme:** \`Athena (Sleek Obsidian Stone)\`\n` +
+                  `-# Your XP Rank Card is now set to the classic Athena Obsidian theme.\n` +
+                  `-# Run \`${prefix}rank\` in chat anytime to render your card!`
+              }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 3. Preview XP Card
+    if (act === 'rank_preview') {
+      const currentTheme = db.getUserRankTheme(user.id);
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## XP Rank Card Status | ${TICK}\n` +
+                  `-# **Member:** <@${user.id}> \`(${user.id})\`\n` +
+                  `-# **Active Theme:** \`${currentTheme}\`\n` +
+                  `-# **How to Render:** Run \`${prefix}rank\` in any text channel to generate your full high-res XP banner.\n` +
+                  `-# You can switch themes on the spot using the grey action buttons above.`
+              }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 4. Open Ticket Manager
+    if (act === 'ticket_manager') {
+      if (!member?.permissions?.has(PermissionFlagsBits.Administrator)) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Only server administrators can launch the Ticket Panel Manager.\n-# Non-admins can use \`${prefix}ticket\` to open a support ticket.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const payload = buildTicketManagerPayload(guild.id);
+      return cv2.respond(interaction, payload, 7).catch(() => null);
+    }
+
+    // 5. Create Support Ticket
+    if (act === 'ticket_create') {
+      const payload = buildTicketPanelPayload(guild.id);
+      return cv2.respond(interaction, payload, 7).catch(() => null);
+    }
+
+    // 6. Inspect Security Status
+    if (act === 'security_status') {
+      const hasClearance = member?.permissions?.has(PermissionFlagsBits.ModerateMembers) || 
+                           member?.permissions?.has(PermissionFlagsBits.Administrator) || 
+                           guild.ownerId === user.id;
+      if (!hasClearance) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Viewing full security status requires Moderator or Administrator clearance.\n-# Athena Prime antinuke shield is actively monitoring server integrity.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const panel = await getSecurityStatusPanel(guild);
+      return cv2.respond(interaction, panel, 7).catch(() => null);
+    }
+
+    // 7. Enable All Security
+    if (act === 'security_enable_all') {
+      const isOwner = guild.ownerId === user.id;
+      if (!isOwner) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Clearance Notice | ${TICK}\n-# Enabling all security modules requires **Server Owner** clearance.\n-# As a server staff member, you can run \`${prefix}security status\` to inspect current protections.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## One-Click Security Enforcement | ${TICK}\n` +
+                  `-# **Server Owner Detected:** <@${user.id}>\n` +
+                  `-# To initialize the full autonomous antinuke and anti-raid suite with role hierarchy checks, please execute \`${prefix}security enable all\` in this channel.\n` +
+                  `-# This guarantees all roles, honeypots, and quarantine channels are bound directly to the database.`
+              }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 8. View Whitelist
+    if (act === 'security_whitelist') {
+      const panel = await getSecurityStatusPanel(guild);
+      return cv2.respond(interaction, panel, 7).catch(() => null);
+    }
+
+    // 9. Open AutoMod Panel
+    if (act === 'automod_panel') {
+      if (!member?.permissions?.has(PermissionFlagsBits.Administrator)) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Only server administrators can configure the AutoMod Dashboard.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const panel = await getAutoModPanel(guild);
+      return cv2.respond(interaction, panel, 7).catch(() => null);
+    }
+
+    // 10. Toggle AI Toxicity Shield
+    if (act === 'automod_ai') {
+      if (!member?.permissions?.has(PermissionFlagsBits.Administrator)) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Only server administrators can toggle AI Toxicity AutoMod.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const current = db.getGuildConfig(guild.id).aiToxicityEnabled === true;
+      const turnOn = !current;
+      db.updateGuildConfig(guild.id, { aiToxicityEnabled: turnOn });
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## AI Toxicity & Sentiment AutoMod | ${TICK}\n` +
+                  `-# **Status:** ${turnOn ? '`Active / Shielding`' : '`Disabled`'}\n` +
+                  `-# ${turnOn ? 'Doxxing attempts (IPs, SSNs, phone numbers), severe toxicity, and violent threats will be autonomously intercepted.' : 'AI Toxicity shield is now deactivated.'}`
+              }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 11. Generic / Custom Action Handler
+    if (act.startsWith('cmd_status_') || act.startsWith('cmd_help_') || act.startsWith('custom_') || act === 'unlockdown' || act === 'lockdown_status' || act === 'quarantine_info' || act === 'verify_setup' || act === 'welcome_setup' || act === 'welcome_test' || act === 'giveaway_manager') {
+      const label = interaction.component?.label || 'Action';
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## Interactive Action Executed | ${TICK}\n` +
+                  `-# **Action Button:** \`[${label}]\`\n` +
+                  `-# **Executed By:** <@${user.id}>\n` +
+                  `-# Athena Prime processed your one-click action. You can ask further follow-up questions using **Ask Follow-Up Doubt** above!`
+              }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+  }
+
   // --- MODAL: ASK FOLLOW-UP DOUBT ---
   if (customId === 'athena_ask_followup') {
     const activeSession = getGuideSession(guild?.id || '0', user.id, interaction.channelId);
@@ -277,8 +531,8 @@ export async function handleAthenaGuideButtons(interaction) {
 
     const doubtInput = new TextInputBuilder()
       .setCustomId('athena_doubt_input')
-      .setLabel(`FOLLOW-UP DOUBT (${topicCmd})`.slice(0, 45))
-      .setPlaceholder(`Ask any doubt about ${topicCmd} (e.g. how to customize, permissions, troubleshooting)...`.slice(0, 100))
+      .setLabel(`FOLLOW-UP DOUBT OR BUTTON REQUEST`.slice(0, 45))
+      .setPlaceholder(`Ask a doubt or request a button (e.g. "give me a button for hogwarts theme")...`.slice(0, 100))
       .setStyle(TextInputStyle.Paragraph)
       .setMinLength(2)
       .setMaxLength(1000)

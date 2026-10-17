@@ -51,8 +51,7 @@ export function buildTicketPanelPayload(guildId) {
   return { components: [container], flags: 32768 };
 }
 
-export async function updateManagerMessage(message) {
-  const guildId = message.guild.id;
+export function buildTicketManagerPayload(guildId) {
   const config = db.getTickets(guildId);
 
   const targetChannelText = config.targetChannelId ? `<#${config.targetChannelId}>` : 'Current Channel';
@@ -138,7 +137,11 @@ export async function updateManagerMessage(message) {
   );
 
   container.components.push(row3.toJSON(), row4.toJSON(), row1.toJSON(), row2.toJSON());
-  const payload = { components: [container], flags: 32768 };
+  return { components: [container], flags: 32768 };
+}
+
+export async function updateManagerMessage(message) {
+  const payload = buildTicketManagerPayload(message.guild.id);
 
   if (message.author?.id === message.client.user.id) {
     await message.edit(payload).catch(() => null);

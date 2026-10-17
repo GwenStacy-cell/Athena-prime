@@ -670,6 +670,222 @@ export function findRelevantKnowledge(query = '', prefix = '!', allCommands = []
 }
 
 /**
+ * Detects if the user's prompt or follow-up is asking for a Discord action button.
+ */
+export function detectRequestedButton(prompt, primaryCommand = '') {
+  if (!prompt || typeof prompt !== 'string') return null;
+  const lower = prompt.toLowerCase();
+  
+  const hasButtonWord = /\b(button|btn|provide a button|give me a button|add a button|i want a button|need a button|make a button|can i get a button)\b/i.test(lower);
+  if (!hasButtonWord) return null;
+
+  if (/hogwarts/i.test(lower)) {
+    return { label: 'Apply Hogwarts Theme', actionId: 'ranktheme_hogwarts', command: 'ranktheme' };
+  }
+  if (/athena.*(theme|card)|god of war/i.test(lower)) {
+    return { label: 'Apply Athena Theme', actionId: 'ranktheme_athena', command: 'ranktheme' };
+  }
+  if (/preview.*(rank|card|theme)/i.test(lower)) {
+    return { label: 'Preview XP Card', actionId: 'rank_preview', command: 'ranktheme' };
+  }
+  if (/ticket.*(panel|manager)/i.test(lower)) {
+    return { label: 'Open Ticket Manager', actionId: 'ticket_manager', command: 'ticketpanel' };
+  }
+  if (/create.*ticket|open.*ticket/i.test(lower)) {
+    return { label: 'Create Support Ticket', actionId: 'ticket_create', command: 'ticket' };
+  }
+  if (/enable.*all.*security/i.test(lower)) {
+    return { label: 'Enable All Security', actionId: 'security_enable_all', command: 'security' };
+  }
+  if (/security.*(status|inspect|check)/i.test(lower)) {
+    return { label: 'Inspect Security Status', actionId: 'security_status', command: 'security' };
+  }
+  if (/whitelist/i.test(lower)) {
+    return { label: 'View Whitelist', actionId: 'security_whitelist', command: 'security' };
+  }
+  if (/automod.*(panel|dashboard)/i.test(lower)) {
+    return { label: 'Open AutoMod Panel', actionId: 'automod_panel', command: 'automod' };
+  }
+  if (/ai.*(toxicity|shield|dox)/i.test(lower)) {
+    return { label: 'Toggle AI Toxicity Shield', actionId: 'automod_ai', command: 'automod' };
+  }
+  if (/unlock/i.test(lower)) {
+    return { label: 'Emergency Unlockdown', actionId: 'unlockdown', command: 'lockdown' };
+  }
+
+  // Extract custom action phrase from e.g. "give me a button to <action>"
+  const match = lower.match(/(?:button|btn)(?:\s+(?:to|for|that))\s+([^.,!?]+)/i) ||
+                lower.match(/(?:give|provide|add|make|want)\s+(?:me\s+)?(?:a\s+)?button(?:\s+to|\s+for)?\s+([^.,!?]+)/i);
+  if (match && match[1]) {
+    const rawAction = match[1].trim();
+    const label = rawAction
+      .split(' ')
+      .slice(0, 4)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ')
+      .slice(0, 45);
+    return {
+      label: label || 'Execute Requested Action',
+      actionId: 'custom_' + rawAction.replace(/[^a-z0-9]/gi, '_').slice(0, 30),
+      rawAction
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Builds the array of 1-4 one-click action buttons (strictly Grey / style: 2) for any command.
+ */
+export function getCommandActionButtons(primaryCommand = '', prompt = '', requestedButton = null) {
+  const cmd = (primaryCommand || '').toLowerCase().trim();
+  const buttons = [];
+
+  // If the user requested a specific button, prioritize it as #1
+  if (requestedButton && requestedButton.label) {
+    buttons.push({
+      type: 2,
+      custom_id: `athena_act_${requestedButton.actionId}`,
+      label: requestedButton.label,
+      style: 2
+    });
+  }
+
+  if (cmd === 'ranktheme' || cmd === 'rank' || cmd === 'level' || cmd === 'xp' || /rank|theme|hogwarts/i.test(cmd)) {
+    if (!buttons.some(b => b.custom_id === 'athena_act_ranktheme_hogwarts')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_ranktheme_hogwarts',
+        label: 'Apply Hogwarts Theme',
+        style: 2
+      });
+    }
+    if (!buttons.some(b => b.custom_id === 'athena_act_ranktheme_athena')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_ranktheme_athena',
+        label: 'Apply Athena Theme',
+        style: 2
+      });
+    }
+    if (!buttons.some(b => b.custom_id === 'athena_act_rank_preview')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_rank_preview',
+        label: 'Preview XP Card',
+        style: 2
+      });
+    }
+  } else if (cmd === 'ticket' || cmd === 'ticketpanel' || cmd === 'tickets' || /ticket/i.test(cmd)) {
+    if (!buttons.some(b => b.custom_id === 'athena_act_ticket_manager')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_ticket_manager',
+        label: 'Open Ticket Manager',
+        style: 2
+      });
+    }
+    if (!buttons.some(b => b.custom_id === 'athena_act_ticket_create')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_ticket_create',
+        label: 'Create Support Ticket',
+        style: 2
+      });
+    }
+  } else if (cmd === 'security' || cmd === 'antinuke' || cmd === 'ss' || /security|antinuke/i.test(cmd)) {
+    if (!buttons.some(b => b.custom_id === 'athena_act_security_status')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_security_status',
+        label: 'Inspect Security Status',
+        style: 2
+      });
+    }
+    if (!buttons.some(b => b.custom_id === 'athena_act_security_enable_all')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_security_enable_all',
+        label: 'Enable All Security',
+        style: 2
+      });
+    }
+    if (!buttons.some(b => b.custom_id === 'athena_act_security_whitelist')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_security_whitelist',
+        label: 'View Whitelist',
+        style: 2
+      });
+    }
+  } else if (cmd === 'automod' || cmd === 'filters' || /automod/i.test(cmd)) {
+    if (!buttons.some(b => b.custom_id === 'athena_act_automod_panel')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_automod_panel',
+        label: 'Open AutoMod Panel',
+        style: 2
+      });
+    }
+    if (!buttons.some(b => b.custom_id === 'athena_act_automod_ai')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_automod_ai',
+        label: 'Toggle AI Toxicity Shield',
+        style: 2
+      });
+    }
+  } else if (cmd === 'lockdown' || /lockdown/i.test(cmd)) {
+    if (!buttons.some(b => b.custom_id === 'athena_act_lockdown_status')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_lockdown_status',
+        label: 'Inspect Lockdown Status',
+        style: 2
+      });
+    }
+    if (!buttons.some(b => b.custom_id === 'athena_act_unlockdown')) {
+      buttons.push({
+        type: 2,
+        custom_id: 'athena_act_unlockdown',
+        label: 'Emergency Unlockdown',
+        style: 2
+      });
+    }
+  } else if (cmd === 'verify' || cmd === 'verification') {
+    buttons.push({
+      type: 2,
+      custom_id: 'athena_act_verify_setup',
+      label: 'Open Verification Setup',
+      style: 2
+    });
+  } else if (cmd === 'welcome') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_welcome_setup', label: 'Open Welcome Setup', style: 2 },
+      { type: 2, custom_id: 'athena_act_welcome_test', label: 'Test Welcome Card', style: 2 }
+    );
+  } else if (cmd === 'giveaway') {
+    buttons.push({
+      type: 2,
+      custom_id: 'athena_act_giveaway_manager',
+      label: 'Open Giveaway Manager',
+      style: 2
+    });
+  } else if (cmd) {
+    const capitalized = cmd.charAt(0).toUpperCase() + cmd.slice(1);
+    buttons.push(
+      { type: 2, custom_id: `athena_act_cmd_status_${cmd}`, label: `Inspect ${capitalized} Status`, style: 2 },
+      { type: 2, custom_id: `athena_act_cmd_help_${cmd}`, label: `View !${cmd} Help`, style: 2 }
+    );
+  }
+
+  return buttons.slice(0, 4).map(btn => ({
+    ...btn,
+    style: 2 // Strictly Grey / Secondary
+  }));
+}
+
+/**
  * Generates an instructive, step-by-step guidance response speaking as Athena Prime
  */
 export async function generateAthenaGuideResponse(userQuestion, { guild, user, member, channelId, prefix = '!', onProgress = null } = {}) {
@@ -730,6 +946,10 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
   const memberClearance = await resolveMemberClearance(guild, user, member);
   const requiredClearance = getCommandClearanceRequirement(primaryCmd, primaryCmdMeta);
   const canExecute = canMemberExecuteCommand(memberClearance, requiredClearance);
+
+  // One-click action buttons and user-requested buttons
+  const requestedButton = detectRequestedButton(cleanPrompt, primaryCmd);
+  const actionButtons = getCommandActionButtons(primaryCmd, cleanPrompt, requestedButton);
 
   // Check if requested capability exists in Athena Prime's command matrix
   const maxCmdScore = knowledge.matchedCommands.length > 0 ? knowledge.matchedCommands[0].score : 0;
@@ -877,6 +1097,12 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     '  • Database State & Persistence: mention which SQLite database methods or tables persist the configuration (e.g. `db.setNewsSetup`, `db.setRateChannel`, `db.updateGuildConfig`).',
     '  • Live Verification: tell the user how to test and verify that the command took effect (e.g. checking confirmation embed, checking `#security-logs`, or running a status command).',
     '',
+    'CRITICAL INTERACTIVE ONE-CLICK ACTION BUTTONS DIRECTIVE:',
+    '- Athena equips one-click grey action buttons directly on the Discord response card for commands: ' + (actionButtons.map(b => `[${b.label}]`).join(', ') || 'One-Click Actions') + '.',
+    '- You MUST conclude your response by explicitly informing the user that one-click action buttons are attached below.',
+    '- Even if the user did not ask for buttons, you MUST state that Athena can provide custom one-click buttons for any specific action or setting of this command, and invite them:',
+    '  "Need a custom one-click action button for this command? Tell me what button you want or click \'Ask Follow-Up Doubt\', and I will generate the interactive button directly for you!"',
+    '',
     'SPECIFIC GROUND TRUTH POLICIES:',
     '- When asked about Automated News Feeds or RSS News (!news, /news, news setup, news disable):',
     '  • Conduct a deep-dive analysis of `src/commands/news.js`, `src/database.js`, and `src/jobs/newsJob.js`:',
@@ -957,7 +1183,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
 
   if (!aiResult.success) {
     // Dynamic codebase synthesizer in case all external AI edge endpoints are offline
-    const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets, memberClearance, requiredClearance, canExecute, typoResult);
+    const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets, memberClearance, requiredClearance, canExecute, typoResult, actionButtons, requestedButton);
     const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, fallbackText, memberClearance, canExecute);
     const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
       matchedCommands: knowledge.matchedCommands,
@@ -973,6 +1199,8 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
       latencyMs: Math.max(12, Date.now() - startTime),
       session: updatedSession,
       suggestions,
+      actionButtons,
+      requestedButton,
       typoCorrection: typoResult,
       clearance: memberClearance,
       requiredClearance,
@@ -1002,6 +1230,8 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     latencyMs: Math.max(20, Date.now() - startTime),
     session: updatedSession,
     suggestions,
+    actionButtons,
+    requestedButton,
     typoCorrection: typoResult,
     clearance: memberClearance,
     requiredClearance,
@@ -1020,7 +1250,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
  * Dynamic codebase synthesizer that analyzes real source code snippets on the fly
  * without ANY hardcoded presets or query-specific if-branches.
  */
-function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [], memberClearance = null, requiredClearance = null, canExecute = true, typoResult = null) {
+function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [], memberClearance = null, requiredClearance = null, canExecute = true, typoResult = null, actionButtons = [], requestedButton = null) {
   const cleanPrompt = (prompt || '').trim();
 
   // 1. Dynamically scan code snippets for primary command definitions
@@ -1134,6 +1364,10 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
 
   const parts = [];
 
+  if (requestedButton?.label) {
+    parts.push(`> **Interactive Action Button Created:** Added grey one-click button \`[${requestedButton.label}]\` below as requested.\n`);
+  }
+
   if (typoResult?.hasTypo) {
     parts.push(`> **Interpreted as \`!${typoResult.correctedCommand}\` (auto-corrected from \`${typoResult.originalToken}\`)**\n`);
   }
@@ -1224,6 +1458,16 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
     }
   }
 
+  // --- Interactive One-Click Action Buttons Section ---
+  const cmdName = primaryCmd ? primaryCmd.name : 'this command';
+  const buttonLabels = (actionButtons && actionButtons.length > 0)
+    ? actionButtons.map(b => `\`[${b.label}]\``).join(', ')
+    : '`[Inspect Status]`';
+
+  parts.push(`\n• **__Interactive One-Click Action Buttons:__**`);
+  parts.push(`  -# • **Available Buttons:** I've attached one-click grey action buttons below: ${buttonLabels}. Click any button to execute or open the setup panel on the spot.`);
+  parts.push(`  -# • **Need a Custom Button?** Even if you didn't ask, I can generate one-click buttons for any specific action or setting of \`!${cmdName}\`. Click **Ask Follow-Up Doubt** or tell me what action button you want (e.g. *"Give me a button to apply Hogwarts theme"* or *"Provide a button for ticket manager"*), and I'll generate the interactive button directly for you!`);
+
   return parts.join('\n');
 }
 
@@ -1268,7 +1512,7 @@ export function buildGuideHubContainer(guild, user, prefix = '!') {
       {
         type: 1,
         components: [
-          { type: 2, custom_id: 'athena_topic_lockdown', label: 'Panic Lockdown', style: 4 },
+          { type: 2, custom_id: 'athena_topic_lockdown', label: 'Panic Lockdown', style: 2 },
           { type: 2, custom_id: 'athena_topic_learn', label: 'Heuristic Learn Mode', style: 2 },
           { type: 2, custom_id: 'athena_topic_help', label: 'Open Help Center', style: 2, emoji: { id: '1523765738655973589' } }
         ]
@@ -1370,11 +1614,30 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
     comps.push({ type: 14, divider: true });
   }
 
-  // 2. Action & Quick navigation row
+  // 1. One-Click Interactive Action Buttons (Strictly Grey / Secondary - Literally no colour)
+  const dynamicActionButtons = aiResult.actionButtons || [];
+  if (dynamicActionButtons.length > 0) {
+    comps.push({
+      type: 10,
+      content: `-# **One-Click Action Buttons (Click to execute directly):**`
+    });
+    comps.push({
+      type: 1,
+      components: dynamicActionButtons.slice(0, 4).map(btn => ({
+        type: 2,
+        custom_id: btn.custom_id,
+        label: btn.label,
+        style: 2 // Strictly Grey / Secondary - Literally no colour
+      }))
+    });
+    comps.push({ type: 14, divider: true });
+  }
+
+  // 2. Action & Quick navigation row (Strictly Grey / Secondary - Literally no colour)
   const actionButtons = [
-    { type: 2, custom_id: 'athena_ask_followup', label: 'Ask Follow-Up Doubt', style: 1 },
-    { type: 2, custom_id: 'athena_guide_hub', label: 'Guidance Hub', style: 2, emoji: { id: '1523765738655973589' } },
-    { type: 2, custom_id: 'arch_home', label: 'Architecture Topics', style: 2, emoji: { id: '1523766065576935475' } }
+    { type: 2, custom_id: 'athena_ask_followup', label: 'Ask Follow-Up Doubt', style: 2 },
+    { type: 2, custom_id: 'athena_guide_hub', label: 'Guidance Hub', style: 2 },
+    { type: 2, custom_id: 'arch_home', label: 'Architecture Topics', style: 2 }
   ];
 
   if (currentSession && currentSession.turnCount > 1) {
@@ -1382,7 +1645,7 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
       type: 2,
       custom_id: 'athena_reset_thread',
       label: 'Reset Thread Memory',
-      style: 4
+      style: 2
     });
   }
 
