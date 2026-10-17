@@ -825,11 +825,14 @@ export const DETAILED_COMMANDS = {
     category: 'Community & Engagement',
     clearance: 'Public / Everyone',
     syntax: '!ranktheme <hogwarts|athena> / /ranktheme [theme]',
-    purpose: 'Switch personalized XP rank card visual theme between Hogwarts Looping Animated GIF and Athena Classic.',
+    purpose: 'Switch personalized XP rank card visual theme between Hogwarts Looping Animated GIF and Athena Classic (Obsidian & God of War stone card).',
     architecture:
-`• **Theme Persistence:** Stores user aesthetic choice in database cache.
-• **Canvas/FFmpeg Pipeline:** Hogwarts theme renders 12-frame 10 FPS palettegen GIF; Athena theme renders static stone card.`,
-    example: '!ranktheme hogwarts'
+`• **Available Themes:**
+  1. \`!ranktheme athena\` (or \`classic\`) \u2014 The sleek Obsidian & God of War stone card.
+  2. \`!ranktheme hogwarts\` \u2014 Cinematic Looping Animated GIF with soaring Hedwig owl & flaming altar.
+• **Theme Persistence:** Stores user aesthetic choice in SQLite database (\`userRankThemes\`).
+• **Canvas/FFmpeg Pipeline:** Hogwarts theme renders 12-frame 10 FPS palettegen GIF; Athena theme renders ultra-HD stone card with Cinzel God of War typography.`,
+    example: '!ranktheme athena'
   },
 
   rankrewards: {

@@ -1,6 +1,7 @@
 import { ARCHITECTURE_TOPICS, COMMAND_EXPLAINERS } from './explainerRegistry.js';
 import { helpModules } from '../commands/utility.js';
 import { generateAIResponse, formatAIToGreyMarkdown } from './ai.js';
+import { searchCodebase, formatCodebaseContext } from './codebaseKnowledge.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 
@@ -153,19 +154,25 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     };
   }
 
-  // 1. Fetch live ground truth context
+  // 1. Fetch live ground truth context and search real codebase
   const knowledge = findRelevantKnowledge(cleanPrompt, prefix);
+  const codeSnippets = await searchCodebase(cleanPrompt, { maxSnippets: 4, snippetLines: 40 });
+  const codeContext = formatCodebaseContext(codeSnippets);
 
   // 2. Build the persona and instruction prompt
   const systemInstructions = [
     'You are Athena Prime, the sovereign AI security assistant, bot specialist, and protector for Discord servers.',
-    'Your goal is to answer questions about Athena Prime, explain bot commands, clarify doubts, and instruct the user with 100% accurate, concise, straightforward instructions.',
+    'Your goal is to answer questions about Athena Prime, explain bot commands, clarify doubts, and instruct the user with 100% accurate, concise, straightforward instructions based directly on the bot repository source code.',
     '',
-    'CRITICAL KNOWLEDGE GROUNDING RULES:',
-    '- Ground every command, flag, and parameter STRICTLY in the provided Ground Truth Knowledge Base.',
-    '- NEVER hallucinate, invent, or suggest fake subcommands (such as `!setup security`, `!setup security logs`, `!setup security quarantine`, `!setup security bind`, `!antinuke config`, `!scanserver`, etc.). If a command is not in the Ground Truth Knowledge Base, DO NOT mention it.',
-    '- For enabling server security or full antinuke protection, the ONE and ONLY short, straightforward, master command is: `' + prefix + 'security enable all` (or `security enable all`).',
-    '- Do NOT give confusing, fragmented, multi-step channel configuration guides when a user asks how to enable security or protect their server. Always provide the single master command `' + prefix + 'security enable all`.',
+    'CRITICAL BOT CODEBASE & TRUTH RULES:',
+    '- Ground every command, feature, parameter, option, and theme STRICTLY in the provided BOT SOURCE CODE and Ground Truth Knowledge Base.',
+    '- Read the provided source code snippets carefully before answering. Look at the exact command options, choices, parameters, and descriptions.',
+    '- If the user asks whether a specific theme, option, or feature is available (e.g. "Athena god of war theme available right?"):',
+    '  • Check the source code: in src/commands/leveling.js line 274, `!ranktheme athena` is explicitly the "Sleek Obsidian & God of War stone card" (and `!profile` is also an official God of War card). State clearly that YES, the God of War theme is available as the `athena` theme via `!ranktheme athena`.',
+    '  • The other available theme is `!ranktheme hogwarts` (cinematic animated GIF).',
+    '  • If a user asks about a feature that is completely absent from the codebase, honestly state that it is not available. NEVER invent fake commands or recommend the wrong argument (such as claiming `!ranktheme hogwarts` is God of War).',
+    '- For enabling server security or full antinuke protection, the ONE and ONLY short, straightforward, master command is `' + prefix + 'security enable all`. Do NOT give manual channel configuration steps.',
+    '- NEVER hallucinate, invent, or suggest fake subcommands (such as `!setup security`, `!setup security logs`, `!setup security quarantine`, `!setup security bind`, `!antinuke config`, `!scanserver`, etc.). If a command is not in the Ground Truth or Source Code, DO NOT mention it.',
     '',
     'SECURITY & ANTINUKE GROUND TRUTH:',
     '- The Master Command: `' + prefix + 'security enable all` (Clearance: Server Owner / Extra Owner).',
@@ -183,7 +190,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     '  • `' + prefix + 'security disable all`: Turn off security (requires 2FA email verification).',
     '',
     'Tone & Style Rules:',
-    '- Speak directly in first-person as Athena Prime ("I am designed to...", "To enable complete security on your server...", "Here is the direct, straightforward method...").',
+    '- Speak directly in first-person as Athena Prime ("I am designed to...", "Here is the direct, straightforward method...").',
     '- Be concise, straightforward, authoritative, and helpful. Avoid unnecessary fluff or bloated steps.',
     '- Always prefix every line with "-# " for Discord small grey font.',
     '- Highlight key headings, commands, and steps using grey bold and underline: "-# **__Master Command:__** `' + prefix + 'security enable all`".',
@@ -191,12 +198,13 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
     '- Never use Discord native unicode emojis (no checkmarks, crosses, warning signs). Only use standard bullet characters or clean text.',
     '- Complete all sentences cleanly. Never cut off or truncate.',
     '',
+    codeContext ? codeContext + '\n' : '',
     'Ground Truth Knowledge Base (Current Live State):',
     knowledge.rawContext
   ].join('\n');
 
   // 3. Delegate to neural engine
-  const fullPrompt = `User's Question / Need: ${cleanPrompt}\n\nPlease explain, clarify, and provide step-by-step instructions on how to accomplish this with Athena Prime.`;
+  const fullPrompt = `User's Question / Need: ${cleanPrompt}\n\nPlease read the provided bot source code and knowledge base carefully, and explain, clarify, and provide accurate instructions on how to accomplish this with Athena Prime.`;
   const aiResult = await generateAIResponse(fullPrompt, {
     customSystem: systemInstructions,
     guildId: guild?.id,
@@ -206,7 +214,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
 
   if (!aiResult.success) {
     // Deterministic fallback response if external AI edge provider is unreachable
-    const fallbackText = buildDeterministicGuide(cleanPrompt, knowledge, prefix);
+    const fallbackText = buildDeterministicGuide(cleanPrompt, knowledge, prefix, codeSnippets);
     return {
       success: true,
       text: formatAIToGreyMarkdown(fallbackText),
@@ -228,8 +236,27 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, p
 /**
  * Deterministic fallback builder in case all AI edge endpoints are offline
  */
-function buildDeterministicGuide(prompt, knowledge, prefix) {
+function buildDeterministicGuide(prompt, knowledge, prefix, codeSnippets = []) {
   const cleanPrompt = (prompt || '').toLowerCase();
+  if (cleanPrompt.includes('god of war')) {
+    return [
+      `**__God of War Theme Availability__**`,
+      `• **Availability:** Yes! The God of War aesthetic is fully available in Athena Prime.`,
+      `• **Rank Theme:** \`${prefix}ranktheme athena\` (or \`classic\`) \u2014 Switches to the sleek Obsidian & God of War stone card aesthetic.`,
+      `• **Profile Card:** \`${prefix}profile\` (or \`!card\`) \u2014 Renders an official God of War canvas profile card displaying your level, voice activity, and server stats.`,
+      `• **Alternative Theme:** \`${prefix}ranktheme hogwarts\` \u2014 Cinematic Animated Looping GIF with soaring Hedwig owl & flaming altar.`
+    ].join('\n');
+  }
+
+  if (cleanPrompt.includes('rank theme') || cleanPrompt.includes('ranktheme') || (cleanPrompt.includes('rank') && cleanPrompt.includes('theme'))) {
+    return [
+      `**__Available Rank Card Themes__**`,
+      `• **Theme 1:** \`${prefix}ranktheme athena\` (or \`classic\`) \u2014 Sleek Obsidian & God of War stone card.`,
+      `• **Theme 2:** \`${prefix}ranktheme hogwarts\` \u2014 Cinematic Animated Looping GIF with soaring Hedwig owl & flaming altar.`,
+      `• **Switch Command:** \`${prefix}ranktheme <hogwarts|athena>\``
+    ].join('\n');
+  }
+
   if (cleanPrompt.includes('security') || cleanPrompt.includes('antinuke') || cleanPrompt.includes('anti-nuke') || cleanPrompt.includes('protect') || cleanPrompt.includes('bulletproof')) {
     return [
       `**__Enabling 100% Bulletproof Server Security & Antinuke__**`,
