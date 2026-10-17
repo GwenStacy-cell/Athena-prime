@@ -1357,6 +1357,7 @@ export const commands = [
           required: false,
           choices: [
             { name: 'Dashboard', value: 'panel' },
+            { name: 'AI Toxicity AutoMod', value: 'ai_toxicity' },
             { name: 'Advanced Config', value: 'advanced' },
             { name: 'List Bypasses', value: 'bypass_list' }
           ]
@@ -1365,6 +1366,17 @@ export const commands = [
       async executePrefix(message, args) {
         if (args && args[0]) {
           const sub = args[0].toLowerCase();
+          if (sub === 'ai' || sub === 'aitoxicity') {
+            const current = db.getGuildConfig(message.guild.id).aiToxicityEnabled === true;
+            let turnOn = !current;
+            if (args[1]) {
+              const arg1 = args[1].toLowerCase();
+              if (arg1 === 'on' || arg1 === 'enable' || arg1 === 'true') turnOn = true;
+              else if (arg1 === 'off' || arg1 === 'disable' || arg1 === 'false') turnOn = false;
+            }
+            db.updateGuildConfig(message.guild.id, { aiToxicityEnabled: turnOn });
+            return message.reply(cv2.success('AI Toxicity & Sentiment AutoMod | <a:atheNATICK:1557841381630681106>', turnOn ? 'AI Toxicity & Sentiment AutoMod has been enabled. Doxxing attempts (IPs, SSNs, phone numbers), severe toxicity, and violent harassment will be autonomously intercepted.' : 'AI Toxicity & Sentiment AutoMod has been disabled.'));
+          }
           if (sub === 'advanced') {
             const panel = await getAdvancedConfigPanel(message.guild);
             return message.reply(panel);
@@ -1381,6 +1393,12 @@ export const commands = [
       },
       async executeSlash(interaction) {
         const sub = interaction.options.getString('subcommand');
+        if (sub === 'ai_toxicity') {
+          const current = db.getGuildConfig(interaction.guild.id).aiToxicityEnabled === true;
+          const turnOn = !current;
+          db.updateGuildConfig(interaction.guild.id, { aiToxicityEnabled: turnOn });
+          return interaction.reply(cv2.success('AI Toxicity & Sentiment AutoMod | <a:atheNATICK:1557841381630681106>', turnOn ? 'AI Toxicity & Sentiment AutoMod has been enabled. Doxxing attempts (IPs, SSNs, phone numbers), severe toxicity, and violent harassment will be autonomously intercepted.' : 'AI Toxicity & Sentiment AutoMod has been disabled.'));
+        }
         if (sub === 'advanced') {
           const panel = await getAdvancedConfigPanel(interaction.guild);
           return interaction.reply(panel);
@@ -4608,6 +4626,7 @@ export async function getAutoModPanel(guild) {
 
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `### **Filters Active:**\n` +
+    `-# **${DOT} AI Toxicity & Sentiment AutoMod (Doxxing, severe toxicity, violent threats)**\n` +
     `-# **${DOT} Mass Mention / Spam Tag Filter**\n` +
     `-# **${DOT} Anti Flood Filter**\n` +
     `-# **${DOT} Standard URLs (unless bypassed)**\n` +
@@ -4625,6 +4644,7 @@ export async function getAutoModPanel(guild) {
 
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `### **Current Configurations:**\n` +
+    `-# **| AI Toxicity & Sentiment Shield:** ${config.aiToxicityEnabled ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Mass Mention Filter:** ${spamMentionOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Anti Flood Engine:** ${antiFloodOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
     `-# **| Anti-Link Engine:** ${antiLinkOn ? TOGGLE_ON : TOGGLE_OFF}\n` +
@@ -4786,11 +4806,13 @@ export async function getAdvancedConfigPanel(guild) {
   const c = new ContainerBuilder();
   c.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `# AUTOMOD | ADVANCED GLOBAL SETTINGS\n` +
+    `-# **| AI Toxicity & Sentiment Shield:** ${config.aiToxicityEnabled ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}\n` +
     `-# **| Allow All Links (Global):** ${config.allowAllLinks ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}\n` +
     `-# **| Allow Invites (Global):** ${config.allowInvitesGlobally ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}`
   ));
   
   const row1 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('am_tgl_aitoxicity').setLabel('AI Toxicity AutoMod').setStyle(config.aiToxicityEnabled ? ButtonStyle.Success : ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('am_tgl_global_links').setLabel('Allow ALL Links').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('am_tgl_global_invites').setLabel('Global Invites').setStyle(ButtonStyle.Secondary)
   );

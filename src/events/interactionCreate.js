@@ -2340,6 +2340,13 @@ async function handleSecurityInteractions(interaction, guild) {
         db.updateGuildConfig(guild.id, { fileCheckEnabled: !(config.fileCheckEnabled !== false) });
         updated = true;
       }
+      else if (customId === 'am_tgl_aitoxicity') {
+        const current = config.aiToxicityEnabled === true;
+        db.updateGuildConfig(guild.id, { aiToxicityEnabled: !current });
+        const { getAdvancedConfigPanel } = await import('../commands/security.js');
+        const newPanel = await getAdvancedConfigPanel(guild);
+        return cv2.respond(interaction, newPanel, 7).catch(() => null);
+      }
       else if (customId === 'am_tgl_global_links') {
         const newVal = !config.allowAllLinks;
         const updateData = { allowAllLinks: newVal };

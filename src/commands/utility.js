@@ -1266,6 +1266,7 @@ export const helpModules = [
   ] },
   { id: 'filters', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Filters', label: 'Automod Filters', emoji: 'filters', commands: [
     "`!automod` - Open Automated Moderation & Security Dashboard `[Extra Owner]`",
+    "`!automod ai on|off` - Toggle AI Toxicity, Sentiment & Doxxing AutoMod `[Admin]`",
     "`!automod config / advanced` - Interactive Automod advanced configuration `[Extra Owner]`",
     "`!automod bypass add @role` - Grant role bypass for specific automod modules `[Extra Owner]`",
     "`!automod bypass remove @role` - Revoke automod bypass from role `[Extra Owner]`",
@@ -1285,6 +1286,7 @@ export const helpModules = [
     "`!ignoreall / !unignoreall` - Ignore or unignore all text channels `[Extra Owner]`",
     "",
     "**Filter Management:**",
+    "- **AI Toxicity AutoMod:** Autonomous neural filtering of doxxing attempts (IPs, SSNs, phone numbers) and severe violent harassment (Optional).",
     "- Whitelisting domains overrides the anti-link filter for those specific links",
     "- Automod bypass roles apply to spam, caps, and raid limits",
     "-# **Advanced Threat Firewall:**",
@@ -1391,8 +1393,9 @@ export const helpModules = [
   ] },
 
   { id: 'tickets', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tickets', label: 'Ticket System', emoji: 'tickets', commands: [
-    "`!ticket setup <#category> <@staffRole>` - Configure category and primary staff roles `[Administrator]`",
-    "`!ticketpanel` - Deploy the interactive public ticket creation panel `[Administrator]`",
+    "`!ticket setup <#category> <@staffRole> [ai_on]` - Configure category, staff roles & optional AI triage `[Administrator]`",
+    "`!ticket ai on|off` - Toggle Smart Ban Appeals & AI Ticket Triage `[Administrator]`",
+    "`!ticketpanel` - Deploy interactive ticket panel with one-click AI triage control `[Administrator]`",
     "`!add @user` - Add a user to an active ticket channel `[Staff]`",
     "`!remove @user` - Remove a user from an active ticket channel `[Staff]`",
     "`!close` - Close and archive the active ticket channel `[Public]`",
@@ -1400,8 +1403,9 @@ export const helpModules = [
     "",
     "**Ticket System Capabilities:**",
     "- Features **Dropdown Menus**, **Interactive Q&A Modals**, and **Beautiful CV2 Welcome Embeds**.",
+    "- **Smart Ban Appeals & AI Triage (Optional):** Categorizes inquiries (Ban Appeal, Store/Coins, Bugs, Harassment) and creates executive summaries for staff.",
     "- Automatically creates paired Voice Channels and Text Channels per ticket.",
-    "**Step 1:** Run `!ticket setup <#category> <@staffRole>` to configure category and staff roles.",
+    "**Step 1:** Run `!ticket setup <#category> <@staffRole> [ai_on]` to configure category and staff roles.",
     "**Step 2:** Run `!ticketpanel` to deploy and customize the public interactive panel."
   ] },
   { id: 'tracking', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tracking', label: 'Tracking & Logs', emoji: 'tracking', commands: [

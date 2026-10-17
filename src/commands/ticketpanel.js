@@ -73,6 +73,7 @@ export async function updateManagerMessage(message) {
           `**Description:** ${(config.panelDescription || 'Need help? Open a ticket below.').substring(0, 500)}\n` +
           `**Options Count:** ${(config.panelOptions || []).length}\n` +
           `**Placeholder:** ${config.panelPlaceholder || 'Select a reason...'}\n` +
+          `**AI Triage:** ${config.aiTriage ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}\n` +
           `**Target Channel:** ${targetChannelText}\n` +
           `**Closing Roles:** ${closeRolesText}\n` +
           `**Image Banner:** ${config.panelImage ? `[Link](${config.panelImage})` : 'None'}\n` +
@@ -95,7 +96,11 @@ export async function updateManagerMessage(message) {
     new ButtonBuilder()
       .setCustomId('tp_add_option')
       .setLabel('Add Option')
-      .setStyle(ButtonStyle.Primary)
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId('tp_toggle_ai')
+      .setLabel(`AI Triage: ${config.aiTriage ? 'ON' : 'OFF'}`)
+      .setStyle(config.aiTriage ? ButtonStyle.Success : ButtonStyle.Secondary)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
@@ -189,6 +194,13 @@ export async function handleTicketPanelButtons(interaction) {
     const descInput = new TextInputBuilder().setCustomId('description').setLabel('Short Description').setStyle(TextInputStyle.Short).setRequired(true);
     modal.addComponents(new ActionRowBuilder().addComponents(labelInput), new ActionRowBuilder().addComponents(descInput));
     return interaction.showModal(modal);
+  }
+
+  if (customId === 'tp_toggle_ai') {
+    const config = db.getTickets(guild.id);
+    db.updateTicketConfig(guild.id, { aiTriage: !config.aiTriage });
+    await interaction.deferUpdate();
+    return updateManagerMessage(interaction.message);
   }
 
   if (customId === 'tp_clear_options') {

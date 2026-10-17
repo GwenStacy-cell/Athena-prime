@@ -387,22 +387,64 @@ A Honeypot is a designated text channel configured with permissions hidden or si
   neural: {
     id: 'neural',
     label: 'Athena Neural AI Matrix',
-    aliases: ['ai', 'ask', 'gemini', 'neuralengine'],
-    title: 'Athena Prime Neural AI Matrix & Accent Borderless Containers | <a:atheNATICK:1557841381630681106>',
-    description: 'Multi-provider AI intelligence with accent borderless CV2 container rendering.',
+    aliases: ['ai', 'ask', 'gemini', 'neuralengine', 'toxicity', 'triage'],
+    title: 'Athena Prime Neural AI Matrix & Cognitive Safeguards | <a:atheNATICK:1557841381630681106>',
+    description: 'Multi-provider AI intelligence, AI Toxicity AutoMod, and Smart Ticket Triage.',
     pages: [
       {
         pageTitle: 'AI Engine & Container Architecture',
         content:
 `# 1. Multi-Provider Fallback Matrix
 • **Primary:** Google Gemini 1.5 Flash API for high-reasoning tasks when \`GEMINI_API_KEY\` is configured.
-• **Autonomous Fallback:** High-speed edge inference (Pollinations) providing zero-key, instant responses.
+• **Autonomous Fallback:** High-speed edge inference (Workers AI / Pollinations) providing zero-key, instant responses.
 • **Native Emoji Scrubbing:** Filters out unicode Discord emojis to strictly uphold Athena's brand identity.
 
 # 2. Strict AI Invocation Protocol
 • **Dedicated Invocations:** AI answers are strictly restricted to the \`!ask\` and \`/ask\` commands.
 • **AI Mode:** Server owners can toggle conversational channel mode (\`!aimode channel #channel\`) to bind AI chat to a specific channel.
 • **Accent Borderless CV2 Container:** Formats responses with server accent colors, section dividers, and markdown styling.`
+      },
+      {
+        pageTitle: 'AI Toxicity & Sentiment AutoMod Architecture',
+        content:
+`# 1. AI Toxicity & Sentiment AutoMod Mechanics
+• **Proactive Interception:** Scans message streams in real time for severe toxicity, aggressive targeted arguments, hate slurs, and malicious doxxing attempts before human moderators need to intervene.
+• **Doxxing Detection Matrix:**
+  • **IPv4 / IPv6 Broadcasts:** Intercepts raw IP address leaks combined with dox context or packet keywords (\`lives at\`, \`dox\`, \`swat\`, \`leak\`).
+  • **Social Security Numbers (SSN):** Regex heuristic scans for PII SSN patterns (\`000-00-0000\`) under zero-tolerance protocol.
+  • **Phone Number & Residential Address Doxxing:** Identifies residential address formats and telephone numbers paired with malicious intent keywords.
+• **Autonomous Penalties:**
+  • Automatically purges the offending payload from chat.
+  • Applies escalating timeouts (15 minutes for toxicity/slurs, 1 hour for critical doxxing/SSN leaks).
+  • Dispatches forensic security incident cards to the configured security log channel.
+
+# 2. Strict Optional Deployment
+• **Default State:** Disabled by default (\`aiToxicityEnabled: false\`) to preserve complete server autonomy.
+• **Configuration Toggles:**
+  • Prefix: \`!automod ai on\` / \`!automod ai off\`
+  • Slash: \`/automod subcommand:ai_toxicity\`
+  • Interactive Dashboard: One-click toggle button in \`!automod advanced\` panel.`
+      },
+      {
+        pageTitle: 'Smart Ban Appeals & Ticket Triage Architecture',
+        content:
+`# 1. Smart Ticket Triage & Categorization
+• **Cognitive Issue Classification:** Automatically classifies user support tickets and modal submissions into clear administrative domains:
+  • **Ban Appeal & Punishment Dispute:** Escalates punishment disputes with urgent priority, prompting staff to review moderation audit logs.
+  • **Billing & Store Fulfillment:** Directs store and coin inquiries to economy ledgers and fulfillment records.
+  • **Bug & Exploit Report:** Flags system glitches with high priority for developer reproduction.
+  • **Member Harassment & Safety Report:** Immediately alerts moderators to safety issues and toxic behavior.
+  • **General Support & Inquiries:** Organizes standard server inquiries.
+• **Automated Executive Summary:** Generates concise 1-2 sentence executive briefs of member inquiries so staff do not need to read long disjointed paragraphs.
+• **Actionable Recommendations:** Suggests concrete next steps for support moderators directly inside the ticket channel.
+
+# 2. Optional Setup & Administrative Control
+• **Setup Integration:** Can be toggled on directly during ticket deployment:
+  • Prefix: \`!ticket setup <#category> <@staffRole> [ai_on]\`
+  • Slash: \`/ticket setup category:<cat> staff_role:<role> ai_triage:true\`
+• **Standalone Control:**
+  • Command: \`!ticket ai on|off\` or \`/ticket ai enabled:true|false\`
+  • Ticket Panel Manager: One-click interactive toggle button (\`tp_toggle_ai\`) in \`!ticketpanel\`.`
       }
     ]
   },
@@ -1171,12 +1213,13 @@ export const DETAILED_COMMANDS = {
     aliases: ['ticketpanel', 'newticket'],
     category: 'Community & Engagement',
     clearance: 'Public / Everyone',
-    syntax: '!ticket [open|close|add|remove]',
-    purpose: 'Interactive private ticket support system with HTML transcript generation.',
+    syntax: '!ticket [setup|ai|close|rename|panel]',
+    purpose: 'Interactive private ticket support system with Smart Ban Appeals & AI Ticket Triage.',
     architecture: 
 `• **Dynamic Channel Creation:** Creates private locked text channel under ticket category with explicit staff permissions.
+• **Smart Ban Appeals & AI Triage:** Automatically summarizes inquiries and categorizes tickets into Urgency Tiers (Ban Appeal, Billing, Bug Report, Harassment). Optional via \`!ticket ai on|off\` or setup flag.
 • **Transcript Archival:** On close, serializes full conversation into HTML transcript and posts to log channel.`,
-    example: '!ticket'
+    example: '!ticket setup #tickets @Staff ai_on'
   },
 
   welcome: {

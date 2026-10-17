@@ -2,6 +2,7 @@ import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuild
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
+import { generateTicketTriage, buildTicketTriageContainer } from '../utils/ai.js';
 
 export const commands = [
   {
@@ -46,6 +47,25 @@ export const commands = [
             description: 'Additional staff role',
             type: 8,
             required: false
+          },
+          {
+            name: 'ai_triage',
+            description: 'Enable Smart Ban Appeals & AI Ticket Triage (Default: False)',
+            type: 5, // BOOLEAN
+            required: false
+          }
+        ]
+      },
+      {
+        name: 'ai',
+        description: 'Toggle Smart Ban Appeals & AI Ticket Triage',
+        type: 1, // SUB_COMMAND
+        options: [
+          {
+            name: 'enabled',
+            description: 'Enable or disable AI Ticket Triage',
+            type: 5, // BOOLEAN
+            required: true
           }
         ]
       }
@@ -53,6 +73,12 @@ export const commands = [
     async executeSlash(interaction) {
       const subcommand = interaction.options.getSubcommand();
       const guildId = interaction.guild.id;
+
+      if (subcommand === 'ai') {
+        const enabled = interaction.options.getBoolean('enabled');
+        db.updateTicketConfig(guildId, { aiTriage: enabled });
+        return interaction.reply(cv2.success('Smart Ticket Triage | <a:atheNATICK:1557841381630681106>', enabled ? 'Smart Ban Appeals & Ticket Triage has been enabled. User inquiries will be categorized and summarized automatically for staff.' : 'Smart Ban Appeals & Ticket Triage has been disabled.'));
+      }
 
       if (subcommand === 'setup') {
         await interaction.deferReply();
@@ -62,6 +88,7 @@ export const commands = [
         const role2 = interaction.options.getRole('staff_role_2');
         const role3 = interaction.options.getRole('staff_role_3');
         const role4 = interaction.options.getRole('staff_role_4');
+        const aiTriageOpt = interaction.options.getBoolean('ai_triage');
         
         const staffRoles = [role1, role2, role3, role4].filter(r => r !== null).map(r => r.id);
 
@@ -88,13 +115,17 @@ export const commands = [
         container.components.push(row.toJSON());
         await interaction.channel.send({ components: [container], flags: 32768 });
 
-        db.updateTicketConfig(guildId, {
+        const ticketConfig = {
           categoryId: category.id,
           staffRoleIds: staffRoles
-        });
+        };
+        if (aiTriageOpt !== null) {
+          ticketConfig.aiTriage = aiTriageOpt;
+        }
+        db.updateTicketConfig(guildId, ticketConfig);
 
         const roleMentions = staffRoles.map(id => `<@&${id}>`).join(', ');
-        await interaction.editReply(cv2.success('Ticket System Deployed', `The ticket panel has been deployed successfully. Tickets will be created under ${category} and ${roleMentions} will be pinged.`));
+        await interaction.editReply(cv2.success('Ticket System Deployed | <a:atheNATICK:1557841381630681106>', `The ticket panel has been deployed successfully. Tickets will be created under ${category} and ${roleMentions} will be pinged.${aiTriageOpt ? '\n-# **Smart Ticket Triage:** Enabled' : ''}`));
       }
     },
     async executePrefix(message, args) {
@@ -102,12 +133,24 @@ export const commands = [
         return message.reply(cv2.error('Missing Permission', 'You need Administrator permissions to use this command.'));
       }
 
+      if (args[0]?.toLowerCase() === 'ai' || args[0]?.toLowerCase() === 'triage') {
+        const current = db.getTickets(message.guild.id).aiTriage === true;
+        let turnOn = !current;
+        if (args[1]) {
+          const a1 = args[1].toLowerCase();
+          if (a1 === 'on' || a1 === 'enable' || a1 === 'true') turnOn = true;
+          else if (a1 === 'off' || a1 === 'disable' || a1 === 'false') turnOn = false;
+        }
+        db.updateTicketConfig(message.guild.id, { aiTriage: turnOn });
+        return message.reply(cv2.success('Smart Ticket Triage | <a:atheNATICK:1557841381630681106>', turnOn ? 'Smart Ban Appeals & Ticket Triage has been enabled. User inquiries will be categorized and summarized automatically for staff.' : 'Smart Ban Appeals & Ticket Triage has been disabled.'));
+      }
+
       if (args[0]?.toLowerCase() === 'setup') {
         const categoryId = message.mentions.channels.first()?.id || args[1]?.replace(/[<#>]/g, '');
         const staffRoles = message.mentions.roles.map(r => r.id);
 
         if (!categoryId || staffRoles.length === 0) {
-          return message.reply(cv2.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...]`'));
+          return message.reply(cv2.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...] [ai_on]`\nToggle AI Triage: `!ticket ai on|off`'));
         }
 
         const category = message.guild.channels.cache.get(categoryId);
@@ -152,19 +195,24 @@ export const commands = [
         container.components.push(row.toJSON());
         const panelMsg = await message.channel.send({ components: [container], flags: 32768 });
 
-        db.updateTicketConfig(message.guild.id, {
+        const aiTriageEnabled = args.some(a => /^(ai_on|ai:on|ai=on|triage_on)$/i.test(a));
+        const ticketUpdate = {
           categoryId: category.id,
           staffRoleIds: staffRoles,
           panelChannelId: message.channel.id,
           panelMessageId: panelMsg.id
-        });
+        };
+        if (aiTriageEnabled) {
+          ticketUpdate.aiTriage = true;
+        }
+        db.updateTicketConfig(message.guild.id, ticketUpdate);
 
         const roleMentions = staffRoles.map(id => `<@&${id}>`).join(', ');
-        await message.reply(cv2.success('Ticket System Deployed', `Tickets will be created under <#${category.id}> and ${roleMentions} will be pinged.`));
+        await message.reply(cv2.success('Ticket System Deployed | <a:atheNATICK:1557841381630681106>', `Tickets will be created under <#${category.id}> and ${roleMentions} will be pinged.${aiTriageEnabled ? '\n-# **Smart Ticket Triage:** Enabled' : ''}`));
       } else if (args[0]?.toLowerCase() === 'close') {
         return executeTicketClose(message.guild, message.channel, message.member, (p) => message.reply(p));
       } else {
-        return message.reply(cv2.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...]`\n\nFor advanced customization (dropdowns, images, etc.), use the `!ticketpanel` command!'));
+        return message.reply(cv2.info('Ticket Setup', 'Usage: `!ticket setup <#category> <@staffRole> [@additionalRoles...] [ai_on]`\nToggle AI Triage: `!ticket ai on|off`\n\nFor advanced customization (dropdowns, images, etc.), use the `!ticketpanel` command!'));
       }
     }
   },
@@ -342,6 +390,16 @@ export async function handleTicketButtons(interaction) {
         components: [container],
         flags: 32768
       });
+      
+      if (config.aiTriage) {
+        try {
+          const triage = await generateTicketTriage({ title: 'General Support', inquiry: 'General member assistance ticket opened.', user });
+          const triageCard = buildTicketTriageContainer({ ...triage, user });
+          await textChannel.send({ components: [triageCard], flags: 32768 }).catch(() => null);
+        } catch (err) {
+          console.warn('[Ticket AI Triage] Failed to send general triage card:', err.message);
+        }
+      }
       
       await interaction.editReply({ content: `-# **Ticket created:** <#${textChannel.id}>` }).catch(()=>null);
       
@@ -569,6 +627,16 @@ export async function handleTicketModals(interaction) {
         components: [container, row1, row2, row3],
         flags: 32768
       });
+      
+      if (config.aiTriage) {
+        try {
+          const triage = await generateTicketTriage({ title: reason, inquiry, docs, details, user });
+          const triageCard = buildTicketTriageContainer({ ...triage, user });
+          await textChannel.send({ components: [triageCard], flags: 32768 }).catch(() => null);
+        } catch (err) {
+          console.warn('[Ticket AI Triage] Failed to send modal triage card:', err.message);
+        }
+      }
       
       await interaction.editReply({ content: `-# **Ticket created:** <#${textChannel.id}>` }).catch(()=>null);
     } catch (error) {

@@ -73,6 +73,7 @@ export function getDatabaseMetrics() {
   const allowedLinksCount = guilds.reduce((acc, g) => acc + (g?.allowedLinks?.length || 0), 0);
   const automodBypassRolesCount = guilds.reduce((acc, g) => acc + Object.keys(g?.automodBypasses || {}).length, 0);
   const automodBypassServers = guilds.filter(g => g && g.automodBypasses && Object.keys(g.automodBypasses).length > 0).length;
+  const aiToxicityServers = guilds.filter(g => g && g.aiToxicityEnabled).length;
 
   // AutoRole & Vanity Engine breakdown
   const autoroleHumanServers = guilds.filter(g => g && (Array.isArray(g.autoroleHuman) ? g.autoroleHuman.length > 0 : Boolean(g.autoroleHuman))).length;
@@ -103,6 +104,7 @@ export function getDatabaseMetrics() {
   const ticketsActive = ticketConfigs.reduce((acc, t) => acc + Object.keys(t?.activeTickets || {}).length, 0);
   const ticketsTotalCreated = ticketConfigs.reduce((acc, t) => acc + (t?.ticketCount || 0), 0);
   const ticketStaffRolesCount = ticketConfigs.reduce((acc, t) => acc + (Array.isArray(t?.staffRoleIds) ? t.staffRoleIds.length : 0), 0);
+  const ticketAiTriageServers = ticketConfigs.filter(t => t && t.aiTriage).length;
 
   // Community Features: Suggestions, Starboard, Voice Roles
   const suggestionChannels = guilds.filter(g => g && g.suggestionChannelId).length;
@@ -183,13 +185,14 @@ export function getDatabaseMetrics() {
     firewallRolesCount,
     unbypassableRolesCount,
 
-    automodServers: guilds.filter(g => g && (g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled)).length,
+    automodServers: guilds.filter(g => g && (g.wordFilterEnabled || g.antiSpamEnabled || g.antiLinkEnabled || g.antiInviteEnabled || g.aiToxicityEnabled)).length,
     antiSpamServers,
     antiInviteServers,
     antiLinkServers,
     wordFilterServers,
     antiFloodServers,
     antiMentionServers,
+    aiToxicityServers,
     blacklistedWordsCount,
     allowedLinksCount,
     automodBypassRolesCount,
@@ -209,6 +212,7 @@ export function getDatabaseMetrics() {
     ticketsActive,
     ticketsTotalCreated,
     ticketStaffRolesCount,
+    ticketAiTriageServers,
 
     suggestionChannels,
     starboardChannels,
@@ -341,7 +345,7 @@ export function formatDatabaseMetrics(m, options = {}) {
 
     `**Automod Protection Matrix:**\n` +
     `> -# **Automod Servers:** \`${m.automodServers} active\` | **Word Filter:** \`${m.wordFilterServers}\` (${m.blacklistedWordsCount} words)\n` +
-    `> -# **Granular Shields:** \`Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, Flood: ${m.antiFloodServers}, Mention: ${m.antiMentionServers}, Link: ${m.antiLinkServers}\`\n` +
+    `> -# **Granular Shields:** \`Spam: ${m.antiSpamServers}, Invite: ${m.antiInviteServers}, Flood: ${m.antiFloodServers}, Mention: ${m.antiMentionServers}, Link: ${m.antiLinkServers}, AI Toxicity: ${m.aiToxicityServers || 0}\`\n` +
     `> -# **Bypasses:** \`${m.allowedLinksCount} allowed links, ${m.inviteBypassChannels} invite channels, ${m.automodBypassRolesCount || 0} role bypasses (${m.automodBypassServers || 0} servers)\`\n\n` +
 
     `**AutoRole, Vanity & Media Integrations:**\n` +
@@ -365,10 +369,10 @@ export function formatDatabaseMetrics(m, options = {}) {
 
     `**Automated Feeds, Community & Engagement:**\n` +
     `> -# **News Feeds:** \`${m.newsChannels} channels (${m.newsFeedsCount} feeds, ${m.newsRolesCount} roles) | Auto-React: ${m.autoReactChannels} channels\`\n` +
-    `> -# **Tickets & Community:** \`${m.ticketSetups || 0} setups (${m.ticketsActive || 0} active, ${m.ticketsTotalCreated || 0} total) | Giveaways: ${m.giveaways}\`\n` +
+    `> -# **Tickets & Community:** \`${m.ticketSetups || 0} setups (${m.ticketsActive || 0} active, ${m.ticketAiTriageServers || 0} AI triage) | Giveaways: ${m.giveaways}\`\n` +
     `> -# **Economy & Commerce:** \`${m.economyUsers || 0} active ledgers | Shop Items: ${m.shopItemsCount || 0} perks listed across ${m.shopGuilds || 0} servers\`\n` +
     `> -# **Casino & Minigames:** \`${m.minigamesUsers || 0} players (${m.minigamesWagered ? m.minigamesWagered.toLocaleString() : 0} coins wagered) | Studio Templates: ${m.studioTemplates || 0} layouts\`\n` +
-    `> -# **Neural AI & Themes:** \`AI Mode: ${m.aiModeServers || 0} servers (${m.aiDedicatedChannels || 0} channels) | Rank Roles: ${m.rankRewardsCount || 0} milestones, ${m.customThemesCount || 0} themed profiles\`\n` +
+    `> -# **Neural AI & Themes:** \`AI Mode: ${m.aiModeServers || 0} servers (${m.aiDedicatedChannels || 0} channels, ${m.aiToxicityServers || 0} toxicity filters) | Rank Roles: ${m.rankRewardsCount || 0} milestones, ${m.customThemesCount || 0} themed profiles\`\n` +
     `> -# **Suggestions, Leveling & Starboard:** \`${m.suggestionChannels || 0} suggestions, ${m.starboardChannels || 0} starboards, XP: ${m.xpSystems} servers (${m.xpUsers} users)\`\n` +
     `> -# **Counting Engine:** \`${m.countingActive || 0} channels (${m.countingGuilds || 0} guilds) | Peak: ${m.countingPeakRecord || 0} | ${m.countingTotalCounts || 0} streak, ${m.countingTotalUsers || 0} counters\`\n` +
     `> -# **Auto-Quotes & Sticky:** \`${m.quoteChannels} quote channels, ${m.stickyMessages} sticky channels, ${m.adel} auto-delete channels\`\n\n` +

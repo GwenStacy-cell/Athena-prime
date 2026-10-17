@@ -21,6 +21,7 @@ import { processMediaLink, cacheMediaUrl } from '../utils/mediaDownloader.js';
 import { buildAutoReplyPreview } from '../commands/trigger.js';
 import { handleCountingMessage } from '../utils/countingEngine.js';
 import { scanForPhishing } from '../utils/phishingShield.js';
+import { scanToxicityAndSentiment } from '../utils/ai.js';
 
 function matchesTrigger(messageContent, triggerKeyword) {
   if (!messageContent || !triggerKeyword) return false;
@@ -1354,6 +1355,43 @@ export default {
                  }
              }
          }
+      }
+
+      // ==========================================
+      // AI TOXICITY, SENTIMENT & DOXXING AUTOMOD (OPTIONAL)
+      // ==========================================
+      if (dbConfig.aiToxicityEnabled && !checkBypass('AI Toxicity') && !isAuthorized(message.member)) {
+        const toxScan = scanToxicityAndSentiment(message.content);
+        if (toxScan.isThreat) {
+          await message.delete().catch(() => null);
+          const authorTier = getUserTierName(message.guild, message.member || message.author);
+          const timeoutMs = toxScan.severity === 'CRITICAL' ? 60 * 60 * 1000 : 15 * 60 * 1000;
+          await message.member?.timeout(timeoutMs, `Automod: ${toxScan.category}`).catch(() => null);
+
+          const securityLog = {
+            type: 17,
+            components: [
+              { type: 10, content: `## AI Toxicity & Sentiment Intercept | <a:atheNATICK:1557841381630681106>` },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `-# **Offending Member:** ${message.author} (\`${message.author.id}\` | \`${message.author.tag}\`)\n` +
+                  `-# **Author Clearance Tier:** \`[${authorTier}]\`\n` +
+                  `-# **Channel:** <#${message.channel.id}>\n` +
+                  `-# **Threat Category:** \`${toxScan.category}\`\n` +
+                  `-# **Severity Level:** \`[${toxScan.severity}]\`\n` +
+                  `-# **Reason:** ${toxScan.reason}\n` +
+                  `-# **Detected Pattern:** \`||${toxScan.detectedPattern || 'Pattern Matched'}||\`\n` +
+                  `-# **Action Taken:** \`Message Purged & Member Timed Out (${toxScan.severity === 'CRITICAL' ? '1 Hour' : '15 Minutes'})\``
+              },
+              { type: 14, divider: true },
+              { type: 10, content: `-# **Athena Prime Neural Security & Sentinel Shield**` }
+            ]
+          };
+          await logToSecurityChannel(message.guild, securityLog);
+          return;
+        }
       }
 
       // ==========================================

@@ -314,4 +314,190 @@ export async function generateAIResponse(prompt, context = {}) {
   };
 }
 
+/**
+ * Scans a message for severe toxicity, aggressive arguments/harassment,
+ * and malicious doxxing attempts (IP addresses, physical addresses, SSNs, phone numbers).
+ */
+export function scanToxicityAndSentiment(text) {
+  if (!text || typeof text !== 'string') {
+    return { isThreat: false };
+  }
+
+  const clean = text.toLowerCase().trim();
+
+  // 1. Doxxing Detection Patterns
+  const ipv4Regex = /\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/;
+  const doxKeywordsRegex = /\b(dox|doxx|doxxed|doxxing|swat|swatted|swatting|leak|leaked|leaking|ip address|grabify|iplogger|lives at|house address|home address|their address|his address|her address|phone number)\b/i;
+  
+  const hasIp = ipv4Regex.test(text);
+  const hasDoxKeywords = doxKeywordsRegex.test(text);
+
+  // SSN pattern: 000-00-0000
+  const ssnRegex = /\b\d{3}-\d{2}-\d{4}\b/;
+  const hasSsn = ssnRegex.test(text);
+
+  // Phone number with dox context
+  const phoneRegex = /\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/;
+  const hasPhoneWithDox = hasDoxKeywords && phoneRegex.test(text);
+
+  if (hasSsn) {
+    return {
+      isThreat: true,
+      category: 'Doxxing Attempt (Social Security Number)',
+      reason: 'Sharing personal identifiable Social Security numbers is strictly prohibited under zero-tolerance safety policies.',
+      severity: 'CRITICAL',
+      detectedPattern: 'SSN Pattern Match'
+    };
+  }
+
+  if (hasIp && (hasDoxKeywords || /ip\s*[:=]/i.test(text))) {
+    const ipMatch = text.match(ipv4Regex)?.[0] || 'IP Address';
+    return {
+      isThreat: true,
+      category: 'Doxxing Attempt (IP Address Broadcast)',
+      reason: `Malicious exposure or targeted leaking of IP address (${ipMatch}).`,
+      severity: 'HIGH',
+      detectedPattern: ipMatch
+    };
+  }
+
+  if (hasPhoneWithDox) {
+    return {
+      isThreat: true,
+      category: 'Doxxing Attempt (Phone Number Exposure)',
+      reason: 'Malicious publishing or leaking of private phone numbers.',
+      severity: 'HIGH',
+      detectedPattern: 'Phone Number in Dox Context'
+    };
+  }
+
+  if (hasDoxKeywords && /(lives at|resides at|address is|house is)\s+([0-9]+\s+[a-z0-9\s,]+)/i.test(text)) {
+    return {
+      isThreat: true,
+      category: 'Doxxing Attempt (Physical Address Exposure)',
+      reason: 'Publishing physical residential addresses or targeted doxxing.',
+      severity: 'CRITICAL',
+      detectedPattern: 'Physical Address Dox Pattern'
+    };
+  }
+
+  // 2. Severe Toxicity & Extreme Harassment
+  const deathThreatsRegex = /\b(kill your\s*self|kys|hang your\s*self|slit your\s*(throat|wrist)|hope you die|go die|murder you|die in a fire|drink bleach)\b/i;
+  if (deathThreatsRegex.test(clean)) {
+    return {
+      isThreat: true,
+      category: 'Severe Toxicity & Violent Threats',
+      reason: 'Direct death threats, self-harm encouragement, or violent harassment detected.',
+      severity: 'CRITICAL',
+      detectedPattern: 'Severe Toxicity / Threat Trigger'
+    };
+  }
+
+  // Targeted malicious hate slurs / severe harassment
+  const severeSlursRegex = /\b(nigger|nigga|faggot|retard|retarded)\b/i;
+  if (severeSlursRegex.test(clean)) {
+    return {
+      isThreat: true,
+      category: 'Severe Toxicity & Harassment',
+      reason: 'Use of prohibited hate slurs or extreme toxic behavior.',
+      severity: 'HIGH',
+      detectedPattern: 'Hate Speech / Slur Trigger'
+    };
+  }
+
+  return { isThreat: false };
+}
+
+/**
+ * Analyzes ticket inquiry details, classifies the ticket into a category,
+ * determines urgency/priority, creates an executive summary, and suggests staff actions.
+ */
+export async function generateTicketTriage({ title, inquiry, docs, details, user }) {
+  const combinedText = `${title || ''} ${inquiry || ''} ${docs || ''} ${details || ''}`.trim();
+  const lower = combinedText.toLowerCase();
+
+  let category = 'General Support & Inquiry';
+  let priority = 'Normal';
+  let recommendedAction = 'Review member details and respond promptly.';
+  let summary = 'User opened a general support ticket seeking server or bot assistance.';
+
+  if (/\b(ban|unban|banned|appeal|unpunish|false ban|punishment|quarantine|unquarantine|appeal ban)\b/i.test(lower)) {
+    category = 'Ban Appeal & Punishment Dispute';
+    priority = 'Urgent';
+    recommendedAction = 'Cross-examine server moderation audit logs and punishment history before ruling on appeal.';
+    summary = `Member ${user ? `<@${user.id}>` : 'User'} is submitting an appeal regarding an active server ban or moderation penalty.`;
+  } else if (/\b(buy|bought|purchase|payment|pay|coin|coins|shop|balance|money|refund|transaction|store|perk|fulfill)\b/i.test(lower)) {
+    category = 'Billing & Store Fulfillment';
+    priority = 'High';
+    recommendedAction = 'Verify coin ledger or payment confirmation and ensure role rewards were properly granted.';
+    summary = 'Inquiry concerning server store purchases, coin balances, or role reward fulfillment.';
+  } else if (/\b(bug|exploit|glitch|error|crash|broken|failed|exception|not working|defect)\b/i.test(lower)) {
+    category = 'Bug & Exploit Report';
+    priority = 'High';
+    recommendedAction = 'Verify reproduction steps in test channel and alert developer if reproducible.';
+    summary = 'Report detailing unexpected software behavior, bot error, or exploit potential.';
+  } else if (/\b(raid|scam|scammer|dox|doxx|harass|harassment|bully|threat|toxic|rule break|rulebreaker|nsfw)\b/i.test(lower)) {
+    category = 'Member Harassment & Safety Report';
+    priority = 'Urgent';
+    recommendedAction = 'Review chat evidence / screenshots and isolate offending parties if rules were breached.';
+    summary = 'Safety report regarding server member misconduct, harassment, or security breach.';
+  } else if (/\b(partner|partnership|affiliate|collab|collaboration)\b/i.test(lower)) {
+    category = 'Partnership & Collaboration';
+    priority = 'Normal';
+    recommendedAction = 'Check partnership requirements against member server metrics.';
+    summary = 'Member inquiry concerning server partnership or collaborative events.';
+  }
+
+  // Refine summary if inquiry text is provided
+  if (details && details.trim().length > 10) {
+    const cleanDetails = details.trim().replace(/\n+/g, ' ');
+    const snippet = cleanDetails.length > 140 ? cleanDetails.substring(0, 137) + '...' : cleanDetails;
+    summary = `"${snippet}"`;
+  } else if (inquiry && inquiry.trim().length > 5) {
+    const cleanInquiry = inquiry.trim().replace(/\n+/g, ' ');
+    summary = `"${cleanInquiry}"`;
+  }
+
+  return {
+    category,
+    priority,
+    summary,
+    recommendedAction
+  };
+}
+
+/**
+ * Builds an interactive Components V2 / CV2 container card for staff triage
+ */
+export function buildTicketTriageContainer({ category, priority, summary, recommendedAction, user }) {
+  const priorityEmoji = priority === 'Urgent' ? '<:danger:1533844874271391785>' : (priority === 'High' ? '<:warning:1533844881665949706>' : '<a:uptime:1552608831060844575>');
+
+  return {
+    type: 17,
+    components: [
+      {
+        type: 10,
+        content: `## Smart Ticket Triage | <a:atheNATICK:1557841381630681106>`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          `-# **Classification Category:** \`[${category}]\`\n` +
+          `-# **Triage Priority:** ${priorityEmoji} \`[${priority}]\`\n` +
+          `-# **Member:** ${user ? `<@${user.id}>` : 'User'}\n\n` +
+          `**AI Executive Summary:**\n` +
+          `-# ${summary}\n\n` +
+          `**Recommended Staff Action:**\n` +
+          `-# • ${recommendedAction}`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **Athena Prime Neural Triage Assistant \u2022 V1.0**`
+      }
+    ]
+  };
+}
+
 export default generateAIResponse;
