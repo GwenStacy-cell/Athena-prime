@@ -1,4 +1,4 @@
-import { MessageFlags } from 'discord.js';
+import { MessageFlags, MessagePayload } from 'discord.js';
 
 // Returns true if a line already has discord markdown — skip auto-formatting
 function isPreformatted(line) {
@@ -247,6 +247,15 @@ export var cv2 = Object.assign(_m(false), {
   
   respond: async function(ctx, payload, type = 4) {
     if (typeof payload === 'string') payload = { content: payload };
+    let resolvedFiles = payload.files;
+    if (resolvedFiles) {
+      const arr = Array.isArray(resolvedFiles) ? resolvedFiles : [resolvedFiles];
+      resolvedFiles = await Promise.all(arr.map(async f => {
+        if (!f) return f;
+        if (f.data && f.name) return f;
+        return MessagePayload.resolveFile(f);
+      }));
+    }
     const isCV2 = payload.flags != null && (payload.flags & 32768);
     let body = payload;
     if (isCV2) {
@@ -258,10 +267,11 @@ export var cv2 = Object.assign(_m(false), {
         }
       }
       body = { components: comps, flags: payload.flags };
+      const fileList = resolvedFiles || payload.files;
       if (payload.attachments && Array.isArray(payload.attachments)) {
         body.attachments = payload.attachments;
-      } else if (payload.files && Array.isArray(payload.files)) {
-        body.attachments = payload.files.map((f, i) => ({
+      } else if (fileList && Array.isArray(fileList)) {
+        body.attachments = fileList.map((f, i) => ({
           id: String(i),
           filename: f.name || (typeof f === 'string' ? f.split(/[\\/]/).pop() : `file_${i}`),
           description: f.description
@@ -270,25 +280,33 @@ export var cv2 = Object.assign(_m(false), {
     }
     
     if (ctx.replied || ctx.deferred) {
-      return cv2.edit(ctx, payload);
+      return cv2.edit(ctx, { ...payload, files: resolvedFiles });
     }
 
     // type 4 = ChannelMessageWithSource (Reply)
     // type 7 = UpdateMessage (Update)
-    return ctx.client.rest.post(`/interactions/${ctx.id}/${ctx.token}/callback`, { body: { type: type, data: body }, files: payload.files });
+    return ctx.client.rest.post(`/interactions/${ctx.id}/${ctx.token}/callback`, { body: { type: type, data: body }, files: resolvedFiles });
   },
   edit: async function(ctx, payload) {
     if (typeof payload === 'string') payload = { content: payload };
-    // Strip all legacy discord.js fields that are injected as undefined/null
-    // and cause DiscordAPIError[50035] when IS_COMPONENTS_V2 flag is set
+    let resolvedFiles = payload.files;
+    if (resolvedFiles) {
+      const arr = Array.isArray(resolvedFiles) ? resolvedFiles : [resolvedFiles];
+      resolvedFiles = await Promise.all(arr.map(async f => {
+        if (!f) return f;
+        if (f.data && f.name) return f;
+        return MessagePayload.resolveFile(f);
+      }));
+    }
     const isCV2 = payload.flags != null && (payload.flags & 32768);
     let body = payload;
     if (isCV2) {
       body = { components: payload.components, flags: payload.flags };
+      const fileList = resolvedFiles || payload.files;
       if (payload.attachments && Array.isArray(payload.attachments)) {
         body.attachments = payload.attachments;
-      } else if (payload.files && Array.isArray(payload.files)) {
-        body.attachments = payload.files.map((f, i) => ({
+      } else if (fileList && Array.isArray(fileList)) {
+        body.attachments = fileList.map((f, i) => ({
           id: String(i),
           filename: f.name || (typeof f === 'string' ? f.split(/[\\/]/).pop() : `file_${i}`),
           description: f.description
@@ -296,9 +314,9 @@ export var cv2 = Object.assign(_m(false), {
       }
     }
     if (ctx.editReply) {
-      return ctx.client.rest.patch(`/webhooks/${ctx.client.user.id}/${ctx.token}/messages/@original`, { body, files: payload.files });
+      return ctx.client.rest.patch(`/webhooks/${ctx.client.user.id}/${ctx.token}/messages/@original`, { body, files: resolvedFiles });
     } else if (ctx.edit) {
-      return ctx.client.rest.patch(`/channels/${ctx.channel.id}/messages/${ctx.id}`, { body, files: payload.files });
+      return ctx.client.rest.patch(`/channels/${ctx.channel.id}/messages/${ctx.id}`, { body, files: resolvedFiles });
     }
   },
 });

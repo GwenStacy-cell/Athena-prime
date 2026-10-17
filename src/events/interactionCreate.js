@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
+import { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, MessagePayload } from 'discord.js';
 import { buildXpDashboard } from '../commands/leveling.js';
 import commandMap from '../commands/loader.js';
 import cv2 from '../cv2.js';
@@ -705,7 +705,18 @@ export default {
       return false;
     };
 
-    const prepareCV2Payload = (options) => {
+    const resolveFilesHelper = async (files) => {
+      if (!files) return undefined;
+      const arr = Array.isArray(files) ? files : [files];
+      if (arr.length === 0) return undefined;
+      return Promise.all(arr.map(async (file) => {
+        if (!file) return file;
+        if (file.data && file.name) return file;
+        return MessagePayload.resolveFile(file);
+      }));
+    };
+
+    const prepareCV2Payload = (options, resolvedFiles) => {
       const flags = (options.flags != null ? options.flags : 0) | 32768;
       let comps = Array.isArray(options.components) ? [...options.components] : [];
       if (options.content) {
@@ -721,10 +732,11 @@ export default {
         }
       }
       const data = { components: comps, flags };
+      const fileList = resolvedFiles || options.files;
       if (options.attachments && Array.isArray(options.attachments)) {
         data.attachments = options.attachments;
-      } else if (options.files && Array.isArray(options.files)) {
-        data.attachments = options.files.map((f, i) => ({
+      } else if (fileList && Array.isArray(fileList)) {
+        data.attachments = fileList.map((f, i) => ({
           id: String(i),
           filename: f.name || (typeof f === 'string' ? f.split(/[\\/]/).pop() : `file_${i}`),
           description: f.description
@@ -740,9 +752,10 @@ export default {
       }
       if (isCV2(options)) {
         interaction.replied = true;
-        const body = prepareCV2Payload(options);
+        const resolvedFiles = await resolveFilesHelper(options.files);
+        const body = prepareCV2Payload(options, resolvedFiles);
         return interaction.client.rest.patch(`/webhooks/${interaction.client.user.id}/${interaction.token}/messages/@original`, {
-          body, files: options.files
+          body, files: resolvedFiles
         });
       }
       return _editReply(options);
@@ -756,9 +769,10 @@ export default {
       }
       if (isCV2(options)) {
         interaction.replied = true;
-        const data = prepareCV2Payload(options);
+        const resolvedFiles = await resolveFilesHelper(options.files);
+        const data = prepareCV2Payload(options, resolvedFiles);
         return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
-          body: { type: 4, data }, files: options.files
+          body: { type: 4, data }, files: resolvedFiles
         });
       }
       return _reply(options);
@@ -769,9 +783,10 @@ export default {
       interaction.update = async function(options) {
         if (isCV2(options)) {
           interaction.replied = true;
-          const data = prepareCV2Payload(options);
+          const resolvedFiles = await resolveFilesHelper(options.files);
+          const data = prepareCV2Payload(options, resolvedFiles);
           return interaction.client.rest.post(`/interactions/${interaction.id}/${interaction.token}/callback`, {
-            body: { type: 7, data }, files: options.files
+            body: { type: 7, data }, files: resolvedFiles
           });
         }
         return _update(options);
@@ -782,9 +797,10 @@ export default {
       const _followUp = interaction.followUp.bind(interaction);
       interaction.followUp = async function(options) {
         if (isCV2(options)) {
-          const body = prepareCV2Payload(options);
+          const resolvedFiles = await resolveFilesHelper(options.files);
+          const body = prepareCV2Payload(options, resolvedFiles);
           return interaction.client.rest.post(`/webhooks/${interaction.client.user.id}/${interaction.token}`, {
-            body, files: options.files
+            body, files: resolvedFiles
           });
         }
         return _followUp(options);
