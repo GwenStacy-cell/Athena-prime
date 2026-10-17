@@ -1574,7 +1574,8 @@ export const helpModules = [
   
   { id: 'utilities', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Utilities', label: 'General Utilities', emoji: 'utilities', commands: [
     "`!help [module/command]` - Displays this interactive menu `[Public]`",
-    "`!ask <prompt> / /ask <prompt>` - Query Athena Prime Neural AI Engine `[Public]`",
+    "`!athena / !guide [question]` - Interactive Athena AI Specialist to explain commands, resolve doubts & instruct setups `[Public]`",
+    "`!ask <prompt> / /ask <prompt>` - Query general AI knowledge and analysis `[Public]`",
     "`!aimode status|on|off|channel` - Configure conversational AI channel mode `[Admin]`",
     "`!dev` - Displays developer information and credits `[Public]`",
     "`!ping / !p` - View bot latency and heartbeat graph `[Public]`",

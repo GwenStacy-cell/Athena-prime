@@ -258,6 +258,14 @@ export default {
       return;
     }
 
+    // --- ATHENA GUIDE HUB BUTTONS ---
+    if (interaction.isButton() && interaction.customId.startsWith('athena_')) {
+      import('../commands/athena.js').then(m => {
+        if (m.handleAthenaGuideButtons) m.handleAthenaGuideButtons(interaction).catch(e => console.error(e));
+      }).catch(e => console.error(e));
+      return;
+    }
+
     // --- SUGGESTION BUTTONS ---
     if (interaction.isButton() && interaction.customId.startsWith('ticket_')) {
       import('../commands/ticket.js').then(m => {

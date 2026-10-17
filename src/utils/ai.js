@@ -189,7 +189,7 @@ export async function generateAIResponse(prompt, context = {}) {
     };
   }
 
-  const systemInstructions = [
+  const systemInstructions = context.customSystem || [
     'You are Athena Prime, the elite security, administration, and community AI assistant for Discord servers.',
     'Temporal Context: The current year is 2026.',
     'Authoritative Real-World Ground Truth (2026 Timeline):',

@@ -577,9 +577,23 @@ A Honeypot is a designated text channel configured with permissions hidden or si
  * Detailed command mechanics, parameters, permissions, and internal architecture.
  */
 export const DETAILED_COMMANDS = {
+  athena: {
+    name: 'athena',
+    aliases: ['guide', 'howto', 'askathena', 'assistant', 'athenahelp'],
+    category: 'Utilities & Integrations',
+    clearance: 'Public / Everyone',
+    syntax: '!athena [question] / /athena [query]',
+    purpose: 'Interactive Athena AI Specialist to explain bot commands, clarify doubts, and provide step-by-step setup guidance.',
+    architecture:
+`• **Live Knowledge Grounding:** Dynamically indexes 245+ commands, security architectures, and newly implemented features.
+• **Step-by-Step Guidance:** Synthesizes actionable walkthroughs, exact syntax, required permissions, and best practices tailored to user needs.
+• **Interactive Guidance Hub:** Spawns a Components V2 quick-action dashboard with one-click domain explainers when invoked without arguments.`,
+    example: '!athena how do I setup tickets with AI triage?'
+  },
+
   ask: {
     name: 'ask',
-    aliases: ['ai', 'athena', 'neural', 'gemini'],
+    aliases: ['ai', 'neural', 'gemini'],
     category: 'Utilities & Integrations',
     clearance: 'Public / Everyone',
     syntax: '!ask <prompt> / /ask <prompt>',
@@ -1904,3 +1918,5 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
     components: rawComponents
   };
 }
+
+export const COMMAND_EXPLAINERS = DETAILED_COMMANDS;

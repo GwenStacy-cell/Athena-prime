@@ -91,8 +91,10 @@ import { commands as economyCmds } from './economy.js';
 import { commands as minigamesCmds } from './minigames.js';
 import { commands as voicestudioCmds } from './voicestudio.js';
 import { commands as studioCmds } from './studio.js';
+import { commands as athenaCmds } from './athena.js';
 
 export const allCommands = [
+  ...athenaCmds,
   ...askCmds,
   ...economyCmds,
   ...minigamesCmds,

@@ -63,7 +63,7 @@ export const commands = [
     name: 'ask',
     description: 'Query the Athena Prime Neural AI Engine for answers, analysis, and assistance.',
     category: 'utility',
-    aliases: ['ai', 'athena', 'neural', 'gemini'],
+    aliases: ['ai', 'neural', 'gemini'],
     options: [
       {
         name: 'prompt',
