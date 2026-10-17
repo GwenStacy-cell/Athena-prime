@@ -316,6 +316,10 @@ export var cv2 = Object.assign(_m(false), {
     if (ctx.editReply) {
       return ctx.client.rest.patch(`/webhooks/${ctx.client.user.id}/${ctx.token}/messages/@original`, { body, files: resolvedFiles });
     } else if (ctx.edit) {
+      if (isCV2 && ctx.content) {
+        await ctx.delete().catch(() => null);
+        return ctx.channel.send({ components: body.components, flags: body.flags, files: resolvedFiles });
+      }
       return ctx.client.rest.patch(`/channels/${ctx.channel.id}/messages/${ctx.id}`, { body, files: resolvedFiles });
     }
   },

@@ -98,16 +98,20 @@ export const commands = [
           ]
         };
         if (thinkingMsg) {
-          return cv2.edit(thinkingMsg, { components: [errorContainer], content: '', flags: MessageFlags.IsComponentsV2 });
+          await thinkingMsg.delete().catch(() => null);
         }
-        return message.reply({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 });
+        return message.reply({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
+          return message.channel.send({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 });
+        });
       }
 
       const container = buildAICV2Container(message.author, prompt, aiResult, accentColor);
       if (thinkingMsg) {
-        return cv2.edit(thinkingMsg, { components: [container], content: '', flags: MessageFlags.IsComponentsV2 });
+        await thinkingMsg.delete().catch(() => null);
       }
-      return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => {
+        return message.channel.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      });
     },
 
     async executeSlash(interaction) {
