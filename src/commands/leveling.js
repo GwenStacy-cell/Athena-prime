@@ -141,9 +141,41 @@ export const commands = [
     name: 'rank',
     description: 'View your current rank and XP.',
     category: 'leveling',
+    aliases: ['lvl', 'level', 'xp'],
     options: [
       { name: 'user', description: 'User to view', type: 6, required: false }
     ],
+    async executePrefix(message, args) {
+      const system = db.getXpSystem(message.guild.id);
+      if (!system || !system.enabled) {
+        return message.reply({ content: 'The XP system is currently disabled.' });
+      }
+
+      if (system.cmdChannelId && message.channelId !== system.cmdChannelId) {
+        return message.reply({ content: `Please use this command in <#${system.cmdChannelId}>.` });
+      }
+
+      const targetUser = message.mentions.users.first()
+        || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null)
+        || message.author;
+      let targetMember = await message.guild.members.fetch(targetUser.id).catch(() => null);
+      if (!targetMember) targetMember = { user: targetUser, displayName: targetUser.username };
+
+      const allUsers = db.getTopUsersXp(message.guild.id, 99999);
+      let rank = allUsers.findIndex(u => u.userId === targetUser.id) + 1;
+      
+      const userXp = db.getUserXp(message.guild.id, targetUser.id);
+      if (rank === 0 && userXp.xp > 0) {
+        rank = allUsers.length + 1;
+      } else if (rank === 0) {
+        rank = '-';
+      }
+
+      const requiredXp = calculateXpForLevel(userXp.level + 1);
+      
+      const attachment = await generateRankCard(targetMember, userXp.xp, userXp.level, rank, requiredXp);
+      await message.reply({ content: `**${targetMember.displayName}'s Rank** | <a:atheNATICK:1557841381630681106>`, files: [attachment] });
+    },
     async executeSlash(interaction) {
       const system = db.getXpSystem(interaction.guild.id);
       if (!system || !system.enabled) {
@@ -172,7 +204,7 @@ export const commands = [
       const requiredXp = calculateXpForLevel(userXp.level + 1);
       
       const attachment = await generateRankCard(targetMember, userXp.xp, userXp.level, rank, requiredXp);
-      await interaction.editReply({ content: `${COIN} **${targetMember.displayName}'s Rank** ${TROPHY}`, files: [attachment] });
+      await interaction.editReply({ content: `**${targetMember.displayName}'s Rank** | <a:atheNATICK:1557841381630681106>`, files: [attachment] });
     }
   },
 

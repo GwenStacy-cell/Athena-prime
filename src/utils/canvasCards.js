@@ -2,6 +2,11 @@ import { createCanvas, loadImage, registerFont } from './canvas.js';
 import { AttachmentBuilder } from 'discord.js';
 import path from 'path';
 import fs from 'fs';
+import { exec } from 'child_process';
+import util from 'util';
+import ffmpegPath from 'ffmpeg-static';
+
+const execPromise = util.promisify(exec);
 
 // Register Cinzel Bold for the God of War stone-style name font
 const CINZEL_PATH = path.resolve('assets/Cinzel-Bold.ttf');
@@ -38,218 +43,332 @@ function rrPath(ctx, x, y, w, h, r) {
   }
 }
 
-export async function generateRankCard(member, xp, level, rank, requiredXp) {
-  const W = 960;
-  const H = 255;
-  const canvas = createCanvas(W, H);
-  const ctx = canvas.getContext('2d');
+// Cache Hogwarts master assets in memory so disk is read only once
+let hogwartsAssetsCache = null;
+async function getHogwartsAssets() {
+  if (hogwartsAssetsCache) return hogwartsAssetsCache;
+  const [bgImg, owlImg, ringImg] = await Promise.all([
+    loadImage(path.resolve('src/assets/rank_hogwarts_master.png')),
+    loadImage(path.resolve('src/assets/hedwig_sprite_clean.png')),
+    loadImage(path.resolve('src/assets/avatar_runic_ring.png'))
+  ]);
+  hogwartsAssetsCache = { bgImg, owlImg, ringImg };
+  return hogwartsAssetsCache;
+}
 
-  // ─── BACKGROUND ────────────────────────────────────────────────────────────
-  let bgLoaded = false;
-  for (const bgPath of ['src/assets/rank_gow_bg.png', 'src/assets/rank_bg.jpg']) {
+// Pre-calculate candle positions on Hogwarts altar & castle
+const HOGWARTS_CANDLES = [
+  { x: 13, y: 76, r: 8 },
+  { x: 34, y: 114, r: 9 },
+  { x: 52, y: 142, r: 8 },
+  { x: 70, y: 168, r: 8 },
+  { x: 198, y: 126, r: 9 },
+  { x: 216, y: 154, r: 8 },
+  { x: 326, y: 276, r: 16 }, // desk lantern
+  { x: 964, y: 243, r: 10 },
+  { x: 945, y: 38,  r: 8  },
+  { x: 989, y: 204, r: 7  }
+];
+
+// Pre-calculate deterministic fire embers / sparks
+const NUM_EMBERS = 28;
+const HOGWARTS_EMBERS = [];
+for (let i = 0; i < NUM_EMBERS; i++) {
+  HOGWARTS_EMBERS.push({
+    x: 80 + (i * 39) % 880,
+    y: 30 + (i * 29) % 280,
+    vx: -(0.4 + (i % 3) * 0.35),
+    vy: -(1.1 + (i % 4) * 0.45),
+    size: 1.1 + (i % 3) * 0.8,
+    alpha: 0.45 + (i % 5) * 0.12,
+    phase: i * 0.45
+  });
+}
+
+export async function generateRankCard(member, xp, level, rank, requiredXp) {
+  const W = 1024;
+  const H = 342;
+  const numFrames = 12;
+
+  const tempDir = path.resolve(`data/rank_temp_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
+  fs.mkdirSync(tempDir, { recursive: true });
+
+  let firstFrameBuffer = null;
+
+  try {
+    const { bgImg, owlImg, ringImg } = await getHogwartsAssets();
+
+    // Fetch Avatar with robust fallback
+    let avatarImg = null;
+    if (member?.user?.displayAvatarURL) {
+      try {
+        const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256 });
+        avatarImg = await loadImage(avatarUrl).catch(() => null);
+      } catch {}
+    }
+
+    // Name formatting
+    let rawName = member?.displayName?.replace(/[^\x00-\x7F]/g, '').trim()
+               || member?.user?.username?.replace(/[^\x00-\x7F]/g, '').trim()
+               || 'MEMBER';
+    if (rawName.length > 22) rawName = rawName.substring(0, 22) + '...';
+    const upperName = rawName.toUpperCase();
+
+    // Split at first space or halfway if long single word
+    let part1 = upperName;
+    let part2 = '';
+    const spaceIdx = upperName.indexOf(' ');
+    if (spaceIdx > 0 && spaceIdx < upperName.length - 1) {
+      part1 = upperName.substring(0, spaceIdx);
+      part2 = upperName.substring(spaceIdx + 1);
+    } else if (upperName.length > 7) {
+      const mid = Math.ceil(upperName.length / 2);
+      part1 = upperName.substring(0, mid);
+      part2 = upperName.substring(mid);
+    }
+
+    // Font size scaling
+    let nameFontSize = 38;
+    if (upperName.length > 18) nameFontSize = 26;
+    else if (upperName.length > 13) nameFontSize = 32;
+
+    // Relative XP calculation
+    let prevXp = 0;
+    if (level > 0) prevXp = 100 * Math.pow(level, 2) + 100 * level;
+    const relXp  = Math.max(0, xp - prevXp);
+    const relReq = Math.max(1, requiredXp - prevXp);
+    const pct    = Math.min(Math.max(relXp / relReq, 0.02), 1.0);
+
+    // Progress Bar parameters
+    const barX = 340, barY = 195, barW = 600, barH = 20, barR = 10;
+    const fillW = Math.max(barH, barW * pct);
+
+    // Avatar center and radius
+    const avX = 210, avY = 138, avR = 81;
+
+    // Render 12 frames
+    for (let f = 0; f < numFrames; f++) {
+      const phi = (2 * Math.PI * f) / numFrames;
+      const canvas = createCanvas(W, H);
+      const ctx = canvas.getContext('2d');
+
+      // 1. Master Background Plate
+      ctx.drawImage(bgImg, 0, 0, W, H);
+
+      // 2. Animated Candle Flames & Lantern Aura
+      for (let cIdx = 0; cIdx < HOGWARTS_CANDLES.length; cIdx++) {
+        const c = HOGWARTS_CANDLES[cIdx];
+        const flicker = 0.75 + 0.25 * Math.sin(phi * 2 + cIdx * 1.5) + 0.08 * Math.cos(phi * 3 + cIdx);
+        const rad = c.r * flicker;
+        const g = ctx.createRadialGradient(c.x, c.y, 1, c.x, c.y, rad * 2.2);
+        g.addColorStop(0, 'rgba(255, 235, 140, 0.75)');
+        g.addColorStop(0.35, 'rgba(255, 130, 30, 0.35)');
+        g.addColorStop(1, 'rgba(255, 60, 0, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, rad * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3. Avatar Fire Halo, Clipped Avatar & Runic Crest Overlay
+      const haloR = 88 + Math.sin(phi) * 3;
+      const halo = ctx.createRadialGradient(avX, avY, 78, avX, avY, haloR + 14);
+      halo.addColorStop(0, 'rgba(240, 40, 20, 0.45)');
+      halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(avX, avY, haloR + 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw Avatar (or dark fallback if unavailable)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avX, avY, avR, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      if (avatarImg) {
+        ctx.drawImage(avatarImg, avX - avR, avY - avR, avR * 2, avR * 2);
+      } else {
+        const defaultAvGrad = ctx.createRadialGradient(avX, avY, 10, avX, avY, avR);
+        defaultAvGrad.addColorStop(0, '#551111');
+        defaultAvGrad.addColorStop(1, '#1a0505');
+        ctx.fillStyle = defaultAvGrad;
+        ctx.fillRect(avX - avR, avY - avR, avR * 2, avR * 2);
+        ctx.font = 'bold 50px "Cinzel", "Montserrat", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText((rawName[0] || '?').toUpperCase(), avX, avY + 18);
+        ctx.textAlign = 'left';
+      }
+      ctx.restore();
+
+      // Overlay Runic Ring on top of avatar edge
+      ctx.drawImage(ringImg, 0, 0, W, H);
+
+      // 4. Hedwig Owl Floating & Soaring Hover
+      const owlCX = 890;
+      const owlCY = 68;
+      const floatY = Math.sin(phi) * 4.2;
+      const tilt = Math.cos(phi) * 0.025;
+      const owlW = 195;
+      const owlH = 195;
+
+      ctx.save();
+      ctx.translate(owlCX, owlCY + floatY);
+      ctx.rotate(tilt);
+      ctx.drawImage(owlImg, -owlW / 2, -owlH / 2, owlW, owlH);
+      ctx.restore();
+
+      // 5. Dynamic Flaming Progress Bar
+      // Outer track
+      ctx.fillStyle = 'rgba(12, 3, 3, 0.88)';
+      rrPath(ctx, barX, barY, barW, barH, barR);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(120, 25, 25, 0.6)';
+      ctx.lineWidth = 1.5;
+      rrPath(ctx, barX, barY, barW, barH, barR);
+      ctx.stroke();
+
+      // Fiery animated fill
+      ctx.save();
+      rrPath(ctx, barX, barY, fillW, barH, barR);
+      ctx.clip();
+
+      const flameGrad = ctx.createLinearGradient(barX - (f * 15), barY, barX + fillW + (f * 15), barY);
+      flameGrad.addColorStop(0, '#550000');
+      flameGrad.addColorStop(0.3, '#aa1111');
+      flameGrad.addColorStop(0.7, '#ff2222');
+      flameGrad.addColorStop(1, '#ff8888');
+      ctx.fillStyle = flameGrad;
+      ctx.fillRect(barX, barY, fillW, barH);
+
+      // Crackling lightning arcs along fill
+      ctx.strokeStyle = 'rgba(255, 230, 230, 0.85)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(barX + 10, barY + barH / 2);
+      let lx = barX + 10;
+      while (lx < barX + fillW - 8) {
+        lx += 15 + Math.random() * 10;
+        const ly = barY + barH / 2 + (Math.sin(phi * 3 + lx) * 3);
+        ctx.lineTo(lx, ly);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Plasma Head Orb
+      const headX = barX + fillW;
+      const headY = barY + barH / 2;
+      const orbR = 12 + Math.sin(phi * 2) * 1.8;
+      const orbGrad = ctx.createRadialGradient(headX, headY, 1, headX, headY, orbR * 1.8);
+      orbGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      orbGrad.addColorStop(0.3, 'rgba(255, 80, 50, 0.95)');
+      orbGrad.addColorStop(0.7, 'rgba(230, 20, 20, 0.45)');
+      orbGrad.addColorStop(1, 'rgba(200, 0, 0, 0)');
+      ctx.fillStyle = orbGrad;
+      ctx.beginPath();
+      ctx.arc(headX, headY, orbR * 1.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 6. Fire Sparks / Embers Particle Drift
+      for (let eIdx = 0; eIdx < HOGWARTS_EMBERS.length; eIdx++) {
+        const e = HOGWARTS_EMBERS[eIdx];
+        const curX = (e.x + e.vx * f * 4 + W) % W;
+        let curY = e.y + e.vy * f * 4;
+        if (curY < 0) curY += H;
+        const waveX = curX + Math.sin(phi + e.phase) * 5;
+        const sparkAlpha = e.alpha * (0.7 + 0.3 * Math.sin(phi * 2 + eIdx));
+
+        ctx.fillStyle = (eIdx % 2 === 0)
+          ? `rgba(255, 200, 70, ${sparkAlpha})`
+          : `rgba(255, 60, 30, ${sparkAlpha})`;
+        ctx.beginPath();
+        ctx.arc(waveX, curY, e.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 7. Dynamic Typography
+      // Username Dual-Tone
+      const nameX = 340, nameY = 110;
+      ctx.font = `bold ${nameFontSize}px "Cinzel", "Montserrat", "Roboto", serif`;
+      ctx.shadowColor = '#000000';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+
+      // Part 1: Silver Stone
+      ctx.fillStyle = '#eaecee';
+      ctx.fillText(part1, nameX, nameY);
+      const p1w = ctx.measureText(part1).width;
+
+      // Part 2: Fiery Crimson
+      if (part2) {
+        ctx.shadowColor = 'rgba(230, 20, 20, 0.7)';
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = '#ff2222';
+        ctx.fillText(' ' + part2, nameX + p1w, nameY);
+      }
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Rank
+      ctx.font = 'bold 20px "Montserrat", "Roboto", sans-serif';
+      ctx.fillStyle = '#9ea5b0';
+      ctx.fillText(`Rank #${rank}`, nameX + 2, nameY + 42);
+
+      // Level
+      const lvlBaseX = 640, lvlBaseY = 152;
+      ctx.font = '24px "Cinzel", "Montserrat", serif';
+      ctx.fillStyle = '#b8bec8';
+      ctx.fillText('Level', lvlBaseX, lvlBaseY);
+      const lvlLabelW = ctx.measureText('Level').width;
+
+      ctx.font = 'bold 44px "Cinzel", "Montserrat", serif';
+      ctx.fillStyle = '#ff2222';
+      ctx.shadowColor = 'rgba(255, 30, 30, 0.8)';
+      ctx.shadowBlur = 14;
+      ctx.fillText(` ${level}`, lvlBaseX + lvlLabelW, lvlBaseY + 6);
+      ctx.shadowBlur = 0;
+
+      // XP Text
+      ctx.font = 'bold 13px "Montserrat", "Roboto", monospace';
+      ctx.fillStyle = '#9ea5b0';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${xp.toLocaleString()} / ${requiredXp.toLocaleString()} XP`, barX + barW, barY - 7);
+      ctx.textAlign = 'left';
+
+      // Save frame PNG
+      const frameBuffer = canvas.toBuffer('image/png');
+      if (f === 0) firstFrameBuffer = frameBuffer;
+      const framePath = path.join(tempDir, `frame_${String(f).padStart(2, '0')}.png`);
+      fs.writeFileSync(framePath, frameBuffer);
+    }
+
+    // 2-pass FFmpeg Palettegen + Paletteuse for highest fidelity GIF
+    const gifOutPath = path.join(tempDir, 'rank-card.gif');
+    const palettePath = path.join(tempDir, 'palette.png');
+
+    const genPaletteCmd = `"${ffmpegPath}" -y -framerate 10 -i "${tempDir}/frame_%02d.png" -vf "palettegen=stats_mode=diff" "${palettePath}"`;
+    const encodeGifCmd = `"${ffmpegPath}" -y -framerate 10 -i "${tempDir}/frame_%02d.png" -i "${palettePath}" -lavfi "paletteuse=dither=bayer:bayer_scale=3" "${gifOutPath}"`;
+
+    await execPromise(genPaletteCmd);
+    await execPromise(encodeGifCmd);
+
+    const gifBuffer = fs.readFileSync(gifOutPath);
+    return new AttachmentBuilder(gifBuffer, { name: 'rank-card.gif' });
+  } catch (err) {
+    console.error('[RankCard] Animated GIF generation error, falling back to static card:', err);
+    if (firstFrameBuffer) {
+      return new AttachmentBuilder(firstFrameBuffer, { name: 'rank-card.png' });
+    }
+    const fallbackCanvas = createCanvas(W, H);
+    return new AttachmentBuilder(fallbackCanvas.toBuffer('image/png'), { name: 'rank-card.png' });
+  } finally {
     try {
-      const bg = await loadImage(bgPath);
-      ctx.drawImage(bg, 0, 0, W, H);
-      bgLoaded = true;
-      break;
+      fs.rmSync(tempDir, { recursive: true, force: true });
     } catch {}
   }
-  if (!bgLoaded) {
-    ctx.fillStyle = '#0d0d0d';
-    ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = 'rgba(165,20,20,0.9)';
-    ctx.lineWidth = 3;
-    rrPath(ctx, 2, 2, W - 4, H - 4, 14);
-    ctx.stroke();
-  }
-
-  // ─── AVATAR ────────────────────────────────────────────────────────────────
-  const avatarCX = 127;
-  const avatarCY = 127;
-  const avatarR  = 75;  // avatar clip radius
-  const ringR    = 88;  // outer ring radius
-
-  // Outer red glow halo
-  const halo = ctx.createRadialGradient(avatarCX, avatarCY, ringR - 4, avatarCX, avatarCY, ringR + 18);
-  halo.addColorStop(0, 'rgba(200, 30, 30, 0.50)');
-  halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = halo;
-  ctx.beginPath();
-  ctx.arc(avatarCX, avatarCY, ringR + 18, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Stone/chain ring — dark outer + bright red inner
-  ctx.beginPath();
-  ctx.arc(avatarCX, avatarCY, ringR, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(70, 6, 6, 1)';
-  ctx.lineWidth = 16;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(avatarCX, avatarCY, ringR, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(190, 25, 25, 1)';
-  ctx.lineWidth = 9;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(avatarCX, avatarCY, ringR, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255, 90, 90, 0.6)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Draw avatar (clipped to circle)
-  const avatarUrl = member.user.displayAvatarURL({ extension: 'png', size: 256 });
-  const avatar = await loadImage(avatarUrl).catch(() => null);
-  if (avatar) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-    ctx.drawImage(avatar, avatarCX - avatarR, avatarCY - avatarR, avatarR * 2, avatarR * 2);
-    ctx.restore();
-  }
-
-  // Inner highlight ring
-  ctx.beginPath();
-  ctx.arc(avatarCX, avatarCY, avatarR + 1, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(220, 60, 60, 0.5)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // ─── NAME TEXT ─────────────────────────────────────────────────────────────
-  const nameX = 242;
-  const nameY = 108;
-
-  let rawName = member.displayName.replace(/[^\x00-\x7F]/g, '').trim()
-             || member.user.username.replace(/[^\x00-\x7F]/g, '').trim()
-             || 'User';
-  if (rawName.length > 18) rawName = rawName.substring(0, 18) + '...';
-  const upperName = rawName.toUpperCase();
-
-  // Split at first space: "H4VN" (white/stone) + "OWNER" (red bold)
-  let part1 = upperName;
-  let part2 = '';
-  const spaceIdx = upperName.indexOf(' ');
-  if (spaceIdx > 0 && spaceIdx < upperName.length - 1) {
-    part1 = upperName.substring(0, spaceIdx);
-    part2 = upperName.substring(spaceIdx + 1);
-  } else if (upperName.length > 5) {
-    const mid = Math.ceil(upperName.length / 2);
-    part1 = upperName.substring(0, mid);
-    part2 = upperName.substring(mid);
-  }
-
-  const fontSize = 44;
-  const nameFont = `bold ${fontSize}px "Cinzel", "Montserrat", "Roboto", sans-serif`;
-
-  ctx.shadowColor = '#000000';
-  ctx.shadowBlur = 14;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
-
-  // Part 1 — off-white stone color
-  ctx.fillStyle = '#ede8e0';
-  ctx.font = nameFont;
-  ctx.fillText(part1, nameX, nameY);
-  const p1w = ctx.measureText(part1).width;
-
-  if (part2) {
-    const gapW = ctx.measureText(' ').width;
-    // Part 2 — bold red
-    ctx.fillStyle = '#cc1111';
-    ctx.font = nameFont;
-    ctx.fillText(part2, nameX + p1w + gapW, nameY);
-  }
-
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
-
-  // ─── RANK ──────────────────────────────────────────────────────────────────
-  ctx.fillStyle = '#999999';
-  ctx.font = `bold 22px "Montserrat", "Roboto", sans-serif`;
-  ctx.fillText(`Rank #${rank}`, nameX + 2, nameY + 40);
-
-  // ─── LEVEL ─────────────────────────────────────────────────────────────────
-  const levelX = 720;
-  const levelY = 118;
-  ctx.fillStyle = '#d0d0d0';
-  ctx.font = `bold 28px "Montserrat", "Roboto", sans-serif`;
-  ctx.fillText('Level', levelX, levelY);
-  const lvlW = ctx.measureText('Level').width;
-
-  ctx.fillStyle = '#ffffff';
-  ctx.shadowColor = '#000000';
-  ctx.shadowBlur = 10;
-  ctx.font = `bold 54px "Cinzel", "Montserrat", "Roboto", sans-serif`;
-  ctx.fillText(`${level}`, levelX + lvlW + 12, levelY + 10);
-  ctx.shadowBlur = 0;
-
-  // ─── XP PROGRESS BAR ───────────────────────────────────────────────────────
-  const barX = nameX;
-  const barY = 178;
-  const barW = 695;
-  const barH = 22;
-  const barR = 11;
-
-  // Bar track
-  ctx.fillStyle = 'rgba(25, 4, 4, 0.88)';
-  rrPath(ctx, barX, barY, barW, barH, barR);
-  ctx.fill();
-
-  ctx.strokeStyle = 'rgba(110, 12, 12, 0.75)';
-  ctx.lineWidth = 1.5;
-  rrPath(ctx, barX, barY, barW, barH, barR);
-  ctx.stroke();
-
-  // Compute fill amount
-  let prevXp = 0;
-  if (level > 0) prevXp = 100 * Math.pow(level, 2) + 100 * level;
-  const relXp  = Math.max(0, xp - prevXp);
-  const relReq = Math.max(1, requiredXp - prevXp);
-  const ratio  = Math.min(relXp / relReq, 1);
-  const fillW  = Math.max(barR * 2, barW * ratio);
-
-  // Red gradient fill
-  const xpGrad = ctx.createLinearGradient(barX, barY, barX + fillW, barY);
-  xpGrad.addColorStop(0,   '#6b0000');
-  xpGrad.addColorStop(0.3, '#bb1010');
-  xpGrad.addColorStop(0.7, '#dd2020');
-  xpGrad.addColorStop(0.9, '#ff4444');
-  xpGrad.addColorStop(1,   '#ff6868');
-
-  ctx.shadowColor = 'rgba(220,30,30,0.55)';
-  ctx.shadowBlur = 8;
-  ctx.fillStyle = xpGrad;
-  rrPath(ctx, barX, barY, fillW, barH, barR);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // Glowing tip at progress end
-  if (fillW > barR * 2 + 12) {
-    const tipGlow = ctx.createRadialGradient(
-      barX + fillW, barY + barH / 2, 0,
-      barX + fillW, barY + barH / 2, barH
-    );
-    tipGlow.addColorStop(0, 'rgba(255,110,110,0.65)');
-    tipGlow.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = tipGlow;
-    ctx.fillRect(barX + fillW - barH, barY - 4, barH * 2, barH + 8);
-  }
-
-  // ─── XP TEXT ───────────────────────────────────────────────────────────────
-  ctx.fillStyle = '#bbbbbb';
-  ctx.font = `bold 14px "Montserrat", "Roboto", sans-serif`;
-  ctx.textAlign = 'right';
-  ctx.shadowColor = '#000000';
-  ctx.shadowBlur = 5;
-  ctx.fillText(`${xp.toLocaleString()} / ${requiredXp.toLocaleString()} XP`, barX + barW - 8, barY + 15);
-  ctx.shadowBlur = 0;
-  ctx.textAlign = 'left';
-
-  const buffer = canvas.toBuffer('image/png');
-  return new AttachmentBuilder(buffer, { name: 'rank-card.png' });
 }
 
 export async function generateLeaderboard(guild, users, page, totalPages) {
