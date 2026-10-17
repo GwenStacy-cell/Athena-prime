@@ -26,6 +26,261 @@ const TICK = '<a:atheNATICK:1557841381630681106>';
 const UPTIME = '<a:uptime:1552608831060844575>';
 
 /**
+ * Hand-curated contextual follow-up questions for core bot commands.
+ */
+export const KNOWN_COMMAND_SUGGESTIONS = {
+  news: [
+    'How to add custom RSS URL?',
+    'How to set ping role?',
+    'How to disable news?'
+  ],
+  ticketpanel: [
+    'How to customize buttons?',
+    'How to set log channel?',
+    'How to reset ticket panel?'
+  ],
+  ticket: [
+    'How to close or delete tickets?',
+    'How to export ticket transcripts?',
+    'How to add members to ticket?'
+  ],
+  security: [
+    'How to whitelist admins?',
+    'How does quarantine work?',
+    'What is 60s exploit threshold?'
+  ],
+  antinuke: [
+    'How to set strike limits?',
+    'What actions trigger antinuke?',
+    'How to whitelist trusted bots?'
+  ],
+  automod: [
+    'How to enable toxicity shield?',
+    'How to set spam limits?',
+    'How to exempt staff roles?'
+  ],
+  firewall: [
+    'How to enable account age filter?',
+    'How to block default avatars?',
+    'How to set quarantine duration?'
+  ],
+  spam: [
+    'How to set rate limits?',
+    'How to prevent mention spam?',
+    'How to set auto-mute time?'
+  ],
+  giveaway: [
+    'How to set role requirements?',
+    'How to reroll a winner?',
+    'How to end giveaway early?'
+  ],
+  leveling: [
+    'How to customize rank card?',
+    'How to set level role rewards?',
+    'How to change XP rate?'
+  ],
+  rank: [
+    'How to view server leaderboard?',
+    'How to change card background?',
+    'How to reset member XP?'
+  ],
+  jtc: [
+    'How to set user limit & bitrate?',
+    'How to transfer voice ownership?',
+    'How to customize channel names?'
+  ],
+  vcpanel: [
+    'How to lock/unlock voice channel?',
+    'How to kick users from voice?',
+    'How to hide voice channel?'
+  ],
+  welcome: [
+    'How to setup custom banner card?',
+    'How to test welcome message?',
+    'How to configure autorole?'
+  ],
+  autorole: [
+    'How to set human vs bot roles?',
+    'How to add multiple join roles?',
+    'How to disable autorole?'
+  ],
+  counting: [
+    'How to set counting channel?',
+    'What happens on wrong count?',
+    'How to reset counting score?'
+  ],
+  birthday: [
+    'How to set birthday channel?',
+    'How to set birthday role?',
+    'How to check upcoming birthdays?'
+  ],
+  confession: [
+    'How to make confessions anonymous?',
+    'How to log confession IDs?',
+    'How to ban trolls from confessing?'
+  ],
+  sticky: [
+    'How to set sticky message?',
+    'How to remove sticky message?',
+    'How often does sticky update?'
+  ],
+  starboard: [
+    'How to change star threshold?',
+    'How to set starboard channel?',
+    'Can bots be star-reacted?'
+  ],
+  trigger: [
+    'How to set wildcard match?',
+    'How to add embed response?',
+    'How to list all active triggers?'
+  ],
+  autoresponder: [
+    'How to set exact vs loose match?',
+    'How to delete a trigger?',
+    'How to ignore specific channels?'
+  ],
+  economy: [
+    'How to view wallet balance?',
+    'How to buy items in server shop?',
+    'How to transfer coins to members?'
+  ],
+  minigames: [
+    'How to play Blackjack?',
+    'How to bet on Roulette?',
+    'What are casino payout odds?'
+  ],
+  blackjack: [
+    'How do hit and stand work?',
+    'What is payout for Natural 21?',
+    'What is max bet allowed?'
+  ],
+  roulette: [
+    'What are number betting odds?',
+    'How to bet on red or black?',
+    'What happens on green zero?'
+  ],
+  enuke: [
+    'How does panic lockdown work?',
+    'How to safely unlockdown?',
+    'Who can trigger emergency nuke?'
+  ],
+  quarantine: [
+    'How to isolate compromised accounts?',
+    'How to release from quarantine?',
+    'What channels can quarantined see?'
+  ],
+  backup: [
+    'How to create server backup?',
+    'How to restore server backup?',
+    'What channels/roles are backed up?'
+  ],
+  verify: [
+    'How to enable graphic CAPTCHA?',
+    'How to set verified role?',
+    'How to bypass verification?'
+  ],
+  moderation: [
+    'How to set mod log channel?',
+    'Required permissions for staff?',
+    'How to auto-punish offenders?'
+  ],
+  ban: [
+    'How to ban with reason & days?',
+    'How to unban a member?',
+    'How to view ban logs?'
+  ],
+  kick: [
+    'Required permissions to kick?',
+    'How to log kicks in channel?',
+    'Can admins be kicked?'
+  ],
+  timeout: [
+    'How to timeout a member?',
+    'How to remove an active timeout?',
+    'Maximum timeout duration?'
+  ],
+  music: [
+    'Supported audio sources?',
+    'How to adjust 24/7 playback?',
+    'How to manage DJ permissions?'
+  ],
+  accent: [
+    'How to set custom hex accent?',
+    'Where does accent color show?',
+    'How to reset accent color?'
+  ],
+  embed: [
+    'How to create JSON embed?',
+    'How to add buttons to embed?',
+    'How to edit existing embed?'
+  ],
+  customrole: [
+    'How to create custom role?',
+    'How to set custom role icon?',
+    'How to manage role permissions?'
+  ],
+  afk: [
+    'How to set AFK status?',
+    'How does auto-remove AFK work?',
+    'How to mention AFK users safely?'
+  ],
+  utility: [
+    'How to view server info?',
+    'How to check bot ping & latency?',
+    'How to view member avatar & banner?'
+  ]
+};
+
+/**
+ * Dynamically synthesizes 2-3 contextual follow-up suggestions for EVERY command in Athena Prime.
+ */
+export function generateFollowUpSuggestions(commandName = '', commandMeta = null, userQuery = '', aiText = '') {
+  const cleanCmd = (commandName || '').toLowerCase().trim();
+
+  // 1. Direct match in dictionary
+  if (cleanCmd && KNOWN_COMMAND_SUGGESTIONS[cleanCmd]) {
+    return KNOWN_COMMAND_SUGGESTIONS[cleanCmd];
+  }
+
+  // 2. Partial / alias match in dictionary
+  if (cleanCmd) {
+    for (const [key, suggestions] of Object.entries(KNOWN_COMMAND_SUGGESTIONS)) {
+      if (cleanCmd.includes(key) || key.includes(cleanCmd)) {
+        return suggestions;
+      }
+    }
+  }
+
+  // 3. Fallback generator for ANY command in Athena Prime
+  const suggestions = [];
+  const cmdDisplay = cleanCmd ? `!${cleanCmd}` : 'this command';
+
+  if (commandMeta?.choices && commandMeta.choices.length > 0) {
+    const choices = commandMeta.choices.slice(0, 2);
+    for (const ch of choices) {
+      suggestions.push(`How to use ${cmdDisplay} ${ch}?`);
+    }
+  }
+
+  if (commandMeta?.options && commandMeta.options.length > 0 && suggestions.length < 2) {
+    const opt = commandMeta.options[0].name;
+    suggestions.push(`How to configure ${cmdDisplay} ${opt}?`);
+  }
+
+  if (suggestions.length < 3) {
+    suggestions.push(`Required permissions for ${cmdDisplay}?`);
+  }
+  if (suggestions.length < 3) {
+    suggestions.push(`How to test ${cmdDisplay} safely?`);
+  }
+  if (suggestions.length < 3) {
+    suggestions.push(`How to disable or reset ${cmdDisplay}?`);
+  }
+
+  return suggestions.slice(0, 3).map(s => s.slice(0, 80));
+}
+
+/**
  * Searches the live command explainers, architecture deep-dives, and categorized help modules
  * to extract authoritative ground truth for any user query or doubt.
  */
@@ -475,14 +730,17 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
     clearTimeout(almostDoneTimer);
   }
 
-  const primaryCmd = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0].name : '';
+  const primaryCmd = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0].name : (activeSession?.primaryCommand || '');
+  const primaryCmdMeta = (knowledge.matchedCommands.length > 0) ? knowledge.matchedCommands[0] : null;
 
   if (!aiResult.success) {
     // Dynamic codebase synthesizer in case all external AI edge endpoints are offline
     const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets);
+    const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, fallbackText);
     const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
       matchedCommands: knowledge.matchedCommands,
       primaryCommand: primaryCmd,
+      suggestions,
       text: fallbackText
     });
 
@@ -492,6 +750,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
       model: 'Athena Dynamic Code Engine (Local Deep-Dive)',
       latencyMs: Math.max(12, Date.now() - startTime),
       session: updatedSession,
+      suggestions,
       matchedTopics: knowledge.matchedTopics,
       sourceReferences: codeSnippets.map(s => ({
         file: s.file,
@@ -502,9 +761,11 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
     };
   }
 
+  const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, aiResult.text);
   const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
     matchedCommands: knowledge.matchedCommands,
     primaryCommand: primaryCmd,
+    suggestions,
     text: aiResult.text
   });
 
@@ -514,6 +775,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, c
     model: aiResult.model,
     latencyMs: Math.max(20, Date.now() - startTime),
     session: updatedSession,
+    suggestions,
     matchedTopics: knowledge.matchedTopics,
     sourceReferences: codeSnippets.map(s => ({
       file: s.file,
@@ -834,14 +1096,35 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
 
   comps.push({ type: 14, divider: true });
 
-  // Quick navigation row
-  const navButtons = [
+  // 1. Contextual Follow-Up Suggestions (Pill Chips)
+  const suggestions = aiResult.suggestions || (currentSession && currentSession.suggestedFollowUps) || [];
+  if (suggestions && suggestions.length > 0) {
+    comps.push({
+      type: 10,
+      content: `-# **Suggested Follow-Ups (Click to explore directly):**`
+    });
+    const chipButtons = suggestions.slice(0, 3).map((q, idx) => ({
+      type: 2,
+      custom_id: `athena_fu_${idx}`,
+      label: q.length > 80 ? q.slice(0, 77) + '...' : q,
+      style: 2
+    }));
+    comps.push({
+      type: 1,
+      components: chipButtons
+    });
+    comps.push({ type: 14, divider: true });
+  }
+
+  // 2. Action & Quick navigation row
+  const actionButtons = [
+    { type: 2, custom_id: 'athena_ask_followup', label: 'Ask Follow-Up Doubt', style: 1 },
     { type: 2, custom_id: 'athena_guide_hub', label: 'Guidance Hub', style: 2, emoji: { id: '1523765738655973589' } },
     { type: 2, custom_id: 'arch_home', label: 'Architecture Topics', style: 2, emoji: { id: '1523766065576935475' } }
   ];
 
   if (currentSession && currentSession.turnCount > 1) {
-    navButtons.push({
+    actionButtons.push({
       type: 2,
       custom_id: 'athena_reset_thread',
       label: 'Reset Thread Memory',
@@ -851,7 +1134,7 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
 
   comps.push({
     type: 1,
-    components: navButtons
+    components: actionButtons
   });
 
   comps.push({ type: 14, divider: true });

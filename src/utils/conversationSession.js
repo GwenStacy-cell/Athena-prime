@@ -48,13 +48,18 @@ export function recordGuideTurn(guildId, userId, channelId, userPrompt, aiResult
       createdAt: now,
       expiresAt,
       turns: [],
-      primaryCommands: []
+      primaryCommands: [],
+      suggestedFollowUps: []
     };
   } else {
     session.expiresAt = expiresAt;
   }
 
   session.turnCount += 1;
+
+  if (aiResult.suggestions && Array.isArray(aiResult.suggestions)) {
+    session.suggestedFollowUps = aiResult.suggestions;
+  }
 
   // Extract primary command from matched commands or aiResult
   let detectedCmd = '';

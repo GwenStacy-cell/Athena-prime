@@ -1,4 +1,4 @@
-import { MessageFlags } from 'discord.js';
+import { MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { 
@@ -262,6 +262,105 @@ export async function handleAthenaGuideButtons(interaction) {
   if (customId === 'athena_guide_hub') {
     const hub = buildGuideHubContainer(guild, user, prefix);
     return cv2.respond(interaction, hub, 7).catch(() => null);
+  }
+
+  // --- MODAL: ASK FOLLOW-UP DOUBT ---
+  if (customId === 'athena_ask_followup') {
+    const activeSession = getGuideSession(guild?.id || '0', user.id, interaction.channelId);
+    const topicCmd = activeSession?.primaryCommand ? `!${activeSession.primaryCommand}` : 'this command';
+
+    const modal = new ModalBuilder()
+      .setCustomId('athena_doubt_modal')
+      .setTitle('Athena Prime • Ask a Follow-Up');
+
+    const doubtInput = new TextInputBuilder()
+      .setCustomId('athena_doubt_input')
+      .setLabel(`FOLLOW-UP DOUBT (${topicCmd})`.slice(0, 45))
+      .setPlaceholder(`Ask any doubt about ${topicCmd} (e.g. how to customize, permissions, troubleshooting)...`.slice(0, 100))
+      .setStyle(TextInputStyle.Paragraph)
+      .setMinLength(2)
+      .setMaxLength(1000)
+      .setRequired(true);
+
+    modal.addComponents(new ActionRowBuilder().addComponents(doubtInput));
+    return interaction.showModal(modal);
+  }
+
+  // --- MODAL SUBMIT: PROCESS USER DOUBT ---
+  if (interaction.isModalSubmit && interaction.isModalSubmit() && customId === 'athena_doubt_modal') {
+    const userDoubt = interaction.fields.getTextInputValue('athena_doubt_input');
+    await interaction.deferReply({ flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+
+    const activeSession = getGuideSession(guild?.id || '0', user.id, interaction.channelId);
+    const initialContainer = buildThinkingContainer(
+      `Athena Prime is analyzing your follow-up inquiry...`,
+      `Synthesizing codebase logic and active thread context...`,
+      activeSession
+    );
+
+    await cv2.edit(interaction, {
+      components: [initialContainer],
+      flags: MessageFlags.IsComponentsV2
+    }).catch(() => null);
+
+    const progress = createProgressHandler(interaction, activeSession);
+
+    let aiResult;
+    try {
+      aiResult = await generateAthenaGuideResponse(userDoubt, {
+        guild,
+        user,
+        channelId: interaction.channelId,
+        prefix,
+        onProgress: progress.onProgress
+      });
+    } finally {
+      progress.stop();
+    }
+
+    const container = buildAthenaGuideContainer(user, userDoubt, aiResult, accentColor, prefix, aiResult.session);
+    return cv2.edit(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+  }
+
+  // --- CLICKABLE CONTEXTUAL SUGGESTION PILL CHIPS ---
+  if (customId && customId.startsWith('athena_fu_')) {
+    const idx = parseInt(customId.replace('athena_fu_', ''), 10);
+    const activeSession = getGuideSession(guild?.id || '0', user.id, interaction.channelId);
+    let query = activeSession?.suggestedFollowUps?.[idx] || interaction.component?.label;
+    if (!query) {
+      query = `More details on ${activeSession?.primaryCommand || 'this command'}`;
+    }
+
+    await interaction.deferUpdate().catch(() => null);
+
+    const initialContainer = buildThinkingContainer(
+      `Athena Prime is deep-diving into "${query.slice(0, 50)}"...`,
+      `Reading codebase specifications and command execution flows...`,
+      activeSession
+    );
+
+    await cv2.edit(interaction, {
+      components: [initialContainer],
+      flags: MessageFlags.IsComponentsV2
+    }).catch(() => null);
+
+    const progress = createProgressHandler(interaction, activeSession);
+
+    let aiResult;
+    try {
+      aiResult = await generateAthenaGuideResponse(query, {
+        guild,
+        user,
+        channelId: interaction.channelId,
+        prefix,
+        onProgress: progress.onProgress
+      });
+    } finally {
+      progress.stop();
+    }
+
+    const container = buildAthenaGuideContainer(user, query, aiResult, accentColor, prefix, aiResult.session);
+    return cv2.edit(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
   }
 
   const topicPrompts = {

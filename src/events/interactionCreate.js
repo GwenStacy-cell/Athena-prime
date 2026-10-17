@@ -258,8 +258,8 @@ export default {
       return;
     }
 
-    // --- ATHENA GUIDE HUB BUTTONS ---
-    if (interaction.isButton() && interaction.customId.startsWith('athena_')) {
+    // --- ATHENA GUIDE HUB & ASSISTANT INTERACTIONS ---
+    if ((interaction.isButton() || interaction.isModalSubmit()) && interaction.customId.startsWith('athena_')) {
       import('../commands/athena.js').then(m => {
         if (m.handleAthenaGuideButtons) m.handleAthenaGuideButtons(interaction).catch(e => console.error(e));
       }).catch(e => console.error(e));
