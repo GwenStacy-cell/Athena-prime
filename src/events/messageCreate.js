@@ -38,6 +38,7 @@ export { getCachedGif };
 const nbClient = new Client();
 const gifCache = new Map();
 const massMentionCache = new Map();
+const globalBanCooldowns = new Map();
 
 function mapAnimeAction(action) {
   const map = {
@@ -425,8 +426,46 @@ export default {
         }).catch(()=>{});
     }
 
-    // Ignore globally blacklisted users
-    if (db.isUserBotBlacklisted(message.author.id)) return;
+    // ==========================================
+    // GLOBALLY BLACKLISTED USER ENFORCEMENT
+    // ==========================================
+    if (db.isUserBotBlacklisted(message.author.id)) {
+      if (!isBotOwnerSync(message.author.id)) {
+        const cleanContent = message.content.trim();
+        const gConfig = message.guild ? db.getGuildConfig(message.guild.id) : null;
+        const prefix = gConfig?.prefix || '!';
+        const botId = message.client.user?.id;
+        const botMention = `<@${botId}>`;
+        const botMentionNick = `<@!${botId}>`;
+
+        const isPrefixed = cleanContent.startsWith(prefix);
+        const isMention = botId ? (cleanContent.startsWith(botMention) || cleanContent.startsWith(botMentionNick)) : false;
+        const isDM = !message.guild;
+        const firstWord = cleanContent.split(/ +/)[0].toLowerCase();
+        const isKnownCmd = commandMap.has(firstWord);
+
+        // If blacklisted user attempts to run ANY command (even !help, !ping, whatever it is, even if server owner)
+        if (isPrefixed || isMention || isDM || isKnownCmd) {
+          const lastNotice = globalBanCooldowns.get(message.author.id) || 0;
+          if (Date.now() - lastNotice > 4000) {
+            globalBanCooldowns.set(message.author.id, Date.now());
+            const bData = db.cache.botBlacklistData?.[message.author.id];
+            const reason = bData?.reason || 'Violation of Athena Bot Rules & Security Protocols';
+            const banNotice = cv2.danger(
+              'Globally Blacklisted',
+              `-# **__Security Notice:__** You are globally banned from using Athena.\n\n` +
+              `> -# **__Account:__** <@${message.author.id}> (\`${message.author.id}\`)\n` +
+              `> -# **__Status:__** \`Permanently Blacklisted\`\n` +
+              `> -# **__Reason:__** \`${reason}\`\n` +
+              `> -# **__Enforcement:__** All commands (\`!help\`, \`!ping\`, modules) are permanently locked for your account across all servers, including server-owner privileges.\n` +
+              `> -# **__Appeal:__** If you believe this is an error, please contact the Bot Owner.`
+            );
+            message.reply(banNotice).catch(() => null);
+          }
+        }
+        return;
+      }
+    }
 
     // ==========================================
     // AFK SYSTEM INTERCEPTION

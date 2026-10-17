@@ -16,6 +16,27 @@ const TOGGLE_ON = '<:emoji_16:1533860111704002665>';
 export default {
   name: 'interactionCreate',
   async execute(interaction) {
+    // ==========================================
+    // GLOBALLY BLACKLISTED USER ENFORCEMENT
+    // ==========================================
+    if (db.isUserBotBlacklisted(interaction.user.id) && !isBotOwnerSync(interaction.user.id)) {
+      const bData = db.cache.botBlacklistData?.[interaction.user.id];
+      const reason = bData?.reason || 'Violation of Athena Bot Rules & Security Protocols';
+      const banNotice = cv2.danger(
+        'Globally Blacklisted',
+        `-# **__Security Notice:__** You are globally banned from using Athena.\n\n` +
+        `> -# **__Account:__** <@${interaction.user.id}> (\`${interaction.user.id}\`)\n` +
+        `> -# **__Status:__** \`Permanently Blacklisted\`\n` +
+        `> -# **__Reason:__** \`${reason}\`\n` +
+        `> -# **__Enforcement:__** All commands and features are permanently locked for your account across all servers, including server-owner privileges.\n` +
+        `> -# **__Appeal:__** If you believe this is an error, please contact the Bot Owner.`
+      );
+      if (interaction.isRepliable()) {
+        return interaction.reply({ ...banNotice, flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2 }).catch(() => null);
+      }
+      return;
+    }
+
     if (interaction.customId && interaction.customId.startsWith('ann_')) {
       try {
         const announce = await import('../commands/announce.js');

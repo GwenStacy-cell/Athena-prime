@@ -1681,26 +1681,38 @@ class Database {
     return this.cache.botBlacklist || [];
   }
 
+  getBotBlacklistData() {
+    return this.cache.botBlacklistData || {};
+  }
+
   isUserBotBlacklisted(userId) {
     if (!this.cache.botBlacklist) this.cache.botBlacklist = [];
     return this.cache.botBlacklist.includes(userId);
   }
 
-  addUserToBotBlacklist(userId) {
+  addUserToBotBlacklist(userId, reason = null) {
     if (!this.cache.botBlacklist) this.cache.botBlacklist = [];
+    if (!this.cache.botBlacklistData) this.cache.botBlacklistData = {};
     if (!this.cache.botBlacklist.includes(userId)) {
       this.cache.botBlacklist.push(userId);
-      this.save();
-      return true;
     }
-    return false;
+    this.cache.botBlacklistData[userId] = {
+      userId,
+      reason: reason || 'Violation of Athena Bot Rules & Security Protocols',
+      timestamp: Date.now()
+    };
+    this.save();
+    return true;
   }
 
   removeUserFromBotBlacklist(userId) {
     if (!this.cache.botBlacklist) this.cache.botBlacklist = [];
     const initialLen = this.cache.botBlacklist.length;
     this.cache.botBlacklist = this.cache.botBlacklist.filter(id => id !== userId);
-    if (this.cache.botBlacklist.length < initialLen) {
+    if (this.cache.botBlacklistData && this.cache.botBlacklistData[userId]) {
+      delete this.cache.botBlacklistData[userId];
+    }
+    if (this.cache.botBlacklist.length < initialLen || this.cache.botBlacklistData) {
       this.save();
       return true;
     }
