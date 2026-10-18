@@ -44,6 +44,13 @@ export default {
       } catch (e) { console.error(e); }
     }
 
+    if (interaction.customId && interaction.customId.startsWith('aian_')) {
+      try {
+        const aiannounce = await import('../commands/aiannounce.js');
+        return aiannounce.handleAIAnnouncementInteractions(interaction);
+      } catch (e) { console.error(e); }
+    }
+
 
     
     // ==========================================
