@@ -7,11 +7,18 @@ import {
   buildAthenaGuideContainer,
   buildThinkingContainer,
   getGuideSession,
-  clearGuideSession
+  clearGuideSession,
+  resolveMemberClearance,
+  getCommandClearanceRequirement,
+  canMemberExecuteCommand,
+  detectAndCorrectTypos,
+  getAllBotCommands
 } from '../utils/botGuideKnowledge.js';
-import { getSecurityStatusPanel, getAutoModPanel } from './security.js';
+import { getSecurityStatusPanel, getAutoModPanel, handleUnlockdown } from './security.js';
 import { buildTicketManagerPayload, buildTicketPanelPayload } from './ticketpanel.js';
 import { getManagerPanel, executeWelcomeTest } from './welcome.js';
+import { gwManagers, buildManagerContainer } from './giveaway.js';
+import { isBotOwnerSync } from '../utils/helpers.js';
 
 const TICK = '<a:atheNATICK:1557841381630681106>';
 
@@ -239,6 +246,327 @@ export const commands = [
     }
   }
 ];
+
+/**
+ * Universal Command Status & Database Telemetry Inspector
+ */
+export async function buildLiveCommandStatusPayload(guild, member, user, cmdName, prefix = '!') {
+  const { commandMap } = await import('./loader.js');
+  let cmd = commandMap.get(cmdName.toLowerCase());
+  if (!cmd) {
+    const allCommands = await getAllBotCommands();
+    const typo = detectAndCorrectTypos(cmdName, allCommands);
+    if (typo.hasTypo && typo.correctedCommand) {
+      cmd = commandMap.get(typo.correctedCommand.toLowerCase());
+    }
+  }
+
+  if (!cmd && (cmdName.toLowerCase() === 'moderation' || cmdName.toLowerCase() === 'mod')) {
+    const cfg = db.getGuildConfig(guild?.id || '0') || {};
+    const authRoles = db.getAuthRoles(guild?.id || '0');
+    const modRoles = authRoles.mod && authRoles.mod.length ? authRoles.mod.map(r => `<@&${r}>`).join(', ') : '`Default Staff Permissions`';
+    const logChan = cfg.logChannelId ? `<#${cfg.logChannelId}>` : '`Not Bound`';
+    const aiTox = cfg.aiToxicityEnabled ? '`Active / AI Toxicity Defense`' : '`Deactivated`';
+
+    return {
+      components: [
+        {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `## MODERATION Telemetry & Status | ${TICK}\n` +
+                `-# • **Operational State:** \`Autonomous Moderation Suite Active\`\n` +
+                `-# • **Audit Log Channel:** ${logChan}\n` +
+                `-# • **Designated Mod Roles:** ${modRoles}\n` +
+                `-# • **AI Toxicity Shield:** ${aiTox}\n` +
+                `-# • **Anti-Spam Filter:** ${cfg.spamDetection !== false ? '`Active`' : '`Disabled`'}\n` +
+                `-# • **Core Enforcement Commands:** \`!ban\`, \`!kick\`, \`!timeout\`, \`!mute\`, \`!warn\`, \`!purge\`, \`!quarantine\`\n\n` +
+                `-# **__Clearance Level:__** \`Server Moderator / Administrator\``
+            }
+          ]
+        },
+        {
+          type: 1,
+          components: [
+            { type: 2, custom_id: 'athena_act_automod_panel', label: 'Open AutoMod Panel', style: 2 },
+            { type: 2, custom_id: 'athena_act_security_status', label: 'Inspect Security Status', style: 2 },
+            { type: 2, custom_id: 'athena_act_ai_ask_moderation', label: 'Ask AI About Moderation', style: 2 }
+          ]
+        }
+      ],
+      flags: MessageFlags.IsComponentsV2
+    };
+  }
+
+  if (!cmd) {
+    return {
+      components: [
+        {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `## Command Not Found | ${TICK}\n` +
+                `-# The command \`!${cmdName}\` was not recognized in the Athena catalog of 254+ commands.\n` +
+                `-# Run \`${prefix}help\` to browse all active modules, or use \`${prefix}athena\` to search with AI.`
+            }
+          ]
+        }
+      ],
+      flags: MessageFlags.IsComponentsV2
+    };
+  }
+
+  const cleanName = cmd.name;
+  const clearance = getCommandClearanceRequirement(cleanName, cmd);
+  const memberClearance = await resolveMemberClearance(guild, user, member);
+  const canRun = canMemberExecuteCommand(memberClearance, clearance);
+  const aliases = cmd.aliases && cmd.aliases.length > 0 
+    ? cmd.aliases.map(a => `\`!${a}\``).join(', ') 
+    : '`None`';
+
+  const cfg = db.getGuildConfig(guild?.id || '0') || {};
+  const statusPoints = [];
+
+  // General telemetry
+  statusPoints.push(`-# • **Operational State:** \`Autonomous & Ready\``);
+  statusPoints.push(`-# • **Primary Invocation:** \`${prefix}${cleanName}\``);
+  statusPoints.push(`-# • **Aliases:** ${aliases}`);
+  statusPoints.push(`-# • **Clearance Level:** \`${clearance.label}\``);
+  statusPoints.push(`-# • **Your Access:** ${canRun ? '`Granted (Executable)`' : '`Restricted (Clearance Required)`'}`);
+
+  const actionButtons = [
+    { type: 2, custom_id: `athena_act_cmd_help_${cleanName}`, label: `View !${cleanName} Help`, style: 2 }
+  ];
+
+  // Specific module telemetry from database
+  if (guild) {
+    if (cleanName === 'welcome' || cleanName === 'leave') {
+      const wChan = cfg.welcomeChannelId ? `<#${cfg.welcomeChannelId}>` : '`Not Configured`';
+      const lChan = cfg.leaveChannelId ? `<#${cfg.leaveChannelId}>` : '`Not Configured`';
+      const wCard = cfg.welcomeCard ? '`Custom Graphic Card`' : '`Standard Text Layout`';
+      statusPoints.push(`-# • **Welcome Channel:** ${wChan}`);
+      statusPoints.push(`-# • **Leave Channel:** ${lChan}`);
+      statusPoints.push(`-# • **Render Style:** ${wCard}`);
+      actionButtons.unshift({ type: 2, custom_id: 'athena_act_welcome_setup', label: 'Open Welcome Setup', style: 2 });
+      actionButtons.push({ type: 2, custom_id: 'athena_act_welcome_test', label: 'Test Welcome Card', style: 2 });
+    } else if (cleanName === 'autorole') {
+      const humanRoles = (cfg.autoroles && cfg.autoroles.length) 
+        ? cfg.autoroles.map(r => `<@&${r}>`).join(', ') 
+        : '`None Bound`';
+      const botRoles = (cfg.botAutoroles && cfg.botAutoroles.length) 
+        ? cfg.botAutoroles.map(r => `<@&${r}>`).join(', ') 
+        : '`None Bound`';
+      statusPoints.push(`-# • **Human Auto-Roles:** ${humanRoles}`);
+      statusPoints.push(`-# • **Bot Auto-Roles:** ${botRoles}`);
+    } else if (cleanName === 'counting') {
+      const cData = db.getCounting(guild.id);
+      const cChan = cData?.channelId ? `<#${cData.channelId}>` : '`Not Configured`';
+      const cCount = cData?.currentCount ?? 0;
+      const cLastUser = cData?.lastUserId ? `<@${cData.lastUserId}>` : '`None`';
+      statusPoints.push(`-# • **Counting Channel:** ${cChan}`);
+      statusPoints.push(`-# • **Current Count:** \`${cCount}\``);
+      statusPoints.push(`-# • **Last Counter:** ${cLastUser}`);
+    } else if (cleanName === 'jtc' || cleanName === 'vcpanel') {
+      const jChan = cfg.jtcChannelId ? `<#${cfg.jtcChannelId}>` : '`Not Configured`';
+      const jCat = cfg.jtcCategoryId ? `<#${cfg.jtcCategoryId}>` : '`Default Category`';
+      statusPoints.push(`-# • **JTC Hub Channel:** ${jChan}`);
+      statusPoints.push(`-# • **JTC Category:** ${jCat}`);
+    } else if (cleanName === 'security' || cleanName === 'antinuke' || cleanName === 'ss') {
+      const secConfig = db.getAntinukeConfig ? db.getAntinukeConfig(guild.id) : null;
+      const wl = db.getAllWhitelists ? db.getAllWhitelists(guild.id) : null;
+      const wlCount = wl?.users ? Object.keys(wl.users).length : 0;
+      statusPoints.push(`-# • **Antinuke Shield:** ${secConfig?.enabled !== false ? '`Active / Monitoring`' : '`Deactivated`'}`);
+      statusPoints.push(`-# • **Whitelisted Accounts:** \`${wlCount} trusted admins\``);
+      actionButtons.unshift({ type: 2, custom_id: 'athena_act_security_status', label: 'Inspect Security Status', style: 2 });
+    } else if (cleanName === 'automod' || cleanName === 'filters' || cleanName === 'spam') {
+      const aiTox = cfg.aiToxicityEnabled ? '`Active / AI Shielding`' : '`Deactivated`';
+      statusPoints.push(`-# • **AI Toxicity Defense:** ${aiTox}`);
+      statusPoints.push(`-# • **Anti-Spam Filter:** ${cfg.spamDetection !== false ? '`Active`' : '`Disabled`'}`);
+      actionButtons.unshift({ type: 2, custom_id: 'athena_act_automod_panel', label: 'Open AutoMod Panel', style: 2 });
+    } else if (cleanName === 'verify' || cleanName === 'verification') {
+      const vData = db.getVerification(guild.id);
+      const vChan = vData?.channelId ? `<#${vData.channelId}>` : '`Not Configured`';
+      const vRole = vData?.roleId ? `<@&${vData.roleId}>` : '`Not Bound`';
+      const vMode = (vData?.mode || 'button').toUpperCase();
+      statusPoints.push(`-# • **Gateway Channel:** ${vChan}`);
+      statusPoints.push(`-# • **Verified Role:** ${vRole}`);
+      statusPoints.push(`-# • **Authentication Mode:** \`${vMode}\``);
+      actionButtons.unshift({ type: 2, custom_id: 'athena_act_verify_setup', label: 'Open Verification Setup', style: 2 });
+    } else if (cleanName === 'giveaway') {
+      actionButtons.unshift({ type: 2, custom_id: 'athena_act_giveaway_manager', label: 'Open Giveaway Manager', style: 2 });
+    } else if (cleanName === 'lockdown') {
+      const snap = db.getLockdownSnapshot(guild.id);
+      const ldState = snap ? `ACTIVE (Tier ${snap.tier})` : 'Normal Operations (Inactive)';
+      statusPoints.push(`-# • **Panic Lockdown State:** \`${ldState}\``);
+      actionButtons.unshift({ type: 2, custom_id: 'athena_act_lockdown_status', label: 'Inspect Lockdown Status', style: 2 });
+    } else if (cleanName === 'starboard') {
+      const sChan = cfg.starboardChannelId ? `<#${cfg.starboardChannelId}>` : '`Not Configured`';
+      const sLimit = cfg.starboardThreshold || 3;
+      statusPoints.push(`-# • **Starboard Channel:** ${sChan}`);
+      statusPoints.push(`-# • **Star Reaction Threshold:** \`${sLimit} Stars\``);
+    } else if (cleanName === 'birthday') {
+      const bChan = cfg.birthdayChannelId ? `<#${cfg.birthdayChannelId}>` : '`Not Configured`';
+      const bRole = cfg.birthdayRoleId ? `<@&${cfg.birthdayRoleId}>` : '`Not Bound`';
+      statusPoints.push(`-# • **Birthday Channel:** ${bChan}`);
+      statusPoints.push(`-# • **Celebration Role:** ${bRole}`);
+    } else if (cleanName === 'rank' || cleanName === 'leveling' || cleanName === 'ranktheme') {
+      const currentTheme = db.getUserRankTheme(user.id);
+      statusPoints.push(`-# • **Leveling Module:** ${cfg.levelingEnabled !== false ? '`Active`' : '`Disabled`'}`);
+      statusPoints.push(`-# • **Your Active Card Theme:** \`${currentTheme}\``);
+      actionButtons.push({ type: 2, custom_id: 'athena_act_rank_preview', label: 'Preview XP Card', style: 2 });
+    }
+  }
+
+  // Always offer Ask AI About This
+  actionButtons.push({ type: 2, custom_id: `athena_act_ai_ask_${cleanName}`, label: 'Ask AI About This', style: 2 });
+
+  const finalButtons = actionButtons.slice(0, 4);
+
+  return {
+    components: [
+      {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content: `## ${cleanName.toUpperCase()} Telemetry & Status | ${TICK}\n` +
+              statusPoints.join('\n') + '\n\n' +
+              `-# **__Description:__** ${cmd.description || 'No description registered.'}`
+          }
+        ]
+      },
+      {
+        type: 1,
+        components: finalButtons
+      }
+    ],
+    flags: MessageFlags.IsComponentsV2
+  };
+}
+
+/**
+ * Universal Command Help Inspector
+ */
+export async function buildDetailedCommandHelpPayload(guild, member, user, cmdName, prefix = '!') {
+  const { commandMap } = await import('./loader.js');
+  let cmd = commandMap.get(cmdName.toLowerCase());
+  if (!cmd) {
+    const allCommands = await getAllBotCommands();
+    const typo = detectAndCorrectTypos(cmdName, allCommands);
+    if (typo.hasTypo && typo.correctedCommand) {
+      cmd = commandMap.get(typo.correctedCommand.toLowerCase());
+    }
+  }
+
+  if (!cmd && (cmdName.toLowerCase() === 'moderation' || cmdName.toLowerCase() === 'mod')) {
+    return {
+      components: [
+        {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `## Command Manual: !moderation | ${TICK}\n` +
+                `-# **__Description:__** High-speed administrative and moderation enforcement matrix.\n` +
+                `-# • **Category:** \`Moderation\`\n` +
+                `-# • **Clearance Required:** \`Moderator / Administrator\`\n\n` +
+                `<:info_jtc:1524111455404953663> **__Key Moderation Commands:__**\n` +
+                `-# • \`${prefix}ban <@user> [reason]\` - Permanently ban member from server\n` +
+                `-# • \`${prefix}kick <@user> [reason]\` - Kick member from server\n` +
+                `-# • \`${prefix}timeout <@user> <duration> [reason]\` - Native Discord timeout\n` +
+                `-# • \`${prefix}mute <@user> [reason]\` - Server voice-mute member\n` +
+                `-# • \`${prefix}warn <@user> [reason]\` - Issue tracked server warning to user\n` +
+                `-# • \`${prefix}purge <count>\` - Mass delete messages\n` +
+                `-# • \`${prefix}quarantine <@user>\` - Isolate member to quarantine chamber`
+            }
+          ]
+        },
+        {
+          type: 1,
+          components: [
+            { type: 2, custom_id: 'athena_act_cmd_status_moderation', label: 'Inspect Moderation Status', style: 2 },
+            { type: 2, custom_id: 'athena_act_automod_panel', label: 'Open AutoMod Panel', style: 2 },
+            { type: 2, custom_id: 'athena_act_ai_ask_moderation', label: 'Ask AI About Moderation', style: 2 }
+          ]
+        }
+      ],
+      flags: MessageFlags.IsComponentsV2
+    };
+  }
+
+  if (!cmd) {
+    return {
+      components: [
+        {
+          type: 17,
+          components: [
+            {
+              type: 10,
+              content: `## Command Not Found | ${TICK}\n` +
+                `-# The command \`!${cmdName}\` was not recognized in the Athena catalog.`
+            }
+          ]
+        }
+      ],
+      flags: MessageFlags.IsComponentsV2
+    };
+  }
+
+  const cleanName = cmd.name;
+  const clearance = getCommandClearanceRequirement(cleanName, cmd);
+  const aliases = cmd.aliases && cmd.aliases.length > 0 
+    ? cmd.aliases.map(a => `\`!${a}\``).join(', ') 
+    : '`None`';
+
+  let subcommands = [];
+  if (Array.isArray(cmd.options) && cmd.options.length > 0) {
+    for (const opt of cmd.options) {
+      if (opt.type === 1) { // SUB_COMMAND
+        subcommands.push(`-# • \`${prefix}${cleanName} ${opt.name}\` - ${opt.description}`);
+      } else {
+        subcommands.push(`-# • \`${opt.name}\`${opt.required ? ' *(Required)*' : ' *(Optional)*'} - ${opt.description}`);
+      }
+    }
+  }
+
+  let content = `## Command Manual: !${cleanName} | ${TICK}\n` +
+    `-# **__Description:__** ${cmd.description || 'No description registered.'}\n` +
+    `-# • **Category:** \`${cmd.category || 'General'}\`\n` +
+    `-# • **Clearance Required:** \`${clearance.label}\`\n` +
+    `-# • **Aliases:** ${aliases}\n`;
+
+  if (subcommands.length > 0) {
+    content += `\n<:info_jtc:1524111455404953663> **__Subcommands & Parameters:__**\n` + subcommands.slice(0, 8).join('\n') + '\n';
+  }
+
+  content += `\n-# **__Quick Invocation:__** Run \`${prefix}${cleanName}\` or \`/${cleanName}\` in any permitted channel.`;
+
+  const buttons = [
+    { type: 2, custom_id: `athena_act_cmd_status_${cleanName}`, label: `Inspect ${cleanName} Status`, style: 2 },
+    { type: 2, custom_id: `athena_act_ai_ask_${cleanName}`, label: 'Ask AI About This', style: 2 }
+  ];
+
+  return {
+    components: [
+      {
+        type: 17,
+        components: [
+          {
+            type: 10,
+            content
+          }
+        ]
+      },
+      {
+        type: 1,
+        components: buttons
+      }
+    ],
+    flags: MessageFlags.IsComponentsV2
+  };
+}
 
 export async function handleAthenaGuideButtons(interaction) {
   const { customId, guild, user, member } = interaction;
@@ -583,9 +911,98 @@ export async function handleAthenaGuideButtons(interaction) {
       }, 7).catch(() => null);
     }
 
-    // 14. Generic / Custom Action Handler
-    if (act.startsWith('cmd_status_') || act.startsWith('cmd_help_') || act.startsWith('custom_') || act === 'unlockdown' || act === 'lockdown_status' || act === 'quarantine_info' || act === 'verify_setup' || act === 'giveaway_manager') {
-      const label = interaction.component?.label || 'Action';
+    // 14. Open Giveaway Manager
+    if (act === 'giveaway_manager') {
+      const hasPerm = member?.permissions?.has(PermissionFlagsBits.Administrator) || 
+                      guild?.ownerId === user.id ||
+                      isBotOwnerSync(user.id);
+      if (!hasPerm) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Administrator permissions are required to launch the Giveaway Manager.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const managerId = interaction.id;
+      gwManagers.set(managerId, {
+        prize: 'Not Set',
+        duration: 'Not Set',
+        durationMs: 0,
+        winners: 1,
+        mode: 'random',
+        hostId: user.id,
+        channelId: interaction.channelId
+      });
+      const container = buildManagerContainer(managerId);
+      return cv2.respond(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 }, 7).catch(() => null);
+    }
+
+    // 15. Server Verification Gateway Control
+    if (act === 'verify_setup') {
+      const hasPerm = member?.permissions?.has(PermissionFlagsBits.Administrator) || 
+                      guild?.ownerId === user.id ||
+                      isBotOwnerSync(user.id);
+      if (!hasPerm) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Administrator permissions are required to configure Server Verification.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+
+      const vData = db.getVerification(guild?.id || '0');
+      if (vData && vData.roleId) {
+        const vChan = vData.channelId ? `<#${vData.channelId}>` : '`Active Channel`';
+        const vRole = `<@&${vData.roleId}>`;
+        const vMode = (vData.mode || 'button').toUpperCase();
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `## Verification Gateway Control | ${TICK}\n` +
+                    `-# • **Operational Status:** \`Deployed & Actively Screening\`\n` +
+                    `-# • **Verification Channel:** ${vChan}\n` +
+                    `-# • **Verified Role:** ${vRole}\n` +
+                    `-# • **Challenge Mechanism:** \`${vMode}\`\n\n` +
+                    `-# Switch verification authentication modes or dismantle the gate below:`
+                }
+              ]
+            },
+            {
+              type: 1,
+              components: [
+                { type: 2, custom_id: 'athena_act_verify_mode_button', label: 'Set Button Mode', style: 2 },
+                { type: 2, custom_id: 'athena_act_verify_mode_captcha', label: 'Set Graphic CAPTCHA', style: 2 },
+                { type: 2, custom_id: 'athena_act_verify_mode_math', label: 'Set Math Challenge', style: 2 },
+                { type: 2, custom_id: 'athena_act_verify_disable', label: 'Dismantle Gateway', style: 2 }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+
       return cv2.respond(interaction, {
         components: [
           {
@@ -593,16 +1010,252 @@ export async function handleAthenaGuideButtons(interaction) {
             components: [
               {
                 type: 10,
-                content: `## Interactive Action Executed | ${TICK}\n` +
-                  `-# **__Action Button:__** \`[${label}]\`\n` +
-                  `-# **__Executed By:__** <@${user.id}>\n` +
-                  `-# Athena Prime processed your one-click action. You can ask further follow-up questions using **__Ask Follow-Up Doubt__** above!`
+                content: `## Verification Gateway Setup | ${TICK}\n` +
+                  `-# • **Operational Status:** \`Not Configured\`\n` +
+                  `-# • **Instant Setup:** Run \`${prefix}verify setup <@role> [button|captcha|math]\` in your gate channel.\n` +
+                  `-# • **Slash Setup:** \`/verify setup role:@Role mode:button\`\n\n` +
+                  `-# **Available Modes:**\n` +
+                  `-# • \`button\`: 1-Click instant identity confirmation\n` +
+                  `-# • \`captcha\`: Distorted image CAPTCHA (Zero false positives)\n` +
+                  `-# • \`math\`: Arithmetic challenge filtering automated bot scripts`
+              }
+            ]
+          },
+          {
+            type: 1,
+            components: [
+              { type: 2, custom_id: 'athena_act_cmd_help_verify', label: 'View !verify Manual', style: 2 },
+              { type: 2, custom_id: 'athena_act_security_status', label: 'Inspect Security Status', style: 2 }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 16. Toggle Verification Challenge Mode
+    if (act.startsWith('verify_mode_')) {
+      const hasPerm = member?.permissions?.has(PermissionFlagsBits.Administrator) || 
+                      guild?.ownerId === user.id ||
+                      isBotOwnerSync(user.id);
+      if (!hasPerm) {
+        return cv2.respond(interaction, {
+          components: [{ type: 17, components: [{ type: 10, content: `### Access Denied | ${TICK}\n-# Administrator permissions required.` }] }],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const newMode = act.replace('verify_mode_', '');
+      const vData = db.getVerification(guild?.id || '0');
+      if (!vData || !vData.roleId) {
+        return cv2.respond(interaction, {
+          components: [{ type: 17, components: [{ type: 10, content: `### Setup Required | ${TICK}\n-# Please deploy verification first using \`${prefix}verify setup <@role>\`.` }] }],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      db.updateVerification(guild.id, { mode: newMode });
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## Verification Mode Switched | ${TICK}\n` +
+                  `-# • **New Mode:** \`${newMode.toUpperCase()}\`\n` +
+                  `-# • Joining members must now pass **${newMode.toUpperCase()}** authentication to receive <@&${vData.roleId}>.`
               }
             ]
           }
         ],
         flags: MessageFlags.IsComponentsV2
       }, 7).catch(() => null);
+    }
+
+    // 17. Dismantle Verification Gate
+    if (act === 'verify_disable') {
+      const hasPerm = member?.permissions?.has(PermissionFlagsBits.Administrator) || 
+                      guild?.ownerId === user.id ||
+                      isBotOwnerSync(user.id);
+      if (!hasPerm) {
+        return cv2.respond(interaction, {
+          components: [{ type: 17, components: [{ type: 10, content: `### Access Denied | ${TICK}\n-# Administrator permissions required.` }] }],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const vData = db.getVerification(guild?.id || '0');
+      if (vData && vData.messageId && vData.channelId) {
+        try {
+          const chan = guild.channels.cache.get(vData.channelId) || await guild.channels.fetch(vData.channelId).catch(() => null);
+          if (chan) {
+            const m = await chan.messages.fetch(vData.messageId).catch(() => null);
+            if (m) await m.delete().catch(() => null);
+          }
+        } catch {}
+      }
+      db.deleteVerification(guild.id);
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## Verification Gateway Dismantled | ${TICK}\n` +
+                  `-# The verification panel and database bindings have been completely removed.\n` +
+                  `-# Run \`${prefix}verify setup <@role>\` anytime to re-deploy.`
+              }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 18. Inspect Lockdown Status
+    if (act === 'lockdown_status') {
+      const snap = db.getLockdownSnapshot(guild?.id || '0');
+      if (snap) {
+        const lockedCount = Object.keys(snap.channels || {}).length;
+        const timeStr = Math.floor(snap.timestamp / 1000);
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `## Panic Lockdown Status: ACTIVE | ${TICK}\n` +
+                    `-# • **Active Tier:** \`Tier ${snap.tier}\`\n` +
+                    `-# • **Engaged Since:** <t:${timeStr}:R> (<t:${timeStr}:f>)\n` +
+                    `-# • **Channels Isolated:** \`${lockedCount} channels\`\n` +
+                    `-# • **Snapshot Integrity:** \`Secured in SQLite storage\`\n\n` +
+                    `-# Click **Emergency Unlockdown** below to restore all channel permissions instantly.`
+                }
+              ]
+            },
+            {
+              type: 1,
+              components: [
+                { type: 2, custom_id: 'athena_act_unlockdown', label: 'Emergency Unlockdown', style: 2 },
+                { type: 2, custom_id: 'athena_act_security_status', label: 'Inspect Security Status', style: 2 }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## Panic Lockdown Status: NORMAL | ${TICK}\n` +
+                  `-# • **Operational State:** \`No Active Lockdown\`\n` +
+                  `-# • **Server Channels:** Standard server permissions active across all categories.\n` +
+                  `-# • **Emergency Action:** In case of a raid or compromise, run \`${prefix}lockdown [1|2|3]\` to isolate channels instantly.`
+              }
+            ]
+          },
+          {
+            type: 1,
+            components: [
+              { type: 2, custom_id: 'athena_act_security_status', label: 'Inspect Security Status', style: 2 },
+              { type: 2, custom_id: 'athena_act_cmd_help_lockdown', label: 'View !lockdown Help', style: 2 }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 19. Emergency Unlockdown Execution
+    if (act === 'unlockdown') {
+      const isAuthorized = isBotOwnerSync(user.id) || 
+                           user.id === guild?.ownerId || 
+                           db.isExtraOwner(guild?.id || '0', user.id) || 
+                           member?.permissions?.has(PermissionFlagsBits.Administrator) ||
+                           member?.permissions?.has(PermissionFlagsBits.ManageChannels);
+      if (!isAuthorized) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Only server administrators or owners can lift panic lockdown.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+
+      const result = await handleUnlockdown(guild, member);
+      return cv2.respond(interaction, result, 7).catch(() => null);
+    }
+
+    // 20. Universal Command Status Inspector
+    if (act.startsWith('cmd_status_')) {
+      const targetCmd = act.replace('cmd_status_', '');
+      const payload = await buildLiveCommandStatusPayload(guild, member, user, targetCmd, prefix);
+      return cv2.respond(interaction, payload, 7).catch(() => null);
+    }
+
+    // 21. Universal Command Manual Inspector
+    if (act.startsWith('cmd_help_')) {
+      const targetCmd = act.replace('cmd_help_', '');
+      const payload = await buildDetailedCommandHelpPayload(guild, member, user, targetCmd, prefix);
+      return cv2.respond(interaction, payload, 7).catch(() => null);
+    }
+
+    // 22. Universal Autonomous AI Action Synthesizer (Zero Fake Placeholders)
+    const label = interaction.component?.label || act.replace(/^custom_/, '').replace(/_/g, ' ');
+    let promptQuery;
+    if (act.startsWith('ai_ask_')) {
+      const targetCmd = act.replace('ai_ask_', '');
+      promptQuery = `How do I configure and use !${targetCmd} in my Discord server? Explain setup steps, options, and best practices.`;
+    } else {
+      promptQuery = `How to ${label}? Provide exact step-by-step guidance and actions for Athena Prime.`;
+    }
+
+    await interaction.deferReply({ flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+
+    const initialThinking = buildThinkingContainer(
+      `Athena Prime is synthesizing action: "${label}"...`,
+      `Querying server database and neural knowledge matrix...`
+    );
+
+    await cv2.edit(interaction, {
+      components: [initialThinking],
+      flags: MessageFlags.IsComponentsV2
+    }).catch(() => null);
+
+    const progress = createProgressHandler(interaction);
+
+    let aiResult;
+    try {
+      aiResult = await generateAthenaGuideResponse(promptQuery, {
+        guild,
+        user,
+        member,
+        channelId: interaction.channelId,
+        prefix,
+        onProgress: progress.onProgress
+      });
+    } finally {
+      progress.stop();
+    }
+
+    if (aiResult?.container) {
+      return cv2.edit(interaction, {
+        components: [aiResult.container],
+        flags: MessageFlags.IsComponentsV2
+      }).catch(() => null);
     }
   }
 

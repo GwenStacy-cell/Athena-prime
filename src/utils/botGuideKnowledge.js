@@ -1,6 +1,7 @@
 import { ARCHITECTURE_TOPICS, COMMAND_EXPLAINERS } from './explainerRegistry.js';
 import { helpModules } from '../commands/utility.js';
 import { generateAIResponse, formatAIToGreyMarkdown } from './ai.js';
+export { searchCodebase, formatCodebaseContext, describeFileRole, getAllBotCommands, SEMANTIC_INTENTS, detectAndCorrectTypos } from './codebaseKnowledge.js';
 import { searchCodebase, formatCodebaseContext, describeFileRole, getAllBotCommands, SEMANTIC_INTENTS, detectAndCorrectTypos } from './codebaseKnowledge.js';
 import { 
   getGuideSession, 
@@ -711,6 +712,24 @@ export function detectRequestedButton(prompt, primaryCommand = '') {
   }
   if (/unlock/i.test(lower)) {
     return { label: 'Emergency Unlockdown', actionId: 'unlockdown', command: 'lockdown' };
+  }
+  if (/welcome.*(setup|manager|panel)/i.test(lower)) {
+    return { label: 'Open Welcome Setup', actionId: 'welcome_setup', command: 'welcome' };
+  }
+  if (/leave.*(setup|manager|panel)/i.test(lower)) {
+    return { label: 'Open Leave Setup', actionId: 'leave_setup', command: 'welcome' };
+  }
+  if (/test.*welcome|welcome.*test/i.test(lower)) {
+    return { label: 'Test Welcome Card', actionId: 'welcome_test', command: 'welcome' };
+  }
+  if (/giveaway.*(manager|setup|create)/i.test(lower)) {
+    return { label: 'Open Giveaway Manager', actionId: 'giveaway_manager', command: 'giveaway' };
+  }
+  if (/verify.*(setup|gateway|panel)/i.test(lower)) {
+    return { label: 'Open Verification Setup', actionId: 'verify_setup', command: 'verify' };
+  }
+  if (/lockdown.*(status|check)/i.test(lower)) {
+    return { label: 'Inspect Lockdown Status', actionId: 'lockdown_status', command: 'lockdown' };
   }
 
   // Extract custom action phrase from e.g. "give me a button to <action>"
