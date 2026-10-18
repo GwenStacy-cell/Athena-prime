@@ -1,6 +1,6 @@
 import { PermissionFlagsBits, MessageFlags } from 'discord.js';
 import db from '../database.js';
-import cv2 from '../cv2.js';
+import cv2, { sanitizeCV2Payload } from '../cv2.js';
 import { generateAIResponse, formatAIToGreyMarkdown } from '../utils/ai.js';
 
 /**
@@ -15,38 +15,59 @@ function resolveLoadingEmoji() {
  */
 export function buildAICV2Container(user, prompt, aiResult, accentColor = '#00e5ff') {
   const content = formatAIToGreyMarkdown(aiResult.text || 'No response generated.');
+  const headerText =
+    `### **Athena Prime Neural Engine** | <a:uptime:1552608831060844575>\n` +
+    `-# • **__Member:__** <@${user.id}> \`(${user.id})\` \u00b7 **__Model:__** \`${aiResult.model}\` \u00b7 **__Latency:__** \`${aiResult.latencyMs}ms\`\n` +
+    `-# • **__Prompt:__** *${prompt.length > 120 ? prompt.slice(0, 117) + '...' : prompt}*`;
+
+  const footerText = `-# **Athena Intelligence Matrix \u00b7 Accelerated Neural Core \u00b7 Gemini 3.8 Flash**`;
+
   const comps = [
     {
       type: 10,
-      content:
-        `### **Athena Prime Neural Engine** | <a:uptime:1552608831060844575>\n` +
-        `-# • **__Member:__** <@${user.id}> \`(${user.id})\` \u00b7 **__Model:__** \`${aiResult.model}\` \u00b7 **__Latency:__** \`${aiResult.latencyMs}ms\`\n` +
-        `-# • **__Prompt:__** *${prompt.length > 120 ? prompt.slice(0, 117) + '...' : prompt}*`
+      content: headerText
     },
     { type: 14, divider: true }
   ];
 
-  // Discord component text limit is ~4000 characters. Split if needed.
-  if (content.length <= 3800) {
-    comps.push({ type: 10, content });
-  } else {
-    const chunks = content.match(/[\s\S]{1,3800}/g) || [content];
-    for (let i = 0; i < chunks.length; i++) {
-      comps.push({ type: 10, content: chunks[i] });
-      if (i < chunks.length - 1) comps.push({ type: 14, divider: true });
+  // Discord hard limit is 4000 characters total across all components in the payload.
+  const auxLength = headerText.length + footerText.length + 50;
+  const maxContentBudget = Math.max(800, 3800 - auxLength);
+
+  let safeContent = content;
+  if (safeContent.length > maxContentBudget) {
+    const notice = '\n-# *(Response condensed for Discord display limits. Ask follow-up questions for more details!)*';
+    const targetCut = maxContentBudget - notice.length;
+    let cutIdx = safeContent.lastIndexOf('\n\n', targetCut);
+    if (cutIdx === -1 || cutIdx < targetCut * 0.65) {
+      cutIdx = safeContent.lastIndexOf('\n', targetCut);
     }
+    if (cutIdx === -1 || cutIdx < targetCut * 0.65) {
+      cutIdx = safeContent.lastIndexOf('. ', targetCut);
+      if (cutIdx !== -1) cutIdx += 1;
+    }
+    if (cutIdx === -1 || cutIdx < targetCut * 0.5) {
+      cutIdx = targetCut;
+    }
+    let trimmed = safeContent.slice(0, cutIdx).trim();
+    const codeBlockCount = (trimmed.match(/```/g) || []).length;
+    if (codeBlockCount % 2 !== 0) {
+      trimmed += '\n```';
+    }
+    safeContent = trimmed + notice;
   }
 
+  comps.push({ type: 10, content: safeContent });
   comps.push({ type: 14, divider: true });
   comps.push({
     type: 10,
-    content: `-# **Athena Intelligence Matrix \u00b7 Accelerated Neural Core \u00b7 Gemini 3.8 Flash**`
+    content: footerText
   });
 
-  return {
+  return sanitizeCV2Payload({
     type: 17,
     components: comps
-  };
+  });
 }
 
 export const commands = [

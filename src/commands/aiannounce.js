@@ -11,7 +11,7 @@ import {
   TextInputStyle, 
   MessageFlags 
 } from 'discord.js';
-import cv2 from '../cv2.js';
+import cv2, { sanitizeCV2Payload } from '../cv2.js';
 import { setGuildContext } from '../embed.js';
 import db from '../database.js';
 import { generateAIResponse } from '../utils/ai.js';
@@ -265,7 +265,7 @@ export function buildPromptIntakeContainer(draft = null) {
     { type: 14, divider: true },
     {
       type: 10,
-      content: `-# 🎯 **Target Channel:** ${targetText} \u00b7 **Broadcast:** \`${pingText}\``
+      content: `-# • **__Target Channel:__** ${targetText} \u00b7 **__Broadcast:__** \`${pingText}\``
     }
   ];
 
@@ -339,31 +339,43 @@ export function buildAnnouncementStudioContainer(draft, isPreview = true) {
 
   comps.push({ type: 14, divider: true });
 
-  // 2. Body Component (Grey fonts with bold highlights)
-  const bodyText = draft.body || '-# No announcement content set.';
-  if (bodyText.length <= 3800) {
-    comps.push({ type: 10, content: bodyText });
-  } else {
-    const chunks = bodyText.match(/[\s\S]{1,3800}/g) || [bodyText];
-    for (let i = 0; i < chunks.length; i++) {
-      comps.push({ type: 10, content: chunks[i] });
-      if (i < chunks.length - 1) comps.push({ type: 14, divider: true });
-    }
-  }
-
-  // 3. Optional Banner / Media Gallery
+  // 2. Optional Banner / Media Gallery
   if (draft.imageUrl && /^https?:\/\//i.test(draft.imageUrl)) {
-    comps.push({ type: 14, divider: true });
     comps.push({
       type: 12,
       items: [{ media: { url: draft.imageUrl } }]
     });
+    comps.push({ type: 14, divider: true });
   }
 
-  comps.push({ type: 14, divider: true });
-
-  // 4. Footer Component (Custom user-editable footer)
+  // Calculate safe budget for announcement body (Discord 4000 total displayable text limit)
   const footerText = draft.footer ? `-# **${draft.footer}**` : `-# **Athena Prime Official Announcement**`;
+  const targetText = draft.targetChannelId ? `<#${draft.targetChannelId}>` : '`Not Selected`';
+  const pingLabel = draft.pingMode === 'everyone' ? '@everyone' : (draft.pingMode === 'here' ? '@here' : 'None');
+  const previewControlsText = isPreview
+    ? `-# • **__AI Announcement Studio Controls:__** Target: ${targetText} \u00b7 Broadcast: \`${pingLabel}\``
+    : '';
+
+  const auxLength = titleText.length + footerText.length + (isPreview ? previewControlsText.length + 50 : 0) + 60;
+  const maxBodyBudget = Math.max(800, 3800 - auxLength);
+
+  let bodyText = draft.body || '-# No announcement content set.';
+  if (bodyText.length > maxBodyBudget) {
+    const notice = '\n-# *(Announcement body condensed for Discord display limits)*';
+    const targetCut = maxBodyBudget - notice.length;
+    let cutIdx = bodyText.lastIndexOf('\n', targetCut);
+    if (cutIdx === -1 || cutIdx < targetCut * 0.7) {
+      cutIdx = bodyText.lastIndexOf('. ', targetCut);
+      if (cutIdx !== -1) cutIdx += 1;
+    }
+    if (cutIdx === -1 || cutIdx < targetCut * 0.5) {
+      cutIdx = targetCut;
+    }
+    bodyText = bodyText.slice(0, cutIdx).trim() + notice;
+  }
+
+  comps.push({ type: 10, content: bodyText });
+  comps.push({ type: 14, divider: true });
   comps.push({
     type: 10,
     content: footerText
@@ -371,14 +383,9 @@ export function buildAnnouncementStudioContainer(draft, isPreview = true) {
 
   if (isPreview) {
     comps.push({ type: 14, divider: true });
-
-    // Studio status line
-    const targetText = draft.targetChannelId ? `<#${draft.targetChannelId}>` : '`Not Selected`';
-    const pingLabel = draft.pingMode === 'everyone' ? '@everyone' : (draft.pingMode === 'here' ? '@here' : 'None');
-    
     comps.push({
       type: 10,
-      content: `-# 🛠️ **AI Announcement Studio Controls** \u00b7 Target: ${targetText} \u00b7 Broadcast: \`${pingLabel}\``
+      content: previewControlsText
     });
 
     // Row 1: Target Channel Select
@@ -447,10 +454,10 @@ export function buildAnnouncementStudioContainer(draft, isPreview = true) {
     comps.push(buttonRow.toJSON());
   }
 
-  return {
+  return sanitizeCV2Payload({
     type: 17,
     components: comps
-  };
+  });
 }
 
 /**

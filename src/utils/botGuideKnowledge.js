@@ -11,7 +11,7 @@ import {
   augmentQueryWithSession 
 } from './conversationSession.js';
 import db from '../database.js';
-import cv2 from '../cv2.js';
+import cv2, { sanitizeCV2Payload } from '../cv2.js';
 
 import { PermissionFlagsBits } from 'discord.js';
 
@@ -1158,6 +1158,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     '- Never output horizontal rules, dashed underlines, or divider lines (DO NOT use "---", "===", or "-----").',
     '- Never use Discord native unicode emojis (no checkmarks, crosses, warning signs). Only use standard bullet characters or clean text.',
     '- Complete all sentences cleanly. Never cut off or truncate.',
+    '- Discord Display Length Constraint: Keep your total response under 2,600 characters so the entire guide renders completely without truncation. Provide precise, direct setup commands and key syntax without unnecessary filler.',
     '',
     codeContext ? codeContext + '\n' : '',
     'Ground Truth Knowledge Base (Current Live State):',
@@ -1565,50 +1566,70 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
     ? `\n-# • **__Typo Auto-Corrected:__** Interpreted \`${aiResult.typoCorrection.originalToken}\` as \`!${aiResult.typoCorrection.correctedCommand}\``
     : '';
 
+  const headerText =
+    `## Athena System Guide & Intelligence | ${TICK}\n` +
+    `-# • **__Member:__** <@${user.id}>${clearanceBadge} \u00b7 **__Model:__** \`${aiResult.model}\` \u00b7 **__Latency:__** \`${aiResult.latencyMs}ms\`\n` +
+    `-# • **__Question:__** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}${threadLine}${permissionNotice}${typoLine}`;
+
   const comps = [
     {
       type: 10,
-      content:
-        `## Athena System Guide & Intelligence | ${TICK}\n` +
-        `-# • **__Member:__** <@${user.id}>${clearanceBadge} \u00b7 **__Model:__** \`${aiResult.model}\` \u00b7 **__Latency:__** \`${aiResult.latencyMs}ms\`\n` +
-        `-# • **__Question:__** *${query.length > 130 ? query.slice(0, 127) + '...' : query}*${sourceLine}${threadLine}${permissionNotice}${typoLine}`
+      content: headerText
     },
     { type: 14, divider: true }
   ];
 
-  if (content.length <= 3800) {
-    comps.push({ type: 10, content });
-  } else {
-    const chunks = [];
-    const lines = content.split('\n');
-    let currentChunk = '';
-
-    for (const line of lines) {
-      if ((currentChunk + '\n' + line).length > 3700 && currentChunk.length > 0) {
-        chunks.push(currentChunk.trim());
-        currentChunk = line;
-      } else {
-        currentChunk = currentChunk ? `${currentChunk}\n${line}` : line;
-      }
-    }
-    if (currentChunk.trim().length > 0) {
-      chunks.push(currentChunk.trim());
-    }
-
-    for (let i = 0; i < chunks.length; i++) {
-      comps.push({ type: 10, content: chunks[i] });
-      if (i < chunks.length - 1) comps.push({ type: 14, divider: true });
-    }
-  }
-
-  comps.push({ type: 14, divider: true });
-
   // 1. Contextual Follow-Up Suggestions (Pill Chips)
   const suggestions = aiResult.suggestions || (currentSession && currentSession.suggestedFollowUps) || [];
+  const suggestionsHeader = (suggestions && suggestions.length > 0)
+    ? `-# **Suggested Follow-Ups (Click to explore directly):**`
+    : '';
+
+  // Dynamic Action Buttons
+  const dynamicActionButtons = aiResult.actionButtons || [];
+  const dynamicActionHeader = (dynamicActionButtons.length > 0)
+    ? `-# **One-Click Action Buttons (Click to execute directly):**`
+    : '';
+
+  const footerText = currentSession
+    ? `-# **Athena Prime \u00b7 Active Session (rolling timer expires <t:${Math.floor(currentSession.expiresAt / 1000)}:R>) \u00b7 Ask follow-ups directly**`
+    : `-# **Athena Prime \u00b7 Autonomous Server Assistance & Intelligence Engine**`;
+
+  // Discord hard limit is 4000 total characters across all components in the payload.
+  // Calculate exact budget for content:
+  const auxTextLength = headerText.length + suggestionsHeader.length + dynamicActionHeader.length + footerText.length + 80;
+  const maxContentBudget = Math.max(800, 3800 - auxTextLength);
+
+  let safeContent = content;
+  if (safeContent.length > maxContentBudget) {
+    const notice = '\n-# *(Guide condensed to fit Discord display limit. Ask follow-up doubts below for any specific step!)*';
+    const targetCut = maxContentBudget - notice.length;
+    let cutIdx = safeContent.lastIndexOf('\n\n', targetCut);
+    if (cutIdx === -1 || cutIdx < targetCut * 0.65) {
+      cutIdx = safeContent.lastIndexOf('\n', targetCut);
+    }
+    if (cutIdx === -1 || cutIdx < targetCut * 0.65) {
+      cutIdx = safeContent.lastIndexOf('. ', targetCut);
+      if (cutIdx !== -1) cutIdx += 1;
+    }
+    if (cutIdx === -1 || cutIdx < targetCut * 0.5) {
+      cutIdx = targetCut;
+    }
+    let trimmed = safeContent.slice(0, cutIdx).trim();
+    const codeBlockCount = (trimmed.match(/```/g) || []).length;
+    if (codeBlockCount % 2 !== 0) {
+      trimmed += '\n```';
+    }
+    safeContent = trimmed + notice;
+  }
+
+  comps.push({ type: 10, content: safeContent });
+  comps.push({ type: 14, divider: true });
+
   if (suggestions && suggestions.length > 0) {
     comps.push({
       type: 10,
-      content: `-# **Suggested Follow-Ups (Click to explore directly):**`
+      content: suggestionsHeader
     });
     const chipButtons = suggestions.slice(0, 3).map((q, idx) => ({
       type: 2,
@@ -1623,12 +1644,10 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
     comps.push({ type: 14, divider: true });
   }
 
-  // 1. One-Click Interactive Action Buttons (Strictly Grey / Secondary - Literally no colour)
-  const dynamicActionButtons = aiResult.actionButtons || [];
   if (dynamicActionButtons.length > 0) {
     comps.push({
       type: 10,
-      content: `-# **One-Click Action Buttons (Click to execute directly):**`
+      content: dynamicActionHeader
     });
     comps.push({
       type: 1,
@@ -1665,19 +1684,15 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
 
   comps.push({ type: 14, divider: true });
 
-  const footerText = currentSession
-    ? `-# **Athena Prime \u00b7 Active Session (rolling timer expires <t:${Math.floor(currentSession.expiresAt / 1000)}:R>) \u00b7 Ask follow-ups directly**`
-    : `-# **Athena Prime \u00b7 Autonomous Server Assistance & Intelligence Engine**`;
-
   comps.push({
     type: 10,
     content: footerText
   });
 
-  return {
+  return sanitizeCV2Payload({
     type: 17,
     components: comps
-  };
+  });
 }
 
 /**

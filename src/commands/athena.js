@@ -166,7 +166,7 @@ export const commands = [
       }
 
       return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => {
-        return message.channel.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        return message.channel.send({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
     },
 
@@ -233,7 +233,7 @@ export const commands = [
 
       const container = buildAthenaGuideContainer(interaction.user, prompt, aiResult, accentColor, prefix, aiResult.session);
       return cv2.edit(interaction, { components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => {
-        return interaction.editReply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        return interaction.editReply({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       });
     }
   }

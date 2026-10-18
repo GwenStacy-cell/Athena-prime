@@ -215,25 +215,74 @@ function buildContainer(title, description, fields, customFooter) {
   // Pure borderless CV2 container (no accent_color)
   // Discord caps total displayable text across all components at 4,000 characters.
   // Enforce a hard safety ceiling of 3,800 characters to prevent COMPONENT_DISPLAYABLE_TEXT_SIZE_EXCEEDED.
-  var currentTotal = 0;
-  for (var cIdx = 0; cIdx < comps.length; cIdx++) {
-    var cObj = comps[cIdx];
-    if (cObj.type === 10 && typeof cObj.content === 'string') {
-      currentTotal += cObj.content.length;
+  return sanitizeCV2Payload({ type: 17, components: comps });
+}
+
+/**
+ * Sanitizes any CV2 container or message payload so that the total displayable
+ * text across all components strictly stays <= maxLimit (default 3800), preventing
+ * DiscordAPIError[50035]: COMPONENT_DISPLAYABLE_TEXT_SIZE_EXCEEDED.
+ */
+export function sanitizeCV2Payload(payload, maxLimit = 3800) {
+  if (!payload) return payload;
+
+  const rootComps = Array.isArray(payload.components)
+    ? payload.components
+    : (payload.type === 17 && Array.isArray(payload.components) ? [payload] : null);
+
+  if (!rootComps) return payload;
+
+  const textComps = [];
+  function collect(item) {
+    if (!item) return;
+    if (item.type === 10 && typeof item.content === 'string') {
+      textComps.push(item);
     }
-  }
-  if (currentTotal > 3800) {
-    var excess = currentTotal - 3750;
-    for (var cIdx = 0; cIdx < comps.length; cIdx++) {
-      var cObj = comps[cIdx];
-      if (cObj.type === 10 && typeof cObj.content === 'string' && cObj.content.length > excess + 50) {
-        cObj.content = cObj.content.slice(0, cObj.content.length - excess - 40) + '\n-# **__[Truncated for display limit]__**';
-        break;
+    if (Array.isArray(item.components)) {
+      for (const child of item.components) {
+        collect(child);
       }
     }
   }
 
-  return { type: 17, components: comps };
+  for (const c of rootComps) {
+    collect(c);
+  }
+
+  let totalLength = textComps.reduce((sum, c) => sum + c.content.length, 0);
+  let iterations = 0;
+  while (totalLength > maxLimit && iterations < 5) {
+    iterations++;
+    const excess = totalLength - (maxLimit - 50);
+    let longest = null;
+    for (const c of textComps) {
+      if (!longest || c.content.length > longest.content.length) {
+        longest = c;
+      }
+    }
+
+    if (!longest || longest.content.length <= 100) break;
+
+    const notice = '\n-# **__[Condensed to fit Discord display limit]__**';
+    const targetLen = Math.max(80, longest.content.length - excess - notice.length);
+    let cut = longest.content.lastIndexOf('\n', targetLen);
+    if (cut === -1 || cut < targetLen * 0.7) {
+      cut = longest.content.lastIndexOf('. ', targetLen);
+      if (cut !== -1) cut += 1;
+    }
+    if (cut === -1 || cut < targetLen * 0.5) {
+      cut = targetLen;
+    }
+    let trimmed = longest.content.slice(0, cut).trim();
+    const codeBlockCount = (trimmed.match(/```/g) || []).length;
+    if (codeBlockCount % 2 !== 0) {
+      trimmed += '\n```';
+    }
+    longest.content = trimmed + notice;
+    totalLength = textComps.reduce((sum, c) => sum + c.content.length, 0);
+  }
+
+  return payload;
 }
 
 function make(title, desc, fields, eph, customFooter) {
@@ -268,6 +317,7 @@ var _m = function(eph) {
 
 export var cv2 = Object.assign(_m(false), {
   TICK_EMOJI:   TICK_EMOJI,
+  sanitizeCV2Payload: sanitizeCV2Payload,
   e:            _m(true),
   asEphemeral:  function(p) {
     return Object.assign({}, p, { flags: ((p.flags != null ? p.flags : MessageFlags.IsComponentsV2) | MessageFlags.Ephemeral) });
@@ -297,6 +347,7 @@ export var cv2 = Object.assign(_m(false), {
         }
       }
       body = { components: comps, flags: payload.flags };
+      sanitizeCV2Payload(body);
       const fileList = resolvedFiles || payload.files;
       if (payload.attachments && Array.isArray(payload.attachments)) {
         body.attachments = payload.attachments;
@@ -332,6 +383,7 @@ export var cv2 = Object.assign(_m(false), {
     let body = payload;
     if (isCV2) {
       body = { components: payload.components, flags: payload.flags };
+      sanitizeCV2Payload(body);
       const fileList = resolvedFiles || payload.files;
       if (payload.attachments && Array.isArray(payload.attachments)) {
         body.attachments = payload.attachments;
