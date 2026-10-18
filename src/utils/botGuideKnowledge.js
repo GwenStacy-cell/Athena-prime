@@ -1506,7 +1506,7 @@ export function buildGuideHubContainer(guild, user, prefix = '!') {
           { type: 2, custom_id: 'athena_topic_security', label: 'Security & Antinuke', style: 2, emoji: { id: '1523672289500069940' } },
           { type: 2, custom_id: 'athena_topic_automod', label: 'Automod & AI Toxicity', style: 2, emoji: { id: '1533844853048209489' } },
           { type: 2, custom_id: 'athena_topic_tickets', label: 'Tickets & AI Triage', style: 2, emoji: { id: '1533859896620089485' } },
-          { type: 2, custom_id: 'athena_topic_minigames', label: 'Economy & Minigames', style: 2, emoji: { id: '1533859922599481577' } }
+          { type: 2, custom_id: 'athena_topic_minigames', label: 'Economy & Minigames', style: 2, emoji: { id: '1561256682376400919' } }
         ]
       },
       {
