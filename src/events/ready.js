@@ -518,8 +518,11 @@ export default {
           
           return {
             name: cmd.name,
-            description: cmd.description,
-            options: cmd.options || [],
+            description: (cmd.description || 'No description').slice(0, 100),
+            options: (cmd.options || []).map(opt => ({
+              ...opt,
+              description: (opt.description || 'Option description').slice(0, 100)
+            })),
             default_member_permissions: cmd.permissions && cmd.permissions.length > 0 
               ? cmd.permissions.reduce((acc, perm) => acc | perm, 0n).toString() 
               : null

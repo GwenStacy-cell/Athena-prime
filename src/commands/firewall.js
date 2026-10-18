@@ -387,7 +387,7 @@ export const commands = [
   {
     name: 'firewall',
     aliases: ['fw', 'matrix', 'telemetry', 'statusnet'],
-    description: 'Inspect real-time Athena firewall telemetry stream, gateway connection, SQLite WAL, and global defense matrix.',
+    description: 'Inspect real-time Athena firewall telemetry, gateway connection, and defense matrix.',
     category: 'security',
     permissions: [],
     async executePrefix(message, args = []) {

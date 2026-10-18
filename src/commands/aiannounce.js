@@ -245,35 +245,82 @@ Athena Prime Official Announcement`;
 /**
  * Builds the initial prompt intake CV2 container for !aiannounce
  */
-export function buildPromptIntakeContainer() {
+export function buildPromptIntakeContainer(draft = null) {
+  const targetText = draft?.targetChannelId ? `<#${draft.targetChannelId}>` : '`Not Selected (Choose from dropdown below)`';
+  const pingText = draft?.pingMode === 'everyone' ? '@everyone' : (draft?.pingMode === 'here' ? '@here' : 'None (Silent)');
+
+  const comps = [
+    {
+      type: 10,
+      content: `## Athena AI Announcement Studio | <a:uptime:1552608831060844575>\n-# Transform rough ideas, typo-filled notes, or brief human bullet points into stunning server announcements.\n-# Powered by Google Gemini 3.8 Flash High Intelligence Pipeline.`
+    },
+    { type: 14, divider: true },
+    {
+      type: 10,
+      content: 
+        `-# • **__Custom Emoji & ID Support:__** Provide full emojis (\`<:name:id>\` / \`<a:name:id>\`) or raw **Emoji IDs** (e.g. \`1557841381630681106\`) for heading and bullets.\n` +
+        `-# • **__Live Studio Preview:__** Inspect, adjust mentions, choose target channel, and fully edit heading, content, and footer before sending.\n` +
+        `-# • **__Direct Command:__** \`!aiannounce <your prompt / notes>\` or write your prompt below.`
+    },
+    { type: 14, divider: true },
+    {
+      type: 10,
+      content: `-# 🎯 **Target Channel:** ${targetText} \u00b7 **Broadcast:** \`${pingText}\``
+    }
+  ];
+
+  // Row 1: Target Channel Select
+  const channelSelect = new ChannelSelectMenuBuilder()
+    .setCustomId('aian_select_channel')
+    .setPlaceholder('Select target announcement channel...')
+    .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement);
+  if (draft?.targetChannelId) {
+    channelSelect.setDefaultChannels([draft.targetChannelId]);
+  }
+  comps.push(new ActionRowBuilder().addComponents(channelSelect).toJSON());
+
+  // Row 2: Broadcast Mention Select
+  const pingSelect = new StringSelectMenuBuilder()
+    .setCustomId('aian_select_ping')
+    .setPlaceholder('Select broadcast mention mode...')
+    .addOptions([
+      {
+        label: 'Silent (No Mention)',
+        value: 'none',
+        description: 'Post announcement cleanly without pinging members',
+        default: !draft?.pingMode || draft?.pingMode === 'none'
+      },
+      {
+        label: '@here (Online Members)',
+        value: 'here',
+        description: 'Mention online and active members in the channel',
+        default: draft?.pingMode === 'here'
+      },
+      {
+        label: '@everyone (All Members)',
+        value: 'everyone',
+        description: 'Broadcast notification to all members of the server',
+        default: draft?.pingMode === 'everyone'
+      }
+    ]);
+  comps.push(new ActionRowBuilder().addComponents(pingSelect).toJSON());
+
+  // Row 3: Action Buttons
+  comps.push(new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('aian_open_prompt_modal')
+      .setLabel('Write Announcement Prompt')
+      .setEmoji('<:1dd48b63_d55f_467f_bc5c_04df55c7:1561262243352412221>')
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId('aian_open_manual_modal')
+      .setLabel('Create Manually')
+      .setStyle(ButtonStyle.Secondary)
+  ).toJSON());
+
   return {
     type: 17,
-    components: [
-      {
-        type: 10,
-        content: `## Athena AI Announcement Studio | <a:uptime:1552608831060844575>\n-# Transform rough ideas, typo-filled notes, or brief human bullet points into stunning server announcements.\n-# Powered by Google Gemini 3.8 Flash High Intelligence Pipeline.`
-      },
-      { type: 14, divider: true },
-      {
-        type: 10,
-        content: 
-          `-# • **__Custom Emoji & ID Support:__** Provide full emojis (\`<:name:id>\` / \`<a:name:id>\`) or raw **Emoji IDs** (e.g. \`1557841381630681106\`) for heading and bullets.\n` +
-          `-# • **__Live Studio Preview:__** Inspect, adjust mentions (\`@here\` / \`@everyone\`), choose target channel, and fully edit heading, content, and footer before sending.\n` +
-          `-# • **__Direct Command:__** \`!aiannounce <your prompt / notes>\` or click the button below to open the studio prompter.`
-      },
-      { type: 14, divider: true },
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('aian_open_prompt_modal')
-          .setLabel('Write Announcement Prompt')
-          .setEmoji('<:1dd48b63_d55f_467f_bc5c_04df55c7:1561262243352412221>')
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('aian_open_manual_modal')
-          .setLabel('Create Manually')
-          .setStyle(ButtonStyle.Secondary)
-      ).toJSON()
-    ]
+    components: comps
   };
 }
 
@@ -430,11 +477,26 @@ function getDraftFromInteraction(interaction) {
           if (inner.type === 10 && inner.content) {
             if (inner.content.startsWith('# ') && title === 'Server Announcement') {
               title = inner.content.replace(/^#\s*/, '').trim();
+            } else if (inner.content.includes('Target Channel:') || inner.content.includes('Target:')) {
+              const chMatch = inner.content.match(/Target(?:\s*Channel)?:\s*<#(\d+)>/);
+              if (chMatch) targetChannelId = chMatch[1];
+              const pingMatch = inner.content.match(/Broadcast:\s*`([^`]+)`/);
+              if (pingMatch) {
+                const p = pingMatch[1].trim();
+                pingMode = p === '@everyone' ? 'everyone' : (p === '@here' ? 'here' : 'none');
+              }
             } else if (inner.content.startsWith('-#') && !inner.content.includes('AI Announcement Studio Controls')) {
               if (!body) {
                 body = inner.content;
               } else if (inner.content.startsWith('-# **') && inner.content.endsWith('**')) {
                 footer = inner.content.slice(5, -2).trim();
+              }
+            }
+          }
+          if (inner.type === 1 && Array.isArray(inner.components)) {
+            for (const c of inner.components) {
+              if (c.custom_id === 'aian_select_channel' && c.default_values?.[0]?.id) {
+                targetChannelId = c.default_values[0].id;
               }
             }
           }
@@ -491,8 +553,22 @@ export const commands = [
 
       const prompt = args.join(' ').trim();
       if (!prompt) {
-        const intake = buildPromptIntakeContainer();
-        return message.channel.send({ components: [intake], flags: MessageFlags.IsComponentsV2 });
+        const draft = {
+          authorId: message.author.id,
+          guildId: message.guild.id,
+          title: 'Server Announcement',
+          body: '',
+          footer: 'Athena Prime Official Announcement',
+          imageUrl: null,
+          targetChannelId: null,
+          pingMode: 'none',
+          originalPrompt: '',
+          lastUpdated: Date.now()
+        };
+        const intake = buildPromptIntakeContainer(draft);
+        const msg = await message.channel.send({ components: [intake], flags: MessageFlags.IsComponentsV2 });
+        announcementDrafts.set(msg.id, draft);
+        return;
       }
 
       const thinkingContainer = {
@@ -535,8 +611,22 @@ export const commands = [
       const targetChan = interaction.options.getChannel('channel');
 
       if (!prompt) {
-        const intake = buildPromptIntakeContainer();
-        return interaction.reply({ components: [intake], flags: MessageFlags.IsComponentsV2 });
+        const draft = {
+          authorId: interaction.user.id,
+          guildId: interaction.guild.id,
+          title: 'Server Announcement',
+          body: '',
+          footer: 'Athena Prime Official Announcement',
+          imageUrl: null,
+          targetChannelId: targetChan?.id || null,
+          pingMode: 'none',
+          originalPrompt: '',
+          lastUpdated: Date.now()
+        };
+        const intake = buildPromptIntakeContainer(draft);
+        const replyMsg = await interaction.reply({ components: [intake], flags: MessageFlags.IsComponentsV2 });
+        announcementDrafts.set(replyMsg.id || interaction.id, draft);
+        return;
       }
 
       await interaction.deferReply();
@@ -597,7 +687,7 @@ export async function handleAIAnnouncementInteractions(interaction) {
       const promptInput = new TextInputBuilder()
         .setCustomId('aian_prompt_input')
         .setLabel('What would you like to announce?')
-        .setPlaceholder('e.g. game night at 8pm ist, bring snacks, use emoji id 1557841381630681106 for bullets and 1557841381630681107 in heading...')
+        .setPlaceholder('e.g. game night 8pm, snacks, emoji id 1557841381630681106 for bullets & 1557841381630681107 in heading')
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true);
 
@@ -655,8 +745,12 @@ export async function handleAIAnnouncementInteractions(interaction) {
     draft.targetChannelId = interaction.values[0];
     draft.lastUpdated = Date.now();
     announcementDrafts.set(interaction.message.id, draft);
+
+    const isIntake = !draft.originalPrompt && (!draft.body || draft.body === '-# No announcement content set.');
+    const container = isIntake ? buildPromptIntakeContainer(draft) : buildAnnouncementStudioContainer(draft, true);
+
     return interaction.update({
-      components: [buildAnnouncementStudioContainer(draft, true)],
+      components: [container],
       flags: MessageFlags.IsComponentsV2
     });
   }
@@ -665,8 +759,12 @@ export async function handleAIAnnouncementInteractions(interaction) {
     draft.pingMode = interaction.values[0];
     draft.lastUpdated = Date.now();
     announcementDrafts.set(interaction.message.id, draft);
+
+    const isIntake = !draft.originalPrompt && (!draft.body || draft.body === '-# No announcement content set.');
+    const container = isIntake ? buildPromptIntakeContainer(draft) : buildAnnouncementStudioContainer(draft, true);
+
     return interaction.update({
-      components: [buildAnnouncementStudioContainer(draft, true)],
+      components: [container],
       flags: MessageFlags.IsComponentsV2
     });
   }
@@ -838,9 +936,9 @@ export async function handleAIAnnouncementInteractions(interaction) {
         title: aiDraft.title,
         body: aiDraft.body,
         footer: aiDraft.footer || 'Athena Prime Official Announcement',
-        imageUrl: null,
-        targetChannelId: null,
-        pingMode: 'none',
+        imageUrl: draft.imageUrl || null,
+        targetChannelId: draft.targetChannelId || null,
+        pingMode: draft.pingMode || 'none',
         originalPrompt: prompt,
         lastUpdated: Date.now()
       };
@@ -862,9 +960,9 @@ export async function handleAIAnnouncementInteractions(interaction) {
         title: title.trim(),
         body: cleanAnnouncementBody(body),
         footer,
-        imageUrl: null,
-        targetChannelId: null,
-        pingMode: 'none',
+        imageUrl: draft.imageUrl || null,
+        targetChannelId: draft.targetChannelId || null,
+        pingMode: draft.pingMode || 'none',
         originalPrompt: '',
         lastUpdated: Date.now()
       };
