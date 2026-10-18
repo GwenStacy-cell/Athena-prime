@@ -25,6 +25,7 @@ import { commands as giveawayCmds } from './giveaway.js';
 import { commands as statsCmds } from './stats.js';
 import { commands as newsCmds } from './news.js';
 import { commands as announceCmds } from './announce.js';
+import { commands as aiannounceCmds } from './aiannounce.js';
 import { commands as verifyCmds } from './verify.js';
 import { commands as ccmdCmds } from './ccmd.js';
 import { commands as qrCmds } from './qr.js';
@@ -151,6 +152,7 @@ export const allCommands = [
   ...statsCmds,
   ...newsCmds,
   ...announceCmds,
+  ...aiannounceCmds,
   ...verifyCmds,
   ...ticketCmds,
   ...ticketPanelCmds,
