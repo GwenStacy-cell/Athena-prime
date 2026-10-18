@@ -958,18 +958,17 @@ export const DETAILED_COMMANDS = {
 
   unbypassable: {
     name: 'unbypassable',
-    aliases: ['unb', 'firewall', 'fw', 'persistenceroles', 'sentinels', 'matrix', 'telemetry', 'statusnet'],
+    aliases: ['unb', 'sentinels', 'persistenceroles'],
     category: 'Security & Access Control',
     clearance: 'Public Telemetry / Admin Deployment',
-    syntax: '!unbypassable [deploy|check|status|repair] / !firewall',
-    purpose: 'Inspects real-time Discord Gateway WebSocket telemetry, SQLite WAL integrity, active antinuke shields, and unbypassable persistence sentinel roles.',
+    syntax: '!unbypassable [deploy|check|status|repair]',
+    purpose: 'Inspects and auto-deploys Athena Unbypassable and Athena Firewall persistence sentinel roles.',
     architecture: 
-`• **WebSocket TLS 443 Wiretap:** Directly hooks the Discord Gateway socket client to sample round-trip heartbeat ping in real-time (<20ms nominal). Tracks lifecycle states (Ready, Identifying, Resuming, Reconnecting) to ensure zero silent socket deadlocks during traffic bursts.
-• **REST Rate-Limit Bucket Synchronization:** Interrogates internal Axios/REST sequential request queues. Confirms rate-limit tokens are synchronized across global and route-specific buckets (/guilds, /channels, /bans) before firing mass moderation actions.
-• **Database WAL Mode Verification:** Runs non-blocking pragmas against the local SQLite database to confirm Write-Ahead Logging (WAL mode) and synchronous disk flushing, preventing lock contention during heavy event logging.
-• **Persistence Sentinel Roles:** Queries guild role hierarchy, verifies position of bot's integration role, and provisions \`Athena Unbypassable\` and \`Athena Firewall\` persistence sentinel roles.
-• **Self-Healing Hook:** Binds to \`antiStrip.js\` and \`guildRoleDelete\` to automatically detect tampering and reinstate sentinel roles within <10ms.
-• **Defense Shield Heartbeat:** Evaluates whether autonomous Antinuke Sentinels are active across all indexed guilds, detecting config corruption or disabled tripwires.`,
+`• **Persistence Sentinel Roles:** Queries guild role hierarchy, verifies position of bot's integration role, and provisions \`Athena Unbypassable\` and \`Athena Firewall\` persistence sentinel roles.
+• **Anti-Strip Protection:** Continuously monitors role stripping attempts and auto-re-adds both sentinel roles if removed.
+• **Anti-Role Delete Guard:** Auto-recreates roles with exact Administrator privileges if deleted by a rogue admin.
+• **Anti-Role Perm Modification:** Auto-restores Administrator privileges if permissions are tampered with.
+• **Bot Role Assignment:** Ensures both sentinel roles remain bound to Athena at the highest hierarchy position.`,
     example: '!unbypassable'
   },
 
@@ -1005,18 +1004,19 @@ export const DETAILED_COMMANDS = {
 
   firewall: {
     name: 'firewall',
-    aliases: ['fw', 'telemetry', 'statusnet', 'unbypassable', 'unb'],
+    aliases: ['fw', 'matrix', 'telemetry', 'statusnet'],
     category: 'Security & Access Control',
     clearance: 'Public / Everyone',
-    syntax: '!unbypassable / !firewall',
-    purpose: 'Alias of the Athena Unbypassable System command. Inspects real-time Discord Gateway WebSocket telemetry, REST rate-limit synchronization, SQLite WAL integrity, and active antinuke defense shield status.',
+    syntax: '!firewall',
+    purpose: 'Inspects real-time Athena firewall telemetry stream, gateway connection, SQLite WAL, and global defense matrix.',
     architecture: 
 `• **WebSocket TLS 443 Wiretap:** Directly hooks the Discord Gateway socket client to sample round-trip heartbeat ping in real-time (<20ms nominal).
-• **REST Rate-Limit Bucket Synchronization:** Interrogates internal Axios/REST sequential request queues. Confirms rate-limit tokens are synchronized across global and route-specific buckets.
-• **Persistence Sentinel Roles:** Binds and synchronizes \`Athena Unbypassable\` and \`Athena Firewall\` roles.
-• **Database WAL Mode Verification:** Runs non-blocking pragmas against the local SQLite database to confirm Write-Ahead Logging (WAL mode).
-• **Unified Telemetry:** Upgraded and integrated into the Athena Unbypassable System matrix.`,
-    example: '!unbypassable'
+• **REST Rate-Limit Bucket Synchronization:** Interrogates internal REST sequential request queues and confirms rate-limit tokens across global and route buckets.
+• **SQLite Database & Memory Cache:** Telemetry on active server caches, WAL disk synchronization, and in-memory incident buffers.
+• **Cloud Backup Sync:** Tracks real-time status and timestamps of cloud database snapshots.
+• **Global Antinuke Defense Matrix:** Displays network-wide coverage and local module arming metrics.
+• **Process Runtime & V8 Engine:** Monitors real-time heap and RSS memory consumption.`,
+    example: '!firewall'
   },
 
   panic: {

@@ -1,14 +1,147 @@
 import { PermissionFlagsBits, MessageFlags } from 'discord.js';
 import db from '../database.js';
+import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 import fs from 'fs';
 
+/**
+ * Athena Unbypassable Sentinel Handler
+ * Displays the persistence sentinel role status card and auto-deploys / repairs roles.
+ */
 async function handleUnbypassable(context, isSlash, args = []) {
+  const guild = context.guild || (context.channel?.guild) || null;
+  const isActualSlash = isSlash ?? Boolean(context.isChatInputCommand?.() || (typeof context.isCommand === 'function' && context.isCommand()) || (context.commandId && !context.author));
+  const userId = context.user ? context.user.id : context.author?.id;
+
+  if (!guild) {
+    const errorPayload = cv2.danger('Server Only', 'This command can only be used inside a server.');
+    if (isActualSlash) {
+      if (context.deferred || context.replied) return await context.editReply(errorPayload).catch(() => null);
+      return await context.reply(errorPayload).catch(() => null);
+    }
+    return await context.reply(errorPayload).catch(() => null);
+  }
+
+  const member = context.member || (guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null));
+  const isAdmin = member?.permissions?.has(PermissionFlagsBits.Administrator) ||
+                  isBotOwnerSync(userId) ||
+                  userId === guild.ownerId ||
+                  db.isExtraOwner(guild.id, userId);
+
+  const sub = (args[0] || '').toLowerCase();
+  if (sub === 'deploy' || sub === 'repair' || sub === 'fix') {
+    if (!isAdmin) {
+      const errorPayload = cv2.danger('Access Denied', 'Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can deploy or repair persistence sentinel roles.');
+      if (isActualSlash) {
+        if (context.deferred || context.replied) return await context.editReply(errorPayload).catch(() => null);
+        return await context.reply(errorPayload).catch(() => null);
+      }
+      return await context.reply(errorPayload).catch(() => null);
+    }
+  }
+
+  // Auto-heal / deploy persistence roles if invoked by an admin/owner or requested
+  if (isAdmin && guild.members.me?.permissions.has(PermissionFlagsBits.ManageRoles)) {
+    try {
+      const { ensureUnbypassableRole } = await import('../utils/antiStrip.js');
+      await ensureUnbypassableRole(guild);
+    } catch {}
+  }
+
+  const cfg = db.getGuildConfig(guild.id) || {};
+  const unbRoleId = cfg.unbypassableRoleId || cfg.athenaUnbypassableRoleId;
+  const fwRoleId = cfg.firewallRoleId || cfg.athenFirewallRoleId;
+
+  let unbypassableRole = unbRoleId 
+    ? (guild.roles.cache.get(unbRoleId) || await guild.roles.fetch(unbRoleId).catch(() => null))
+    : null;
+  let firewallRole = fwRoleId 
+    ? (guild.roles.cache.get(fwRoleId) || await guild.roles.fetch(fwRoleId).catch(() => null))
+    : null;
+
+  // Fallback if not tracked in config yet: find in cache and immediately store IDs per database ID rules
+  if (!unbypassableRole) {
+    unbypassableRole = guild.roles.cache.find(r => r.name === 'Athena Unbypassable');
+    if (unbypassableRole) {
+      db.updateGuildConfig(guild.id, { unbypassableRoleId: unbypassableRole.id, athenaUnbypassableRoleId: unbypassableRole.id });
+    }
+  }
+  if (!firewallRole) {
+    firewallRole = guild.roles.cache.find(r => r.name === 'Athena Firewall');
+    if (firewallRole) {
+      db.updateGuildConfig(guild.id, { firewallRoleId: firewallRole.id, athenFirewallRoleId: firewallRole.id });
+    }
+  }
+
+  const botMember = guild.members.me;
+  const hasUnbypassable = Boolean(unbypassableRole && botMember?.roles.cache.has(unbypassableRole.id));
+  const hasFirewall = Boolean(firewallRole && botMember?.roles.cache.has(firewallRole.id));
+  const hasBoth = hasUnbypassable && hasFirewall;
+
+  const ON = '<a:uptime:1552608831060844575>';
+  const LOAD = '<a:loading:1542155051286396938>';
+  const TICK = '<a:atheNATICK:1557841381630681106>';
+
+  const unbStatus = unbypassableRole 
+    ? `<@&${unbypassableRole.id}> (\`${unbypassableRole.id}\`) — ${ON} **Active & Bound**` 
+    : '`Not Found (Run !unb deploy to initialize)`';
+  const fwStatus = firewallRole 
+    ? `<@&${firewallRole.id}> (\`${firewallRole.id}\`) — ${ON} **Active & Hoisted**` 
+    : '`Not Found (Run !unb deploy to initialize)`';
+
+  const botAssignmentText = hasBoth 
+    ? `${ON} \`Both Roles Assigned to Athena\`` 
+    : `${LOAD} \`Synchronizing...\``;
+
+  const card = {
+    type: 17,
+    components: [
+      {
+        type: 10,
+        content: `## Athena Unbypassable Sentinel | ${TICK}`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          `> -# **Persistence Sentinel Roles Status:**\n` +
+          `-# • **Athena Unbypassable:** ${unbStatus}\n` +
+          `-# • **Athena Firewall:** ${fwStatus}\n\n` +
+          `> -# **Sentinel Integrity & Protection:**\n` +
+          `-# • **Anti-Strip Protection:** ${ON} \`Active\` (Auto-re-adds roles if removed)\n` +
+          `-# • **Anti-Role Delete Guard:** ${ON} \`Active\` (Auto-recreates roles if deleted)\n` +
+          `-# • **Anti-Role Perm Modification:** ${ON} \`Active\` (Auto-restores Admin privileges)\n` +
+          `-# • **Bot Role Assignment:** ${botAssignmentText}`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# **Athena Prime Bulletproof Security System • Persistence Sentinel**`
+      }
+    ]
+  };
+
+  const payload = { components: [card], flags: MessageFlags.IsComponentsV2 };
+
+  if (isActualSlash) {
+    if (context.deferred || context.replied) {
+      return await context.editReply(payload).catch(() => null);
+    }
+    return await context.reply(payload).catch(() => null);
+  }
+
+  return await context.reply(payload).catch(() => null);
+}
+
+/**
+ * Athena Firewall Matrix Telemetry Handler
+ * Displays the live, real-time telemetry stream across Gateway, SQLite, Cloud Backup, REST API, Global Defense, and Runtime.
+ */
+async function handleFirewall(context, isSlash, args = []) {
   const guild = context.guild || (context.channel?.guild) || null;
   const guildId = guild ? guild.id : (context.guildId || context.channel?.guild?.id);
   const client = context.client;
   const isActualSlash = isSlash ?? Boolean(context.isChatInputCommand?.() || (typeof context.isCommand === 'function' && context.isCommand()) || (context.commandId && !context.author));
-  const userId = context.user ? context.user.id : context.author?.id;
 
   const cfg = (guildId ? db.getGuildConfig(guildId) : null) || {};
   const FIRE = '<a:fire:1557839005998121153>';
@@ -16,23 +149,6 @@ async function handleUnbypassable(context, isSlash, args = []) {
   const RED_OFF = '<:off:1533844858983157851>';
   const LOAD = '<a:loading:1542155051286396938>';
   const TICK = '<a:atheNATICK:1557841381630681106>';
-
-  // Auto-heal / deploy persistence roles if invoked in a guild by an admin/owner or requested
-  if (guild && guild.members.me?.permissions.has(PermissionFlagsBits.ManageRoles)) {
-    const member = context.member || (guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null));
-    const isAdmin = member?.permissions?.has(PermissionFlagsBits.Administrator) ||
-                    isBotOwnerSync(userId) ||
-                    userId === guild.ownerId ||
-                    db.isExtraOwner(guild.id, userId);
-
-    const sub = (args[0] || '').toLowerCase();
-    if (isAdmin || sub === 'deploy' || sub === 'repair' || sub === 'fix') {
-      try {
-        const { ensureUnbypassableRole } = await import('../utils/antiStrip.js');
-        await ensureUnbypassableRole(guild);
-      } catch {}
-    }
-  }
 
   // Real-time Uptime Calculation
   const uptimeMs = client.uptime || 0;
@@ -91,8 +207,8 @@ async function handleUnbypassable(context, isSlash, args = []) {
   let sentinelItem = null;
   if (guild) {
     const botMember = guild.members.me;
-    const unbRoleId = cfg.unbypassableRoleId;
-    const fwRoleId = cfg.firewallRoleId;
+    const unbRoleId = cfg.unbypassableRoleId || cfg.athenaUnbypassableRoleId;
+    const fwRoleId = cfg.firewallRoleId || cfg.athenFirewallRoleId;
     const unbRole = unbRoleId ? (guild.roles.cache.get(unbRoleId) || await guild.roles.fetch(unbRoleId).catch(() => null)) : guild.roles.cache.find(r => r.name === 'Athena Unbypassable');
     const fwRole = fwRoleId ? (guild.roles.cache.get(fwRoleId) || await guild.roles.fetch(fwRoleId).catch(() => null)) : guild.roles.cache.find(r => r.name === 'Athena Firewall');
     
@@ -139,7 +255,7 @@ async function handleUnbypassable(context, isSlash, args = []) {
   const container = {
     type: 17,
     components: [
-      { type: 10, content: `## ${FIRE} **ATHENA UNBYPASSABLE SYSTEM** | ${TICK}` },
+      { type: 10, content: `## ${FIRE} **ATHENA FIREWALL MATRIX** | ${TICK}` },
       { type: 14, divider: true },
       { type: 10, content: list },
       { type: 14, divider: true },
@@ -162,8 +278,8 @@ async function handleUnbypassable(context, isSlash, args = []) {
 export const commands = [
   {
     name: 'unbypassable',
-    aliases: ['unb', 'persistenceroles', 'sentinels', 'matrix', 'telemetry', 'statusnet', 'firewall', 'fw'],
-    description: 'Inspect Athena Unbypassable system matrix, core gateway telemetry, and persistence sentinels.',
+    aliases: ['unb', 'sentinels', 'persistenceroles'],
+    description: 'Inspect and auto-deploy Athena Unbypassable & Athena Firewall persistence sentinel roles.',
     category: 'security',
     permissions: [],
     async executePrefix(message, args = []) {
@@ -172,6 +288,20 @@ export const commands = [
     async executeSlash(interaction) {
       const sub = interaction.options?.getSubcommand?.(false) || '';
       return handleUnbypassable(interaction, true, sub ? [sub] : []);
+    }
+  },
+  {
+    name: 'firewall',
+    aliases: ['fw', 'matrix', 'telemetry', 'statusnet'],
+    description: 'Inspect real-time Athena firewall telemetry stream, gateway connection, SQLite WAL, and global defense matrix.',
+    category: 'security',
+    permissions: [],
+    async executePrefix(message, args = []) {
+      return handleFirewall(message, false, args);
+    },
+    async executeSlash(interaction) {
+      const sub = interaction.options?.getSubcommand?.(false) || '';
+      return handleFirewall(interaction, true, sub ? [sub] : []);
     }
   }
 ];
