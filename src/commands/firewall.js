@@ -6,7 +6,8 @@ import fs from 'fs';
 
 /**
  * Athena Unbypassable Sentinel Handler
- * Displays the persistence sentinel role status card and auto-deploys / repairs roles.
+ * Computes 100% genuine real-time live data sync for Sentinel roles and protection tripwires.
+ * Reflects true Active / Inactive / Degraded states based on actual guild permissions and configuration.
  */
 async function handleUnbypassable(context, isSlash, args = []) {
   const guild = context.guild || (context.channel?.guild) || null;
@@ -29,7 +30,10 @@ async function handleUnbypassable(context, isSlash, args = []) {
                   db.isExtraOwner(guild.id, userId);
 
   const sub = (args[0] || '').toLowerCase();
-  if (sub === 'deploy' || sub === 'repair' || sub === 'fix') {
+  const isDeployAction = sub === 'deploy' || sub === 'repair' || sub === 'fix' || sub === 'setup';
+
+  // Manual deployment / self-healing requested
+  if (isDeployAction) {
     if (!isAdmin) {
       const errorPayload = cv2.danger('Access Denied', 'Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can deploy or repair persistence sentinel roles.');
       if (isActualSlash) {
@@ -38,17 +42,23 @@ async function handleUnbypassable(context, isSlash, args = []) {
       }
       return await context.reply(errorPayload).catch(() => null);
     }
+
+    if (guild.members.me?.permissions.has(PermissionFlagsBits.ManageRoles)) {
+      try {
+        const { ensureUnbypassableRole } = await import('../utils/antiStrip.js');
+        await ensureUnbypassableRole(guild);
+      } catch {}
+    }
   }
 
-  // Auto-heal / deploy persistence roles if invoked by an admin/owner or requested
-  if (isAdmin && guild.members.me?.permissions.has(PermissionFlagsBits.ManageRoles)) {
-    try {
-      const { ensureUnbypassableRole } = await import('../utils/antiStrip.js');
-      await ensureUnbypassableRole(guild);
-    } catch {}
-  }
-
+  // 1. Live Guild Config & Permissions Evaluation
   const cfg = db.getGuildConfig(guild.id) || {};
+  const isSecurityEnabled = Boolean(cfg.securityEnabled || cfg.antiNukeEnabled);
+
+  const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
+  const botHasManageRoles = Boolean(botMember?.permissions.has(PermissionFlagsBits.ManageRoles));
+
+  // 2. Role IDs from Database (per Database ID Detection & Fetching Rules)
   const unbRoleId = cfg.unbypassableRoleId || cfg.athenaUnbypassableRoleId;
   const fwRoleId = cfg.firewallRoleId || cfg.athenFirewallRoleId;
 
@@ -59,39 +69,123 @@ async function handleUnbypassable(context, isSlash, args = []) {
     ? (guild.roles.cache.get(fwRoleId) || await guild.roles.fetch(fwRoleId).catch(() => null))
     : null;
 
-  // Fallback if not tracked in config yet: find in cache and immediately store IDs per database ID rules
+  // Fallback: check cache if not tracked in config yet, and persist IDs immediately per Rule 2
   if (!unbypassableRole) {
-    unbypassableRole = guild.roles.cache.find(r => r.name === 'Athena Unbypassable');
+    unbypassableRole = (typeof guild.roles.cache?.find === 'function')
+      ? guild.roles.cache.find(r => r.name === 'Athena Unbypassable')
+      : [...(guild.roles.cache?.values?.() || [])].find(r => r.name === 'Athena Unbypassable');
     if (unbypassableRole) {
       db.updateGuildConfig(guild.id, { unbypassableRoleId: unbypassableRole.id, athenaUnbypassableRoleId: unbypassableRole.id });
     }
   }
   if (!firewallRole) {
-    firewallRole = guild.roles.cache.find(r => r.name === 'Athena Firewall');
+    firewallRole = (typeof guild.roles.cache?.find === 'function')
+      ? guild.roles.cache.find(r => r.name === 'Athena Firewall')
+      : [...(guild.roles.cache?.values?.() || [])].find(r => r.name === 'Athena Firewall');
     if (firewallRole) {
       db.updateGuildConfig(guild.id, { firewallRoleId: firewallRole.id, athenFirewallRoleId: firewallRole.id });
     }
   }
 
-  const botMember = guild.members.me;
-  const hasUnbypassable = Boolean(unbypassableRole && botMember?.roles.cache.has(unbypassableRole.id));
-  const hasFirewall = Boolean(firewallRole && botMember?.roles.cache.has(firewallRole.id));
-  const hasBoth = hasUnbypassable && hasFirewall;
+  // 3. Live Real-Time Role States & Hierarchy Verification
+  const unbExists = Boolean(unbypassableRole);
+  const fwExists = Boolean(firewallRole);
+
+  const unbHasAdmin = Boolean(unbypassableRole?.permissions.has(PermissionFlagsBits.Administrator));
+  const fwHasAdmin = Boolean(firewallRole?.permissions.has(PermissionFlagsBits.Administrator));
+
+  const unbEditable = Boolean(unbypassableRole?.editable);
+  const fwEditable = Boolean(firewallRole?.editable);
+
+  const botHasUnb = Boolean(unbypassableRole && botMember?.roles.cache.has(unbypassableRole.id));
+  const botHasFw = Boolean(firewallRole && botMember?.roles.cache.has(firewallRole.id));
+  const hasBoth = botHasUnb && botHasFw;
 
   const ON = '<a:uptime:1552608831060844575>';
-  const LOAD = '<a:loading:1542155051286396938>';
+  const RED_OFF = '<:off:1533844858983157851>';
   const TICK = '<a:atheNATICK:1557841381630681106>';
 
-  const unbStatus = unbypassableRole 
-    ? `<@&${unbypassableRole.id}> (\`${unbypassableRole.id}\`) — ${ON} **Active & Bound**` 
-    : '`Not Found (Run !unb deploy to initialize)`';
-  const fwStatus = firewallRole 
-    ? `<@&${firewallRole.id}> (\`${firewallRole.id}\`) — ${ON} **Active & Hoisted**` 
-    : '`Not Found (Run !unb deploy to initialize)`';
+  // Real-time calculation of Section 1: Persistence Sentinel Roles Status
+  let unbStatus;
+  if (!unbExists) {
+    unbStatus = `\`Not Found (Run !unb deploy)\` — ${RED_OFF} **Inactive**`;
+  } else if (!unbHasAdmin) {
+    unbStatus = `<@&${unbypassableRole.id}> (\`${unbypassableRole.id}\`) — ${RED_OFF} **Vulnerable (Admin Missing)**`;
+  } else if (!botHasUnb) {
+    unbStatus = `<@&${unbypassableRole.id}> (\`${unbypassableRole.id}\`) — ${RED_OFF} **Unbound (Not on Bot)**`;
+  } else if (!unbEditable) {
+    unbStatus = `<@&${unbypassableRole.id}> (\`${unbypassableRole.id}\`) — ${RED_OFF} **Hierarchy Blocked (Above Bot)**`;
+  } else {
+    unbStatus = `<@&${unbypassableRole.id}> (\`${unbypassableRole.id}\`) — ${ON} **Active & Bound**`;
+  }
 
-  const botAssignmentText = hasBoth 
-    ? `${ON} \`Both Roles Assigned to Athena\`` 
-    : `${LOAD} \`Synchronizing...\``;
+  let fwStatus;
+  if (!fwExists) {
+    fwStatus = `\`Not Found (Run !unb deploy)\` — ${RED_OFF} **Inactive**`;
+  } else if (!fwHasAdmin) {
+    fwStatus = `<@&${firewallRole.id}> (\`${firewallRole.id}\`) — ${RED_OFF} **Vulnerable (Admin Missing)**`;
+  } else if (!botHasFw) {
+    fwStatus = `<@&${firewallRole.id}> (\`${firewallRole.id}\`) — ${RED_OFF} **Unbound (Not on Bot)**`;
+  } else if (!firewallRole.hoist) {
+    fwStatus = `<@&${firewallRole.id}> (\`${firewallRole.id}\`) — ${ON} **Active (Not Hoisted)**`;
+  } else if (!fwEditable) {
+    fwStatus = `<@&${firewallRole.id}> (\`${firewallRole.id}\`) — ${RED_OFF} **Hierarchy Blocked (Above Bot)**`;
+  } else {
+    fwStatus = `<@&${firewallRole.id}> (\`${firewallRole.id}\`) — ${ON} **Active & Hoisted**`;
+  }
+
+  // Real-time calculation of Section 2: Sentinel Integrity & Protection
+  // 1. Anti-Strip Protection (Requires security enabled, bot has ManageRoles, roles exist, roles editable)
+  let antiStripText;
+  if (!isSecurityEnabled) {
+    antiStripText = `${RED_OFF} \`Inactive\` (Security disarmed — run \`!security enable all\`)`;
+  } else if (!botHasManageRoles) {
+    antiStripText = `${RED_OFF} \`Inactive\` (Missing 'Manage Roles' permission)`;
+  } else if (!unbExists || !fwExists) {
+    antiStripText = `${RED_OFF} \`Inactive\` (Sentinel roles missing — run \`!unb deploy\`)`;
+  } else if (!unbEditable || !fwEditable) {
+    antiStripText = `${RED_OFF} \`Degraded\` (Roles positioned above bot hierarchy)`;
+  } else {
+    antiStripText = `${ON} \`Active\` (Auto-re-adds roles if removed)`;
+  }
+
+  // 2. Anti-Role Delete Guard (Requires security enabled and bot has ManageRoles)
+  let antiDeleteText;
+  if (!isSecurityEnabled) {
+    antiDeleteText = `${RED_OFF} \`Inactive\` (Security tripwire disarmed — run \`!security enable all\`)`;
+  } else if (!botHasManageRoles) {
+    antiDeleteText = `${RED_OFF} \`Inactive\` (Missing 'Manage Roles' permission to recreate)`;
+  } else {
+    antiDeleteText = `${ON} \`Active\` (Auto-recreates roles if deleted)`;
+  }
+
+  // 3. Anti-Role Perm Modification (Requires security enabled, ManageRoles, and roles currently having Admin)
+  let antiPermText;
+  if (!isSecurityEnabled) {
+    antiPermText = `${RED_OFF} \`Inactive\` (Security disarmed — run \`!security enable all\`)`;
+  } else if (!botHasManageRoles) {
+    antiPermText = `${RED_OFF} \`Inactive\` (Missing 'Manage Roles' permission to restore)`;
+  } else if (!unbExists || !fwExists) {
+    antiPermText = `${RED_OFF} \`Inactive\` (Sentinel roles missing — run \`!unb deploy\`)`;
+  } else if (!unbHasAdmin || !fwHasAdmin) {
+    antiPermText = `${RED_OFF} \`Compromised\` (Admin privileges stripped from role)`;
+  } else {
+    antiPermText = `${ON} \`Active\` (Auto-restores Admin privileges)`;
+  }
+
+  // 4. Bot Role Assignment (Live state of Athena's assigned roles)
+  let botAssignmentText;
+  if (hasBoth) {
+    botAssignmentText = `${ON} \`Both Roles Assigned to Athena\``;
+  } else if (botHasUnb && !botHasFw) {
+    botAssignmentText = `${RED_OFF} \`Degraded\` (Only Athena Unbypassable Assigned)`;
+  } else if (!botHasUnb && botHasFw) {
+    botAssignmentText = `${RED_OFF} \`Degraded\` (Only Athena Firewall Assigned)`;
+  } else if (unbExists || fwExists) {
+    botAssignmentText = `${RED_OFF} \`Inactive\` (Neither Sentinel Role Assigned to Athena)`;
+  } else {
+    botAssignmentText = `${RED_OFF} \`Unassigned\` (Sentinel roles not deployed — run \`!unb deploy\`)`;
+  }
 
   const card = {
     type: 17,
@@ -108,9 +202,9 @@ async function handleUnbypassable(context, isSlash, args = []) {
           `-# • **Athena Unbypassable:** ${unbStatus}\n` +
           `-# • **Athena Firewall:** ${fwStatus}\n\n` +
           `> -# **Sentinel Integrity & Protection:**\n` +
-          `-# • **Anti-Strip Protection:** ${ON} \`Active\` (Auto-re-adds roles if removed)\n` +
-          `-# • **Anti-Role Delete Guard:** ${ON} \`Active\` (Auto-recreates roles if deleted)\n` +
-          `-# • **Anti-Role Perm Modification:** ${ON} \`Active\` (Auto-restores Admin privileges)\n` +
+          `-# • **Anti-Strip Protection:** ${antiStripText}\n` +
+          `-# • **Anti-Role Delete Guard:** ${antiDeleteText}\n` +
+          `-# • **Anti-Role Perm Modification:** ${antiPermText}\n` +
           `-# • **Bot Role Assignment:** ${botAssignmentText}`
       },
       { type: 14, divider: true },
