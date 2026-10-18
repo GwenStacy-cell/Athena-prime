@@ -1526,7 +1526,7 @@ export const helpModules = [
     "-# • **__Step 3:__** If someone counts twice in a row or types the wrong number, a server save is consumed.",
     "-# • **__Step 4:__** If no saves remain, the count ruins back to 1 and the all-time high score is updated!"
   ] },
-  { id: 'economy', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Economy', label: 'Economy & Shop', emoji: 'economy', commands: [
+  { id: 'economy', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Economy', label: 'Economy & Shop', emoji: 'coins', commands: [
     "`!balance / !bal [@user]` - View wallet, vault reserves, and net worth `[Public]`",
     "`!daily` - Claim daily stipend with consecutive day streak multipliers `[Public]`",
     "`!pay @user <amount>` - Transfer coins directly to another member `[Public]`",
@@ -1645,6 +1645,28 @@ export function buildHelpContainer(client, guildId, moduleId) {
     const botId = client?.user?.id || '1347071663182676059';
     
     const getEmoji = (name, fallback) => {
+      // 1. Designated custom emojis requested specifically for these 4 modules
+      const designatedCustomEmojis = {
+        'ai': '<:9a084bbf_2370_4734_896b_dd29f969:1561256545289900052>',
+        'aiguide': '<:9a084bbf_2370_4734_896b_dd29f969:1561256545289900052>',
+        'counting': '<:f4363980_d43f_47b9_81db_0fe0a9a4:1561256353094172692>',
+        'community': '<:de2de296_a511_40fa_953f_01365b9a:1561256778405257370>',
+        'economy': '<:d908aaba_8825_41ee_bc4c_ad871ad0:1561256682376400919>',
+        'coins': '<:d908aaba_8825_41ee_bc4c_ad871ad0:1561256682376400919>'
+      };
+      if (designatedCustomEmojis[name]) return designatedCustomEmojis[name];
+
+      // 2. For all other modules, search client emojis cache FIRST (original behavior restored)
+      const nameMap = {
+        'mod': 'moderation',
+        'mass': 'moderation',
+        'giveaway': 'giveaways',
+        'utilities': 'utility'
+      };
+      const searchName = nameMap[name] || name;
+      const e = client?.emojis?.cache ? client.emojis.cache.find(emoji => emoji.name === searchName || emoji.name === name) : null;
+      if (e) return `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`;
+      
       const customEmojiFallback = {
         'security': '<:security_and_firewall:1523672289500069940>',
         'filters': '<:config:1533844853048209489>',
@@ -1666,27 +1688,9 @@ export function buildHelpContainer(client, guildId, moduleId) {
         'utilities': '<:pencil:1523770653528817835>',
         'black_dot': '<a:black_dot:1544740123403620422>',
         'ai': '<:9a084bbf_2370_4734_896b_dd29f969:1561256545289900052>',
-        'aiguide': '<:9a084bbf_2370_4734_896b_dd29f969:1561256545289900052>',
         'home': '<:on:1533844867191406672>'
       };
-
-      if (customEmojiFallback[name]) return customEmojiFallback[name];
-
-      const nameMap = {
-        'mod': 'moderation',
-        'mass': 'moderation',
-        'giveaway': 'giveaways',
-        'utilities': 'utility',
-        'aiguide': 'ai',
-        'economy': 'coins'
-      };
-      const searchName = nameMap[name] || name;
-      if (customEmojiFallback[searchName]) return customEmojiFallback[searchName];
-
-      const e = client?.emojis?.cache ? client.emojis.cache.find(emoji => emoji.name === searchName || emoji.name === name) : null;
-      if (e) return `<${e.animated ? 'a' : ''}:${e.name}:${e.id}>`;
-      
-      return fallback;
+      return customEmojiFallback[name] || fallback;
     };
 
     let rawComponents = [];
