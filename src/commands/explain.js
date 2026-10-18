@@ -75,9 +75,11 @@ export const commands = [
         const focusedValue = interaction.options.getFocused().toLowerCase().trim();
         const choices = [
           { name: 'AI Guide: Neural Architecture & Action Buttons', value: 'athena' },
+          { name: 'AI Announcement: Neural Studio & Custom Emojis', value: 'aiannounce' },
           { name: 'Security: Zero-Day & Linked Role Exploits', value: 'security' },
           { name: 'Persistence: Unbypassable Sentinel Roles', value: 'unbypassable' },
           { name: 'Onboarding: Neutralize Dangerous Prompt Roles', value: 'onboarding' },
+          { name: 'Command: !aiannounce (AI Announcement Studio)', value: 'aiannounce' },
           { name: 'Command: !athena (AI Specialist & Guide)', value: 'athena' },
           { name: 'Command: !ask (Conversational AI Engine)', value: 'ask' },
           { name: 'Command: !aimode (Dedicated Chat Channel)', value: 'aimode' },

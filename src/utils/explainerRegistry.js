@@ -646,6 +646,57 @@ A Honeypot is a designated text channel configured with permissions hidden or si
 • **Component Execution Pipeline (\`handleAthenaGuideButtons\` in \`src/commands/athena.js\`):** Directly validates caller permissions before executing database mutations, launching modals, or toggling subsystems.`
       }
     ]
+  },
+
+  aiannounce: {
+    id: 'aiannounce',
+    label: 'AI Announcement Studio & Neural Pipeline',
+    aliases: ['aian', 'smartannounce', 'studioannounce', 'ai_announcement', 'aiannouncement'],
+    title: 'AI Announcement Studio & Neural Pipeline Architecture | <a:atheNATICK:1557841381630681106>',
+    description: 'Autonomous natural language speech enhancement, custom emoji & raw ID synthesis, Components V2 live preview studio, and broadcast dispatching.',
+    pages: [
+      {
+        pageTitle: 'Human-Speech Error Resilience & Natural Language Ingestion',
+        content:
+`# 1. Human-Speech Error Resilience & Natural Language Ingestion (\`src/commands/aiannounce.js\`)
+• **Casual Speech & Typo Normalization:** Ingests unrefined, brief, or typo-ridden human prompts (e.g. *"game night at 8pm ist bring snax and drinks, use emoji id 1557841381630681106 for bullets"*).
+• **Neural Prompt Refinement:** Transmits prompt through Google Gemini 3.8 Flash High intelligence engine, enhancing structure, grammatical flow, and tone while faithfully preserving all facts, dates, times, and participant instructions.
+• **Discord Grey Subtext Post-Processing (\`cleanAnnouncementBody\`):**
+  • Automatically prefixes every body line with \`-# \` to render Discord's modern grey subtext typography.
+  • Dynamically converts emphasized phrases, dates, and roles into bold underlines: \`**__Time: 8:00 PM IST__**\`.
+  • Strips raw markdown hashes (\`#\`, \`##\`) and square brackets from content lines to guarantee uniform aesthetic presentation.`
+      },
+      {
+        pageTitle: 'Custom Emoji Resolution & Raw ID Synthesis Engine',
+        content:
+`# 1. Custom Emoji & Numerical ID Extraction (\`resolveCustomEmojiIds\`)
+• **Raw Emoji ID Extraction:** Users can supply raw 18–19 digit Discord snowflake IDs directly in the prompt (e.g. \`use emoji id 1557841381630681106 for bullets\` or \`use 1557841381630681107 in heading\`).
+• **Live Guild & Client Cache Lookup:** Athena evaluates numerical IDs against \`client.emojis.cache.get(id)\` and \`guild.emojis.cache.get(id)\`:
+  • Resolves whether the emoji is animated (\`<a:name:id>\`) or static (\`<:name:id>\`).
+  • Formats the full Discord emoji token so the client renders it natively without broken text strings.
+• **Heading vs. Bullet Custom Emoji Placement:**
+  • If a title/heading emoji is designated, the AI strictly embeds it in the announcement title.
+  • If a bullet emoji is designated, the AI applies that exact emoji at the beginning of each bullet item.
+• **Zero-Native-Emoji Enforcement:** Automatically strips Discord native unicode emojis to maintain pristine Athena Prime brand compliance.`
+      },
+      {
+        pageTitle: 'Components V2 Interactive Studio Controls & Broadcast Dispatcher',
+        content:
+`# 1. Ephemeral Components V2 Live Studio Preview (\`buildAnnouncementStudioContainer\`)
+• **Interactive Preview Mode:** Generates a real-time Components V2 container (\`type: 17\`) showing the announcement exactly as members will see it before anything is dispatched.
+• **Target Channel Dropdown Selector:** Interactive \`ChannelSelectMenuBuilder\` configured for \`GuildText\` and \`GuildAnnouncement\` channels, allowing staff to route broadcasts with 1 click.
+• **Broadcast Mention Mode Selector:** Dedicated \`StringSelectMenuBuilder\` allowing instant toggles between:
+  • \`Silent (No Mention)\` — Clean message drop without pings.
+  • \`@here (Online Members)\` — Pings active channel members.
+  • \`@everyone (All Members)\` — Server-wide notification.
+• **Full In-Flight Manual Modals:** Staff can edit Title, Body, Footer, or Media/Banner URLs at any point before dispatching.
+
+# 2. Discord Payload Display Limit Budgeting & Safe Dispatching
+• **4,000-Character Display Ceiling Protection:** Discord enforces a strict 4,000 character limit across all displayable text components combined.
+• **Dynamic Budget Allocation:** Calculates fixed header, controls, and footer length and dynamically caps body text to stay strictly $\\le 3,800$ characters via \`sanitizeCV2Payload\`.
+• **Atomic Broadcast Dispatch:** Posts the finalized announcement container to the target channel with mention bitfield elevation and auto-deletes the preview studio.`
+      }
+    ]
   }
 };
 
@@ -746,6 +797,21 @@ export const DETAILED_COMMANDS = {
 `• **Channel ID Binding:** Binds dedicated channel ID to SQLite guild configuration.
 • **Strict Isolation:** In all standard channels, AI replies are strictly restricted to the !ask command to prevent unwanted chatter.`,
     example: '!aimode channel #ai-chat'
+  },
+
+  aiannounce: {
+    name: 'aiannounce',
+    aliases: ['aian', 'ai-announce', 'smartannounce', 'studioannounce'],
+    category: 'Server Administration & AI Tools',
+    clearance: 'Manage Messages / Administrator',
+    syntax: '!aiannounce [prompt] [#channel] / /aiannounce [prompt] [channel]',
+    purpose: 'Launch the AI Announcement Studio to transform rough ideas, typos, or notes into stunning Discord announcements with live preview, custom emojis, and target channel selection.',
+    architecture:
+`• **Human-Speech Error Resilience:** Ingests brief, informal notes or typo-filled user text, enhancing structure and tone via Gemini 3.8 Flash High.
+• **Custom Emoji & Raw ID Resolution:** Scans for full emojis (<:name:id>, <a:name:id>) or raw 18-19 digit Discord IDs specified for titles or bullets.
+• **Interactive Studio Preview:** Renders an ephemeral Components V2 container with channel select dropdown, broadcast mention mode (@everyone, @here, Silent), and modal editing.
+• **Display Limit Budgeting:** Enforces strict payload text budgeting (<= 3,800 characters) via sanitizeCV2Payload to prevent Discord 50035 errors.`,
+    example: '!aiannounce Movie night at 8pm IST, snacks provided, use emoji id 1557841381630681106 for bullets #announcements'
   },
 
   db: {
@@ -2080,6 +2146,11 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
       label: 'AI & System Intelligence',
       description: 'Damerau-Levenshtein typo correction, dynamic RAG & action buttons',
       value: 'athena'
+    },
+    {
+      label: 'AI Announcement Studio',
+      description: 'Neural prompt intake, custom emoji synthesis & live studio preview',
+      value: 'aiannounce'
     },
     {
       label: 'Security & Role Exploits',

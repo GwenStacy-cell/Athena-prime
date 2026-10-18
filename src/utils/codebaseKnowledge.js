@@ -361,6 +361,7 @@ export function extractSearchTokens(query = '') {
  * Authoritative semantic intents that map natural-language user queries to real bot commands
  */
 export const SEMANTIC_INTENTS = [
+  { match: /\b(ai\s*announce|aiannounce|smart\s*announce|ai\s*announcement|announcement\s*studio|make\s*announcement|craft\s*announcement|announcement\s*builder)\b/i, commands: ['aiannounce', 'announce', 'studio'] },
   { match: /\b(rate\s*edit|rateedit|edit\s*rate|editrate|star\s*rating|rate\s*an?\s*edit)\b/i, commands: ['rate', 'ratelb'] },
   { match: /\b(ticket\s*panel|ticketpanel|support\s*ticket|open\s*ticket|smart\s*triage|ban\s*appeal\s*ticket)\b/i, commands: ['ticketpanel', 'ticket'] },
   { match: /\b(slow\s*mode|slowmode|slow\s*down|slow\s*chat|chat\s*delay|rate\s*limit\s*per\s*user|channel\s*speed)\b/i, commands: ['slowmode'] },

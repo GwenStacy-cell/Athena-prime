@@ -1368,6 +1368,7 @@ export const helpModules = [
     "`!deletethread` - Delete the current thread `[Extra Owner]`",
     "`!say <message>` - Send a raw text message via bot `[Extra Owner]`",
     "`!announce` - Launch interactive announcement builder `[Extra Owner]`",
+    "`!aiannounce [prompt] [#channel] / /aiannounce` - AI Announcement Studio to craft, format, enhance & preview broadcasts `[Staff]`",
     "`!fck @user <reason>` - Send direct official warning DM `[Server Owner]`"
   ] },
   { id: 'mass_actions', category: 'SERVER ADMINISTRATION', shortLabel: 'Mass Mod', label: 'Mass Actions', emoji: 'mass', commands: [
@@ -1387,6 +1388,7 @@ export const helpModules = [
   ] },
 
   { id: 'studio', category: 'SERVER ADMINISTRATION', shortLabel: 'Studio', label: 'Studio & Audits', emoji: 'config', commands: [
+    "`!aiannounce [prompt] [#channel] / /aiannounce` - Neural Announcement Studio with live preview, custom emojis & target channel selector `[Staff]`",
     "`!studio create` - Interactive Container & Embed Studio builder with template persistence `[Admin]`",
     "`!studio list` - View all saved server announcement and container templates `[Admin]`",
     "`!studio send <template_id> [#channel]` - Dispatch saved container template to channel `[Admin]`",
@@ -1394,6 +1396,7 @@ export const helpModules = [
     "`!auditlogs / !audit [@user] [limit]` - Forensic audit log search with action classification and time filters `[Staff]`",
     "",
     "-# **__Studio & Forensic Architecture:__**",
+    "-# • **__AI Announcement Studio:__** Neural speech enhancement transforms rough ideas into formatted Discord announcements with custom emojis and live preview.",
     "-# • **__Custom Container Templates:__** Create and persist reusable CV2 borderless layouts across reboots.",
     "-# • **__Forensic Audit Logs:__** Real-time Gateway API audit log inspection with moderator/target filtering."
   ] },
@@ -1401,13 +1404,16 @@ export const helpModules = [
   { id: 'ai', category: 'AI & SYSTEM INTELLIGENCE', shortLabel: 'AI Guide', label: 'AI & System Intelligence', emoji: 'ai', commands: [
     "`!athena <question> / /athena <query>` - Interactive AI Specialist explaining all 257+ commands & step-by-step setups `[Public]`",
     "`!athena` (no args) - Interactive Quick-Action Guidance Hub with one-click domain explainers `[Public]`",
+    "`!aiannounce [prompt] [#channel] / /aiannounce` - AI Announcement Studio to craft, format, enhance & preview broadcasts `[Staff]`",
     "`!ask <prompt> / /ask <prompt>` - Direct conversational AI query engine for general questions and server queries `[Public]`",
     "`!aimode channel [#channel]` - Lock conversational AI auto-replies to a specific channel `[Admin]`",
     "`!aimode on|off|status` - Toggle and check server-wide conversational AI channel mode `[Admin]`",
     "`!explain / !architecture [topic/cmd]` - Interactive multi-page architectural breakdowns & exploit analyses `[Public]`",
+    "`!explain aiannounce` - Deep-dive architecture of AI Announcement Studio, custom emojis & live studio `[Public]`",
     "`!explain athena / !explain guide` - Deep-dive architecture of Athena's AI Guide, RAG & button generator `[Public]`",
     "",
     "-# **__Athena AI Specialist Capabilities & Architecture:__**",
+    "-# • **__AI Announcement Studio:__** Turns brief, typo-laden notes into polished Discord announcements with custom emojis, live ephemeral preview, and channel targeting.",
     "-# • **__257+ Command Deep-Dive & Knowledge Base:__** Full awareness of all command parameters, syntax variations, permission tiers, and edge cases across every bot module.",
     "-# • **__Fuzzy Typo Auto-Correction:__** Powered by Damerau-Levenshtein distance. Typo variations (e.g. `!athena how to use rnkthme`, `tcikets`, `atninuke`) are automatically recognized and resolved.",
     "-# • **__Prefix-First Step-by-Step Walkthroughs:__** Guides users step-by-step with clean markdown codeblocks (`!command ...`) while clarifying if slash commands or dashboard alternatives exist.",
