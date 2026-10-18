@@ -27,7 +27,7 @@ setInterval(() => {
       announcementDrafts.delete(key);
     }
   }
-}, 30 * 60 * 1000);
+}, 30 * 60 * 1000).unref();
 
 /**
  * Restores any custom Discord emojis (<:name:id> or <a:name:id>) if the AI truncated them to <:name> or :name:
