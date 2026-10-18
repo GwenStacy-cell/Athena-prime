@@ -255,7 +255,7 @@ export async function generateAIResponse(prompt, context = {}) {
     return { success: false, error: 'Empty prompt provided.' };
   }
 
-  const cacheKey = cleanPrompt.toLowerCase();
+  const cacheKey = (context.raw ? 'raw:' : '') + (context.customSystem ? 'sys:' : '') + cleanPrompt.toLowerCase();
   const cached = responseCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     return {
@@ -384,7 +384,7 @@ export async function generateAIResponse(prompt, context = {}) {
           const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text && text.trim()) {
             const latencyMs = Date.now() - startTime;
-            const cleanedText = formatAIToGreyMarkdown(text.trim());
+            const cleanedText = context.raw ? text.trim() : formatAIToGreyMarkdown(text.trim());
             const displayModel = modelDisplayNames[modelId] || `Gemini 3.8 Flash (High Intelligence)`;
             responseCache.set(cacheKey, { text: cleanedText, model: displayModel, timestamp: Date.now() });
             return {
@@ -428,7 +428,7 @@ export async function generateAIResponse(prompt, context = {}) {
         const text = await res.text();
         if (text && text.trim() && !text.includes('Free limit reached') && !text.includes('pollen key')) {
           const latencyMs = Date.now() - startTime;
-          const cleanedText = formatAIToGreyMarkdown(text.trim());
+          const cleanedText = context.raw ? text.trim() : formatAIToGreyMarkdown(text.trim());
           responseCache.set(cacheKey, { text: cleanedText, model: `Athena Neural (${model})`, timestamp: Date.now() });
           return {
             success: true,
@@ -465,7 +465,7 @@ export async function generateAIResponse(prompt, context = {}) {
       const responseText = data?.response || data?.text;
       if (responseText && responseText.trim()) {
         const latencyMs = Date.now() - startTime;
-        const cleanedText = formatAIToGreyMarkdown(responseText.trim());
+        const cleanedText = context.raw ? responseText.trim() : formatAIToGreyMarkdown(responseText.trim());
         responseCache.set(cacheKey, { text: cleanedText, model: 'Athena Neural Edge', timestamp: Date.now() });
         return {
           success: true,
