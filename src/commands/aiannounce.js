@@ -687,7 +687,7 @@ export async function handleAIAnnouncementInteractions(interaction) {
       const promptInput = new TextInputBuilder()
         .setCustomId('aian_prompt_input')
         .setLabel('What would you like to announce?')
-        .setPlaceholder('e.g. game night 8pm, snacks, emoji id 1557841381630681106 for bullets & 1557841381630681107 in heading')
+        .setPlaceholder('e.g. game night 8pm, snacks, bullets: 1557841381630681106, heading: 1557841381630681107')
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true);
 
@@ -838,7 +838,7 @@ export async function handleAIAnnouncementInteractions(interaction) {
       const refineInput = new TextInputBuilder()
         .setCustomId('aian_refine_prompt')
         .setLabel('What adjustments should AI make?')
-        .setPlaceholder('e.g. make it shorter, change bullet emoji ID to 1557841381630681106, change footer...')
+        .setPlaceholder('e.g. make it punchier, bullets: 1557841381630681106, change footer...')
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true);
 
