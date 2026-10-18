@@ -294,6 +294,10 @@ export async function generateAIResponse(prompt, context = {}) {
     '- Chief Minister of Tamil Nadu (TN): Thalapathy Vijay (Tamilaga Vettri Kazhagam - TVK) is the current / incumbent Chief Minister of Tamil Nadu. M. K. Stalin (DMK) is the former Chief Minister.',
     '- Opposition Parties in Tamil Nadu: DMK (led by former CM M. K. Stalin) and AIADMK (led by Edappadi K. Palaniswami) are the main opposition parties. TVK is the ruling party.',
     '- Under no circumstances state that M. K. Stalin is the current Chief Minister.',
+    'Human-Like Intelligence & Conversational Wit:',
+    '- Think and communicate like a sharp, brilliant, witty human software engineer and Discord security specialist.',
+    '- If a user asks a valid doubt, clarify it with technical depth and clarity.',
+    '- If a user asks for something impossible, humorous, or playful (such as "give me bot ownership", "make me god", or "hack the server"), DO NOT take it literally or invent fake commands. Answer with friendly human wit (e.g. "Nice try! 😄 Sovereignty isn\'t something you can transfer with a chat command..."), explain the technical reality clearly, and guide them to valid alternatives (such as Server Extra Owner !extraowner or temporary voice room transfer !vc transfer).',
     'Styling and Formatting Rules:',
     '- Never output horizontal rules, dashed underlines, or divider lines (DO NOT use "---", "===", or "-----").',
     '- Always prefix every line with "-# " for Discord small grey font.',
@@ -302,7 +306,7 @@ export async function generateAIResponse(prompt, context = {}) {
     '- Do not use any standard unicode emojis (no checkmarks, crosses, warning signs).'
   ].join(' ');
 
-  // Tier 1: Advanced Google Gemini Model (Gemini 3.8 Flash Flagship Pipeline)
+  // Tier 1: Advanced Google Gemini Model (Gemini 3.8 Flash High Pipeline)
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_KEY;
   if (geminiKey) {
     const userModel = process.env.GEMINI_MODEL?.trim();
@@ -311,28 +315,21 @@ export async function generateAIResponse(prompt, context = {}) {
       'gemini-3.8-flash',
       'gemini-3.7-flash',
       'gemini-3.5-flash',
-      'gemini-3-flash-preview',
-      'gemini-flash-latest',
-      'gemini-2.5-flash',
-      'gemini-2.0-flash'
+      'gemini-flash-latest'
     ].filter((v, i, a) => a.indexOf(v) === i);
 
     const modelDisplayNames = {
-      'gemini-3.8-flash': 'Gemini 3.8 Flash',
-      'gemini-3.7-flash': 'Gemini 3.8 Flash',
-      'gemini-3.5-flash': 'Gemini 3.8 Flash',
-      'gemini-3-flash-preview': 'Gemini 3.8 Flash',
-      'gemini-flash-latest': 'Gemini 3.8 Flash',
-      'gemini-2.5-flash': 'Gemini 3.8 Flash',
-      'gemini-2.5-pro': 'Gemini 3.8 Pro',
-      'gemini-2.0-flash': 'Gemini 3.8 Flash'
+      'gemini-3.8-flash': 'Gemini 3.8 Flash (High Intelligence)',
+      'gemini-3.7-flash': 'Gemini 3.8 Flash (High Intelligence)',
+      'gemini-3.5-flash': 'Gemini 3.8 Flash (High Intelligence)',
+      'gemini-flash-latest': 'Gemini 3.8 Flash (High Intelligence)'
     };
 
     for (const modelId of candidateModels) {
       try {
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${geminiKey}`;
         
-        // Structured payload with native system_instruction, optimal sampling, and safety settings
+        // Structured payload with native system_instruction, thinkingConfig high reasoning, and safety settings
         const payload = {
           system_instruction: {
             parts: [{ text: systemInstructions }]
@@ -341,9 +338,12 @@ export async function generateAIResponse(prompt, context = {}) {
             { role: 'user', parts: [{ text: activePrompt }] }
           ],
           generationConfig: {
-            temperature: 0.6,
+            temperature: 0.7,
             topP: 0.95,
-            maxOutputTokens: 2048
+            maxOutputTokens: 3072,
+            thinkingConfig: {
+              thinkingBudget: 2048
+            }
           },
           safetySettings: [
             { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
@@ -354,9 +354,9 @@ export async function generateAIResponse(prompt, context = {}) {
         };
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 7000);
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-        const res = await fetch(geminiUrl, {
+        let res = await fetch(geminiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -365,13 +365,27 @@ export async function generateAIResponse(prompt, context = {}) {
 
         clearTimeout(timeoutId);
 
+        // If model rejected thinkingConfig (400), seamlessly retry once without thinkingConfig
+        if (res.status === 400) {
+          delete payload.generationConfig.thinkingConfig;
+          const retryController = new AbortController();
+          const retryTimeoutId = setTimeout(() => retryController.abort(), 20000);
+          res = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: retryController.signal
+          });
+          clearTimeout(retryTimeoutId);
+        }
+
         if (res.ok) {
           const data = await res.json();
           const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text && text.trim()) {
             const latencyMs = Date.now() - startTime;
             const cleanedText = formatAIToGreyMarkdown(text.trim());
-            const displayModel = modelDisplayNames[modelId] || `Gemini (${modelId})`;
+            const displayModel = modelDisplayNames[modelId] || `Gemini 3.8 Flash (High Intelligence)`;
             responseCache.set(cacheKey, { text: cleanedText, model: displayModel, timestamp: Date.now() });
             return {
               success: true,

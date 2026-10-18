@@ -383,8 +383,8 @@ export const SEMANTIC_INTENTS = [
   { match: /\b(snipe|deleted\s*messages?|sniped)\b/i, commands: ['snipe'] },
   { match: /\b(24\s*7\s*vc|sethomevc|stay\s*in\s*vc|voice\s*bot)\b/i, commands: ['sethomevc', 'utility'] },
   { match: /\b(mod\s*mode|modmode|maintenance\s*mode)\b/i, commands: ['modmode'] },
-  { match: /\b(panic|lockdown|emergency\s*lock)\b/i, commands: ['panic', 'lockdown', 'moderation'] },
-  { match: /\b(news|newsfeed|rss\s*feed|rss|automated\s*news|bbc\s*news|news\s*channel|news\s*setup|news\s*disable)\b/i, commands: ['news'] }
+  { match: /\b(news|newsfeed|rss\s*feed|rss|automated\s*news|bbc\s*news|news\s*channel|news\s*setup|news\s*disable)\b/i, commands: ['news'] },
+  { match: /\b(bot\s*ownership|give\s*(me\s*)?(bot\s*)?ownership|transfer\s*(bot\s*)?ownership|make\s*(me\s*)?(a\s*)?bot\s*owner|become\s*(a\s*)?bot\s*owner|owner\s*privileges|transfer\s*bot)\b/i, commands: ['owner', 'extraowner', 'vc', 'jtc'] }
 ];
 
 /**
@@ -447,7 +447,7 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
 
     // Check if filename matches a keyword (e.g. learn.js matches learn, antinuke.js matches nuke)
     const baseName = path.basename(relPath, '.js').toLowerCase();
-    const fileNameMatch = keywords.some(k => baseName === k || (k.length > 3 && baseName.includes(k)) || (baseName.length > 3 && k.includes(baseName)));
+    const fileNameMatch = keywords.some(k => baseName === k || (k.length >= 5 && baseName.startsWith(k)) || (baseName.length >= 5 && k.startsWith(baseName)));
     if (fileNameMatch) {
       fileMultiplier *= 2.2;
     }
@@ -514,7 +514,7 @@ export async function searchCodebase(query = '', { maxSnippets = 5, snippetLines
         const nameDecl = line.match(/^\s*name:\s*['"]([a-zA-Z0-9_-]+)['"]/);
         if (nameDecl) {
           const declaredName = nameDecl[1].toLowerCase();
-          if (declaredName === kw || declaredName.includes(kw) || kw.includes(declaredName)) {
+          if (declaredName === kw || (declaredName.length >= 5 && kw.startsWith(declaredName)) || (kw.length >= 5 && declaredName.startsWith(kw))) {
             lineScore += 300;
           }
         }
