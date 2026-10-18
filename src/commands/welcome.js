@@ -122,7 +122,7 @@ export async function sendLeaveMessage(member) {
 // ============================================================
 // MANAGER UI
 // ============================================================
-function getManagerPanel(guildId, type) {
+export function getManagerPanel(guildId, type) {
   const isWelcome = type === 'welcome';
   const cfg = (isWelcome ? db.getWelcomeConfig(guildId) : db.getLeaveConfig(guildId)) || {};
   const label = isWelcome ? 'Welcome' : 'Leave';
@@ -186,6 +186,43 @@ function getManagerPanel(guildId, type) {
     replyData.components.push(channelSelectRow, row1, row2, row3);
   }
   return replyData;
+}
+
+export async function executeWelcomeTest(guild, member, type = 'welcome') {
+  const isWelcome = type === 'welcome';
+  const cfg = (isWelcome ? db.getWelcomeConfig(guild.id) : db.getLeaveConfig(guild.id)) || {};
+  if (!cfg.channelId) {
+    return { success: false, error: `Please select a ${type} channel from the dropdown first.` };
+  }
+
+  let targetChannel = guild.channels.cache.get(cfg.channelId);
+  if (!targetChannel) {
+    targetChannel = await guild.channels.fetch(cfg.channelId).catch(() => null);
+  }
+
+  if (!targetChannel) {
+    return { success: false, error: `Configured channel <#${cfg.channelId}> could not be found.` };
+  }
+
+  let content = cfg.message ? resolve(cfg.message, member, cfg) : undefined;
+  let testEmbed = buildWelcomeEmbed(member, cfg);
+
+  if (!content && !testEmbed) {
+    content = isWelcome
+      ? `Hey <@${member.id}>, welcome to **${guild.name}**! (Default test preview)`
+      : `**${member.user?.tag || member.displayName}** has left the server. (Default test preview)`;
+  }
+
+  const sendPayload = {};
+  if (content) sendPayload.content = content;
+  if (testEmbed) sendPayload.embeds = [testEmbed];
+
+  try {
+    await targetChannel.send(sendPayload);
+    return { success: true, channelId: targetChannel.id };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
 // ============================================================

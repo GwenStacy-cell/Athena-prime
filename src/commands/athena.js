@@ -11,6 +11,7 @@ import {
 } from '../utils/botGuideKnowledge.js';
 import { getSecurityStatusPanel, getAutoModPanel } from './security.js';
 import { buildTicketManagerPayload, buildTicketPanelPayload } from './ticketpanel.js';
+import { getManagerPanel, executeWelcomeTest } from './welcome.js';
 
 const TICK = '<a:atheNATICK:1557841381630681106>';
 
@@ -497,8 +498,93 @@ export async function handleAthenaGuideButtons(interaction) {
       }, 7).catch(() => null);
     }
 
-    // 11. Generic / Custom Action Handler
-    if (act.startsWith('cmd_status_') || act.startsWith('cmd_help_') || act.startsWith('custom_') || act === 'unlockdown' || act === 'lockdown_status' || act === 'quarantine_info' || act === 'verify_setup' || act === 'welcome_setup' || act === 'welcome_test' || act === 'giveaway_manager') {
+    // 11. Open Welcome Setup Dashboard
+    if (act === 'welcome_setup') {
+      const hasPerm = member?.permissions?.has(PermissionFlagsBits.ManageGuild) || 
+                      member?.permissions?.has(PermissionFlagsBits.Administrator) || 
+                      guild.ownerId === user.id;
+      if (!hasPerm) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Only server administrators can configure the Welcome System.\n-# Run \`${prefix}welcome\` to view server greeting settings.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const panel = getManagerPanel(guild.id, 'welcome');
+      return cv2.respond(interaction, panel, 7).catch(() => null);
+    }
+
+    // 12. Open Leave Setup Dashboard
+    if (act === 'leave_setup') {
+      const hasPerm = member?.permissions?.has(PermissionFlagsBits.ManageGuild) || 
+                      member?.permissions?.has(PermissionFlagsBits.Administrator) || 
+                      guild.ownerId === user.id;
+      if (!hasPerm) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Only server administrators can configure the Leave System.\n-# Run \`${prefix}leave\` to view server departure settings.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const panel = getManagerPanel(guild.id, 'leave');
+      return cv2.respond(interaction, panel, 7).catch(() => null);
+    }
+
+    // 13. Test Welcome Card Execution
+    if (act === 'welcome_test') {
+      const result = await executeWelcomeTest(guild, member, 'welcome');
+      if (!result.success) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Welcome Test Advisory | ${TICK}\n-# • **__Status:__** \`Could not dispatch test message\`\n-# • **__Reason:__** ${result.error}\n-# Click **Open Welcome Setup** below to select a channel from the dropdown first.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## Welcome Test Card Dispatched | ${TICK}\n-# • **__Target Channel:__** <#${result.channelId}>\n-# • **__Status:__** \`Successfully rendered test welcome card\`\n-# Check <#${result.channelId}> to preview your card layout, avatars, and typography!`
+              }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 14. Generic / Custom Action Handler
+    if (act.startsWith('cmd_status_') || act.startsWith('cmd_help_') || act.startsWith('custom_') || act === 'unlockdown' || act === 'lockdown_status' || act === 'quarantine_info' || act === 'verify_setup' || act === 'giveaway_manager') {
       const label = interaction.component?.label || 'Action';
       return cv2.respond(interaction, {
         components: [

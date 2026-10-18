@@ -859,9 +859,10 @@ export function getCommandActionButtons(primaryCommand = '', prompt = '', reques
       label: 'Open Verification Setup',
       style: 2
     });
-  } else if (cmd === 'welcome') {
+  } else if (cmd === 'welcome' || cmd === 'leave') {
     buttons.push(
       { type: 2, custom_id: 'athena_act_welcome_setup', label: 'Open Welcome Setup', style: 2 },
+      { type: 2, custom_id: 'athena_act_leave_setup', label: 'Open Leave Setup', style: 2 },
       { type: 2, custom_id: 'athena_act_welcome_test', label: 'Test Welcome Card', style: 2 }
     );
   } else if (cmd === 'giveaway') {
