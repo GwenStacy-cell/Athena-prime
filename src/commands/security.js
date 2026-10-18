@@ -4373,6 +4373,10 @@ export async function runSecurityEnableSequence(guild, updateMessageFn) {
           }
         ]
       }).catch(() => null);
+
+      // Real-time synchronization of security dashboard
+      const { updateDashboardMessage } = await import("../utils/dashboardManager.js");
+      await updateDashboardMessage(guild, guild.client).catch(() => null);
     
       await sendPayload(true, false);
       return true;

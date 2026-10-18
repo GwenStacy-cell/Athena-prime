@@ -460,7 +460,7 @@ export default {
     setInterval(async () => {
       for (const guild of client.guilds.cache.values()) {
         const cfg = db.getGuildConfig(guild.id);
-        if (cfg.antiNukeEnabled && cfg.dashboardChannelId) {
+        if ((cfg.antiNukeEnabled || cfg.securityEnabled) && cfg.dashboardChannelId) {
           await updateDashboardMessage(guild, client);
         }
       }
