@@ -37,7 +37,7 @@ export const ADMIN_COMMANDS = new Set([
   'firewall', 'spam', 'customrole', 'accent', 'embed', 'logging', 'serverlogs', 
   'jtc', 'tempvoice', 'vcpanel', 'vcprotect', 'moveprotect', 'adel', 'fck', 'ezal', 
   'app', 'announce', 'buildserver', 'channeladmin', 'rolemanager', 'setdeletelog', 
-  'wipeemojis', 'auth', 'verify', 'news'
+  'wipeemojis', 'auth', 'verify', 'news', 'incidents'
 ]);
 
 export const MOD_COMMANDS = new Set([

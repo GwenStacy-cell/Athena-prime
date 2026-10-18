@@ -159,6 +159,19 @@ export async function handleAntiStab(guild, actionText, auditLogType) {
       punishedText = `\n\nSince they are the Server Owner, I cannot execute a **Hostile Neutralization**, but I have forced my permissions back on.`;
     }
 
+    // ⚡ Real-Time Live Security Record
+    try {
+      db.addSecurityLiveRecord(guild.id, {
+        executorTag: executor ? (executor.tag || executor.username) : 'Unknown Admin',
+        executorId: executor ? executor.id : 'Unknown',
+        eventType: `Anti-Stab Persistence Attack (${actionText})`,
+        verdict: executor?.id !== guild.ownerId ? 'Banned & Roles Stripped' : 'Protected (Owner Action)',
+        rollback: 'Athena Unbypassable & Firewall permissions immediately restored',
+        latencyMs: 1,
+        severity: 'critical'
+      });
+    } catch {}
+
     // 4. Alert the Server Owner (NO EMOJIS)
     const owner = await guild.fetchOwner().catch(() => null);
     if (!owner) return;

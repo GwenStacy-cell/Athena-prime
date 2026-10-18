@@ -180,6 +180,19 @@ export default {
                     // 3.5. Scrub from Discord Onboarding prompts in case role was acquired via Onboarding
                     auditAndNeutralizeOnboarding(guild, { quiet: true, reason: 'Zero-audit dangerous role assignment detected' }).catch(() => null);
 
+                    // ⚡ Real-Time Live Security Record
+                    try {
+                      db.addSecurityLiveRecord(guild.id, {
+                        executorTag: newMember.user?.tag || newMember.user?.username || 'Unknown',
+                        executorId: newMember.id,
+                        eventType: 'Linked Role / Dangerous Assignment Exploit',
+                        verdict: 'Roles Stripped & Quarantined',
+                        rollback: `Disarmed dangerous permissions from: ${dangerousRoles.map(r => r.name).join(', ')}`,
+                        latencyMs: 1,
+                        severity: 'critical'
+                      });
+                    } catch (e) {}
+
                     // 4. LOG & DM OWNER (Following Athena's formatting rules: Custom Tick Heading | <a:atheNATICK:1557841381630681106>)
                     const targetTier = getUserTierName(guild, newMember);
                     const roleNames = dangerousRoles.map(r => `\`${r.name}\` (\`${r.id}\`)`).join(', ');

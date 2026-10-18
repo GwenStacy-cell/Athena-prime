@@ -1231,6 +1231,7 @@ export const helpModules = [
     "`!tier / !perms` - Check your current authorization tier & clearance `[Public]`",
     "`!antinuke config` - Interactive configuration panel `[Extra Owner]`",
     "`!antinuke status` - Quick summary of current security `[Extra Owner]`",
+    "`!antinuke records / !incidents` - Real-Time Live Security Records & Hostile Incursion Audit `[Admin / Extra Owner]`",
     "`!antinuke guide` - Exploit Defense & Architecture Guide `[Extra Owner]`",
     "`!unbypassable / !firewall` - Live Unbypassable system telemetry, gateway uptime & persistence sentinels `[Public]`",
     "`!unbypassable deploy` - Auto-deploy & repair Athena Unbypassable persistence sentinel roles `[Admin / Extra Owner]`",

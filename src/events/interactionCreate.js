@@ -2209,6 +2209,58 @@ async function handleSecurityInteractions(interaction, guild) {
       } catch(e) { console.error(e); }
     }
 
+    // ⚡ Real-Time Live Security Records Panel & Pagination
+    if (customId === 'sec_live_records' || customId.startsWith('sec_records_refresh') || customId.startsWith('sec_records_page_')) {
+      try {
+        const sec = await import('../commands/security.js');
+        let page = 0;
+        if (customId.startsWith('sec_records_page_')) {
+          page = parseInt(customId.replace('sec_records_page_', '')) || 0;
+        } else if (customId.startsWith('sec_records_refresh_')) {
+          page = parseInt(customId.replace('sec_records_refresh_', '')) || 0;
+        }
+        const panel = await sec.getSecurityLiveRecordsPanel(guild, page);
+        return interaction.update(panel);
+      } catch (e) { console.error(e); }
+    }
+
+    // ⚡ Clear Security Live Records History (Owner only)
+    if (customId === 'sec_records_clear') {
+      const isAllowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === guild.ownerId || db.isExtraOwner(guild.id, interaction.user.id);
+      if (!isAllowed) {
+        return interaction.reply({ content: '-# <:cross_red:1533860128015519895> Only the **Server Owner** or **Extra Owners** can clear live audit records.', flags: MessageFlags.Ephemeral });
+      }
+      db.clearSecurityLiveRecords(guild.id);
+      const sec = await import('../commands/security.js');
+      const panel = await sec.getSecurityLiveRecordsPanel(guild, 0);
+      return interaction.update(panel);
+    }
+
+    // ⚡ One-Click Engage All Security Shields
+    if (customId === 'sec_enable_all') {
+      const isAllowed = isBotOwnerSync(interaction.user.id) || interaction.user.id === guild.ownerId;
+      if (!isAllowed) {
+        return interaction.reply({ content: '-# <:cross_red:1533860128015519895> Only the **Server Owner** or **Bot Owner** can engage all security shields.', flags: MessageFlags.Ephemeral });
+      }
+      const maxPos = Math.max(...guild.roles.cache.map(r => r.position));
+      const botMember = await guild.members.fetch(interaction.client.user.id);
+      const botPos = botMember.roles.highest.position;
+      if (botPos < maxPos - 2) {
+        return interaction.reply({ content: `-# <:cross_red:1533860128015519895> **Role Hierarchy Requirement:** Move Athena's role to the top 3 highest roles in Server Settings so she can enforce bulletproof security.`, flags: MessageFlags.Ephemeral });
+      }
+      if (guild.memberCount < 200 && !isBotOwnerSync(interaction.user.id)) {
+        return interaction.reply({ content: `-# <:cross_red:1533860128015519895> Server requires at least **200 members** to activate unbypassable antinuke. (Bot Owners bypass this restriction).`, flags: MessageFlags.Ephemeral });
+      }
+
+      const sec = await import('../commands/security.js');
+      await interaction.deferUpdate();
+      await sec.runSecurityEnableSequence(guild, async (payload) => {
+        await interaction.editReply(payload).catch(() => null);
+      });
+      const updatedStatus = await sec.getSecurityStatusPanel(guild);
+      return interaction.editReply(updatedStatus);
+    }
+
     
     if (customId === "sec_close_dash") {
       try {

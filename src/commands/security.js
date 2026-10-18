@@ -732,6 +732,7 @@ export const commands = [
         choices: [
           { name: 'Open Config Panel', value: 'config' },
           { name: 'Security & Module Status', value: 'status' },
+          { name: 'Real-Time Live Records', value: 'records' },
           { name: 'Exploit Defense & Architecture Guide', value: 'guide' }
         ]
       }
@@ -750,11 +751,14 @@ export const commands = [
       } else if (sub === 'status' || sub === 'modules') {
         const panel = await getSecurityStatusPanel(message.guild);
         await message.reply(panel);
+      } else if (sub === 'records' || sub === 'logs' || sub === 'live' || sub === 'incidents' || sub === 'threats') {
+        const panel = await getSecurityLiveRecordsPanel(message.guild, 0);
+        await message.reply(panel);
       } else if (sub === 'guide' || sub === 'explain' || sub === 'info' || sub === 'architecture') {
         const panel = await getAntinukeArchitecturePanel(message.guild);
         await message.reply(panel);
       } else {
-        await message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!antinuke [config|status|guide]\``));
+        await message.reply(cv2.warn('Command Error', `${message.author} Usage: \`!antinuke [config|status|records|guide]\``));
       }
     },
     async executeSlash(interaction) {
@@ -770,6 +774,9 @@ export const commands = [
         await interaction.reply(panel);
       } else if (sub === 'status') {
         const panel = await getSecurityStatusPanel(interaction.guild);
+        await interaction.reply(panel);
+      } else if (sub === 'records') {
+        const panel = await getSecurityLiveRecordsPanel(interaction.guild, 0);
         await interaction.reply(panel);
       } else if (sub === 'guide') {
         const panel = await getAntinukeArchitecturePanel(interaction.guild);
@@ -1249,6 +1256,41 @@ export const commands = [
     }
   },
 
+  {
+    name: 'incidents',
+    aliases: ['liverecords', 'threatlogs', 'securityrecords', 'seclogs'],
+    description: 'Displays the real-time live security incident and hostile interception audit records.',
+    category: 'security',
+    permissions: [],
+    slashHidden: false,
+    options: [
+      {
+        name: 'page',
+        description: 'Page number to view',
+        type: 4,
+        required: false
+      }
+    ],
+    async executePrefix(message, args) {
+      const allowed = message.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(message.author.id) || message.author.id === message.guild.ownerId || db.isExtraOwner(message.guild.id, message.author.id);
+      if (!allowed) {
+        return message.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can view live security records.'));
+      }
+      const page = Math.max(0, (parseInt(args[0]) || 1) - 1);
+      const panel = await getSecurityLiveRecordsPanel(message.guild, page);
+      return message.reply(panel);
+    },
+    async executeSlash(interaction) {
+      const allowed = interaction.member.permissions.has(PermissionFlagsBits.Administrator) || isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild.ownerId || db.isExtraOwner(interaction.guild.id, interaction.user.id);
+      if (!allowed) {
+        return interaction.reply(cv2.danger('Access Denied', ' Only **Administrators**, the **Server Owner**, **Extra Owners**, or the **Bot Owner** can view live security records.'));
+      }
+      const page = Math.max(0, (interaction.options.getInteger('page') || 1) - 1);
+      const panel = await getSecurityLiveRecordsPanel(interaction.guild, page);
+      return interaction.reply(panel);
+    }
+  },
+
   // --- BOTWHITELIST COMMAND ---
   {
     name: 'botwhitelist',
@@ -1438,7 +1480,8 @@ export const commands = [
         choices: [
           { name: 'Enable All Security', value: 'enable_all' },
           { name: 'Disable All Security', value: 'disable_all' },
-          { name: 'Security Status', value: 'status' }
+          { name: 'Security Status', value: 'status' },
+          { name: 'Real-Time Live Records', value: 'records' }
         ]
       }
     ],
@@ -1458,9 +1501,15 @@ export const commands = [
       const enable = (sub === 'enable all' || sub === 'enable_all');
       const disable = (sub === 'disable all' || sub === 'disable_all');
       const status = (sub === 'status');
+      const records = (sub === 'records' || sub === 'logs' || sub === 'live' || sub === 'incidents' || sub === 'threats');
       
-      if (!enable && !disable && !status) {
-        return message.reply(cv2.warn('Usage', `${message.author} Usage: \`!security enable all\`, \`!security disable all\`, or \`!security status\``));
+      if (!enable && !disable && !status && !records) {
+        return message.reply(cv2.warn('Usage', `${message.author} Usage: \`!security enable all\`, \`!security disable all\`, \`!security status\`, or \`!security records\``));
+      }
+
+      if (records) {
+        const panel = await getSecurityLiveRecordsPanel(message.guild, 0);
+        return message.reply(panel);
       }
 
       if (status) {
@@ -1527,6 +1576,12 @@ export const commands = [
       const enable = action === 'enable_all';
       const disable = action === 'disable_all';
       const status = action === 'status';
+      const records = action === 'records';
+
+      if (records) {
+        const panel = await getSecurityLiveRecordsPanel(interaction.guild, 0);
+        return interaction.reply(panel);
+      }
 
       if (status) {
         const panel = await getSecurityStatusPanel(interaction.guild);
@@ -3617,18 +3672,18 @@ export async function getSecurityStatusPanel(guild) {
   }
 
   if (!isSecured) {
-    listText += "\n> -# <a:warning:1540656124313993247> **Security is currently DISABLED on this server.**\n> -# **Modules cannot be viewed or configured until `!security enable all` is executed.**";
+    listText += "\n> -# <a:warning:1540656124313993247> **Security is currently DISABLED on this server.**\n> -# **Execute `!security enable all` or click `⚡ Engage All Shields` below to arm all 28 modules.**";
   }
 
+  const liveRecords = db.getSecurityLiveRecords(guild.id);
   const headerSection = { type: 10, content: 
       "# SECURITY FIREWALL STATUS\n" +
       "-# Global Status: " + (isSecured ? "**God-Tier Firewall ACTIVE**" : "Offline \u2014 Unprotected") + "\n" +
       "-# Strike Velocity: " + (isSecured ? "Ludicrously fast \u2014 **1-3ms execution**" : "Disabled") + "\n" +
-      "-# Predictive Layer: " + (isSecured ? "Online \u2014 **Behavioral scanning active**" : "Disabled")
+      "-# Predictive Layer: " + (isSecured ? "Online \u2014 **Behavioral scanning active**" : "Disabled") + "\n" +
+      "-# Live Audit Records: **`" + liveRecords.length + "` threat events neutralized** in real-time"
     };
-  
 
-  
     const detailsSection = { type: 10, content:
       "-# **Advanced Architecture & Exploit Defense:**\n" +
       "-# **1. Real-Time Role Interceptor (`guildMemberUpdate.js`):** Intercepts unauthorized gaining of Administrator / dangerous roles. Cross-examines 60s audit logs for authorized executors. Automatically strips roles, disarms dangerous permissions, and isolates the account in Quarantine.\n" +
@@ -3637,6 +3692,15 @@ export async function getSecurityStatusPanel(guild) {
       "-# **Lightspeed Detection:** Direct API polling every 10ms catches destructive events instantly.\n" +
       "-# **Flawless Restoration:** Re-engineers exact channel/category raw positions and permissions post-nuke."
     };
+
+    const actionButtons = [];
+    if (!isSecured) {
+      actionButtons.push({ type: 2, custom_id: 'sec_enable_all', label: '⚡ Engage All Shields', style: 3 });
+    }
+    actionButtons.push({ type: 2, custom_id: 'sec_live_records', label: `🔴 Live Records (${liveRecords.length})`, style: 2 });
+    actionButtons.push({ type: 2, custom_id: 'sec_module_manage', label: 'Manage Modules', style: 2 });
+    actionButtons.push({ type: 2, custom_id: 'sec_architecture_guide', label: 'Exploit Guide', style: 2 });
+    actionButtons.push({ type: 2, custom_id: 'sec_close', label: 'Close', style: 2 });
 
     const container = {
     type: 17,
@@ -3647,13 +3711,91 @@ export async function getSecurityStatusPanel(guild) {
       { type: 14, divider: true },
       { type: 10, content: listText.trimEnd() },
       { type: 14, divider: true },
-      { type: 1, components: [
-        { type: 2, custom_id: 'sec_module_manage', label: 'Manage Modules', style: 2 },
-        { type: 2, custom_id: 'sec_architecture_guide', label: 'Exploit Guide', style: 2 },
-        { type: 2, custom_id: 'sec_close', label: 'Close', style: 2 }
-      ]},
+      { type: 1, components: actionButtons.slice(0, 5) },
       { type: 14, divider: true },
       { type: 10, content: '-# **Athena Bulletproof Security !!!**' }
+    ]
+  };
+
+  return { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 };
+}
+
+export async function getSecurityLiveRecordsPanel(guild, page = 0) {
+  const config = db.getGuildConfig(guild.id);
+  const isSecured = !!(config.securityEnabled || config.antiNukeEnabled);
+  const allRecords = db.getSecurityLiveRecords(guild.id);
+  const pageSize = 5;
+  const maxPages = Math.max(1, Math.ceil(allRecords.length / pageSize));
+  const currentPage = Math.max(0, Math.min(page, maxPages - 1));
+  const pageRecords = allRecords.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  const header = {
+    type: 10,
+    content:
+      "# REAL-TIME SECURITY LIVE AUDIT & RECORDS\n" +
+      `-# **Live Telemetry Stream • Server:** ${guild.name} • **Status:** ${isSecured ? '**God-Tier Firewall ACTIVE**' : 'Offline / Unprotected'}\n` +
+      `-# **Strike Velocity:** 1-3ms direct REST strike • **Total Threats Neutralized:** \`${allRecords.length}\``
+  };
+
+  let recordsContent = '';
+  if (pageRecords.length === 0) {
+    recordsContent =
+      "> -# <a:atheNATICK:1557841381630681106> **All systems quiet. Zero hostile incursions recorded in live memory.**\n" +
+      "> -# **Athena Prime Raw WebSocket Wiretap & Direct Strike Engine are standing guard.**\n" +
+      "> -# Any unauthorized destructive action (roles, channels, bans, webhooks, exploits) will be recorded here live in <1ms.";
+  } else {
+    recordsContent = pageRecords.map((r, i) => {
+      const idx = currentPage * pageSize + i + 1;
+      const timeStr = r.timestamp ? `<t:${Math.floor(r.timestamp / 1000)}:R>` : 'Just now';
+      return (
+        `> **#${idx}** • **__${r.eventType}__** • ${timeStr}\n` +
+        `> -# • **Perpetrator:** ${r.executorTag} (\`${r.executorId}\`)\n` +
+        `> -# • **Neutralization:** **${r.verdict}** (\`${r.latencyMs || 1}ms execution\`)\n` +
+        `> -# • **Rollback & Repair:** ${r.rollback || 'Damage prevented'}`
+      );
+    }).join('\n\n');
+  }
+
+  const paginationNav = maxPages > 1 
+    ? `\n\n-# **Page ${currentPage + 1} of ${maxPages}** • Total Records: \`${allRecords.length}\``
+    : `\n\n-# **Live Buffer:** \`${allRecords.length}\` / 100 recorded incidents retained in DB`;
+
+  const buttons = [
+    { type: 2, custom_id: `sec_records_refresh_${currentPage}`, label: '🔄 Refresh', style: 2 }
+  ];
+
+  if (maxPages > 1) {
+    buttons.push({ 
+      type: 2, 
+      custom_id: `sec_records_page_${Math.max(0, currentPage - 1)}`, 
+      label: '◀ Prev', 
+      style: 2, 
+      disabled: currentPage === 0 
+    });
+    buttons.push({ 
+      type: 2, 
+      custom_id: `sec_records_page_${Math.min(maxPages - 1, currentPage + 1)}`, 
+      label: 'Next ▶', 
+      style: 2, 
+      disabled: currentPage >= maxPages - 1 
+    });
+  }
+
+  buttons.push({ type: 2, custom_id: 'sec_status_view', label: '🛡️ Firewall Status', style: 2 });
+  if (allRecords.length > 0) {
+    buttons.push({ type: 2, custom_id: 'sec_records_clear', label: '🗑️ Clear History', style: 4 });
+  }
+
+  const container = {
+    type: 17,
+    components: [
+      header,
+      { type: 14, divider: true },
+      { type: 10, content: (recordsContent + paginationNav).trim() },
+      { type: 14, divider: true },
+      { type: 1, components: buttons.slice(0, 5) },
+      { type: 14, divider: true },
+      { type: 10, content: '-# **Athena Bulletproof Security Matrix • Real-Time Live Records Engine**' }
     ]
   };
 
@@ -4066,7 +4208,7 @@ async function handleMassUnquarantine(guild, moderator, client, context = null) 
     );
 }
 
-async function runSecurityEnableSequence(guild, updateMessageFn) {
+export async function runSecurityEnableSequence(guild, updateMessageFn) {
       const { TextDisplayBuilder, ContainerBuilder } = await import("discord.js");
       const successEmoji = "<:emoji_16:1533860111704002665>";
       const loadingEmoji = "<a:loading:1542155051286396938>";

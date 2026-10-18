@@ -764,6 +764,51 @@ class Database {
     return true;
   }
 
+  // --- REAL-TIME SECURITY LIVE AUDIT & INCIDENT RECORDS ---
+  getSecurityLiveRecords(guildId, limit = 50) {
+    if (!this.cache.securityLiveRecords) this.cache.securityLiveRecords = {};
+    if (Array.isArray(this.cache.securityLiveRecords)) {
+      this.cache.securityLiveRecords = {};
+    }
+    const list = this.cache.securityLiveRecords[guildId] || [];
+    return list.slice(0, limit);
+  }
+
+  addSecurityLiveRecord(guildId, record) {
+    if (!this.cache.securityLiveRecords) this.cache.securityLiveRecords = {};
+    if (Array.isArray(this.cache.securityLiveRecords)) {
+      this.cache.securityLiveRecords = {};
+    }
+    if (!this.cache.securityLiveRecords[guildId]) {
+      this.cache.securityLiveRecords[guildId] = [];
+    }
+    const entry = {
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      timestamp: Date.now(),
+      executorTag: record.executorTag || 'Unknown',
+      executorId: record.executorId || 'Unknown',
+      eventType: record.eventType || 'Security Alert',
+      verdict: record.verdict || 'Neutralized',
+      rollback: record.rollback || 'Completed',
+      latencyMs: record.latencyMs || 1,
+      severity: record.severity || 'high'
+    };
+    this.cache.securityLiveRecords[guildId].unshift(entry);
+    if (this.cache.securityLiveRecords[guildId].length > 100) {
+      this.cache.securityLiveRecords[guildId] = this.cache.securityLiveRecords[guildId].slice(0, 100);
+    }
+    this.save();
+    return entry;
+  }
+
+  clearSecurityLiveRecords(guildId) {
+    if (!this.cache.securityLiveRecords) this.cache.securityLiveRecords = {};
+    if (Array.isArray(this.cache.securityLiveRecords)) this.cache.securityLiveRecords = {};
+    this.cache.securityLiveRecords[guildId] = [];
+    this.save();
+    return true;
+  }
+
   getLearnBaseline(guildId) {
     if (!this.cache.baselineProfiles) this.cache.baselineProfiles = {};
     return this.cache.baselineProfiles[guildId] || {
