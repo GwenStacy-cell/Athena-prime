@@ -1203,8 +1203,9 @@ export async function handleAuditLogEntry(guild, entry) {
           const r = guild.roles.cache.get(rObj.id);
           return r && hasDangerousPerms(r.permissions);
         });
-        if (dangerous) {
-          eventType = 'Unauthorized Dangerous Role Grant';
+        const isTainted = targetId ? db.isExploitTainted(guild.id, targetId) : false;
+        if (dangerous || isTainted) {
+          eventType = isTainted ? 'Privilege Grant to Exploit-Tainted Member' : 'Unauthorized Dangerous Role Grant';
           forceBan = true;
         }
       }
@@ -1365,7 +1366,9 @@ export async function handleAuditLogEntry(guild, entry) {
         const targetMember = await guild.members.fetch(targetId).catch(() => null);
         if (targetMember) {
           await targetMember.roles.remove(addedRoleIds, 'Athena Anti-Nuke: Reversed unauthorized role grant').catch(() => null);
-          rollbackResult = ` Removed dangerous roles from <@${targetId}>`;
+          db.addExploitTaint(guild.id, targetId, 'Unauthorized dangerous role grant recipient');
+          await executeQuarantine(guild, targetMember, guild.members.me, 'Athena Anti-Nuke: Recipient of unauthorized dangerous role grant').catch(() => null);
+          rollbackResult = `Removed dangerous roles and quarantined recipient <@${targetId}>`;
         }
       }
     }

@@ -24,6 +24,7 @@ import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
 import { StringSelectMenuBuilder, UserSelectMenuBuilder, RoleSelectMenuBuilder, ChannelSelectMenuBuilder } from 'discord.js';
 import { auditAndNeutralizeOnboarding, CRITICAL_ONBOARDING_PERMS, hasCriticalOnboardingPerms, getDangerousPermNames } from '../utils/onboardingGuard.js';
+import { hasDangerousPerms } from '../utils/antinuke.js';
 
 // Toggle emoji constants Ã¢â‚¬â€ used throughout all security/config embeds
 const TOGGLE_ON  = '<:on:1533844867191406672>';
@@ -2103,9 +2104,21 @@ export async function executeQuarantine(guild, targetMember, moderator, reason, 
     const prevVoiceChannelId = targetMember.voice.channelId || null;
 
     // 4. Save original roles to DB (filter out managed integration roles and @everyone)
-    const roleIdsToSave = targetMember.roles.cache
+    let roleIdsToSave = targetMember.roles.cache
       .filter(r => !r.managed && r.id !== guild.id)
       .map(r => r.id);
+
+    const isExploit = /exploit|dangerous|backdoor|unauthorized.*role|rogue.*invite|invite.*role|zero-audit/i.test(reason);
+    if (isExploit) {
+      db.addExploitTaint(guild.id, targetMember.id, reason);
+      const authRoles = db.getAuthRoles(guild.id);
+      roleIdsToSave = roleIdsToSave.filter(rid => {
+        const r = guild.roles.cache.get(rid);
+        if (!r) return false;
+        if (authRoles?.admin && authRoles.admin.includes(rid)) return false;
+        return !hasDangerousPerms(r.permissions);
+      });
+    }
 
     const expiresAt = durationMs ? Date.now() + durationMs : null;
     db.addQuarantine(guild.id, targetMember.id, roleIdsToSave, reason, prevVoiceChannelId, expiresAt);
@@ -2210,7 +2223,16 @@ export async function executeUnquarantine(guild, targetMember, moderator, contex
     const quarantineRole = await getOrCreateQuarantineRole(guild);
     
     // Determine restore role IDs
-    const savedRoleIds = record.roles || [];
+    let savedRoleIds = record.roles || [];
+    if (db.isExploitTainted(guild.id, targetMember.id)) {
+      const authRoles = db.getAuthRoles(guild.id);
+      savedRoleIds = savedRoleIds.filter(id => {
+        const r = guild.roles.cache.get(id);
+        if (!r) return false;
+        if (authRoles?.admin && authRoles.admin.includes(id)) return false;
+        return !hasDangerousPerms(r.permissions);
+      });
+    }
     const managedRoleIds = targetMember.roles.cache.filter(r => r.managed).map(r => r.id);
     
     // Add saved + managed, remove quarantine

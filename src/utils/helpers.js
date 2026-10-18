@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, ChannelType } from 'discord.js';
+import { PermissionFlagsBits, ChannelType, MessageFlags } from 'discord.js';
 import db from '../database.js';
 
 // ==========================================
@@ -250,11 +250,17 @@ export async function logToSecurityChannel(guild, embedObject) {
 
     if (channel) {
       try {
-        if (embedObject && embedObject.components) {
-          await channel.send(embedObject);
+        let payload;
+        if (embedObject && embedObject.type === 17) {
+          payload = { components: [embedObject], flags: MessageFlags.IsComponentsV2 };
+        } else if (embedObject && Array.isArray(embedObject.components)) {
+          payload = { ...embedObject, flags: embedObject.flags || MessageFlags.IsComponentsV2 };
+        } else if (embedObject && embedObject.embeds) {
+          payload = embedObject;
         } else {
-          await channel.send({ embeds: [embedObject] });
+          payload = { embeds: [embedObject] };
         }
+        await channel.send(payload);
       } catch (err) {
         if (err.code === 10003) {
           // Channel was deleted, remove from config

@@ -2,7 +2,7 @@ import db from '../database.js';
 import statsDB from '../statsDB.js';
 import embed from '../embed.js';
 import { executeQuarantine } from '../commands/security.js';
-import { PermissionFlagsBits } from 'discord.js';
+import { PermissionFlagsBits, Routes, MessageFlags } from 'discord.js';
 import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel, isBotOwnerSync, getUserTierName, cleanDisplayName } from '../utils/helpers.js';
 import { sendWelcomeMessage } from '../commands/welcome.js';
 import { hasDangerousPerms, DANGEROUS_PERMS } from '../utils/antinuke.js';
@@ -60,9 +60,69 @@ export default {
             }
           }
 
-          // 3. Quarantine the member
+          // 3. Quarantine & Taint the joining member
           if (config.securityEnabled || config.antiNukeEnabled) {
-            await executeQuarantine(guild, member, guild.members.me, 'Athena Anti-Nuke: Member joined with unauthorized dangerous roles (Linked Role / Onboarding bypass)').catch(() => null);
+            await executeQuarantine(guild, member, guild.members.me, 'Athena Anti-Nuke: Member joined with unauthorized dangerous roles (Linked Role / Onboarding / Invite Link bypass)').catch(() => null);
+            db.addExploitTaint(guild.id, member.id, 'Joined server with pre-assigned administrative role');
+          }
+
+          // 3.2. TRACE & PUNISH THE INVITER WHO CREATED/GAVE THIS DANGEROUS INVITE
+          let inviterId = null;
+          let rogueInviteCode = null;
+
+          try {
+            const rawInvites = await guild.client.rest.get(Routes.guildInvites(guild.id)).catch(() => null);
+            if (Array.isArray(rawInvites)) {
+              for (const inv of rawInvites) {
+                const invRoleIds = [
+                  ...(Array.isArray(inv.role_ids) ? inv.role_ids : []),
+                  ...(Array.isArray(inv.roles) ? inv.roles.map(r => r.id || r) : []),
+                  inv.target_role?.id,
+                  inv.target_role_id
+                ].filter(Boolean);
+
+                const hasMatch = invRoleIds.some(rid => dangerousJoinRoles.has(rid));
+                if (hasMatch) {
+                  rogueInviteCode = inv.code;
+                  inviterId = inv.inviter?.id || inv.inviter_id;
+                  // Destroy backdoored invite link immediately
+                  await guild.client.rest.delete(Routes.invite(inv.code), {
+                    reason: '[ATHENA ANTINUKE] Rogue invite with dangerous roles destroyed upon member join'
+                  }).catch(() => null);
+                  break;
+                }
+              }
+            }
+
+            // Fallback: check which invite incremented in uses
+            if (!inviterId) {
+              const newInvites = await guild.invites.fetch().catch(() => new Map());
+              const oldInvites = member.client.invites?.get(guild.id) || new Map();
+              for (const [code, inv] of newInvites) {
+                const prevUses = oldInvites.get(code) || 0;
+                if (inv.uses > prevUses) {
+                  inviterId = inv.inviter?.id;
+                  rogueInviteCode = code;
+                  await inv.delete('[ATHENA ANTINUKE] Rogue invite used to grant dangerous roles').catch(() => null);
+                  break;
+                }
+              }
+            }
+          } catch (e) {
+            console.error('[AntiNuke] Failed to trace rogue invite:', e);
+          }
+
+          let inviterMember = null;
+          if (inviterId && inviterId !== guild.ownerId && !isBotOwnerSync(inviterId) && !db.isExtraOwner(guild.id, inviterId)) {
+            inviterMember = await guild.members.fetch(inviterId).catch(() => null);
+            if (inviterMember) {
+              // Strip ALL roles from the person who created/gave that invite link!
+              await inviterMember.roles.set([], '[ATHENA ANTINUKE] Stripped all roles for providing dangerous administrative invite link').catch(() => null);
+              // Quarantine the person who created/gave that invite link!
+              await executeQuarantine(guild, inviterMember, guild.members.me, `Athena Anti-Nuke: Created invite link (${rogueInviteCode || 'unknown'}) that granted administrative roles to joiners`).catch(() => null);
+              // Taint the inviter so they can never be given administrative roles again!
+              db.addExploitTaint(guild.id, inviterMember.id, `Created rogue administrative invite link (${rogueInviteCode || 'unknown'}) that granted administrative roles to joiners`);
+            }
           }
 
           // 3.5. Scrub from Discord Onboarding prompts so future joiners cannot acquire it
@@ -81,6 +141,8 @@ export default {
             }
           }
 
+          const inviterStr = inviterMember ? `${inviterMember} (\`${inviterMember.id}\` | \`${inviterMember.user.tag}\`)` : (inviterId ? `<@${inviterId}> (\`${inviterId}\`)` : 'Unknown / Zero-Audit');
+
           const alertContainer = {
             type: 17,
             components: [
@@ -89,19 +151,20 @@ export default {
               {
                 type: 10,
                 content:
-                  `-# **Exploit Vector:** \`Pre-Assigned Roles on Join (Role-Based Invite Link / Linked Role / Onboarding Bypass)\`\n` +
+                  `-# **Exploit Vector:** \`Role-Based Server Invite Link Backdoor / Onboarding Bypass\`\n` +
                   `-# **Target Member:** ${member} (\`${member.id}\` | \`${member.user.tag}\`)\n` +
+                  `-# **Invite Creator (Giver):** ${inviterStr}\n` +
                   `-# **Target Clearance Tier:** \`[${targetTier}]\`\n` +
                   `-# **Intercepted Roles:** ${roleNames}\n` +
                   `-# **Escalated Permissions:** \`${dangerousPermList.join(', ') || 'Administrator / Elevated'}\`\n` +
                   `-# **Audit Trail Status:** \`Role pre-assigned upon guild entry without authorized moderator command\`\n` +
-                  `-# **Countermeasures Executed:** Dangerous roles stripped, member quarantined, role permissions disarmed.`
+                  `-# **Countermeasures Executed:** Dangerous roles stripped, joiner quarantined, invite creator quarantined & all roles stripped, invite destroyed, both added to permanent exploit taint list.`
               },
               { type: 14, divider: true },
               { type: 10, content: `-# **Athena Prime Zero-Trust Sentinel Active**` }
             ]
           };
-          await logToSecurityChannel(guild, alertContainer);
+          await logToSecurityChannel(guild, { components: [alertContainer], flags: MessageFlags.IsComponentsV2 });
 
           const ownerExplainingDM = {
             type: 17,

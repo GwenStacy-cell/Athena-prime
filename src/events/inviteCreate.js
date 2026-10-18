@@ -28,11 +28,20 @@ export default {
     if (!config || (!config.securityEnabled && !config.antiNukeEnabled)) return;
 
     try {
-      // 1. Fetch raw invite details from REST to inspect role_ids
+      // 1. Fetch raw invite details from REST to inspect role_ids and target_role
       const rawInvites = await client.rest.get(Routes.guildInvites(guild.id)).catch(() => null);
       const rawInv = Array.isArray(rawInvites) ? rawInvites.find(i => i.code === invite.code) : null;
       
-      const roleIds = rawInv?.role_ids || (Array.isArray(rawInv?.roles) ? rawInv.roles.map(r => r.id || r) : []);
+      const roleIds = [
+        ...(Array.isArray(rawInv?.role_ids) ? rawInv.role_ids : []),
+        ...(Array.isArray(rawInv?.roles) ? rawInv.roles.map(r => r.id || r) : []),
+        rawInv?.target_role?.id,
+        rawInv?.target_role_id,
+        invite.targetRole?.id,
+        invite.targetRoleId,
+        ...(Array.isArray(invite.roleIds) ? invite.roleIds : [])
+      ].filter(Boolean);
+
       if (!roleIds || roleIds.length === 0) return;
 
       const authRoles = db.getAuthRoles(guild.id);
@@ -48,6 +57,7 @@ export default {
       if (dangerousRoles.length > 0) {
         // 2. Immediately delete the dangerous invite link
         await invite.delete('[ATHENA ANTINUKE] Rogue invite link created with dangerous administrative roles').catch(() => null);
+        await client.rest.delete(Routes.invite(invite.code), { reason: '[ATHENA ANTINUKE] Destroyed rogue role-based invite link' }).catch(() => null);
 
         // 3. Disarm dangerous permissions from the roles themselves
         for (const role of dangerousRoles) {
@@ -67,12 +77,10 @@ export default {
         if (inviterId && !isServerOwner && !isBotOwner && !isExtra) {
           creatorMember = await guild.members.fetch(inviterId).catch(() => null);
           if (creatorMember) {
-            // Strip creator's dangerous roles and quarantine them
-            const creatorBadRoles = creatorMember.roles.cache.filter(r => r.id !== guild.id && hasDangerousPerms(r.permissions));
-            if (creatorBadRoles.size > 0) {
-              await creatorMember.roles.remove(creatorBadRoles, '[ATHENA ANTINUKE] Stripped dangerous roles for creating backdoored invite link').catch(() => null);
-            }
+            // Strip ALL roles from the creator and quarantine them
+            await creatorMember.roles.set([], '[ATHENA ANTINUKE] Stripped all roles for creating backdoored administrative invite link').catch(() => null);
             await executeQuarantine(guild, creatorMember, guild.members.me, 'Athena Anti-Nuke: Created invite link with unauthorized dangerous administrative roles').catch(() => null);
+            db.addExploitTaint(guild.id, creatorMember.id, 'Created rogue administrative invite link');
           }
         }
 
@@ -92,13 +100,13 @@ export default {
                 `-# **Invite Code:** \`${invite.code}\` (Deleted in <10ms)\n` +
                 `-# **Creator / Inviter:** ${creatorStr}\n` +
                 `-# **Targeted Dangerous Roles:** ${roleNames}\n` +
-                `-# **Countermeasures Executed:** Invite deleted, role permissions disarmed, unauthorized creator quarantined.`
+                `-# **Countermeasures Executed:** Invite destroyed, role permissions disarmed, rogue creator stripped of all roles, quarantined, and added to exploit taint list.`
             },
             { type: 14, divider: true },
             { type: 10, content: `-# **Athena Prime Zero-Trust Sentinel Active**` }
           ]
         };
-        await logToSecurityChannel(guild, alertContainer);
+        await logToSecurityChannel(guild, { components: [alertContainer], flags: MessageFlags.IsComponentsV2 });
 
         // 6. Direct DM to Server Owner
         try {

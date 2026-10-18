@@ -18,6 +18,7 @@ const DEFAULT_SCHEMA = {
   afk: {},           // userId -> { reason, timestamp }
   warnings: {},      // guildId -> { userId -> [...] }
   quarantines: {},   // guildId -> { userId -> { roles, quarantinedAt, reason, expiresAt } }
+  exploitTaints: {}, // guildId -> { userId -> { taintedAt, reason } }
   tempBans: {},      // guildId -> { userId -> { bannedAt, expiresAt, reason, bannedBy } }
   extraOwners: {},   // guildId -> [ userId... ]
   spamPermitted: [], // global list
@@ -119,6 +120,7 @@ class Database {
         this.cache.afk           = this.cache.afk           || {};
         this.cache.warnings      = this.cache.warnings      || {};
         this.cache.quarantines   = this.cache.quarantines   || {};
+        this.cache.exploitTaints = this.cache.exploitTaints || {};
         this.cache.tempBans      = this.cache.tempBans      || {};
         this.cache.extraOwners   = this.cache.extraOwners   || {};
         this.cache.spamPermitted = this.cache.spamPermitted || [];
@@ -933,6 +935,40 @@ class Database {
 
   getQuarantinedInGuild(guildId) {
     const guild = this.cache.quarantines?.[guildId] || {};
+    return Object.entries(guild).map(([userId, record]) => ({ userId, ...record }));
+  }
+
+  // Exploit Taint System (Permanent restriction on dangerous/iconic permissions)
+  addExploitTaint(guildId, userId, reason = 'Exploit violation') {
+    if (!this.cache.exploitTaints) this.cache.exploitTaints = {};
+    if (!this.cache.exploitTaints[guildId]) this.cache.exploitTaints[guildId] = {};
+    this.cache.exploitTaints[guildId][userId] = {
+      taintedAt: Date.now(),
+      reason
+    };
+    this.save();
+  }
+
+  isExploitTainted(guildId, userId) {
+    if (!this.cache.exploitTaints || !this.cache.exploitTaints[guildId]) return false;
+    return Boolean(this.cache.exploitTaints[guildId][userId]);
+  }
+
+  removeExploitTaint(guildId, userId) {
+    if (this.cache.exploitTaints?.[guildId]?.[userId]) {
+      delete this.cache.exploitTaints[guildId][userId];
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  getExploitTaint(guildId, userId) {
+    return this.cache.exploitTaints?.[guildId]?.[userId] || null;
+  }
+
+  getExploitTaintedUsers(guildId) {
+    const guild = this.cache.exploitTaints?.[guildId] || {};
     return Object.entries(guild).map(([userId, record]) => ({ userId, ...record }));
   }
 
