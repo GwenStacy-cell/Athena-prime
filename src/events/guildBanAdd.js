@@ -1,6 +1,6 @@
 import { AuditLogEvent } from 'discord.js';
 import { postGlobalActionLog } from '../utils/globalLog.js';
-import { directStrike } from '../utils/antinuke.js';
+import { directStrike, getRecentAuditEntry } from '../utils/antinuke.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 import embed from '../embed.js';
 
@@ -24,34 +24,46 @@ export default {
       }
     ).catch(() => null);
 
-    // Server logging
-    const logs = await ban.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberBanAdd }).catch(() => null);
-    const entry = logs?.entries?.first();
-    let executor = 'Unknown (Native/Other Bot)';
-    let reason = ban.reason || 'No reason provided';
-    if (entry && entry.target?.id === ban.user.id) {
-      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
-      reason = entry.reason || reason;
-    }
-    const logEmbed = embed.build({
-      description: `__**Member Banned |**__ <a:uptime:1552608831060844575>\n> **User:** ${ban.user.tag} (<@${ban.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
-      color: '#2b2d31',
-      thumbnail: ban.user.displayAvatarURL({ dynamic: true })
-    });
-    await logServerEvent(ban.guild, 'bans', logEmbed);
+    // Non-blocking server logging & global action broadcast
+    (async () => {
+      try {
+        const ring = getRecentAuditEntry(ban.guild.id, AuditLogEvent.MemberBanAdd, ban.user.id);
+        let executor = ring?.executor ? `${ring.executor.tag} (<@${ring.executor.id}>)` : 'Unknown (Native/Other Bot)';
+        let reason = ban.reason || 'No reason provided';
+        let executorId = ring?.executor?.id || null;
+        let executorTag = ring?.executor?.tag || null;
 
-    // Global Action Log — cross-server broadcast
-    const execEntry = logs?.entries?.first();
-    postGlobalActionLog(ban.guild.client, {
-      action: 'BAN',
-      guildId: ban.guild.id,
-      guildName: ban.guild.name,
-      guildIconUrl: ban.guild.iconURL({ extension: 'png', size: 256 }),
-      targetId: ban.user.id,
-      targetTag: ban.user.tag,
-      executorId: execEntry?.executor?.id || ban.guild.client.user.id,
-      executorTag: execEntry?.executor?.tag || 'Anti-Nuke / Bot',
-      reason: execEntry?.reason || ban.reason || 'No reason provided'
-    }).catch(() => null);
+        if (executor === 'Unknown (Native/Other Bot)') {
+          await new Promise(r => setTimeout(r, 2000));
+          const lateRing = getRecentAuditEntry(ban.guild.id, AuditLogEvent.MemberBanAdd, ban.user.id);
+          if (lateRing?.executor) {
+            executor = `${lateRing.executor.tag} (<@${lateRing.executor.id}>)`;
+            executorId = lateRing.executor.id;
+            executorTag = lateRing.executor.tag;
+            if (lateRing.reason) reason = lateRing.reason;
+          }
+        }
+
+        const logEmbed = embed.build({
+          description: `__**Member Banned |**__ <a:uptime:1552608831060844575>\n> **User:** ${ban.user.tag} (<@${ban.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
+          color: '#2b2d31',
+          thumbnail: ban.user.displayAvatarURL({ dynamic: true })
+        });
+        await logServerEvent(ban.guild, 'bans', logEmbed);
+
+        // Global Action Log — cross-server broadcast
+        postGlobalActionLog(ban.guild.client, {
+          action: 'BAN',
+          guildId: ban.guild.id,
+          guildName: ban.guild.name,
+          guildIconUrl: ban.guild.iconURL({ extension: 'png', size: 256 }),
+          targetId: ban.user.id,
+          targetTag: ban.user.tag,
+          executorId: executorId || ban.guild.client.user.id,
+          executorTag: executorTag || 'Anti-Nuke / Bot',
+          reason: reason
+        }).catch(() => null);
+      } catch {}
+    })().catch(() => null);
   }
 };

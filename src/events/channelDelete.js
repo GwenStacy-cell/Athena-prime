@@ -43,10 +43,10 @@ export default {
         let executor = ring?.executor ? `${ring.executor.tag} (<@${ring.executor.id}>)` : 'Unknown';
 
         if (executor === 'Unknown') {
-          const logs = await channel.guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.ChannelDelete }).catch(() => null);
-          const entry = logs?.entries?.first();
-          if (entry && entry.target?.id === channel.id && entry.executor) {
-            executor = `${entry.executor.tag} (<@${entry.executor.id}>)`;
+          await new Promise(r => setTimeout(r, 2000));
+          const lateRing = getRecentAuditEntry(channel.guild.id, AuditLogEvent.ChannelDelete, channel.id);
+          if (lateRing?.executor) {
+            executor = `${lateRing.executor.tag} (<@${lateRing.executor.id}>)`;
           }
         }
 

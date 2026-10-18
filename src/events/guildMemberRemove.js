@@ -1,5 +1,5 @@
 import { AuditLogEvent } from 'discord.js';
-import { directStrike } from '../utils/antinuke.js';
+import { directStrike, getRecentAuditEntry } from '../utils/antinuke.js';
 import db from '../database.js';
 import statsDB from '../statsDB.js';
 import { sendLeaveMessage } from '../commands/welcome.js';
@@ -37,35 +37,35 @@ export default {
       null // Kicks cannot be auto-reversed
     ).catch(() => null);
 
-    // Server logging (with small delay only for logging accuracy)
-    await new Promise(r => setTimeout(r, 300));
-    const logs = await guild.fetchAuditLogs({ limit: 1, type: AuditLogEvent.MemberKick }).catch(() => null);
-    const entry = logs?.entries?.first();
+    // Non-blocking server logging — zero REST audit contention with Anti-Nuke
+    (async () => {
+      try {
+        let ring = getRecentAuditEntry(guild.id, AuditLogEvent.MemberKick, member.id);
+        if (!ring) {
+          await new Promise(r => setTimeout(r, 1500));
+          ring = getRecentAuditEntry(guild.id, AuditLogEvent.MemberKick, member.id);
+        }
 
-    let isKick = false;
-    let executor = 'Unknown (Native/Other Bot)';
-    let reason = 'No reason provided';
+        const isKick = !!ring;
+        const executor = ring?.executor ? `${ring.executor.tag} (<@${ring.executor.id}>)` : 'Unknown (Native/Other Bot)';
+        const reason = ring?.reason || 'No reason provided';
 
-    if (entry && entry.target?.id === member.id && Date.now() - entry.createdAt.getTime() < 5000) {
-      isKick = true;
-      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
-      reason = entry.reason || reason;
-    }
-
-    if (isKick) {
-      const kickEmbed = embed.build({
-        description: `__**Member Kicked |**__ <a:uptime:1552608831060844575>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
-        color: '#2b2d31',
-        thumbnail: member.user.displayAvatarURL({ dynamic: true })
-      });
-      await logServerEvent(guild, 'kicks', kickEmbed);
-    } else {
-      const leaveEmbed = embed.build({
-        description: `__**Member Left |**__ <a:uptime:1552608831060844575>\n> **User:** ${member.user.tag} (<@${member.user.id}>)`,
-        color: '#2b2d31',
-        thumbnail: member.user.displayAvatarURL({ dynamic: true })
-      });
-      await logServerEvent(guild, 'leaves', leaveEmbed);
-    }
+        if (isKick) {
+          const kickEmbed = embed.build({
+            description: `__**Member Kicked |**__ <a:uptime:1552608831060844575>\n> **User:** ${member.user.tag} (<@${member.user.id}>)\n>  **Executor:** ${executor}\n>  **Reason:** ${reason}`,
+            color: '#2b2d31',
+            thumbnail: member.user.displayAvatarURL({ dynamic: true })
+          });
+          await logServerEvent(guild, 'kicks', kickEmbed);
+        } else {
+          const leaveEmbed = embed.build({
+            description: `__**Member Left |**__ <a:uptime:1552608831060844575>\n> **User:** ${member.user.tag} (<@${member.user.id}>)`,
+            color: '#2b2d31',
+            thumbnail: member.user.displayAvatarURL({ dynamic: true })
+          });
+          await logServerEvent(guild, 'leaves', leaveEmbed);
+        }
+      } catch {}
+    })().catch(() => null);
   }
 };

@@ -1,8 +1,9 @@
 import db from '../database.js';
 import { AuditLogEvent } from 'discord.js';
-import { directStrike } from '../utils/antinuke.js';
+import { directStrike, getRecentAuditEntry } from '../utils/antinuke.js';
 import embed from '../embed.js';
 import { logServerEvent } from '../utils/serverLogger.js';
+
 export default {
   name: 'channelCreate',
   async execute(channel) {
@@ -31,23 +32,7 @@ export default {
       }
     }
 
-
-    // Fetch audit log to find creator
-    await new Promise(r => setTimeout(r, 500));
-    const logs = await channel.guild.fetchAuditLogs({ limit: 1, type: 10 /* ChannelCreate */ }).catch(() => null);
-    const entry = logs?.entries?.first();
-    let executor = 'Unknown';
-    if (entry && entry.target?.id === channel.id) {
-      executor = entry.executor ? `${entry.executor.tag} (<@${entry.executor.id}>)` : executor;
-    }
-
-    const createEmbed = embed.build({
-      description: `__**Channel Created |**__ <a:uptime:1552608831060844575>\n> **Channel:** ${channel.name} (<#${channel.id}>)\n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
-      color: '#2b2d31'
-    });
-    await logServerEvent(channel.guild, 'channels', createEmbed);
-    
-    // Auto-hide new channels from quarantined users
+    // Auto-hide new channels from quarantined users (immediate execution)
     try {
       const config = db.getGuildConfig(channel.guild.id);
       
@@ -70,5 +55,27 @@ export default {
     } catch (err) {
       console.error('Failed to auto-hide new channel from quarantine role:', err);
     }
+
+    // Non-blocking server log entry — zero REST audit contention with Anti-Nuke
+    (async () => {
+      try {
+        const ring = getRecentAuditEntry(channel.guild.id, AuditLogEvent.ChannelCreate, channel.id);
+        let executor = ring?.executor ? `${ring.executor.tag} (<@${ring.executor.id}>)` : 'Unknown';
+
+        if (executor === 'Unknown') {
+          await new Promise(r => setTimeout(r, 2000));
+          const lateRing = getRecentAuditEntry(channel.guild.id, AuditLogEvent.ChannelCreate, channel.id);
+          if (lateRing?.executor) {
+            executor = `${lateRing.executor.tag} (<@${lateRing.executor.id}>)`;
+          }
+        }
+
+        const createEmbed = embed.build({
+          description: `__**Channel Created |**__ <a:uptime:1552608831060844575>\n> **Channel:** ${channel.name} (<#${channel.id}>)\n>  **Type:** ${channel.type}\n>  **Executor:** ${executor}`,
+          color: '#2b2d31'
+        });
+        await logServerEvent(channel.guild, 'channels', createEmbed);
+      } catch {}
+    })().catch(() => null);
   }
 };

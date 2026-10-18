@@ -4360,6 +4360,10 @@ export async function runSecurityEnableSequence(guild, updateMessageFn) {
       // Ensure quarantine role & security logs channel are initialized and bound in DB
       const { getOrCreateQuarantineRole, logToSecurityChannel } = await import("../utils/helpers.js");
       await getOrCreateQuarantineRole(guild).catch(() => null);
+
+      // Ground-truth infrastructure snapshot for instant zero-loss rollbacks
+      const { snapshotGuildInfrastructure } = await import("../utils/antinuke.js");
+      snapshotGuildInfrastructure(guild);
       await logToSecurityChannel(guild, {
         type: 17,
         components: [
