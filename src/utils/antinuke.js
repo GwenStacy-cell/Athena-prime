@@ -267,6 +267,7 @@ export const restorationRegistry = {
   restored: new Map(),             // itemId -> timestamp (15-min TTL)
   restoredCategories: new Map(),   // oldCategoryId -> newCategoryId
   restoredCategoriesByName: new Map(), // lowerCategoryName -> newCategoryId
+  restoredChannels: new Map(),     // oldChannelId -> newChannelId
   restoredRoles: new Map()         // oldRoleId -> newRoleId
 };
 
@@ -305,6 +306,7 @@ let isRestoring = false;
 export async function processRestorationQueue() {
   if (isRestoring || restorationQueue.length === 0) return;
   isRestoring = true;
+  let activeGuild = null;
 
   while (restorationQueue.length > 0) {
     // Categories MUST be restored first so children have their parent container
@@ -316,6 +318,7 @@ export async function processRestorationQueue() {
 
     const task = restorationQueue.shift();
     if (!task) continue;
+    if (task.guild) activeGuild = task.guild;
 
     try {
       await task.execute();
@@ -327,6 +330,11 @@ export async function processRestorationQueue() {
   }
 
   isRestoring = false;
+
+  // Post-restoration integrity reconciliation pass to ensure all channels have pristine parentage
+  if (activeGuild) {
+    reconcileGuildStructure(activeGuild).catch(() => null);
+  }
 }
 
 // ==========================================
@@ -356,29 +364,72 @@ export async function executeIntelligentChannelRepair(guild, channelId, fallback
     const oldParentId = cached?.parentId || snap?.parentId || fallbackChannel?.parentId || null;
     const parentName = cached?.parent?.name || snap?.parentName || fallbackChannel?.parent?.name || null;
 
-    // 2. Resolve Overwrites
+    // Deduplication check for special system channels:
+    // If a channel with this exact system identity already exists in the guild, don't create an unnecessary duplicate!
+    const guildCfg = db.getGuildConfig(guild.id);
+    if (name.toLowerCase() === 'security-logs') {
+      const existingSec = guild.channels.cache.find(c => 
+        c.type === ChannelType.GuildText && c.name.toLowerCase() === 'security-logs'
+      );
+      if (existingSec) {
+        db.updateGuildConfig(guild.id, { securityLogChannelId: existingSec.id, logChannel: existingSec.id });
+        restorationRegistry.restored.set(channelId, Date.now());
+        restorationRegistry.restoredChannels.set(channelId, existingSec.id);
+        return existingSec;
+      }
+    } else if (name.toLowerCase() === 'you-have-been-quarantined') {
+      const existingQ = guild.channels.cache.find(c => 
+        c.type === ChannelType.GuildText && c.name.toLowerCase() === 'you-have-been-quarantined'
+      );
+      if (existingQ) {
+        db.updateGuildConfig(guild.id, { quarantineChannelId: existingQ.id });
+        restorationRegistry.restored.set(channelId, Date.now());
+        restorationRegistry.restoredChannels.set(channelId, existingQ.id);
+        return existingQ;
+      }
+    } else if (name.toLowerCase() === 'athenas-dashboard') {
+      const existingDash = guild.channels.cache.find(c => 
+        c.type === ChannelType.GuildText && c.name.toLowerCase() === 'athenas-dashboard'
+      );
+      if (existingDash) {
+        db.updateGuildConfig(guild.id, { dashboardChannelId: existingDash.id });
+        restorationRegistry.restored.set(channelId, Date.now());
+        restorationRegistry.restoredChannels.set(channelId, existingDash.id);
+        return existingDash;
+      }
+    }
+
+    // 2. Resolve Overwrites with strict integer type normalization
     let rawOverwrites = [];
     if (cached?.permissionOverwrites?.cache) {
       rawOverwrites = cached.permissionOverwrites.cache.map(o => ({
         id: o.id,
-        type: o.type,
+        type: (o.type === 1 || o.type === 'member' || o.type === 'Member') ? 1 : 0,
         allow: o.allow?.bitfield ? BigInt(o.allow.bitfield) : 0n,
         deny: o.deny?.bitfield ? BigInt(o.deny.bitfield) : 0n
       }));
     } else if (snap?.permissionOverwrites) {
       rawOverwrites = snap.permissionOverwrites.map(o => ({
         id: o.id,
-        type: o.type,
+        type: (o.type === 1 || o.type === 'member' || o.type === 'Member') ? 1 : 0,
         allow: BigInt(o.allow || 0),
         deny: BigInt(o.deny || 0)
+      }));
+    } else if (fallbackChannel?.permissionOverwrites?.cache) {
+      rawOverwrites = fallbackChannel.permissionOverwrites.cache.map(o => ({
+        id: o.id,
+        type: (o.type === 1 || o.type === 'member' || o.type === 'Member') ? 1 : 0,
+        allow: o.allow?.bitfield ? BigInt(o.allow.bitfield) : 0n,
+        deny: o.deny?.bitfield ? BigInt(o.deny.bitfield) : 0n
       }));
     }
 
     // Remap overwrites if any roles were restored
     const mappedOverwrites = rawOverwrites.map(ow => {
       let tid = ow.id;
-      if (ow.id === guild.id) tid = guild.id; // @everyone
-      else if (restorationRegistry.restoredRoles.has(ow.id)) {
+      if (ow.id === guild.id || ow.id === guild.roles.everyone.id) {
+        tid = guild.roles.everyone.id;
+      } else if (restorationRegistry.restoredRoles.has(ow.id)) {
         tid = restorationRegistry.restoredRoles.get(ow.id);
       }
       return {
@@ -387,29 +438,27 @@ export async function executeIntelligentChannelRepair(guild, channelId, fallback
         allow: ow.allow,
         deny: ow.deny
       };
-    }).filter(ow => guild.roles.cache.has(ow.id) || ow.id === guild.id || ow.type === 1);
+    }).filter(ow => guild.roles.cache.has(ow.id) || ow.id === guild.roles.everyone.id || ow.type === 1);
 
     const createOptions = {
       name,
       type,
-      position: rawPos,
       permissionOverwrites: mappedOverwrites,
       reason: 'Athena Anti-Nuke: Autonomous Intelligent Restoration'
     };
 
-    // 3. Resolve parent category for child channels
+    // 3. Resolve parent category and relative position for child channels
+    let resolvedParentId = null;
     if (!isCategory) {
-      let resolvedParentId = null;
-
       // Check mapped restored category ID
       if (oldParentId && restorationRegistry.restoredCategories.has(oldParentId)) {
         resolvedParentId = restorationRegistry.restoredCategories.get(oldParentId);
       }
 
       // Check if old parent category is still alive in the guild
-      if (!resolvedParentId && oldParentId && guild.channels.cache.has(oldParentId)) {
-        const liveCat = guild.channels.cache.get(oldParentId);
-        if (liveCat.type === ChannelType.GuildCategory) {
+      if (!resolvedParentId && oldParentId) {
+        const liveCat = guild.channels.cache.get(oldParentId) || await guild.channels.fetch(oldParentId).catch(() => null);
+        if (liveCat && (liveCat.type === ChannelType.GuildCategory || liveCat.type === 4)) {
           resolvedParentId = liveCat.id;
         }
       }
@@ -421,7 +470,7 @@ export async function executeIntelligentChannelRepair(guild, channelId, fallback
           resolvedParentId = restorationRegistry.restoredCategoriesByName.get(lowerName);
         } else {
           const matchByName = guild.channels.cache.find(c => 
-            c.type === ChannelType.GuildCategory && c.name.toLowerCase() === lowerName
+            (c.type === ChannelType.GuildCategory || c.type === 4) && c.name.toLowerCase() === lowerName
           );
           if (matchByName) resolvedParentId = matchByName.id;
         }
@@ -429,6 +478,18 @@ export async function executeIntelligentChannelRepair(guild, channelId, fallback
 
       if (resolvedParentId) {
         createOptions.parent = resolvedParentId;
+        const relPos = cached?.position ?? snap?.position ?? fallbackChannel?.position;
+        if (typeof relPos === 'number') {
+          createOptions.position = relPos;
+        }
+      } else {
+        if (typeof rawPos === 'number') {
+          createOptions.position = rawPos;
+        }
+      }
+    } else {
+      if (typeof rawPos === 'number') {
+        createOptions.position = rawPos;
       }
     }
 
@@ -443,25 +504,29 @@ export async function executeIntelligentChannelRepair(guild, channelId, fallback
       if (typeof slowmode === 'number' && slowmode > 0) createOptions.rateLimitPerUser = slowmode;
     }
 
-    const bitrate = cached?.bitrate ?? snap?.bitrate;
-    const userLimit = cached?.userLimit ?? snap?.userLimit;
-    const rtcRegion = cached?.rtcRegion ?? snap?.rtcRegion;
+    const bitrate = cached?.bitrate ?? snap?.bitrate ?? fallbackChannel?.bitrate;
+    const userLimit = cached?.userLimit ?? snap?.userLimit ?? fallbackChannel?.userLimit;
+    const rtcRegion = cached?.rtcRegion ?? snap?.rtcRegion ?? fallbackChannel?.rtcRegion;
 
     if ([ChannelType.GuildVoice, ChannelType.GuildStageVoice, 2, 13].includes(type)) {
-      if (bitrate) createOptions.bitrate = bitrate;
-      if (userLimit) createOptions.userLimit = userLimit;
+      if (typeof bitrate === 'number' && bitrate > 0) createOptions.bitrate = bitrate;
+      if (typeof userLimit === 'number' && userLimit > 0) createOptions.userLimit = userLimit;
       if (rtcRegion) createOptions.rtcRegion = rtcRegion;
     }
 
     // 4. Create the channel with full parameters
     const newChannel = await guild.channels.create(createOptions);
 
-    // 5. Enforce position ordering
-    if (typeof rawPos === 'number') {
-      await newChannel.setPosition(rawPos, { relative: false, reason: 'Athena Anti-Nuke: Locking channel position' }).catch(() => null);
+    // 5. Post-creation category parent lock (DO NOT call setPosition(rawPos) as it detaches from category)
+    if (!isCategory && resolvedParentId && newChannel.parentId !== resolvedParentId) {
+      await newChannel.setParent(resolvedParentId, { lockPermissions: false }).catch(() => null);
+    }
+    if (isCategory && typeof rawPos === 'number') {
+      await newChannel.setPosition(rawPos, { relative: false }).catch(() => null);
     }
 
     // 6. Record mappings
+    restorationRegistry.restoredChannels.set(channelId, newChannel.id);
     if (isCategory) {
       restorationRegistry.restoredCategories.set(channelId, newChannel.id);
       restorationRegistry.restoredCategoriesByName.set(name.toLowerCase(), newChannel.id);
@@ -471,16 +536,57 @@ export async function executeIntelligentChannelRepair(guild, channelId, fallback
     restorationRegistry.restored.set(channelId, Date.now());
     setTimeout(() => restorationRegistry.restored.delete(channelId), 15 * 60 * 1000);
 
+    // 8. Synchronize Database configurations if the restored channel was tracked
+    const dbUpdates = {};
+    if (guildCfg.securityLogChannelId === channelId || (name.toLowerCase() === 'security-logs' && !guildCfg.securityLogChannelId)) {
+      dbUpdates.securityLogChannelId = newChannel.id;
+      dbUpdates.logChannel = newChannel.id;
+    }
+    if (guildCfg.logChannel === channelId) {
+      dbUpdates.logChannel = newChannel.id;
+    }
+    if (guildCfg.quarantineChannelId === channelId || (name.toLowerCase() === 'you-have-been-quarantined' && !guildCfg.quarantineChannelId)) {
+      dbUpdates.quarantineChannelId = newChannel.id;
+    }
+    if (guildCfg.quarantineVcId === channelId) {
+      dbUpdates.quarantineVcId = newChannel.id;
+    }
+    if (guildCfg.dashboardChannelId === channelId || (name.toLowerCase() === 'athenas-dashboard' && !guildCfg.dashboardChannelId)) {
+      dbUpdates.dashboardChannelId = newChannel.id;
+    }
+    if (guildCfg.welcomeChannel === channelId) {
+      dbUpdates.welcomeChannel = newChannel.id;
+    }
+    if (guildCfg.statsChannelId === channelId) {
+      dbUpdates.statsChannelId = newChannel.id;
+    }
+    if (guildCfg.musicChannelId === channelId) {
+      dbUpdates.musicChannelId = newChannel.id;
+    }
+
+    if (Object.keys(dbUpdates).length > 0) {
+      db.updateGuildConfig(guild.id, dbUpdates);
+    }
+
+    // 9. Update live infrastructure snapshot
+    snapshotGuildInfrastructure(guild);
+
     return newChannel;
   } catch (err) {
     console.error(`[AntiNuke] Intelligent channel repair failed for ${channelId}:`, err.message);
     try {
-      const basic = await guild.channels.create({
+      const basicOptions = {
         name: fallbackChannel?.name || 'restored-channel',
         type: fallbackChannel?.type || ChannelType.GuildText,
         reason: 'Athena Anti-Nuke: Basic Fallback Channel'
-      });
+      };
+      if (oldParentId && guild.channels.cache.has(oldParentId)) {
+        basicOptions.parent = oldParentId;
+      }
+      const basic = await guild.channels.create(basicOptions);
       restorationRegistry.restored.set(channelId, Date.now());
+      restorationRegistry.restoredChannels.set(channelId, basic.id);
+      snapshotGuildInfrastructure(guild);
       return basic;
     } catch {}
     return null;
@@ -991,7 +1097,7 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
   if (alreadyCondemned) {
     // Already eliminated — execute damage repair immediately
     if (rollbackFn) {
-      restorationQueue.push({ isCategory: eventType.includes('Category'), execute: rollbackFn });
+      restorationQueue.push({ guild, isCategory: eventType.includes('Category'), execute: rollbackFn });
       processRestorationQueue();
     }
     return;
@@ -1010,7 +1116,7 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
   let rollbackResult = 'No rollback needed';
   if (rollbackFn) {
     try {
-      restorationQueue.push({ isCategory: eventType.includes('Category'), execute: rollbackFn });
+      restorationQueue.push({ guild, isCategory: eventType.includes('Category'), execute: rollbackFn });
       processRestorationQueue();
       rollbackResult = 'Intelligent damage repair queued';
     } catch (e) {
@@ -1082,6 +1188,7 @@ export async function handleAuditLogEntry(guild, entry) {
         const ch = deletedCache.get(targetId) || getChannelSnapshot(guild.id, targetId);
         const isCat = ch?.type === ChannelType.GuildCategory || ch?.type === 4;
         restorationQueue.push({
+          guild,
           isCategory: isCat,
           execute: () => executeIntelligentChannelRepair(guild, targetId, ch)
         });
@@ -1092,6 +1199,7 @@ export async function handleAuditLogEntry(guild, entry) {
         markRestorationQueued(targetId);
         const r = deletedCache.get(targetId) || getRoleSnapshot(guild.id, targetId);
         restorationQueue.push({
+          guild,
           isCategory: false,
           execute: () => executeIntelligentRoleRepair(guild, targetId, r)
         });

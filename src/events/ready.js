@@ -20,6 +20,7 @@ import { initWebSub } from '../utils/websub.js';
 import { startYtStatsEngine } from '../utils/ytStatsEngine.js';
 import { checkAndAutoRestore, startCloudBackupScheduler } from '../utils/cloudSync.js';
 import { snapshotGuildInfrastructure } from '../utils/antinuke.js';
+import { pruneDuplicateSecurityLogChannels } from '../utils/helpers.js';
 
 export default {
   name: 'clientReady',
@@ -169,6 +170,7 @@ export default {
     client.guilds.cache.forEach(guild => {
       // Take ground-truth infrastructure snapshot for zero-delay intelligent restoration
       snapshotGuildInfrastructure(guild);
+      pruneDuplicateSecurityLogChannels(guild).catch(() => null);
 
       // Unbypassable Role
       const cfg = db.getGuildConfig(guild.id);

@@ -1,6 +1,6 @@
 import db from '../database.js';
 import { AuditLogEvent } from 'discord.js';
-import { directStrike, getRecentAuditEntry } from '../utils/antinuke.js';
+import { directStrike, getRecentAuditEntry, snapshotGuildInfrastructure } from '../utils/antinuke.js';
 import embed from '../embed.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 
@@ -8,6 +8,7 @@ export default {
   name: 'channelCreate',
   async execute(channel) {
     if (!channel.guild) return;
+    snapshotGuildInfrastructure(channel.guild);
 
     // ⚡ DIRECT STRIKE — fire the moment channel hits gateway
     directStrike(

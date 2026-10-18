@@ -216,6 +216,51 @@ export function canModerate(moderator, target) {
   return moderator.roles.highest.position > target.roles.highest.position;
 }
 
+// In-flight channel creation lock to prevent parallel creations
+const inFlightLogChannelCreation = new Map(); // guildId -> Promise<TextChannel>
+
+/**
+ * Prunes redundant duplicate security-logs channels from the guild,
+ * ensuring only 1 single authoritative security-logs channel exists.
+ */
+export async function pruneDuplicateSecurityLogChannels(guild) {
+  if (!guild?.channels?.cache) return null;
+  try {
+    const config = db.getGuildConfig(guild.id);
+    const secLogs = guild.channels.cache.filter(c => 
+      c.type === ChannelType.GuildText && 
+      (c.name.toLowerCase() === 'security-logs' || c.name.toLowerCase() === 'security-log')
+    );
+
+    if (secLogs.size === 0) return null;
+
+    if (secLogs.size === 1) {
+      const single = secLogs.first();
+      if (config.securityLogChannelId !== single.id || config.logChannel !== single.id) {
+        db.updateGuildConfig(guild.id, { securityLogChannelId: single.id, logChannel: single.id });
+      }
+      return single;
+    }
+
+    // Multiple duplicate security-logs exist!
+    const boundId = config.securityLogChannelId || config.logChannel;
+    let primary = (boundId && secLogs.get(boundId)) || secLogs.first();
+
+    // Prune all extras except the primary
+    for (const [id, extraCh] of secLogs) {
+      if (id !== primary.id) {
+        await extraCh.delete('Athena Prime Self-Healing: Pruning duplicate security-logs channel').catch(() => null);
+      }
+    }
+
+    db.updateGuildConfig(guild.id, { securityLogChannelId: primary.id, logChannel: primary.id });
+    return primary;
+  } catch (e) {
+    console.error('[pruneDuplicateSecurityLogChannels] Error:', e.message);
+    return null;
+  }
+}
+
 /**
  * Logs an action or security threat to the designated logs channel
  */
@@ -229,22 +274,52 @@ export async function logToSecurityChannel(guild, embedObject) {
       channel = guild.channels.cache.get(logChId) || await guild.channels.fetch(logChId).catch(() => null);
     }
 
+    // If channel not found by ID, handle deduplication and recovery with exclusive mutex lock
     if (!channel) {
-      // Create dynamically and immediately bind ID in database
-      channel = await guild.channels.create({
-        name: 'security-logs',
-        type: ChannelType.GuildText,
-        topic: 'Automated security audits and moderation records - Athena Prime',
-        permissionOverwrites: [
-          {
-            id: guild.roles.everyone.id,
-            deny: [PermissionFlagsBits.ViewChannel] // Hide from normal members
-          }
-        ]
-      }).catch(() => null);
+      if (inFlightLogChannelCreation.has(guild.id)) {
+        channel = await inFlightLogChannelCreation.get(guild.id);
+      } else {
+        const recovered = await pruneDuplicateSecurityLogChannels(guild);
+        if (recovered) {
+          channel = recovered;
+        } else {
+          const creationPromise = (async () => {
+            try {
+              const newCh = await guild.channels.create({
+                name: 'security-logs',
+                type: ChannelType.GuildText,
+                topic: 'Automated security audits and moderation records - Athena Prime',
+                permissionOverwrites: [
+                  {
+                    id: guild.roles.everyone.id,
+                    deny: [PermissionFlagsBits.ViewChannel] // Hide from normal members
+                  }
+                ],
+                reason: 'Athena Prime Security Log Channel Creation'
+              }).catch(() => null);
 
-      if (channel) {
-        db.updateGuildConfig(guild.id, { logChannel: channel.id, securityLogChannelId: channel.id });
+              if (newCh) {
+                db.updateGuildConfig(guild.id, { logChannel: newCh.id, securityLogChannelId: newCh.id });
+                import('./antinuke.js').then(m => m.snapshotGuildInfrastructure?.(guild)).catch(() => null);
+              }
+              return newCh;
+            } finally {
+              inFlightLogChannelCreation.delete(guild.id);
+            }
+          })();
+
+          inFlightLogChannelCreation.set(guild.id, creationPromise);
+          channel = await creationPromise;
+        }
+      }
+    } else {
+      // If channel is already present, verify there are no lingering duplicate channels and prune them
+      const secLogs = guild.channels.cache.filter(c => 
+        c.type === ChannelType.GuildText && 
+        c.name.toLowerCase() === 'security-logs'
+      );
+      if (secLogs.size > 1) {
+        pruneDuplicateSecurityLogChannels(guild).catch(() => null);
       }
     }
 
@@ -263,8 +338,11 @@ export async function logToSecurityChannel(guild, embedObject) {
         await channel.send(payload);
       } catch (err) {
         if (err.code === 10003) {
-          // Channel was deleted, remove from config
-          db.updateGuildConfig(guild.id, { logChannel: null, securityLogChannelId: null });
+          // Channel was deleted — do NOT immediately wipe config to prevent race conditions during restoration
+          const isRestoring = await import('./antinuke.js').then(m => m.isRestorationHandled?.(channel.id)).catch(() => false);
+          if (!isRestoring) {
+            db.updateGuildConfig(guild.id, { logChannel: null, securityLogChannelId: null });
+          }
         }
       }
     }
