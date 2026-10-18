@@ -4770,6 +4770,9 @@ export async function getAutoModPanel(guild) {
   const DOT = '•';
   const E_CLOCK = '🕒';
 
+  const linkChannel = (config.linkAllowedChannel || config.urlAllowedChannel || config.antiLinkAllowedChannel)
+    ? `<#${config.linkAllowedChannel || config.urlAllowedChannel || config.antiLinkAllowedChannel}>` 
+    : 'None';
   const inviteChannel = config.inviteAllowedChannel ? `<#${config.inviteAllowedChannel}>` : 'None';
   const honeypotChannel = config.honeypotChannelId ? `<#${config.honeypotChannelId}>` : 'None';
   const honeypotTimeout = config.honeypotTimeoutMinutes || 15;
@@ -4840,6 +4843,7 @@ export async function getAutoModPanel(guild) {
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `### **Bypass Settings:**\n` +
     (bypassText.trim() ? bypassText.trim() + '\n' : '') +
+    `-# **| Links / URL Allowed Channel:** ${linkChannel}\n` +
     `-# **| Invite Allowed Channel:** ${inviteChannel}\n` +
     `-# **| Honeypot Channel:** ${honeypotChannel}`
   ));
@@ -4875,15 +4879,15 @@ export async function getAutoModPanel(guild) {
 
   const row4 = new ActionRowBuilder().addComponents(
     new ChannelSelectMenuBuilder()
-      .setCustomId('am_select_invite_channel')
-      .setPlaceholder('Select Invite Allowed Channel...')
+      .setCustomId('am_select_link_channel')
+      .setPlaceholder('Select Links / URL Allowed Channel...')
       .setChannelTypes(ChannelType.GuildText)
   );
 
   const row5 = new ActionRowBuilder().addComponents(
     new ChannelSelectMenuBuilder()
-      .setCustomId('am_select_honeypot_channel')
-      .setPlaceholder('Select Honeypot Trap Channel...')
+      .setCustomId('am_select_invite_channel')
+      .setPlaceholder('Select Invite Allowed Channel...')
       .setChannelTypes(ChannelType.GuildText)
   );
 
@@ -4976,14 +4980,17 @@ export async function getAdvancedConfigPanel(guild) {
   const db = (await import('../database.js')).default;
   const config = db.getGuildConfig(guild.id);
   
-  const { ContainerBuilder, TextDisplayBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle } = await import('discord.js');
+  const { ContainerBuilder, TextDisplayBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType } = await import('discord.js');
   
+  const honeypotChannel = config.honeypotChannelId ? `<#${config.honeypotChannelId}>` : 'None';
+
   const c = new ContainerBuilder();
   c.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `# AUTOMOD | ADVANCED GLOBAL SETTINGS\n` +
     `-# **| AI Toxicity & Sentiment Shield:** ${config.aiToxicityEnabled ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}\n` +
     `-# **| Allow All Links (Global):** ${config.allowAllLinks ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}\n` +
-    `-# **| Allow Invites (Global):** ${config.allowInvitesGlobally ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}`
+    `-# **| Allow Invites (Global):** ${config.allowInvitesGlobally ? '<:on:1533844867191406672>' : '<:off:1533844858983157851>'}\n` +
+    `-# **| Honeypot Channel:** ${honeypotChannel}`
   ));
   
   const row1 = new ActionRowBuilder().addComponents(
@@ -4991,11 +4998,19 @@ export async function getAdvancedConfigPanel(guild) {
       new ButtonBuilder().setCustomId('am_tgl_global_links').setLabel('Allow ALL Links').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('am_tgl_global_invites').setLabel('Global Invites').setStyle(ButtonStyle.Secondary)
   );
+
   const row2 = new ActionRowBuilder().addComponents(
+    new ChannelSelectMenuBuilder()
+      .setCustomId('am_select_honeypot_channel')
+      .setPlaceholder('Select Honeypot Trap Channel...')
+      .setChannelTypes(ChannelType.GuildText)
+  );
+
+  const row3 = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('am_back_to_main').setLabel('Back to Automod').setStyle(ButtonStyle.Secondary)
   );
   
-  c.addActionRowComponents(row1, row2);
+  c.addActionRowComponents(row1, row2, row3);
   return { components: [c.toJSON ? c.toJSON() : c], flags: MessageFlags.IsComponentsV2 };
 }
 

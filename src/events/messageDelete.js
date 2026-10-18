@@ -40,10 +40,8 @@ if (!message.guild) return;
     let deletionReason = '';
 
     const formatUser = (id) => {
-      const mem = message.guild.members.cache.get(id);
-      const u = message.client.users.cache.get(id);
-      const name = cleanDisplayName(mem?.displayName || u?.globalName || u?.username || 'Unknown');
-      return `[${name}](https://discord.com/users/${id})`;
+      if (!id) return 'Unknown';
+      return `<@${id}> (\`${id}\`)`;
     };
 
     if (!message.author) {
@@ -100,6 +98,14 @@ if (!message.guild) return;
     // Info
     innerComps.push({ type: 10, content: `-# **Author:** ${authorMention}` });
     innerComps.push({ type: 10, content: `-# **Deleted By:** ${deletedBy}${deletionReason}` });
+
+    // Detect Filtered / Deleted URLs in content
+    const urlMatches = content.match(/https?:\/\/[^\s]+/gi);
+    if (urlMatches && urlMatches.length > 0) {
+      const uniqueUrls = [...new Set(urlMatches)];
+      innerComps.push({ type: 10, content: `-# **Filtered URL(s):** ${uniqueUrls.map(u => `\`||${u}||\``).join(', ')}` });
+    }
+
     let safeChannel = message.channel.name.replace(/[^a-zA-Z0-9\- ]/g, '').trim();
       if (!safeChannel) safeChannel = 'Channel';
     innerComps.push({ type: 10, content: `-# **Channel:** [${safeChannel}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` });

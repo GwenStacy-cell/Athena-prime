@@ -1336,25 +1336,33 @@ export default {
         }
       }
       
-      const applyWarning = async (logReason, actionStr, headingStr) => {
+      const applyWarning = async (logReason, actionStr, headingStr, extraData = null) => {
           const authorTier = getUserTierName(message.guild, message.member || message.author);
           const warns = db.addWarning(guildId, userId, message.client.user.id, logReason);
+          const fields = [
+            { name: 'Member', value: `<@${userId}> (\`${userId}\`) [${authorTier}]`, inline: true },
+            { name: 'Channel', value: `${message.channel}`, inline: true },
+            { name: 'Warn Increment', value: `\`${warns.length}\` / ${maxWarnings}` }
+          ];
+
+          if (Array.isArray(extraData) && extraData.length > 0) {
+            fields.push({ name: 'Filtered URL(s)', value: extraData.map(u => `\`||${u}||\``).join(', ').slice(0, 500), inline: false });
+          } else if (typeof extraData === 'string' && extraData.trim()) {
+            fields.push({ name: 'Filtered Item', value: extraData.slice(0, 500), inline: false });
+          }
+
           logToSecurityChannel(message.guild, cv2.log(
             headingStr,
             logReason,
-            [
-              { name: 'Member', value: `${message.author.tag} (${userId}) [${authorTier}]`, inline: true },
-              { name: 'Channel', value: `${message.channel}`, inline: true },
-              { name: 'Warn Increment', value: `\`${warns.length}\` / ${maxWarnings}` }
-            ],
+            fields,
             'warning'
           ));
           if (warns.length >= maxWarnings) {
             const qRes = await executeQuarantine(message.guild, message.member, message.guild.members.me, `Automated: ${headingStr} limit reached`);
             db.clearWarnings(guildId, userId);
             
-                        const c = new ContainerBuilder();
-            const textContent = `-# > Reason: . [${message.member?.displayName || message.author.displayName || message.author.username}](https://discord.com/users/${message.author.id}) , **Maximum Warnings Exceeded**\n-# > \u2800\u2800\u2800\u2800\u2570\u203A has been automatically quarantined. ${qRes.message || ''}`;
+            const c = new ContainerBuilder();
+            const textContent = `-# > Reason: . <@${message.author.id}> , **Maximum Warnings Exceeded**\n-# > \u2800\u2800\u2800\u2800\u2570\u203A has been automatically quarantined. ${qRes.message || ''}`;
             const section = new SectionBuilder()
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(`**Security Quarantine | <a:uptime:1552608831060844575>**`),
@@ -1364,8 +1372,8 @@ export default {
             c.addSectionComponents(section);
             await message.channel.send({ components: [c], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
           } else {
-                        const c = new ContainerBuilder();
-            const textContent = `-# > Reason: . [${message.member?.displayName || message.author.displayName || message.author.username}](https://discord.com/users/${message.author.id}) , **${actionStr}**\n-# > \u2800\u2800\u2800\u2800\u2570\u203A has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`;
+            const c = new ContainerBuilder();
+            const textContent = `-# > Reason: . <@${message.author.id}> , **${actionStr}**\n-# > \u2800\u2800\u2800\u2800\u2570\u203A has been warned " Your Limit is ${warns.length}/${maxWarnings} " Exceeding the limits will leads to punishments ,`;
             const section = new SectionBuilder()
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(`**${headingStr} | <a:uptime:1552608831060844575>**`),
@@ -1556,17 +1564,91 @@ export default {
       }
 
       // 1.5 ANTI-LINK (URL FILTER)
-      if (dbConfig.allowAllLinks !== true && dbConfig.antiLinkEnabled && !checkBypass('URL Filter', hasAntiLinkImmunity)) {
+      const isLinkAllowedChannel = (dbConfig.linkAllowedChannel === message.channel.id) ||
+                                   (dbConfig.urlAllowedChannel === message.channel.id) ||
+                                   (dbConfig.antiLinkAllowedChannel === message.channel.id) ||
+                                   (Array.isArray(dbConfig.allowedLinkChannels) && dbConfig.allowedLinkChannels.includes(message.channel.id));
+
+      if (dbConfig.allowAllLinks !== true && !isLinkAllowedChannel && dbConfig.antiLinkEnabled && !checkBypass('URL Filter', hasAntiLinkImmunity)) {
         const linkRegex = /https?:\/\/[^\s]+/gi;
-        if (linkRegex.test(message.content)) {
+        const matches = message.content.match(linkRegex);
+        if (matches && matches.length > 0) {
+          const detectedUrls = [...new Set(matches)];
+          const urlList = detectedUrls.map(u => `\`||${u}||\``).join(', ');
+
+          let highlightedContent = message.content;
+          for (const u of detectedUrls) {
+            const escaped = u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            highlightedContent = highlightedContent.replace(new RegExp(`(${escaped})`, 'gi'), '**||$1||**');
+          }
+          if (highlightedContent.length > 1000) {
+            highlightedContent = highlightedContent.substring(0, 997) + '...';
+          }
+
+          const authorTier = getUserTierName(message.guild, message.member || message.author);
+
+          // Suppress redundant generic messageDelete event log
+          if (!message.client.ignoredDeletes) message.client.ignoredDeletes = new Set();
+          message.client.ignoredDeletes.add(message.id);
+
           await message.delete().catch(() => null);
-          await applyWarning(`Deleted message containing a URL.`, `Posted Links`, 'Warned URL Filter');
+
+          // 1. Detailed Security Channel Log
+          const securityLog = {
+            type: 17,
+            components: [
+              { type: 10, content: `## URL Link Filter Blocked | <a:atheNATICK:1557841381630681106>` },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content:
+                  `-# **Offending Member:** <@${message.author.id}> (\`${message.author.id}\` | \`${message.author.tag}\`)\n` +
+                  `-# **Author Clearance Tier:** \`[${authorTier}]\`\n` +
+                  `-# **Channel:** <#${message.channel.id}>\n` +
+                  `-# **Filtered URL(s):** ${urlList}\n` +
+                  `-# **Action Taken:** \`Link Deleted & Auto-Mod Strike Recorded\``
+              },
+              { type: 14, divider: true },
+              {
+                type: 10,
+                content: `### Highlighted Content:\n> ${highlightedContent}`
+              },
+              { type: 14, divider: true },
+              { type: 10, content: `-# **Athena Prime Auto-Mod Sentinel Active**` }
+            ]
+          };
+          await logToSecurityChannel(message.guild, { components: [securityLog], flags: 32768 });
+
+          // 2. Detailed Message Delete Log (msgDeletes)
+          let delInnerComps = [
+            { type: 10, content: `## Message Deleted | <a:uptime:1552608831060844575>` },
+            { type: 14, divider: true },
+            { type: 10, content: `-# **Author:** <@${message.author.id}> (\`${message.author.id}\`) [${authorTier}]` },
+            { type: 10, content: `-# **Deleted By:** Athena Prime (Anti-Link Auto-Mod)` },
+            { type: 10, content: `-# **Filtered URL(s):** ${urlList}` },
+            { type: 10, content: `-# **Reason:** Unauthorized link/URL detected: ${urlList}` },
+            { type: 10, content: `-# **Channel:** [\# ${message.channel.name}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` },
+            { type: 14, divider: true },
+            { type: 10, content: `-# **Message Content (Highlighted):**` }
+          ];
+          for (const line of highlightedContent.split('\n')) {
+            delInnerComps.push({ type: 10, content: `-# ${line}` });
+          }
+          delInnerComps.push({ type: 14, divider: true });
+          delInnerComps.push({ type: 10, content: `-# **Athena Diagnostic Logs**` });
+
+          await logServerEvent(message.guild, 'msgDeletes', {
+            components: [{ type: 17, components: delInnerComps }],
+            flags: 32768
+          });
+
+          await applyWarning(`Deleted message containing URL(s): ${urlList}`, `Posted Links: ${urlList}`, 'Warned URL Filter', detectedUrls);
           return;
         }
       }
 
       // 1.6 HIDDEN URL FILTER
-      if (dbConfig.hiddenUrlEnabled !== false && !checkBypass('Hidden URL Filter')) {
+      if (dbConfig.hiddenUrlEnabled !== false && !isLinkAllowedChannel && !checkBypass('Hidden URL Filter')) {
         const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/gi;
         let match;
         while ((match = mdLinkRegex.exec(message.content)) !== null) {
@@ -1575,8 +1657,30 @@ export default {
           if (/(https?:\/\/|[a-z0-9]+\.(com|net|org|gg|io|info))/.test(textPart)) {
             const textDomainMatch = textPart.match(/([a-z0-9-]+\.[a-z]+)/);
             if (textDomainMatch && !urlPart.includes(textDomainMatch[1])) {
+               const deceptiveUrl = match[2];
+               if (!message.client.ignoredDeletes) message.client.ignoredDeletes = new Set();
+               message.client.ignoredDeletes.add(message.id);
                await message.delete().catch(() => null);
-               await applyWarning(`Deceptive/Hidden hyperlink markdown detected.`, `Posted Hidden URL`, 'Warned Hidden URL');
+
+               const authorTier = getUserTierName(message.guild, message.member || message.author);
+               await logServerEvent(message.guild, 'msgDeletes', {
+                 components: [{
+                   type: 17,
+                   components: [
+                     { type: 10, content: `## Message Deleted | <a:uptime:1552608831060844575>` },
+                     { type: 14, divider: true },
+                     { type: 10, content: `-# **Author:** <@${message.author.id}> (\`${message.author.id}\`) [${authorTier}]` },
+                     { type: 10, content: `-# **Deleted By:** Athena Prime (Hidden URL Filter)` },
+                     { type: 10, content: `-# **Deceptive URL:** \`||${deceptiveUrl}||\`` },
+                     { type: 10, content: `-# **Channel:** [\# ${message.channel.name}](https://discord.com/channels/${message.guild.id}/${message.channel.id})` },
+                     { type: 14, divider: true },
+                     { type: 10, content: `-# **Athena Diagnostic Logs**` }
+                   ]
+                 }],
+                 flags: 32768
+               });
+
+               await applyWarning(`Deceptive/Hidden hyperlink markdown detected: \`||${deceptiveUrl}||\``, `Posted Hidden URL: \`||${deceptiveUrl}||\``, 'Warned Hidden URL', [deceptiveUrl]);
                return;
             }
           }

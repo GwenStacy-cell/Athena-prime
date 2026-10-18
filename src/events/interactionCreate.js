@@ -2477,8 +2477,22 @@ async function handleSecurityInteractions(interaction, guild) {
       else if (customId === 'am_save') {
         return interaction.message.delete().catch(() => null);
       }
+      else if (customId === 'am_select_link_channel') {
+        const selected = interaction.values[0];
+        const current = config.linkAllowedChannel || config.urlAllowedChannel || config.antiLinkAllowedChannel;
+        const newChannel = current === selected ? null : selected;
+        db.updateGuildConfig(guild.id, {
+          linkAllowedChannel: newChannel,
+          urlAllowedChannel: newChannel,
+          antiLinkAllowedChannel: newChannel
+        });
+        updated = true;
+      }
       else if (customId === 'am_select_invite_channel') {
-        db.updateGuildConfig(guild.id, { inviteAllowedChannel: interaction.values[0] });
+        const selected = interaction.values[0];
+        const current = config.inviteAllowedChannel;
+        const newChannel = current === selected ? null : selected;
+        db.updateGuildConfig(guild.id, { inviteAllowedChannel: newChannel });
         updated = true;
       }
       else if (customId === 'am_select_honeypot_channel') {
