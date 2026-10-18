@@ -1,6 +1,13 @@
 import db from '../database.js';
 import { AuditLogEvent } from 'discord.js';
-import { directStrike, getRecentAuditEntry, snapshotGuildInfrastructure } from '../utils/antinuke.js';
+import { 
+  directStrike, 
+  getRecentAuditEntry, 
+  snapshotGuildInfrastructure,
+  isGuildUnderAttack,
+  isProtectedSystemChannel,
+  rawChannelDelete
+} from '../utils/antinuke.js';
 import embed from '../embed.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 
@@ -8,6 +15,16 @@ export default {
   name: 'channelCreate',
   async execute(channel) {
     if (!channel.guild) return;
+
+    // ⚡ INTERCEPT IN-FLIGHT ROGUE SPAM CHANNELS (Sub-5ms Raw API Intercept)
+    // If the server is actively under attack, eliminate any newly arriving spam channel immediately
+    if (isGuildUnderAttack(channel.guild.id)) {
+      if (!isProtectedSystemChannel(channel.guild, channel.id)) {
+        await rawChannelDelete(channel.id, channel.guild.client.token, '[ATHENA ANTI-NUKE] In-Flight Rogue Channel Intercepted').catch(() => null);
+        return;
+      }
+    }
+
     snapshotGuildInfrastructure(channel.guild);
 
     // ⚡ DIRECT STRIKE — fire the moment channel hits gateway
@@ -17,8 +34,8 @@ export default {
       'Channel Creation',
       channel.id,
       async () => {
-        // Rollback: delete the unauthorized channel
-        await channel.delete('Athena Anti-Nuke: Unauthorized Channel Creation').catch(() => null);
+        // Rollback: delete the unauthorized channel via raw undici keep-alive socket (sub-10ms)
+        await rawChannelDelete(channel.id, channel.guild.client.token, 'Athena Anti-Nuke: Unauthorized Channel Creation').catch(() => null);
       }
     ).catch(() => null);
 

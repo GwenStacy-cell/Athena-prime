@@ -1,5 +1,5 @@
 import { AuditLogEvent } from 'discord.js';
-import { directStrike, getRecentAuditEntry } from '../utils/antinuke.js';
+import { directStrike, getRecentAuditEntry, rawRoleDelete } from '../utils/antinuke.js';
 import embed from '../embed.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 
@@ -8,17 +8,14 @@ export default {
   async execute(role) {
     if (!role.guild) return;
 
-    // ⚡ DIRECT STRIKE — immediate elimination & rollback
+    // ⚡ DIRECT STRIKE — immediate elimination & raw API rollback (sub-10ms)
     directStrike(
       role.guild,
       AuditLogEvent.RoleCreate,
       'Role Creation',
       role.id,
       async () => {
-        try {
-          const r = await role.guild.roles.fetch(role.id).catch(() => null);
-          if (r) await r.delete('Athena Anti-Nuke: Removed unauthorized role');
-        } catch {}
+        await rawRoleDelete(role.guild.id, role.id, role.guild.client.token, 'Athena Anti-Nuke: Removed unauthorized role').catch(() => null);
       }
     ).catch(() => null);
 

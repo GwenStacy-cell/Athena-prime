@@ -125,7 +125,7 @@ export async function rawRoleDelete(guildId, roleId, token, reason = '[ATHENA] U
 // ==========================================
 export async function rawFetchAuditLogs(guildId, token, auditType = null) {
   try {
-    let url = `https://discord.com/api/v10/guilds/${guildId}/audit-logs?limit=5`;
+    let url = `https://discord.com/api/v10/guilds/${guildId}/audit-logs?limit=20`;
     if (auditType != null) url += `&action_type=${auditType}`;
     const res = await fetch(url, {
       method: 'GET',
@@ -176,10 +176,20 @@ export function getRecentAuditEntry(guildId, auditType, targetId) {
   if (!list || list.length === 0) return null;
   const now = Date.now();
 
-  return list.find(e => 
+  // Tier 1: Exact targetId match (sub-1ms)
+  const exact = list.find(e => 
     e.action === auditType &&
     (!targetId || e.targetId === targetId) &&
     (now - e.timestamp < 10000)
+  );
+  if (exact) return exact;
+
+  // Tier 2: Correlation match — Recent destructive action of same type within 10s
+  return list.find(e =>
+    e.action === auditType &&
+    (now - e.timestamp < 10000) &&
+    e.executor &&
+    e.executorId !== guildId
   ) || null;
 }
 
@@ -291,6 +301,116 @@ export const queuedRestorations = restorationRegistry.queued;
 export function cacheDeletedItem(id, item) {
   deletedCache.set(id, item);
   setTimeout(() => deletedCache.delete(id), 60000);
+}
+
+// ==========================================
+// GUILD ATTACK STATE & LOCKDOWN
+// Automatically engages when destructive actions or rapid attacks are detected
+// ==========================================
+const activeAttacks = new Map(); // guildId -> { startTime, attackerId, timer }
+
+export function isGuildUnderAttack(guildId) {
+  return activeAttacks.has(guildId);
+}
+
+export function setGuildUnderAttack(guildId, attackerId = null, durationMs = 60_000) {
+  const existing = activeAttacks.get(guildId);
+  if (existing?.timer) clearTimeout(existing.timer);
+
+  const timer = setTimeout(() => {
+    activeAttacks.delete(guildId);
+  }, durationMs);
+
+  activeAttacks.set(guildId, {
+    startTime: existing?.startTime || Date.now(),
+    attackerId: attackerId || existing?.attackerId || null,
+    timer
+  });
+}
+
+// ==========================================
+// SYSTEM CHANNEL PROTECTION GUARD
+// Protects core system, database-configured, and restored channels from accidental cleanup
+// ==========================================
+export function isProtectedSystemChannel(guild, channelId) {
+  if (!guild || !channelId) return false;
+  const config = db.getGuildConfig(guild.id) || {};
+  if (
+    (config.securityLogChannelId && config.securityLogChannelId === channelId) ||
+    (config.logChannel && config.logChannel === channelId) ||
+    (config.quarantineChannelId && config.quarantineChannelId === channelId) ||
+    (config.quarantineVcId && config.quarantineVcId === channelId) ||
+    (config.dashboardChannelId && config.dashboardChannelId === channelId) ||
+    (config.welcomeChannel && config.welcomeChannel === channelId) ||
+    (config.statsChannelId && config.statsChannelId === channelId) ||
+    (config.musicChannelId && config.musicChannelId === channelId) ||
+    (config.ticketCategoryId && config.ticketCategoryId === channelId) ||
+    (guild.systemChannelId && guild.systemChannelId === channelId) ||
+    (guild.rulesChannelId && guild.rulesChannelId === channelId) ||
+    (guild.publicUpdatesChannelId && guild.publicUpdatesChannelId === channelId) ||
+    (guild.afkChannelId && guild.afkChannelId === channelId)
+  ) {
+    return true;
+  }
+
+  // Check active restoration registry
+  if (
+    restorationRegistry.restoredChannels.has(channelId) ||
+    restorationRegistry.restoredCategories.has(channelId) ||
+    restorationRegistry.restored.has(channelId) ||
+    restorationRegistry.inFlight.has(channelId) ||
+    restorationRegistry.queued.has(channelId)
+  ) {
+    return true;
+  }
+
+  // Check baseline infrastructure snapshot
+  const snap = infrastructureSnapshots.get(guild.id);
+  if (snap && snap.channels.has(channelId)) {
+    return true;
+  }
+
+  return false;
+}
+
+// ==========================================
+// ⚡ MASS CHANNEL ANNIHILATION
+// Scans for rogue spam channels created during attack flood and executes parallel undici raw deletes
+// ==========================================
+export async function annihilateRogueChannels(guild, attackerId = null) {
+  if (!guild || !guild.id) return;
+  const token = guild.client.token;
+  const snap = infrastructureSnapshots.get(guild.id);
+  const baselineChannelIds = snap ? new Set(snap.channels.keys()) : new Set();
+
+  try {
+    const liveChannels = await guild.channels.fetch().catch(() => guild.channels.cache);
+    const now = Date.now();
+    const channelsToDelete = [];
+
+    for (const ch of liveChannels.values()) {
+      if (!ch || !ch.id) continue;
+      if (isProtectedSystemChannel(guild, ch.id)) continue;
+      if (baselineChannelIds.has(ch.id)) continue;
+
+      // Created in the last 60 seconds and not in our pre-attack baseline snapshot
+      const createdAt = ch.createdTimestamp || (Number(BigInt(ch.id) >> 22n) + 1420070400000);
+      if (now - createdAt < 60_000) {
+        channelsToDelete.push(ch.id);
+      }
+    }
+
+    if (channelsToDelete.length > 0) {
+      // Parallel batch delete over pre-warmed keep-alive sockets (batches of 10)
+      const batchSize = 10;
+      for (let i = 0; i < channelsToDelete.length; i += batchSize) {
+        const batch = channelsToDelete.slice(i, i + batchSize);
+        await Promise.allSettled(batch.map(id => rawChannelDelete(id, token, '[ATHENA ANTI-NUKE] Rogue Spam Channel Annihilated')));
+      }
+    }
+  } catch (err) {
+    console.error(`[AntiNuke] Annihilate rogue channels failed for ${guild.name}:`, err.message);
+  }
 }
 
 // ==========================================
@@ -534,7 +654,11 @@ export async function executeIntelligentChannelRepair(guild, channelId, fallback
 
     // 7. Mark restored with 15-minute TTL
     restorationRegistry.restored.set(channelId, Date.now());
-    setTimeout(() => restorationRegistry.restored.delete(channelId), 15 * 60 * 1000);
+    restorationRegistry.restored.set(newChannel.id, Date.now());
+    setTimeout(() => {
+      restorationRegistry.restored.delete(channelId);
+      restorationRegistry.restored.delete(newChannel.id);
+    }, 15 * 60 * 1000);
 
     // 8. Synchronize Database configurations if the restored channel was tracked
     const dbUpdates = {};
@@ -585,6 +709,7 @@ export async function executeIntelligentChannelRepair(guild, channelId, fallback
       }
       const basic = await guild.channels.create(basicOptions);
       restorationRegistry.restored.set(channelId, Date.now());
+      restorationRegistry.restored.set(basic.id, Date.now());
       restorationRegistry.restoredChannels.set(channelId, basic.id);
       snapshotGuildInfrastructure(guild);
       return basic;
@@ -993,6 +1118,18 @@ async function punish(guild, executor, eventType, config, forceBan = true) {
     console.error('[AntiNuke] Punishment failed:', err.message);
     result = `Hierarchy blocked (${err.message})`;
   }
+
+  // ⚡ Mark guild under attack & trigger triple rogue cleanup sweep
+  setGuildUnderAttack(guild.id, executor.id, 60_000);
+  const isChannelOrNuke = eventType.toLowerCase().includes('channel') ||
+                          eventType.toLowerCase().includes('nuke') ||
+                          eventType.toLowerCase().includes('creation');
+  if (isChannelOrNuke) {
+    annihilateRogueChannels(guild, executor.id).catch(() => null);
+    setTimeout(() => annihilateRogueChannels(guild, executor.id).catch(() => null), 1200);
+    setTimeout(() => annihilateRogueChannels(guild, executor.id).catch(() => null), 3000);
+  }
+
   return result;
 }
 
@@ -1031,7 +1168,9 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
   let executor = null;
   const ringMatch = getRecentAuditEntry(guild.id, auditType, targetId);
   if (ringMatch && ringMatch.executor) {
-    executor = ringMatch.executor;
+    if (ringMatch.targetId === targetId || !isAuthorized(guild, ringMatch.executor, eventType)) {
+      executor = ringMatch.executor;
+    }
   }
 
   // ⚡ Step 2: If not in ring, use high-speed raw REST fetch directly over keep-alive socket (sub-15ms)
@@ -1042,15 +1181,31 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
     if (!fetchPromise) {
       fetchPromise = (async () => {
         const token = guild.client.token;
-        for (let attempt = 0; attempt < 3; attempt++) {
+        const delays = [0, 35, 75, 120, 200];
+        for (let attempt = 0; attempt < delays.length; attempt++) {
+          if (delays[attempt] > 0) {
+            await new Promise(r => setTimeout(r, delays[attempt]));
+          }
           const rawData = await rawFetchAuditLogs(guild.id, token, auditType);
           const entries = rawData?.audit_log_entries || [];
           const users = rawData?.users || [];
 
-          const found = entries.find(e =>
+          // Match Priority 1: Exact targetId match
+          let found = entries.find(e =>
             (!targetId || e.target_id === targetId) &&
             (Date.now() - (Number(BigInt(e.id) >> 22n) + 1420070400000) < 15000)
-          ) || (attempt > 0 && entries[0] && (Date.now() - (Number(BigInt(entries[0].id) >> 22n) + 1420070400000) < 10000) ? entries[0] : null);
+          );
+
+          // Match Priority 2: Fuzzy correlate — Any recent destructive entry by an unauthorized user
+          if (!found) {
+            found = entries.find(e => {
+              if (!e.user_id || e.user_id === guild.client.user.id) return false;
+              const age = Date.now() - (Number(BigInt(e.id) >> 22n) + 1420070400000);
+              if (age > 15000) return false;
+              const userObj = users.find(u => u.id === e.user_id) || { id: e.user_id };
+              return !isAuthorized(guild, userObj, eventType);
+            });
+          }
 
           if (found && found.user_id) {
             const userObj = users.find(u => u.id === found.user_id);
@@ -1067,19 +1222,26 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
             });
             return exec;
           }
-          await new Promise(r => setTimeout(r, 20));
         }
         return null;
       })();
 
       inFlightAuditFetches.set(fetchKey, fetchPromise);
-      setTimeout(() => inFlightAuditFetches.delete(fetchKey), 1200);
+      fetchPromise.finally(() => {
+        inFlightAuditFetches.delete(fetchKey);
+      });
     }
 
     executor = await fetchPromise;
   }
 
-  if (!executor) return; // Cannot identify actor
+  if (!executor) {
+    // If actor could not be identified, release queued lock so subsequent audit events can repair
+    if (targetId) {
+      restorationRegistry.queued.delete(targetId);
+    }
+    return;
+  }
 
   // Skip if it's the bot itself or authorized
   if (executor.id === guild.client.user.id) return;
@@ -1093,12 +1255,17 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
   // ⚡ CONDEMN — synchronous 0ms lock, subsequent attempts skip straight to repair
   const alreadyCondemned = isCondemned(guild.id, executor.id);
   condemn(guild.id, executor.id);
+  setGuildUnderAttack(guild.id, executor.id, 60_000);
 
   if (alreadyCondemned) {
     // Already eliminated — execute damage repair immediately
     if (rollbackFn) {
       restorationQueue.push({ guild, isCategory: eventType.includes('Category'), execute: rollbackFn });
       processRestorationQueue();
+    }
+    // For rogue channel creation, ensure rogue channel is annihilated
+    if (auditType === AuditLogEvent.ChannelCreate && targetId) {
+      rawChannelDelete(targetId, guild.client.token, '[ATHENA ANTI-NUKE] Rogue Channel Annihilated').catch(() => null);
     }
     return;
   }
@@ -1194,6 +1361,10 @@ export async function handleAuditLogEntry(guild, entry) {
         });
         processRestorationQueue();
       }
+    } else if (action === AuditLogEvent.ChannelCreate) {
+      if (targetId) rawChannelDelete(targetId, guild.client.token, '[ATHENA ANTI-NUKE] Rogue Channel Annihilated').catch(() => null);
+      setGuildUnderAttack(guild.id, executorId, 60_000);
+      annihilateRogueChannels(guild, executorId).catch(() => null);
     } else if (action === AuditLogEvent.RoleDelete) {
       if (!isRestorationHandled(targetId)) {
         markRestorationQueued(targetId);
@@ -1205,6 +1376,10 @@ export async function handleAuditLogEntry(guild, entry) {
         });
         processRestorationQueue();
       }
+    } else if (action === AuditLogEvent.RoleCreate) {
+      if (targetId) rawRoleDelete(guild.id, targetId, guild.client.token, '[ATHENA ANTI-NUKE] Rogue Role Annihilated').catch(() => null);
+    } else if (action === AuditLogEvent.WebhookCreate) {
+      if (targetId) rawDeleteWebhook(targetId, guild.client.token, '[ATHENA ANTI-NUKE] Rogue Webhook Annihilated').catch(() => null);
     }
     return;
   }
@@ -1425,8 +1600,10 @@ export async function handleAuditLogEntry(guild, entry) {
     }
 
     if (action === AuditLogEvent.ChannelCreate) {
-      if (targetId) await rawChannelDelete(targetId, guild.client.token).catch(() => null);
-      rollbackResult = 'Unauthorized channel annihilated';
+      if (targetId) await rawChannelDelete(targetId, guild.client.token, '[ATHENA ANTI-NUKE] Unauthorized Channel Annihilated').catch(() => null);
+      setGuildUnderAttack(guild.id, executor.id, 60_000);
+      annihilateRogueChannels(guild, executor.id).catch(() => null);
+      rollbackResult = 'Unauthorized channel annihilated & spam sweep executed';
     }
 
     if (action === AuditLogEvent.RoleDelete) {
