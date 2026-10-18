@@ -1647,8 +1647,8 @@ export function buildHelpContainer(client, guildId, moduleId) {
     const getEmoji = (name, fallback) => {
       // 1. Designated custom emojis requested specifically for these 4 modules
       const designatedCustomEmojis = {
-        'ai': '<:9a084bbf_2370_4734_896b_dd29f969:1561256545289900052>',
-        'aiguide': '<:9a084bbf_2370_4734_896b_dd29f969:1561256545289900052>',
+        'ai': '<:1dd48b63_d55f_467f_bc5c_04df55c7:1561262243352412221>',
+        'aiguide': '<:1dd48b63_d55f_467f_bc5c_04df55c7:1561262243352412221>',
         'counting': '<:f4363980_d43f_47b9_81db_0fe0a9a4:1561256353094172692>',
         'community': '<:de2de296_a511_40fa_953f_01365b9a:1561256778405257370>',
         'economy': '<:d908aaba_8825_41ee_bc4c_ad871ad0:1561256682376400919>',
@@ -1687,7 +1687,7 @@ export function buildHelpContainer(client, guildId, moduleId) {
         'coins': '<:d908aaba_8825_41ee_bc4c_ad871ad0:1561256682376400919>',
         'utilities': '<:pencil:1523770653528817835>',
         'black_dot': '<a:black_dot:1544740123403620422>',
-        'ai': '<:9a084bbf_2370_4734_896b_dd29f969:1561256545289900052>',
+        'ai': '<:1dd48b63_d55f_467f_bc5c_04df55c7:1561262243352412221>',
         'home': '<:on:1533844867191406672>'
       };
       return customEmojiFallback[name] || fallback;
