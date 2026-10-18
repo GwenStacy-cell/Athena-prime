@@ -416,6 +416,19 @@ export async function buildLiveCommandStatusPayload(guild, member, user, cmdName
       statusPoints.push(`-# • **Leveling Module:** ${cfg.levelingEnabled !== false ? '`Active`' : '`Disabled`'}`);
       statusPoints.push(`-# • **Your Active Card Theme:** \`${currentTheme}\``);
       actionButtons.push({ type: 2, custom_id: 'athena_act_rank_preview', label: 'Preview XP Card', style: 2 });
+    } else if (cleanName === 'aiannounce' || cleanName === 'announce') {
+      statusPoints.push(`-# • **AI Announcement Engine:** \`Gemini 3.8 Flash High Architecture\``);
+      statusPoints.push(`-# • **Custom Emoji ID Support:** \`Active (Emoji & ID parsing enabled)\``);
+      actionButtons.unshift({ type: 2, custom_id: 'athena_act_aiannounce_create', label: 'Draft AI Announcement', style: 2 });
+    } else if (cleanName === 'news') {
+      const feeds = db.getNewsFeeds ? db.getNewsFeeds(guild.id) : [];
+      const newsChan = cfg.newsChannelId ? `<#${cfg.newsChannelId}>` : '`Not Bound`';
+      statusPoints.push(`-# • **News Channel:** ${newsChan}`);
+      statusPoints.push(`-# • **Subscribed Feeds:** \`${feeds.length} / 5 feeds active\``);
+    } else if (cleanName === 'rate' || cleanName === 'rateedit') {
+      const rChan = cfg.rateChannelId ? `<#${cfg.rateChannelId}>` : '`Not Bound`';
+      statusPoints.push(`-# • **Rate Edit Channel:** ${rChan}`);
+      statusPoints.push(`-# • **Interaction Method:** \`Interactive 1-5 Star Voting Buttons\``);
     }
   }
 
@@ -598,8 +611,10 @@ export async function handleAthenaGuideButtons(interaction) {
   }
 
   // --- ONE-CLICK INTERACTIVE ACTION BUTTON HANDLERS ---
-  if (customId && customId.startsWith('athena_act_')) {
-    const act = customId.replace('athena_act_', '');
+  if (customId && (customId.startsWith('athena_act_') || customId.startsWith('athena_guide_action:'))) {
+    const act = customId.startsWith('athena_act_') 
+      ? customId.replace('athena_act_', '') 
+      : customId.replace('athena_guide_action:', '');
 
     // 1. Apply Hogwarts Theme
     if (act === 'ranktheme_hogwarts') {
@@ -664,6 +679,37 @@ export async function handleAthenaGuideButtons(interaction) {
             ]
           }
         ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 3b. Launch AI Announcement Studio Directly
+    if (act === 'aiannounce_create') {
+      const hasPerm = member?.permissions?.has(PermissionFlagsBits.ManageGuild) || 
+                      member?.permissions?.has(PermissionFlagsBits.ManageMessages) || 
+                      member?.permissions?.has(PermissionFlagsBits.Administrator) || 
+                      guild?.ownerId === user.id || 
+                      isBotOwnerSync(user.id);
+      if (!hasPerm) {
+        return cv2.respond(interaction, {
+          components: [
+            {
+              type: 17,
+              components: [
+                {
+                  type: 10,
+                  content: `### Access Denied | ${TICK}\n-# Manage Server, Manage Messages, or Administrator permissions required to launch the AI Announcement Studio.`
+                }
+              ]
+            }
+          ],
+          flags: MessageFlags.IsComponentsV2
+        }, 7).catch(() => null);
+      }
+      const { buildPromptIntakeContainer } = await import('./aiannounce.js');
+      const intakeContainer = buildPromptIntakeContainer();
+      return cv2.respond(interaction, {
+        components: [intakeContainer],
         flags: MessageFlags.IsComponentsV2
       }, 7).catch(() => null);
     }
@@ -1220,7 +1266,15 @@ export async function handleAthenaGuideButtons(interaction) {
       const targetCmd = act.replace('ai_ask_', '');
       promptQuery = `How do I configure and use !${targetCmd} in my Discord server? Explain setup steps, options, and best practices.`;
     } else {
-      promptQuery = `How to ${label}? Provide exact step-by-step guidance and actions for Athena Prime.`;
+      const { commandMap } = await import('./loader.js');
+      const parts = act.split('_');
+      const potentialCmd = parts[0]?.toLowerCase();
+      if (potentialCmd && commandMap.has(potentialCmd)) {
+        const sub = parts.slice(1).join(' ');
+        promptQuery = `How do I use and configure !${potentialCmd}${sub ? ` ${sub}` : ''} in Athena Prime? Provide complete step-by-step instructions, parameters, and architecture.`;
+      } else {
+        promptQuery = `How to ${label}? Provide exact step-by-step guidance and actions for Athena Prime.`;
+      }
     }
 
     await interaction.deferReply({ flags: MessageFlags.IsComponentsV2 }).catch(() => null);
@@ -1251,12 +1305,11 @@ export async function handleAthenaGuideButtons(interaction) {
       progress.stop();
     }
 
-    if (aiResult?.container) {
-      return cv2.edit(interaction, {
-        components: [aiResult.container],
-        flags: MessageFlags.IsComponentsV2
-      }).catch(() => null);
-    }
+    const container = buildAthenaGuideContainer(user, promptQuery, aiResult, accentColor, prefix, aiResult?.session);
+    return cv2.edit(interaction, {
+      components: [container],
+      flags: MessageFlags.IsComponentsV2
+    }).catch(() => null);
   }
 
   // --- MODAL: ASK FOLLOW-UP DOUBT ---

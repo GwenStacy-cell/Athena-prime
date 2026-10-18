@@ -756,7 +756,7 @@ export function detectRequestedButton(prompt, primaryCommand = '') {
 /**
  * Builds the array of 1-4 one-click action buttons (strictly Grey / style: 2) for any command.
  */
-export function getCommandActionButtons(primaryCommand = '', prompt = '', requestedButton = null) {
+export function getCommandActionButtons(primaryCommand = '', prompt = '', requestedButton = null, commandMeta = null) {
   const cmd = (primaryCommand || '').toLowerCase().trim();
   const buttons = [];
 
@@ -770,139 +770,188 @@ export function getCommandActionButtons(primaryCommand = '', prompt = '', reques
     });
   }
 
-  if (cmd === 'ranktheme' || cmd === 'rank' || cmd === 'level' || cmd === 'xp' || /rank|theme|hogwarts/i.test(cmd)) {
-    if (!buttons.some(b => b.custom_id === 'athena_act_ranktheme_hogwarts')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_ranktheme_hogwarts',
-        label: 'Apply Hogwarts Theme',
-        style: 2
-      });
-    }
-    if (!buttons.some(b => b.custom_id === 'athena_act_ranktheme_athena')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_ranktheme_athena',
-        label: 'Apply Athena Theme',
-        style: 2
-      });
-    }
-    if (!buttons.some(b => b.custom_id === 'athena_act_rank_preview')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_rank_preview',
-        label: 'Preview XP Card',
-        style: 2
-      });
-    }
-  } else if (cmd === 'ticket' || cmd === 'ticketpanel' || cmd === 'tickets' || /ticket/i.test(cmd)) {
-    if (!buttons.some(b => b.custom_id === 'athena_act_ticket_manager')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_ticket_manager',
-        label: 'Open Ticket Manager',
-        style: 2
-      });
-    }
-    if (!buttons.some(b => b.custom_id === 'athena_act_ticket_create')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_ticket_create',
-        label: 'Create Support Ticket',
-        style: 2
-      });
-    }
-  } else if (cmd === 'security' || cmd === 'antinuke' || cmd === 'ss' || /security|antinuke/i.test(cmd)) {
-    if (!buttons.some(b => b.custom_id === 'athena_act_security_status')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_security_status',
-        label: 'Inspect Security Status',
-        style: 2
-      });
-    }
-    if (!buttons.some(b => b.custom_id === 'athena_act_security_enable_all')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_security_enable_all',
-        label: 'Enable All Security',
-        style: 2
-      });
-    }
-    if (!buttons.some(b => b.custom_id === 'athena_act_security_whitelist')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_security_whitelist',
-        label: 'View Whitelist',
-        style: 2
-      });
-    }
-  } else if (cmd === 'automod' || cmd === 'filters' || /automod/i.test(cmd)) {
-    if (!buttons.some(b => b.custom_id === 'athena_act_automod_panel')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_automod_panel',
-        label: 'Open AutoMod Panel',
-        style: 2
-      });
-    }
-    if (!buttons.some(b => b.custom_id === 'athena_act_automod_ai')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_automod_ai',
-        label: 'Toggle AI Toxicity Shield',
-        style: 2
-      });
-    }
-  } else if (cmd === 'lockdown' || /lockdown/i.test(cmd)) {
-    if (!buttons.some(b => b.custom_id === 'athena_act_lockdown_status')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_lockdown_status',
-        label: 'Inspect Lockdown Status',
-        style: 2
-      });
-    }
-    if (!buttons.some(b => b.custom_id === 'athena_act_unlockdown')) {
-      buttons.push({
-        type: 2,
-        custom_id: 'athena_act_unlockdown',
-        label: 'Emergency Unlockdown',
-        style: 2
-      });
-    }
-  } else if (cmd === 'verify' || cmd === 'verification') {
-    buttons.push({
-      type: 2,
-      custom_id: 'athena_act_verify_setup',
-      label: 'Open Verification Setup',
-      style: 2
-    });
-  } else if (cmd === 'welcome' || cmd === 'leave') {
+  // 1. Announcements & AI Studio
+  if (cmd === 'aiannounce' || cmd === 'announce' || /announce/i.test(cmd)) {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_aiannounce_create', label: 'Draft AI Announcement', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_status_aiannounce', label: 'Inspect Announce Status', style: 2 }
+    );
+  }
+  // 2. Rank Themes & XP Cards
+  else if (cmd === 'ranktheme' || cmd === 'rank' || cmd === 'level' || cmd === 'xp' || /rank|theme|hogwarts/i.test(cmd)) {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_ranktheme_hogwarts', label: 'Apply Hogwarts Theme', style: 2 },
+      { type: 2, custom_id: 'athena_act_ranktheme_athena', label: 'Apply Athena Theme', style: 2 },
+      { type: 2, custom_id: 'athena_act_rank_preview', label: 'Preview XP Card', style: 2 }
+    );
+  }
+  // 3. Ticket System
+  else if (cmd === 'ticket' || cmd === 'ticketpanel' || cmd === 'tickets' || /ticket/i.test(cmd)) {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_ticket_manager', label: 'Open Ticket Manager', style: 2 },
+      { type: 2, custom_id: 'athena_act_ticket_create', label: 'Create Support Ticket', style: 2 }
+    );
+  }
+  // 4. Security & Antinuke Matrix
+  else if (cmd === 'security' || cmd === 'antinuke' || cmd === 'ss' || /security|antinuke/i.test(cmd)) {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_security_status', label: 'Inspect Security Status', style: 2 },
+      { type: 2, custom_id: 'athena_act_security_enable_all', label: 'Enable All Security', style: 2 },
+      { type: 2, custom_id: 'athena_act_security_whitelist', label: 'View Whitelist', style: 2 }
+    );
+  }
+  // 5. AutoMod & Anti-Spam
+  else if (cmd === 'automod' || cmd === 'filters' || cmd === 'spam' || /automod/i.test(cmd)) {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_automod_panel', label: 'Open AutoMod Panel', style: 2 },
+      { type: 2, custom_id: 'athena_act_automod_ai', label: 'Toggle AI Toxicity Shield', style: 2 }
+    );
+  }
+  // 6. Lockdown & Quarantine
+  else if (cmd === 'lockdown' || /lockdown/i.test(cmd)) {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_lockdown_status', label: 'Inspect Lockdown Status', style: 2 },
+      { type: 2, custom_id: 'athena_act_unlockdown', label: 'Emergency Unlockdown', style: 2 }
+    );
+  }
+  // 7. Verification Gateway
+  else if (cmd === 'verify' || cmd === 'verification') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_verify_setup', label: 'Open Verification Setup', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_verify', label: 'View !verify Help', style: 2 }
+    );
+  }
+  // 8. Welcome & Leave Systems
+  else if (cmd === 'welcome' || cmd === 'leave') {
     buttons.push(
       { type: 2, custom_id: 'athena_act_welcome_setup', label: 'Open Welcome Setup', style: 2 },
       { type: 2, custom_id: 'athena_act_leave_setup', label: 'Open Leave Setup', style: 2 },
       { type: 2, custom_id: 'athena_act_welcome_test', label: 'Test Welcome Card', style: 2 }
     );
-  } else if (cmd === 'giveaway') {
-    buttons.push({
-      type: 2,
-      custom_id: 'athena_act_giveaway_manager',
-      label: 'Open Giveaway Manager',
-      style: 2
-    });
-  } else if (cmd) {
+  }
+  // 9. Giveaway Management
+  else if (cmd === 'giveaway') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_giveaway_manager', label: 'Open Giveaway Manager', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_status_giveaway', label: 'Inspect Giveaway Status', style: 2 }
+    );
+  }
+  // 10. Auto-Roles
+  else if (cmd === 'autorole' || cmd === 'joinrole') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_autorole', label: 'Inspect AutoRole Status', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_autorole', label: 'View !autorole Help', style: 2 }
+    );
+  }
+  // 11. Server Backups
+  else if (cmd === 'backup') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_backup', label: 'Inspect Server Backups', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_backup', label: 'View !backup Help', style: 2 }
+    );
+  }
+  // 12. Join to Create (JTC) Voice & VC Panel
+  else if (cmd === 'jtc' || cmd === 'vcpanel' || cmd === 'vc') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_jtc', label: 'Inspect JTC Voice Hub', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_jtc', label: 'View !jtc Help', style: 2 }
+    );
+  }
+  // 13. Sticky Messages
+  else if (cmd === 'sticky') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_sticky', label: 'Inspect Sticky Messages', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_sticky', label: 'View !sticky Help', style: 2 }
+    );
+  }
+  // 14. Custom Triggers & Autoresponder
+  else if (cmd === 'trigger' || cmd === 'autoresponder' || cmd === 'ar') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_trigger', label: 'Inspect Active Triggers', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_trigger', label: 'View !trigger Help', style: 2 }
+    );
+  }
+  // 15. Confessions
+  else if (cmd === 'confession' || cmd === 'confess') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_confession', label: 'Inspect Confessions', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_confession', label: 'View !confession Help', style: 2 }
+    );
+  }
+  // 16. Starboard
+  else if (cmd === 'starboard') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_starboard', label: 'Inspect Starboard', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_starboard', label: 'View !starboard Help', style: 2 }
+    );
+  }
+  // 17. Birthday System
+  else if (cmd === 'birthday') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_birthday', label: 'Inspect Birthdays', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_birthday', label: 'View !birthday Help', style: 2 }
+    );
+  }
+  // 18. News Feeds
+  else if (cmd === 'news') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_news', label: 'Inspect News Feeds', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_news', label: 'View !news Help', style: 2 }
+    );
+  }
+  // 19. Rate / Edit Rating
+  else if (cmd === 'rate' || cmd === 'rateedit' || cmd === 'ratelb') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_rate', label: 'Inspect Rate Status', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_rate', label: 'View !rate Help', style: 2 }
+    );
+  }
+  // 20. Economy & Casino Games
+  else if (cmd === 'economy' || cmd === 'minigames' || cmd === 'blackjack' || cmd === 'roulette') {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_cmd_status_economy', label: 'Check Balance', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_help_minigames', label: 'View Casino Help', style: 2 }
+    );
+  }
+  // 21. Moderation Suite
+  else if (cmd === 'moderation' || cmd === 'mod' || /ban|kick|timeout|mute|warn|purge|quarantine/i.test(cmd)) {
+    buttons.push(
+      { type: 2, custom_id: 'athena_act_automod_panel', label: 'Open AutoMod Panel', style: 2 },
+      { type: 2, custom_id: 'athena_act_cmd_status_moderation', label: 'Inspect Moderation Status', style: 2 }
+    );
+  }
+  // 22. Dynamic Subcommand / Option Inspection for ANY other command
+  else if (cmd) {
     const capitalized = cmd.charAt(0).toUpperCase() + cmd.slice(1);
+    const subOpts = commandMeta?.options?.filter(o => o.type === 1) || [];
+    if (subOpts.length > 0) {
+      const topSub = subOpts[0].name;
+      const subLabel = topSub.charAt(0).toUpperCase() + topSub.slice(1);
+      buttons.push({
+        type: 2,
+        custom_id: `athena_act_${cmd}_${topSub}`,
+        label: `${subLabel} ${capitalized}`,
+        style: 2
+      });
+    }
     buttons.push(
       { type: 2, custom_id: `athena_act_cmd_status_${cmd}`, label: `Inspect ${capitalized} Status`, style: 2 },
       { type: 2, custom_id: `athena_act_cmd_help_${cmd}`, label: `View !${cmd} Help`, style: 2 }
     );
   }
 
-  return buttons.slice(0, 4).map(btn => ({
-    ...btn,
-    style: 2 // Strictly Grey / Secondary
-  }));
+  // Deduplicate by custom_id and return up to 4 buttons
+  const seen = new Set();
+  const uniqueButtons = [];
+  for (const b of buttons) {
+    if (!seen.has(b.custom_id)) {
+      seen.add(b.custom_id);
+      uniqueButtons.push({ ...b, style: 2 });
+    }
+    if (uniqueButtons.length >= 4) break;
+  }
+
+  return uniqueButtons;
 }
 
 /**
@@ -969,7 +1018,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
 
   // One-click action buttons and user-requested buttons
   const requestedButton = detectRequestedButton(cleanPrompt, primaryCmd);
-  const actionButtons = getCommandActionButtons(primaryCmd, cleanPrompt, requestedButton);
+  const actionButtons = getCommandActionButtons(primaryCmd, cleanPrompt, requestedButton, primaryCmdMeta);
 
   // Check if requested capability exists in Athena Prime's command matrix
   const maxCmdScore = knowledge.matchedCommands.length > 0 ? knowledge.matchedCommands[0].score : 0;
@@ -1118,7 +1167,13 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     '  • Live Verification: tell the user how to test and verify that the command took effect (e.g. checking confirmation embed, checking `#security-logs`, or running a status command).',
     '',
     'CRITICAL INTERACTIVE ONE-CLICK ACTION BUTTONS DIRECTIVE:',
-    '- Athena equips one-click grey action buttons directly on the Discord response card for commands: ' + (actionButtons.map(b => `[${b.label}]`).join(', ') || 'One-Click Actions') + '.',
+    '- Athena equips one-click grey action buttons directly on the Discord response card: ' + (actionButtons.map(b => `[${b.label}]`).join(', ') || 'One-Click Actions') + '.',
+    '- DYNAMIC AI ACTION BUTTON RECOMMENDATION: At the very end of your response, you may optionally declare 1 to 2 tailored interactive action buttons for the user to execute immediately. Format each action on a single line at the end:',
+    '  `ACTIONS: [Button Label | action_id]`',
+    '  Examples:',
+    '  `ACTIONS: [Open Config Dashboard | cmd_status_' + (primaryCmd || 'security') + ']`',
+    '  `ACTIONS: [View Command Manual | cmd_help_' + (primaryCmd || 'help') + ']`',
+    '  `ACTIONS: [Draft AI Announcement | aiannounce_create]`',
     '- You MUST conclude your response by explicitly informing the user that one-click action buttons are attached below.',
     '- Even if the user did not ask for buttons, you MUST state that Athena can provide custom one-click buttons for any specific action or setting of this command, and invite them:',
     '  "Need a custom one-click action button for this command? Tell me what button you want or click \'Ask Follow-Up Doubt\', and I will generate the interactive button directly for you!"',
@@ -1245,22 +1300,51 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     };
   }
 
-  const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, aiResult.text, memberClearance, canExecute);
+  let cleanAiText = aiResult.text || '';
+  const dynamicAiButtons = [];
+  const actionRegex = /ACTIONS:\s*\[([^\]\|]+)\|([^\]]+)\]/gi;
+  let match;
+  while ((match = actionRegex.exec(cleanAiText)) !== null) {
+    const label = match[1].trim();
+    const actionId = match[2].trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    if (label && actionId) {
+      dynamicAiButtons.push({
+        type: 2,
+        label: label.length > 30 ? label.slice(0, 27) + '...' : label,
+        custom_id: actionId.startsWith('athena_act_') ? actionId : `athena_act_${actionId}`,
+        style: 2
+      });
+    }
+  }
+  cleanAiText = cleanAiText.replace(/ACTIONS:\s*\[[^\]]+\]/gi, '').trim();
+
+  // Combine dynamic AI buttons with pre-calculated actionButtons (AI buttons prioritized first)
+  const combinedActionButtons = [];
+  const seenIds = new Set();
+  for (const b of [...dynamicAiButtons, ...actionButtons]) {
+    if (!seenIds.has(b.custom_id)) {
+      seenIds.add(b.custom_id);
+      combinedActionButtons.push({ ...b, style: 2 });
+    }
+    if (combinedActionButtons.length >= 4) break;
+  }
+
+  const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, cleanAiText, memberClearance, canExecute);
   const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
     matchedCommands: knowledge.matchedCommands,
     primaryCommand: primaryCmd,
     suggestions,
-    text: aiResult.text
+    text: cleanAiText
   });
 
   return {
     success: true,
-    text: formatAIToGreyMarkdown(aiResult.text),
+    text: formatAIToGreyMarkdown(cleanAiText),
     model: aiResult.model,
     latencyMs: Math.max(20, Date.now() - startTime),
     session: updatedSession,
     suggestions,
-    actionButtons,
+    actionButtons: combinedActionButtons,
     requestedButton,
     typoCorrection: typoResult,
     clearance: memberClearance,
