@@ -5,7 +5,7 @@ import { executeQuarantine } from '../commands/security.js';
 import { PermissionFlagsBits, Routes, MessageFlags } from 'discord.js';
 import { logToSecurityChannel, getOrCreateQuarantineRole, getOrCreateQuarantineChannel, isBotOwnerSync, getUserTierName, cleanDisplayName } from '../utils/helpers.js';
 import { sendWelcomeMessage } from '../commands/welcome.js';
-import { hasDangerousPerms, DANGEROUS_PERMS } from '../utils/antinuke.js';
+import { hasDangerousPerms, DANGEROUS_PERMS, isBotAuthorized, rawBan, directStrike } from '../utils/antinuke.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 import { auditAndNeutralizeOnboarding } from '../utils/onboardingGuard.js';
 
@@ -24,16 +24,14 @@ export default {
     // ==========================================
     if (member.user.bot) {
       if ((config.securityEnabled || config.antiNukeEnabled) && config.antinukeModules?.antiBotAdd !== false) {
-        import('../utils/antinuke.js').then(({ isBotAuthorized, rawBan, directStrike }) => {
-          if (!isBotAuthorized(guild, member.id)) {
-            // ? INSTANT 1ms ELIMINATION
-            // We ban the bot instantly without waiting for the audit log!
-            rawBan(guild.id, member.id, guild.client.token, '[ATHENA] Anti-Nuke: Unauthorized Bot Addition').catch(() => null);
-            
-            // Fire directStrike to find the executor (who added the bot) and ban them too
-            directStrike(guild, 28 /* AuditLogEvent.BotAdd */, 'Unauthorized Bot Addition', member.id, null).catch(() => null);
-          }
-        });
+        if (!isBotAuthorized(guild, member.id)) {
+          // ⚡ INSTANT 0ms ELIMINATION
+          // We ban the bot instantly without waiting for the audit log!
+          rawBan(guild.id, member.id, guild.client.token, '[ATHENA] Anti-Nuke: Unauthorized Bot Addition').catch(() => null);
+          
+          // Fire directStrike to find the executor (who added the bot) and ban them too
+          directStrike(guild, 28 /* AuditLogEvent.BotAdd */, 'Unauthorized Bot Addition', member.id, null).catch(() => null);
+        }
       }
       return;
     }
