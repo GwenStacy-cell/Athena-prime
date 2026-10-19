@@ -305,6 +305,25 @@ export const commands = [
                     `> • \`${prefix}voicerole <@role / ID / Name>\` - Bind a specific voice role.\n` +
                     `> • \`${prefix}voicerole disable\` - Disable system & strip role from all active members.\n` +
                     `> • \`/voicerole [role] [disable]\` - Slash command equivalent.`;
+              } else if (targetCmd.name === "raidmode") {
+                  descContent = `Unified Server Raid Defense Matrix providing manual lockdown control and automated join-velocity burst detection.\n\n` +
+                    `> -# **__Subcommands & Directives:__**\n` +
+                    `> • \`${prefix}raidmode\` - Displays the live Server Raid Defense Matrix dashboard.\n` +
+                    `> • \`${prefix}raidmode on\` - Immediately locks down server, elevates verification to VERY HIGH (Phone Required), and auto-quarantines incoming accounts.\n` +
+                    `> • \`${prefix}raidmode off\` - Disengages lockdown, restores baseline verification level, and mass-releases quarantined members.\n` +
+                    `> • \`${prefix}raidmode auto on\` - Arms automated join-velocity burst detection.\n` +
+                    `> • \`${prefix}raidmode auto off\` - Disarms automated join-velocity burst detection.\n` +
+                    `> • \`${prefix}raidmode auto threshold <number>\` - Configures how many joins trigger the auto-shield (default: 8).\n` +
+                    `> • \`${prefix}raidmode auto window <seconds>\` - Configures time window in seconds (default: 5s).`;
+              } else if (targetCmd.name === "health" || targetCmd.name === "audit") {
+                  descContent = `Runs a real-time security diagnostics and hierarchy health assessment on the server.\n\n` +
+                    `> -# **__Diagnostics Evaluated:__**\n` +
+                    `> • **Hierarchy Health:** Bot highest role position vs all other roles; alerts if any roles above Athena have dangerous permissions.\n` +
+                    `> • **Core Permissions:** Validates all 8 critical bot permissions (Admin, Manage Server, Manage Roles, Manage Channels, Ban, Kick, View Audit Log, Manage Webhooks).\n` +
+                    `> • **Defense Modules:** Reports master antinuke status, security state, raid mode, and auto-shield.\n` +
+                    `> • **Snapshot Integrity:** Reports ground-truth mapped channels, roles, and snapshot freshness.\n` +
+                    `> • **Persistence Roles:** Validates Athena Unbypassable and Athena Firewall.\n` +
+                    `> • **Audit Socket Latency:** Tests raw TLS undici keep-alive round-trip socket latency to Discord API.`;
               }
 
               const display1 = new TextDisplayBuilder().setContent(
@@ -425,6 +444,25 @@ export const commands = [
             `> • \`${prefix}voicerole <@role / ID / Name>\` - Bind a specific voice role.\n` +
             `> • \`${prefix}voicerole disable\` - Disable system & strip role from all active members.\n` +
             `> • \`/voicerole [role] [disable]\` - Slash command equivalent.`;
+        } else if (targetCmd.name === "raidmode") {
+          descContent = `Unified Server Raid Defense Matrix providing manual lockdown control and automated join-velocity burst detection.\n\n` +
+            `> -# **__Subcommands & Directives:__**\n` +
+            `> • \`${prefix}raidmode\` - Displays the live Server Raid Defense Matrix dashboard.\n` +
+            `> • \`${prefix}raidmode on\` - Immediately locks down server, elevates verification to VERY HIGH (Phone Required), and auto-quarantines incoming accounts.\n` +
+            `> • \`${prefix}raidmode off\` - Disengages lockdown, restores baseline verification level, and mass-releases quarantined members.\n` +
+            `> • \`${prefix}raidmode auto on\` - Arms automated join-velocity burst detection.\n` +
+            `> • \`${prefix}raidmode auto off\` - Disarms automated join-velocity burst detection.\n` +
+            `> • \`${prefix}raidmode auto threshold <number>\` - Configures how many joins trigger the auto-shield (default: 8).\n` +
+            `> • \`${prefix}raidmode auto window <seconds>\` - Configures time window in seconds (default: 5s).`;
+        } else if (targetCmd.name === "health" || targetCmd.name === "audit") {
+          descContent = `Runs a real-time security diagnostics and hierarchy health assessment on the server.\n\n` +
+            `> -# **__Diagnostics Evaluated:__**\n` +
+            `> • **Hierarchy Health:** Bot highest role position vs all other roles; alerts if any roles above Athena have dangerous permissions.\n` +
+            `> • **Core Permissions:** Validates all 8 critical bot permissions (Admin, Manage Server, Manage Roles, Manage Channels, Ban, Kick, View Audit Log, Manage Webhooks).\n` +
+            `> • **Defense Modules:** Reports master antinuke status, security state, raid mode, and auto-shield.\n` +
+            `> • **Snapshot Integrity:** Reports ground-truth mapped channels, roles, and snapshot freshness.\n` +
+            `> • **Persistence Roles:** Validates Athena Unbypassable and Athena Firewall.\n` +
+            `> • **Audit Socket Latency:** Tests raw TLS undici keep-alive round-trip socket latency to Discord API.`;
         }
 
         const display1 = new TextDisplayBuilder().setContent(
@@ -1251,7 +1289,12 @@ export const helpModules = [
     "`!unlockdown` - Restore exact pre-lockdown channels and bitmasks from DB snapshot `[Admin]`",
     "`!phishingshield` - Automated token stealer, fake Nitro and domain spoofing filter `[System Active]`",
     "`!endemergency` - Lift active emergency lockdown `[Extra Owner]`",
-    "`!raidmode on|off` - Toggle anti-raid CAPTCHA verification `[Extra Owner]`",
+    "`!health / !audit` - Real-time hierarchy integrity, permissions & audit socket diagnostics `[Admin / Extra Owner]`",
+    "`!raidmode [status]` - Unified Server Raid Defense Matrix dashboard `[Admin / Extra Owner]`",
+    "`!raidmode on|off` - Manual server raid lockdown, elevates verification to Phone Required & auto-quarantines `[Admin / Extra Owner]`",
+    "`!raidmode auto on|off` - Toggle automated join-velocity burst detection anti-raid shield `[Admin / Extra Owner]`",
+    "`!raidmode auto threshold <num>` - Configure join burst trigger limit (default: 8) `[Admin / Extra Owner]`",
+    "`!raidmode auto window <sec>` - Configure join burst time window (default: 5s) `[Admin / Extra Owner]`",
     "`!lockapps / !unlockapps` - Lock or unlock server app integrations `[Extra Owner]`",
     "`!scanserver` - Scan server for dangerous bot & onboarding permissions `[Extra Owner]`",
     "`!neutralizeonboarding / !onboarding` - Audit & neutralize dangerous Onboarding roles `[Extra Owner]`",
@@ -1263,8 +1306,11 @@ export const helpModules = [
     "`!modmode` - Temporarily pause restore for server edits `[Server Owner]`",
     "",
     "-# **__Sentinel Exploit Mitigations & Hardening:__**",
-    "-# • **__Role Interceptor:__** Real-time dangerous role strip, quarantine containment & owner DM alerts.",
-    "-# • **__Onboarding Guard:__** Join-time dangerous role neutralization & automatic onboarding prompt sanitization.",
+    "-# • **__Zero-Delay Role Stripping:__** Dangerous roles stripped in 0ms at gateway level before audit log resolution.",
+    "-# • **__Rogue Annihilation Engine:__** Parallel undici batch vaporization of spam channels & roles created during attacks.",
+    "-# • **__Permission Escalation Guard:__** Bitfield guard reverts unauthorized Admin/Manage roles in sub-10ms.",
+    "-# • **__Server Identity Rollback:__** Instant rollback of server name, icon, banner, and verification tampering.",
+    "-# • **__Join-Velocity Anti-Raid Shield:__** Automatic verification level elevation to Phone Required on join bursts.",
     "-# • **__Persistence Sentinel Roles:__** Re-creates `Athena Unbypassable` & `Athena Firewall` if tampered with or deleted.",
     "-# • **__Heuristic Learn Engine:__** Adaptive staff velocity profiling, false-positive protection & SQLite anomaly signatures.",
     "-# • Use `!explain security`, `!explain learn`, or `!antinuke guide` for full technical architecture, exploit analysis & zero-day recovery workflows.",

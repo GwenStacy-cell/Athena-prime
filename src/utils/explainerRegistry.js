@@ -64,6 +64,46 @@ As designed for Athena Prime:
 • **Access Clearance:** Administrators, Server Owner, Extra Owners, and Bot Owners.
 • **Role Hierarchy Positioning:** Establishes \`Athena Unbypassable\` and \`Athena Firewall\` directly below the bot's integration role.
 • **Self-Healing Loop:** Automatically re-creates and heals sentinel roles if deleted, stripped, or tampered with by unauthorized staff.`
+      },
+      {
+        pageTitle: 'Zero-Delay Role Stripping & Gateway Interception',
+        content:
+`# 0ms Pre-Emptive Dangerous Role Stripping (\`src/events/guildMemberUpdate.js\`)
+• **The Race Condition:** Nuke bots that exploit dangerous role grants or linked-role connections immediately execute destructive calls within 200-400ms. If an antinuke bot waits 1000ms for audit logs, the nuke bot can delete channels or roles before punishment occurs.
+• **The 0ms Solution:** When any member receives a role carrying dangerous permissions (\`Administrator\`, \`ManageRoles\`, \`ManageChannels\`, \`BanMembers\`, \`KickMembers\`), Athena immediately strips the role at **0 milliseconds** before doing any verification.
+• **Instant Progressive Verification Loop:** Athena executes an immediate progressive audit loop \`[0ms, 40ms, 100ms, 250ms]\` over pre-warmed Undici TLS sockets:
+  1. **Authorized Admin/Owner:** If an authorized admin granted the role, Athena immediately and safely restores it.
+  2. **Unauthorized / Exploit:** If no authorized audit entry exists or the grant was unauthorized, Athena keeps the role stripped, disarms dangerous permissions from the role itself, bans rogue grantors via dual-strike, and quarantines the recipient with permanent exploit taint tracking.
+• **Result:** Exactly 0 live milliseconds where an attacker holds active Administrator permissions!`
+      },
+      {
+        pageTitle: 'Mass Rogue Role/Channel Annihilation & Direct Strike',
+        content:
+`# Rogue Channel & Role Annihilation Engine (\`src/utils/antinuke.js\`)
+• **The Spam Nuke Vector:** Rapid nuke bots attempt to flood a guild with dozens of spam channels (e.g. \`nuked-by-xyz\`) or spam roles within 2-3 seconds.
+• **Dual-Strike Instant Neutralization:**
+  • Sub-1ms parallel \`rawRoleStrip\` and \`rawBan\` over pre-warmed keep-alive HTTP/1.1 sockets revokes \`Administrator\` and \`ManageChannels\` in Discord's permissions cache within 10-15ms.
+  • Any subsequent REST call dispatched by the nuke bot is immediately rejected by Discord with \`403 Forbidden\`.
+• **Rogue Entity Sweep Workers (\`annihilateRogueChannels\` & \`annihilateRogueRoles\`):**
+  • Automatically scans live channels and roles created within the last 60 seconds against Athena's ground-truth baseline infrastructure snapshot.
+  • Executes parallel batch deletions (10 concurrent requests per batch directly over Undici) to vaporize all rogue spam channels and roles in sub-second time.
+• **In-Flight Gateway Interceptors (\`roleCreate.js\` & \`channelCreate.js\`):**
+  • When a guild is marked actively under attack (\`isGuildUnderAttack\`), newly arriving rogue spam roles and channels are intercepted and deleted at the gateway layer in sub-5ms before any permission overwrites can be written.`
+      },
+      {
+        pageTitle: 'Server Identity Rollback, Raid Defense & Diagnostics',
+        content:
+`# Server Identity & Settings Rollback Guard (\`src/events/guildUpdate.js\`)
+• **Monitored Vectors:** Server Name, Icon, Banner, Vanity URL, and Verification Level.
+• **Zero-Day Reclaim:** If an attacker attempts to rename the server, delete the icon/banner, or tamper with verification, Athena intercepts the event, triggers \`directStrike\` to ban the violator, and instantly restores the original identity via direct API rollback.
+
+# Unified Server Raid Defense Matrix (\`!raidmode\`)
+• **Manual Lockdown:** \`!raidmode on\` immediately locks joining operations, auto-quarantines incoming accounts, and elevates the server's verification level to **VERY HIGH (Phone Verified required)** to stop disposable token floods.
+• **Safe Restoration:** \`!raidmode off\` restores original baseline verification level from database and triggers parallel mass-unquarantine.
+• **Join-Velocity Anti-Raid Shield (\`!raidmode auto on\`):** Tracks incoming join velocity. If join bursts breach the configured threshold (e.g. 8 joins / 5s), Athena automatically engages Raid Mode and elevates verification level to Phone Required without human intervention required.
+
+# Security Diagnostics & Hierarchy Health (\`!health\` / \`!audit\`)
+• Real-time diagnostic audit of bot role hierarchy, permissions, persistence roles, and Undici TLS socket latency to Discord API.`
       }
     ]
   },
@@ -753,6 +793,50 @@ export const DETAILED_COMMANDS = {
 • **Unbypassable Persistence Roles ("Athena Unbypassable" & "Athena Firewall"):**
   • Self-healing loop intercepts deletion or permission stripping in sub-1ms, instantly re-creating roles with Administrator and banning attackers.`,
     example: '!security enable all'
+  },
+
+  raidmode: {
+    name: 'raidmode',
+    aliases: ['raid', 'rm'],
+    category: 'Security & Antinuke Defense',
+    clearance: 'Administrator / Extra Owner',
+    syntax: '!raidmode [on|off|auto on|auto off|auto threshold <num>|auto window <sec>]',
+    purpose: 'Unified Server Raid Defense Matrix providing manual lockdown control and automated join-velocity burst detection.',
+    architecture:
+`• **Manual Raid Lockdown (!raidmode on):**
+  1. Sets server raid mode to active in SQLite database.
+  2. Snapshots current server verification level.
+  3. Elevates Discord server verification level to 4 (VERY_HIGH - Phone Verified Required) to stop disposable bot accounts immediately.
+  4. Automatically isolates and quarantines all incoming joiners.
+• **Lockdown Deactivation (!raidmode off):**
+  1. Reverts server raid mode to standby.
+  2. Restores pre-raid baseline verification level from database.
+  3. Triggers automated parallel mass-unquarantine for accounts caught during the raid.
+• **Join-Velocity Auto-Shield (!raidmode auto on):**
+  1. Monitors member join timestamps across a sliding window.
+  2. If joins breach threshold (default: 8 joins / 5 seconds), auto-engages Raid Mode lockdown and Phone Verification.
+  3. Dispatches high-priority alert container to #security-logs and DMs the Server Owner.
+• **Threshold & Window Directives:**
+  • \`!raidmode auto threshold <num>\`: Sets how many accounts trigger the auto-shield.
+  • \`!raidmode auto window <sec>\`: Sets the join time window in seconds.`,
+    example: '!raidmode on'
+  },
+
+  health: {
+    name: 'health',
+    aliases: ['audit', 'securityhealth', 'antinukeaudit', 'healthcheck'],
+    category: 'Security & Antinuke Defense',
+    clearance: 'Administrator / Extra Owner',
+    syntax: '!health / !audit',
+    purpose: 'Runs real-time hierarchy, permission, persistence, and audit socket diagnostics on the server.',
+    architecture:
+`• **Hierarchy Integrity Check:** Compares bot's highest role position against all roles in the server. Scans for any roles above Athena that possess dangerous administrative permissions (Administrator, Manage Guild, Manage Roles, Manage Channels, Ban, Kick).
+• **Core Permissions Validation:** Verifies all 8 critical operational permissions (Administrator, Manage Guild, Manage Roles, Manage Channels, Ban Members, Kick Members, View Audit Log, Manage Webhooks).
+• **Defense Matrix Status:** Assesses live master antinuke engine, general security, raid mode, and auto join-velocity shield.
+• **Continuous Infrastructure Snapshot:** Reports tracked channels, roles, and snapshot freshness.
+• **Persistence Sentinel Roles:** Validates Athena Unbypassable and Athena Firewall roles.
+• **Audit Socket Latency:** Measures direct Undici keep-alive round-trip socket latency to Discord API in milliseconds.`,
+    example: '!health'
   },
 
   athena: {

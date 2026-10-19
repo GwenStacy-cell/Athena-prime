@@ -582,6 +582,17 @@ async function handleEhelp(message) {
         '> **Aliases:** `!globalbanlist`, `!botbanlist`, `!gblacklist`'
     },
     {
+      name: 'Security & System Health',
+      value:
+        '`!health` / `ezal health [serverId]` - Run real-time hierarchy, permissions, snapshot & audit socket diagnostics\n' +
+        '> **Aliases:** `!audit`, `!securityhealth`, `!healthcheck`, `!antinuke audit`\n' +
+        '`!raidmode` - Server Raid Defense Matrix (Lockdown & Auto-Shield status)\n' +
+        '`!raidmode on|off` - Manual server raid lockdown & verification elevation\n' +
+        '`!raidmode auto on|off` - Toggle automated join-velocity burst detection\n' +
+        '`!raidmode auto threshold <num>` - Configure burst sensitivity threshold\n' +
+        '`!raidmode auto window <sec>` - Configure burst sensitivity time window'
+    },
+    {
       name: 'Server Management',
       value:
         '`ezal servers` - List all servers the bot is in with their backup IDs and stats\n' +
@@ -709,6 +720,19 @@ export async function handleEzal(message) {
         return dbCmd.executePrefix(message, args);
       }
       break;
+    }
+    case 'health':
+    case 'audit':
+    case 'healthcheck':
+    case 'securityhealth': {
+      const { getSecurityHealthPanel } = await import('./security.js');
+      let targetGuild = message.guild;
+      if (args[0] && /^\d{17,20}$/.test(args[0])) {
+        targetGuild = message.client.guilds.cache.get(args[0]) || message.guild;
+      }
+      if (!targetGuild) return message.reply(cv2.warn('No Guild', 'Run this inside a server or provide a valid server ID.'));
+      const panel = await getSecurityHealthPanel(targetGuild);
+      return message.reply(panel);
     }
     case 'ehelp':
     case 'help':
