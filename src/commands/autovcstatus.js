@@ -36,7 +36,8 @@ const DEFAULT_STATUSES = [
   "<a:ArrowHeart:1544688958196158525> **The {guild} collective**",
   "<a:Star2:1516523061468205227> **{guild} Study and focus**",
   "<a:a_fheartSpinWhite:1533844790314143955> **Engaging with {guild}**",
-  "<a:st_Ghost:1543537892717105212> **{guild}'s hidden retreat**"
+  "<a:st_Ghost:1543537892717105212> **{guild}'s hidden retreat**",
+  "<a:ArrowHeart:1544688958196158525> **Will You Still Love Me When I'm No Longer, Young & Beautiful**"
 ];
 
 function getRandomStatus(guild, customStatuses) {

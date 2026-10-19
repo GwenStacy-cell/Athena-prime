@@ -212,7 +212,8 @@ export default {
       'Made in India | Challenging the World !',
       'Use !help, to learn more',
       'Trusted by {users} Users in {servers} Servers',
-      'Secured by | Zero Trust Architecture !'
+      'Secured by | Zero Trust Architecture !',
+      "Will You Still Love Me When I'm No Longer, Young & Beautiful"
     ];
     let statusIndex = 0;
 
