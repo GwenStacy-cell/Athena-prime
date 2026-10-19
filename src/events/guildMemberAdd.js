@@ -9,6 +9,9 @@ import { hasDangerousPerms, DANGEROUS_PERMS } from '../utils/antinuke.js';
 import { logServerEvent } from '../utils/serverLogger.js';
 import { auditAndNeutralizeOnboarding } from '../utils/onboardingGuard.js';
 
+// Tracks join velocity timestamps per guild for automated anti-raid shield
+const guildJoinTracker = new Map(); // guildId -> Array<number>
+
 export default {
   name: 'guildMemberAdd',
   async execute(member) {
@@ -277,18 +280,86 @@ export default {
     }
 
     // ==========================================
+    // 1.5. JOIN-VELOCITY ANTI-RAID AUTO-SHIELD
+    // ==========================================
+    if (config.raidAutoShield && !config.raidMode) {
+      const now = Date.now();
+      const windowMs = config.raidJoinWindowMs || 5000;
+      const threshold = config.raidJoinThreshold || 8;
+
+      const timestamps = (guildJoinTracker.get(guild.id) || []).filter(t => now - t < windowMs);
+      timestamps.push(now);
+      guildJoinTracker.set(guild.id, timestamps);
+
+      if (timestamps.length >= threshold) {
+        // Automatically engage Raid Mode and elevate verification level
+        db.updateGuildConfig(guild.id, {
+          raidMode: true,
+          preRaidVerificationLevel: guild.verificationLevel
+        });
+
+        // Elevate verification level to 4 (VERY_HIGH / Phone verified)
+        try {
+          await guild.setVerificationLevel(4, '[ATHENA AUTO-SHIELD] Join-Velocity Burst Raid Detected — Emergency Phone Verification Enforced');
+        } catch (e) {
+          console.error('[Anti-Raid] Failed to elevate verification level:', e.message);
+        }
+
+        const alertContainer = {
+          type: 17,
+          components: [
+            { type: 10, content: `## Join-Velocity Anti-Raid Shield Engaged | <a:atheNATICK:1557841381630681106>` },
+            { type: 14, divider: true },
+            {
+              type: 10,
+              content:
+                `-# **Threat Vector:** \`Rapid Mass-Join Velocity Flood (Token Raid Attack)\`\n` +
+                `-# **Detected Velocity:** \`${timestamps.length}\` accounts joined within \`${Math.round(windowMs / 1000)}s\` (Threshold: \`${threshold}\`)\n` +
+                `-# **Defensive Action 1:** \`Verification Level elevated to VERY HIGH (Phone Required)\`\n` +
+                `-# **Defensive Action 2:** \`Server Raid Mode ENGAGED — Incoming members auto-quarantined\`\n` +
+                `-# **Resolution:** Once the raid subsides, execute \`!raidmode off\` to restore verification level and release accounts.`
+            },
+            { type: 14, divider: true },
+            { type: 10, content: `-# **Athena Prime Automated Defense Active**` }
+          ]
+        };
+
+        logToSecurityChannel(guild, { components: [alertContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+
+        guild.fetchOwner().then(owner => {
+          if (owner) {
+            owner.send({ components: [alertContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+          }
+        }).catch(() => null);
+      }
+    }
+
+    // ==========================================
     // 2. RAIDMODE ACTIVE ENFORCEMENT
     // ==========================================
-    if (config.raidMode) {
+    const isRaidModeActive = Boolean(config.raidMode || db.getGuildConfig(guild.id)?.raidMode);
+    if (isRaidModeActive) {
       const reason = 'Automated Anti-Raid: Guild is currently under Lockdown / Raid Mode.';
       await executeQuarantine(guild, member, guild.members.me, reason);
       
-      logToSecurityChannel(guild, embed.log(
-        'Anti-Raid Quarantine Applied',
-        `Account quarantined automatically during active Raid Mode.`,
-        [{ name: 'Member Join', value: `${member.user.tag} (${userId})` }],
-        'raid'
-      ));
+      const raidLogContainer = {
+        type: 17,
+        components: [
+          { type: 10, content: `## Anti-Raid Quarantine Applied | <a:atheNATICK:1557841381630681106>` },
+          { type: 14, divider: true },
+          {
+            type: 10,
+            content:
+              `-# **Target Account:** ${member} (\`${member.user.tag}\` | \`${userId}\`)\n` +
+              `-# **Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n` +
+              `-# **Isolation Reason:** \`Account quarantined automatically during active Raid Mode\``
+          },
+          { type: 14, divider: true },
+          { type: 10, content: `-# **Athena Prime Anti-Raid Sentinel Active**` }
+        ]
+      };
+
+      logToSecurityChannel(guild, { components: [raidLogContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
       return; // Stop further checks if quarantined
     }
 

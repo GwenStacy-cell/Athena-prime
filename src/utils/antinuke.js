@@ -119,6 +119,36 @@ export async function rawRoleDelete(guildId, roleId, token, reason = '[ATHENA] U
     return false;
   }
 }
+
+// ==========================================
+// ⚡ RAW HTTP UNBAN (sub-15ms socket execution)
+// ==========================================
+export async function rawUnban(guildId, userId, token, reason = '[ATHENA] Anti-Nuke: Ban Reverted') {
+  try {
+    const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/bans/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bot ${token}`,
+        'X-Audit-Log-Reason': encodeURIComponent(reason.slice(0, 512))
+      },
+      dispatcher
+    });
+    return res.ok || res.status === 204;
+  } catch {
+    return false;
+  }
+}
+
+// Parallel bulk unban worker (10 concurrent requests per batch)
+export async function unbanVictimsParallel(guild, victimIds = []) {
+  if (!guild || !victimIds.length) return;
+  const token = guild.client.token;
+  const batchSize = 10;
+  for (let i = 0; i < victimIds.length; i += batchSize) {
+    const batch = victimIds.slice(i, i + batchSize);
+    await Promise.allSettled(batch.map(uid => rawUnban(guild.id, uid, token)));
+  }
+}
 // ==========================================
 // ⚡ RAW HTTP AUDIT LOG FETCH (Direct Undici Socket — sub-15ms)
 // Completely bypasses discord.js REST queue to eliminate rate limit contention.
@@ -411,6 +441,73 @@ export async function annihilateRogueChannels(guild, attackerId = null) {
   } catch (err) {
     console.error(`[AntiNuke] Annihilate rogue channels failed for ${guild.name}:`, err.message);
   }
+}
+
+// ==========================================
+// ⚡ MASS ROLE ANNIHILATION
+// Scans for rogue spam roles created during attack flood and executes parallel undici raw deletes
+// ==========================================
+export async function annihilateRogueRoles(guild, attackerId = null) {
+  if (!guild || !guild.id) return;
+  const token = guild.client.token;
+  const config = db.getGuildConfig(guild.id) || {};
+  const snap = infrastructureSnapshots.get(guild.id);
+  const baselineRoleIds = snap ? new Set(snap.roles.keys()) : new Set();
+
+  const protectedRoleIds = new Set([
+    config.unbypassableRoleId,
+    config.firewallRoleId,
+    config.quarantineRoleId,
+    guild.roles.everyone?.id,
+    guild.members.me?.roles.botRole?.id,
+    guild.members.me?.roles.highest?.id
+  ].filter(Boolean));
+
+  try {
+    const liveRoles = await guild.roles.fetch().catch(() => guild.roles.cache);
+    const now = Date.now();
+    const rolesToDelete = [];
+
+    for (const r of liveRoles.values()) {
+      if (!r || !r.id || r.managed) continue;
+      if (protectedRoleIds.has(r.id)) continue;
+      if (r.name === 'Athena Unbypassable' || r.name === 'Athena Firewall') continue;
+      if (baselineRoleIds.has(r.id)) continue;
+
+      const createdAt = r.createdTimestamp || (Number(BigInt(r.id) >> 22n) + 1420070400000);
+      if (now - createdAt < 60_000) {
+        rolesToDelete.push(r.id);
+      }
+    }
+
+    if (rolesToDelete.length > 0) {
+      const batchSize = 10;
+      for (let i = 0; i < rolesToDelete.length; i += batchSize) {
+        const batch = rolesToDelete.slice(i, i + batchSize);
+        await Promise.allSettled(batch.map(id => rawRoleDelete(guild.id, id, token, '[ATHENA ANTI-NUKE] Rogue Spam Role Annihilated')));
+      }
+    }
+  } catch (err) {
+    console.error(`[AntiNuke] Annihilate rogue roles failed for ${guild.name}:`, err.message);
+  }
+}
+
+// ==========================================
+// DEBOUNCED SNAPSHOT AUTO-SYNC
+// Automatically synchronizes live baseline infrastructure 30s after legitimate admin changes
+// ==========================================
+const snapshotDebounceTimers = new Map();
+
+export function triggerSnapshotSync(guild, delayMs = 30_000) {
+  if (!guild || !guild.id) return;
+  if (snapshotDebounceTimers.has(guild.id)) {
+    clearTimeout(snapshotDebounceTimers.get(guild.id));
+  }
+  const timer = setTimeout(() => {
+    snapshotDebounceTimers.delete(guild.id);
+    snapshotGuildInfrastructure(guild);
+  }, delayMs);
+  snapshotDebounceTimers.set(guild.id, timer);
 }
 
 // ==========================================
@@ -1130,6 +1227,15 @@ async function punish(guild, executor, eventType, config, forceBan = true) {
     setTimeout(() => annihilateRogueChannels(guild, executor.id).catch(() => null), 3000);
   }
 
+  const isRoleOrNuke = eventType.toLowerCase().includes('role') ||
+                       eventType.toLowerCase().includes('nuke') ||
+                       eventType.toLowerCase().includes('creation');
+  if (isRoleOrNuke) {
+    annihilateRogueRoles(guild, executor.id).catch(() => null);
+    setTimeout(() => annihilateRogueRoles(guild, executor.id).catch(() => null), 1200);
+    setTimeout(() => annihilateRogueRoles(guild, executor.id).catch(() => null), 3000);
+  }
+
   return result;
 }
 
@@ -1267,6 +1373,10 @@ export async function directStrike(guild, auditType, eventType, targetId, rollba
     if (auditType === AuditLogEvent.ChannelCreate && targetId) {
       rawChannelDelete(targetId, guild.client.token, '[ATHENA ANTI-NUKE] Rogue Channel Annihilated').catch(() => null);
     }
+    // For rogue role creation, ensure rogue role is annihilated
+    if (auditType === AuditLogEvent.RoleCreate && targetId) {
+      rawRoleDelete(guild.id, targetId, guild.client.token, '[ATHENA ANTI-NUKE] Rogue Role Annihilated').catch(() => null);
+    }
     return;
   }
 
@@ -1378,6 +1488,8 @@ export async function handleAuditLogEntry(guild, entry) {
       }
     } else if (action === AuditLogEvent.RoleCreate) {
       if (targetId) rawRoleDelete(guild.id, targetId, guild.client.token, '[ATHENA ANTI-NUKE] Rogue Role Annihilated').catch(() => null);
+      setGuildUnderAttack(guild.id, executorId, 60_000);
+      annihilateRogueRoles(guild, executorId).catch(() => null);
     } else if (action === AuditLogEvent.WebhookCreate) {
       if (targetId) rawDeleteWebhook(targetId, guild.client.token, '[ATHENA ANTI-NUKE] Rogue Webhook Annihilated').catch(() => null);
     }
@@ -1620,8 +1732,10 @@ export async function handleAuditLogEntry(guild, entry) {
     }
 
     if (action === AuditLogEvent.RoleCreate) {
-      if (targetId) await rawRoleDelete(guild.id, targetId, guild.client.token).catch(() => null);
-      rollbackResult = 'Unauthorized role annihilated';
+      if (targetId) await rawRoleDelete(guild.id, targetId, guild.client.token, '[ATHENA ANTI-NUKE] Unauthorized Role Annihilated').catch(() => null);
+      setGuildUnderAttack(guild.id, executor.id, 60_000);
+      annihilateRogueRoles(guild, executor.id).catch(() => null);
+      rollbackResult = 'Unauthorized role annihilated & spam sweep executed';
     }
 
     if (action === AuditLogEvent.WebhookCreate) {

@@ -98,5 +98,51 @@ export default {
       }
     }
 
+    // 4. Dangerous Permission Escalation Guard (Sub-10ms Bitfield Revert & Strike)
+    if (config.securityEnabled || (config.antiNukeEnabled && config.antinukeModules?.antiRolePermUpdate !== false)) {
+      const { directStrike, DANGEROUS_PERMS, isGuildUnderAttack, triggerSnapshotSync } = await import('../utils/antinuke.js');
+      const gainedDangerousPerm = DANGEROUS_PERMS.some(p => !oldRole.permissions.has(p) && newRole.permissions.has(p));
+
+      if (gainedDangerousPerm && !newRole.managed) {
+        // If server is actively under attack, revert bitfield immediately
+        if (isGuildUnderAttack(newRole.guild.id)) {
+          await newRole.setPermissions(oldRole.permissions, 'Athena Anti-Nuke: Rogue Permission Escalation Intercepted').catch(() => null);
+        }
+
+        // Direct Strike verifies executor authorization, eliminates violator, and rolls back
+        directStrike(
+          newRole.guild,
+          AuditLogEvent.RoleUpdate,
+          'Role Permission Escalation',
+          newRole.id,
+          async () => {
+            await newRole.setPermissions(oldRole.permissions, 'Athena Anti-Nuke: Unauthorized Permission Escalation Reverted').catch(() => null);
+            return `Stripped unauthorized dangerous permissions from role **${newRole.name}**.`;
+          }
+        ).catch(() => null);
+      }
+
+      // 5. Role Name Modification Guard
+      if (config.antinukeModules?.antiRoleUpdate !== false && oldRole.name !== newRole.name && !newRole.managed) {
+        if (isGuildUnderAttack(newRole.guild.id)) {
+          await newRole.setName(oldRole.name, 'Athena Anti-Nuke: Rogue Role Rename Intercepted').catch(() => null);
+        }
+
+        directStrike(
+          newRole.guild,
+          AuditLogEvent.RoleUpdate,
+          'Role Name Modification',
+          newRole.id,
+          async () => {
+            await newRole.setName(oldRole.name, 'Athena Anti-Nuke: Role Name Restored').catch(() => null);
+            return `Restored role name **${oldRole.name}** from unauthorized modification.`;
+          }
+        ).catch(() => null);
+      }
+
+      // Debounced snapshot sync after role updates
+      triggerSnapshotSync(newRole.guild);
+    }
+
   }
 };

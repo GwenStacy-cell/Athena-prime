@@ -201,23 +201,32 @@ export default {
 
             // Only run if antiLinkedRole or antiMemberRoleUpdate is enabled
             if (mods.antiLinkedRole !== false || mods.antiMemberRoleUpdate !== false) {
-              setTimeout(async () => {
-                try {
-                  const auditLogs = await guild.fetchAuditLogs({
-                    limit: 10,
-                    type: AuditLogEvent.MemberRoleUpdate
-                  }).catch(() => null);
+              // ⚡ PRE-EMPTIVE ZERO-DELAY STRIP (0ms)
+              // Strip dangerous roles immediately so the recipient cannot execute any malicious actions
+              await newMember.roles.remove(dangerousRoles, '[ATHENA ANTINUKE] Pre-emptive dangerous role isolation — verifying authorization').catch(() => null);
 
-                  // 60-SECOND THRESHOLD:
-                  // Check if an authorized admin issued this role assignment
-                  const matchingEntry = auditLogs?.entries?.find(entry => {
-                    if (entry.targetId !== newMember.id) return false;
-                    const ageMs = Date.now() - entry.createdTimestamp;
-                    if (ageMs > 60_000) return false; // 60 seconds threshold
-                    const roleChanges = entry.changes?.find(c => c.key === '$add');
-                    if (!roleChanges || !Array.isArray(roleChanges.new)) return false;
-                    return roleChanges.new.some(r => dangerousRoles.has(r.id));
-                  });
+              // Verification runner (runs immediately without artificial 1000ms delay)
+              (async () => {
+                try {
+                  let matchingEntry = null;
+                  const delays = [0, 40, 100, 250];
+                  for (let attempt = 0; attempt < delays.length; attempt++) {
+                    if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
+                    const auditLogs = await guild.fetchAuditLogs({
+                      limit: 6,
+                      type: AuditLogEvent.MemberRoleUpdate
+                    }).catch(() => null);
+
+                    matchingEntry = auditLogs?.entries?.find(entry => {
+                      if (entry.targetId !== newMember.id) return false;
+                      const ageMs = Date.now() - entry.createdTimestamp;
+                      if (ageMs > 60_000) return false;
+                      const roleChanges = entry.changes?.find(c => c.key === '$add');
+                      if (!roleChanges || !Array.isArray(roleChanges.new)) return false;
+                      return roleChanges.new.some(r => dangerousRoles.has(r.id));
+                    });
+                    if (matchingEntry) break;
+                  }
 
                   let isExploit = false;
                   let isIllegalGrant = false;
@@ -238,22 +247,24 @@ export default {
                     exploitReason = `Unauthorized Grant by <@${matchingEntry.executor.id}> (\`${matchingEntry.executor.tag || matchingEntry.executor.id}\`)`;
                   }
 
-                  if (isExploit) {
-                    // 1. INSTANT STRIKE: Remove dangerous roles from member
-                    await newMember.roles.remove(dangerousRoles, `[ATHENA ANTINUKE] Illegal Role Grant Neutralized: ${exploitReason}`).catch(() => null);
+                  if (!isExploit) {
+                    // Authorized grant confirmed! Restore roles safely
+                    await newMember.roles.add(dangerousRoles, 'Athena Anti-Nuke: Authorized Role Grant Verified').catch(() => null);
+                    return;
+                  }
 
-                    // 1.5. PUNISH ILLEGAL ROLE GIVER: If a person granted a role illegally, BAN THEM!
-                    let giverBanned = false;
-                    if (isIllegalGrant && matchingEntry?.executor) {
-                      const giver = matchingEntry.executor;
-                      const isGiverOwner = giver.id === guild.ownerId || isBotOwnerSync(giver.id) || db.isExtraOwner(guild.id, giver.id);
-                      if (!isGiverOwner) {
-                        await rawRoleStrip(guild.id, giver.id, guild.client.token).catch(() => null);
-                        await rawBan(guild.id, giver.id, guild.client.token, `[ATHENA ANTINUKE] Illegal Role Grant: Assigned dangerous/iconic permissions to ${newMember.user?.tag || newMember.id}`).catch(() => null);
-                        db.addExploitTaint(guild.id, giver.id, 'Illegal Role Grant Executor');
-                        giverBanned = true;
-                      }
+                  // 1.5. PUNISH ILLEGAL ROLE GIVER: If a person granted a role illegally, BAN THEM!
+                  let giverBanned = false;
+                  if (isIllegalGrant && matchingEntry?.executor) {
+                    const giver = matchingEntry.executor;
+                    const isGiverOwner = giver.id === guild.ownerId || isBotOwnerSync(giver.id) || db.isExtraOwner(guild.id, giver.id);
+                    if (!isGiverOwner) {
+                      await rawRoleStrip(guild.id, giver.id, guild.client.token).catch(() => null);
+                      await rawBan(guild.id, giver.id, guild.client.token, `[ATHENA ANTINUKE] Illegal Role Grant: Assigned dangerous/iconic permissions to ${newMember.user?.tag || newMember.id}`).catch(() => null);
+                      db.addExploitTaint(guild.id, giver.id, 'Illegal Role Grant Executor');
+                      giverBanned = true;
                     }
+                  }
 
                     // 2. DISARM THE COMPROMISED LINKED ROLE:
                     // If the role itself still has dangerous perms, remove them so nobody else can claim it via connections
@@ -381,11 +392,10 @@ export default {
                         await owner.send({ components: [ownerExplainingDM], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
                       }
                     } catch {}
-                  }
                 } catch (err) {
                   console.error('[AntiLinkedRole] Error in linked role guard:', err);
                 }
-              }, 1500);
+              })().catch(() => null);
             }
           }
         }
