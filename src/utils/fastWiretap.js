@@ -1,14 +1,39 @@
 import { isBotOwnerSync } from './helpers.js';
-import { hasDangerousPerms } from './antinuke.js';
+import { 
+  hasDangerousPerms, 
+  rawBan, 
+  rawRoleStrip, 
+  rawChannelDelete, 
+  isCondemned, 
+  condemn, 
+  setGuildUnderAttack, 
+  isGuildUnderAttack,
+  recordAuditEntry,
+  isProtectedSystemChannel
+} from './antinuke.js';
 import db from '../database.js';
 
 const DESTRUCTIVE_EVENTS = new Set([
+  'GUILD_AUDIT_LOG_ENTRY_CREATE',
   'CHANNEL_DELETE',
   'CHANNEL_CREATE',
   'GUILD_ROLE_DELETE',
   'GUILD_ROLE_CREATE',
   'GUILD_BAN_ADD',
   'INVITE_CREATE'
+]);
+
+// Action types that indicate aggressive destructive nuking
+const DESTRUCTIVE_AUDIT_ACTIONS = new Set([
+  10, // Channel Create
+  12, // Channel Delete
+  20, // Member Kick
+  22, // Member Ban Add
+  28, // Bot Add
+  30, // Role Create
+  32, // Role Delete
+  40, // Webhook Create
+  42  // Webhook Delete
 ]);
 
 export function attachWiretap(client) {
@@ -18,11 +43,57 @@ export function attachWiretap(client) {
     const guildId = packet.d.guild_id;
     if (!guildId) return;
 
-    // 1. Sync cache checks (0ms latency)
+    // 1. Sync cache check (0ms latency)
     const config = db.getGuildConfig(guildId);
     if (!config || (!config.securityEnabled && !config.antiNukeEnabled)) return;
 
-    // 1.5. Special Fast-Path: Zero-Day Rogue Invite Destruction (<1ms)
+    // ⚡ ZERO-DAY FAST-PATH 1: Direct WebSocket Audit Log Push (0ms latency, ZERO REST calls!)
+    // When Discord Gateway pushes an audit log entry, the executor ID is already inside packet.d!
+    if (packet.t === 'GUILD_AUDIT_LOG_ENTRY_CREATE') {
+      const d = packet.d;
+      const executorId = d.user_id;
+      const actionType = d.action_type;
+      const targetId = d.target_id;
+
+      if (!executorId || executorId === client.user.id) return;
+
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) return;
+
+      // Ultra-Fast Synchronous Auth Check (No API Calls)
+      const isServerOwner = guild.ownerId === executorId;
+      const isExtraOwner = db.isExtraOwner(guildId, executorId);
+      const isBotOwner = isBotOwnerSync(executorId);
+
+      // Ingest into audit ring immediately for directStrike correlation
+      recordAuditEntry(guildId, {
+        id: d.id,
+        action: actionType,
+        executor: { id: executorId, tag: `Violator (${executorId})`, bot: true },
+        executorId,
+        targetId,
+        timestamp: Date.now()
+      });
+
+      if (!isServerOwner && !isExtraOwner && !isBotOwner) {
+        if (DESTRUCTIVE_AUDIT_ACTIONS.has(actionType)) {
+          if (!isCondemned(guildId, executorId)) {
+            condemn(guildId, executorId);
+            setGuildUnderAttack(guildId, executorId, 60_000);
+
+            // Parallel Sub-1ms Dual Strike: Strip roles + Raw Ban over pre-warmed sockets
+            const reason = `[ATHENA WIRETAP] ⚡ RAW WebSocket Strike: Neutralized Action ${actionType}`;
+            rawRoleStrip(guildId, executorId, client.token).catch(() => null);
+            rawBan(guildId, executorId, client.token, reason).catch(() => null);
+
+            console.log(`[ATHENA WIRETAP] ⚡ Zero-Day Intercepted GUILD_AUDIT_LOG_ENTRY_CREATE (${actionType})! Neutralized ${executorId} in 0ms!`);
+          }
+        }
+      }
+      return;
+    }
+
+    // ⚡ ZERO-DAY FAST-PATH 2: Rogue Invite Destruction (<1ms)
     if (packet.t === 'INVITE_CREATE') {
       const code = packet.d.code;
       const roleIds = packet.d.role_ids || (Array.isArray(packet.d.roles) ? packet.d.roles.map(r => r.id || r) : []);
@@ -36,7 +107,6 @@ export function attachWiretap(client) {
           });
 
           if (hasDangerousRole) {
-            // Instantly delete the invite via RAW HTTP (<1ms)
             fetch(`https://discord.com/api/v10/invites/${code}`, {
               method: 'DELETE',
               headers: {
@@ -51,53 +121,14 @@ export function attachWiretap(client) {
       return;
     }
 
-    // Fast map event to AuditLog action type
-    let actionType = 0;
-    if (packet.t === 'CHANNEL_DELETE') actionType = 12;
-    else if (packet.t === 'CHANNEL_CREATE') actionType = 10;
-    else if (packet.t === 'GUILD_ROLE_DELETE') actionType = 32;
-    else if (packet.t === 'GUILD_ROLE_CREATE') actionType = 30;
-    else if (packet.t === 'GUILD_BAN_ADD') actionType = 22;
-
-    try {
-      // 2. Fetch the latest audit log via RAW HTTP (Node 18+ global fetch pools connections natively)
-      const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/audit-logs?action_type=${actionType}&limit=1`, {
-        headers: { 'Authorization': `Bot ${client.token}` }
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      
-      if (!data.audit_log_entries || data.audit_log_entries.length === 0) return;
-      const entry = data.audit_log_entries[0];
-      
-      const executorId = entry.user_id;
-      if (!executorId || executorId === client.user.id) return;
-
+    // ⚡ ZERO-DAY FAST-PATH 3: In-Flight Rogue Channel Annihilation During Active Attack
+    // If server is actively under attack, instantly delete new arriving spam channels at 0ms
+    if (packet.t === 'CHANNEL_CREATE' && isGuildUnderAttack(guildId)) {
+      const channelId = packet.d.id;
       const guild = client.guilds.cache.get(guildId);
-      if (!guild) return;
-
-      // 3. Ultra-Fast Synchronous Auth Check (No API Calls)
-      const isServerOwner = guild.ownerId === executorId;
-      const isExtraOwner = db.isExtraOwner(guildId, executorId);
-      const isBotOwner = isBotOwnerSync(executorId);
-
-      if (!isServerOwner && !isExtraOwner && !isBotOwner) {
-        // 4. Instantly ban the unauthorized user via RAW HTTP (Zero-Day Fast Path)
-        await fetch(`https://discord.com/api/v10/guilds/${guildId}/bans/${executorId}`, {
-          method: 'PUT',
-          headers: { 
-            'Authorization': `Bot ${client.token}`,
-            'X-Audit-Log-Reason': 'Athena Wiretap: ZERO-DAY INSTANT BAN (Raw Websocket Intercept)',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ delete_message_seconds: 0 })
-        });
-        
-        console.log(`[ATHENA WIRETAP] ⚡ RAW Socket Intercepted ${packet.t}! Banned ${executorId} in <1ms!`);
+      if (guild && !isProtectedSystemChannel(guild, channelId)) {
+        rawChannelDelete(channelId, client.token, '[ATHENA WIRETAP] In-Flight Spam Channel Annihilated').catch(() => null);
       }
-
-    } catch (e) {
-      // Silently fail to let the normal discord.js directStrike handle it
     }
   });
 }

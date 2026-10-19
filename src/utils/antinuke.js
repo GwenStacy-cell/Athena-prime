@@ -1448,11 +1448,21 @@ export async function handleAuditLogEntry(guild, entry) {
   const config = db.getGuildConfig(guild.id);
   if (!config.securityEnabled && !config.antiNukeEnabled) return;
   const mods = config.antinukeModules || {};
+  const action = entry.action;
+  const executorId = entry.executorId || entry.executor?.id;
+  const targetId = entry.targetId;
+  const createdAt = entry.createdAt || new Date();
 
-  const { executor, action, executorId, targetId, createdAt } = entry;
-  if (!executor || !executorId) return;
+  if (!executorId) return;
   if (executorId === guild.members.me?.id) return;
-  if (Date.now() - createdAt.getTime() > 25_000) return;
+  if (Date.now() - (createdAt.getTime ? createdAt.getTime() : Number(createdAt)) > 25_000) return;
+
+  const executor = entry.executor || {
+    id: executorId,
+    tag: `Violator (${executorId})`,
+    username: `Violator_${executorId}`,
+    bot: true
+  };
 
   // Record into ring buffer for directStrike instant correlation
   recordAuditEntry(guild.id, entry);
