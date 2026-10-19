@@ -1152,16 +1152,15 @@ async function punish(guild, executor, eventType, config, forceBan = true) {
 
   try {
     if (punishment === 'ban') {
-      // ⚡ STEP 1: Role strip + raw ban — simultaneous parallel strike
-      const [stripOk, banOk] = await Promise.all([
-        rawRoleStrip(guild.id, executor.id, token),
-        rawBan(guild.id, executor.id, token, reason)
-      ]);
+      // ⚡ STEP 1: Direct Raw Ban FIRST (Fastest 0ms socket execution)
+      const banOk = await rawBan(guild.id, executor.id, token, reason);
 
       if (banOk) {
-        result = 'Eliminated (Raw API Dual-Strike — Sub-1ms)';
+        result = 'Eliminated (Direct Raw Ban — Sub-1ms)';
       } else {
-        // Fallback chain
+        // Fallback chain if raw ban failed (hierarchy conflict, permission mismatch, etc.):
+        // Immediately disarm with raw role strip, then retry ban
+        await rawRoleStrip(guild.id, executor.id, token).catch(() => null);
         try {
           await guild.members.ban(executor.id, { reason });
           result = 'Permanently Banned (djs fallback)';
@@ -1755,12 +1754,11 @@ export async function handleAuditLogEntry(guild, entry) {
 
     if (action === AuditLogEvent.BotAdd) {
       if (targetId && targetId !== guild.client.user.id) {
-        await Promise.all([
-          rawRoleStrip(guild.id, targetId, guild.client.token),
-          rawBan(guild.id, targetId, guild.client.token, 'Athena Anti-Nuke: Unauthorized bot addition')
-        ]).catch(() => null);
+        await rawBan(guild.id, targetId, guild.client.token, 'Athena Anti-Nuke: Unauthorized bot addition').then(ok => {
+          if (!ok) rawRoleStrip(guild.id, targetId, guild.client.token).catch(() => null);
+        }).catch(() => null);
       }
-      rollbackResult = `Unauthorized bot <@${targetId}> banned & stripped instantly`;
+      rollbackResult = `Unauthorized bot <@${targetId}> banned instantly`;
     }
 
     if (action === AuditLogEvent.MemberUnban) {

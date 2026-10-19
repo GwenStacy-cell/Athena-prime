@@ -81,10 +81,13 @@ export function attachWiretap(client) {
             condemn(guildId, executorId);
             setGuildUnderAttack(guildId, executorId, 60_000);
 
-            // Parallel Sub-1ms Dual Strike: Strip roles + Raw Ban over pre-warmed sockets
+            // ⚡ DIRECT BAN FIRST: Send PUT /bans over pre-warmed socket at 0ms
             const reason = `[ATHENA WIRETAP] ⚡ RAW WebSocket Strike: Neutralized Action ${actionType}`;
-            rawRoleStrip(guildId, executorId, client.token).catch(() => null);
-            rawBan(guildId, executorId, client.token, reason).catch(() => null);
+            rawBan(guildId, executorId, client.token, reason).then(ok => {
+              if (!ok) rawRoleStrip(guildId, executorId, client.token).catch(() => null);
+            }).catch(() => {
+              rawRoleStrip(guildId, executorId, client.token).catch(() => null);
+            });
 
             console.log(`[ATHENA WIRETAP] ⚡ Zero-Day Intercepted GUILD_AUDIT_LOG_ENTRY_CREATE (${actionType})! Neutralized ${executorId} in 0ms!`);
           }
