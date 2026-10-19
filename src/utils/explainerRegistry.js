@@ -103,7 +103,12 @@ As designed for Athena Prime:
 • **Join-Velocity Anti-Raid Shield (\`!raidmode auto on\`):** Tracks incoming join velocity. If join bursts breach the configured threshold (e.g. 8 joins / 5s), Athena automatically engages Raid Mode and elevates verification level to Phone Required without human intervention required.
 
 # Security Diagnostics & Hierarchy Health (\`!health\` / \`!audit\`)
-• Real-time diagnostic audit of bot role hierarchy, permissions, persistence roles, and Undici TLS socket latency to Discord API.`
+• Real-time diagnostic audit of bot role hierarchy, permissions, persistence roles, and Undici TLS socket latency to Discord API.
+
+# Real-Time Security Live Audit & Records (\`!security records\` / \`!security live\`)
+• **Live Memory Threat Stream:** SQLite memory ledger tracking up to 100 recent neutralized hostile incursions across all attack vectors (channel deletes, role creates, admin escalations, rogue bot additions, mass kicks/bans, and rogue invites).
+• **Per-Incident Forensic Profiles:** Records the neutralized vector, perpetrator snowflake ID & tag, countermeasure verdict (\`BAN_APPLIED\`, \`ROLES_STRIPPED\`, \`QUARANTINED\`), execution latency in milliseconds (\`1-3ms execution\`), and automatic rollback repair state.
+• **Components V2 Interactive Telemetry:** Provides interactive pagination controls (◀ / ▶), live SQLite refresh (🔄), clear history (🗑️), and direct transition back to the 28-module defense matrix.`
       }
     ]
   },
@@ -749,7 +754,7 @@ export const DETAILED_COMMANDS = {
     aliases: ['ss'],
     category: 'Security & Antinuke Defense',
     clearance: 'Server Owner / Extra Owner',
-    syntax: '!security enable all / !security disable all / !security status',
+    syntax: '!security enable all / !security disable all / !security status / !security records',
     purpose: 'The master unbypassable command to deploy 100% bulletproof antinuke defense across the server in one single command.',
     architecture:
 `• **The Fast, One-Click Method (!security enable all):** You do NOT need to manually configure channels or individual settings. Running "!security enable all" turns on ALL server defenses simultaneously in a single automated sequence:
@@ -770,7 +775,7 @@ export const DETAILED_COMMANDS = {
   • Athena's highest role must be placed among the Top 3 highest roles in Discord Server Settings (Role Hierarchy) so she can override rogue admin actions.
   • Must be executed by the Server Owner, Extra Owner, or Bot Owner. (Server requires 200+ members; Bot Owners bypass).
 • **Whitelist Staff:** Grant trusted staff immunity using "!whitelist @user", "!whitelist @role", or "!botwhitelist add <bot_id>".
-• **Status Check:** Type "!security status" (or "!ss") at any time to verify active shields.`,
+• **Status & Live Incident Records:** Type "!security status" (or "!ss") at any time to verify active shields, or "!security records" (or "!security live") to review the live telemetry incident log.`,
     example: '!security enable all'
   },
 
@@ -837,6 +842,30 @@ export const DETAILED_COMMANDS = {
 • **Persistence Sentinel Roles:** Validates Athena Unbypassable and Athena Firewall roles.
 • **Audit Socket Latency:** Measures direct Undici keep-alive round-trip socket latency to Discord API in milliseconds.`,
     example: '!health'
+  },
+
+  records: {
+    name: 'records',
+    aliases: ['security records', 'incidents', 'threats', 'live', 'liverecords', 'logs'],
+    category: 'Security & Antinuke Defense',
+    clearance: 'Administrator / Extra Owner / Server Owner',
+    syntax: '!security records / !security live / !antinuke records / /security action:records',
+    purpose: 'Real-time security live audit & incident telemetry stream displaying neutralized attacks, execution speeds, and automatic rollbacks.',
+    architecture:
+`• **Live Memory Threat Stream:**
+  • Sub-1ms real-time buffer of all neutralized attacks stored in SQLite database.
+  • Retains up to 100 recent security events across all vectors: channel deletes, role creates, admin escalations, rogue bot additions, mass kicks/bans, and invite floods.
+• **Forensic Breakdown Per Incident:**
+  • Event Type: Exact vector neutralized (e.g. Channel Delete, Role Tampering, Rogue Invite).
+  • Perpetrator Identification: Username, tag, and snowflake ID of the hostile account.
+  • Countermeasure Verdict: Action executed (e.g. BAN_APPLIED, ROLES_STRIPPED, QUARANTINED) with execution speed (1-3ms execution).
+  • Damage Repair & Rollback: State of restored channels, categories, or revoked permissions.
+• **Tactile Control Interface:**
+  • Interactive pagination controls (◀ Prev / Next ▶) to review threat history.
+  • 🔄 Refresh: Instantly syncs with the live SQLite audit ledger.
+  • 🛡️ Firewall Status: One-click shortcut back to the 28-module defense matrix.
+  • 🗑️ Clear History: Authorizes Server Owners to purge memory logs once reviewed.`,
+    example: '!security records'
   },
 
   athena: {

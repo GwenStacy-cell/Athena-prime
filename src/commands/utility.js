@@ -324,6 +324,22 @@ export const commands = [
                     `> • **Snapshot Integrity:** Reports ground-truth mapped channels, roles, and snapshot freshness.\n` +
                     `> • **Persistence Roles:** Validates Athena Unbypassable and Athena Firewall.\n` +
                     `> • **Audit Socket Latency:** Tests raw TLS undici keep-alive round-trip socket latency to Discord API.`;
+              } else if (targetCmd.name === "security") {
+                  descContent = `Master unbypassable security deployment, status monitoring, and incident telemetry engine.\n\n` +
+                    `> -# **__Subcommands & Directives:__**\n` +
+                    `> • \`${prefix}security enable all\` - One-click deployment of all 28 antinuke modules, persistence roles, and dashboard.\n` +
+                    `> • \`${prefix}security disable all\` - Forcibly disable security system (requires 2FA Gmail authorization).\n` +
+                    `> • \`${prefix}security status\` - Real-time active/offline matrix view across all 28 security modules.\n` +
+                    `> • \`${prefix}security records\` - Live forensic incident audit stream of neutralized threats, execution speeds, and automatic rollbacks.\n` +
+                    `> • \`${prefix}security disable <module>\` - Disable a specific security module.\n` +
+                    `> • \`${prefix}security enable <module>\` - Enable a specific security module.`;
+              } else if (targetCmd.name === "records" || targetCmd.name === "incidents") {
+                  descContent = `Real-time security live audit & incident telemetry stream.\n\n` +
+                    `> -# **__Features & Telemetry:__**\n` +
+                    `> • Displays all intercepted threats in real time with relative timestamps (<t:...:R>).\n` +
+                    `> • Shows perpetrator tag, user ID, countermeasure verdict (BAN_APPLIED, ROLES_STRIPPED), and strike latency in ms.\n` +
+                    `> • Reports automatic channel/category recreation and permission rollbacks.\n` +
+                    `> • Interactive components: Page navigation (◀ / ▶), live Refresh (🔄), and Clear History.`;
               }
 
               const display1 = new TextDisplayBuilder().setContent(
@@ -463,6 +479,22 @@ export const commands = [
             `> • **Snapshot Integrity:** Reports ground-truth mapped channels, roles, and snapshot freshness.\n` +
             `> • **Persistence Roles:** Validates Athena Unbypassable and Athena Firewall.\n` +
             `> • **Audit Socket Latency:** Tests raw TLS undici keep-alive round-trip socket latency to Discord API.`;
+        } else if (targetCmd.name === "security") {
+          descContent = `Master unbypassable security deployment, status monitoring, and incident telemetry engine.\n\n` +
+            `> -# **__Subcommands & Directives:__**\n` +
+            `> • \`${prefix}security enable all\` - One-click deployment of all 28 antinuke modules, persistence roles, and dashboard.\n` +
+            `> • \`${prefix}security disable all\` - Forcibly disable security system (requires 2FA Gmail authorization).\n` +
+            `> • \`${prefix}security status\` - Real-time active/offline matrix view across all 28 security modules.\n` +
+            `> • \`${prefix}security records\` - Live forensic incident audit stream of neutralized threats, execution speeds, and automatic rollbacks.\n` +
+            `> • \`${prefix}security disable <module>\` - Disable a specific security module.\n` +
+            `> • \`${prefix}security enable <module>\` - Enable a specific security module.`;
+        } else if (targetCmd.name === "records" || targetCmd.name === "incidents") {
+          descContent = `Real-time security live audit & incident telemetry stream.\n\n` +
+            `> -# **__Features & Telemetry:__**\n` +
+            `> • Displays all intercepted threats in real time with relative timestamps (<t:...:R>).\n` +
+            `> • Shows perpetrator tag, user ID, countermeasure verdict (BAN_APPLIED, ROLES_STRIPPED), and strike latency in ms.\n` +
+            `> • Reports automatic channel/category recreation and permission rollbacks.\n` +
+            `> • Interactive components: Page navigation (◀ / ▶), live Refresh (🔄), and Clear History.`;
         }
 
         const display1 = new TextDisplayBuilder().setContent(
@@ -1278,6 +1310,10 @@ export const helpModules = [
     "`!unbypassable deploy` - Auto-deploy & repair Athena Unbypassable persistence sentinel roles `[Admin / Extra Owner]`",
     "`!firewall` - Live system telemetry matrix, gateway ping, SQLite WAL & defense status `[Public]`",
     "`!explain / !architecture [topic|cmd]` - Deep-dive architectural breakdowns & exploit analyses `[Public]`",
+    "`!security enable all` - Deploy complete 28-module unbypassable antinuke firewall `[Server Owner / Extra Owner]`",
+    "`!security disable all` - Forcibly disable security (requires 2FA Gmail verification) `[Server Owner / Extra Owner]`",
+    "`!security status` - Full 28-module real-time security matrix status `[Admin / Extra Owner]`",
+    "`!security records / !security live` - Live incident audit stream of neutralized threats & execution speed `[Admin / Extra Owner]`",
     "`!security disable <module>` - Disable specific protection `[Extra Owner]`",
     "`!security enable <module>` - Enable specific protection `[Extra Owner]`",
     "`!security mode [strict|normal|relaxed]` - Change defense sensitivity `[Extra Owner]`",

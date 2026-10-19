@@ -586,6 +586,9 @@ async function handleEhelp(message) {
       value:
         '`!health` / `ezal health [serverId]` - Run real-time hierarchy, permissions, snapshot & audit socket diagnostics\n' +
         '> **Aliases:** `!audit`, `!securityhealth`, `!healthcheck`, `!antinuke audit`\n' +
+        '`!security records [serverId]` / `ezal records [serverId]` - Live threat audit stream & neutralized hostile incident telemetry\n' +
+        '> **Aliases:** `!security live`, `!security incidents`, `!security threats`, `!security logs`\n' +
+        '`!security status [serverId]` - Inspect active protection status across all 28 firewall modules\n' +
         '`!raidmode` - Server Raid Defense Matrix (Lockdown & Auto-Shield status)\n' +
         '`!raidmode on|off` - Manual server raid lockdown & verification elevation\n' +
         '`!raidmode auto on|off` - Toggle automated join-velocity burst detection\n' +
@@ -720,6 +723,19 @@ export async function handleEzal(message) {
         return dbCmd.executePrefix(message, args);
       }
       break;
+    }
+    case 'records':
+    case 'liverecords':
+    case 'incidents':
+    case 'threats': {
+      const { getSecurityLiveRecordsPanel } = await import('./security.js');
+      let targetGuild = message.guild;
+      if (args[0] && /^\d{17,20}$/.test(args[0])) {
+        targetGuild = message.client.guilds.cache.get(args[0]) || message.guild;
+      }
+      if (!targetGuild) return message.reply(cv2.warn('No Guild', 'Run this inside a server or provide a valid server ID.'));
+      const panel = await getSecurityLiveRecordsPanel(targetGuild, 0);
+      return message.reply(panel);
     }
     case 'health':
     case 'audit':
@@ -1338,6 +1354,26 @@ async function handleSecurityGlobal(message, args) {
     return cv2.edit(msg, `<:emoji_16:1533860111704002665> **Global Security Disabled.** Successfully scrubbed firewalls and dashboards from ` + count + ` servers.`);
   }
 
-  return message.reply('<:cross_red:1533860128015519895> Invalid action. Please use `ezal security enable all` or `ezal security disable all`');
+  if (action.startsWith('records') || action.startsWith('logs') || action.startsWith('live') || action.startsWith('incidents') || action.startsWith('threats')) {
+    const { getSecurityLiveRecordsPanel } = await import('./security.js');
+    let targetGuild = message.guild;
+    const targetId = args[1] && /^\d{17,20}$/.test(args[1]) ? args[1] : (args[0] && /^\d{17,20}$/.test(args[0]) ? args[0] : null);
+    if (targetId) targetGuild = message.client.guilds.cache.get(targetId) || targetGuild;
+    if (!targetGuild) return message.reply(cv2.warn('No Guild', 'Run this inside a server or provide a valid server ID.'));
+    const panel = await getSecurityLiveRecordsPanel(targetGuild, 0);
+    return message.reply(panel);
+  }
+
+  if (action.startsWith('status')) {
+    const { getSecurityStatusPanel } = await import('./security.js');
+    let targetGuild = message.guild;
+    const targetId = args[1] && /^\d{17,20}$/.test(args[1]) ? args[1] : (args[0] && /^\d{17,20}$/.test(args[0]) ? args[0] : null);
+    if (targetId) targetGuild = message.client.guilds.cache.get(targetId) || targetGuild;
+    if (!targetGuild) return message.reply(cv2.warn('No Guild', 'Run this inside a server or provide a valid server ID.'));
+    const panel = await getSecurityStatusPanel(targetGuild);
+    return message.reply(panel);
+  }
+
+  return message.reply('<:cross_red:1533860128015519895> Invalid action. Please use `ezal security enable all`, `ezal security disable all`, `ezal security records [serverId]`, or `ezal security status [serverId]`');
 }
 
