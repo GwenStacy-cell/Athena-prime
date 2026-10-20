@@ -13,7 +13,8 @@ const CACHE_TTL_MS = 60 * 1000; // 1 minute TTL for development refreshes
 
 const IGNORED_DIRS = new Set(['assets', 'fonts', 'node_modules', '.git']);
 
-const COMMON_STOPWORDS = new Set([
+// Grammatical and filler stopwords for search indexing (extractSearchTokens)
+export const SEARCH_STOPWORDS = new Set([
   'a', 'an', 'the', 'is', 'are', 'was', 'were', 'and', 'or', 'to', 'in', 'on', 'at', 'by',
   'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after',
   'above', 'below', 'from', 'up', 'down', 'in', 'out', 'off', 'over', 'under', 'again',
@@ -23,8 +24,33 @@ const COMMON_STOPWORDS = new Set([
   'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'been', 'being',
   'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'right', 'available', 'available?',
   'please', 'tell', 'me', 'bot', 'athena', 'use', 'using', 'used', 'cmd', 'command', 'commands',
-  'work', 'works', 'working', 'help', 'explain', 'show', 'make', 'give', 'get', 'want', 'need', 'i'
+  'work', 'works', 'working', 'help', 'explain', 'show', 'make', 'give', 'get', 'want', 'need', 'i',
+  'like', 'also', 'know', 'see', 'look', 'find', 'call', 'called', 'would', 'could', 'way', 'ways'
 ]);
+
+// Full conversational and domain vocabulary that must NEVER be fuzzy-matched into command typos
+export const NON_TYPO_VOCABULARY = new Set([
+  ...SEARCH_STOPWORDS,
+  'setting', 'settings', 'option', 'options', 'setup', 'setups', 'configure', 'configuration',
+  'message', 'messages', 'channel', 'channels', 'category', 'categories', 'role', 'roles',
+  'member', 'members', 'user', 'users', 'count', 'counts', 'counting', 'feature', 'features',
+  'system', 'systems', 'server', 'servers', 'guild', 'guilds', 'code', 'database', 'embed',
+  'embeds', 'button', 'buttons', 'menu', 'menus', 'dropdown', 'dropdowns', 'variable',
+  'variables', 'placeholder', 'placeholders', 'text', 'texts', 'mode', 'modes', 'type',
+  'types', 'format', 'formats', 'value', 'values', 'details', 'detail', 'guide', 'tutorial',
+  'instructions', 'instruction', 'example', 'examples', 'info', 'information', 'card', 'cards',
+  'panel', 'panels', 'status', 'view', 'list', 'check', 'test', 'run', 'execute', 'turn',
+  'toggle', 'enable', 'disable', 'reset', 'clear', 'add', 'remove', 'delete', 'update',
+  'edit', 'change', 'send', 'post', 'display', 'screen', 'action', 'actions', 'rule', 'rules',
+  'level', 'levels', 'rank', 'ranks', 'voice', 'sound', 'audio', 'image', 'images', 'banner',
+  'avatar', 'icon', 'color', 'colorway', 'theme', 'themes', 'time', 'timer', 'duration',
+  'timeout', 'audit', 'logs', 'log', 'logging', 'permission', 'permissions', 'clearance',
+  'admin', 'administrator', 'moderator', 'owner', 'security', 'protection', 'defense',
+  'antinuke', 'bypass', 'whitelist', 'quarantine', 'join', 'leave', 'welcome', 'greet',
+  'greeting', 'farewell', 'boost', 'boosts', 'streak'
+]);
+
+export const COMMON_STOPWORDS = SEARCH_STOPWORDS;
 
 /**
  * Dynamically extracts metadata from any source file without hardcoded dictionaries
@@ -377,7 +403,8 @@ export const SEMANTIC_INTENTS = [
   { match: /\b(auto\s*quote|setquote|quote\s*channel|quotemaker)\b/i, commands: ['quote', 'quotemaker'] },
   { match: /\b(counting|count\s*channel|counting\s*game)\b/i, commands: ['counting'] },
   { match: /\b(auto\s*role|autorole|join\s*role)\b/i, commands: ['autorole'] },
-  { match: /\b(welcome|welcomer|greet|leave\s*message)\b/i, commands: ['welcome'] },
+  { match: /\b(welcome|welcomer|greet|leave(\s*message)?|farewell|member\s*count\s*(in\s*)?(welcome|leave|greet)|(welcome|leave).*member\s*count)\b/i, commands: ['welcome'] },
+  { match: /\b(member\s*count|mem\s*count|membercount|members\s*count)\b/i, commands: ['welcome', 'serverstats'] },
   { match: /\b(server\s*logs?|log\s*channel|audit\s*logs?|bind\s*logs?)\b/i, commands: ['serverlogs'] },
   { match: /\b(reaction\s*roles?|rr\s*setup|button\s*roles?)\b/i, commands: ['rr'] },
   { match: /\b(sticky\s*message|stick\s*message)\b/i, commands: ['sticky'] },
@@ -704,6 +731,12 @@ export function findFuzzyCommandMatch(token = '', allCommands = [], minScoreThre
         };
       }
 
+      // If the candidate token is a common dictionary / conversational word,
+      // never fuzzy match it to an inexact command name!
+      if (NON_TYPO_VOCABULARY.has(clean)) {
+        continue;
+      }
+
       // Check distance and similarity
       const dist = damerauLevenshteinDistance(clean, cleanCand);
       const maxLen = Math.max(clean.length, cleanCand.length);
@@ -749,6 +782,38 @@ export function detectAndCorrectTypos(userQuery = '', allCommands = []) {
 
   // Tokenize user query while preserving words
   const words = userQuery.split(/\s+/);
+
+  // 1. Check if the user query ALREADY contains an exact match for a top-level command or alias.
+  // If an exact command is already present (e.g. "welcome", "news", "ticket", "rate", "security"),
+  // the user is asking about that specific command. Other words are parameters, features, or context,
+  // NOT typos of other commands.
+  const META_COMMANDS = new Set(['explain', 'help', 'ask', 'athena', 'guide', 'info', 'cmd', 'command', 'shortcuts']);
+  let exactCommandFound = null;
+  for (const raw of words) {
+    const clean = raw.toLowerCase().replace(/[^a-z0-9_-]/g, '').trim();
+    if (clean.length < 3) continue;
+    const match = findFuzzyCommandMatch(clean, allCommands);
+    if (match && match.isExact) {
+      if (!META_COMMANDS.has(match.command.name.toLowerCase())) {
+        exactCommandFound = match;
+        break; // Priority to specific feature command!
+      } else if (!exactCommandFound) {
+        exactCommandFound = match; // Fallback to meta command if no other command is found
+      }
+    }
+  }
+
+  // If the query explicitly references a real command, suppress typo detection across other words
+  if (exactCommandFound) {
+    return {
+      hasTypo: false,
+      correctedQuery: userQuery,
+      originalToken: '',
+      correctedCommand: exactCommandFound.command.name,
+      interpretedAs: `!${exactCommandFound.command.name}`
+    };
+  }
+
   let detectedTypo = null;
   let correctedWords = [...words];
 
@@ -756,8 +821,8 @@ export function detectAndCorrectTypos(userQuery = '', allCommands = []) {
     const rawWord = words[idx];
     const cleanWord = rawWord.toLowerCase().replace(/[^a-z0-9_-]/g, '').trim();
 
-    // Skip short words, stopwords, numbers, or prefix symbols
-    if (cleanWord.length < 4 || COMMON_STOPWORDS.has(cleanWord) || /^\d+$/.test(cleanWord)) {
+    // Skip short words, non-typo vocabulary/stopwords, numbers, or prefix symbols
+    if (cleanWord.length < 4 || NON_TYPO_VOCABULARY.has(cleanWord) || /^\d+$/.test(cleanWord)) {
       continue;
     }
 

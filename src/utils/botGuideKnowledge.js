@@ -713,6 +713,9 @@ export function detectRequestedButton(prompt, primaryCommand = '') {
   if (/unlock/i.test(lower)) {
     return { label: 'Emergency Unlockdown', actionId: 'unlockdown', command: 'lockdown' };
   }
+  if (/welcome.*(placeholder|variable|guide)|placeholder.*welcome/i.test(lower)) {
+    return { label: 'Placeholders Guide', actionId: 'welcome_vars', command: 'welcome' };
+  }
   if (/welcome.*(setup|manager|panel)/i.test(lower)) {
     return { label: 'Open Welcome Setup', actionId: 'welcome_setup', command: 'welcome' };
   }
@@ -825,7 +828,7 @@ export function getCommandActionButtons(primaryCommand = '', prompt = '', reques
   else if (cmd === 'welcome' || cmd === 'leave') {
     buttons.push(
       { type: 2, custom_id: 'athena_act_welcome_setup', label: 'Open Welcome Setup', style: 2 },
-      { type: 2, custom_id: 'athena_act_leave_setup', label: 'Open Leave Setup', style: 2 },
+      { type: 2, custom_id: 'athena_act_welcome_vars', label: 'Placeholders Guide', style: 2 },
       { type: 2, custom_id: 'athena_act_welcome_test', label: 'Test Welcome Card', style: 2 }
     );
   }
@@ -1137,7 +1140,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
           '• MANDATORY INSTRUCTION: You MUST begin your response by stating explicitly:',
           `  "Interpreted as \`!${typoResult.correctedCommand}\`..."`,
           `  (e.g., "Interpreted as \`!${typoResult.correctedCommand}\` (auto-corrected from \`${typoResult.originalToken}\`)...")`,
-          `• Then proceed to provide the step-by-step instructions for !${typoResult.correctedCommand}.`,
+          `• Then proceed to answer the user's actual question using the ground truth for !${typoResult.correctedCommand}.`,
           ''
         ].join('\n')
       : '',
@@ -1227,6 +1230,33 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     '    2. **Temporary Voice Channel (JTC) Ownership (!vc transfer):** If you created a temporary Join-to-Create voice channel, you can transfer channel room ownership to another member in the room using `' + prefix + 'vc transfer @user` (or `' + prefix + 'jtc transfer @user`).',
     '    3. **Discord Server Ownership:** Transferred exclusively in Discord Server Settings > Members > Transfer Ownership (this is a Discord platform action, not a bot command).',
     '  • NEVER hallucinate that `!transfer` from economy.js or currency transfer gives bot ownership, and NEVER confuse voice channel ownership with bot ownership!',
+    '- When asked about Welcome or Leave messages, Greeting cards, Member Count in Welcome, or Dynamic Placeholders (!welcome, !leave):',
+    '  • Conduct a deep-dive analysis of `src/commands/welcome.js` and `src/database.js`:',
+    '  • **How to Configure Welcome & Leave Messages:** Server Administrators run `' + prefix + 'welcome` (or `' + prefix + 'leave` for farewells) to launch the interactive Components V2 manager control panel.',
+    '  • **How to Display Member Count in Welcome/Leave Messages:** Member count is NOT a standalone configuration command or toggle! To display the server\'s real-time member count or join position, administrators simply insert dynamic placeholders into the Welcome/Leave message Top Text, Embed Title, or Description using the manager panel:',
+    '    - `{membercount}` or `{count}` \u2192 Inserts the server\'s current total member count (e.g. `142`). Also supports `{member_count}`, `{server.membercount}`, `{server.members}`.',
+    '    - `{ordinal}` or `{ordinal_count}` \u2192 Inserts the member\'s ordinal join position (e.g. `142nd`, `1st`, `2nd`, `3rd`).',
+    '    - Example Embed Description: `( ♡ ) {membercount} members [peace] \u2022 You are our {ordinal} member!`',
+    '    - Example Top Text: `Welcome {user}! You are our {ordinal} member! (Total: {membercount})`',
+    '  • **Full Supported Placeholders Suite:**',
+    '    - **Member:** `{user}` (mention/formatted), `{username}`, `{displayname}`, `{tag}`, `{userid}`, `{avatar}`, `{created}`, `{joined}`',
+    '    - **Server:** `{server}` (name), `{serverid}`, `{server.icon}`, `{owner}`, `{boosts}`, `{tier}`, `{roles}`, `{channels}`',
+    '    - **Count:** `{membercount}`, `{count}`, `{ordinal}`',
+    '  • **Interactive Dashboard Steps:**',
+    '    1. Run `' + prefix + 'welcome` (or `' + prefix + 'leave`).',
+    '    2. Click **Channel** to bind the greeting channel in SQLite (`db.setGuildConfig(guildId, { welcomeChannelId })`).',
+    '    3. Click **Top Text**, **Title**, or **Description** modal to enter your greeting text including `{membercount}` or `{ordinal}`.',
+    '    4. Click **Placeholders** button to view the full variable cheat sheet directly in Discord.',
+    '    5. Click **Send Test** to verify live placeholder rendering before members join.',
+    '    6. Click **Toggle Status** to ensure greetings are enabled.',
+    '  • **STRICT ANTI-HALLUCINATION CONSTRAINT (CRITICAL):**',
+    '    - NEVER claim there is a command like `' + prefix + 'config welcome membercount`, `' + prefix + 'config welcome membercount reset`, or `' + prefix + 'setup welcome`. Such commands DO NOT EXIST in Athena Prime.',
+    '    - NEVER confuse welcome member count placeholders with the counting minigame (`!counting`) or its `saves <0-20>` mechanic.',
+    '    - Member count in greetings is 100% dynamic and evaluated at join-time via `resolvePlaceholders()` in `src/commands/welcome.js`.',
+    '- When asked how to show member count across the server or in voice channels (!serverstats, !stats):',
+    '  • Conduct a deep-dive analysis of `src/commands/serverstats.js`:',
+    '  • If the user wants a live counter in voice channels, Server Administrators run `' + prefix + 'serverstats` (or `' + prefix + 'stats setup`).',
+    '  • Athena creates dedicated locked voice channels that dynamically update with live member counts (e.g. `Total Members: 1,420`, `Humans: 1,350`, `Bots: 70`).',
     '- NEVER hallucinate, invent, or suggest fake subcommands (such as `!setup security`, `!setup security logs`, `!setup security quarantine`, `!setup security bind`, `!antinuke config`, `!scanserver`, etc.).',
     '',
     'Formatting & Style Rules:',

@@ -350,6 +350,7 @@ export async function buildLiveCommandStatusPayload(guild, member, user, cmdName
       statusPoints.push(`-# • **Leave Channel:** ${lChan}`);
       statusPoints.push(`-# • **Render Style:** ${wCard}`);
       actionButtons.unshift({ type: 2, custom_id: 'athena_act_welcome_setup', label: 'Open Welcome Setup', style: 2 });
+      actionButtons.push({ type: 2, custom_id: 'athena_act_welcome_vars', label: 'Placeholders Guide', style: 2 });
       actionButtons.push({ type: 2, custom_id: 'athena_act_welcome_test', label: 'Test Welcome Card', style: 2 });
     } else if (cleanName === 'autorole') {
       const humanRoles = (cfg.autoroles && cfg.autoroles.length) 
@@ -949,6 +950,51 @@ export async function handleAthenaGuideButtons(interaction) {
               {
                 type: 10,
                 content: `## Welcome Test Card Dispatched | ${TICK}\n-# • **__Target Channel:__** <#${result.channelId}>\n-# • **__Status:__** \`Successfully rendered test welcome card\`\n-# Check <#${result.channelId}> to preview your card layout, avatars, and typography!`
+              }
+            ]
+          }
+        ],
+        flags: MessageFlags.IsComponentsV2
+      }, 7).catch(() => null);
+    }
+
+    // 13b. View Welcome & Leave Placeholders Guide
+    if (act === 'welcome_vars') {
+      return cv2.respond(interaction, {
+        components: [
+          {
+            type: 17,
+            components: [
+              {
+                type: 10,
+                content: `## Dynamic Placeholders & Variable Matrix | ${TICK}\n` +
+                  `-# Use these dynamic placeholders in your Top Text, Title, Description, Author, or Footer.\n\n` +
+                  `### Member Counts & Ordinals\n` +
+                  `-# • \`{membercount}\` or \`{count}\` — Current server member count (e.g. \`142\`).\n` +
+                  `-# • \`{ordinal}\` or \`{ordinal_count}\` — Formatted join milestone ordinal (e.g. \`1st\`, \`2nd\`, \`142nd\`).\n\n` +
+                  `### User Information\n` +
+                  `-# • \`{user}\` or \`{member}\` — Member ping (\`<@id>\`) or formatted link based on Name Format.\n` +
+                  `-# • \`{mention}\` — Literal user ping (\`<@id>\`).\n` +
+                  `-# • \`{username}\` — Clean raw username (e.g. \`gwen\`).\n` +
+                  `-# • \`{displayname}\` or \`{nickname}\` — Server nickname or display name.\n` +
+                  `-# • \`{tag}\` — Full Discord tag.\n` +
+                  `-# • \`{userid}\` or \`{id}\` — Raw Discord user snowflake ID.\n` +
+                  `-# • \`{avatar}\` — User avatar CDN URL.\n\n` +
+                  `### Server Information\n` +
+                  `-# • \`{server}\` — Server name.\n` +
+                  `-# • \`{serverid}\` — Server snowflake ID.\n` +
+                  `-# • \`{server.icon}\` — Server icon CDN URL.\n` +
+                  `-# • \`{owner}\` — Server Owner mention (\`<@owner_id>\`).\n` +
+                  `-# • \`{boosts}\` — Server Nitro boost count.\n` +
+                  `-# • \`{roles}\` — Total server role count.\n` +
+                  `-# • \`{channels}\` — Total server channel count.\n\n` +
+                  `### Relative Timestamps\n` +
+                  `-# • \`{created}\` — Discord relative timestamp for account age.\n` +
+                  `-# • \`{joined}\` — Discord relative timestamp for guild join date.\n\n` +
+                  `### Example Embed Setup\n` +
+                  `-# Top Text: \`Welcome {user}! You are our {ordinal} member!\`\n` +
+                  `-# Title: \`Welcome to {server}!\`\n` +
+                  `-# Body: \`thank you for joining!\n( ♡ ) {membercount} members [peace]\``
               }
             ]
           }
