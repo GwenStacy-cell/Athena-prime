@@ -255,20 +255,24 @@ export function getManagerPanel(guildId, type) {
     `${label} Manager`,
     `-# **• Manage settings for your server's ${label.toLowerCase()} messages.**\n\n` +
     `-# **__Current Configuration:__**\n` +
-    `-# **• __Channel:__** ${cfg.channelId ? `<#${cfg.channelId}>` : '`Not Set`'}\n` +
-    `-# **• __Status:__** ${cfg.enabled ? '`Enabled`' : '`Disabled`'}\n` +
-    `-# **• __Top Text:__** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : '`Not Set`'}\n` +
-    `-# **• __Author (From):__** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : '`Not Set`'}\n` +
-    `-# **• __Title:__** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : '`Not Set`'}\n` +
-    `-# **• __Description:__** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : '`Not Set`'}\n` +
-    `-# **• __Color:__** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : '`Default`'}\n` +
-    `-# **• __Image:__** ${cfg.image ? '`[Link Set]`' : '`Not Set`'}\n` +
-    `-# **• __Footer:__** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : '`Not Set`'}\n` +
-    `-# **• __Name Format:__** ${cfg.nameFormat === 'user_link' ? '`Username Link`' : cfg.nameFormat === 'nick_link' ? '`Nickname Link`' : '`Tag (@user)`'}\n` +
-    `-# **• __Avatar Location:__** ${cfg.avatarPos === 'author' ? '`Author (Top Left)`' : cfg.avatarPos === 'footer' ? '`Footer (Bottom)`' : cfg.avatarPos === 'image' ? '`Large Image (Bottom)`' : cfg.avatarPos === 'off' ? '`Hidden`' : '`Thumbnail (Top Right)`'}\n` +
-    `-# **• __Timestamp:__** ${cfg.timestamp !== false ? '`On`' : '`Off`'}\n\n` +
-    `-# **__Supported Placeholders:__**\n` +
-    `-# \`{user}\` • \`{username}\` • \`{displayname}\` • \`{membercount}\` • \`{server}\` • \`{avatar}\` • \`{ordinal}\` • \`{owner}\``
+    `-# • **Channel:** ${cfg.channelId ? `<#${cfg.channelId}>` : '`Not Set`'}\n` +
+    `-# • **Status:** ${cfg.enabled ? '`Enabled`' : '`Disabled`'}\n` +
+    `-# • **Top Text:** ${cfg.message ? `\`${cfg.message.slice(0, 40)}...\`` : '`Not Set`'}\n` +
+    `-# • **Author:** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : '`Not Set`'}\n` +
+    `-# • **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : '`Not Set`'}\n` +
+    `-# • **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : '`Not Set`'}\n` +
+    `-# • **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : '`Default (#5865F2)`'}\n` +
+    `-# • **Image:** ${cfg.image ? '`[Custom Link]`' : '`Not Set`'}\n` +
+    `-# • **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : '`Not Set`'}\n` +
+    `-# • **Name Format:** ${cfg.nameFormat === 'user_link' ? '`Username Link`' : cfg.nameFormat === 'nick_link' ? '`Nickname Link`' : '`Tag (@user)`'}\n` +
+    `-# • **Avatar Location:** ${cfg.avatarPos === 'author' ? '`Author Icon`' : cfg.avatarPos === 'footer' ? '`Footer Icon`' : cfg.avatarPos === 'image' ? '`Large Image`' : cfg.avatarPos === 'off' ? '`Hidden`' : '`Thumbnail`'}\n` +
+    `-# • **Timestamp:** ${cfg.timestamp !== false ? '`Enabled`' : '`Disabled`'}\n\n` +
+    `-# **__Live Placeholders & Dynamic Variables:__**\n` +
+    `-# • **Counts:** \`{membercount}\` • \`{ordinal}\` *(e.g. 1st, 142nd)* • \`{count}\`\n` +
+    `-# • **Member:** \`{user}\` *(ping/link)* • \`{username}\` • \`{displayname}\` • \`{tag}\` • \`{userid}\` • \`{avatar}\`\n` +
+    `-# • **Server:** \`{server}\` • \`{serverid}\` • \`{server.icon}\` • \`{owner}\` • \`{boosts}\` • \`{roles}\` • \`{channels}\`\n` +
+    `-# • **Times:** \`{created}\` *(account age)* • \`{joined}\` *(join date)*\n` +
+    `-# -# *Click **Placeholders** button below for the full cheat-sheet & copy-paste templates.*`
   );
 
   const channelSelectRow = new ActionRowBuilder().addComponents(
@@ -296,6 +300,7 @@ export function getManagerPanel(guildId, type) {
   const row3 = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`${prefix}status`).setLabel(cfg.enabled ? 'Disable System' : 'Enable System').setStyle(cfg.enabled ? ButtonStyle.Danger : ButtonStyle.Success),
     new ButtonBuilder().setCustomId(`${prefix}cycle_name`).setLabel('Name Format').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`${prefix}vars`).setLabel('Placeholders').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}test`).setLabel('Test Message').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`${prefix}reset`).setLabel('Reset All').setStyle(ButtonStyle.Danger)
   );
@@ -432,6 +437,40 @@ export async function handleWelcomeManagerButton(interaction) {
   if (action === 'reset') {
     setConfig(guildId, {});
     return interaction.update(getManagerPanel(guildId, typeStr));
+  }
+
+  if (action === 'vars') {
+    return interaction.reply(cv2.asEphemeral(cv2.info(
+      'Placeholder & Variable Guide',
+      `-# **• Use these dynamic placeholders in your Top Text, Title, Description, Author, or Footer.**\n\n` +
+      `### Member Counts & Ordinals\n` +
+      `-# • \`{membercount}\` or \`{count}\` — Current server member count (e.g. \`142\`).\n` +
+      `-# • \`{ordinal}\` or \`{ordinal_count}\` — Formatted join milestone ordinal (e.g. \`1st\`, \`2nd\`, \`142nd\`).\n\n` +
+      `### User Information\n` +
+      `-# • \`{user}\` or \`{member}\` — Member ping (\`<@id>\`) or Markdown link based on Name Format.\n` +
+      `-# • \`{mention}\` — Literal user ping (\`<@id>\`).\n` +
+      `-# • \`{username}\` or \`{name}\` — Clean raw username (e.g. \`gwen\`).\n` +
+      `-# • \`{displayname}\` or \`{nickname}\` — Server nickname or display name.\n` +
+      `-# • \`{tag}\` or \`{usertag}\` — Full Discord tag.\n` +
+      `-# • \`{userid}\` or \`{id}\` — Raw Discord user snowflake ID.\n` +
+      `-# • \`{avatar}\` or \`{user.avatar}\` — User avatar CDN URL.\n\n` +
+      `### Server Information\n` +
+      `-# • \`{server}\` or \`{guild}\` — Server name.\n` +
+      `-# • \`{serverid}\` — Server snowflake ID.\n` +
+      `-# • \`{server.icon}\` — Server icon CDN URL.\n` +
+      `-# • \`{owner}\` — Server Owner mention (\`<@owner_id>\`).\n` +
+      `-# • \`{boosts}\` — Server Nitro boost count.\n` +
+      `-# • \`{roles}\` — Total server role count.\n` +
+      `-# • \`{channels}\` — Total server channel count.\n\n` +
+      `### Relative Timestamps\n` +
+      `-# • \`{created}\` — Discord relative timestamp for account age.\n` +
+      `-# • \`{joined}\` — Discord relative timestamp for guild join date.\n\n` +
+      `### Example Template\n` +
+      `-# Top Text: \`hope you enjoy your stay!\`\n` +
+      `-# Title: \`୨ৎ - welcome - ୨ৎ\`\n` +
+      `-# Body: \`thank you for joining!\n( ♡ ) {membercount} members [peace]\`\n` +
+      `-# Footer: \`Member #{ordinal} • {server}\``
+    )));
   }
 
   if (action === 'test') {
