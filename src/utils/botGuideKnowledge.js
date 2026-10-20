@@ -960,6 +960,24 @@ export function getCommandActionButtons(primaryCommand = '', prompt = '', reques
 /**
  * Generates an instructive, step-by-step guidance response speaking as Athena Prime
  */
+export function detectLanguage(prompt = '') {
+  if (!prompt || typeof prompt !== 'string') return 'English';
+
+  if (/[\u0B80-\u0BFF]/.test(prompt)) {
+    return 'Tamil';
+  }
+
+  const tanglishWordPattern = /\b(enna|edhu|edhula|enga|engae|epdi|eppadi|yaaru|yaarukku|panradhu|pananum|pannum|pannuradhu|panna|pannunga|panni|solli|sollu|sollunga|solrathu|kudunga|kaatu|kaatunga|irukku|irukka|illa|illai|therila|theriyuma|mudiyuma|podu|podanum|poduradhu|edukanum|vaikkanum|mathu|maathanum|mathuradhu|seiyala|aagala|aachu|aagum|seri|sari|romba|nalla|purinjidhu|sariya|thappa|thappu|adhula|idhula|adhu|idhu|ippo|aprom|appuram|kooda|mattum|enakku|unakku|ungakitta|ennaala)\b/i;
+
+  const tanglishSuffixPattern = /\b[a-zA-Z]+-(la|ku|oda|ah|nu)\b|\b(server|bot|channel|role|message|embed|command|setting|count|card|prefix)la\b/i;
+
+  if (tanglishWordPattern.test(prompt) || tanglishSuffixPattern.test(prompt)) {
+    return 'Tanglish';
+  }
+
+  return 'English';
+}
+
 export async function generateAthenaGuideResponse(userQuestion, { guild, user, member, channelId, prefix = '!', onProgress = null } = {}) {
   const startTime = Date.now();
   const cleanPrompt = (userQuestion || '').trim();
@@ -984,6 +1002,10 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
 
   // Retrieve active multi-turn conversational session
   const activeSession = getGuideSession(guild?.id, user?.id, channelId);
+  const userLang = detectLanguage(cleanPrompt);
+  const detectedLang = (userLang === 'English' && activeSession?.language === 'Tanglish' && cleanPrompt.length < 50)
+    ? 'Tanglish'
+    : userLang;
 
   // 1. Fetch all real commands from codebase catalog and live ground truth context
   const allCommands = await getAllBotCommands();
@@ -992,7 +1014,17 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
   const searchQuery = augmentQueryWithSession(effectivePrompt, activeSession);
 
   const sessionExpSec = activeSession ? Math.floor(activeSession.expiresAt / 1000) : 0;
-  if (typoResult.hasTypo) {
+  if (detectedLang === 'Tanglish') {
+    await reportProgress(
+      `Tanglish intent detected: "${shortPrompt}"... Scanning Athena catalog...`,
+      `Athena Prime is synthesizing guidance in fluent Tanglish (Tamil + English)...`
+    );
+  } else if (detectedLang === 'Tamil') {
+    await reportProgress(
+      `தமிழ் வினா கண்டறியப்பட்டது: "${shortPrompt}"...`,
+      `Athena Prime தமிழில் பதிலளிக்க தயாராகிறது...`
+    );
+  } else if (typoResult.hasTypo) {
     await reportProgress(
       `Fuzzy match: detected typo "${typoResult.originalToken}" \u2192 Interpreted as "!${typoResult.correctedCommand}"...`,
       `Auto-correcting query across 254 commands and catalog of 400+ aliases...`
@@ -1093,7 +1125,31 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
   );
 
   // 2. Build the persona and instruction prompt
+  const languageDirective = detectedLang === 'Tanglish'
+    ? [
+        'CRITICAL LANGUAGE MANDATE: 100% CONVERSATIONAL TANGLISH (TAMIL + ENGLISH IN LATIN ALPHABET)',
+        '• The user is asking in TANGLISH (Tamil spoken naturally, written using English/Latin alphabet A-Z, e.g. "server member count command enna ?").',
+        '• You MUST formulate your entire response in friendly, natural, fluent TANGLISH using English letters (A-Z), exactly like how ChatGPT and Gemini chat in Tanglish!',
+        '• SCRIPT RULE: Write strictly in English alphabet (A-Z). DO NOT output Tamil Unicode script (தமிழ் வேண்டாம்). Tanglish-la mattum ezhudhavum.',
+        '• DISCORD COMMANDS & TECHNICAL TERMS: Keep command syntaxes in backticks (`!serverstats setup`, `!welcome`, `{membercount}`) and technical words in clean English ("server", "voice channel", "bot", "channel", "category", "placeholder", "permissions", "settings", "roles").',
+        '• SPOKEN TAMIL CONVERSATIONAL FLOW: Use natural Tamil verbs and connectives ("paakka rendu official ways irukku", "create panna use pannunga", "live-ah sync aagum", "kaattum", "podunga", "solren", "pathukalam", "vandhadhum", "mudiyum").',
+        '• Never parrot or echo the user prompt as a noun. Directly begin your response with **__Direct Overview:__** and proceed systematically through **__Step-by-Step Instructions:__**, **__Under-the-Hood Architecture:__**, and **__Source Code Deep Dive & Analysis:__**.',
+        ''
+      ].join('\n')
+    : detectedLang === 'Tamil'
+    ? [
+        'CRITICAL LANGUAGE MANDATE: RESPOND IN TAMIL SCRIPT (தமிழ்)',
+        '• The user asked in Tamil script.',
+        '• Formulate your response in polite, helpful Tamil script, keeping command names and code snippets in clean English code blocks.',
+        ''
+      ].join('\n')
+    : [
+        'LANGUAGE: Respond in clear, authoritative, highly structured English.',
+        ''
+      ].join('\n');
+
   const systemInstructions = [
+    languageDirective,
     'You are Athena Prime, the sovereign AI security assistant, bot specialist, and protector for Discord servers.',
     'Your goal is to answer questions about Athena Prime by conducting a thorough deep-dive analysis of the bot\'s codebase, and providing a fully prepared, comprehensive step-by-step output to help the user.',
     '',
@@ -1144,6 +1200,8 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
           ''
         ].join('\n')
       : '',
+    languageDirective,
+    '',
     'CRITICAL GROUND TRUTH & ANTI-HALLUCINATION RULES:',
     '- Ground every command, feature, parameter, option, and theme STRICTLY in the provided BOT SOURCE CODE and Ground Truth Knowledge Base.',
     '- ZERO TOLERANCE FOR FAKE COMMANDS: Never invent, guess, or fabricate fake commands (such as inventing `!rateedit` when the real command is `!rate <#channel>`, or inventing `!setup security` when the real command is `!security enable all`). If a user asks with an incorrect command name, typo, or alias, you MUST guide them directly to the real command name and syntax.',
@@ -1253,10 +1311,11 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     '    - NEVER claim there is a command like `' + prefix + 'config welcome membercount`, `' + prefix + 'config welcome membercount reset`, or `' + prefix + 'setup welcome`. Such commands DO NOT EXIST in Athena Prime.',
     '    - NEVER confuse welcome member count placeholders with the counting minigame (`!counting`) or its `saves <0-20>` mechanic.',
     '    - Member count in greetings is 100% dynamic and evaluated at join-time via `resolvePlaceholders()` in `src/commands/welcome.js`.',
-    '- When asked how to show member count across the server or in voice channels (!serverstats, !stats):',
-    '  • Conduct a deep-dive analysis of `src/commands/serverstats.js`:',
-    '  • If the user wants a live counter in voice channels, Server Administrators run `' + prefix + 'serverstats` (or `' + prefix + 'stats setup`).',
-    '  • Athena creates dedicated locked voice channels that dynamically update with live member counts (e.g. `Total Members: 1,420`, `Humans: 1,350`, `Bots: 70`).',
+    '- When asked how to show member count across the server, in voice channels, or in greetings (!serverstats, !stats, server member count, member count command enna):',
+    '  • Conduct a deep-dive analysis of `src/commands/serverstats.js` and `src/commands/welcome.js`:',
+    '  • Clearly explain that Athena Prime offers TWO powerful methods to show server member counts:',
+    '    1. **Live Dynamic Voice Channel Counters (!serverstats setup):** Run `' + prefix + 'serverstats setup`. Athena creates dedicated locked voice channels under a "Server Stats" category displaying live Total Members, Humans, and Bots counts in real-time. Customize font and emojis via `' + prefix + 'serverstats config`.',
+    '    2. **Welcome & Leave Messages ({membercount} placeholder):** In `' + prefix + 'welcome` or `' + prefix + 'leave`, administrators insert `{membercount}` or `{ordinal}` into Top Text, Title, or Description.',
     '- NEVER hallucinate, invent, or suggest fake subcommands (such as `!setup security`, `!setup security logs`, `!setup security quarantine`, `!setup security bind`, `!antinuke config`, `!scanserver`, etc.).',
     '',
     'Formatting & Style Rules:',
@@ -1275,9 +1334,12 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
   ].filter(Boolean).join('\n');
 
   // 3. Delegate to neural engine
-  const fullPrompt = `User's Question / Need: ${cleanPrompt}\n\nPlease read the provided bot source code and knowledge base carefully, and explain, clarify, and provide a comprehensive deep-dive response with step-by-step instructions and source code references on how to accomplish this with Athena Prime.`;
-
-  let finished = false;
+  const fullPrompt = detectedLang === 'Tanglish'
+    ? `User Question (Tanglish): "${cleanPrompt}"\n\n[MANDATORY INSTRUCTION: Answer this question thoroughly in natural, friendly TANGLISH using Latin/English alphabet (Tamil + English code-switching like ChatGPT/Gemini). Do NOT use Tamil Unicode script. Write strictly in A-Z Latin letters.]`
+    : detectedLang === 'Tamil'
+    ? `User Question (Tamil): "${cleanPrompt}"\n\n[MANDATORY INSTRUCTION: Answer in Tamil script with English code blocks.]`
+    : `User's Question / Need: ${cleanPrompt}\n\nPlease read the provided bot source code and knowledge base carefully, and explain, clarify, and provide a comprehensive deep-dive response with step-by-step instructions and source code references on how to accomplish this with Athena Prime.`;
+    let finished = false;
   const almostDoneTimer = setTimeout(async () => {
     if (!finished) {
       await reportProgress(
@@ -1302,13 +1364,14 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
 
   if (!aiResult.success) {
     // Dynamic codebase synthesizer in case all external AI edge endpoints are offline
-    const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets, memberClearance, requiredClearance, canExecute, typoResult, actionButtons, requestedButton);
+    const fallbackText = buildDynamicCodeGuide(cleanPrompt, knowledge, prefix, codeSnippets, memberClearance, requiredClearance, canExecute, typoResult, actionButtons, requestedButton, detectedLang);
     const suggestions = generateFollowUpSuggestions(primaryCmd, primaryCmdMeta, cleanPrompt, fallbackText, memberClearance, canExecute);
     const updatedSession = recordGuideTurn(guild?.id, user?.id, channelId, cleanPrompt, {
       matchedCommands: knowledge.matchedCommands,
       primaryCommand: primaryCmd,
       suggestions,
-      text: fallbackText
+      text: fallbackText,
+      language: detectedLang
     });
 
     return {
@@ -1316,6 +1379,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
       text: formatAIToGreyMarkdown(fallbackText),
       model: 'Athena Dynamic Code Engine (Local Deep-Dive)',
       latencyMs: Math.max(12, Date.now() - startTime),
+      language: detectedLang,
       session: updatedSession,
       suggestions,
       actionButtons,
@@ -1368,7 +1432,8 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     matchedCommands: knowledge.matchedCommands,
     primaryCommand: primaryCmd,
     suggestions,
-    text: cleanAiText
+    text: cleanAiText,
+    language: detectedLang
   });
 
   return {
@@ -1376,6 +1441,7 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     text: formatAIToGreyMarkdown(cleanAiText),
     model: aiResult.model,
     latencyMs: Math.max(20, Date.now() - startTime),
+    language: detectedLang,
     session: updatedSession,
     suggestions,
     actionButtons: combinedActionButtons,
@@ -1398,8 +1464,9 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
  * Dynamic codebase synthesizer that analyzes real source code snippets on the fly
  * without ANY hardcoded presets or query-specific if-branches.
  */
-function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [], memberClearance = null, requiredClearance = null, canExecute = true, typoResult = null, actionButtons = [], requestedButton = null) {
+function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [], memberClearance = null, requiredClearance = null, canExecute = true, typoResult = null, actionButtons = [], requestedButton = null, language = 'English') {
   const cleanPrompt = (prompt || '').trim();
+  const isTanglish = language === 'Tanglish';
 
   // 1. Dynamically scan code snippets for primary command definitions
   let primaryCmd = null;
@@ -1523,15 +1590,30 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
   // --- Title & Overview ---
   if (primaryCmd) {
     parts.push(`**__${primaryCmd.name.toUpperCase()} — Code Analysis & Step-by-Step Guide__**\n`);
-    parts.push(`• **__Direct Overview:__** ${primaryCmd.description || `Autonomous module implementation within Athena Prime.`}`);
+    if (isTanglish) {
+      if (primaryCmd.name === 'serverstats' || /member\s*count/i.test(cleanPrompt)) {
+        parts.push(`• **__Direct Overview:__** Athena Prime-la server member count paakka rendu official methods irukku:\n  1. **Live Dynamic Voice Channel Counters:** \`${prefix}serverstats setup\` run panna, Server Stats category keezha live member counts (Total, Humans, Bots) kaattum voice channels create aagum.\n  2. **Welcome & Leave Messages:** \`${prefix}welcome\` panel-la \`{membercount}\` placeholder use panni greetings-la dynamic member count kaattalaam.`);
+      } else {
+        parts.push(`• **__Direct Overview:__** Athena Prime-la \`${primaryCmd.name}\` module: ${primaryCmd.description || 'Autonomous Discord system implementation.'}`);
+      }
+    } else {
+      parts.push(`• **__Direct Overview:__** ${primaryCmd.description || `Autonomous module implementation within Athena Prime.`}`);
+    }
   } else {
     parts.push(`**__Athena Code Analysis & Step-by-Step Guide__**\n`);
-    parts.push(`• **__Direct Overview:__** Source code deep-dive conducted for: *${cleanPrompt}*. Extracted live parameters and execution flow directly from the repository.`);
+    parts.push(isTanglish
+      ? `• **__Direct Overview:__** Source code deep-dive conducted for: *${cleanPrompt}*. Athena repository-la irundhu live parameters extract panniyachu.`
+      : `• **__Direct Overview:__** Source code deep-dive conducted for: *${cleanPrompt}*. Extracted live parameters and execution flow directly from the repository.`);
   }
 
   if (!canExecute && memberClearance) {
-    parts.push(`\n-# **__Notice:__** This command requires **__${requiredClearance?.label || 'Administrator'}__** clearance.`);
-    parts.push(`-# As a **__${memberClearance.label}__**, you do not possess administrative permissions to execute this command directly, but here is an overview of how the system operates server-wide:\n`);
+    if (isTanglish) {
+      parts.push(`\n-# **__Notice:__** Indha command-ku **__${requiredClearance?.label || 'Administrator'}__** clearance thevaipPadum.`);
+      parts.push(`-# Neenga **__${memberClearance.label}__** aaga irupadhala direct execution mudiyadhu, but server protection system epdi work aagudhu-nu kizhe paarkalam:\n`);
+    } else {
+      parts.push(`\n-# **__Notice:__** This command requires **__${requiredClearance?.label || 'Administrator'}__** clearance.`);
+      parts.push(`-# As a **__${memberClearance.label}__**, you do not possess administrative permissions to execute this command directly, but here is an overview of how the system operates server-wide:\n`);
+    }
   } else if (memberClearance?.isAdmin || memberClearance?.isServerOwner) {
     parts.push(`\n-# **__Clearance:__** **__Authorized (${memberClearance.label})__** • Full administrative privileges granted for this command.\n`);
   }
@@ -1545,14 +1627,16 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
   const memberStatus = canExecute 
     ? `Authorized: ${memberClearance?.label || 'Authorized'}` 
     : `Requires elevated clearance (Your role: ${memberClearance?.label || 'Community Member'})`;
-  parts.push(`  -# • **__Step 1: Clearance & Role Hierarchy:__** Requires clearance: \`${clearanceText}\` • [${memberStatus}]. Ensure Athena's bot role is positioned above target managed roles in Server Settings.`);
+  parts.push(isTanglish
+    ? `  -# • **__Step 1: Clearance & Role Hierarchy:__** Thevaipadum clearance: \`${clearanceText}\` • [${memberStatus}]. Server Settings-la Athena-voda bot role managed roles-ku mela irukkanum.`
+    : `  -# • **__Step 1: Clearance & Role Hierarchy:__** Requires clearance: \`${clearanceText}\` • [${memberStatus}]. Ensure Athena's bot role is positioned above target managed roles in Server Settings.`);
 
   // Step 2: Running command & choices
   if (primaryCmd) {
     const cmdSyntax = primaryCmd.primaryPrefixSyntax || (primaryCmd.syntax ? primaryCmd.syntax.replace(/!/g, prefix) : `${prefix}${primaryCmd.name}`);
     parts.push(`  -# • **__Step 2: Primary Execution (Prefix First):__** \`${cmdSyntax}\``);
     parts.push(`    -# • **__Execution Modality:__** \`${primaryCmd.executionMode || 'Prefix Supported'}\``);
-    parts.push(`    -# • **__Slash Command Availability:__** \`${primaryCmd.slashAlternative || (primaryCmd.hasSlash ? `/${primaryCmd.name}` : 'Not Available as a Slash Command (Prefix Only)')}\``);
+    parts.push(`    -# • **__Slash Command Availability:__** \`${primaryCmd.slashAlternative || (primaryCmd.hasSlash ? `/${primaryCmd.name}` : (isTanglish ? 'Slash Command illai (Prefix Only)' : 'Not Available as a Slash Command (Prefix Only)'))}\``);
 
     if (primaryCmd.choices && primaryCmd.choices.length > 0) {
       parts.push(`    -# Supported choices & subcommands: ${primaryCmd.choices.map(c => `\`${c}\``).join(', ')}.`);
@@ -1565,36 +1649,52 @@ function buildDynamicCodeGuide(prompt, knowledge, prefix = '!', codeSnippets = [
     const cmd = knowledge.matchedCommands[0];
     parts.push(`  -# • **__Step 2: Primary Execution (Prefix First):__** \`${(cmd.primaryPrefixSyntax || cmd.syntax).replace(/!/g, prefix)}\` \u2014 ${cmd.purpose}`);
     parts.push(`    -# • **__Execution Modality:__** \`${cmd.executionMode || 'Prefix Supported'}\``);
-    parts.push(`    -# • **__Slash Command Availability:__** \`${cmd.slashAlternative || (cmd.hasSlash ? `/${cmd.name}` : 'Not Available as a Slash Command (Prefix Only)')}\``);
+    parts.push(`    -# • **__Slash Command Availability:__** \`${cmd.slashAlternative || (cmd.hasSlash ? `/${cmd.name}` : (isTanglish ? 'Slash Command illai (Prefix Only)' : 'Not Available as a Slash Command (Prefix Only)'))}\``);
   } else {
     parts.push(`  -# • **__Step 2: Command Execution:__** Execute the relevant module command using the server prefix \`${prefix}\` as identified in the source snippets below.`);
   }
 
   // Step 3: Verification & Inspection
   if (primaryCmd && primaryCmd.name === 'security') {
-    parts.push(`  -# • **__Step 3: Verification:__** Run \`${prefix}security status\` to inspect real-time shield tripwires and backup admin roles.`);
+    parts.push(isTanglish
+      ? `  -# • **__Step 3: Verification:__** Real-time shield tripwires and backup roles check panna \`${prefix}security status\` run pannunga.`
+      : `  -# • **__Step 3: Verification:__** Run \`${prefix}security status\` to inspect real-time shield tripwires and backup admin roles.`);
   } else if (primaryCmd && (primaryCmd.name === 'ranktheme' || primaryCmd.name === 'rank')) {
-    parts.push(`  -# • **__Step 3: Verification:__** Run \`${prefix}rank\` or \`${prefix}profile\` to preview the updated card on canvas.`);
+    parts.push(isTanglish
+      ? `  -# • **__Step 3: Verification:__** Canvas card preview paakka \`${prefix}rank\` or \`${prefix}profile\` run pannunga.`
+      : `  -# • **__Step 3: Verification:__** Run \`${prefix}rank\` or \`${prefix}profile\` to preview the updated card on canvas.`);
   } else if (primaryCmd && primaryCmd.name === 'learn') {
-    parts.push(`  -# • **__Step 3: Verification:__** Run \`${prefix}learn baseline\` to execute an immediate staff velocity audit scan.`);
+    parts.push(isTanglish
+      ? `  -# • **__Step 3: Verification:__** Velocity audit scan execute panna \`${prefix}learn baseline\` run pannunga.`
+      : `  -# • **__Step 3: Verification:__** Run \`${prefix}learn baseline\` to execute an immediate staff velocity audit scan.`);
   } else {
-    parts.push(`  -# • **__Step 3: Verification:__** Run the corresponding status inspection command or inspect the interactive Components V2 dashboard.`);
+    parts.push(isTanglish
+      ? `  -# • **__Step 3: Verification:__** Changes verify panna inspection command run pannunga or dashboard check pannunga.`
+      : `  -# • **__Step 3: Verification:__** Run the corresponding status inspection command or inspect the interactive Components V2 dashboard.`);
   }
 
   // --- Under-the-Hood Architecture ---
   parts.push(`\n• **__Under-the-Hood Architecture:__**`);
   const archNotes = [];
   if (dbMethods.length > 0) {
-    archNotes.push(`Persistent ledger state is managed via SQLite calls: \`${dbMethods.slice(0, 3).map(m => `db.${m}()`).join(', ')}\`.`);
+    archNotes.push(isTanglish
+      ? `SQLite calls moolama persistent state manage aagum: \`${dbMethods.slice(0, 3).map(m => `db.${m}()`).join(', ')}\`.`
+      : `Persistent ledger state is managed via SQLite calls: \`${dbMethods.slice(0, 3).map(m => `db.${m}()`).join(', ')}\`.`);
   }
   if (hasCanvas) {
-    archNotes.push(`Graphic rendering pipelines assemble visual elements using node-canvas hardware composition.`);
+    archNotes.push(isTanglish
+      ? `node-canvas hardware composition moolama graphic elements assemble aagum.`
+      : `Graphic rendering pipelines assemble visual elements using node-canvas hardware composition.`);
   }
   if (hasApiDirect) {
-    archNotes.push(`Direct Discord REST API calls bypass standard gateway lag for instantaneous enforcement.`);
+    archNotes.push(isTanglish
+      ? `Direct Discord REST API calls standard gateway lag illama instantaneous enforcement pannum.`
+      : `Direct Discord REST API calls bypass standard gateway lag for instantaneous enforcement.`);
   }
   if (archNotes.length === 0) {
-    archNotes.push(`Dispatched through Athena Prime's unified message and interaction command router with strict clearance verification.`);
+    archNotes.push(isTanglish
+      ? `Athena Prime-oda unified message and interaction command router moolama strict clearance-oda dispatch aagum.`
+      : `Dispatched through Athena Prime's unified message and interaction command router with strict clearance verification.`);
   }
   parts.push(`  -# ${archNotes.join(' ')}`);
 
@@ -1702,6 +1802,10 @@ export function buildAthenaGuideContainer(user, query, aiResult, accentColor = '
 
   const typoLine = (aiResult.typoCorrection && aiResult.typoCorrection.hasTypo)
     ? `\n-# • **__Typo Auto-Corrected:__** Interpreted \`${aiResult.typoCorrection.originalToken}\` as \`!${aiResult.typoCorrection.correctedCommand}\``
+    : '';
+
+  const langBadge = (aiResult.language && aiResult.language !== 'English')
+    ? ` \u00b7 **__Language:__** \`${aiResult.language === 'Tanglish' ? 'Tanglish (Tamil + English)' : aiResult.language}\``
     : '';
 
   const headerText =

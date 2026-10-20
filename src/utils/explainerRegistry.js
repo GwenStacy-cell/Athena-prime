@@ -1712,6 +1712,20 @@ export const DETAILED_COMMANDS = {
 • **Gateway Trigger:** Evaluated instantly inside guildMemberRemove alongside server logging.`,
     example: '!leave'
   },
+  serverstats: {
+    name: 'serverstats',
+    aliases: ['statsvc', 'membercountvc', 'statsetup', 'membercount'],
+    category: 'Utility & Statistics',
+    clearance: 'Extra Owner / Administrator',
+    syntax: '!serverstats <setup|config|disable>',
+    purpose: 'Deploys dynamic, locked voice channels that continuously display real-time server member counts, human counts, and bot counts.',
+    architecture: 
+`• **Live Gateway Synchronization:** Listens to guildMemberAdd and guildMemberRemove to update voice channel names dynamically in real-time.
+• **Three Dynamic Counters:** Generates locked voice channels for Total Members, Humans, and Bots under a dedicated category.
+• **Font & Emoji Styling Engine:** Interactive configuration via !serverstats config offering 8 typographical fonts (Small Caps, Bold, Script, Double Struck) and custom emojis.
+• **Database State:** Persisted in SQLite via db.setServerStats and updated on gateway events.`,
+    example: '!serverstats setup'
+  },
 
   afk: {
     name: 'afk',

@@ -49,10 +49,12 @@ export function recordGuideTurn(guildId, userId, channelId, userPrompt, aiResult
       expiresAt,
       turns: [],
       primaryCommands: [],
-      suggestedFollowUps: []
+      suggestedFollowUps: [],
+      language: aiResult.language || 'English'
     };
   } else {
     session.expiresAt = expiresAt;
+    if (aiResult.language) session.language = aiResult.language;
   }
 
   session.turnCount += 1;

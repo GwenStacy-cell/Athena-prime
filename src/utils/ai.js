@@ -313,16 +313,18 @@ export async function generateAIResponse(prompt, context = {}) {
     const candidateModels = [
       ...(userModel ? [userModel] : []),
       'gemini-3.8-flash',
-      'gemini-3.7-flash',
       'gemini-3.5-flash',
+      'gemini-flash-lite-latest',
+      'gemini-3.7-flash',
       'gemini-flash-latest'
     ].filter((v, i, a) => a.indexOf(v) === i);
 
     const modelDisplayNames = {
       'gemini-3.8-flash': 'Gemini 3.8 Flash (High Intelligence)',
-      'gemini-3.7-flash': 'Gemini 3.8 Flash (High Intelligence)',
-      'gemini-3.5-flash': 'Gemini 3.8 Flash (High Intelligence)',
-      'gemini-flash-latest': 'Gemini 3.8 Flash (High Intelligence)'
+      'gemini-3.5-flash': 'Gemini 3.5 Flash (High Intelligence)',
+      'gemini-flash-lite-latest': 'Gemini Flash Lite (Ultra-Fast)',
+      'gemini-3.7-flash': 'Gemini 3.7 Flash (High Intelligence)',
+      'gemini-flash-latest': 'Gemini Flash (High Intelligence)'
     };
 
     for (const modelId of candidateModels) {

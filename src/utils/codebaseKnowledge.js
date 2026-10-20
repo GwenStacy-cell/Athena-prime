@@ -13,6 +13,19 @@ const CACHE_TTL_MS = 60 * 1000; // 1 minute TTL for development refreshes
 
 const IGNORED_DIRS = new Set(['assets', 'fonts', 'node_modules', '.git']);
 
+// Conversational Tanglish (Tamil + English) stopwords and phrasing particles
+export const TANGLISH_VOCABULARY = [
+  'enna', 'edhu', 'edhula', 'enga', 'engae', 'epdi', 'eppadi', 'yaaru', 'yaarukku',
+  'panradhu', 'pananum', 'pannum', 'pannuradhu', 'panna', 'pannunga', 'panni',
+  'solli', 'sollu', 'sollunga', 'solrathu', 'kudu', 'kudunga', 'kaatu', 'kaatunga',
+  'irukku', 'irukka', 'illa', 'illai', 'onnum', 'therila', 'theriyuma', 'mudiyuma',
+  'podu', 'podanum', 'poduradhu', 'edukanum', 'vaikkanum', 'mathu', 'maathanum', 'mathuradhu',
+  'velai', 'seiyala', 'aagala', 'aachu', 'aagum', 'seri', 'sari', 'romba',
+  'nalla', 'super', 'puriya', 'purinjidhu', 'sariya', 'thappa', 'thappu',
+  'adhula', 'idhula', 'adhu', 'idhu', 'ippo', 'aprom', 'appuram', 'kooda', 'mattum',
+  'enakku', 'unakku', 'ungakitta', 'ennaala'
+];
+
 // Grammatical and filler stopwords for search indexing (extractSearchTokens)
 export const SEARCH_STOPWORDS = new Set([
   'a', 'an', 'the', 'is', 'are', 'was', 'were', 'and', 'or', 'to', 'in', 'on', 'at', 'by',
@@ -25,12 +38,14 @@ export const SEARCH_STOPWORDS = new Set([
   'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'right', 'available', 'available?',
   'please', 'tell', 'me', 'bot', 'athena', 'use', 'using', 'used', 'cmd', 'command', 'commands',
   'work', 'works', 'working', 'help', 'explain', 'show', 'make', 'give', 'get', 'want', 'need', 'i',
-  'like', 'also', 'know', 'see', 'look', 'find', 'call', 'called', 'would', 'could', 'way', 'ways'
+  'like', 'also', 'know', 'see', 'look', 'find', 'call', 'called', 'would', 'could', 'way', 'ways',
+  ...TANGLISH_VOCABULARY
 ]);
 
 // Full conversational and domain vocabulary that must NEVER be fuzzy-matched into command typos
 export const NON_TYPO_VOCABULARY = new Set([
   ...SEARCH_STOPWORDS,
+  ...TANGLISH_VOCABULARY,
   'setting', 'settings', 'option', 'options', 'setup', 'setups', 'configure', 'configuration',
   'message', 'messages', 'channel', 'channels', 'category', 'categories', 'role', 'roles',
   'member', 'members', 'user', 'users', 'count', 'counts', 'counting', 'feature', 'features',
