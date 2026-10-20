@@ -743,6 +743,67 @@ A Honeypot is a designated text channel configured with permissions hidden or si
       }
     ]
   }
+,
+
+  welcome: {
+    id: 'welcome',
+    label: 'Welcome, Leave & Dynamic Placeholders',
+    aliases: ['welcomer', 'greet', 'leave', 'farewell', 'placeholders', 'membercount', 'welcome_engine'],
+    title: 'Welcome, Leave & Dynamic Placeholder Engine | <a:atheNATICK:1557841381630681106>',
+    description: 'Autonomous join greetings, departure dispatch, CV2 container formatting, and multi-token variable resolution.',
+    pages: [
+      {
+        pageTitle: 'Dynamic Variable Interpolation & Full Placeholder Suite',
+        content:
+`# Dynamic Variable Interpolation Engine (resolvePlaceholders)
+Athena Prime features a high-performance, multi-token variable resolution engine in \`src/commands/welcome.js\` that dynamically injects real-time guild and member metadata into greeting messages, embeds, and auto-replies.
+
+### Supported Placeholder Matrix
+• **Member Count Tokens:**
+  - \`{membercount}\`, \`{member_count}\`, \`{members}\`, \`{count}\`, \`{server.membercount}\` — Injects live guild member total (e.g. \`142\`).
+• **Ordinals & Milestones:**
+  - \`{ordinal}\`, \`{ordinal_count}\`, \`{ordinal_membercount}\` — Injects formatted join ordinal (e.g. \`1st\`, \`2nd\`, \`3rd\`, \`142nd\`).
+• **User Identification Tokens:**
+  - \`{user}\`, \`{member}\` — Injects user mention \`<@id>\` or customizable Markdown profile link (\`[User](https://discord.com/users/id)\`).
+  - \`{mention}\`, \`{usermention}\`, \`{user.mention}\` — Injects literal user ping \`<@id>\`.
+  - \`{username}\`, \`{user.username}\`, \`{name}\` — Clean sanitized username.
+  - \`{displayname}\`, \`{nickname}\`, \`{nick}\` — Server nickname or display name.
+  - \`{tag}\`, \`{usertag}\`, \`{user.tag}\` — Full Discord tag.
+  - \`{userid}\`, \`{user.id}\`, \`{id}\` — Raw Discord snowflake ID.
+  - \`{avatar}\`, \`{user.avatar}\`, \`{useravatar}\` — Direct CDN avatar URL.
+• **Account & Join Chronology:**
+  - \`{created}\`, \`{created_at}\`, \`{user.created_at}\` — Discord relative timestamp for account age (<t:timestamp:R>).
+  - \`{joined}\`, \`{joined_at}\`, \`{user.joined_at}\` — Discord relative timestamp for guild join date (<t:timestamp:R>).
+• **Guild & Server Metadata:**
+  - \`{server}\`, \`{guild}\`, \`{servername}\`, \`{server.name}\` — Guild name.
+  - \`{serverid}\`, \`{server.id}\`, \`{guildid}\` — Guild snowflake ID.
+  - \`{server.icon}\`, \`{servericon}\`, \`{guild.icon}\` — Direct CDN guild icon URL.
+  - \`{owner}\`, \`{server.owner}\`, \`{guild.owner}\` — Server Owner mention.
+  - \`{ownerid}\`, \`{server.owner_id}\` — Server Owner snowflake ID.
+  - \`{boosts}\`, \`{boost_count}\`, \`{server.boosts}\` — Total server boost count.
+  - \`{tier}\`, \`{server.tier}\` — Nitro boost tier level.
+  - \`{roles}\`, \`{rolecount}\` — Total active roles in guild.
+  - \`{channels}\`, \`{channelcount}\` — Total active channels in guild.`
+      },
+      {
+        pageTitle: 'Welcome & Leave Architecture & Deliverability',
+        content:
+`# Welcome & Leave Dispatch Architecture (src/commands/welcome.js)
+• **Event Gateways:**
+  - Join triggers in \`guildMemberAdd\` immediately dispatch \`sendWelcomeMessage(member)\`.
+  - Departure triggers in \`guildMemberRemove\` immediately dispatch \`sendLeaveMessage(member)\`.
+• **Resilient Channel Fetching:**
+  - Uses \`guild.channels.cache.get(id) || await guild.channels.fetch(id)\` to eliminate silent drops caused by cold channel caches or bot restarts.
+• **Dual Layout Architecture (Content + Embed):**
+  - **Top Text (message):** Standalone plaintext header rendered above the card.
+  - **Embed Construction (buildWelcomeEmbed):** Fully customizable author, title, description, thumbnail, large media (GIF & MP4 conversion), custom hex accent colors, footer text, and footer icons.
+• **Dynamic Media Support:**
+  - Automatically converts uploaded MP4 videos into animated looping Discord GIFs via \`convertMp4ToGif\` and re-hosts them securely on Discord CDN via \`uploadGifToDiscord\`.
+• **Auto-Reply Integration (src/commands/trigger.js):**
+  - All auto-responders and trigger keyword replies dynamically parse the full placeholder suite on invocation.`
+      }
+    ]
+  }
 };
 
 /**
@@ -1621,13 +1682,35 @@ export const DETAILED_COMMANDS = {
   welcome: {
     name: 'welcome',
     aliases: ['welcomer', 'greet'],
-    category: 'Server Administration',
-    clearance: 'Admin Tier / Manage Server',
-    syntax: '!welcome [channel|message|embed|test]',
-    purpose: 'Configures join greetings, departure messages, and direct welcome messages for new members.',
+    category: 'Community & Engagement',
+    clearance: 'Manage Server / Admin',
+    syntax: '!welcome',
+    purpose: 'Interactive visual builder for join greetings with full dynamic placeholder interpolation and MP4-to-GIF conversion.',
     architecture: 
-`• **Dynamic Variable Interpolation:** Injects \`{user}\`, \`{server}\`, \`{membercount}\` into Components V2 containers on member join.`,
-    example: '!welcome channel #welcome'
+`• **Interactive Control Dashboard:** Running !welcome launches an interactive Components V2 manager panel with buttons for Top Text, Author, Title, Description, Color, Media, Footer, Avatar Positioning, and Name Formatting.
+• **Comprehensive Placeholder Suite:** Injects live variables at dispatch time:
+  - Member counts: \`{membercount}\`, \`{member_count}\`, \`{members}\`, \`{count}\`, \`{server.membercount}\`
+  - Ordinal numbers: \`{ordinal}\`, \`{ordinal_count}\` (e.g. \`1st\`, \`142nd\`)
+  - User details: \`{user}\`, \`{username}\`, \`{displayname}\`, \`{nickname}\`, \`{tag}\`, \`{userid}\`, \`{avatar}\`
+  - Timestamps: \`{created}\`, \`{joined}\`
+  - Server metadata: \`{server}\`, \`{serverid}\`, \`{server.icon}\`, \`{owner}\`, \`{boosts}\`, \`{tier}\`, \`{roles}\`, \`{channels}\`
+• **Resilient Delivery:** Automatically falls back to Discord REST fetch(channelId) if channel is not cached.
+• **Media Pipeline:** Automatically converts MP4 URLs into animated GIFs via ffmpeg and re-hosts on Discord CDN.`,
+    example: '!welcome'
+  },
+
+  leave: {
+    name: 'leave',
+    aliases: ['farewell', 'goodbye'],
+    category: 'Community & Engagement',
+    clearance: 'Manage Server / Admin',
+    syntax: '!leave',
+    purpose: 'Interactive visual builder for departure messages when members exit the server.',
+    architecture: 
+`• **Interactive Control Dashboard:** Running !leave launches an interactive Components V2 manager panel mirroring the welcome builder.
+• **Shared Interpolation Engine:** Shares resolvePlaceholders to dynamically inject \`{membercount}\`, \`{user}\`, \`{username}\`, \`{server}\`, \`{created}\`, \`{joined}\`, and server statistics into farewell announcements.
+• **Gateway Trigger:** Evaluated instantly inside guildMemberRemove alongside server logging.`,
+    example: '!leave'
   },
 
   afk: {
@@ -2250,6 +2333,11 @@ ${formatExplainerMarkdown(matchedCmd.architecture)}
  */
 export function buildTopicsDirectoryContainer(prefix = '!') {
   const selectOptions = [
+    {
+      label: 'Welcome, Leave & Placeholders',
+      description: 'Dynamic variable interpolation, {membercount}, ordinals & CV2 builder',
+      value: 'welcome'
+    },
     {
       label: 'Heuristic Threat Profiling',
       description: 'Adaptive staff baselining, ML profiling & threat signatures',

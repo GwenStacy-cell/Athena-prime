@@ -236,7 +236,8 @@ export const commands = [
               const matchingModule = helpModules.find(m => 
                 m.id === cmdName || 
                 m.shortLabel.toLowerCase() === cmdName || 
-                (cmdName === 'count' && m.id === 'counting') ||
+                ((cmdName === 'count' || cmdName === 'counting') && m.id === 'counting') ||
+                ((cmdName === 'leave' || cmdName === 'farewell' || cmdName === 'welcome') && m.id === 'welcome') ||
                 ((cmdName === 'antinuke' || cmdName === 'an') && m.id === 'security') ||
                 ((cmdName === 'athena' || cmdName === 'guide' || cmdName === 'neural' || cmdName === 'ai' || cmdName === 'aiguide') && m.id === 'ai') ||
                 ((cmdName === 'eco' || cmdName === 'economy' || cmdName === 'coins' || cmdName === 'shop') && m.id === 'economy')
@@ -1580,7 +1581,8 @@ export const helpModules = [
     "-# **__Builder & Engine Features:__**",
     "-# • **__AutoRole & Vanity Engine:__** Automatically assigns human/bot roles on join and vanity URL reward roles.",
     "-# • **__Auto-React Engine:__** Configure up to 5 custom or native reaction emojis per channel.",
-    "-# • Supports embedding images, setting custom CV2 borders, and placeholders like `{user}`, `{server}`, and `{membercount}`."
+    "-# • **__Dynamic Variable Interpolation:__** Full support for `{membercount}`, `{ordinal}`, `{user}`, `{username}`, `{displayname}`, `{tag}`, `{userid}`, `{server}`, `{serverid}`, `{server.icon}`, `{avatar}`, `{created}`, `{joined}`, `{owner}`, `{boosts}`, `{tier}`, `{roles}`, `{channels}`.",
+    "-# • **__Media Pipeline:__** Supports custom hex accent colors, image URLs, and auto-converts MP4 video links into animated looping GIFs."
   ] },
   { id: 'leveling', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'XP', label: 'Leveling & XP', emoji: 'leveling', commands: [
     "`!xpsetup` - Open the XP Dashboard `[Extra Owner]`",
