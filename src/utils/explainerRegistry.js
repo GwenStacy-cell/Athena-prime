@@ -1727,6 +1727,22 @@ export const DETAILED_COMMANDS = {
     example: '!serverstats setup'
   },
 
+  pinterest: {
+    name: 'pinterest',
+    aliases: ['pin', 'pinit', 'pintrest'],
+    category: 'Media & Utility',
+    clearance: '@everyone (Standard User)',
+    syntax: '!pinterest <link> (or !pin <link>, or reply to a message with !pin)',
+    purpose: 'Fetches, extracts, and delivers uncompressed original high-resolution images and MP4 videos from any Pinterest link or short URL (pin.it).',
+    architecture: 
+`• **Multi-Format Ingestion:** Supports standard pin URLs (pinterest.com/pin/...), short redirect URLs (pin.it/...), and direct pinimg links.
+• **Full-Resolution Upgrade Engine:** Automatically inspects page metadata and upgrades resized preview thumbnails (736x, 564x, 236x) to original uncompressed master files (/originals/).
+• **Video & Image Extraction:** Dynamically detects whether a pin contains an MP4 video (v.pinimg.com) or static/animated image asset.
+• **Direct Discord Upload Pipeline:** Downloads media buffer and attaches it directly via AttachmentBuilder, bypassing hotlink blocks and guaranteeing permanent preview rendering.
+• **Reply-Aware Invocation:** Automatically parses replied messages when invoked via !pin as a Discord reply.`,
+    example: '!pinterest https://pin.it/5gq1j4x'
+  },
+
   afk: {
     name: 'afk',
     aliases: ['brb'],

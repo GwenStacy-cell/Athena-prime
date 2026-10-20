@@ -1718,6 +1718,7 @@ export const helpModules = [
     "`!bump` - Bump the server (Disboard integration) `[Public]`",
     "`!sticky / !stick <message>` - Keep a message stuck at bottom of chat `[Extra Owner]`",
     "`!upload <url>` - Upload and mirror file from direct URL `[Public]`",
+    "`!pinterest / !pin <link>` - Extract & download full-res images or videos from Pinterest `[Public]`",
     "`!tier / !mytier / !perms` - Check your current Athena Prime authorization tier `[Public]`",
     "`!profile / !card [@user]` - Official God of War canvas profile card `[Public]`",
     "",

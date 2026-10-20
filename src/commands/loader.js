@@ -69,6 +69,7 @@ import { commands as emojiStealerCmds } from './emojistealer.js';
 import { commands as setDeleteLogCmds } from './setdeletelog.js';
 import { commands as channelAdminCmds } from './channeladmin.js';
 import { commands as youtubeCmds } from './youtube.js';
+import { commands as pinterestCmds } from './pinterest.js';
 import { commands as snipeCmds } from './snipe.js';
 import { commands as vcpanelCmds } from './vcpanel.js';
 import { commands as npCmds } from './np.js';
@@ -127,6 +128,7 @@ export const allCommands = [
   ...autovcstatusCmds,
   ...shipCmds,
   ...youtubeCmds,
+  ...pinterestCmds,
   ...snipeCmds,
   ...vcpanelCmds,
   ...channelAdminCmds,

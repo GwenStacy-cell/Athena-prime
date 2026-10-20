@@ -5,6 +5,7 @@ import util from 'util';
 import fs from 'fs';
 import path from 'path';
 import ffmpegPath from 'ffmpeg-static';
+import { fetchPinterestMedia, downloadPinterestBuffer } from './pinterest.js';
 
 const execPromise = util.promisify(exec);
 
@@ -117,6 +118,27 @@ export async function processMediaLink(client, message, url) {
       await execPromise(`"${ytdlpPath}" --ffmpeg-location "${ffmpegPath}" --extractor-args "youtube:player_client=android,web" -f "best[ext=mp4][height<=720]/bestvideo[ext=mp4][height<=720]+bestaudio[ext=m4a]/best" --no-playlist -o "${tempPath}" "${url}"`);
       if (fs.existsSync(tempPath)) {
         localFile = tempPath;
+      }
+    }
+    // 3.5 PINTEREST (Original High-Res Images & MP4 Videos)
+    else if (url.includes('pinterest.com') || url.includes('pin.it') || url.includes('pinimg.com')) {
+      try {
+        const pinResult = await fetchPinterestMedia(url);
+        if (pinResult.success) {
+          const dl = await downloadPinterestBuffer(pinResult.mediaUrl, pinResult.fallbackUrl);
+          if (dl && dl.buffer) {
+            const ext = dl.extension;
+            const attachment = new AttachmentBuilder(dl.buffer, { name: `Athena_Pinterest_${Date.now()}.${ext}` });
+            await message.channel.send({
+              content: `-# **Pinterest Media Extracted | <a:atheNATICK:1557841381630681106>** Requested by ${message.author} \u00b7 [Source Pin](${pinResult.sourceUrl})`,
+              files: [attachment]
+            });
+            await message.delete().catch(() => {});
+            return true;
+          }
+        }
+      } catch (e) {
+        console.error('[Media] Pinterest extraction failed:', e.message);
       }
     }
 

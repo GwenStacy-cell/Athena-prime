@@ -332,11 +332,12 @@ export default {
           const urls = message.content.match(urlRegex);
           if (urls) {
             for (const url of urls) {
-              if (url.includes('tiktok.com') || url.includes('instagram.com') || url.includes('twitter.com') || url.includes('x.com') || url.includes('reddit.com') || url.includes('youtube.com') || url.includes('youtu.be')) {
+              if (url.includes('tiktok.com') || url.includes('instagram.com') || url.includes('twitter.com') || url.includes('x.com') || url.includes('reddit.com') || url.includes('youtube.com') || url.includes('youtu.be') || url.includes('pinterest.com') || url.includes('pin.it')) {
                 cacheMediaUrl(message.id, url);
+                const isPin = url.includes('pinterest.com') || url.includes('pin.it');
                 const row = new ActionRowBuilder().addComponents(
-                  new ButtonBuilder().setCustomId(`dl_mp4_${message.id}`).setLabel('Download MP4').setStyle(ButtonStyle.Primary),
-                  new ButtonBuilder().setCustomId(`dl_mp3_${message.id}`).setLabel('Extract MP3').setStyle(ButtonStyle.Success)
+                  new ButtonBuilder().setCustomId(`dl_mp4_${message.id}`).setLabel(isPin ? 'Fetch Media' : 'Download MP4').setStyle(ButtonStyle.Primary),
+                  ...(isPin ? [] : [new ButtonBuilder().setCustomId(`dl_mp3_${message.id}`).setLabel('Extract MP3').setStyle(ButtonStyle.Success)])
                 );
                 await message.reply({ content: '-# **Media Link Detected!** Choose your format:', components: [row] }).catch(() => null);
                 return;
