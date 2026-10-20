@@ -145,17 +145,14 @@ export function buildWelcomeEmbed(member, cfg) {
   if (!cfg) return null;
   const e = new EmbedBuilder();
 
-  if (cfg.color !== undefined && cfg.color !== null) {
-    try {
-      if (typeof cfg.color === 'string') {
-        const hex = cfg.color.replace('#', '');
-        const intVal = parseInt(hex, 16);
-        e.setColor(!isNaN(intVal) ? intVal : 0x5865F2);
-      } else {
-        e.setColor(cfg.color);
-      }
-    } catch { e.setColor(0x5865F2); }
-  } else {
+  // Inherit server accent color from guild configuration
+  const guildConfig = member?.guild ? db.getGuildConfig(member.guild.id) : null;
+  const accentColor = guildConfig?.accentColor || '#5865F2';
+  try {
+    const hex = accentColor.replace('#', '');
+    const intVal = parseInt(hex, 16);
+    e.setColor(!isNaN(intVal) ? intVal : 0x5865F2);
+  } catch {
     e.setColor(0x5865F2);
   }
 
@@ -261,7 +258,6 @@ export function getManagerPanel(guildId, type) {
     `-# • **Author:** ${cfg.from ? `\`${cfg.from.slice(0, 30)}...\`` : '`Not Set`'}\n` +
     `-# • **Title:** ${cfg.title ? `\`${cfg.title.slice(0, 30)}...\`` : '`Not Set`'}\n` +
     `-# • **Description:** ${cfg.description ? `\`${cfg.description.slice(0, 40)}...\`` : '`Not Set`'}\n` +
-    `-# • **Color:** ${cfg.color ? `\`#${cfg.color.toString(16).toUpperCase()}\`` : '`Default (#5865F2)`'}\n` +
     `-# • **Image:** ${cfg.image ? '`[Custom Link]`' : '`Not Set`'}\n` +
     `-# • **Footer:** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : '`Not Set`'}\n` +
     `-# • **Name Format:** ${cfg.nameFormat === 'user_link' ? '`Username Link`' : cfg.nameFormat === 'nick_link' ? '`Nickname Link`' : '`Tag (@user)`'}\n` +
@@ -290,7 +286,6 @@ export function getManagerPanel(guildId, type) {
   );
 
   const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`${prefix}color`).setLabel('Color').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}image`).setLabel('Image').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}footer`).setLabel('Footer').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`${prefix}cycle_avatar`).setLabel('Avatar Location').setStyle(ButtonStyle.Secondary),
@@ -557,11 +552,7 @@ export async function handleWelcomeManagerButton(interaction) {
   }
 
   if (action === 'color') {
-    const modal = new ModalBuilder().setCustomId(`${prefix}modal_color`).setTitle('Set Embed Color');
-    modal.addComponents(new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('val').setLabel('Hex Color Code (e.g. #5865F2)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.color ? `#${cfg.color.toString(16).toUpperCase()}` : '')
-    ));
-    return interaction.showModal(modal);
+    return interaction.reply(cv2.asEphemeral(cv2.info('Accent Theme', 'Welcome and Leave embeds automatically use your server\'s accent color configured via `!accent`.')));
   }
 
   if (action === 'image') {

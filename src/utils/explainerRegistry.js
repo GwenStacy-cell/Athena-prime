@@ -796,7 +796,7 @@ Athena Prime features a high-performance, multi-token variable resolution engine
   - Uses \`guild.channels.cache.get(id) || await guild.channels.fetch(id)\` to eliminate silent drops caused by cold channel caches or bot restarts.
 • **Dual Layout Architecture (Content + Embed):**
   - **Top Text (message):** Standalone plaintext header rendered above the card.
-  - **Embed Construction (buildWelcomeEmbed):** Fully customizable author, title, description, thumbnail, large media (GIF & MP4 conversion), custom hex accent colors, footer text, and footer icons.
+  - **Embed Construction (buildWelcomeEmbed):** Fully customizable author, title, description, thumbnail, large media (GIF & MP4 conversion), server accent theme integration (via !accent), footer text, and footer icons.
 • **Dynamic Media Support:**
   - Automatically converts uploaded MP4 videos into animated looping Discord GIFs via \`convertMp4ToGif\` and re-hosts them securely on Discord CDN via \`uploadGifToDiscord\`.
 • **Auto-Reply Integration (src/commands/trigger.js):**
@@ -1687,7 +1687,7 @@ export const DETAILED_COMMANDS = {
     syntax: '!welcome',
     purpose: 'Interactive visual builder for join greetings with full dynamic placeholder interpolation and MP4-to-GIF conversion.',
     architecture: 
-`• **Interactive Control Dashboard:** Running !welcome launches an interactive Components V2 manager panel with buttons for Top Text, Author, Title, Description, Color, Media, Footer, Avatar Positioning, and Name Formatting.
+`• **Interactive Control Dashboard:** Running !welcome launches an interactive Components V2 manager panel with buttons for Top Text, Author, Title, Description, Media, Footer, Avatar Positioning, and Name Formatting (embed colors automatically inherit the server's accent theme via !accent).
 • **Comprehensive Placeholder Suite:** Injects live variables at dispatch time:
   - Member counts: \`{membercount}\`, \`{member_count}\`, \`{members}\`, \`{count}\`, \`{server.membercount}\`
   - Ordinal numbers: \`{ordinal}\`, \`{ordinal_count}\` (e.g. \`1st\`, \`142nd\`)
