@@ -1855,7 +1855,7 @@ export default {
         if (!t.match) continue;
         
         if (matchesTrigger(message.content, t.match)) {
-          const autoReplyContainer = buildAutoReplyPreview(message.guild, t);
+          const autoReplyContainer = buildAutoReplyPreview(message.guild, t, message.member || message.author);
 
           await message.reply({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
             message.channel.send({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);

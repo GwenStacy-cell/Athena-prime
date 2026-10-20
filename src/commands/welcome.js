@@ -5,30 +5,137 @@ import { convertMp4ToGif, uploadGifToDiscord } from '../utils/mediaConverter.js'
 import { isBotOwnerSync, cleanDisplayName } from '../utils/helpers.js';
 
 // ============================================================
-// PLACEHOLDER RESOLVER
+// ORDINAL NUMBER HELPER (1st, 2nd, 3rd, 142nd...)
 // ============================================================
-function resolve(text, member, cfg = {}) {
-  if (!text) return '';
-  const guild = member.guild;
-  const user = member.user || member;
-  const username = cleanDisplayName(user.username || 'User');
-  const displayName = cleanDisplayName(member.displayName || username);
-  let userFormat = `<@${member.id}>`;
-  if (cfg.nameFormat === 'user_link') {
-    userFormat = `[${username}](https://discord.com/users/${member.id})`;
-  } else if (cfg.nameFormat === 'nick_link') {
-    userFormat = `[${displayName}](https://discord.com/users/${member.id})`;
+function getOrdinal(n) {
+  const num = parseInt(n, 10);
+  if (isNaN(num)) return String(n || 0);
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = num % 100;
+  return num + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+// ============================================================
+// COMPREHENSIVE PLACEHOLDER RESOLVER
+// Supports {membercount}, {user}, {server}, {avatar}, {ordinal}, etc.
+// ============================================================
+export function resolvePlaceholders(text, memberOrUser, guildParam = null, cfg = {}) {
+  if (!text || typeof text !== 'string') return '';
+  if (!memberOrUser) return text;
+
+  const guild = guildParam || memberOrUser.guild || memberOrUser.client?.guilds?.cache?.get(memberOrUser.guildId) || null;
+  const user = memberOrUser.user || memberOrUser;
+  const username = cleanDisplayName(user?.username || 'User');
+  const displayName = cleanDisplayName(memberOrUser?.displayName || username);
+  const userId = memberOrUser?.id || user?.id || '';
+  const tag = user?.tag || (user?.discriminator && user.discriminator !== '0' ? `${user.username}#${user.discriminator}` : user?.username) || username;
+
+  let userFormat = userId ? `<@${userId}>` : username;
+  if (cfg.nameFormat === 'user_link' && userId) {
+    userFormat = `[${username}](https://discord.com/users/${userId})`;
+  } else if (cfg.nameFormat === 'nick_link' && userId) {
+    userFormat = `[${displayName}](https://discord.com/users/${userId})`;
   }
-  const avatarUrl = user.displayAvatarURL ? user.displayAvatarURL({ size: 256 }) : '';
+
+  const avatarUrl = user?.displayAvatarURL ? user.displayAvatarURL({ size: 256 }) : '';
+  const serverIcon = guild?.iconURL ? (guild.iconURL({ dynamic: true, size: 256 }) || '') : '';
+  const memberCount = guild?.memberCount || guild?.members?.cache?.size || 0;
+  const countStr = String(memberCount);
+  const ordinalStr = getOrdinal(memberCount);
+  const serverName = guild?.name || 'Server';
+  const serverId = guild?.id || '';
+  const ownerId = guild?.ownerId || '';
+  const ownerMention = ownerId ? `<@${ownerId}>` : 'Unknown';
+
+  const userCreated = user?.createdTimestamp || user?.createdAt?.getTime?.() || Date.now();
+  const memberJoined = memberOrUser?.joinedTimestamp || memberOrUser?.joinedAt?.getTime?.() || Date.now();
+  const createdTs = Math.floor(userCreated / 1000);
+  const joinedTs = Math.floor(memberJoined / 1000);
+
   return text
-    .replace(/{user}/gi, userFormat)
-    .replace(/{usermention}/gi, userFormat)
-    .replace(/{username}/gi, username)
-    .replace(/{displayname}/gi, displayName)
-    .replace(/{server}/gi, guild?.name || 'Server')
-    .replace(/{count}/gi, String(guild?.memberCount || 0))
-    .replace(/{avatar}/gi, avatarUrl)
-    .replace(/{user\.avatar}/gi, avatarUrl);
+    // 1. Compound / Multi-word Placeholders (longer tokens replaced first)
+    .replace(/\{server\.membercount\}/gi, countStr)
+    .replace(/\{server\.member_count\}/gi, countStr)
+    .replace(/\{server\.members\}/gi, countStr)
+    .replace(/\{server\.count\}/gi, countStr)
+    .replace(/\{guild\.membercount\}/gi, countStr)
+    .replace(/\{guild\.member_count\}/gi, countStr)
+    .replace(/\{guild\.members\}/gi, countStr)
+    .replace(/\{guild\.count\}/gi, countStr)
+    .replace(/\{membercount\}/gi, countStr)
+    .replace(/\{member_count\}/gi, countStr)
+    .replace(/\{members\}/gi, countStr)
+    .replace(/\{ordinal_membercount\}/gi, ordinalStr)
+    .replace(/\{ordinal_count\}/gi, ordinalStr)
+    .replace(/\{ordinal\}/gi, ordinalStr)
+
+    // 2. User Placeholders
+    .replace(/\{user\.username\}/gi, username)
+    .replace(/\{user\.name\}/gi, username)
+    .replace(/\{username\}/gi, username)
+    .replace(/\{displayname\}/gi, displayName)
+    .replace(/\{display_name\}/gi, displayName)
+    .replace(/\{nickname\}/gi, displayName)
+    .replace(/\{nick\}/gi, displayName)
+    .replace(/\{user\.mention\}/gi, userFormat)
+    .replace(/\{usermention\}/gi, userFormat)
+    .replace(/\{user_mention\}/gi, userFormat)
+    .replace(/\{mention\}/gi, userId ? `<@${userId}>` : username)
+    .replace(/\{user\.tag\}/gi, tag)
+    .replace(/\{usertag\}/gi, tag)
+    .replace(/\{tag\}/gi, tag)
+    .replace(/\{user\.id\}/gi, userId)
+    .replace(/\{userid\}/gi, userId)
+    .replace(/\{user\.avatar\}/gi, avatarUrl)
+    .replace(/\{useravatar\}/gi, avatarUrl)
+    .replace(/\{user_avatar\}/gi, avatarUrl)
+    .replace(/\{avatar\}/gi, avatarUrl)
+    .replace(/\{user\.created_at\}/gi, `<t:${createdTs}:R>`)
+    .replace(/\{created_at\}/gi, `<t:${createdTs}:R>`)
+    .replace(/\{created\}/gi, `<t:${createdTs}:R>`)
+    .replace(/\{user\.joined_at\}/gi, `<t:${joinedTs}:R>`)
+    .replace(/\{joined_at\}/gi, `<t:${joinedTs}:R>`)
+    .replace(/\{joined\}/gi, `<t:${joinedTs}:R>`)
+
+    // 3. Server / Guild Placeholders
+    .replace(/\{server\.name\}/gi, serverName)
+    .replace(/\{guild\.name\}/gi, serverName)
+    .replace(/\{servername\}/gi, serverName)
+    .replace(/\{server_name\}/gi, serverName)
+    .replace(/\{server\.id\}/gi, serverId)
+    .replace(/\{guild\.id\}/gi, serverId)
+    .replace(/\{serverid\}/gi, serverId)
+    .replace(/\{guildid\}/gi, serverId)
+    .replace(/\{server\.icon\}/gi, serverIcon)
+    .replace(/\{guild\.icon\}/gi, serverIcon)
+    .replace(/\{servericon\}/gi, serverIcon)
+    .replace(/\{guildicon\}/gi, serverIcon)
+    .replace(/\{server\.owner_id\}/gi, ownerId)
+    .replace(/\{server\.owner\}/gi, ownerMention)
+    .replace(/\{guild\.owner\}/gi, ownerMention)
+    .replace(/\{ownerid\}/gi, ownerId)
+    .replace(/\{owner\}/gi, ownerMention)
+    .replace(/\{server\.boosts\}/gi, String(guild?.premiumSubscriptionCount || 0))
+    .replace(/\{boost_count\}/gi, String(guild?.premiumSubscriptionCount || 0))
+    .replace(/\{boosts\}/gi, String(guild?.premiumSubscriptionCount || 0))
+    .replace(/\{server\.tier\}/gi, String(guild?.premiumTier || 0))
+    .replace(/\{tier\}/gi, String(guild?.premiumTier || 0))
+    .replace(/\{rolecount\}/gi, String(guild?.roles?.cache?.size || 0))
+    .replace(/\{roles\}/gi, String(guild?.roles?.cache?.size || 0))
+    .replace(/\{channelcount\}/gi, String(guild?.channels?.cache?.size || 0))
+    .replace(/\{channels\}/gi, String(guild?.channels?.cache?.size || 0))
+
+    // 4. Primary Aliases (matched last)
+    .replace(/\{user\}/gi, userFormat)
+    .replace(/\{member\}/gi, userFormat)
+    .replace(/\{server\}/gi, serverName)
+    .replace(/\{guild\}/gi, serverName)
+    .replace(/\{count\}/gi, countStr)
+    .replace(/\{id\}/gi, userId);
+}
+
+function resolve(text, member, cfg = {}) {
+  return resolvePlaceholders(text, member, member?.guild, cfg);
 }
 
 // ============================================================
@@ -38,8 +145,16 @@ export function buildWelcomeEmbed(member, cfg) {
   if (!cfg) return null;
   const e = new EmbedBuilder();
 
-  if (cfg.color) {
-    try { e.setColor(cfg.color); } catch { e.setColor(0x5865F2); }
+  if (cfg.color !== undefined && cfg.color !== null) {
+    try {
+      if (typeof cfg.color === 'string') {
+        const hex = cfg.color.replace('#', '');
+        const intVal = parseInt(hex, 16);
+        e.setColor(!isNaN(intVal) ? intVal : 0x5865F2);
+      } else {
+        e.setColor(cfg.color);
+      }
+    } catch { e.setColor(0x5865F2); }
   } else {
     e.setColor(0x5865F2);
   }
@@ -78,7 +193,7 @@ export function buildWelcomeEmbed(member, cfg) {
     try {
       e.setFooter({
         text: cfg.footer ? resolve(cfg.footer, member, cfg) : 'Welcome!',
-        iconURL: (avatarPos === 'footer') ? userAvatar : undefined
+        iconURL: (avatarPos === 'footer') ? userAvatar : (cfg.footerIcon ? resolve(cfg.footerIcon, member, cfg) : undefined)
       });
     } catch (err) {}
   }
@@ -92,9 +207,11 @@ export function buildWelcomeEmbed(member, cfg) {
 // SEND MESSAGE
 // ============================================================
 export async function sendWelcomeMessage(member) {
-  const cfg = db.getWelcomeConfig(member.guild.id);
+  const guild = member.guild;
+  if (!guild) return;
+  const cfg = db.getWelcomeConfig(guild.id);
   if (!cfg?.enabled || !cfg?.channelId) return;
-  const channel = member.guild.channels.cache.get(cfg.channelId);
+  const channel = guild.channels.cache.get(cfg.channelId) || await guild.channels.fetch(cfg.channelId).catch(() => null);
   if (!channel) return;
   const content = cfg.message ? resolve(cfg.message, member, cfg) : undefined;
   const embedObj = buildWelcomeEmbed(member, cfg);
@@ -102,13 +219,17 @@ export async function sendWelcomeMessage(member) {
   if (content) payload.content = content;
   if (embedObj) payload.embeds = [embedObj];
   if (!payload.content && !payload.embeds) return;
-  await channel.send(payload).catch(() => null);
+  await channel.send(payload).catch(err => {
+    console.error(`[ATHENA WELCOME] Delivery failed in guild ${guild.id}:`, err?.message || err);
+  });
 }
 
 export async function sendLeaveMessage(member) {
-  const cfg = db.getLeaveConfig(member.guild.id);
+  const guild = member.guild;
+  if (!guild) return;
+  const cfg = db.getLeaveConfig(guild.id);
   if (!cfg?.enabled || !cfg?.channelId) return;
-  const channel = member.guild.channels.cache.get(cfg.channelId);
+  const channel = guild.channels.cache.get(cfg.channelId) || await guild.channels.fetch(cfg.channelId).catch(() => null);
   if (!channel) return;
   const content = cfg.message ? resolve(cfg.message, member, cfg) : undefined;
   const embedObj = buildWelcomeEmbed(member, cfg);
@@ -116,7 +237,9 @@ export async function sendLeaveMessage(member) {
   if (content) payload.content = content;
   if (embedObj) payload.embeds = [embedObj];
   if (!payload.content && !payload.embeds) return;
-  await channel.send(payload).catch(() => null);
+  await channel.send(payload).catch(err => {
+    console.error(`[ATHENA LEAVE] Delivery failed in guild ${guild.id}:`, err?.message || err);
+  });
 }
 
 // ============================================================
@@ -143,7 +266,9 @@ export function getManagerPanel(guildId, type) {
     `-# **• __Footer:__** ${cfg.footer ? `\`${cfg.footer.slice(0, 30)}...\`` : '`Not Set`'}\n` +
     `-# **• __Name Format:__** ${cfg.nameFormat === 'user_link' ? '`Username Link`' : cfg.nameFormat === 'nick_link' ? '`Nickname Link`' : '`Tag (@user)`'}\n` +
     `-# **• __Avatar Location:__** ${cfg.avatarPos === 'author' ? '`Author (Top Left)`' : cfg.avatarPos === 'footer' ? '`Footer (Bottom)`' : cfg.avatarPos === 'image' ? '`Large Image (Bottom)`' : cfg.avatarPos === 'off' ? '`Hidden`' : '`Thumbnail (Top Right)`'}\n` +
-    `-# **• __Timestamp:__** ${cfg.timestamp !== false ? '`On`' : '`Off`'}`
+    `-# **• __Timestamp:__** ${cfg.timestamp !== false ? '`On`' : '`Off`'}\n\n` +
+    `-# **__Supported Placeholders:__**\n` +
+    `-# \`{user}\` • \`{username}\` • \`{displayname}\` • \`{membercount}\` • \`{server}\` • \`{avatar}\` • \`{ordinal}\` • \`{owner}\``
   );
 
   const channelSelectRow = new ActionRowBuilder().addComponents(
@@ -362,7 +487,7 @@ export async function handleWelcomeManagerButton(interaction) {
   if (action === 'text') {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_text`).setTitle('Set Top Text');
     modal.addComponents(new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('val').setLabel('Message content (above embed)').setStyle(TextInputStyle.Paragraph).setRequired(false).setValue(cfg.message || '')
+      new TextInputBuilder().setCustomId('val').setLabel('Message content (above embed)').setPlaceholder('e.g. Welcome {user} to {server}! Member #{membercount}').setStyle(TextInputStyle.Paragraph).setRequired(false).setValue(cfg.message || '')
     ));
     return interaction.showModal(modal);
   }
@@ -370,7 +495,7 @@ export async function handleWelcomeManagerButton(interaction) {
   if (action === 'author') {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_author`).setTitle('Set Author (From)');
     modal.addComponents(
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Author Text (e.g. "From Server")').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.from || '')),
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Author Text (e.g. "From {server}")').setPlaceholder('e.g. Welcome to {server}').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.from || '')),
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('icon').setLabel('Icon URL (leave empty for server icon)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.fromIcon || ''))
     );
     return interaction.showModal(modal);
@@ -379,7 +504,7 @@ export async function handleWelcomeManagerButton(interaction) {
   if (action === 'title') {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_title`).setTitle('Set Embed Title');
     modal.addComponents(new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('val').setLabel('Embed Title').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.title || '')
+      new TextInputBuilder().setCustomId('val').setLabel('Embed Title').setPlaceholder('e.g. Welcome {username}!').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.title || '')
     ));
     return interaction.showModal(modal);
   }
@@ -387,7 +512,7 @@ export async function handleWelcomeManagerButton(interaction) {
   if (action === 'desc') {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_desc`).setTitle('Set Embed Description');
     modal.addComponents(new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('val').setLabel('Embed Body').setStyle(TextInputStyle.Paragraph).setRequired(false).setValue(cfg.description || '')
+      new TextInputBuilder().setCustomId('val').setLabel('Embed Body').setPlaceholder('e.g. Thank you for joining!\n( ♡ ) {membercount} [peace]').setStyle(TextInputStyle.Paragraph).setRequired(false).setValue(cfg.description || '')
     ));
     return interaction.showModal(modal);
   }
@@ -412,7 +537,7 @@ export async function handleWelcomeManagerButton(interaction) {
   if (action === 'footer') {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_footer`).setTitle('Set Embed Footer');
     modal.addComponents(
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Footer Text').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.footer || '')),
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Footer Text').setPlaceholder('e.g. Member #{membercount} • {server}').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.footer || '')),
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('icon').setLabel('Footer Icon URL').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.footerIcon || ''))
     );
     return interaction.showModal(modal);

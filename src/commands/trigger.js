@@ -2,21 +2,28 @@ import { PermissionFlagsBits, ModalBuilder, TextInputBuilder, TextInputStyle, Ac
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
+import { resolvePlaceholders } from './welcome.js';
 
-export function buildAutoReplyPreview(guild, trigger) {
+export function buildAutoReplyPreview(guild, trigger, userOrMember = null) {
   const config = db.getGuildConfig(guild.id);
   const accentHex = config.accentColor || '#5865F2';
   const accentInt = parseInt(accentHex.replace('#', ''), 16);
+
+  const resolve = (txt) => {
+    if (!txt || typeof txt !== 'string') return '';
+    return userOrMember ? resolvePlaceholders(txt, userOrMember, guild) : txt;
+  };
 
   const comps = [];
 
   // 1. Heading (Title) - 100% Optional
   if (trigger.heading && trigger.heading.trim()) {
-    comps.push({ type: 10, content: `## **${trigger.heading.trim()}**` });
+    comps.push({ type: 10, content: `## **${resolve(trigger.heading.trim())}**` });
   }
 
   // 2. Content / Description (grey bold markdown) - 100% Optional
-  const bodyText = (trigger.content || trigger.response || '').trim();
+  const rawBody = (trigger.content || trigger.response || '').trim();
+  const bodyText = resolve(rawBody);
   if (bodyText) {
     if (comps.length > 0) comps.push({ type: 14, divider: true });
     const lines = bodyText.split('\n');
@@ -34,6 +41,7 @@ export function buildAutoReplyPreview(guild, trigger) {
     mediaUrl = trigger.response.trim();
   }
   if (mediaUrl) {
+    mediaUrl = resolve(mediaUrl);
     if (comps.length > 0) comps.push({ type: 14, divider: true });
     comps.push({
       type: 12,
@@ -46,7 +54,7 @@ export function buildAutoReplyPreview(guild, trigger) {
   // 4. Footer - 100% Optional & Unique per Reply
   if (trigger.footer && trigger.footer.trim()) {
     if (comps.length > 0) comps.push({ type: 14, divider: true });
-    comps.push({ type: 10, content: `-# **${trigger.footer.trim()}**` });
+    comps.push({ type: 10, content: `-# **${resolve(trigger.footer.trim())}**` });
   } else if (trigger.isGlobal) {
     if (comps.length > 0) comps.push({ type: 14, divider: true });
     comps.push({ type: 10, content: `-# **Global Network Auto-Reply • Athena Prime**` });
