@@ -269,7 +269,7 @@ export function getManagerPanel(guildId, type) {
     `-# • **Member:** \`{user}\` *(ping/link)* • \`{username}\` • \`{displayname}\` • \`{tag}\` • \`{userid}\` • \`{avatar}\`\n` +
     `-# • **Server:** \`{server}\` • \`{serverid}\` • \`{server.icon}\` • \`{owner}\` • \`{boosts}\` • \`{roles}\` • \`{channels}\`\n` +
     `-# • **Times:** \`{created}\` *(account age)* • \`{joined}\` *(join date)*\n` +
-    `-# -# *Click **Placeholders** button below for the full cheat-sheet & copy-paste templates.*`
+    `-# *Click **Placeholders** button below for the full cheat-sheet & copy-paste templates.*`
   );
 
   const channelSelectRow = new ActionRowBuilder().addComponents(
