@@ -2,6 +2,7 @@ import { PermissionFlagsBits } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import chalk from 'chalk';
+import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
 
 export const commands = [
   {
@@ -145,6 +146,9 @@ async function runInteractiveBuilder(message) {
     
     // Auto-strip < > around URLs if user added them
     imageUrl = imageUrl.replace(/^<|>$/g, '');
+    if (imageUrl && isPinterestUrl(imageUrl)) {
+      imageUrl = await resolveMediaUrl(imageUrl);
+    }
   }
 
   // Step 5: Footer

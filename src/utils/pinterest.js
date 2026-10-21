@@ -280,3 +280,60 @@ export async function downloadPinterestBuffer(mediaUrl, fallbackUrl) {
     url: target
   };
 }
+
+/**
+ * Resolves any media input URL.
+ * If the URL is a Pinterest link (pin.it or pinterest.com), it automatically extracts
+ * the original high-resolution media (or converts video to GIF if requested) and returns a direct usable URL.
+ * If the URL is already a direct link, it returns it as-is.
+ *
+ * @param {string} inputUrl - The URL provided by the user.
+ * @param {object} [options] - Optional processing settings.
+ * @param {boolean} [options.convertToGif] - If true and media is MP4, converts to GIF and returns uploaded Discord CDN URL.
+ * @param {object} [options.interaction] - Discord interaction context (needed if convertToGif is requested).
+ * @returns {Promise<string|null>} The resolved direct media URL.
+ */
+export async function resolveMediaUrl(inputUrl, options = {}) {
+  if (!inputUrl || typeof inputUrl !== 'string') return null;
+  const trimmed = inputUrl.trim();
+  if (!trimmed || trimmed.toLowerCase() === 'none') return null;
+
+  // If not a Pinterest link, return as-is
+  if (!isPinterestUrl(trimmed)) {
+    return trimmed;
+  }
+
+  try {
+    const result = await fetchPinterestMedia(trimmed);
+    if (!result.success || !result.mediaUrl) {
+      return trimmed;
+    }
+
+    // Video handling
+    if (result.mediaType === 'video') {
+      if (options.convertToGif && options.interaction) {
+        try {
+          const { convertMp4ToGif, uploadGifToDiscord } = await import('./mediaConverter.js');
+          const gifBuffer = await convertMp4ToGif(result.mediaUrl);
+          const gifUrl = await uploadGifToDiscord(options.interaction, gifBuffer, 'pinterest_media.gif');
+          return gifUrl;
+        } catch (e) {
+          console.error('[Pinterest Media Resolver] Failed to convert MP4 to GIF:', e);
+          return result.mediaUrl;
+        }
+      }
+      return result.mediaUrl;
+    }
+
+    // Image handling: download buffer to verify status 200 and get uncompressed master CDN URL
+    const downloaded = await downloadPinterestBuffer(result.mediaUrl, result.fallbackUrl);
+    if (downloaded && downloaded.url) {
+      return downloaded.url;
+    }
+
+    return result.mediaUrl;
+  } catch (err) {
+    console.error('[Pinterest Media Resolver Error]:', err);
+    return trimmed;
+  }
+}

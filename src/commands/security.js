@@ -22,6 +22,7 @@ import {
 } from '../utils/helpers.js';
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
+import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
 import { StringSelectMenuBuilder, UserSelectMenuBuilder, RoleSelectMenuBuilder, ChannelSelectMenuBuilder } from 'discord.js';
 import { auditAndNeutralizeOnboarding, CRITICAL_ONBOARDING_PERMS, hasCriticalOnboardingPerms, getDangerousPermNames } from '../utils/onboardingGuard.js';
 import { hasDangerousPerms } from '../utils/antinuke.js';
@@ -2093,8 +2094,12 @@ async function isBotOwnerOnly(user) {
  * Helper to fetch a media link URL and convert it into a Buffer for Discord API uploads
  */
 async function getImageBuffer(url) {
+  let targetUrl = url;
+  if (targetUrl && isPinterestUrl(targetUrl)) {
+    targetUrl = await resolveMediaUrl(targetUrl);
+  }
   try {
-    const response = await fetch(url);
+    const response = await fetch(targetUrl);
     if (!response.ok) throw new Error(`HTTP fetch failed with status: ${response.status} ${response.statusText}`);
     let contentType = response.headers.get('content-type') || 'image/png';
     const arrayBuffer = await response.arrayBuffer();

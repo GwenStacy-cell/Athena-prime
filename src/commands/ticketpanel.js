@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, RoleSelectMenuBuilder, StringSelectMenuBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
+import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
 
 export function buildTicketPanelPayload(guildId) {
   const config = db.getTickets(guildId);
@@ -280,9 +281,19 @@ export async function handleTicketPanelModals(interaction) {
   }
 
   if (customId === 'tp_modal_media') {
+    let panelImage = fields.getTextInputValue('image')?.trim() || null;
+    let panelThumbnail = fields.getTextInputValue('thumbnail')?.trim() || null;
+
+    if (panelImage && isPinterestUrl(panelImage)) {
+      panelImage = await resolveMediaUrl(panelImage);
+    }
+    if (panelThumbnail && isPinterestUrl(panelThumbnail)) {
+      panelThumbnail = await resolveMediaUrl(panelThumbnail);
+    }
+
     db.updateTicketConfig(guild.id, {
-      panelImage: fields.getTextInputValue('image') || null,
-      panelThumbnail: fields.getTextInputValue('thumbnail') || null
+      panelImage,
+      panelThumbnail
     });
     await interaction.deferUpdate();
     return updateManagerMessage(interaction.message);

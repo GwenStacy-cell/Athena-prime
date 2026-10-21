@@ -15,6 +15,7 @@ import cv2, { sanitizeCV2Payload } from '../cv2.js';
 import { setGuildContext } from '../embed.js';
 import db from '../database.js';
 import { generateAIResponse } from '../utils/ai.js';
+import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
 
 // In-memory active announcement drafts keyed by message ID
 export const announcementDrafts = new Map();
@@ -1024,7 +1025,10 @@ export async function handleAIAnnouncementInteractions(interaction) {
     }
 
     if (customId === 'aian_modal_media') {
-      const url = interaction.fields.getTextInputValue('aian_media_url')?.trim();
+      let url = interaction.fields.getTextInputValue('aian_media_url')?.trim() || null;
+      if (url && isPinterestUrl(url)) {
+        url = await resolveMediaUrl(url);
+      }
       draft.imageUrl = url && /^https?:\/\//i.test(url) ? url : null;
       draft.lastUpdated = Date.now();
 

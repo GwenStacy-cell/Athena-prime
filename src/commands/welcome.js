@@ -3,6 +3,7 @@ import db from '../database.js';
 import cv2 from '../cv2.js';
 import { convertMp4ToGif, uploadGifToDiscord } from '../utils/mediaConverter.js';
 import { isBotOwnerSync, cleanDisplayName } from '../utils/helpers.js';
+import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
 
 // ============================================================
 // ORDINAL NUMBER HELPER (1st, 2nd, 3rd, 142nd...)
@@ -601,12 +602,20 @@ export async function handleWelcomeManagerModal(interaction) {
   
   if (action === 'author') {
     cfg.from = val;
-    cfg.fromIcon = interaction.fields.getTextInputValue('icon')?.trim() || null;
+    let iconVal = interaction.fields.getTextInputValue('icon')?.trim() || null;
+    if (iconVal && isPinterestUrl(iconVal)) {
+      iconVal = await resolveMediaUrl(iconVal);
+    }
+    cfg.fromIcon = iconVal;
   }
   
   if (action === 'footer') {
     cfg.footer = val;
-    cfg.footerIcon = interaction.fields.getTextInputValue('icon')?.trim() || null;
+    let iconVal = interaction.fields.getTextInputValue('icon')?.trim() || null;
+    if (iconVal && isPinterestUrl(iconVal)) {
+      iconVal = await resolveMediaUrl(iconVal);
+    }
+    cfg.footerIcon = iconVal;
   }
 
   if (action === 'color') {
@@ -623,8 +632,12 @@ export async function handleWelcomeManagerModal(interaction) {
     if (!val || val.toLowerCase() === 'none') {
       delete cfg.image;
     } else {
-      if (val.toLowerCase().endsWith('.mp4')) {
-        await interaction.deferUpdate();
+      if (isPinterestUrl(val)) {
+        if (!interaction.deferred) await interaction.deferUpdate();
+        val = await resolveMediaUrl(val, { convertToGif: true, interaction });
+      }
+      if (val && val.toLowerCase().endsWith('.mp4')) {
+        if (!interaction.deferred) await interaction.deferUpdate();
         try {
           const gifBuffer = await convertMp4ToGif(val);
           val = await uploadGifToDiscord(interaction, gifBuffer, 'large_image.gif');
@@ -639,7 +652,11 @@ export async function handleWelcomeManagerModal(interaction) {
     if (!thumbVal || thumbVal.toLowerCase() === 'none') {
       delete cfg.thumbnailUrl;
     } else {
-      if (thumbVal.toLowerCase().endsWith('.mp4')) {
+      if (isPinterestUrl(thumbVal)) {
+        if (!interaction.deferred) await interaction.deferUpdate();
+        thumbVal = await resolveMediaUrl(thumbVal, { convertToGif: true, interaction });
+      }
+      if (thumbVal && thumbVal.toLowerCase().endsWith('.mp4')) {
         if (!interaction.deferred) await interaction.deferUpdate();
         try {
           const gifBuffer = await convertMp4ToGif(thumbVal);

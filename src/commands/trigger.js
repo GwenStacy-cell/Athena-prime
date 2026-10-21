@@ -3,6 +3,7 @@ import db from '../database.js';
 import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 import { resolvePlaceholders } from './welcome.js';
+import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
 
 export function buildAutoReplyPreview(guild, trigger, userOrMember = null) {
   const config = db.getGuildConfig(guild.id);
@@ -752,7 +753,8 @@ export async function handleAutoReplyInteractions(interaction) {
         const match = interaction.fields.getTextInputValue('ar_keyword').trim();
         const heading = interaction.fields.getTextInputValue('ar_heading').trim() || null;
         const content = interaction.fields.getTextInputValue('ar_content').trim() || null;
-        const gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
+        let gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
+        if (gif && isPinterestUrl(gif)) gif = await resolveMediaUrl(gif);
         const footer = interaction.fields.getTextInputValue('ar_footer').trim() || null;
 
         db.setTrigger(interaction.guild.id, { match, heading, content, gif, footer });
@@ -767,7 +769,8 @@ export async function handleAutoReplyInteractions(interaction) {
         const match = interaction.fields.getTextInputValue('ar_keyword').trim();
         const heading = interaction.fields.getTextInputValue('ar_heading').trim() || null;
         const content = interaction.fields.getTextInputValue('ar_content').trim() || null;
-        const gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
+        let gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
+        if (gif && isPinterestUrl(gif)) gif = await resolveMediaUrl(gif);
         const footer = interaction.fields.getTextInputValue('ar_footer').trim() || null;
 
         db.setGlobalTrigger({ match, heading, content, gif, footer });
@@ -786,7 +789,8 @@ export async function handleAutoReplyInteractions(interaction) {
         const newMatch = interaction.fields.getTextInputValue('ar_keyword').trim();
         const heading = interaction.fields.getTextInputValue('ar_heading').trim() || null;
         const content = interaction.fields.getTextInputValue('ar_content').trim() || null;
-        const gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
+        let gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
+        if (gif && isPinterestUrl(gif)) gif = await resolveMediaUrl(gif);
         const footer = interaction.fields.getTextInputValue('ar_footer').trim() || null;
 
         if (oldMatch.toLowerCase() !== newMatch.toLowerCase()) {
@@ -812,7 +816,8 @@ export async function handleAutoReplyInteractions(interaction) {
         const newMatch = interaction.fields.getTextInputValue('ar_keyword').trim();
         const heading = interaction.fields.getTextInputValue('ar_heading').trim() || null;
         const content = interaction.fields.getTextInputValue('ar_content').trim() || null;
-        const gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
+        let gif = interaction.fields.getTextInputValue('ar_gif').trim() || null;
+        if (gif && isPinterestUrl(gif)) gif = await resolveMediaUrl(gif);
         const footer = interaction.fields.getTextInputValue('ar_footer').trim() || null;
 
         if (oldMatch.toLowerCase() !== newMatch.toLowerCase()) {

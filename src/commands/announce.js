@@ -2,6 +2,7 @@ import { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, But
 import cv2 from '../cv2.js';
 import { setGuildContext } from '../embed.js';
 import db from '../database.js';
+import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
 
 export const commands = [
   {
@@ -225,9 +226,16 @@ export async function handleAnnouncementInteractions(interaction) {
     }
 
     if (customId === 'ann_modal_media') {
-      const image = interaction.fields.getTextInputValue('ann_image');
-      const thumb = interaction.fields.getTextInputValue('ann_thumb');
+      let image = interaction.fields.getTextInputValue('ann_image')?.trim() || null;
+      let thumb = interaction.fields.getTextInputValue('ann_thumb')?.trim() || null;
       
+      if (image && isPinterestUrl(image)) {
+        image = await resolveMediaUrl(image);
+      }
+      if (thumb && isPinterestUrl(thumb)) {
+        thumb = await resolveMediaUrl(thumb);
+      }
+
       if (image && image.startsWith('http')) embed.setImage(image);
       else embed.setImage(null);
       
