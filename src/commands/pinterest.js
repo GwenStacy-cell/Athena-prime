@@ -23,7 +23,7 @@ const LOADING = '<a:loading:1542155051286396938>';
 /**
  * Builds the Pinterest CV2 Container and Action Buttons
  */
-function buildPinterestContainer(user, result, downloaded, filename, guildId) {
+function buildPinterestContainer(user, result, downloaded, filename, guildId, hasAttachment = true) {
   const isVideo = result.mediaType === 'video';
   const guildConfig = guildId ? db.getGuildConfig(guildId) : null;
   const accentColor = guildConfig?.accentColor || '#5865F2';
@@ -44,7 +44,30 @@ function buildPinterestContainer(user, result, downloaded, filename, guildId) {
     { type: 14, divider: true }
   ];
 
+  // Visual Media Gallery preview inside CV2 Container for images
+  if (!isVideo) {
+    const mediaUrl = (hasAttachment && filename) ? `attachment://${filename}` : downloaded.url;
+    if (mediaUrl) {
+      comps.push({
+        type: 12,
+        items: [{ media: { url: mediaUrl } }]
+      });
+      comps.push({ type: 14, divider: true });
+    }
+  }
+
+  comps.push({
+    type: 10,
+    content: `-# **Athena Pinterest Media Engine \u00b7 Direct 4K Master Extraction**`
+  });
+
+  const downloadLabel = isVideo ? 'Download Video' : 'Download Image';
+
   const actionRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setLabel(downloadLabel)
+      .setStyle(ButtonStyle.Link)
+      .setURL(downloaded.url),
     new ButtonBuilder()
       .setLabel('Open on Pinterest')
       .setStyle(ButtonStyle.Link)
@@ -148,7 +171,8 @@ export const commands = [
           result,
           downloaded,
           filename,
-          message.guild?.id
+          message.guild?.id,
+          files.length > 0
         );
 
         const responsePayload = {
@@ -159,10 +183,9 @@ export const commands = [
         };
 
         if (statusMsg) {
-          await statusMsg.edit(responsePayload);
-        } else {
-          await message.reply(responsePayload);
+          await statusMsg.delete().catch(() => null);
         }
+        await message.reply(responsePayload);
       } catch (err) {
         console.error('[Pinterest Command Error]:', err);
         const errPayload = cv2.danger('Pinterest Extractor Error', `An unexpected error occurred: \`${err.message}\``);
@@ -205,7 +228,8 @@ export const commands = [
           result,
           downloaded,
           filename,
-          interaction.guild?.id
+          interaction.guild?.id,
+          files.length > 0
         );
 
         return interaction.editReply({
