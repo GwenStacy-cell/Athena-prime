@@ -3649,7 +3649,24 @@ async function handleConfig(guild, moderator, setting, value) {
 
 export async function getAntinukeConfigPanel(guild) {
   const config = db.getGuildConfig(guild.id);
-  const isSecured = Boolean(config.securityEnabled && config.antiNukeEnabled);
+
+  const maxPos = Math.max(...guild.roles.cache.map(r => r.position));
+  const botMember = guild.members.me || await guild.members.fetch(guild.client.user.id).catch(() => null);
+  const botPos = botMember?.roles?.highest?.position ?? 0;
+  const meetsRoleHierarchy = botPos >= maxPos - 2;
+  const meetsMemberCount = (guild.memberCount || 0) >= 200;
+  const meetsHierarchy = meetsRoleHierarchy && meetsMemberCount;
+
+  // Anti-Nuke firewall is strictly ON only if server meets the role and member count hierarchy
+  const isSecured = Boolean(meetsHierarchy && config.securityEnabled && config.antiNukeEnabled);
+
+  // If server does not meet hierarchy but had antinuke flagged in DB, self-heal
+  if (!meetsHierarchy && (config.securityEnabled || config.antiNukeEnabled)) {
+    db.updateGuildConfig(guild.id, {
+      securityEnabled: false,
+      antiNukeEnabled: false
+    });
+  }
 
   const blacklistState = isSecured && Boolean(config.blacklistWords && config.blacklistWords.length > 0);
   const spamState = isSecured && Boolean(config.antiSpamEnabled);
@@ -3659,16 +3676,24 @@ export async function getAntinukeConfigPanel(guild) {
   const emojiOn = '<:on:1533844867191406672>'; 
   const emojiOff = '<:off:1533844858983157851>'; 
 
-  const description = 
+  let description = 
     `# MODULE CONFIGURATION\n` +
     `-# **Athena Prime - God-Tier Firewall**\n\n` +
     `> ${nukeState ? emojiOn : emojiOff} Anti-Nuke Firewall\n` +
     `> ${spamState ? emojiOn : emojiOff} Anti-Spam Filter\n` +
     `> ${inviteState ? emojiOn : emojiOff} Anti-Invite Blocker\n` +
     `> ${blacklistState ? emojiOn : emojiOff} Word Filter (${config.blacklistWords ? config.blacklistWords.length : 0} Words)\n` +
-    `> Punishment: \`${config.antiNukePunishment.toUpperCase()}\`\n` +
-    `> Warn Limit: \`${config.maxWarnings}\`\n\n` +
-    `-# Raw API strike engine active - nuke bots eliminated in ~1-3ms`;
+    `> Punishment: \`${(config.antiNukePunishment || 'ban').toUpperCase()}\`\n` +
+    `> Warn Limit: \`${config.maxWarnings || 3}\`\n\n`;
+
+  if (!meetsHierarchy) {
+    description +=
+      `-# <a:warning:1540656124313993247> **Hierarchy Requirements Not Met for Anti-Nuke:**\n` +
+      `-# • Member Count: **${guild.memberCount || 0} / 200** ${meetsMemberCount ? '<:on:1533844867191406672>' : '<:off:1533844858983157851> (Requires at least 200 members)'}\n` +
+      `-# • Role Position: **Pos ${botPos}** (Highest: ${maxPos}) ${meetsRoleHierarchy ? '<:on:1533844867191406672>' : '<:off:1533844858983157851> (Must be Top 3)'}\n\n`;
+  }
+
+  description += `> -# Raw API strike engine active - nuke bots eliminated in ~1-3ms`;
 
   const mainDisplay = new TextDisplayBuilder().setContent(description);
   const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
@@ -4157,7 +4182,14 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
 
 export async function getSecurityStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
-  const isSecured = Boolean(config.securityEnabled && config.antiNukeEnabled);
+  const maxPos = Math.max(...guild.roles.cache.map(r => r.position));
+  const botMember = guild.members.me || await guild.members.fetch(guild.client.user.id).catch(() => null);
+  const botPos = botMember?.roles?.highest?.position ?? 0;
+  const meetsRoleHierarchy = botPos >= maxPos - 2;
+  const meetsMemberCount = (guild.memberCount || 0) >= 200;
+  const meetsHierarchy = meetsRoleHierarchy && meetsMemberCount;
+
+  const isSecured = Boolean(meetsHierarchy && config.securityEnabled && config.antiNukeEnabled);
   let botAvatarUrl = guild.client?.user?.displayAvatarURL({ dynamic: true, size: 256 }) || null;
 
   const modLabels = {
@@ -4207,7 +4239,14 @@ export async function getSecurityStatusPanel(guild) {
   }
 
   if (!isSecured) {
-    listText += "\n> -# <a:warning:1540656124313993247> **Security is currently DISABLED on this server.**\n> -# **Execute `!security enable all` or click `⚡ Engage All Shields` below to arm all 28 modules.**";
+    if (!meetsHierarchy) {
+      listText += `\n> -# <a:warning:1540656124313993247> **Hierarchy Requirements Not Met for Anti-Nuke:**\n` +
+                  `> -# • Member Count: **${guild.memberCount || 0} / 200** ${meetsMemberCount ? '<:on:1533844867191406672>' : '<:off:1533844858983157851> (Requires at least 200 members)'}\n` +
+                  `> -# • Role Position: **Pos ${botPos}** (Highest: ${maxPos}) ${meetsRoleHierarchy ? '<:on:1533844867191406672>' : '<:off:1533844858983157851> (Must be Top 3)'}\n` +
+                  `> -# **Execute \`!security enable all\` or click \`⚡ Engage All Shields\` once requirements are met.**`;
+    } else {
+      listText += "\n> -# <a:warning:1540656124313993247> **Security is currently DISABLED on this server.**\n> -# **Execute `!security enable all` or click `⚡ Engage All Shields` below to arm all 28 modules.**";
+    }
   }
 
   const liveRecords = db.getSecurityLiveRecords(guild.id);

@@ -2321,22 +2321,35 @@ async function handleSecurityInteractions(interaction, guild) {
           if (!isAllowed) {
             return interaction.reply({ content: '-# <:cross_red:1533860128015519895> Only the **Server Owner** or **Bot Owner** can configure the Anti-Nuke Firewall.', flags: MessageFlags.Ephemeral });
           }
-          const isEnabling = !config.antiNukeEnabled;
+
+          const maxPos = Math.max(...guild.roles.cache.map(r => r.position));
+          const botMember = guild.members.me || await guild.members.fetch(interaction.client.user.id).catch(() => null);
+          const botPos = botMember?.roles?.highest?.position ?? 0;
+          const meetsRoleHierarchy = isBotOwner || botPos >= maxPos - 2;
+          const meetsMemberCount = isBotOwner || (guild.memberCount || 0) >= 200;
+
+          const isCurrentlyActive = Boolean(config.securityEnabled && config.antiNukeEnabled && meetsRoleHierarchy && meetsMemberCount);
+          const isEnabling = !isCurrentlyActive;
+
           if (isEnabling) {
-            if (!config.securityEnabled) {
-              return interaction.reply({ content: '-# <:cross_red:1533860128015519895> Security is currently disabled on this server. Please execute `!security enable all` or click `⚡ Engage All Shields` in `!ss` to arm the firewall and all 28 modules.', flags: MessageFlags.Ephemeral });
+            if (!meetsMemberCount) {
+              return interaction.reply({ content: `-# <:cross_red:1533860128015519895> Server requires at least **200 members** to activate Anti-Nuke firewall. (Currently: **${guild.memberCount || 0}** members).`, flags: MessageFlags.Ephemeral });
             }
-            if (guild.memberCount < 200 && !isBotOwner) {
-              return interaction.reply({ content: '-# <:cross_red:1533860128015519895> Server requires at least **200 members** to activate Anti-Nuke firewall. (Bot Owners bypass this restriction).', flags: MessageFlags.Ephemeral });
+            if (!meetsRoleHierarchy) {
+              return interaction.reply({ content: `-# <:cross_red:1533860128015519895> **Role Hierarchy Requirement:** Move Athena's role to the top 3 highest roles in Server Settings so she can enforce bulletproof security.\n-# Currently, the highest role is at position **${maxPos}**, but Athena's role is at position **${botPos}**.`, flags: MessageFlags.Ephemeral });
             }
-            const maxPos = Math.max(...guild.roles.cache.map(r => r.position));
-            const botMember = guild.members.me || await guild.members.fetch(interaction.client.user.id).catch(() => null);
-            const botPos = botMember?.roles?.highest?.position ?? 0;
-            if (!isBotOwner && botPos < maxPos - 2) {
-              return interaction.reply({ content: `-# <:cross_red:1533860128015519895> **Role Hierarchy Requirement:** Move Athena's role to the top 3 highest roles in Server Settings so she can enforce bulletproof security.`, flags: MessageFlags.Ephemeral });
+
+            updateData.securityEnabled = true;
+            updateData.antiNukeEnabled = true;
+            updateData.antinukeModules = config.antinukeModules || {};
+            const allKeys = ['antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder', 'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod', 'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate', 'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge', 'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands', 'antiLinkedRole'];
+            for (const k of allKeys) {
+              updateData.antinukeModules[k] = true;
             }
+          } else {
+            updateData.antiNukeEnabled = false;
+            updateData.securityEnabled = false;
           }
-          updateData.antiNukeEnabled = isEnabling;
           updated = true;
         }
         if (customId === 'toggle_spam') {
