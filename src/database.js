@@ -286,14 +286,14 @@ class Database {
         linkBypassRoles: [],
         inviteBypassRoles: [],
         allowInvitesGlobally: false,
-        antiSpamEnabled: true,
+        antiSpamEnabled: false,
         antiSpamMentionEnabled: false,
         antiSpamMentionBypassRoles: [],
         antiLinkEnabled: false,
         antiInviteEnabled: false,
-        wordFilterEnabled: true,
-        bigFontsEnabled: true,
-        antiFloodEnabled: true,
+        wordFilterEnabled: false,
+        bigFontsEnabled: false,
+        antiFloodEnabled: false,
         automodBypasses: {},
         honeypotChannelId: null,
         honeypotTimeoutMinutes: 15,
@@ -303,39 +303,39 @@ class Database {
         raidJoinWindowMs: 5000,
         preRaidVerificationLevel: null,
         twoFactorEmail: null,
-          twoFactorVerified: false,
-          pendingTwoFactorCode: null,
+        twoFactorVerified: false,
+        pendingTwoFactorCode: null,
         antiNukeEnabled: false,
         securityEnabled: false,
         antinukeModules: {
-          antiRoleCreate: true,
-          antiRoleDelete: true,
-          antiRoleUpdate: true,
-          antiRolePermUpdate: true,
-          antiMemberRoleUpdate: true,
-          antiRoleReorder: true,
-          antiChannelCreate: true,
-          antiChannelDelete: true,
-          antiChannelUpdate: true,
-          antiChannelPermUpdate: true,
-          antiChannelReorder: true,
-          antiChannelNameMod: true,
-          antiEmojiCreate: true,
-          antiEmojiDelete: true,
-          antiEmojiUpdate: true,
-          antiWebhooks: true,
-          antiBotAdd: true,
-          antiServerUpdate: true,
-          antiBan: true,
-          antiKick: true,
-          antiUnban: true, // Replaced Invite with Unban in standard
+          antiRoleCreate: false,
+          antiRoleDelete: false,
+          antiRoleUpdate: false,
+          antiRolePermUpdate: false,
+          antiMemberRoleUpdate: false,
+          antiRoleReorder: false,
+          antiChannelCreate: false,
+          antiChannelDelete: false,
+          antiChannelUpdate: false,
+          antiChannelPermUpdate: false,
+          antiChannelReorder: false,
+          antiChannelNameMod: false,
+          antiEmojiCreate: false,
+          antiEmojiDelete: false,
+          antiEmojiUpdate: false,
+          antiWebhooks: false,
+          antiBotAdd: false,
+          antiServerUpdate: false,
+          antiBan: false,
+          antiKick: false,
+          antiUnban: false,
           antiInvite: false,
-          antiScheduledEvents: true,
-          antiMemberPurge: true,
-          antiMassBan: true,
-          antiAutomodUpdate: true,
-          antiAppCommands: true,
-          antiLinkedRole: true
+          antiScheduledEvents: false,
+          antiMemberPurge: false,
+          antiMassBan: false,
+          antiAutomodUpdate: false,
+          antiAppCommands: false,
+          antiLinkedRole: false
         },
         antiNukePunishment: 'ban',
         antiNukeThreshold: 1,
@@ -377,17 +377,38 @@ class Database {
       if (cfg.securityEnabled === undefined) { cfg.securityEnabled = false; updated = true; }
       if (cfg.antinukeModules === undefined) {
         cfg.antinukeModules = {
-          antiRoleCreate: true, antiRoleDelete: true, antiRoleUpdate: true, antiRolePermUpdate: true, antiMemberRoleUpdate: true, antiRoleReorder: true,
-          antiChannelCreate: true, antiChannelDelete: true, antiChannelUpdate: true, antiChannelPermUpdate: true, antiChannelReorder: true, antiChannelNameMod: true,
-          antiEmojiCreate: true, antiEmojiDelete: true, antiEmojiUpdate: true, antiWebhooks: true, antiBotAdd: true, antiServerUpdate: true,
-          antiBan: true, antiKick: true, antiUnban: true, antiInvite: false, antiScheduledEvents: true, antiMemberPurge: true,
-          antiMassBan: true, antiAutomodUpdate: true, antiAppCommands: true, antiLinkedRole: true
+          antiRoleCreate: false, antiRoleDelete: false, antiRoleUpdate: false, antiRolePermUpdate: false, antiMemberRoleUpdate: false, antiRoleReorder: false,
+          antiChannelCreate: false, antiChannelDelete: false, antiChannelUpdate: false, antiChannelPermUpdate: false, antiChannelReorder: false, antiChannelNameMod: false,
+          antiEmojiCreate: false, antiEmojiDelete: false, antiEmojiUpdate: false, antiWebhooks: false, antiBotAdd: false, antiServerUpdate: false,
+          antiBan: false, antiKick: false, antiUnban: false, antiInvite: false, antiScheduledEvents: false, antiMemberPurge: false,
+          antiMassBan: false, antiAutomodUpdate: false, antiAppCommands: false, antiLinkedRole: false
         };
         updated = true;
       }
       if (cfg.antinukeModules.antiLinkedRole === undefined) {
-        cfg.antinukeModules.antiLinkedRole = true;
+        cfg.antinukeModules.antiLinkedRole = false;
         updated = true;
+      }
+
+      // If security is disabled, ensure orphaned antiNukeEnabled and modules are reset to false
+      if (!cfg.securityEnabled) {
+        if (cfg.antiNukeEnabled) {
+          cfg.antiNukeEnabled = false;
+          updated = true;
+        }
+        const antinukeKeys = [
+          'antiRoleCreate', 'antiRoleDelete', 'antiRoleUpdate', 'antiRolePermUpdate', 'antiMemberRoleUpdate', 'antiRoleReorder',
+          'antiChannelCreate', 'antiChannelDelete', 'antiChannelUpdate', 'antiChannelPermUpdate', 'antiChannelReorder', 'antiChannelNameMod',
+          'antiEmojiCreate', 'antiEmojiDelete', 'antiEmojiUpdate', 'antiWebhooks', 'antiBotAdd', 'antiServerUpdate',
+          'antiBan', 'antiKick', 'antiUnban', 'antiInvite', 'antiScheduledEvents', 'antiMemberPurge',
+          'antiMassBan', 'antiAutomodUpdate', 'antiAppCommands', 'antiLinkedRole'
+        ];
+        for (const k of antinukeKeys) {
+          if (cfg.antinukeModules[k] !== false) {
+            cfg.antinukeModules[k] = false;
+            updated = true;
+          }
+        }
       }
       if (cfg.maxWarnings === undefined) { cfg.maxWarnings = 3; updated = true; }
       if (cfg.blacklistWords === undefined) { cfg.blacklistWords = []; updated = true; }

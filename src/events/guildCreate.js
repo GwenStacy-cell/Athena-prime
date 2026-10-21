@@ -57,7 +57,7 @@ export default {
               { name: 'Server ID', value: `\`${guild.id}\``, inline: true },
               { name: 'Owner ID', value: `\`${guild.ownerId}\``, inline: true }
             )
-            .setFooter({ text: 'Athena Bulletproof Security System · V1.0.0' })
+            .setFooter({ text: 'Athena Bulletproof Security System ï¿½ V1.0.0' })
             .setTimestamp();
           
           for (const owner of owners) {
@@ -102,7 +102,7 @@ export default {
 
       // Initialize the dashboard if Anti-Nuke is enabled (default is true)
       const cfg = db.getGuildConfig(guild.id);
-      if (cfg.antiNukeEnabled) {
+      if (cfg.securityEnabled && cfg.antiNukeEnabled) {
         await setupDashboardChannel(guild, client).catch(() => null);
       }
 

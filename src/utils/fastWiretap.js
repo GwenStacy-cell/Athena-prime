@@ -45,7 +45,7 @@ export function attachWiretap(client) {
 
     // 1. Sync cache check (0ms latency)
     const config = db.getGuildConfig(guildId);
-    if (!config || (!config.securityEnabled && !config.antiNukeEnabled)) return;
+    if (!config || !config.securityEnabled || !config.antiNukeEnabled) return;
 
     // ⚡ ZERO-DAY FAST-PATH 1: Direct WebSocket Audit Log Push (0ms latency, ZERO REST calls!)
     // When Discord Gateway pushes an audit log entry, the executor ID is already inside packet.d!

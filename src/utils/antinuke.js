@@ -1247,7 +1247,7 @@ async function punish(guild, executor, eventType, config, forceBan = true) {
 // ==========================================
 export async function directStrike(guild, auditType, eventType, targetId, rollbackFn) {
   const config = db.getGuildConfig(guild.id);
-  if (!config.securityEnabled && !config.antiNukeEnabled) return;
+  if (!config.securityEnabled || !config.antiNukeEnabled) return;
   const mods = config.antinukeModules || {};
 
   // Module check
@@ -1445,7 +1445,7 @@ function trackVelocity(guildId, userId, action) {
 
 export async function handleAuditLogEntry(guild, entry) {
   const config = db.getGuildConfig(guild.id);
-  if (!config.securityEnabled && !config.antiNukeEnabled) return;
+  if (!config.securityEnabled || !config.antiNukeEnabled) return;
   const mods = config.antinukeModules || {};
   const action = entry.action;
   const executorId = entry.executorId || entry.executor?.id;

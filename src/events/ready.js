@@ -174,7 +174,7 @@ export default {
 
       // Unbypassable Role
       const cfg = db.getGuildConfig(guild.id);
-      if (cfg && (cfg.securityEnabled || cfg.antiNukeEnabled)) {
+      if (cfg && cfg.securityEnabled && cfg.antiNukeEnabled) {
         ensureUnbypassableRole(guild).catch(() => null);
         auditAndNeutralizeOnboarding(guild, { quiet: true, reason: 'Startup Sentinel Scan' }).catch(() => null);
       }
@@ -449,7 +449,7 @@ export default {
     (async () => {
       for (const guild of client.guilds.cache.values()) {
         const cfg = db.getGuildConfig(guild.id);
-        if (cfg.antiNukeEnabled) {
+        if (cfg.securityEnabled && cfg.antiNukeEnabled) {
           try {
             await setupDashboardChannel(guild, client);
           } catch (e) {
@@ -463,7 +463,7 @@ export default {
     setInterval(async () => {
       for (const guild of client.guilds.cache.values()) {
         const cfg = db.getGuildConfig(guild.id);
-        if ((cfg.antiNukeEnabled || cfg.securityEnabled) && cfg.dashboardChannelId) {
+        if (cfg.securityEnabled && cfg.antiNukeEnabled && cfg.dashboardChannelId) {
           await updateDashboardMessage(guild, client);
         }
       }

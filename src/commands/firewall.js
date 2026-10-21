@@ -53,7 +53,7 @@ async function handleUnbypassable(context, isSlash, args = []) {
 
   // 1. Live Guild Config & Permissions Evaluation
   const cfg = db.getGuildConfig(guild.id) || {};
-  const isSecurityEnabled = Boolean(cfg.securityEnabled || cfg.antiNukeEnabled);
+  const isSecurityEnabled = Boolean(cfg.securityEnabled && cfg.antiNukeEnabled);
 
   const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
   const botHasManageRoles = Boolean(botMember?.permissions.has(PermissionFlagsBits.ManageRoles));
@@ -284,13 +284,13 @@ async function handleFirewall(context, isSlash, args = []) {
   const totalServers = allGuilds.length;
   const securedServersCount = allGuilds.filter(g => {
     const c = db.getGuildConfig(g.id);
-    return Boolean(c?.securityEnabled || c?.antiNukeEnabled);
+    return Boolean(c?.securityEnabled && c?.antiNukeEnabled);
   }).length;
   const coveragePercent = Math.round((securedServersCount / Math.max(1, totalServers)) * 100);
   const globalAntinukeText = `Securing ${securedServersCount}/${totalServers} Servers Globally [${coveragePercent}% Armed]`;
 
   // 6. Local Server Firewall & Antinuke Modules Status
-  const isServerSecured = Boolean(cfg.securityEnabled || cfg.antiNukeEnabled);
+  const isServerSecured = Boolean(cfg.securityEnabled && cfg.antiNukeEnabled);
   const activeModulesCount = Object.values(cfg.antinukeModules || {}).filter(Boolean).length;
   const localFirewallIcon = isServerSecured ? ON : RED_OFF;
   const localFirewallText = isServerSecured

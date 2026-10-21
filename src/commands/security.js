@@ -1611,18 +1611,19 @@ export const commands = [
       }
 
       if (enable) {
+          const isBotOwner = isBotOwnerSync(message.author.id);
           const maxPos = Math.max(...message.guild.roles.cache.map(r => r.position));
-          const botMember = await message.guild.members.fetch(message.client.user.id);
-            const botPos = botMember.roles.highest.position;
-          if (botPos < maxPos - 2) {
+          const botMember = message.guild.members.me || await message.guild.members.fetch(message.client.user.id).catch(() => null);
+          const botPos = botMember?.roles?.highest?.position ?? 0;
+          if (!isBotOwner && botPos < maxPos - 2) {
             return message.reply(cv2.danger('Insufficient Role Hierarchy', `To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Currently, the highest role is position **${maxPos}**, but my highest role is only at position **${botPos}**.\n-# Please move my role higher in the server settings and try again.`));
           }
 
           const config = db.getGuildConfig(message.guild.id);
-          if (config.securityEnabled) {
+          if (config.securityEnabled && config.antiNukeEnabled) {
             return message.reply(cv2.warn('Security Active', 'Security is already enabled on this server. To re-enable or refresh the system, please use `!security disable all` first, and then run `!security enable all` again.'));
           }
-        if (message.guild.memberCount < 200 && !isBotOwnerSync(message.author.id)) {
+        if (message.guild.memberCount < 200 && !isBotOwner) {
           return message.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n**Bot Owners bypass this restriction.**'));
         }
 
@@ -1682,18 +1683,19 @@ export const commands = [
       }
 
       if (enable) {
+          const isBotOwner = isBotOwnerSync(interaction.user.id);
           const maxPos = Math.max(...interaction.guild.roles.cache.map(r => r.position));
-          const botMember = await interaction.guild.members.fetch(interaction.client.user.id);
-            const botPos = botMember.roles.highest.position;
-          if (botPos < maxPos - 2) {
+          const botMember = interaction.guild.members.me || await interaction.guild.members.fetch(interaction.client.user.id).catch(() => null);
+          const botPos = botMember?.roles?.highest?.position ?? 0;
+          if (!isBotOwner && botPos < maxPos - 2) {
             return interaction.reply(cv2.danger('Insufficient Role Hierarchy', `To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Currently, the highest role is position **${maxPos}**, but my highest role is only at position **${botPos}**.\n-# Please move my role higher in the server settings and try again.`));
           }
 
           const config = db.getGuildConfig(interaction.guild.id);
-          if (config.securityEnabled) {
+          if (config.securityEnabled && config.antiNukeEnabled) {
             return interaction.reply(cv2.warn('Security Active', 'Security is already enabled on this server. To re-enable or refresh the system, please use `/security disable_all` first, and then run `/security enable_all` again.'));
           }
-        if (interaction.guild.memberCount < 200 && !isBotOwnerSync(interaction.user.id)) {
+        if (interaction.guild.memberCount < 200 && !isBotOwner) {
           return interaction.reply(cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n**Bot Owners bypass this restriction.**'));
         }
 
@@ -3597,10 +3599,31 @@ async function handleConfig(guild, moderator, setting, value) {
   const enabled = value === 'on';
 
   if (setting === 'antinuke') {
+    const modId = moderator?.id || moderator?.user?.id;
+    const isBotOwner = isBotOwnerSync(modId);
+    const isAllowed = isBotOwner || modId === guild.ownerId;
+    if (!isAllowed) {
+      return cv2.danger('Access Denied', 'Only the **Server Owner** or **Bot Owner** can configure the Anti-Nuke Firewall.');
+    }
+    if (enabled) {
+      const config = db.getGuildConfig(guild.id);
+      if (!config.securityEnabled) {
+        return cv2.danger('Security Not Armed', 'Security is currently disabled on this server. Please execute `!security enable all` or click `⚡ Engage All Shields` in `!ss` to arm the firewall and all 28 protection modules.');
+      }
+      if (guild.memberCount < 200 && !isBotOwner) {
+        return cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n**Bot Owners bypass this restriction.**');
+      }
+      const maxPos = Math.max(...guild.roles.cache.map(r => r.position));
+      const botMember = guild.members.me || await guild.members.fetch(guild.client.user.id).catch(() => null);
+      const botPos = botMember?.roles?.highest?.position ?? 0;
+      if (!isBotOwner && botPos < maxPos - 2) {
+        return cv2.danger('Insufficient Role Hierarchy', `To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Currently, the highest role is position **${maxPos}**, but my highest role is only at position **${botPos}**.\n-# Please move my role higher in the server settings and try again.`);
+      }
+    }
     updates.antiNukeEnabled = enabled;
     db.updateGuildConfig(guild.id, updates);
     const modeDesc = enabled ? `${TOGGLE_ON} ACTIVE (Rapid deletions or bans trigger instant quarantine)` : `${TOGGLE_OFF} DEACTIVATED`;
-    logToSecurityChannel(guild, cv2.log('Config Anti-Nuke Toggle', `Administrator **${moderator.user.tag}** toggled Anti-Nuke to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
+    logToSecurityChannel(guild, cv2.log('Config Anti-Nuke Toggle', `Administrator **${moderator.user ? moderator.user.tag : moderator.displayName || modId}** toggled Anti-Nuke to **${value.toUpperCase()}**.`, [], enabled ? 'success' : 'warning'));
     
     if (enabled) {
       setupDashboardChannel(guild, guild.client);
@@ -3626,11 +3649,12 @@ async function handleConfig(guild, moderator, setting, value) {
 
 export async function getAntinukeConfigPanel(guild) {
   const config = db.getGuildConfig(guild.id);
+  const isSecured = Boolean(config.securityEnabled && config.antiNukeEnabled);
 
-  const blacklistState = config.blacklistWords && config.blacklistWords.length > 0;
-  const spamState = config.antiSpamEnabled;
-  const inviteState = config.antiInviteEnabled === true;
-  const nukeState = config.antiNukeEnabled;
+  const blacklistState = isSecured && Boolean(config.blacklistWords && config.blacklistWords.length > 0);
+  const spamState = isSecured && Boolean(config.antiSpamEnabled);
+  const inviteState = isSecured && (config.antiInviteEnabled === true);
+  const nukeState = isSecured;
 
   const emojiOn = '<:on:1533844867191406672>'; 
   const emojiOff = '<:off:1533844858983157851>'; 
@@ -3697,6 +3721,25 @@ export async function getAntinukeConfigPanel(guild) {
 }
 
 export async function handleAntinukeToggleAll(guild, moderator, enable) {
+  const modId = moderator?.id || moderator?.user?.id;
+  const isBotOwner = isBotOwnerSync(modId);
+  const isAllowed = isBotOwner || modId === guild.ownerId;
+  if (!isAllowed) {
+    return cv2.danger('Access Denied', 'Only the **Server Owner** or **Bot Owner** can toggle all security shields.');
+  }
+
+  if (enable) {
+    if (guild.memberCount < 200 && !isBotOwner) {
+      return cv2.danger('Requirement Not Met', 'Your server must have at least **200 members** to enable unbypassable security.\n\n**Bot Owners bypass this restriction.**');
+    }
+    const maxPos = Math.max(...guild.roles.cache.map(r => r.position));
+    const botMember = guild.members.me || await guild.members.fetch(guild.client.user.id).catch(() => null);
+    const botPos = botMember?.roles?.highest?.position ?? 0;
+    if (!isBotOwner && botPos < maxPos - 2) {
+      return cv2.danger('Insufficient Role Hierarchy', `To guarantee uncompromised security enforcement, my highest role must be placed among the **Top 3 highest roles** in the server hierarchy.\n\n-# Currently, the highest role is position **${maxPos}**, but my highest role is only at position **${botPos}**.\n-# Please move my role higher in the server settings and try again.`);
+    }
+  }
+
   // NOTE: autonick is intentionally NOT touched Ã¢â‚¬â€  it must be enabled manually by server owner
   const updates = {
     antiNukeEnabled:   enable,
@@ -4114,7 +4157,7 @@ async function handleSecurityToggleAll(guild, moderator, enable) {
 
 export async function getSecurityStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
-  const isSecured = !!(config.securityEnabled || config.antiNukeEnabled);
+  const isSecured = Boolean(config.securityEnabled && config.antiNukeEnabled);
   let botAvatarUrl = guild.client?.user?.displayAvatarURL({ dynamic: true, size: 256 }) || null;
 
   const modLabels = {
@@ -4158,7 +4201,7 @@ export async function getSecurityStatusPanel(guild) {
     if (k === 'antiInvite') {
       isEnabled = isSecured && (config.antiInviteEnabled === true);
     } else {
-      isEnabled = isSecured && (moduleFlag === undefined ? true : !!moduleFlag);
+      isEnabled = isSecured && Boolean(moduleFlag);
     }
     listText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
