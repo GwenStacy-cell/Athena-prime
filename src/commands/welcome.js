@@ -531,7 +531,7 @@ export async function handleWelcomeManagerButton(interaction) {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_author`).setTitle('Set Author (From)');
     modal.addComponents(
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Author Text (e.g. "From {server}")').setPlaceholder('e.g. Welcome to {server}').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.from || '')),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('icon').setLabel('Icon URL (leave empty for server icon)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.fromIcon || ''))
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('icon').setLabel('Author Icon (Supports Pinterest / Image URL)').setPlaceholder('Image URL or Pinterest link (pin.it / pinterest.com)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.fromIcon || ''))
     );
     return interaction.showModal(modal);
   }
@@ -559,8 +559,8 @@ export async function handleWelcomeManagerButton(interaction) {
   if (action === 'image') {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_image`).setTitle('Edit Media');
     modal.addComponents(
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Large Image URL (Supports GIF & MP4)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.image || '')),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('thumb').setLabel('Thumbnail URL (Supports GIF & MP4)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.thumbnailUrl || ''))
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Large Image (Supports Pinterest, GIF, MP4)').setPlaceholder('Image URL or Pinterest link (pin.it / pinterest.com)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.image || '')),
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('thumb').setLabel('Thumbnail (Supports Pinterest, GIF, MP4)').setPlaceholder('Image URL or Pinterest link (pin.it / pinterest.com)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.thumbnailUrl || ''))
     );
     return interaction.showModal(modal);
   }
@@ -569,7 +569,7 @@ export async function handleWelcomeManagerButton(interaction) {
     const modal = new ModalBuilder().setCustomId(`${prefix}modal_footer`).setTitle('Set Embed Footer');
     modal.addComponents(
       new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('val').setLabel('Footer Text').setPlaceholder('e.g. Member #{membercount} • {server}').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.footer || '')),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('icon').setLabel('Footer Icon URL').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.footerIcon || ''))
+      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('icon').setLabel('Footer Icon (Supports Pinterest / Image URL)').setPlaceholder('Image URL or Pinterest link (pin.it / pinterest.com)').setStyle(TextInputStyle.Short).setRequired(false).setValue(cfg.footerIcon || ''))
     );
     return interaction.showModal(modal);
   }

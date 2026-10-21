@@ -278,6 +278,8 @@ export const commands = [
                   usageText = `${prefix}learn [status|on|off|baseline|signatures|clear] / /learn`;
               } else if (targetCmd.name === "voicerole") {
                   usageText = `${prefix}voicerole [@role|ID|Name|disable] / /voicerole [role] [disable]`;
+              } else if (targetCmd.name === "pinterest" || targetCmd.name === "pin") {
+                  usageText = `${prefix}pinterest <link> / ${prefix}pin <link> / /pinterest <link>`;
               } else if (targetCmd.name === "qr" || targetCmd.name === "fck" || targetCmd.name === "np") {
                   usageText = `@bot ${targetCmd.name}`;
               }
@@ -287,7 +289,42 @@ export const commands = [
                   : '`None`';
 
               let descContent = targetCmd.description || "No description provided.";
-              if (targetCmd.name === "learn") {
+              if (targetCmd.name === "pinterest" || targetCmd.name === "pin") {
+                  descContent = `Extracts and downloads uncompressed original master-resolution images and MP4 videos from any Pinterest link or short URL (pin.it).\n\n` +
+                    `> -# **__Features & Pipeline:__**\n` +
+                    `> • **Full Master Resolution:** Automatically expands shortened \`pin.it\` redirects and upgrades 736x/564x preview thumbnails to uncompressed master quality (/originals/).\n` +
+                    `> • **Video & GIF Extraction:** Automatically extracts full MP4 videos (v.pinimg.com) and animated assets.\n` +
+                    `> • **1-Click Download Button:** Attaches an instant direct button to download the media asset directly to your device.\n` +
+                    `> • **Universal Cross-Bot Media Integration:** Any command with an image prompt or button (\`${prefix}welcome\`, \`${prefix}leave\`, \`${prefix}ticketpanel\`, \`${prefix}announce\`, \`${prefix}aiannounce\`, \`${prefix}autoreply\`, and Studio) accepts direct Pinterest links (\`pin.it\` or \`pinterest.com\`) and Athena will automatically extract and resolve the raw high-resolution media!\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}pinterest <link>\` - Download media from Pinterest link.\n` +
+                    `> • \`${prefix}pin <link>\` - Short alias for quick downloads.\n` +
+                    `> • Reply to any Pinterest link with \`${prefix}pin\` to download it instantly.`;
+              } else if (targetCmd.name === "welcome" || targetCmd.name === "leave") {
+                  descContent = `Interactive visual builder for join greetings and departures featuring borderless CV2 embeds, dynamic placeholders, and full media pipeline.\n\n` +
+                    `> -# **__Media & Universal Pinterest Support:__**\n` +
+                    `> • **Direct Pinterest Links:** Paste any Pinterest link (\`pin.it\` or \`pinterest.com/pin/...\`) into Image, Thumbnail, Author Icon, or Footer Icon modals — Athena automatically extracts the uncompressed master resolution media.\n` +
+                    `> • **MP4-to-GIF Conversion:** Video links are automatically converted into animated looping Discord GIFs.\n` +
+                    `> • **Dynamic Variables:** Full support for \`{membercount}\`, \`{ordinal}\`, \`{user}\`, \`{avatar}\`, \`{server}\`, and 15+ guild metadata tokens.\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}${targetCmd.name}\` - Open the interactive visual configuration dashboard.`;
+              } else if (targetCmd.name === "ticketpanel") {
+                  descContent = `Interactive visual ticket panel deployment dashboard with AI triage and custom media integration.\n\n` +
+                    `> -# **__Features & Media Support:__**\n` +
+                    `> • **Universal Pinterest Support:** Panel banner and thumbnail inputs support direct Pinterest links (\`pin.it\` & \`pinterest.com\`) with automatic uncompressed extraction.\n` +
+                    `> • **Smart AI Triage:** Classifies incoming inquiries into urgency tiers with staff executive summaries.\n` +
+                    `> • **Interactive Customization:** Buttons, dropdown reasons, target channels, and closing roles.\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}ticketpanel\` - Open the interactive panel manager.`;
+              } else if (targetCmd.name === "announce" || targetCmd.name === "aiannounce") {
+                  descContent = `Interactive announcement studio to craft, format, preview, and dispatch server broadcasts.\n\n` +
+                    `> -# **__Features & Media Support:__**\n` +
+                    `> • **Universal Pinterest Support:** Announcement banners and images support direct Pinterest links (\`pin.it\` & \`pinterest.com\`) with automatic master extraction.\n` +
+                    `> • **AI Polish & Formatting:** Converts rough notes into beautifully formatted broadcasts with custom emojis.\n` +
+                    `> • **Live Ephemeral Preview:** Preview your broadcast before sending it to the target channel.\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}${targetCmd.name} [prompt] [#channel]\` - Launch announcement builder.`;
+              } else if (targetCmd.name === "learn") {
                   descContent = `${targetCmd.description}\n\n` +
                     `> -# **__Subcommands Supported:__**\n` +
                     `> • \`${prefix}learn on / enable\` - Engages continuous adaptive profiling.\n` +
@@ -436,13 +473,50 @@ export const commands = [
           usageText = `${prefix}learn [status|on|off|baseline|signatures|clear] / /learn`;
         } else if (targetCmd.name === "voicerole") {
           usageText = `${prefix}voicerole [@role|ID|Name|disable] / /voicerole [role] [disable]`;
+        } else if (targetCmd.name === "pinterest" || targetCmd.name === "pin") {
+          usageText = `${prefix}pinterest <link> / ${prefix}pin <link> / /pinterest <link>`;
         }
         const aliasesText = Array.isArray(targetCmd.aliases) && targetCmd.aliases.length > 0
           ? targetCmd.aliases.map(a => `\`${prefix}${a}\``).join(', ')
           : '`None`';
 
         let descContent = targetCmd.description || "No description provided.";
-        if (targetCmd.name === "learn") {
+        if (targetCmd.name === "pinterest" || targetCmd.name === "pin") {
+          descContent = `Extracts and downloads uncompressed original master-resolution images and MP4 videos from any Pinterest link or short URL (pin.it).\n\n` +
+            `> -# **__Features & Pipeline:__**\n` +
+            `> • **Full Master Resolution:** Automatically expands shortened \`pin.it\` redirects and upgrades 736x/564x preview thumbnails to uncompressed master quality (/originals/).\n` +
+            `> • **Video & GIF Extraction:** Automatically extracts full MP4 videos (v.pinimg.com) and animated assets.\n` +
+            `> • **1-Click Download Button:** Attaches an instant direct button to download the media asset directly to your device.\n` +
+            `> • **Universal Cross-Bot Media Integration:** Any command with an image prompt or button (\`${prefix}welcome\`, \`${prefix}leave\`, \`${prefix}ticketpanel\`, \`${prefix}announce\`, \`${prefix}aiannounce\`, \`${prefix}autoreply\`, and Studio) accepts direct Pinterest links (\`pin.it\` or \`pinterest.com\`) and Athena will automatically extract and resolve the raw high-resolution media!\n\n` +
+            `> -# **__Usage Syntax:__**\n` +
+            `> • \`${prefix}pinterest <link>\` - Download media from Pinterest link.\n` +
+            `> • \`${prefix}pin <link>\` - Short alias for quick downloads.\n` +
+            `> • Reply to any Pinterest link with \`${prefix}pin\` to download it instantly.`;
+        } else if (targetCmd.name === "welcome" || targetCmd.name === "leave") {
+          descContent = `Interactive visual builder for join greetings and departures featuring borderless CV2 embeds, dynamic placeholders, and full media pipeline.\n\n` +
+            `> -# **__Media & Universal Pinterest Support:__**\n` +
+            `> • **Direct Pinterest Links:** Paste any Pinterest link (\`pin.it\` or \`pinterest.com/pin/...\`) into Image, Thumbnail, Author Icon, or Footer Icon modals — Athena automatically extracts the uncompressed master resolution media.\n` +
+            `> • **MP4-to-GIF Conversion:** Video links are automatically converted into animated looping Discord GIFs.\n` +
+            `> • **Dynamic Variables:** Full support for \`{membercount}\`, \`{ordinal}\`, \`{user}\`, \`{avatar}\`, \`{server}\`, and 15+ guild metadata tokens.\n\n` +
+            `> -# **__Usage Syntax:__**\n` +
+            `> • \`${prefix}${targetCmd.name}\` - Open the interactive visual configuration dashboard.`;
+        } else if (targetCmd.name === "ticketpanel") {
+          descContent = `Interactive visual ticket panel deployment dashboard with AI triage and custom media integration.\n\n` +
+            `> -# **__Features & Media Support:__**\n` +
+            `> • **Universal Pinterest Support:** Panel banner and thumbnail inputs support direct Pinterest links (\`pin.it\` & \`pinterest.com\`) with automatic uncompressed extraction.\n` +
+            `> • **Smart AI Triage:** Classifies incoming inquiries into urgency tiers with staff executive summaries.\n` +
+            `> • **Interactive Customization:** Buttons, dropdown reasons, target channels, and closing roles.\n\n` +
+            `> -# **__Usage Syntax:__**\n` +
+            `> • \`${prefix}ticketpanel\` - Open the interactive panel manager.`;
+        } else if (targetCmd.name === "announce" || targetCmd.name === "aiannounce") {
+          descContent = `Interactive announcement studio to craft, format, preview, and dispatch server broadcasts.\n\n` +
+            `> -# **__Features & Media Support:__**\n` +
+            `> • **Universal Pinterest Support:** Announcement banners and images support direct Pinterest links (\`pin.it\` & \`pinterest.com\`) with automatic master extraction.\n` +
+            `> • **AI Polish & Formatting:** Converts rough notes into beautifully formatted broadcasts with custom emojis.\n` +
+            `> • **Live Ephemeral Preview:** Preview your broadcast before sending it to the target channel.\n\n` +
+            `> -# **__Usage Syntax:__**\n` +
+            `> • \`${prefix}${targetCmd.name} [prompt] [#channel]\` - Launch announcement builder.`;
+        } else if (targetCmd.name === "learn") {
           descContent = `${targetCmd.description}\n\n` +
             `> -# **__Subcommands Supported:__**\n` +
             `> • \`${prefix}learn on / enable\` - Engages continuous adaptive profiling.\n` +
@@ -1450,8 +1524,8 @@ export const helpModules = [
     "`!archivethread` - Archive the current thread `[Extra Owner]`",
     "`!deletethread` - Delete the current thread `[Extra Owner]`",
     "`!say <message>` - Send a raw text message via bot `[Extra Owner]`",
-    "`!announce` - Launch interactive announcement builder `[Extra Owner]`",
-    "`!aiannounce [prompt] [#channel] / /aiannounce` - AI Announcement Studio to craft, format, enhance & preview broadcasts `[Staff]`",
+    "`!announce` - Launch interactive announcement builder (supports direct Pinterest links) `[Extra Owner]`",
+    "`!aiannounce [prompt] [#channel] / /aiannounce` - AI Announcement Studio with Pinterest banner support, custom emojis & live preview `[Staff]`",
     "`!fck @user <reason>` - Send direct official warning DM `[Server Owner]`"
   ] },
   { id: 'mass_actions', category: 'SERVER ADMINISTRATION', shortLabel: 'Mass Mod', label: 'Mass Actions', emoji: 'mass', commands: [
@@ -1471,15 +1545,16 @@ export const helpModules = [
   ] },
 
   { id: 'studio', category: 'SERVER ADMINISTRATION', shortLabel: 'Studio', label: 'Studio & Audits', emoji: 'config', commands: [
-    "`!aiannounce [prompt] [#channel] / /aiannounce` - Neural Announcement Studio with live preview, custom emojis & target channel selector `[Staff]`",
-    "`!studio create` - Interactive Container & Embed Studio builder with template persistence `[Admin]`",
+    "`!aiannounce [prompt] [#channel] / /aiannounce` - Neural Announcement Studio with Pinterest banner support, live preview & channel selector `[Staff]`",
+    "`!studio create` - Interactive Container & Embed Studio builder (supports direct Pinterest links) `[Admin]`",
     "`!studio list` - View all saved server announcement and container templates `[Admin]`",
     "`!studio send <template_id> [#channel]` - Dispatch saved container template to channel `[Admin]`",
     "`!studio delete <template_id>` - Permanently delete saved container template `[Admin]`",
     "`!auditlogs / !audit [@user] [limit]` - Forensic audit log search with action classification and time filters `[Staff]`",
     "",
     "-# **__Studio & Forensic Architecture:__**",
-    "-# • **__AI Announcement Studio:__** Neural speech enhancement transforms rough ideas into formatted Discord announcements with custom emojis and live preview.",
+    "-# • **__AI Announcement Studio:__** Neural speech enhancement transforms rough ideas into formatted Discord announcements with custom emojis, direct Pinterest banners, and live preview.",
+    "-# • **__Universal Media Pipeline:__** Announcement banners and studio embed containers support direct Pinterest links (`pin.it` & `pinterest.com`) with uncompressed master extraction.",
     "-# • **__Custom Container Templates:__** Create and persist reusable CV2 borderless layouts across reboots.",
     "-# • **__Forensic Audit Logs:__** Real-time Gateway API audit log inspection with moderator/target filtering."
   ] },
@@ -1511,7 +1586,7 @@ export const helpModules = [
   { id: 'tickets', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Tickets', label: 'Ticket System', emoji: 'tickets', commands: [
     "`!ticket setup <#category> <@staffRole> [ai_on]` - Configure category, staff roles & optional AI triage `[Administrator]`",
     "`!ticket ai on|off` - Toggle Smart Ban Appeals & AI Ticket Triage `[Administrator]`",
-    "`!ticketpanel` - Deploy interactive ticket panel with one-click AI triage control `[Administrator]`",
+    "`!ticketpanel` - Deploy interactive ticket panel with one-click AI triage & Pinterest banner support `[Administrator]`",
     "`!add @user` - Add a user to an active ticket channel `[Staff]`",
     "`!remove @user` - Remove a user from an active ticket channel `[Staff]`",
     "`!close` - Close and archive the active ticket channel `[Public]`",
@@ -1519,6 +1594,7 @@ export const helpModules = [
     "",
     "-# **__Ticket System Capabilities:__**",
     "-# • Features **__Dropdown Menus__**, **__Interactive Q&A Modals__**, and **__Beautiful CV2 Welcome Embeds__**.",
+    "-# • **__Universal Media & Pinterest Support:__** Ticket panel banner and thumbnail inputs support direct Pinterest links (`pin.it` & `pinterest.com`) with automatic uncompressed extraction.",
     "-# • **__Smart Ban Appeals & AI Triage (Optional):__** Categorizes inquiries (Ban Appeal, Store/Coins, Bugs, Harassment) and creates executive summaries for staff.",
     "-# • Automatically creates paired Voice Channels and Text Channels per ticket.",
     "-# • **__Step 1:__** Run `!ticket setup <#category> <@staffRole> [ai_on]` to configure category and staff roles.",
@@ -1570,8 +1646,8 @@ export const helpModules = [
   ] },
 
   { id: 'welcome', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'Welcome', label: 'Welcome & Leave', emoji: 'welcome', commands: [
-    "`!welcome` - Open interactive Welcome Message Builder `[Extra Owner]`",
-    "`!leave` - Open interactive Leave Message Builder `[Extra Owner]`",
+    "`!welcome` - Open interactive Welcome Message Builder (supports direct Pinterest links & MP4s) `[Extra Owner]`",
+    "`!leave` - Open interactive Leave Message Builder (supports direct Pinterest links & MP4s) `[Extra Owner]`",
     "`!autorole / !autorole-config` - Open **AutoRole & Vanity Engine** (Human/Bot join roles & vanity status rewards) `[Extra Owner]`",
     "`!autoreact` - Open **Auto-React Engine** (Add up to 5 automatic reaction emojis per channel) `[Extra Owner]`",
     "`!verify setup <@role> [button|captcha|math]` - Deploy verification gate with Graphic CAPTCHA or Math challenges `[Admin]`",
@@ -1579,10 +1655,11 @@ export const helpModules = [
     "`!verify disable` - Dismantle verification gate `[Admin]`",
     "",
     "-# **__Builder & Engine Features:__**",
+    "-# • **__Universal Pinterest Integration:__** Paste any direct Pinterest link (`pin.it` or `pinterest.com/pin/...`) into Image, Thumbnail, Author Icon, or Footer Icon modals — Athena automatically scrapes the uncompressed master resolution image or converts MP4 videos into animated looping GIFs.",
     "-# • **__AutoRole & Vanity Engine:__** Automatically assigns human/bot roles on join and vanity URL reward roles.",
     "-# • **__Auto-React Engine:__** Configure up to 5 custom or native reaction emojis per channel.",
     "-# • **__Dynamic Variable Interpolation:__** Full support for `{membercount}`, `{ordinal}`, `{user}`, `{username}`, `{displayname}`, `{tag}`, `{userid}`, `{server}`, `{serverid}`, `{server.icon}`, `{avatar}`, `{created}`, `{joined}`, `{owner}`, `{boosts}`, `{tier}`, `{roles}`, `{channels}`.",
-    "-# • **__Media Pipeline:__** Supports custom hex accent colors, image URLs, and auto-converts MP4 video links into animated looping GIFs."
+    "-# • **__Media Pipeline:__** Supports custom hex accent colors, direct image URLs, uncompressed Pinterest links, and auto-converts MP4 video links into animated looping GIFs."
   ] },
   { id: 'leveling', category: 'COMMUNITY & ENGAGEMENT', shortLabel: 'XP', label: 'Leveling & XP', emoji: 'leveling', commands: [
     "`!xpsetup` - Open the XP Dashboard `[Extra Owner]`",
@@ -1681,7 +1758,7 @@ export const helpModules = [
     "`!quotemaker` - Launch interactive Canvas Quote Generator `[Public]`",
     "`!youtube add|remove|list` - Configure YouTube video upload notification alerts `[Extra Owner]`",
     "`!ccmd / !customcmd add <trigger> <reply>` - Create a custom command response `[Extra Owner]`",
-    "`!autoreply / !ar` - Custom keyword auto-replies with accent borderless CV2 embeds & GIFs `[Extra Owner]`",
+    "`!autoreply / !ar` - Custom keyword auto-replies with accent borderless CV2 embeds, GIFs & direct Pinterest links `[Extra Owner]`",
     "`!rrsetup / !reactionrole` - Interactive Reaction Role builder `[Extra Owner]`",
     "`!giveaway / !gw` - Manage server giveaways `[Extra Owner]`",
     "`!date / !go-on-date @user` - Go on a special interactive date `[Public]`",
@@ -1718,9 +1795,15 @@ export const helpModules = [
     "`!bump` - Bump the server (Disboard integration) `[Public]`",
     "`!sticky / !stick <message>` - Keep a message stuck at bottom of chat `[Extra Owner]`",
     "`!upload <url>` - Upload and mirror file from direct URL `[Public]`",
-    "`!pinterest / !pin <link>` - Extract & download full-res images or videos from Pinterest `[Public]`",
+    "`!pinterest / !pin <link>` - Extract & download master uncompressed images or MP4 videos from Pinterest `[Public]`",
     "`!tier / !mytier / !perms` - Check your current Athena Prime authorization tier `[Public]`",
     "`!profile / !card [@user]` - Official God of War canvas profile card `[Public]`",
+    "",
+    "-# **__Pinterest Media Downloader Engine:__**",
+    "-# • **__Full Master Resolution Scraper:__** Resolves shortened `pin.it` redirects and upgrades preview thumbnails (736x, 564x) to full uncompressed original master quality (/originals/).",
+    "-# • **__Video & GIF Extraction:__** Detects and extracts full-quality MP4 videos and animated GIFs from Pinterest posts.",
+    "-# • **__1-Click Download Button:__** Every extracted pin generates an instant direct **Download Image** or **Download Video** button on the result embed.",
+    "-# • **__Universal Cross-Bot Integration:__** Paste any Pinterest link directly into any bot image button or modal (!welcome, !leave, !ticketpanel, !announce, !autoreply, and Studio) and Athena will automatically extract and display the high-res media asset seamlessly.",
     "",
     "-# **__News Feed System:__**",
     "-# • Supports Twitter (X), YouTube, Reddit, and standard RSS feeds.",

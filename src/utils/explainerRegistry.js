@@ -797,10 +797,11 @@ Athena Prime features a high-performance, multi-token variable resolution engine
 • **Dual Layout Architecture (Content + Embed):**
   - **Top Text (message):** Standalone plaintext header rendered above the card.
   - **Embed Construction (buildWelcomeEmbed):** Fully customizable author, title, description, thumbnail, large media (GIF & MP4 conversion), server accent theme integration (via !accent), footer text, and footer icons.
-• **Dynamic Media Support:**
+• **Universal Media & Pinterest Pipeline:**
+  - Full support for direct Pinterest links (\`pin.it\` and \`pinterest.com/pin/...\`). Athena automatically scrapes the master uncompressed image resolution for Large Image, Thumbnail, Author Icon, and Footer Icon.
   - Automatically converts uploaded MP4 videos into animated looping Discord GIFs via \`convertMp4ToGif\` and re-hosts them securely on Discord CDN via \`uploadGifToDiscord\`.
 • **Auto-Reply Integration (src/commands/trigger.js):**
-  - All auto-responders and trigger keyword replies dynamically parse the full placeholder suite on invocation.`
+  - All auto-responders and trigger keyword replies dynamically parse the full placeholder suite on invocation. Supports direct Pinterest links for automated response images and GIFs.`
       }
     ]
   }
@@ -1695,7 +1696,7 @@ export const DETAILED_COMMANDS = {
   - Timestamps: \`{created}\`, \`{joined}\`
   - Server metadata: \`{server}\`, \`{serverid}\`, \`{server.icon}\`, \`{owner}\`, \`{boosts}\`, \`{tier}\`, \`{roles}\`, \`{channels}\`
 • **Resilient Delivery:** Automatically falls back to Discord REST fetch(channelId) if channel is not cached.
-• **Media Pipeline:** Automatically converts MP4 URLs into animated GIFs via ffmpeg and re-hosts on Discord CDN.`,
+• **Universal Media & Direct Pinterest Support:** Accepts direct image URLs, animated GIFs, and direct Pinterest links (\`pin.it\` or \`pinterest.com/pin/...\`) for Large Image, Thumbnail, Author Icon, and Footer Icon. Automatically upgrades Pinterest links to uncompressed master quality and converts MP4 video links into animated looping Discord GIFs.`,
     example: '!welcome'
   },
 
@@ -1739,6 +1740,8 @@ export const DETAILED_COMMANDS = {
 • **Full-Resolution Upgrade Engine:** Automatically inspects page metadata and upgrades resized preview thumbnails (736x, 564x, 236x) to original uncompressed master files (/originals/).
 • **Video & Image Extraction:** Dynamically detects whether a pin contains an MP4 video (v.pinimg.com) or static/animated image asset.
 • **Direct Discord Upload Pipeline:** Downloads media buffer and attaches it directly via AttachmentBuilder, bypassing hotlink blocks and guaranteeing permanent preview rendering.
+• **1-Click Download Button:** Every extracted pin embeds an instant 1-click Download Image / Download Video button for effortless direct downloads.
+• **Universal Cross-Bot Integration:** Paste direct Pinterest links (pin.it or pinterest.com) into any image button or modal across Athena (!welcome, !leave, !ticketpanel, !announce, !aiannounce, !autoreply, and Studio) and Athena will automatically extract and render the uncompressed master media seamlessly.
 • **Reply-Aware Invocation:** Automatically parses replied messages when invoked via !pin as a Discord reply.`,
     example: '!pinterest https://pin.it/5gq1j4x'
   },

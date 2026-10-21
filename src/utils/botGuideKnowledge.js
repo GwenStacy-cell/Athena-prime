@@ -262,8 +262,8 @@ export const KNOWN_COMMAND_SUGGESTIONS = {
   ],
   welcome: [
     'How to setup custom banner card?',
-    'How to test welcome message?',
-    'How to configure autorole?'
+    'Can I use direct Pinterest links?',
+    'How to test welcome message?'
   ],
   autorole: [
     'How to set human vs bot roles?',
@@ -389,6 +389,16 @@ export const KNOWN_COMMAND_SUGGESTIONS = {
     'How to set AFK status?',
     'How does auto-remove AFK work?',
     'How to mention AFK users safely?'
+  ],
+  pinterest: [
+    'How to download pins with !pin?',
+    'Does it work with pin.it links?',
+    'How to use Pinterest in !welcome?'
+  ],
+  pin: [
+    'How to download high-res images?',
+    'Can I download Pinterest videos?',
+    'Does it work with pin.it links?'
   ],
   utility: [
     'How to view server info?',
@@ -1307,10 +1317,31 @@ export async function generateAthenaGuideResponse(userQuestion, { guild, user, m
     '    4. Click **Placeholders** button to view the full variable cheat sheet directly in Discord.',
     '    5. Click **Send Test** to verify live placeholder rendering before members join.',
     '    6. Click **Toggle Status** to ensure greetings are enabled.',
+    '  • **Media Pipeline & Universal Pinterest Support:**',
+    '    - Large Image, Thumbnail, Author Icon, and Footer Icon accept direct image URLs, animated GIFs, and direct Pinterest links (`pin.it` or `pinterest.com/pin/...`).',
+    '    - Athena automatically scrapes the uncompressed master resolution media file and converts MP4 video links into animated looping GIFs via `convertMp4ToGif`.',
     '  • **STRICT ANTI-HALLUCINATION CONSTRAINT (CRITICAL):**',
     '    - NEVER claim there is a command like `' + prefix + 'config welcome membercount`, `' + prefix + 'config welcome membercount reset`, or `' + prefix + 'setup welcome`. Such commands DO NOT EXIST in Athena Prime.',
     '    - NEVER confuse welcome member count placeholders with the counting minigame (`!counting`) or its `saves <0-20>` mechanic.',
     '    - Member count in greetings is 100% dynamic and evaluated at join-time via `resolvePlaceholders()` in `src/commands/welcome.js`.',
+    '- When asked about Pinterest, Pinterest Downloader, or using Pinterest links in bot commands (!pinterest, !pin, pintrest, pin.it):',
+    '  • Conduct a deep-dive analysis of `src/utils/pinterest.js`, `src/commands/pinterest.js`, and universal media integration across Athena Prime:',
+    '  • **What is the Pinterest Feature:** Athena Prime features a high-performance Pinterest media extraction engine supporting both shortened redirect links (`pin.it/...`) and full pin URLs (`pinterest.com/pin/...`).',
+    '  • **Full Master Resolution Upgrade:** Scrapes page metadata and automatically upgrades resized preview thumbnails (`736x`, `564x`, `236x`) to full uncompressed original master quality (`/originals/`).',
+    '  • **Video & GIF Extraction:** Automatically detects and extracts full-quality MP4 videos (`v.pinimg.com`) and animated GIFs.',
+    '  • **1-Click Direct Download Button:** Every extracted pin embeds an instant direct "Download Image" or "Download Video" button.',
+    '  • **Universal Cross-Bot Integration:** You can paste any Pinterest link (`pin.it` or `pinterest.com/pin/...`) directly into ANY bot image button or modal prompt:',
+    '    - `' + prefix + 'welcome` and `' + prefix + 'leave` (Large Image, Thumbnail, Author Icon, Footer Icon)',
+    '    - `' + prefix + 'ticketpanel` (Panel Banner and Thumbnail)',
+    '    - `' + prefix + 'announce` and `' + prefix + 'aiannounce` (Broadcast Banner and Thumbnail)',
+    '    - `' + prefix + 'studio create` (Container Banner and Thumbnail)',
+    '    - `' + prefix + 'autoreply` (Trigger response GIFs and images)',
+    '    - `' + prefix + 'rrsetup` (Reaction Role embed images)',
+    '    Athena automatically detects the Pinterest link, scrapes the raw master asset, and renders it seamlessly.',
+    '  • **How to Use:**',
+    '    - Command: `' + prefix + 'pinterest <link>` or `' + prefix + 'pin <link>`',
+    '    - Reply: Reply to any message containing a Pinterest link with `' + prefix + 'pin`',
+    '    - Slash: `/pinterest link:<url>`',
     '- When asked how to show member count across the server, in voice channels, or in greetings (!serverstats, !stats, server member count, member count command enna):',
     '  • Conduct a deep-dive analysis of `src/commands/serverstats.js` and `src/commands/welcome.js`:',
     '  • Clearly explain that Athena Prime offers TWO powerful methods to show server member counts:',

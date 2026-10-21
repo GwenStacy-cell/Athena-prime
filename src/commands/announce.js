@@ -123,14 +123,16 @@ export async function handleAnnouncementInteractions(interaction) {
       
       const imageInput = new TextInputBuilder()
         .setCustomId('ann_image')
-        .setLabel('Image URL (Large)')
+        .setLabel('Large Image (Supports Pinterest / Direct URL)')
+        .setPlaceholder('Image URL or Pinterest link (pin.it / pinterest.com)')
         .setStyle(TextInputStyle.Short)
         .setRequired(false)
         ; if (embed.data.image?.url) imageInput.setValue(embed.data.image.url);
         
       const thumbInput = new TextInputBuilder()
         .setCustomId('ann_thumb')
-        .setLabel('Thumbnail URL (Small)')
+        .setLabel('Thumbnail (Supports Pinterest / Direct URL)')
+        .setPlaceholder('Image URL or Pinterest link (pin.it / pinterest.com)')
         .setStyle(TextInputStyle.Short)
         .setRequired(false)
         ; if (embed.data.thumbnail?.url) thumbInput.setValue(embed.data.thumbnail.url);

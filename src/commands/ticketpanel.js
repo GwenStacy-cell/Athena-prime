@@ -182,8 +182,8 @@ export async function handleTicketPanelButtons(interaction) {
   if (customId === 'tp_edit_media') {
     const config = db.getTickets(guild.id);
     const modal = new ModalBuilder().setCustomId('tp_modal_media').setTitle('Edit Panel Media');
-    const imageInput = new TextInputBuilder().setCustomId('image').setLabel('Large Image URL (Banner)').setStyle(TextInputStyle.Short).setValue(config.panelImage || '').setRequired(false);
-    const thumbInput = new TextInputBuilder().setCustomId('thumbnail').setLabel('Thumbnail URL').setStyle(TextInputStyle.Short).setValue(config.panelThumbnail || '').setRequired(false);
+    const imageInput = new TextInputBuilder().setCustomId('image').setLabel('Banner (Supports Pinterest / Image URL)').setPlaceholder('Image URL or Pinterest link (pin.it / pinterest.com)').setStyle(TextInputStyle.Short).setValue(config.panelImage || '').setRequired(false);
+    const thumbInput = new TextInputBuilder().setCustomId('thumbnail').setLabel('Thumbnail (Supports Pinterest / Image URL)').setPlaceholder('Image URL or Pinterest link (pin.it / pinterest.com)').setStyle(TextInputStyle.Short).setValue(config.panelThumbnail || '').setRequired(false);
     modal.addComponents(new ActionRowBuilder().addComponents(imageInput), new ActionRowBuilder().addComponents(thumbInput));
     return interaction.showModal(modal);
   }
