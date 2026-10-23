@@ -1197,16 +1197,77 @@ class Database {
       gif: triggerData.gif || null,
       footer: triggerData.footer || null,
       type: triggerData.type || 'ar',
+      reaction: triggerData.reaction || null,
+      mirrorChannel: triggerData.mirrorChannel || null,
+      ghost: typeof triggerData.ghost === 'number' ? triggerData.ghost : (triggerData.ghost ? parseInt(triggerData.ghost, 10) || null : null),
+      rewardXp: typeof triggerData.rewardXp === 'number' ? triggerData.rewardXp : (triggerData.rewardXp ? parseInt(triggerData.rewardXp, 10) || null : null),
+      maxClaims: typeof triggerData.maxClaims === 'number' ? triggerData.maxClaims : (triggerData.maxClaims ? parseInt(triggerData.maxClaims, 10) || null : null),
+      claims: Array.isArray(triggerData.claims) ? triggerData.claims : [],
+      timeVariant: triggerData.timeVariant || 'always',
+      audience: triggerData.audience || 'all',
+      helpfulCount: typeof triggerData.helpfulCount === 'number' ? triggerData.helpfulCount : 0,
+      unhelpfulCount: typeof triggerData.unhelpfulCount === 'number' ? triggerData.unhelpfulCount : 0,
+      helpfulVoters: Array.isArray(triggerData.helpfulVoters) ? triggerData.helpfulVoters : [],
       updatedAt: Date.now()
     };
 
     if (index !== -1) {
+      const existing = this.cache.triggers[guildId][index];
+      if (!triggerData.claims && existing.claims) formatted.claims = existing.claims;
+      if (triggerData.helpfulCount === undefined && existing.helpfulCount !== undefined) formatted.helpfulCount = existing.helpfulCount;
+      if (triggerData.unhelpfulCount === undefined && existing.unhelpfulCount !== undefined) formatted.unhelpfulCount = existing.unhelpfulCount;
+      if (!triggerData.helpfulVoters && existing.helpfulVoters) formatted.helpfulVoters = existing.helpfulVoters;
       this.cache.triggers[guildId][index] = formatted;
     } else {
       this.cache.triggers[guildId].push(formatted);
     }
     this.save();
     return true;
+  }
+
+  claimEasterEggTrigger(guildId, match, userId) {
+    if (!this.cache.triggers || !this.cache.triggers[guildId]) return { success: false, reason: 'not_found' };
+    const matchLower = (match || '').trim().toLowerCase();
+    const trigger = this.cache.triggers[guildId].find(t => t.match.toLowerCase() === matchLower);
+    if (!trigger || !trigger.rewardXp) return { success: false, reason: 'not_bounty' };
+
+    if (!Array.isArray(trigger.claims)) trigger.claims = [];
+    if (trigger.claims.includes(userId)) {
+      return { success: false, reason: 'already_claimed', rewardXp: trigger.rewardXp, claimsCount: trigger.claims.length, maxClaims: trigger.maxClaims };
+    }
+    if (trigger.maxClaims && trigger.claims.length >= trigger.maxClaims) {
+      return { success: false, reason: 'max_reached', rewardXp: trigger.rewardXp, claimsCount: trigger.claims.length, maxClaims: trigger.maxClaims };
+    }
+
+    trigger.claims.push(userId);
+    this.save();
+    return {
+      success: true,
+      rewardXp: trigger.rewardXp,
+      claimsCount: trigger.claims.length,
+      maxClaims: trigger.maxClaims
+    };
+  }
+
+  rateTrigger(guildId, match, isHelpful = true, userId = null) {
+    if (!this.cache.triggers || !this.cache.triggers[guildId]) return { helpful: 0, unhelpful: 0, changed: false };
+    const matchLower = (match || '').trim().toLowerCase();
+    const trigger = this.cache.triggers[guildId].find(t => t.match.toLowerCase() === matchLower);
+    if (!trigger) return { helpful: 0, unhelpful: 0, changed: false };
+
+    if (!Array.isArray(trigger.helpfulVoters)) trigger.helpfulVoters = [];
+    if (userId && trigger.helpfulVoters.includes(userId)) {
+      return { helpful: trigger.helpfulCount || 0, unhelpful: trigger.unhelpfulCount || 0, changed: false, alreadyVoted: true };
+    }
+
+    if (userId) trigger.helpfulVoters.push(userId);
+    if (isHelpful) {
+      trigger.helpfulCount = (trigger.helpfulCount || 0) + 1;
+    } else {
+      trigger.unhelpfulCount = (trigger.unhelpfulCount || 0) + 1;
+    }
+    this.save();
+    return { helpful: trigger.helpfulCount, unhelpful: trigger.unhelpfulCount, changed: true, alreadyVoted: false };
   }
 
   addTrigger(guildId, match, response, extra = {}) {

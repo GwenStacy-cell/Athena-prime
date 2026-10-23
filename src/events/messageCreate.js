@@ -1879,31 +1879,139 @@ export default {
         if (!t.match) continue;
         
         if (matchesTrigger(message.content, t.match)) {
+          // 1. Audience Filter
+          if (t.audience && t.audience !== 'all') {
+            const joinedAt = message.member?.joinedTimestamp || 0;
+            const isNewbie = joinedAt > 0 && (Date.now() - joinedAt) < (3 * 24 * 60 * 60 * 1000);
+            const isBooster = Boolean(message.member?.premiumSinceTimestamp);
+            const isStaff = message.member?.permissions?.has(PermissionFlagsBits.ManageMessages) ||
+                            message.member?.permissions?.has(PermissionFlagsBits.Administrator) ||
+                            isBotOwnerSync(message.author.id) ||
+                            message.guild.ownerId === message.author.id;
+
+            if (t.audience === 'newbie' && !isNewbie) continue;
+            if (t.audience === 'regular' && isNewbie) continue;
+            if (t.audience === 'booster' && !isBooster) continue;
+            if (t.audience === 'staff' && !isStaff) continue;
+          }
+
+          // 2. Time / Clock Filter
+          if (t.timeVariant && t.timeVariant !== 'always') {
+            const now = new Date();
+            const hour = now.getHours();
+            const day = now.getDay();
+            const isWeekend = (day === 0 || day === 6);
+
+            if (t.timeVariant === 'weekend' && !isWeekend) continue;
+            if (t.timeVariant === 'morning' && (hour < 5 || hour >= 12)) continue;
+            if (t.timeVariant === 'day' && (hour < 12 || hour >= 18)) continue;
+            if (t.timeVariant === 'night' && (hour >= 5 && hour < 18)) continue;
+          }
+
+          // 3. Dual-Action Emoji Reaction (Auto-Reaction Synergy) - Manually Settable
+          if (t.reaction && t.reaction.trim()) {
+            message.react(t.reaction.trim()).catch(() => null);
+          }
+
+          // 4. Staff Alert & Channel Mirroring (Emergency / Escalation Triggers) - Manually Settable
+          if (t.mirrorChannel) {
+            const mirrorTarget = message.guild.channels.cache.get(t.mirrorChannel) ||
+              await message.guild.channels.fetch(t.mirrorChannel).catch(() => null);
+            if (mirrorTarget && mirrorTarget.isTextBased()) {
+              mirrorTarget.send({
+                components: [{
+                  type: 17,
+                  accent_color: 0xED4245,
+                  components: [
+                    { type: 10, content: '## **Trigger Escalation Alert | <a:atheNATICK:1557841381630681106>**' },
+                    { type: 14, divider: true },
+                    {
+                      type: 10,
+                      content:
+                        `-# • **Trigger Keyword:** \`${t.match}\`\n` +
+                        `-# • **Author:** <@${message.author.id}> (\`${message.author.tag || message.author.id}\`)\n` +
+                        `-# • **Channel:** <#${message.channel.id}>\n` +
+                        `-# • **Message Content:** ${message.content.slice(0, 500)}\n` +
+                        `-# • **Jump Link:** [Click to Jump](${message.url})`
+                    },
+                    { type: 14, divider: true },
+                    { type: 10, content: '-# Athena Prime Escalation Matrix • Trigger Mirror Alert' }
+                  ]
+                }],
+                flags: MessageFlags.IsComponentsV2
+              }).catch(() => null);
+            }
+          }
+
+          // 5. Gamified Easter Egg & Bounty Triggers
+          let bountyNotice = null;
+          if (t.rewardXp && typeof t.rewardXp === 'number' && t.rewardXp > 0) {
+            const claimRes = db.claimEasterEggTrigger(guildId, t.match, message.author.id);
+            if (claimRes.success) {
+              const userXp = db.getUserXp(guildId, message.author.id);
+              userXp.xp += claimRes.rewardXp;
+              const newLevel = calculateLevel(userXp.xp);
+              if (newLevel > userXp.level) {
+                userXp.level = newLevel;
+                processLevelUp(message.client, message.guild, message.member, newLevel, message.channel).catch(() => null);
+              }
+              db.setUserXp(guildId, message.author.id, userXp);
+              bountyNotice = `-# 🎉 **[Easter Egg Found!]** <@${message.author.id}> discovered a secret keyword and claimed **+${claimRes.rewardXp} XP**! (${claimRes.claimsCount}/${claimRes.maxClaims || '∞'} claimed)`;
+            }
+          }
+
+          // 6. Ghost countdown notice
+          let ghostNotice = null;
+          if (t.ghost && typeof t.ghost === 'number' && t.ghost > 0) {
+            ghostNotice = `-# ⏳ **[Self-Destruct]** This message and trigger will auto-delete in **${t.ghost}s**.`;
+          }
+
+          // 7. Dispatch Response
+          const userOrMember = message.member || message.author;
+          let sentMessage = null;
+
           if (t.type === 'trigger') {
-            // Direct Trigger Response
             const { resolvePlaceholders } = await import('../commands/welcome.js');
-            const userOrMember = message.member || message.author;
             const body = t.content || t.response || '';
             const resolvedText = resolvePlaceholders(body, userOrMember, message.guild);
 
-            if (t.heading || t.gif || t.footer) {
-              const triggerContainer = buildAutoReplyPreview(message.guild, t, userOrMember);
-              await message.reply({ components: [triggerContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
-                message.channel.send({ components: [triggerContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+            if (t.heading || t.gif || t.footer || ghostNotice || bountyNotice) {
+              const triggerContainer = buildAutoReplyPreview(message.guild, t, userOrMember, {
+                ghostNotice,
+                bountyNotice,
+                includeFeedback: true
+              });
+              sentMessage = await message.reply({ components: [triggerContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
+                return message.channel.send({ components: [triggerContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
               });
             } else if (resolvedText) {
-              await message.reply({ content: resolvedText }).catch(() => {
-                message.channel.send({ content: resolvedText }).catch(() => null);
+              sentMessage = await message.reply({ content: resolvedText }).catch(() => {
+                return message.channel.send({ content: resolvedText }).catch(() => null);
               });
             }
           } else {
             // Standard Auto-Reply (CV2 accent borderless container)
-            const autoReplyContainer = buildAutoReplyPreview(message.guild, t, message.member || message.author);
+            const autoReplyContainer = buildAutoReplyPreview(message.guild, t, userOrMember, {
+              ghostNotice,
+              bountyNotice,
+              includeFeedback: true
+            });
 
-            await message.reply({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
-              message.channel.send({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+            sentMessage = await message.reply({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
+              return message.channel.send({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
             });
           }
+
+          // 8. Ghost auto-purge execution
+          if (t.ghost && typeof t.ghost === 'number' && t.ghost > 0) {
+            setTimeout(async () => {
+              try {
+                if (sentMessage) await sentMessage.delete().catch(() => null);
+                await message.delete().catch(() => null);
+              } catch {}
+            }, t.ghost * 1000);
+          }
+
           break; // Reply only once per message
         }
       }

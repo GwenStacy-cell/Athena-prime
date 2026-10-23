@@ -3366,10 +3366,27 @@ export async function getWhitelistOverviewPanel(guild) {
     `**Roles Whitelisted**\n\n` +
     `${rolesText}`;
 
+  const iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
+  const WHITELIST_BANNER_GIF = 'https://media.giphy.com/media/L1R1tvI9svkIWwpVYr/giphy.gif';
+
+  const headerSection = {
+    type: 9,
+    components: [{ type: 10, content: description }]
+  };
+  if (iconUrl) {
+    headerSection.accessory = { type: 11, media: { url: iconUrl } };
+  }
+
   const card = {
     type: 17,
     components: [
-      { type: 10, content: description },
+      {
+        type: 12,
+        items: [{ media: { url: WHITELIST_BANNER_GIF } }]
+      },
+      { type: 14, divider: true },
+      headerSection,
+      { type: 14, divider: true },
       { type: 1, components: [
           { type: 2, custom_id: 'wlo_manage_users', label: 'Manage Users', style: 2 },
           { type: 2, custom_id: 'wlo_remove_users', label: 'Remove User', style: 2 },

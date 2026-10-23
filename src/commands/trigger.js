@@ -5,7 +5,54 @@ import { isBotOwnerSync } from '../utils/helpers.js';
 import { resolvePlaceholders } from './welcome.js';
 import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
 
-export function buildAutoReplyPreview(guild, trigger, userOrMember = null) {
+export function renderSleekProgressBar(current, total = 50, length = 12) {
+  const clamped = Math.max(0, Math.min(current, total));
+  const ratio = total > 0 ? clamped / total : 0;
+  const filled = Math.round(ratio * length);
+  const empty = length - filled;
+  const pct = Math.round(ratio * 100);
+  return `\`[${'▰'.repeat(filled)}${'▱'.repeat(empty)}]\` **${pct}%** (${current}/${total})`;
+}
+
+export function parseTriggerOptions(text) {
+  const options = {};
+  if (!text || typeof text !== 'string') return options;
+
+  const regex = /\b(reaction|react|mirror|ghost|xp|bounty|maxclaims|time|audience):(?:"([^"]+)"|'([^']+)'|([^\s|]+))/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const key = match[1].toLowerCase();
+    const val = match[2] || match[3] || match[4];
+    if (key === 'reaction' || key === 'react') {
+      options.reaction = val.toLowerCase() === 'none' ? null : val;
+    } else if (key === 'mirror') {
+      const chanId = val.replace(/<#|>/g, '');
+      options.mirrorChannel = chanId.toLowerCase() === 'none' ? null : chanId;
+    } else if (key === 'ghost') {
+      const secs = parseInt(val, 10);
+      options.ghost = (!isNaN(secs) && secs > 0) ? secs : null;
+    } else if (key === 'xp' || key === 'bounty') {
+      const xpNum = parseInt(val, 10);
+      options.rewardXp = (!isNaN(xpNum) && xpNum > 0) ? xpNum : null;
+    } else if (key === 'maxclaims') {
+      const claimsNum = parseInt(val, 10);
+      options.maxClaims = (!isNaN(claimsNum) && claimsNum > 0) ? claimsNum : null;
+    } else if (key === 'time') {
+      const tVal = val.toLowerCase();
+      if (['morning', 'day', 'afternoon', 'night', 'evening', 'weekend', 'always', 'none'].includes(tVal)) {
+        options.timeVariant = tVal === 'none' ? 'always' : (tVal === 'afternoon' ? 'day' : (tVal === 'evening' ? 'night' : tVal));
+      }
+    } else if (key === 'audience') {
+      const aVal = val.toLowerCase();
+      if (['all', 'newbie', 'regular', 'booster', 'staff', 'none'].includes(aVal)) {
+        options.audience = aVal === 'none' ? 'all' : aVal;
+      }
+    }
+  }
+  return options;
+}
+
+export function buildAutoReplyPreview(guild, trigger, userOrMember = null, options = {}) {
   const config = db.getGuildConfig(guild.id);
   const accentHex = config.accentColor || '#5865F2';
   const accentInt = parseInt(accentHex.replace('#', ''), 16);
@@ -52,6 +99,15 @@ export function buildAutoReplyPreview(guild, trigger, userOrMember = null) {
     });
   }
 
+  // Extra module notices (Ghost countdown, Easter Egg discovery)
+  const moduleNotices = [];
+  if (options.bountyNotice) moduleNotices.push(options.bountyNotice);
+  if (options.ghostNotice) moduleNotices.push(options.ghostNotice);
+  if (moduleNotices.length > 0) {
+    if (comps.length > 0) comps.push({ type: 14, divider: true });
+    comps.push({ type: 10, content: moduleNotices.join('\n') });
+  }
+
   // 4. Footer - 100% Optional & Unique per Reply
   if (trigger.footer && trigger.footer.trim()) {
     if (comps.length > 0) comps.push({ type: 14, divider: true });
@@ -64,6 +120,19 @@ export function buildAutoReplyPreview(guild, trigger, userOrMember = null) {
   // Fallback if completely empty
   if (comps.length === 0) {
     comps.push({ type: 10, content: `-# **[Auto-Reply Triggered: \`${trigger.match}\`]**` });
+  }
+
+  // 5. Optional Feedback Rating Buttons
+  if (options.includeFeedback && trigger.match) {
+    const encodedMatch = Buffer.from(trigger.match).toString('base64url');
+    comps.push({ type: 14, divider: true });
+    comps.push({
+      type: 1,
+      components: [
+        { type: 2, custom_id: `trig_rate_up_${encodedMatch}`, label: `👍 Helpful (${trigger.helpfulCount || 0})`, style: 2 },
+        { type: 2, custom_id: `trig_rate_down_${encodedMatch}`, label: `❓ Need Help (${trigger.unhelpfulCount || 0})`, style: 2 }
+      ]
+    });
   }
 
   return {
@@ -962,6 +1031,10 @@ export function buildTriggerDashboard(guild, page = 0) {
   const currentPage = Math.max(0, Math.min(page, totalPages - 1));
   const pageTriggers = triggers.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
+  const iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
+  const progressBar = renderSleekProgressBar(triggers.length, 50, 14);
+  const TRIGGER_BANNER_GIF = 'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif';
+
   let triggersContent = `-# • **No server triggers configured yet.**\n-# • For a simple usual trigger setup, use: \`${prefix}trigger create <match> | <response>\`\n-# • Or click the **Create Trigger** button below to set one up!`;
   if (triggers.length > 0) {
     triggersContent = pageTriggers.map((t, idx) => {
@@ -972,27 +1045,52 @@ export function buildTriggerDashboard(guild, page = 0) {
       const footerText = t.footer ? `\`${t.footer}\`` : 'None';
       const mediaText = t.gif ? 'Attached' : 'None';
 
+      const badges = [];
+      if (t.ghost) badges.push(`⏳ ${t.ghost}s Ghost`);
+      if (t.rewardXp) badges.push(`🎉 +${t.rewardXp} XP (${(t.claims || []).length}/${t.maxClaims || '∞'})`);
+      if (t.timeVariant && t.timeVariant !== 'always') badges.push(`⏰ ${t.timeVariant}`);
+      if (t.audience && t.audience !== 'all') badges.push(`👥 ${t.audience}`);
+      if (t.reaction) badges.push(`⭐ React: ${t.reaction}`);
+      if (t.mirrorChannel) badges.push(`🚨 Mirror: <#${t.mirrorChannel}>`);
+      if (t.helpfulCount || t.unhelpfulCount) badges.push(`👍 ${t.helpfulCount || 0} / ❓ ${t.unhelpfulCount || 0}`);
+      const extraLine = badges.length > 0 ? `\n-# • **Modules:** **${badges.join(' • ')}**` : '';
+
       return (
         `-# • **[#${globalIdx}] Trigger Word:** \`${t.match}\`\n` +
         `-# • **Response:** **${contentSnippet}**\n` +
-        `-# • **Heading:** **${headingText}** • **Footer:** **${footerText}** • **Media:** **${mediaText}**`
+        `-# • **Heading:** **${headingText}** • **Footer:** **${footerText}** • **Media:** **${mediaText}**` +
+        extraLine
       );
     }).join('\n-# • ──────────────────────────────\n');
   }
 
-  const containerComps = [
-    {
+  const headerSection = {
+    type: 9,
+    components: [{
       type: 10,
       content:
         `# Trigger Response Matrix\n` +
         `-# **__Server Trigger Word Responder System__**\n\n` +
+        `-# • **Capacity:** ${progressBar}\n` +
         `-# • **Active Server Triggers:** **${triggers.length} configured**\n` +
         `-# • **Global Network Replies:** **${globalTriggers.length} active**\n` +
         `-# • **Page:** **${currentPage + 1} of ${totalPages}**\n` +
         `-# • **Sync Status:** **Synchronized with Auto-Reply Matrix (${prefix}ar)**\n` +
         `-# • **Removal Access:** **Server Admins / Extra Owner**\n` +
         `-# • **Dynamic Tags:** **Supports {user}, {server}, {count}, etc.**`
+    }]
+  };
+  if (iconUrl) {
+    headerSection.accessory = { type: 11, media: { url: iconUrl } };
+  }
+
+  const containerComps = [
+    {
+      type: 12,
+      items: [{ media: { url: TRIGGER_BANNER_GIF } }]
     },
+    { type: 14, divider: true },
+    headerSection,
     { type: 14, divider: true },
     {
       type: 10,
@@ -1002,7 +1100,9 @@ export function buildTriggerDashboard(guild, page = 0) {
         `> \`${prefix}trigger create <match> | <response>\`\n` +
         `-# • **Example:** \`${prefix}trigger create hello | Hello {user}, welcome to {server}!\`\n` +
         `-# • **Direct Shortcut:** \`${prefix}trigger <match> | <response>\`\n` +
-        `-# • **Quick Delete:** \`${prefix}trigger delete <match>\` • **List:** \`${prefix}trigger list\``
+        `-# • **Quick Delete:** \`${prefix}trigger delete <match>\` • **List:** \`${prefix}trigger list\`\n` +
+        `-# • **Advanced Modules Syntax:** \`${prefix}trigger create <match> | <resp> | [options]\`\n` +
+        `> -# Settable Options: \`reaction:<emoji>\`, \`mirror:<#channel>\`, \`ghost:<sec>\`, \`xp:<amount>\`, \`time:<morning|day|night|weekend>\`, \`audience:<newbie|booster|staff>\``
     },
     { type: 14, divider: true },
     {
@@ -1163,7 +1263,8 @@ export async function handleTriggerInteractions(interaction) {
           content: conf.content,
           gif: conf.gif,
           footer: conf.footer,
-          type: 'trigger'
+          type: 'trigger',
+          ...(conf.options || {})
         });
         pendingTriggerConflicts.delete(confKey);
         const resp = makeAccentResponse(
@@ -1183,7 +1284,8 @@ export async function handleTriggerInteractions(interaction) {
           content: conf.content,
           gif: conf.gif,
           footer: conf.footer,
-          type: 'trigger'
+          type: 'trigger',
+          ...(conf.options || {})
         });
         pendingTriggerConflicts.delete(confKey);
         const resp = makeAccentResponse(
@@ -1204,7 +1306,8 @@ export async function handleTriggerInteractions(interaction) {
           content: conf.content,
           gif: conf.gif,
           footer: conf.footer,
-          type: 'trigger'
+          type: 'trigger',
+          ...(conf.options || {})
         });
         pendingTriggerConflicts.delete(confKey);
         const resp = makeAccentResponse(
@@ -1219,6 +1322,29 @@ export async function handleTriggerInteractions(interaction) {
 
     // 2. DASHBOARD BUTTONS
     if (interaction.isButton()) {
+      // Feedback Rating Buttons
+      if (interaction.customId.startsWith('trig_rate_up_') || interaction.customId.startsWith('trig_rate_down_')) {
+        const isUp = interaction.customId.startsWith('trig_rate_up_');
+        const raw = interaction.customId.replace(isUp ? 'trig_rate_up_' : 'trig_rate_down_', '');
+        let match;
+        try {
+          match = Buffer.from(raw, 'base64url').toString('utf8');
+        } catch {
+          match = decodeURIComponent(raw);
+        }
+
+        const res = db.rateTrigger(interaction.guild.id, match, isUp, interaction.user.id);
+        if (res.alreadyVoted) {
+          return interaction.reply({
+            content: `-# **Feedback Recorded:** You have already rated this trigger response! (Current: 👍 ${res.helpful} • ❓ ${res.unhelpful})`,
+            flags: 64
+          });
+        }
+        return interaction.reply({
+          content: `-# **Thank you!** Your feedback has been recorded: **${isUp ? 'Helpful 👍' : 'Needs Help ❓'}** (Total: 👍 ${res.helpful} • ❓ ${res.unhelpful})`,
+          flags: 64
+        });
+      }
       // Direct Delete button for a trigger (Server Admins / Extra Owner)
       if (interaction.customId.startsWith('trig_btn_del_')) {
         if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
@@ -1864,7 +1990,38 @@ export const triggerCmd = {
         { name: 'response', description: 'Response text for the trigger', type: 3, required: true },
         { name: 'heading', description: 'Title heading (optional)', type: 3, required: false },
         { name: 'gif', description: 'Direct image, GIF or Pinterest URL (optional)', type: 3, required: false },
-        { name: 'footer', description: 'Custom unique footer text (optional)', type: 3, required: false }
+        { name: 'footer', description: 'Custom unique footer text (optional)', type: 3, required: false },
+        { name: 'reaction', description: 'Emoji to auto-react to message (manually settable)', type: 3, required: false },
+        { name: 'mirror', description: 'Channel to mirror/alert escalations (manually settable)', type: 7, required: false },
+        { name: 'ghost', description: 'Self-destruct timer in seconds (e.g. 5, 10, 30)', type: 4, required: false },
+        { name: 'xp', description: 'Gamified Easter Egg bonus XP reward', type: 4, required: false },
+        { name: 'maxclaims', description: 'Maximum users who can claim Easter Egg XP', type: 4, required: false },
+        {
+          name: 'time',
+          description: 'Time-sensitive filter for this trigger',
+          type: 3,
+          required: false,
+          choices: [
+            { name: 'Always (Any time)', value: 'always' },
+            { name: 'Morning (05:00 - 12:00)', value: 'morning' },
+            { name: 'Day / Afternoon (12:00 - 18:00)', value: 'day' },
+            { name: 'Night / Evening (18:00 - 05:00)', value: 'night' },
+            { name: 'Weekend (Sat & Sun)', value: 'weekend' }
+          ]
+        },
+        {
+          name: 'audience',
+          description: 'Adaptive tier audience filter',
+          type: 3,
+          required: false,
+          choices: [
+            { name: 'All Members', value: 'all' },
+            { name: 'Newbies (<3 Days)', value: 'newbie' },
+            { name: 'Regular Members (>3 Days)', value: 'regular' },
+            { name: 'Server Boosters', value: 'booster' },
+            { name: 'Staff Members', value: 'staff' }
+          ]
+        }
       ]
     },
     {
@@ -1907,7 +2064,38 @@ export const triggerCmd = {
         { name: 'response', description: 'Response text for the trigger', type: 3, required: true },
         { name: 'heading', description: 'Title heading (optional)', type: 3, required: false },
         { name: 'gif', description: 'Direct image, GIF or Pinterest URL (optional)', type: 3, required: false },
-        { name: 'footer', description: 'Custom unique footer text (optional)', type: 3, required: false }
+        { name: 'footer', description: 'Custom unique footer text (optional)', type: 3, required: false },
+        { name: 'reaction', description: 'Emoji to auto-react to message (manually settable)', type: 3, required: false },
+        { name: 'mirror', description: 'Channel to mirror/alert escalations (manually settable)', type: 7, required: false },
+        { name: 'ghost', description: 'Self-destruct timer in seconds (e.g. 5, 10, 30)', type: 4, required: false },
+        { name: 'xp', description: 'Gamified Easter Egg bonus XP reward', type: 4, required: false },
+        { name: 'maxclaims', description: 'Maximum users who can claim Easter Egg XP', type: 4, required: false },
+        {
+          name: 'time',
+          description: 'Time-sensitive filter for this trigger',
+          type: 3,
+          required: false,
+          choices: [
+            { name: 'Always (Any time)', value: 'always' },
+            { name: 'Morning (05:00 - 12:00)', value: 'morning' },
+            { name: 'Day / Afternoon (12:00 - 18:00)', value: 'day' },
+            { name: 'Night / Evening (18:00 - 05:00)', value: 'night' },
+            { name: 'Weekend (Sat & Sun)', value: 'weekend' }
+          ]
+        },
+        {
+          name: 'audience',
+          description: 'Adaptive tier audience filter',
+          type: 3,
+          required: false,
+          choices: [
+            { name: 'All Members', value: 'all' },
+            { name: 'Newbies (<3 Days)', value: 'newbie' },
+            { name: 'Regular Members (>3 Days)', value: 'regular' },
+            { name: 'Server Boosters', value: 'booster' },
+            { name: 'Staff Members', value: 'staff' }
+          ]
+        }
       ]
     },
     {
@@ -1928,7 +2116,113 @@ export const triggerCmd = {
 
     const sub = args[0].toLowerCase();
     const fullText = args.join(' ');
-    const isDirectCreate = fullText.includes('|') && !['add', 'create', 'remove', 'delete', 'del', 'clear', 'clearall', 'list', 'test', 'preview', 'dashboard'].includes(sub);
+    const isDirectCreate = fullText.includes('|') && !['add', 'create', 'remove', 'delete', 'del', 'clear', 'clearall', 'list', 'test', 'preview', 'dashboard', 'react', 'reaction', 'mirror', 'escalate', 'ghost', 'autodelete', 'bounty', 'xp', 'easteregg', 'time', 'clock', 'audience', 'tier', 'option', 'opt'].includes(sub);
+
+    // 1. Manually Settable Reaction Synergy: !trigger react <keyword> <emoji | none>
+    if (sub === 'react' || sub === 'reaction') {
+      if (!canManageTriggers(message.guild, message.member || message.author)) {
+        return message.reply(makeAccentResponse(message.guild, 'Access Denied', 'Only **Server Admins**, **Extra Owners**, or the **Server Owner** can configure trigger reactions.', false));
+      }
+      const match = args[1]?.trim();
+      const emoji = args[2]?.trim();
+      if (!match || !emoji) {
+        return message.reply(makeAccentResponse(message.guild, 'Usage Guide', '`!trigger react <keyword> <emoji | none>`\n\nExample:\n-# • `!trigger react hello 👋`\n-# • `!trigger react ping none`', false));
+      }
+      const trigger = db.getTriggerOnly(message.guild.id, match) || db.getTrigger(message.guild.id, match);
+      if (!trigger) return message.reply(makeAccentResponse(message.guild, 'Not Found', `No trigger found matching \`${match}\`.`, false));
+      const newEmoji = emoji.toLowerCase() === 'none' || emoji.toLowerCase() === 'off' ? null : emoji;
+      db.updateTrigger(message.guild.id, match, { reaction: newEmoji });
+      return message.reply(makeAccentResponse(message.guild, 'Reaction Synergy Configured', newEmoji ? `Athena will now auto-react with ${newEmoji} whenever \`${match}\` is triggered.` : `Cleared reaction synergy for \`${match}\`.`, true));
+    }
+
+    // 2. Manually Settable Channel Mirroring: !trigger mirror <keyword> <#channel | none>
+    if (sub === 'mirror' || sub === 'escalate') {
+      if (!canManageTriggers(message.guild, message.member || message.author)) {
+        return message.reply(makeAccentResponse(message.guild, 'Access Denied', 'Only **Server Admins**, **Extra Owners**, or the **Server Owner** can configure trigger mirroring.', false));
+      }
+      const match = args[1]?.trim();
+      const channelRaw = args[2]?.trim();
+      if (!match || !channelRaw) {
+        return message.reply(makeAccentResponse(message.guild, 'Usage Guide', '`!trigger mirror <keyword> <#channel | none>`\n\nExample:\n-# • `!trigger mirror help #mod-logs`\n-# • `!trigger mirror help none`', false));
+      }
+      const trigger = db.getTriggerOnly(message.guild.id, match) || db.getTrigger(message.guild.id, match);
+      if (!trigger) return message.reply(makeAccentResponse(message.guild, 'Not Found', `No trigger found matching \`${match}\`.`, false));
+      const chanId = channelRaw.toLowerCase() === 'none' || channelRaw.toLowerCase() === 'off' ? null : channelRaw.replace(/<#|>/g, '');
+      db.updateTrigger(message.guild.id, match, { mirrorChannel: chanId });
+      return message.reply(makeAccentResponse(message.guild, 'Escalation Mirror Configured', chanId ? `Trigger \`${match}\` will now mirror emergency alerts into <#${chanId}>.` : `Cleared escalation mirroring for \`${match}\`.`, true));
+    }
+
+    // 3. Ghost / Self-Destruct Triggers: !trigger ghost <keyword> <seconds | none>
+    if (sub === 'ghost' || sub === 'autodelete') {
+      if (!canManageTriggers(message.guild, message.member || message.author)) {
+        return message.reply(makeAccentResponse(message.guild, 'Access Denied', 'Only **Server Admins**, **Extra Owners**, or the **Server Owner** can configure ghost triggers.', false));
+      }
+      const match = args[1]?.trim();
+      const secRaw = args[2]?.trim();
+      if (!match || !secRaw) {
+        return message.reply(makeAccentResponse(message.guild, 'Usage Guide', '`!trigger ghost <keyword> <seconds | none>`\n\nExample:\n-# • `!trigger ghost rules 10`\n-# • `!trigger ghost rules none`', false));
+      }
+      const trigger = db.getTriggerOnly(message.guild.id, match) || db.getTrigger(message.guild.id, match);
+      if (!trigger) return message.reply(makeAccentResponse(message.guild, 'Not Found', `No trigger found matching \`${match}\`.`, false));
+      const secs = parseInt(secRaw, 10);
+      const newGhost = (!isNaN(secs) && secs > 0) ? secs : null;
+      db.updateTrigger(message.guild.id, match, { ghost: newGhost });
+      return message.reply(makeAccentResponse(message.guild, 'Ghost Mode Configured', newGhost ? `Trigger \`${match}\` will now auto-destruct (zero clutter) after **${newGhost}s**.` : `Cleared ghost mode for \`${match}\`.`, true));
+    }
+
+    // 4. Gamified Easter Egg & Bounty: !trigger bounty <keyword> <xp> [maxClaims]
+    if (sub === 'bounty' || sub === 'xp' || sub === 'easteregg') {
+      if (!canManageTriggers(message.guild, message.member || message.author)) {
+        return message.reply(makeAccentResponse(message.guild, 'Access Denied', 'Only **Server Admins**, **Extra Owners**, or the **Server Owner** can configure Easter Egg bounties.', false));
+      }
+      const match = args[1]?.trim();
+      const xpRaw = args[2]?.trim();
+      const maxRaw = args[3]?.trim();
+      if (!match || !xpRaw) {
+        return message.reply(makeAccentResponse(message.guild, 'Usage Guide', '`!trigger bounty <keyword> <xp_amount | none> [max_claims]`\n\nExample:\n-# • `!trigger bounty secret 100 5`\n-# • `!trigger bounty secret none`', false));
+      }
+      const trigger = db.getTriggerOnly(message.guild.id, match) || db.getTrigger(message.guild.id, match);
+      if (!trigger) return message.reply(makeAccentResponse(message.guild, 'Not Found', `No trigger found matching \`${match}\`.`, false));
+      const xp = parseInt(xpRaw, 10);
+      const maxClaims = maxRaw ? parseInt(maxRaw, 10) : null;
+      const newXp = (!isNaN(xp) && xp > 0) ? xp : null;
+      db.updateTrigger(message.guild.id, match, { rewardXp: newXp, maxClaims: (!isNaN(maxClaims) && maxClaims > 0) ? maxClaims : null });
+      return message.reply(makeAccentResponse(message.guild, 'Easter Egg Bounty Configured', newXp ? `Trigger \`${match}\` is now an Easter Egg awarding **+${newXp} XP** (Max claims: ${maxClaims || 'Unlimited'}).` : `Cleared bounty reward for \`${match}\`.`, true));
+    }
+
+    // 5. Day / Night & Clock-Aware: !trigger time <keyword> <morning | day | night | weekend | always>
+    if (sub === 'time' || sub === 'clock') {
+      if (!canManageTriggers(message.guild, message.member || message.author)) {
+        return message.reply(makeAccentResponse(message.guild, 'Access Denied', 'Only **Server Admins**, **Extra Owners**, or the **Server Owner** can configure time-sensitive triggers.', false));
+      }
+      const match = args[1]?.trim();
+      const variantRaw = args[2]?.trim().toLowerCase();
+      if (!match || !variantRaw) {
+        return message.reply(makeAccentResponse(message.guild, 'Usage Guide', '`!trigger time <keyword> <morning | day | night | weekend | always>`\n\nExample:\n-# • `!trigger time gm morning`\n-# • `!trigger time party weekend`', false));
+      }
+      const trigger = db.getTriggerOnly(message.guild.id, match) || db.getTrigger(message.guild.id, match);
+      if (!trigger) return message.reply(makeAccentResponse(message.guild, 'Not Found', `No trigger found matching \`${match}\`.`, false));
+      const variant = ['morning', 'day', 'night', 'weekend', 'always'].includes(variantRaw) ? variantRaw : 'always';
+      db.updateTrigger(message.guild.id, match, { timeVariant: variant });
+      return message.reply(makeAccentResponse(message.guild, 'Time Filter Configured', `Trigger \`${match}\` is now set to trigger during: **${variant}**.`, true));
+    }
+
+    // 6. Dynamic Tier-Adaptive Responses: !trigger audience <keyword> <all | newbie | regular | booster | staff>
+    if (sub === 'audience' || sub === 'tier') {
+      if (!canManageTriggers(message.guild, message.member || message.author)) {
+        return message.reply(makeAccentResponse(message.guild, 'Access Denied', 'Only **Server Admins**, **Extra Owners**, or the **Server Owner** can configure audience filters.', false));
+      }
+      const match = args[1]?.trim();
+      const audRaw = args[2]?.trim().toLowerCase();
+      if (!match || !audRaw) {
+        return message.reply(makeAccentResponse(message.guild, 'Usage Guide', '`!trigger audience <keyword> <all | newbie | regular | booster | staff>`\n\nExample:\n-# • `!trigger audience welcome newbie`\n-# • `!trigger audience vip booster`', false));
+      }
+      const trigger = db.getTriggerOnly(message.guild.id, match) || db.getTrigger(message.guild.id, match);
+      if (!trigger) return message.reply(makeAccentResponse(message.guild, 'Not Found', `No trigger found matching \`${match}\`.`, false));
+      const aud = ['all', 'newbie', 'regular', 'booster', 'staff'].includes(audRaw) ? audRaw : 'all';
+      db.updateTrigger(message.guild.id, match, { audience: aud });
+      return message.reply(makeAccentResponse(message.guild, 'Audience Tier Configured', `Trigger \`${match}\` is now set to trigger only for: **${aud}**.`, true));
+    }
 
     if (sub === 'create' || sub === 'add' || isDirectCreate) {
       if (!canManageTriggers(message.guild, message.member || message.author)) {
@@ -1941,6 +2235,7 @@ export const triggerCmd = {
       }
 
       const rest = isDirectCreate ? fullText : args.slice(1).join(' ');
+      const parsedOpts = parseTriggerOptions(rest);
       const parts = rest.split('|').map(p => p.trim());
       if (parts.length === 0 || !parts[0] || !parts[1]) {
         return message.reply(makeAccentResponse(
@@ -1950,20 +2245,25 @@ export const triggerCmd = {
           '**Examples:**\n' +
           '-# • `!trigger create hello | Hello {user}, welcome to {server}!`\n' +
           '-# • `!trigger create ping | pong`\n' +
-          '-# • `!trigger hello | Direct shortcut response!`\n\n' +
+          '-# • `!trigger hello | Direct shortcut response!`\n' +
+          '-# • `!trigger create secret | You found it! | reaction:🎉 xp:100 ghost:10`\n\n' +
           '> -# • **Placeholders:** `{user}`, `{server}`, `{count}`\n' +
-          '> -# • **Commands:** `!trigger delete <match>`, `!trigger list`',
+          '> -# • **Options:** `reaction:<emoji>`, `mirror:<#chan>`, `ghost:<sec>`, `xp:<num>`, `time:<morning|day|night|weekend>`, `audience:<newbie|booster|staff>`\n' +
+          '> -# • **Commands:** `!trigger delete <match>`, `!trigger list`, `!trigger react`, `!trigger mirror`, `!trigger ghost`, `!trigger bounty`',
           false
         ));
       }
 
       const match = parts[0];
       const content = parts[1];
-      const heading = parts[2] || null;
+      let heading = parts[2] || null;
       let gif = parts[3] || null;
-      if (gif && isPinterestUrl(gif)) gif = await resolveMediaUrl(gif);
-      const footer = parts[4] || null;
+      let footer = parts[4] || null;
 
+      if (heading && /\b(reaction|react|mirror|ghost|xp|bounty|time|audience):/i.test(heading)) {
+        heading = null;
+      }
+      if (gif && isPinterestUrl(gif)) gif = await resolveMediaUrl(gif);
       if (message.attachments.size > 0 && !gif) {
         gif = message.attachments.first().url;
       }
@@ -1987,13 +2287,14 @@ export const triggerCmd = {
           heading,
           gif,
           footer,
+          options: parsedOpts,
           userId: message.author.id
         });
         setTimeout(() => pendingTriggerConflicts.delete(confKey), 5 * 60 * 1000);
         return message.reply(buildConflictPromptPayload(message.guild, confKey, pendingTriggerConflicts.get(confKey)));
       }
 
-      db.setTrigger(message.guild.id, { match, heading, content, gif, footer, type: 'trigger' });
+      db.setTrigger(message.guild.id, { match, heading, content, gif, footer, type: 'trigger', ...parsedOpts });
       return message.reply(makeAccentResponse(
         message.guild,
         'Trigger Created',
@@ -2047,7 +2348,7 @@ export const triggerCmd = {
         return message.reply(makeAccentResponse(message.guild, 'Not Found', `No trigger found matching \`${match}\`.`, false));
       }
 
-      const previewContainer = buildAutoReplyPreview(message.guild, trigger, message.member || message.author);
+      const previewContainer = buildAutoReplyPreview(message.guild, trigger, message.member || message.author, { includeFeedback: true });
       return message.reply({ components: [previewContainer], flags: MessageFlags.IsComponentsV2 });
     }
 
@@ -2082,6 +2383,24 @@ export const triggerCmd = {
       let gif = interaction.options.getString('gif')?.trim() || null;
       if (gif && isPinterestUrl(gif)) gif = await resolveMediaUrl(gif);
       const footer = interaction.options.getString('footer')?.trim() || null;
+      const reaction = interaction.options.getString('reaction')?.trim() || null;
+      const mirrorChan = interaction.options.getChannel('mirror');
+      const mirrorChannel = mirrorChan ? mirrorChan.id : null;
+      const ghost = interaction.options.getInteger('ghost') || null;
+      const rewardXp = interaction.options.getInteger('xp') || null;
+      const maxClaims = interaction.options.getInteger('maxclaims') || null;
+      const timeVariant = interaction.options.getString('time') || 'always';
+      const audience = interaction.options.getString('audience') || 'all';
+
+      const extraOpts = {
+        reaction,
+        mirrorChannel,
+        ghost,
+        rewardXp,
+        maxClaims,
+        timeVariant,
+        audience
+      };
 
       // Check Conflict
       const existingAr = db.getAutoReply(interaction.guild.id, match);
@@ -2102,13 +2421,14 @@ export const triggerCmd = {
           heading,
           gif,
           footer,
+          options: extraOpts,
           userId: interaction.user.id
         });
         setTimeout(() => pendingTriggerConflicts.delete(confKey), 5 * 60 * 1000);
         return interaction.reply(buildConflictPromptPayload(interaction.guild, confKey, pendingTriggerConflicts.get(confKey)));
       }
 
-      db.setTrigger(interaction.guild.id, { match, heading, content, gif, footer, type: 'trigger' });
+      db.setTrigger(interaction.guild.id, { match, heading, content, gif, footer, type: 'trigger', ...extraOpts });
       return interaction.reply(makeAccentResponse(
         interaction.guild,
         'Trigger Created',
@@ -2154,7 +2474,7 @@ export const triggerCmd = {
         return interaction.reply(makeAccentResponse(interaction.guild, 'Not Found', `No trigger found matching \`${keyword}\`.`, false));
       }
 
-      const previewContainer = buildAutoReplyPreview(interaction.guild, trigger, interaction.member || interaction.user);
+      const previewContainer = buildAutoReplyPreview(interaction.guild, trigger, interaction.member || interaction.user, { includeFeedback: true });
       return interaction.reply({ components: [previewContainer], flags: MessageFlags.IsComponentsV2 });
     }
   }
