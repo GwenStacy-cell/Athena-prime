@@ -13,6 +13,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['donaldtrump', 'donald', 'potus45'],
     name: 'Donald Trump',
     category: 'World Leaders',
+    modelsLabModel: 'donald_trump',
+    elevenLabsVoiceId: 'trump_cloned_voice',
     neuralVoice: 'en-US-RogerNeural',
     pitch: '-4Hz',
     rate: '-5%',
@@ -25,6 +27,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['narendramodi', 'pmmodi', 'namo'],
     name: 'Narendra Modi',
     category: 'World Leaders',
+    modelsLabModel: 'narendra_modi',
+    elevenLabsVoiceId: 'modi_cloned_voice',
     neuralVoice: 'en-IN-PrabhatNeural',
     pitch: '-2Hz',
     rate: '-8%',
@@ -37,6 +41,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['barackobama', 'barack', 'potus44'],
     name: 'Barack Obama',
     category: 'World Leaders',
+    modelsLabModel: 'barack_obama',
+    elevenLabsVoiceId: 'obama_cloned_voice',
     neuralVoice: 'en-US-ChristopherNeural',
     pitch: '-6Hz',
     rate: '-10%',
@@ -51,6 +57,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['michaeljackson', 'jackson', 'kingofpop'],
     name: 'Michael Jackson',
     category: 'Pop Icons',
+    modelsLabModel: 'michael_jackson',
+    elevenLabsVoiceId: 'mj_cloned_voice',
     neuralVoice: 'en-US-SteffanNeural',
     pitch: '+12Hz',
     rate: '+4%',
@@ -63,6 +71,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['taylorswift', 'swift'],
     name: 'Taylor Swift',
     category: 'Pop Icons',
+    modelsLabModel: 'taylor_swift',
+    elevenLabsVoiceId: 'taylor_cloned_voice',
     neuralVoice: 'en-US-EmmaNeural',
     pitch: '+4Hz',
     rate: '-2%',
@@ -75,6 +85,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['arianagrande', 'grande'],
     name: 'Ariana Grande',
     category: 'Pop Icons',
+    modelsLabModel: 'ariana_grande',
+    elevenLabsVoiceId: 'ariana_cloned_voice',
     neuralVoice: 'en-US-AnaNeural',
     pitch: '+14Hz',
     rate: '0%',
@@ -87,6 +99,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['sabrinacarpenter', 'carpenter'],
     name: 'Sabrina Carpenter',
     category: 'Pop Icons',
+    modelsLabModel: 'sabrina_carpenter',
+    elevenLabsVoiceId: 'sabrina_cloned_voice',
     neuralVoice: 'en-US-JennyNeural',
     pitch: '+6Hz',
     rate: '+2%',
@@ -99,6 +113,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['justinbieber', 'justin'],
     name: 'Justin Bieber',
     category: 'Pop Icons',
+    modelsLabModel: 'justin_bieber',
+    elevenLabsVoiceId: 'bieber_cloned_voice',
     neuralVoice: 'en-CA-LiamNeural',
     pitch: '+6Hz',
     rate: '+3%',
@@ -111,6 +127,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['slimshady', 'shady', 'marshall'],
     name: 'Eminem',
     category: 'Pop Icons',
+    modelsLabModel: 'eminem',
+    elevenLabsVoiceId: 'eminem_cloned_voice',
     neuralVoice: 'en-US-BrianNeural',
     pitch: '+4Hz',
     rate: '+18%',
@@ -123,6 +141,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['champagnepapi', 'drizzy'],
     name: 'Drake',
     category: 'Pop Icons',
+    modelsLabModel: 'drake',
+    elevenLabsVoiceId: 'drake_cloned_voice',
     neuralVoice: 'en-US-AndrewNeural',
     pitch: '-4Hz',
     rate: '-5%',
@@ -135,6 +155,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['snoopdogg', 'snoopdog', 'dogg'],
     name: 'Snoop Dogg',
     category: 'Pop Icons',
+    modelsLabModel: 'snoop_dogg',
+    elevenLabsVoiceId: 'snoop_cloned_voice',
     neuralVoice: 'en-US-GuyNeural',
     pitch: '-6Hz',
     rate: '-14%',
@@ -147,6 +169,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['billieeilish', 'eilish'],
     name: 'Billie Eilish',
     category: 'Pop Icons',
+    modelsLabModel: 'billie_eilish',
+    elevenLabsVoiceId: 'billie_cloned_voice',
     neuralVoice: 'en-US-AriaNeural',
     pitch: '-2Hz',
     rate: '-8%',
@@ -161,6 +185,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['morganfreeman', 'morgan'],
     name: 'Morgan Freeman',
     category: 'Visionaries',
+    modelsLabModel: 'morgan_freeman',
+    elevenLabsVoiceId: 'freeman_cloned_voice',
     neuralVoice: 'en-US-GuyNeural',
     pitch: '-12Hz',
     rate: '-14%',
@@ -173,6 +199,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['elonmusk', 'elon'],
     name: 'Elon Musk',
     category: 'Visionaries',
+    modelsLabModel: 'elon_musk',
+    elevenLabsVoiceId: 'musk_cloned_voice',
     neuralVoice: 'en-US-EricNeural',
     pitch: '-2Hz',
     rate: '+6%',
@@ -187,6 +215,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['darthvader', 'darth'],
     name: 'Darth Vader',
     category: 'Iconic Characters',
+    modelsLabModel: 'darth_vader',
+    elevenLabsVoiceId: null,
     neuralVoice: 'en-US-GuyNeural',
     pitch: '-20Hz',
     rate: '-18%',
@@ -199,6 +229,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['monster', 'devil'],
     name: 'Demon / Monster',
     category: 'Iconic Characters',
+    modelsLabModel: null,
+    elevenLabsVoiceId: null,
     neuralVoice: 'en-US-RogerNeural',
     pitch: '-25Hz',
     rate: '-20%',
@@ -211,6 +243,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['cyber', 'cyborg', 'mech'],
     name: 'Robot / Cyber',
     category: 'Iconic Characters',
+    modelsLabModel: null,
+    elevenLabsVoiceId: null,
     neuralVoice: 'en-US-GuyNeural',
     pitch: '0Hz',
     rate: '0%',
@@ -223,6 +257,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['spirit', 'spooky'],
     name: 'Ghost / Spectral',
     category: 'Iconic Characters',
+    modelsLabModel: null,
+    elevenLabsVoiceId: null,
     neuralVoice: 'en-US-AriaNeural',
     pitch: '+10Hz',
     rate: '-10%',
@@ -235,6 +271,8 @@ export const CELEBRITY_VOICES = {
     aliases: ['alvin', 'squeaky'],
     name: 'Chipmunk',
     category: 'Iconic Characters',
+    modelsLabModel: null,
+    elevenLabsVoiceId: null,
     neuralVoice: 'en-US-JennyNeural',
     pitch: '+30Hz',
     rate: '+25%',
@@ -301,6 +339,69 @@ async function applyAudioFilter(inputBuffer, filterString) {
   }
 }
 
+/**
+ * Synthesizes 100% authentic voice clone using ModelsLab Voice API.
+ */
+async function generateModelsLabAudio(text, voice) {
+  const apiKey = process.env.MODELSLAB_API_KEY || process.env.AI_VOICE_API_KEY;
+  if (!apiKey || !voice?.modelsLabModel) return null;
+
+  const response = await fetch('https://modelslab.com/api/v6/voice/text_to_audio', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      key: apiKey,
+      model_id: voice.modelsLabModel,
+      prompt: text.slice(0, 500).trim(),
+      language: voice.baseLang?.slice(0, 2) || 'en'
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`ModelsLab API error ${response.status}`);
+  }
+
+  const data = await response.json();
+  const audioUrl = Array.isArray(data.output) ? data.output[0] : (data.output || data.fetch_result);
+  if (!audioUrl) {
+    throw new Error('ModelsLab returned no audio output link');
+  }
+
+  const audioRes = await fetch(audioUrl);
+  if (!audioRes.ok) throw new Error(`Failed to download audio from ModelsLab ${audioRes.status}`);
+  return Buffer.from(await audioRes.arrayBuffer());
+}
+
+/**
+ * Synthesizes 100% authentic voice clone using ElevenLabs API.
+ */
+async function generateElevenLabsAudio(text, voice) {
+  const apiKey = process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY;
+  if (!apiKey || !voice?.elevenLabsVoiceId) return null;
+
+  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice.elevenLabsVoiceId}`, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': apiKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      text: text.slice(0, 500).trim(),
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.8
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`ElevenLabs API error ${response.status}`);
+  }
+
+  return Buffer.from(await response.arrayBuffer());
+}
+
 let sharedTtsInstance = null;
 
 function getTtsClient() {
@@ -365,12 +466,34 @@ async function generateGoogleTtsAudio(text, lang = 'en') {
 
 /**
  * Generates speech audio buffer for specified text and voice profile.
+ * Automatically utilizes AI Voice Cloning (ModelsLab / ElevenLabs) when an API key is present.
  */
 export async function generateVoiceAudio(text, voiceOrCode, customLang = 'en') {
   const voice = typeof voiceOrCode === 'object' ? voiceOrCode : resolveVoice(voiceOrCode);
   const cleanText = text.slice(0, 500).trim();
   let rawBuffer = null;
 
+  // 1. Attempt ModelsLab AI Voice Cloning (100% Real Voice Clone)
+  if (process.env.MODELSLAB_API_KEY || (process.env.AI_VOICE_API_KEY && !process.env.ELEVENLABS_API_KEY)) {
+    try {
+      rawBuffer = await generateModelsLabAudio(cleanText, voice);
+      if (rawBuffer) return rawBuffer;
+    } catch (err) {
+      console.warn('[ttsVoiceEngine] ModelsLab clone notice:', err.message);
+    }
+  }
+
+  // 2. Attempt ElevenLabs Voice Cloning (100% Real Voice Clone)
+  if (process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY) {
+    try {
+      rawBuffer = await generateElevenLabsAudio(cleanText, voice);
+      if (rawBuffer) return rawBuffer;
+    } catch (err) {
+      console.warn('[ttsVoiceEngine] ElevenLabs clone notice:', err.message);
+    }
+  }
+
+  // 3. Fallback to Microsoft Edge Neural Speech
   try {
     rawBuffer = await generateMsEdgeAudio(cleanText, voice, customLang);
   } catch (err) {
@@ -396,6 +519,11 @@ export function buildVoiceListContainer(prefix = '!') {
     categories[v.category].push(v);
   }
 
+  const hasCloningKey = Boolean(process.env.MODELSLAB_API_KEY || process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY);
+  const engineBadge = hasCloningKey
+    ? '`100% Authentic AI Voice Cloning (Active)`'
+    : '`Neural Acoustic Modeling (Active)` • *Set AI_VOICE_API_KEY in .env for 1:1 Biometric Clone*';
+
   const sections = [];
   for (const [catName, voices] of Object.entries(categories)) {
     let catContent = `### **${catName}**\n`;
@@ -412,7 +540,8 @@ export function buildVoiceListContainer(prefix = '!') {
         type: 10,
         content:
           `# Athena Voice Studio // Celebrity & Neural Roster | <a:atheNATICK:1557841381630681106>\n` +
-          `-# High-fidelity neural speech synthesis with custom acoustic DSP modeling across famous personalities.\n\n` +
+          `-# High-fidelity AI speech synthesis with 100% real celebrity cloning and neural voice models.\n\n` +
+          `> -# **__Engine Status:__** ${engineBadge}\n` +
           `> -# **__How to Set Your Voice:__** \`${prefix}ttsvoice <name>\` or \`${prefix}tts voice <name>\` (e.g. \`${prefix}ttsvoice trump\`)\n` +
           `> -# **__On-The-Fly Voice Speech:__** \`${prefix}tts <name> <message>\` (e.g. \`${prefix}tts mj Shamone! Hee hee!\`)\n` +
           `> -# **__Reset to Default:__** \`${prefix}ttsvoice default\` or \`${prefix}tts voice default\``

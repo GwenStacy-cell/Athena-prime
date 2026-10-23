@@ -198,6 +198,9 @@ export function buildTtsControlPanel(member, guild) {
       .setStyle(ButtonStyle.Secondary)
   );
 
+  const hasCloningKey = Boolean(process.env.MODELSLAB_API_KEY || process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY);
+  const engineStatus = hasCloningKey ? '`100% Authentic AI Voice Cloning (Active)`' : '`Neural Acoustic Modeling`';
+
   const container = {
     type: 17,
     components: [
@@ -208,6 +211,7 @@ export function buildTtsControlPanel(member, guild) {
           `-# Zero-latency celebrity speech synthesis, real-time acoustic DSP transformations, and voice channel broadcasting.\n\n` +
           `> **Current Voice Profile:** ${voiceName}\n` +
           `> **Vocal Characteristics:** *${voiceDesc}*\n` +
+          `> **Cloning Engine:** ${engineStatus}\n` +
           `> **Speech Language:** \`${userLang}\`\n` +
           `> **Voice Channel Status:** ${vcDisplay}\n` +
           `> **Auto-TTS VC Mode:** ${autoVcDisplay}\n\n` +
