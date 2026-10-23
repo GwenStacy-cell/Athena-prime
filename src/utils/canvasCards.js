@@ -767,3 +767,310 @@ export async function generateProfileCard(member, xpData, statsData, guild) {
   const buffer = canvas.toBuffer('image/png');
   return new AttachmentBuilder(buffer, { name: 'profile_card.png' });
 }
+
+/**
+ * Generates an ultra-sleek, dynamic Cyber HUD animated looping GIF for Discord commands (Whitelist, Security, Triggers, Automod, etc.)
+ * Dynamically draws the server/member icon, title, animated glowing progress bar, status badges, and real-time metrics chips.
+ * Modeled after the Hogwarts XP animated rank card pipeline.
+ */
+export async function generateCommandStatusBanner({
+  title = 'SYSTEM MATRIX',
+  subtitle = 'ATHENA PRIME DEFENSE ENGINE',
+  badge = 'ACTIVE',
+  badgeColor = '#00f0ff',
+  iconUrl = null,
+  fallbackInitial = 'A',
+  current = 10,
+  total = 20,
+  unit = 'UNITS',
+  accentColor = '#00f0ff',
+  metrics = [],
+  attachmentName = 'status_banner.gif',
+  animated = true
+}) {
+  const W = 800;
+  const H = 220;
+  const numFrames = animated ? 8 : 1;
+  const tempDir = path.resolve(`data/status_gif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
+  
+  if (animated) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+
+  let firstFrameBuffer = null;
+
+  // Pre-load icon image once
+  let iconImg = null;
+  if (iconUrl) {
+    try {
+      iconImg = await loadImage(iconUrl);
+    } catch {}
+  }
+
+  const clamped = Math.max(0, Math.min(current, total));
+  const ratio = total > 0 ? clamped / total : 0;
+  const pct = Math.round(ratio * 100);
+
+  const barX = 155;
+  const barY = 110;
+  const barW = 590;
+  const barH = 15;
+  const barR = 7;
+  const fillW = Math.max(barR * 2, barW * ratio);
+
+  const iconCX = 80;
+  const iconCY = 110;
+  const iconR = 48;
+
+  try {
+    for (let f = 0; f < numFrames; f++) {
+      const phi = (2 * Math.PI * f) / numFrames;
+      const canvas = createCanvas(W, H);
+      const ctx = canvas.getContext('2d');
+
+      // 1. Deep Cyber Obsidian Gradient Background
+      const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+      bgGrad.addColorStop(0, '#07090e');
+      bgGrad.addColorStop(0.5, '#0e131f');
+      bgGrad.addColorStop(1, '#06080d');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. High-Tech Grid Lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 32) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      }
+      for (let y = 0; y < H; y += 32) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      }
+
+      // Animated Cyber Sweep Line
+      if (animated) {
+        const sweepY = (f / numFrames) * H;
+        const sweepGrad = ctx.createLinearGradient(0, sweepY - 25, 0, sweepY + 25);
+        sweepGrad.addColorStop(0, 'rgba(0, 240, 255, 0)');
+        sweepGrad.addColorStop(0.5, 'rgba(0, 240, 255, 0.05)');
+        sweepGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+        ctx.fillStyle = sweepGrad;
+        ctx.fillRect(0, sweepY - 25, W, 50);
+      }
+
+      // Dual Cyber Edge Glowing Accents
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(0, 0, 4, H);
+      ctx.fillRect(W - 4, 0, 4, H);
+
+      // 3. Avatar / Server Icon HUD
+      // Rotating / pulsing HUD reticle
+      ctx.save();
+      ctx.beginPath();
+      const startAngle = phi;
+      const endAngle = phi + Math.PI * 1.5;
+      ctx.arc(iconCX, iconCY, iconR + 6, startAngle, endAngle);
+      ctx.strokeStyle = accentColor;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = accentColor;
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+      ctx.restore();
+
+      // Outer static ring
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(iconCX, iconCY, iconR + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+
+      // Draw Icon or Fallback
+      if (iconImg) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(iconImg, iconCX - iconR, iconCY - iconR, iconR * 2, iconR * 2);
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2);
+        ctx.fillStyle = '#141a29';
+        ctx.fill();
+        ctx.font = 'bold 36px "Montserrat", sans-serif';
+        ctx.fillStyle = accentColor;
+        ctx.textAlign = 'center';
+        ctx.fillText((fallbackInitial || 'A')[0].toUpperCase(), iconCX, iconCY + 13);
+        ctx.restore();
+      }
+
+      // 4. Header Titles & Subtitle
+      const contentX = barX;
+      
+      // Subtitle / Eyebrow
+      ctx.font = 'bold 11px "Montserrat", sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.fillText(subtitle.toUpperCase(), contentX, 42);
+
+      // Main Title
+      ctx.font = 'bold 24px "Montserrat", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 8;
+      ctx.fillText(title.toUpperCase(), contentX, 72);
+      ctx.shadowBlur = 0;
+
+      // Status Badge Pill
+      const titleW = ctx.measureText(title.toUpperCase()).width;
+      const badgeX = contentX + titleW + 16;
+      const badgeY = 54;
+      if (badgeX + 160 < W && badge) {
+        ctx.font = 'bold 10px "Montserrat", sans-serif';
+        const badgeTextW = ctx.measureText(badge.toUpperCase()).width;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        rrPath(ctx, badgeX, badgeY, badgeTextW + 16, 20, 10);
+        ctx.fill();
+        ctx.strokeStyle = badgeColor;
+        ctx.lineWidth = 1.2;
+        rrPath(ctx, badgeX, badgeY, badgeTextW + 16, 20, 10);
+        ctx.stroke();
+
+        ctx.fillStyle = badgeColor;
+        ctx.fillText(badge.toUpperCase(), badgeX + 8, badgeY + 14);
+      }
+
+      // 5. Sleek Visual Glowing Progress Bar IN the GIF
+      // Track Label
+      ctx.font = 'bold 12px "Montserrat", monospace';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(`STATUS PROGRESS: ${clamped}/${total} ${unit}`, barX, barY - 10);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = accentColor;
+      ctx.fillText(`${pct}%`, barX + barW, barY - 10);
+      ctx.textAlign = 'left';
+
+      // Dark Track
+      ctx.fillStyle = '#111625';
+      rrPath(ctx, barX, barY, barW, barH, barR);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1;
+      rrPath(ctx, barX, barY, barW, barH, barR);
+      ctx.stroke();
+
+      // Glowing Animated Fill
+      if (ratio > 0) {
+        ctx.save();
+        rrPath(ctx, barX, barY, fillW, barH, barR);
+        ctx.clip();
+        
+        // Fluid light shift gradient
+        const shift = animated ? Math.sin(phi) * 30 : 0;
+        const fillGrad = ctx.createLinearGradient(barX - shift, barY, barX + fillW + shift, barY);
+        fillGrad.addColorStop(0, '#1d4ed8');
+        fillGrad.addColorStop(0.5, accentColor);
+        fillGrad.addColorStop(1, '#ffffff');
+        ctx.fillStyle = fillGrad;
+        ctx.fillRect(barX, barY, fillW, barH);
+
+        // Electric lightning energy arc along fill
+        if (animated) {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          let lx = barX + 6;
+          ctx.moveTo(lx, barY + barH / 2);
+          while (lx < barX + fillW - 6) {
+            lx += 18;
+            const ly = barY + barH / 2 + Math.sin(phi * 2 + lx * 0.1) * 2.5;
+            ctx.lineTo(lx, ly);
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Glowing Plasma Head Orb
+        ctx.save();
+        const headX = barX + fillW;
+        const headY = barY + barH / 2;
+        const orbR = 10 + (animated ? Math.sin(phi * 2) * 2 : 0);
+        const orbGrad = ctx.createRadialGradient(headX, headY, 1, headX, headY, orbR);
+        orbGrad.addColorStop(0, '#ffffff');
+        orbGrad.addColorStop(0.4, accentColor);
+        orbGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = orbGrad;
+        ctx.beginPath();
+        ctx.arc(headX, headY, orbR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 6. Metrics Chips at Bottom
+      const chipY = 160;
+      let curChipX = contentX;
+      if (Array.isArray(metrics)) {
+        for (const m of metrics) {
+          ctx.font = 'bold 11px "Montserrat", sans-serif';
+          const text = `${m.label}: ${m.value}`;
+          const textW = ctx.measureText(text).width;
+          const chipW = textW + 20;
+
+          ctx.fillStyle = '#131929';
+          rrPath(ctx, curChipX, chipY, chipW, 26, 6);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+          ctx.lineWidth = 1;
+          rrPath(ctx, curChipX, chipY, chipW, 26, 6);
+          ctx.stroke();
+
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillText(text, curChipX + 10, chipY + 17);
+
+          curChipX += chipW + 12;
+        }
+      }
+
+      // Watermark
+      ctx.font = 'bold 9px "Montserrat", monospace';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.textAlign = 'right';
+      ctx.fillText('ATHENA PRIME // DEFENSE MATRIX', W - 18, H - 12);
+
+      const frameBuf = canvas.toBuffer('image/png');
+      if (f === 0) firstFrameBuffer = frameBuf;
+
+      if (animated) {
+        fs.writeFileSync(path.join(tempDir, `frame_${String(f).padStart(2, '0')}.png`), frameBuf);
+      }
+    }
+
+    if (!animated) {
+      return new AttachmentBuilder(firstFrameBuffer, { name: attachmentName || 'status_banner.png' });
+    }
+
+    // 2-pass FFmpeg Palettegen + Paletteuse for highest fidelity looping GIF
+    const gifOutPath = path.join(tempDir, 'status.gif');
+    const palettePath = path.join(tempDir, 'palette.png');
+
+    const genPaletteCmd = `"${ffmpegPath}" -y -framerate 10 -i "${tempDir}/frame_%02d.png" -vf "palettegen=stats_mode=diff" "${palettePath}"`;
+    const encodeGifCmd = `"${ffmpegPath}" -y -framerate 10 -i "${tempDir}/frame_%02d.png" -i "${palettePath}" -lavfi "paletteuse=dither=bayer:bayer_scale=3" "${gifOutPath}"`;
+
+    await execPromise(genPaletteCmd);
+    await execPromise(encodeGifCmd);
+
+    const gifBuffer = fs.readFileSync(gifOutPath);
+    return new AttachmentBuilder(gifBuffer, { name: attachmentName || 'status_banner.gif' });
+  } catch (err) {
+    console.error('[CommandStatusBanner] GIF generation error, falling back to static card:', err);
+    return new AttachmentBuilder(firstFrameBuffer || createCanvas(W, H).toBuffer('image/png'), { name: 'status_banner.png' });
+  } finally {
+    if (animated) {
+      try {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      } catch {}
+    }
+  }
+}

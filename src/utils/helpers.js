@@ -1013,3 +1013,16 @@ export async function applyAutonick(member, autonickConfig) {
   }
 }
 
+/**
+ * Renders a sleek Unicode progress bar styled like Hogwarts XP rank card.
+ * Usage: renderSleekProgressBar(20, 50, 12) -> `[▰▰▰▰▰▱▱▱▱▱▱▱]` **40%** (20/50)
+ */
+export function renderSleekProgressBar(current, total = 50, length = 12) {
+  const clamped = Math.max(0, Math.min(current, total));
+  const ratio = total > 0 ? clamped / total : 0;
+  const filled = Math.round(ratio * length);
+  const empty = length - filled;
+  const pct = Math.round(ratio * 100);
+  return `\`[${'▰'.repeat(filled)}${'▱'.repeat(empty)}]\` **${pct}%** (${current}/${total})`;
+}
+

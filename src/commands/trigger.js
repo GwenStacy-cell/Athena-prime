@@ -4,15 +4,10 @@ import cv2 from '../cv2.js';
 import { isBotOwnerSync } from '../utils/helpers.js';
 import { resolvePlaceholders } from './welcome.js';
 import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
+import { generateCommandStatusBanner } from '../utils/canvasCards.js';
 
-export function renderSleekProgressBar(current, total = 50, length = 12) {
-  const clamped = Math.max(0, Math.min(current, total));
-  const ratio = total > 0 ? clamped / total : 0;
-  const filled = Math.round(ratio * length);
-  const empty = length - filled;
-  const pct = Math.round(ratio * 100);
-  return `\`[${'▰'.repeat(filled)}${'▱'.repeat(empty)}]\` **${pct}%** (${current}/${total})`;
-}
+import { renderSleekProgressBar } from '../utils/helpers.js';
+export { renderSleekProgressBar };
 
 export function parseTriggerOptions(text) {
   const options = {};
@@ -1018,7 +1013,7 @@ export function buildConflictPromptPayload(guild, confKey, conf) {
   };
 }
 
-export function buildTriggerDashboard(guild, page = 0) {
+export async function buildTriggerDashboard(guild, page = 0) {
   const triggers = db.getTriggersOnly(guild.id);
   const globalTriggers = db.getGlobalTriggers();
   const config = db.getGuildConfig(guild.id);
@@ -1033,7 +1028,26 @@ export function buildTriggerDashboard(guild, page = 0) {
 
   const iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
   const progressBar = renderSleekProgressBar(triggers.length, 50, 14);
-  const TRIGGER_BANNER_GIF = 'https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif';
+
+  const bannerAttachment = await generateCommandStatusBanner({
+    title: 'TRIGGER RESPONSE MATRIX',
+    subtitle: `${guild.name.toUpperCase()} // AUTOMATION SYSTEM`,
+    badge: triggers.length > 0 ? `${triggers.length} TRIGGERS ACTIVE` : 'ZERO TRIGGERS',
+    badgeColor: triggers.length > 0 ? '#00f0ff' : '#888888',
+    iconUrl,
+    fallbackInitial: guild.name[0] || 'T',
+    current: triggers.length,
+    total: 50,
+    unit: 'SLOTS USED',
+    accentColor: '#00f0ff',
+    metrics: [
+      { label: 'TRIGGERS', value: `${triggers.length}/50` },
+      { label: 'NETWORK', value: `${globalTriggers.length} GLOBAL` },
+      { label: 'STATUS', value: 'SYNCED' }
+    ],
+    attachmentName: 'trigger_banner.gif',
+    animated: true
+  });
 
   let triggersContent = `-# • **No server triggers configured yet.**\n-# • For a simple usual trigger setup, use: \`${prefix}trigger create <match> | <response>\`\n-# • Or click the **Create Trigger** button below to set one up!`;
   if (triggers.length > 0) {
@@ -1087,7 +1101,7 @@ export function buildTriggerDashboard(guild, page = 0) {
   const containerComps = [
     {
       type: 12,
-      items: [{ media: { url: TRIGGER_BANNER_GIF } }]
+      items: [{ media: { url: 'attachment://trigger_banner.gif' } }]
     },
     { type: 14, divider: true },
     headerSection,
@@ -1212,6 +1226,7 @@ export function buildTriggerDashboard(guild, page = 0) {
       accent_color: accentInt,
       components: containerComps
     }],
+    files: [bannerAttachment],
     flags: MessageFlags.IsComponentsV2
   };
 }
@@ -1362,7 +1377,7 @@ export async function handleTriggerInteractions(interaction) {
         }
         db.removeTrigger(interaction.guild.id, match);
         db.enableGlobalTriggerForGuild(interaction.guild.id, match);
-        const panel = buildTriggerDashboard(interaction.guild);
+        const panel = await buildTriggerDashboard(interaction.guild);
         return cv2.respond(interaction, panel, 7);
       }
 
@@ -1370,7 +1385,7 @@ export async function handleTriggerInteractions(interaction) {
       if (interaction.customId.startsWith('trig_page_')) {
         const pageStr = interaction.customId.replace('trig_page_', '');
         const page = parseInt(pageStr, 10) || 0;
-        const panel = buildTriggerDashboard(interaction.guild, page);
+        const panel = await buildTriggerDashboard(interaction.guild, page);
         return cv2.respond(interaction, panel, 7);
       }
 
@@ -1378,7 +1393,7 @@ export async function handleTriggerInteractions(interaction) {
       if (interaction.customId.startsWith('trig_btn_refresh')) {
         const parts = interaction.customId.split('_');
         const page = parseInt(parts[3] || '0', 10) || 0;
-        const panel = buildTriggerDashboard(interaction.guild, page);
+        const panel = await buildTriggerDashboard(interaction.guild, page);
         return cv2.respond(interaction, panel, 7);
       }
 
@@ -1391,7 +1406,7 @@ export async function handleTriggerInteractions(interaction) {
           });
         }
         db.clearTriggersOnly(interaction.guild.id);
-        const panel = buildTriggerDashboard(interaction.guild, 0);
+        const panel = await buildTriggerDashboard(interaction.guild, 0);
         return cv2.respond(interaction, panel, 7);
       }
 
@@ -1542,7 +1557,7 @@ export async function handleTriggerInteractions(interaction) {
         const match = interaction.values[0];
         db.removeTrigger(interaction.guild.id, match);
         db.enableGlobalTriggerForGuild(interaction.guild.id, match);
-        const panel = buildTriggerDashboard(interaction.guild);
+        const panel = await buildTriggerDashboard(interaction.guild);
         return cv2.respond(interaction, panel, 7);
       }
     }
@@ -1590,7 +1605,7 @@ export async function handleTriggerInteractions(interaction) {
         }
 
         db.setTrigger(interaction.guild.id, { match, heading, content, gif, footer, type: 'trigger' });
-        const panel = buildTriggerDashboard(interaction.guild);
+        const panel = await buildTriggerDashboard(interaction.guild);
         return cv2.respond(interaction, panel, 7);
       }
 
@@ -1620,7 +1635,7 @@ export async function handleTriggerInteractions(interaction) {
         }
         db.setTrigger(interaction.guild.id, { match: newMatch, heading, content, gif, footer, type: 'trigger' });
 
-        const panel = buildTriggerDashboard(interaction.guild);
+        const panel = await buildTriggerDashboard(interaction.guild);
         return cv2.respond(interaction, panel, 7);
       }
 
@@ -2110,7 +2125,7 @@ export const triggerCmd = {
 
   async executePrefix(message, args) {
     if (args.length === 0) {
-      const payload = buildTriggerDashboard(message.guild);
+      const payload = await buildTriggerDashboard(message.guild);
       return message.reply(payload);
     }
 
@@ -2353,11 +2368,11 @@ export const triggerCmd = {
     }
 
     if (sub === 'list' || sub === 'dashboard' || sub === 'manager') {
-      const payload = buildTriggerDashboard(message.guild);
+      const payload = await buildTriggerDashboard(message.guild);
       return message.reply(payload);
     }
 
-    const payload = buildTriggerDashboard(message.guild);
+    const payload = await buildTriggerDashboard(message.guild);
     return message.reply(payload);
   },
 
@@ -2365,7 +2380,7 @@ export const triggerCmd = {
     const sub = interaction.options.getSubcommand();
 
     if (sub === 'dashboard' || sub === 'list') {
-      const payload = buildTriggerDashboard(interaction.guild);
+      const payload = await buildTriggerDashboard(interaction.guild);
       return interaction.reply({ ...payload });
     }
 

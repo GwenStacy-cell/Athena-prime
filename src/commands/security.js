@@ -18,8 +18,10 @@ import {
   isServerAdmin,
   syncQuarantinePermissions,
   getUserTierName,
-  cleanDisplayName
+  cleanDisplayName,
+  renderSleekProgressBar
 } from '../utils/helpers.js';
+import { generateCommandStatusBanner } from '../utils/canvasCards.js';
 import { connectToHomeVc, toggleBotDeafen } from '../utils/voice.js';
 import { setupDashboardChannel } from '../utils/dashboardManager.js';
 import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
@@ -3284,24 +3286,69 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
     moduleListText += `> ${isEnabled ? emojiOn : emojiOff} ${modLabels[k]}\n`;
   }
 
+  const enabledCount = wData.modules.includes('all') ? modulesKeys.length : modulesKeys.filter(k => wData.modules.includes(k)).length;
+  const accessProgress = renderSleekProgressBar(enabledCount, modulesKeys.length, 14);
+
+  let targetAvatarUrl = null;
+  if (type === 'users') {
+    const member = await guild.members.fetch(targetId).catch(() => null);
+    targetAvatarUrl = member?.user?.displayAvatarURL ? member.user.displayAvatarURL({ extension: 'png', size: 256 }) : null;
+  } else {
+    targetAvatarUrl = guild.iconURL({ dynamic: true, size: 256 });
+  }
+
+  const bannerAttachment = await generateCommandStatusBanner({
+    title: 'WHITELIST ACCESS CLEARANCE',
+    subtitle: `${targetName.toUpperCase()} // PERMISSION MATRIX`,
+    badge: enabledCount === modulesKeys.length ? 'ALL AUTHORIZED' : `${enabledCount}/${modulesKeys.length} CATEGORIES`,
+    badgeColor: enabledCount > 0 ? '#00f0ff' : '#ef4444',
+    iconUrl: targetAvatarUrl,
+    fallbackInitial: targetName[0] || 'U',
+    current: enabledCount,
+    total: modulesKeys.length,
+    unit: 'PERMISSIONS',
+    accentColor: '#00f0ff',
+    metrics: [
+      { label: 'CATEGORIES', value: `${enabledCount}/${modulesKeys.length}` },
+      { label: 'ACTION LIMIT', value: String(wData.triggerLimit || 0) },
+      { label: 'STATUS', value: 'GUARDED' }
+    ],
+    attachmentName: 'wl_access.gif',
+    animated: true
+  });
+
   const limitText = wData.triggerLimit === 0 ? '0' : wData.triggerLimit;
   
   const description = 
     `# WHITELIST ACCESS\n` +
     `-# **${targetName}** (${targetId})\n\n` +
-    `-# **Custom Action Limits:** ${limitText}\n` +
-    `-# **Authorized for ${modulesKeys.length} security event categories.**\n\n` +
+    `-# • **Authorized Categories:** ${accessProgress} (${enabledCount}/${modulesKeys.length} Whitelisted)\n` +
+    `-# • **Custom Action Limits:** \`${limitText}\`\n\n` +
     moduleListText;
 
-  const mainDisplay = new TextDisplayBuilder().setContent(description);
-  const panelContainer = new ContainerBuilder().addTextDisplayComponents(mainDisplay);
+  const panelContainer = {
+    type: 17,
+    components: [
+      {
+        type: 12,
+        items: [{ media: { url: 'attachment://wl_access.gif' } }]
+      },
+      { type: 14, divider: true },
+      { type: 10, content: description }
+    ]
+  };
 
   if (view === 'info') {
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`wl_manage_${type}_${targetId}`).setLabel('Manage').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`wl_close`).setLabel('Close').setStyle(ButtonStyle.Secondary)
+    panelContainer.components.push(
+      { type: 14, divider: true },
+      {
+        type: 1,
+        components: [
+          { type: 2, custom_id: `wl_manage_${type}_${targetId}`, label: 'Manage', style: 2 },
+          { type: 2, custom_id: `wl_close`, label: 'Close', style: 2 }
+        ]
+      }
     );
-    panelContainer.addActionRowComponents(row);
   } else {
     const options = modulesKeys.map(k => {
       const isEnabled = wData.modules.includes('all') || wData.modules.includes(k);
@@ -3312,36 +3359,48 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
       };
     }).slice(0, 25);
 
-    const row1 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`wl_all_${type}_${targetId}`).setLabel('Whitelist All').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`wl_reset_${type}_${targetId}`).setLabel('Reset All').setStyle(ButtonStyle.Secondary)
+    panelContainer.components.push(
+      { type: 14, divider: true },
+      {
+        type: 1,
+        components: [
+          { type: 2, custom_id: `wl_all_${type}_${targetId}`, label: 'Whitelist All', style: 2 },
+          { type: 2, custom_id: `wl_reset_${type}_${targetId}`, label: 'Reset All', style: 2 }
+        ]
+      },
+      {
+        type: 1,
+        components: [
+          { type: 2, custom_id: `wl_limit_5_${type}_${targetId}`, label: '5 Actions', style: 2 },
+          { type: 2, custom_id: `wl_limit_10_${type}_${targetId}`, label: '10 Actions', style: 2 },
+          { type: 2, custom_id: `wl_limit_15_${type}_${targetId}`, label: '15 Actions', style: 2 },
+          { type: 2, custom_id: `wl_limit_custom_${type}_${targetId}`, label: 'Custom', style: 2 }
+        ]
+      },
+      {
+        type: 1,
+        components: [
+          {
+            type: 3,
+            custom_id: `wl_select_${type}_${targetId}`,
+            placeholder: 'Select a permissions category...',
+            min_values: 1,
+            max_values: options.length,
+            options
+          }
+        ]
+      },
+      {
+        type: 1,
+        components: [
+          { type: 2, custom_id: `wl_save_${type}_${targetId}`, label: 'Save Changes', style: 2 },
+          { type: 2, custom_id: `wlo_back`, label: 'Close', style: 2 }
+        ]
+      }
     );
-
-    const row2 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`wl_limit_5_${type}_${targetId}`).setLabel('5 Actions').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`wl_limit_10_${type}_${targetId}`).setLabel('10 Actions').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`wl_limit_15_${type}_${targetId}`).setLabel('15 Actions').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`wl_limit_custom_${type}_${targetId}`).setLabel('Custom').setStyle(ButtonStyle.Secondary)
-    );
-
-    const row3 = new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder()
-        .setCustomId(`wl_select_${type}_${targetId}`)
-        .setPlaceholder('Select a permissions category...')
-        .setMinValues(1)
-        .setMaxValues(options.length)
-        .addOptions(options)
-    );
-    
-    const row4 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`wl_save_${type}_${targetId}`).setLabel('Save Changes').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`wlo_back`).setLabel('Close').setStyle(ButtonStyle.Secondary)
-    );
-
-    panelContainer.addActionRowComponents(row1, row2, row3, row4);
   }
 
-  return { components: [panelContainer.toJSON ? panelContainer.toJSON() : panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { components: [panelContainer], files: [bannerAttachment], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function getWhitelistOverviewPanel(guild) {
@@ -3349,6 +3408,7 @@ export async function getWhitelistOverviewPanel(guild) {
   
   const userIds = Object.keys(wlData.users || {});
   const roleIds = Object.keys(wlData.roles || {});
+  const totalWl = userIds.length + roleIds.length;
   
   let usersText = userIds.length > 0 
     ? userIds.map(id => `| <@${id}>`).slice(0, 10).join('\n') + (userIds.length > 10 ? '\n| ...and more' : '')
@@ -3358,16 +3418,38 @@ export async function getWhitelistOverviewPanel(guild) {
     ? roleIds.map(id => `| <@&${id}>`).slice(0, 10).join('\n') + (roleIds.length > 10 ? '\n| ...and more' : '')
     : '| None';
 
+  const wlProgress = renderSleekProgressBar(totalWl, 25, 14);
+
   const description = 
     `# WL OVERVIEW\n` +
     `-# **${guild.name} !**\n\n` +
+    `-# • **Whitelist Protection Level:** ${wlProgress} (${totalWl}/25 Trusted)\n` +
+    `-# • **Active Authorizations:** **${userIds.length} Users** • **${roleIds.length} Roles**\n\n` +
     `**Users Whitelisted**\n\n` +
     `${usersText}\n\n` +
     `**Roles Whitelisted**\n\n` +
     `${rolesText}`;
 
   const iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
-  const WHITELIST_BANNER_GIF = 'https://media.giphy.com/media/L1R1tvI9svkIWwpVYr/giphy.gif';
+  const bannerAttachment = await generateCommandStatusBanner({
+    title: 'WHITELIST DEFENSE MATRIX',
+    subtitle: `${guild.name.toUpperCase()} // SECURITY LEVEL`,
+    badge: totalWl > 0 ? `LEVEL ${Math.min(5, Math.ceil(totalWl / 5))}: MAXIMUM ARMOR` : 'LEVEL 0: NONE',
+    badgeColor: totalWl > 0 ? '#00f0ff' : '#ef4444',
+    iconUrl,
+    fallbackInitial: guild.name[0] || 'W',
+    current: totalWl,
+    total: 25,
+    unit: 'ENTITIES',
+    accentColor: '#00f0ff',
+    metrics: [
+      { label: 'USERS', value: String(userIds.length) },
+      { label: 'ROLES', value: String(roleIds.length) },
+      { label: 'ANTINUKE', value: 'GUARDED' }
+    ],
+    attachmentName: 'wl_banner.gif',
+    animated: true
+  });
 
   const headerSection = {
     type: 9,
@@ -3382,7 +3464,7 @@ export async function getWhitelistOverviewPanel(guild) {
     components: [
       {
         type: 12,
-        items: [{ media: { url: WHITELIST_BANNER_GIF } }]
+        items: [{ media: { url: 'attachment://wl_banner.gif' } }]
       },
       { type: 14, divider: true },
       headerSection,
@@ -3403,7 +3485,7 @@ export async function getWhitelistOverviewPanel(guild) {
     ]
   };
 
-  return { components: [card.toJSON ? card.toJSON() : card], flags: MessageFlags.IsComponentsV2 };
+  return { components: [card.toJSON ? card.toJSON() : card], files: [bannerAttachment], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function getWhitelistSelectPanel(guild, type, action) {
@@ -3583,7 +3665,7 @@ export async function buildAutonickDashboard(guildId, guild = null) {
     ]
   };
 
-  return { components: [container], flags: MessageFlags.IsComponentsV2 };
+  return { components: [container], files: [bannerAttachment], flags: MessageFlags.IsComponentsV2 };
 }
 async function handleConfig(guild, moderator, setting, value) {
   const updates = {};
@@ -4267,12 +4349,43 @@ export async function getSecurityStatusPanel(guild) {
   }
 
   const liveRecords = db.getSecurityLiveRecords(guild.id);
+  const totalModules = Object.keys(modLabels).length;
+  const activeModulesCount = Object.keys(modLabels).filter(k => {
+    return isSecured && (k === 'antiInvite' ? config.antiInviteEnabled === true : Boolean(config.antinukeModules?.[k]));
+  }).length;
+
+  const shieldProgress = renderSleekProgressBar(activeModulesCount, totalModules, 14);
+  const memberProgress = renderSleekProgressBar(guild.memberCount || 0, 200, 12);
+  const rolePosProgress = renderSleekProgressBar(botPos, Math.max(botPos, maxPos), 12);
+
+  const bannerAttachment = await generateCommandStatusBanner({
+    title: 'FIREWALL DEFENSE STATUS',
+    subtitle: `${guild.name.toUpperCase()} // ANTINUKE ARMOR`,
+    badge: isSecured ? 'GOD-TIER FIREWALL ACTIVE' : 'OFFLINE // STANDBY',
+    badgeColor: isSecured ? '#22c55e' : '#ef4444',
+    iconUrl: guild.iconURL({ dynamic: true, size: 256 }),
+    fallbackInitial: guild.name[0] || 'S',
+    current: activeModulesCount,
+    total: totalModules,
+    unit: 'SHIELDS ARMED',
+    accentColor: isSecured ? '#22c55e' : '#ef4444',
+    metrics: [
+      { label: 'SHIELDS', value: `${activeModulesCount}/${totalModules}` },
+      { label: 'MEMBERS', value: `${guild.memberCount || 0}/200` },
+      { label: 'THREATS', value: `${liveRecords.length} BLOCKED` }
+    ],
+    attachmentName: 'sec_status.gif',
+    animated: true
+  });
+
   const headerSection = { type: 10, content: 
       "# SECURITY FIREWALL STATUS\n" +
       "-# Global Status: " + (isSecured ? "**God-Tier Firewall ACTIVE**" : "Offline \u2014 Unprotected") + "\n" +
-      "-# Strike Velocity: " + (isSecured ? "Ludicrously fast \u2014 **1-3ms execution**" : "Disabled") + "\n" +
-      "-# Predictive Layer: " + (isSecured ? "Online \u2014 **Behavioral scanning active**" : "Disabled") + "\n" +
-      "-# Live Audit Records: **`" + liveRecords.length + "` threat events neutralized** in real-time"
+      "-# • **Shield Integrity:** " + shieldProgress + " (" + activeModulesCount + "/" + totalModules + " Shields Armed)\n" +
+      "-# • **Hierarchy Gate:** " + memberProgress + " (" + (meetsMemberCount ? "Requirement Met" : "Requires 200 Members") + ")\n" +
+      "-# • **Role Position:** " + rolePosProgress + " (Pos " + botPos + " / " + maxPos + ")\n" +
+      "-# • **Strike Velocity:** " + (isSecured ? "Ludicrously fast \u2014 **1-3ms execution**" : "Disabled") + "\n" +
+      "-# • **Live Audit Records:** **`" + liveRecords.length + "` threat events neutralized** in real-time"
     };
 
     const detailsSection = { type: 10, content:
@@ -4296,9 +4409,14 @@ export async function getSecurityStatusPanel(guild) {
     const container = {
     type: 17,
     components: [
+      {
+        type: 12,
+        items: [{ media: { url: 'attachment://sec_status.gif' } }]
+      },
+      { type: 14, divider: true },
       headerSection,
-        { type: 14, divider: true },
-        detailsSection,
+      { type: 14, divider: true },
+      detailsSection,
       { type: 14, divider: true },
       { type: 10, content: listText.trimEnd() },
       { type: 14, divider: true },
@@ -4308,7 +4426,7 @@ export async function getSecurityStatusPanel(guild) {
     ]
   };
 
-  return { components: [container.toJSON ? container.toJSON() : container], flags: MessageFlags.IsComponentsV2 };
+  return { components: [container], files: [bannerAttachment], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function getSecurityLiveRecordsPanel(guild, page = 0) {
@@ -5199,14 +5317,43 @@ const allMembers = guild.members.cache;
   const startIdx = page * ITEMS_PER_PAGE;
   const endIdx = startIdx + ITEMS_PER_PAGE;
 
+  const safeBotsCount = whitelistedBots.length;
+  const totalBotsCount = Math.max(1, allBots.size);
+  const botAuditProgress = renderSleekProgressBar(safeBotsCount, totalBotsCount, 14);
+  const isOptimal = (unauthorizedBots.length === 0 && highRiskHumans.length === 0 && onboardingDangerousRoles.length === 0);
+
+  const bannerAttachment = await generateCommandStatusBanner({
+    title: 'SERVER THREAT AUDIT HUD',
+    subtitle: `${guild.name.toUpperCase()} // BOT & PERM SCAN`,
+    badge: isOptimal ? 'SYSTEM: OPTIMAL' : 'THREATS DETECTED',
+    badgeColor: isOptimal ? '#22c55e' : '#ef4444',
+    iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+    fallbackInitial: guild.name[0] || 'S',
+    current: safeBotsCount,
+    total: totalBotsCount,
+    unit: 'BOTS VERIFIED',
+    accentColor: isOptimal ? '#22c55e' : '#f97316',
+    metrics: [
+      { label: 'SAFE BOTS', value: `${safeBotsCount}/${allBots.size}` },
+      { label: 'RISK USERS', value: String(highRiskHumans.length) },
+      { label: 'EXPLOITS', value: String(onboardingDangerousRoles.length + dangerousInviteLinks.length) }
+    ],
+    attachmentName: 'scan_banner.gif',
+    animated: true
+  });
+
   const cv2Components = [];
-  
+  cv2Components.push({
+    type: 12,
+    items: [{ media: { url: 'attachment://scan_banner.gif' } }]
+  });
+  cv2Components.push({ type: 14, divider: true });
   cv2Components.push({ type: 10, content: `## **SERVER SECURITY SCANNER**` });
   cv2Components.push({ type: 14, divider: true });
   
   cv2Components.push({ 
     type: 10, 
-    content: `## **SECURITY DIAGNOSTICS**\n-# **Total Humans:** \`${allHumans.size}\`\n-# **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n-# **Onboarding Status:** \`${onboardingDangerousRoles.length > 0 ? `${onboardingDangerousRoles.length} Dangerous Roles Detected (Use !neutralizeonboarding)` : 'Clean / Protected'}\`\n-# **Role-Based Invites Status:** \`${dangerousInviteLinks.length > 0 ? `${dangerousInviteLinks.length} Dangerous Role-Bound Invites Detected` : 'Clean / Protected'}\`` 
+    content: `## **SECURITY DIAGNOSTICS**\n-# • **Verified Bot Armor:** ${botAuditProgress} (${safeBotsCount}/${allBots.size} Safe)\n-# **Total Humans:** \`${allHumans.size}\`\n-# **Total Bots:** \`${allBots.size}\` (Whitelisted: \`${whitelistedBots.length}\` | Unauthorized: \`${unauthorizedBots.length}\`)\n-# **Onboarding Status:** \`${onboardingDangerousRoles.length > 0 ? `${onboardingDangerousRoles.length} Dangerous Roles Detected (Use !neutralizeonboarding)` : 'Clean / Protected'}\`\n-# **Role-Based Invites Status:** \`${dangerousInviteLinks.length > 0 ? `${dangerousInviteLinks.length} Dangerous Role-Bound Invites Detected` : 'Clean / Protected'}\`` 
   });
 
   if (dangerousInviteLinks.length > 0) {
@@ -5333,7 +5480,7 @@ const allMembers = guild.members.cache;
     cv2Components.push(...actionRows.map(r => r.toJSON ? r.toJSON() : r));
   }
 
-  return { components: [container], flags: MessageFlags.IsComponentsV2 };
+  return { components: [container], files: [bannerAttachment], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function handleAutoModBypass(guild, action, role) {
@@ -5405,13 +5552,48 @@ export async function getAutoModPanel(guild) {
     }
   }
 
-  const { ContainerBuilder, SeparatorBuilder, TextDisplayBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, RoleSelectMenuBuilder, ChannelSelectMenuBuilder, ChannelType } = await import('discord.js');
+  const { ContainerBuilder, SeparatorBuilder, TextDisplayBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, RoleSelectMenuBuilder, ChannelSelectMenuBuilder, ChannelType, MediaGalleryBuilder } = await import('discord.js');
   
+  const activeFilters = [
+    spamMentionOn, antiFloodOn, antiLinkOn, antiInviteOn,
+    wordFilterOn, bigFontsOn, hiddenUrlOn, fileCheckOn,
+    selfbotOn, !!config.aiToxicityEnabled
+  ].filter(Boolean).length;
+
+  const automodProgress = renderSleekProgressBar(activeFilters, 10, 14);
+
+  const bannerAttachment = await generateCommandStatusBanner({
+    title: 'AUTOMOD HEURISTIC MATRIX',
+    subtitle: `${guild.name.toUpperCase()} // FILTER INTEGRITY`,
+    badge: activeFilters >= 8 ? 'STATUS: FORTIFIED' : activeFilters >= 4 ? 'STATUS: ACTIVE' : 'STATUS: VULNERABLE',
+    badgeColor: activeFilters >= 8 ? '#00f0ff' : activeFilters >= 4 ? '#eab308' : '#ef4444',
+    iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+    fallbackInitial: guild.name[0] || 'A',
+    current: activeFilters,
+    total: 10,
+    unit: 'FILTERS ARMED',
+    accentColor: activeFilters >= 8 ? '#00f0ff' : '#a855f7',
+    metrics: [
+      { label: 'ACTIVE', value: `${activeFilters}/10` },
+      { label: 'BYPASSES', value: String(Object.keys(bypasses).length) },
+      { label: 'HONEYPOT', value: `${honeypotTimeout}m` }
+    ],
+    attachmentName: 'automod_banner.gif',
+    animated: true
+  });
+
   const panelContainer = new ContainerBuilder();
+
+  panelContainer.addMediaGalleryComponents(
+    new MediaGalleryBuilder().addItems({ media: { url: 'attachment://automod_banner.gif' } })
+  );
+
+  panelContainer.addSeparatorComponents(new SeparatorBuilder().setDivider(true));
 
   panelContainer.addTextDisplayComponents(new TextDisplayBuilder().setContent(
     `# AUTOMOD | HEURISTIC FILTERING & SECURITY MATRIX\n` +
-    `**Athena Unbypassable !**`
+    `**Athena Unbypassable !**\n\n` +
+    `-# • **Heuristic Filter Armor:** ${automodProgress} (${activeFilters}/10 Filters Armed)`
   ));
 
   panelContainer.addSeparatorComponents(new SeparatorBuilder().setDivider(true));
@@ -5506,7 +5688,7 @@ export async function getAutoModPanel(guild) {
   );
 
   panelContainer.addActionRowComponents(row1, row2, row3, row4, row5);
-  return { components: [panelContainer.toJSON ? panelContainer.toJSON() : panelContainer], flags: MessageFlags.IsComponentsV2 };
+  return { components: [panelContainer.toJSON ? panelContainer.toJSON() : panelContainer], files: [bannerAttachment], flags: MessageFlags.IsComponentsV2 };
 }
 
 export async function getGranularBypassPanel(guild, roleId) {

@@ -1,9 +1,10 @@
 import { PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } from 'discord.js';
 import db from '../database.js';
 import cv2 from '../cv2.js';
-import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner, getUserTierName, cleanDisplayName } from '../utils/helpers.js';
+import { parseDuration, canModerate, logToSecurityChannel, isBotOwnerSync, isExtraOwner, getUserTierName, cleanDisplayName, renderSleekProgressBar } from '../utils/helpers.js';
 import { executeQuarantine } from './security.js';
 import { logServerEvent } from '../utils/serverLogger.js'; // We will implement security.js next
+import { generateCommandStatusBanner } from '../utils/canvasCards.js';
 
 export const commands = [
   // --- MUTEALL COMMAND ---
@@ -1790,22 +1791,81 @@ export async function handleWarn(guild, moderator, target, reason, force = false
 
 async function handleWarnings(guild, target) {
   const warns = db.getWarnings(guild.id, target.id);
+  const config = db.getGuildConfig(guild.id);
+  const maxWarnings = config.maxWarnings || 3;
+  const targetTag = target.user?.tag || target.tag || 'Unknown';
+  const targetAvatarUrl = target.user?.displayAvatarURL ? target.user.displayAvatarURL({ extension: 'png', size: 128 }) : null;
+  const initial = (target.user?.username || target.username || 'W')[0] || 'W';
+  const warnProgress = renderSleekProgressBar(warns.length, maxWarnings, 14);
 
+  const bannerAttachment = await generateCommandStatusBanner({
+    title: 'INFRACTION TRACKER HUD',
+    subtitle: `${targetTag.toUpperCase()} // WARNING STRIKES`,
+    badge: warns.length >= maxWarnings ? 'LIMIT EXCEEDED' : warns.length > 0 ? `${warns.length}/${maxWarnings} STRIKES` : '0 STRIKES : PRISTINE',
+    badgeColor: warns.length >= maxWarnings ? '#ef4444' : warns.length > 0 ? '#eab308' : '#22c55e',
+    iconUrl: targetAvatarUrl,
+    fallbackInitial: initial,
+    current: warns.length,
+    total: maxWarnings,
+    unit: 'STRIKES RECORDED',
+    accentColor: warns.length >= maxWarnings ? '#ef4444' : warns.length > 0 ? '#f97316' : '#22c55e',
+    metrics: [
+      { label: 'WARNINGS', value: `${warns.length}/${maxWarnings}` },
+      { label: 'STATUS', value: warns.length >= maxWarnings ? 'PUNISHABLE' : warns.length > 0 ? 'ACTIVE' : 'CLEAN' },
+      { label: 'ESCALATION', value: config.warnAction || 'QUARANTINE' }
+    ],
+    attachmentName: 'warn_banner.gif',
+    animated: true
+  });
+
+  let warnDetails = '';
   if (warns.length === 0) {
-    return cv2.success('Warnings Clear', `**${target.user.tag}** has clean record. No active warnings!`);
+    warnDetails = `-# • **Member has a clean disciplinary record with zero active warnings.**`;
+  } else {
+    warnDetails = warns.map((w, index) => {
+      return (
+        `-# • **[Strike #${index + 1}] <t:${Math.floor(w.timestamp / 1000)}:R>**\n` +
+        `-#   **Reason:** ${w.reason}\n` +
+        `-#   **Warner:** <@${w.warnerId}> (\`${w.warnerId}\`)`
+      );
+    }).join('\n-# • ──────────────────────────────\n');
   }
 
-  const fields = warns.map((w, index) => ({
-    name: `Warning #${index + 1} - <t:${Math.floor(w.timestamp / 1000)}:R>`,
-    value: `**Reason:** ${w.reason}\n**Warner:** <@${w.warnerId}>`
-  }));
+  const container = {
+    type: 17,
+    components: [
+      {
+        type: 12,
+        items: [{ media: { url: 'attachment://warn_banner.gif' } }]
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          `# INFRACTION AUDIT: ${targetTag}\n` +
+          `-# • **Disciplinary Strike Meter:** ${warnProgress} (${warns.length}/${maxWarnings} Limit)\n` +
+          `-# • **Member ID:** \`${target.id}\`\n` +
+          `-# • **Escalation Threshold:** \`${maxWarnings}\` (Use \`!maxwarnings <amount>\` to configure)\n` +
+          `-# • **Disciplinary Escalation:** \`${config.warnAction || 'Quarantine Isolation'}\``
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `### **Infraction History Log:**\n` + warnDetails
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content: `-# Athena Prime Disciplinary Defense Matrix • Zero-Trust Enforcement`
+      }
+    ]
+  };
 
-  const resEmbed = cv2.info(
-    `Warning History: ${target.user.tag}`, 
-    `This member currently has **${warns.length}** active warnings recorded on disk.`, 
-    fields
-  );
-  return resEmbed;
+  return {
+    components: [container],
+    files: [bannerAttachment],
+    flags: MessageFlags.IsComponentsV2
+  };
 }
 
 async function handleClearWarns(guild, moderator, target) {

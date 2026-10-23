@@ -378,6 +378,59 @@ export const commands = [
                     `> • Shows perpetrator tag, user ID, countermeasure verdict (BAN_APPLIED, ROLES_STRIPPED), and strike latency in ms.\n` +
                     `> • Reports automatic channel/category recreation and permission rollbacks.\n` +
                     `> • Interactive components: Page navigation (◀ / ▶), live Refresh (🔄), and Clear History.`;
+              } else if (targetCmd.name === "trigger" || targetCmd.name === "trig") {
+                  descContent = `Interactive server trigger word responder dashboard with synced animated looping GIF HUD, electric progress bar, and 4 advanced automation modules.\n\n` +
+                    `> -# **__Synced Looping Animated GIF HUD:__**\n` +
+                    `> • **In-GIF Progress Bar:** 8-frame looping animated HUD banner (\`trigger_banner.gif\`) with real-time glowing capacity progress bar drawn directly in the GIF.\n` +
+                    `> • **Metrics Tracked:** Server trigger count vs 50-slot capacity, global network auto-responses, and synchronization state.\n\n` +
+                    `> -# **__The 4 Advanced Trigger Engines:__**\n` +
+                    `> • **Ghost / Auto-Destruct (\`ghost:<sec>\`):** Automatically purges response after N seconds to prevent channel clutter.\n` +
+                    `> • **Bounty XP Rewards (\`xp:<amount>\` & \`maxclaims:<limit>\`):** Awards dynamic XP to the first N users who trigger the response.\n` +
+                    `> • **Time / Clock Variant (\`time:<morning|day|night|weekend>\`):** Daypart-dependent response matching current server clock.\n` +
+                    `> • **Audience & Tier Adaptive (\`audience:<newbie|booster|staff>\`):** Personalizes responses based on user tenure, booster status, or staff tier.\n\n` +
+                    `> -# **__Cross-Action Synergy:__**\n` +
+                    `> • **Dual-Action Emoji Reaction Synergy (\`reaction:<emoji>\`):** Reacts with custom/unicode emoji on the triggering message while responding.\n` +
+                    `> • **Staff Alert Mirroring (\`mirror:<#channel>\`):** Escalates emergency keywords directly to staff channels in real time.\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}trigger\` - Open the interactive Response Matrix Dashboard.\n` +
+                    `> • \`${prefix}trigger create <match> | <response>\` - Simple & fast usual setup.\n` +
+                    `> • \`${prefix}trigger <match> | <response>\` - Direct shortcut.\n` +
+                    `> • \`${prefix}trigger delete <match>\` - Remove trigger (Server Admin & Extra Owner).\n` +
+                    `> • \`${prefix}trigger list\` - Public list of configured triggers.`;
+              } else if (targetCmd.name === "whitelist" || targetCmd.name === "wl") {
+                  descContent = `Interactive Whitelist Defense Matrix dashboard with synced looping animated GIF HUD, permission category clearance, and custom action limits.\n\n` +
+                    `> -# **__Synced Looping Animated GIF HUD:__**\n` +
+                    `> • **In-GIF Progress Bar:** 8-frame looping animated HUD banners (\`wl_banner.gif\` & \`wl_access.gif\`) with real-time glowing electric progress bars drawn directly in the GIF.\n` +
+                    `> • **Overview Metrics:** Total whitelisted users and roles vs 25 trusted cap.\n` +
+                    `> • **Clearance Metrics:** Individual user/role authorized categories vs total defense categories.\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}whitelist\` / \`${prefix}wl\` - Opens the Whitelist Overview Panel.\n` +
+                    `> • \`${prefix}wl <@user|@role>\` - Quick-whitelist for standard actions.\n` +
+                    `> • \`${prefix}unwl <@user|@role>\` - Remove user or role from whitelist.`;
+              } else if (targetCmd.name === "automod") {
+                  descContent = `Interactive Heuristic Filtering & Security Matrix console with synced looping animated GIF HUD and 10 active shield filters.\n\n` +
+                    `> -# **__Synced Looping Animated GIF HUD:__**\n` +
+                    `> • **In-GIF Progress Bar:** 8-frame looping animated HUD banner (\`automod_banner.gif\`) with glowing electric progress bar visualizing filter armor integrity (\`activeFilters / 10\`).\n` +
+                    `> • **Filters Monitored:** AI Toxicity & Sentiment, Mass Mentions, Anti-Flood, Anti-Link, Discord Invites, Word Filter, Big Fonts, Selfbot, Hidden URLs, and File Checks.\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}automod\` - Opens the interactive Heuristic Filter Matrix console.\n` +
+                    `> • \`${prefix}automodbypass add|remove <@role>\` - Manage granular role bypasses.`;
+              } else if (targetCmd.name === "scanserver" || targetCmd.name === "scan") {
+                  descContent = `Server Threat Audit HUD scanner to evaluate external bot integrations, dangerous administrative permissions, and onboarding exploit vectors.\n\n` +
+                    `> -# **__Synced Looping Animated GIF HUD:__**\n` +
+                    `> • **In-GIF Progress Bar:** 8-frame looping animated HUD banner (\`scan_banner.gif\`) tracking verified bot armor ratio (\`safeBots / totalBots\`).\n` +
+                    `> • **Diagnostics:** Unauthorized external bots, high-risk humans with dangerous roles, dangerous onboarding prompt roles, and role-bound invite links.\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}scanserver\` (or \`${prefix}scan\`) - Launch the server security audit scan.`;
+              } else if (targetCmd.name === "warnings" || targetCmd.name === "warn") {
+                  descContent = `Disciplinary Infraction Tracker HUD monitoring member strike history against server escalation limits.\n\n` +
+                    `> -# **__Synced Looping Animated GIF HUD:__**\n` +
+                    `> • **In-GIF Progress Bar:** 8-frame looping animated HUD banner (\`warn_banner.gif\`) with glowing strike progress bar (\`warns.length / maxWarnings\`).\n` +
+                    `> • **Auto-Escalation:** When strikes reach \`!maxwarnings\` limit (default: 3), Athena automatically isolates the user in Quarantine containment.\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}warnings <@user>\` - View member's active warnings & strike HUD.\n` +
+                    `> • \`${prefix}warn <@user> [reason]\` - Issue a warning strike.\n` +
+                    `> • \`${prefix}clearwarns <@user>\` - Clear member's disciplinary record.`;
               }
 
               const display1 = new TextDisplayBuilder().setContent(
@@ -1475,8 +1528,8 @@ export const helpModules = [
     "-# • **__Channel Sweeper:__** Automatically syncs deny overwrites across all channels to prevent evasion."
   ] },
   { id: 'whitelist', category: 'SECURITY & ACCESS CONTROL', shortLabel: 'Whitelist', label: 'Whitelist Manager', emoji: 'whitelist', commands: [
-    "`!whitelist / !wl` - Opens Interactive Whitelist Overview Panel `[Extra Owner]`",
-    "`!wl <user/role>` - Quick-whitelist for standard actions `[Extra Owner]`",
+    "`!whitelist / !wl` - Opens Whitelist Overview Panel with Synced Looping Animated GIF HUD & Progress Bar `[Extra Owner]`",
+    "`!wl <user/role>` - Quick-whitelist for standard actions with Animated Clearance HUD `[Extra Owner]`",
     "`!unwl <user/role>` - Remove user or role from whitelist `[Extra Owner]`",
     "`!wlist` - View all whitelisted entities `[Extra Owner]`",
     "`!extraowner add|remove @user` - Grant or revoke full system bypass `[Server Owner]`",
@@ -1484,7 +1537,8 @@ export const helpModules = [
     "",
     "-# **__The Whitelist Interface:__**",
     "-# • Allows granting specific bypasses (e.g., allow Mass Ban but block Channel Delete).",
-    "-# • Supports **__Custom Trigger Limits__** (e.g., allowed to kick 5 members max per hour)."
+    "-# • Supports **__Custom Trigger Limits__** (e.g., allowed to kick 5 members max per hour).",
+    "-# • **__Synced Looping GIF HUD:__** Features authentic 8-frame looping animated HUD banners (`wl_banner.gif` & `wl_access.gif`) with glowing progress bars drawn directly in the GIF."
   ] },
   
   { id: 'moderation', category: 'SERVER ADMINISTRATION', shortLabel: 'Mods', label: 'Moderation Tools', emoji: 'mod', commands: [
@@ -1759,9 +1813,19 @@ export const helpModules = [
     "`!youtube add|remove|list` - Configure YouTube video upload notification alerts `[Extra Owner]`",
     "`!ccmd / !customcmd add <trigger> <reply>` - Create a custom command response `[Extra Owner]`",
     "`!autoreply / !ar` - Custom keyword auto-replies with accent borderless CV2 embeds, GIFs & direct Pinterest links `[Extra Owner]`",
-    "`!trigger create <match> | <resp>` - Create keyword auto-response `[Extra Owner / Admin]`",
+    "`!trigger` - Opens Trigger Response Matrix with Synced Looping Animated GIF HUD & Progress Bar `[Public / Admin]`",
+    "`!trigger create <match> | <resp>` - Fast simple setup: `!trigger create hello | Hello {user}!` `[Extra Owner / Admin]`",
+    "`!trigger <match> | <resp>` - Direct shortcut syntax `[Extra Owner / Admin]`",
     "`!trigger delete <match>` - Remove keyword trigger `[Extra Owner / Admin]`",
+    "`!trigger react <match> <emoji>` - Configure dual-action auto-reaction synergy `[Extra Owner / Admin]`",
+    "`!trigger mirror <match> <#channel>` - Configure staff alert mirroring for emergency keywords `[Extra Owner / Admin]`",
     "`!trigger list` - View active keyword triggers `[Public]`",
+    "",
+    "-# **__The 4 Advanced Trigger Engines:__**",
+    "-# • **__Ghost Triggers (`ghost:<sec>`):__** Auto-destructs after N seconds to prevent channel clutter.",
+    "-# • **__Bounty XP Rewards (`xp:<amount>` & `maxclaims:<n>`):__** Awards dynamic XP to the first N users.",
+    "-# • **__Time / Clock Dayparts (`time:<morning|day|night|weekend>`):__** Matches current server clock.",
+    "-# • **__Tier & Audience Adaptive (`audience:<newbie|booster|staff>`):__** Dynamic role/tenure responses.",
     "`!rrsetup / !reactionrole` - Interactive Reaction Role builder `[Extra Owner]`",
     "`!giveaway / !gw` - Manage server giveaways `[Extra Owner]`",
     "`!date / !go-on-date @user` - Go on a special interactive date `[Public]`",
