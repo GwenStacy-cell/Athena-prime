@@ -139,7 +139,7 @@ export function buildTtsControlPanel(member, guild) {
   const autoVcId = db.getAutoTtsVc(guild.id);
   const isAutoVcActive = memberVc && autoVcId === memberVc.id;
 
-  const voiceName = resolved ? `${resolved.emoji} **${resolved.name}**` : '🔊 **Standard Neutral Delivery**';
+  const voiceName = resolved ? `**${resolved.name}**` : '**Standard Neutral Delivery**';
   const voiceDesc = resolved ? resolved.description : 'Standard natural speech delivery without acoustic modification';
   const vcDisplay = memberVc ? `<#${memberVc.id}>` : '`Not in a Voice Channel`';
   const autoVcDisplay = isAutoVcActive
@@ -151,14 +151,12 @@ export function buildTtsControlPanel(member, guild) {
       label: 'Standard Voice (Default)',
       value: 'tts_voice_default',
       description: 'Reset to natural default speech delivery',
-      emoji: { name: '🔊' },
       default: !resolved
     },
     ...Object.values(CELEBRITY_VOICES).map(v => ({
       label: v.name,
       value: `tts_voice_${v.id}`,
       description: v.description.slice(0, 50),
-      emoji: { name: v.emoji },
       default: resolved?.id === v.id
     }))
   ];
@@ -166,7 +164,7 @@ export function buildTtsControlPanel(member, guild) {
   const selectRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId('tts_select_voice')
-      .setPlaceholder('🎙️ Choose a Celebrity or AI Voice Profile...')
+      .setPlaceholder('Select a Celebrity or Neural Voice Profile...')
       .addOptions(voiceOptions)
   );
 
@@ -358,7 +356,7 @@ export async function handleTtsInteraction(interaction) {
 
     const prefs = db.getTtsPrefs(member.id);
     const resolved = prefs.voice ? resolveVoice(prefs.voice) : null;
-    const voiceTag = resolved ? `${resolved.emoji} ${resolved.name}` : 'Standard Voice';
+    const voiceTag = resolved ? `**${resolved.name}**` : 'Standard Voice';
 
     await interaction.reply({
       content: `-# <a:atheNATICK:1557841381630681106> **Broadcasting to <#${member.voice.channel.id}>** using **${voiceTag}**...`,
@@ -372,7 +370,7 @@ export async function handleTtsInteraction(interaction) {
 export const commands = [
   {
     name: 'tts',
-    aliases: ['speak', 'say', 'voice'],
+    aliases: ['speak', 'say', 'voice', 'ttsvoice', 'ttsvoices', 'voices'],
     description: 'Broadcast spoken text into your voice channel with AI & celebrity voices.',
     category: 'utilities',
     options: [
@@ -390,6 +388,34 @@ export const commands = [
       }
     ],
     async executePrefix(message, args) {
+      const prefix = db.getGuildConfig(message.guild.id)?.prefix || '!';
+      const cleanContent = message.content.trim();
+      const firstWord = cleanContent.startsWith(prefix)
+        ? cleanContent.slice(prefix.length).split(/\s+/)[0]?.toLowerCase()
+        : '';
+
+      // Direct handling for !ttsvoice / !ttsvoices / !voices
+      if (firstWord === 'ttsvoice' || firstWord === 'ttsvoices' || firstWord === 'voices') {
+        const voiceArg = args[0]?.toLowerCase();
+        if (!voiceArg || voiceArg === 'list' || voiceArg === 'all' || voiceArg === 'help') {
+          const container = buildVoiceListContainer(prefix);
+          return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        }
+
+        if (voiceArg === 'default' || voiceArg === 'none' || voiceArg === 'reset') {
+          db.updateTtsPrefs(message.author.id, { voice: null });
+          return message.reply(cv2.success('TTS Voice Reset | <a:atheNATICK:1557841381630681106>', 'Your speech voice has been reset to standard default delivery.'));
+        }
+
+        const resolved = resolveVoice(voiceArg);
+        if (!resolved) {
+          return message.reply(cv2.warn('Voice Not Found', `Unknown celebrity voice: \`${voiceArg}\`.\nType \`${prefix}ttsvoice\` to view all available celebrity and character voices!`));
+        }
+
+        db.updateTtsPrefs(message.author.id, { voice: resolved.id, lang: resolved.baseLang });
+        return message.reply(cv2.success('TTS Voice Updated | <a:atheNATICK:1557841381630681106>', `Your voice preference has been locked to **${resolved.name}**!\nAll future TTS speech will speak in this voice.`));
+      }
+
       // If no args or interface keyword, open interactive Control Center Dashboard
       if (
         args.length === 0 ||
@@ -416,7 +442,6 @@ export const commands = [
       const subcommand = args[0]?.toLowerCase();
 
       if (subcommand === 'voices' || subcommand === 'celebrities' || subcommand === 'listvoices') {
-        const prefix = db.getGuildConfig(message.guild.id)?.prefix || '!';
         const container = buildVoiceListContainer(prefix);
         return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
       }
@@ -424,7 +449,6 @@ export const commands = [
       if (subcommand === 'voice' || subcommand === 'setvoice') {
         const voiceArg = args[1]?.toLowerCase();
         if (!voiceArg) {
-          const prefix = db.getGuildConfig(message.guild.id)?.prefix || '!';
           const container = buildVoiceListContainer(prefix);
           return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
         }
@@ -436,11 +460,11 @@ export const commands = [
 
         const resolved = resolveVoice(voiceArg);
         if (!resolved) {
-          return message.reply(cv2.warn('Voice Not Found', `Unknown celebrity voice: \`${voiceArg}\`.\nType \`!tts voices\` to explore all available celebrity and character voices!`));
+          return message.reply(cv2.warn('Voice Not Found', `Unknown celebrity voice: \`${voiceArg}\`.\nType \`${prefix}ttsvoice\` to explore all available celebrity and character voices!`));
         }
 
         db.updateTtsPrefs(message.author.id, { voice: resolved.id, lang: resolved.baseLang });
-        return message.reply(cv2.success('TTS Voice Updated | <a:atheNATICK:1557841381630681106>', `Your voice preference has been locked to **${resolved.emoji} ${resolved.name}**!\nAll future TTS speech will speak in this voice.`));
+        return message.reply(cv2.success('TTS Voice Updated | <a:atheNATICK:1557841381630681106>', `Your voice preference has been locked to **${resolved.name}**!\nAll future TTS speech will speak in this voice.`));
       }
 
       if (subcommand === 'stop') {

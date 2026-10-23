@@ -4,6 +4,7 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 
 export const CELEBRITY_VOICES = {
   // --- WORLD LEADERS ---
@@ -12,30 +13,36 @@ export const CELEBRITY_VOICES = {
     aliases: ['donaldtrump', 'donald', 'potus45'],
     name: 'Donald Trump',
     category: 'World Leaders',
-    emoji: '🦅',
+    neuralVoice: 'en-US-RogerNeural',
+    pitch: '-4Hz',
+    rate: '-5%',
     baseLang: 'en-US',
     description: '45th U.S. President confident, low-mid resonant speech delivery',
-    filter: 'asetrate=44100*0.88,atempo=1.12,equalizer=f=1200:t=q:w=1.5:g=6,acompressor=threshold=-12dB:ratio=4:attack=20:release=100'
+    filter: 'equalizer=f=1200:t=q:w=1.5:g=5,equalizer=f=180:t=q:w=1.5:g=4,acompressor=threshold=-12dB:ratio=3.5:attack=20:release=100'
   },
   modi: {
     id: 'modi',
     aliases: ['narendramodi', 'pmmodi', 'namo'],
     name: 'Narendra Modi',
     category: 'World Leaders',
-    emoji: '🇮🇳',
+    neuralVoice: 'en-IN-PrabhatNeural',
+    pitch: '-2Hz',
+    rate: '-8%',
     baseLang: 'en-IN',
     description: 'Prime Minister authoritative orator voice with deep resonant cadence',
-    filter: 'asetrate=44100*0.92,atempo=0.88,equalizer=f=150:t=q:w=2:g=7,equalizer=f=2500:t=q:w=1.5:g=4'
+    filter: 'equalizer=f=160:t=q:w=2:g=5,equalizer=f=2500:t=q:w=1.5:g=3.5'
   },
   obama: {
     id: 'obama',
     aliases: ['barackobama', 'barack', 'potus44'],
     name: 'Barack Obama',
     category: 'World Leaders',
-    emoji: '🏛️',
+    neuralVoice: 'en-US-ChristopherNeural',
+    pitch: '-6Hz',
+    rate: '-10%',
     baseLang: 'en-US',
     description: '44th U.S. President measured, resonant speech cadence',
-    filter: 'asetrate=44100*0.86,atempo=0.88,equalizer=f=200:t=q:w=1.5:g=6'
+    filter: 'equalizer=f=200:t=q:w=1.5:g=5,equalizer=f=3000:t=q:w=1:g=2'
   },
 
   // --- POP ICONS & SINGERS ---
@@ -44,112 +51,196 @@ export const CELEBRITY_VOICES = {
     aliases: ['michaeljackson', 'jackson', 'kingofpop'],
     name: 'Michael Jackson',
     category: 'Pop Icons',
-    emoji: '🎤',
-    baseLang: 'en',
+    neuralVoice: 'en-US-SteffanNeural',
+    pitch: '+12Hz',
+    rate: '+4%',
+    baseLang: 'en-US',
     description: 'King of Pop energetic tenor voice with signature vocal vibrato',
-    filter: 'asetrate=44100*1.28,atempo=0.80,vibrato=f=6.5:d=0.35,equalizer=f=3500:t=q:w=1:g=7,highpass=f=200'
+    filter: 'highpass=f=160,equalizer=f=3500:t=q:w=1:g=6,vibrato=f=6.0:d=0.25'
   },
   taylor: {
     id: 'taylor',
     aliases: ['taylorswift', 'swift'],
     name: 'Taylor Swift',
     category: 'Pop Icons',
-    emoji: '✨',
+    neuralVoice: 'en-US-EmmaNeural',
+    pitch: '+4Hz',
+    rate: '-2%',
     baseLang: 'en-US',
     description: 'Pop superstar warm acoustic vocal with airy melodic brightness',
-    filter: 'asetrate=44100*1.12,atempo=0.90,equalizer=f=2500:t=q:w=1.2:g=4,aecho=0.8:0.88:20:0.2'
+    filter: 'equalizer=f=2800:t=q:w=1.2:g=4,aecho=0.8:0.88:25:0.18'
   },
   ariana: {
     id: 'ariana',
     aliases: ['arianagrande', 'grande'],
     name: 'Ariana Grande',
     category: 'Pop Icons',
-    emoji: '☁️',
+    neuralVoice: 'en-US-AnaNeural',
+    pitch: '+14Hz',
+    rate: '0%',
     baseLang: 'en-US',
     description: 'Whistle-register pop soprano voice with airy treble shimmer',
-    filter: 'asetrate=44100*1.30,atempo=0.78,equalizer=f=8000:t=q:w=1.5:g=6,aecho=0.8:0.9:30:0.3'
+    filter: 'equalizer=f=8000:t=q:w=1.5:g=5,aecho=0.8:0.9:30:0.22'
   },
   sabrina: {
     id: 'sabrina',
     aliases: ['sabrinacarpenter', 'carpenter'],
     name: 'Sabrina Carpenter',
     category: 'Pop Icons',
-    emoji: '💋',
+    neuralVoice: 'en-US-JennyNeural',
+    pitch: '+6Hz',
+    rate: '+2%',
     baseLang: 'en-US',
     description: 'Modern smooth acoustic pop vocal with crisp intimate tone',
-    filter: 'asetrate=44100*1.16,atempo=0.87,equalizer=f=4000:t=q:w=1:g=5'
+    filter: 'equalizer=f=3800:t=q:w=1:g=4.5,acompressor=threshold=-14dB:ratio=2.5'
   },
   bieber: {
     id: 'bieber',
     aliases: ['justinbieber', 'justin'],
     name: 'Justin Bieber',
     category: 'Pop Icons',
-    emoji: '🧢',
+    neuralVoice: 'en-CA-LiamNeural',
+    pitch: '+6Hz',
+    rate: '+3%',
     baseLang: 'en-CA',
     description: 'Chart-topping pop tenor voice with smooth vocal compression',
-    filter: 'asetrate=44100*1.08,atempo=0.93,equalizer=f=3000:t=q:w=1.2:g=4,acompressor=threshold=-15dB:ratio=3'
+    filter: 'equalizer=f=3000:t=q:w=1.2:g=4,acompressor=threshold=-15dB:ratio=3'
+  },
+  eminem: {
+    id: 'eminem',
+    aliases: ['slimshady', 'shady', 'marshall'],
+    name: 'Eminem',
+    category: 'Pop Icons',
+    neuralVoice: 'en-US-BrianNeural',
+    pitch: '+4Hz',
+    rate: '+18%',
+    baseLang: 'en-US',
+    description: 'Rapid, punchy rhythmic rap delivery with crisp articulation',
+    filter: 'equalizer=f=2200:t=q:w=1:g=5,acompressor=threshold=-12dB:ratio=4:attack=10:release=80'
+  },
+  drake: {
+    id: 'drake',
+    aliases: ['champagnepapi', 'drizzy'],
+    name: 'Drake',
+    category: 'Pop Icons',
+    neuralVoice: 'en-US-AndrewNeural',
+    pitch: '-4Hz',
+    rate: '-5%',
+    baseLang: 'en-US',
+    description: 'Smooth, relaxed Canadian/US hip-hop flow with warm vocal tone',
+    filter: 'equalizer=f=180:t=q:w=1.5:g=4,equalizer=f=2400:t=q:w=1:g=3'
+  },
+  snoop: {
+    id: 'snoop',
+    aliases: ['snoopdogg', 'snoopdog', 'dogg'],
+    name: 'Snoop Dogg',
+    category: 'Pop Icons',
+    neuralVoice: 'en-US-GuyNeural',
+    pitch: '-6Hz',
+    rate: '-14%',
+    baseLang: 'en-US',
+    description: 'Relaxed West Coast drawl with smooth laid-back cadence',
+    filter: 'equalizer=f=150:t=q:w=2:g=4,lowpass=f=7500'
+  },
+  billie: {
+    id: 'billie',
+    aliases: ['billieeilish', 'eilish'],
+    name: 'Billie Eilish',
+    category: 'Pop Icons',
+    neuralVoice: 'en-US-AriaNeural',
+    pitch: '-2Hz',
+    rate: '-8%',
+    baseLang: 'en-US',
+    description: 'Intimate breathy vocal with soft acoustic closeness',
+    filter: 'equalizer=f=5000:t=q:w=1.5:g=4,acompressor=threshold=-20dB:ratio=4'
   },
 
-  // --- VISIONARIES & CHARACTERS ---
+  // --- VISIONARIES & LEGENDS ---
+  freeman: {
+    id: 'freeman',
+    aliases: ['morganfreeman', 'morgan'],
+    name: 'Morgan Freeman',
+    category: 'Visionaries',
+    neuralVoice: 'en-US-GuyNeural',
+    pitch: '-12Hz',
+    rate: '-14%',
+    baseLang: 'en-US',
+    description: 'Cinematic deep baritone voice with rich legendary gravitas',
+    filter: 'equalizer=f=100:t=q:w=1.5:g=7,equalizer=f=220:t=q:w=1.5:g=4,acompressor=threshold=-16dB:ratio=3.5'
+  },
   musk: {
     id: 'musk',
     aliases: ['elonmusk', 'elon'],
     name: 'Elon Musk',
     category: 'Visionaries',
-    emoji: '🚀',
+    neuralVoice: 'en-US-EricNeural',
+    pitch: '-2Hz',
+    rate: '+6%',
     baseLang: 'en-US',
     description: 'Tech innovator rapid analytical speech delivery',
-    filter: 'asetrate=44100*0.95,atempo=1.02,equalizer=f=1800:t=q:w=1:g=3'
+    filter: 'equalizer=f=1800:t=q:w=1:g=3'
   },
+
+  // --- ICONIC CHARACTERS ---
   vader: {
     id: 'vader',
     aliases: ['darthvader', 'darth'],
     name: 'Darth Vader',
     category: 'Iconic Characters',
-    emoji: '⚔️',
+    neuralVoice: 'en-US-GuyNeural',
+    pitch: '-20Hz',
+    rate: '-18%',
     baseLang: 'en-GB',
     description: 'Galactic Empire dark lord mechanical deep resonance',
-    filter: 'asetrate=44100*0.62,atempo=1.55,flanger,equalizer=f=100:t=q:w=2:g=8'
-  },
-  chipmunk: {
-    id: 'chipmunk',
-    aliases: ['alvin', 'squeaky'],
-    name: 'Chipmunk',
-    category: 'Iconic Characters',
-    emoji: '🐿️',
-    baseLang: 'en',
-    description: 'High-speed squeaky animated cartoon voice',
-    filter: 'asetrate=44100*1.65,atempo=0.62'
+    filter: 'equalizer=f=90:t=q:w=2:g=8,flanger=delay=5:depth=2:regen=50:width=80:speed=0.5'
   },
   demon: {
     id: 'demon',
     aliases: ['monster', 'devil'],
     name: 'Demon / Monster',
     category: 'Iconic Characters',
-    emoji: '👹',
-    baseLang: 'en',
+    neuralVoice: 'en-US-RogerNeural',
+    pitch: '-25Hz',
+    rate: '-20%',
+    baseLang: 'en-US',
     description: 'Deep underworld terrifying monster roar with distortion',
-    filter: 'asetrate=44100*0.52,atempo=1.85,volume=1.8'
+    filter: 'asetrate=24000*0.65,atempo=1.54,volume=1.8'
   },
   robot: {
     id: 'robot',
     aliases: ['cyber', 'cyborg', 'mech'],
     name: 'Robot / Cyber',
     category: 'Iconic Characters',
-    emoji: '🤖',
-    baseLang: 'en',
+    neuralVoice: 'en-US-GuyNeural',
+    pitch: '0Hz',
+    rate: '0%',
+    baseLang: 'en-US',
     description: 'Futuristic synthetic cybernetic vocoder',
-    filter: 'tremolo=f=25:d=0.8,flanger'
+    filter: 'tremolo=f=30:d=0.85,flanger'
   },
   ghost: {
     id: 'ghost',
     aliases: ['spirit', 'spooky'],
     name: 'Ghost / Spectral',
     category: 'Iconic Characters',
-    emoji: '👻',
-    baseLang: 'en',
+    neuralVoice: 'en-US-AriaNeural',
+    pitch: '+10Hz',
+    rate: '-10%',
+    baseLang: 'en-US',
     description: 'Eerie supernatural spectral echo and reverberation',
-    filter: 'vibrato=f=4:d=0.6,aecho=0.8:0.9:50:0.4'
+    filter: 'vibrato=f=4.5:d=0.6,aecho=0.8:0.9:60:0.45'
+  },
+  chipmunk: {
+    id: 'chipmunk',
+    aliases: ['alvin', 'squeaky'],
+    name: 'Chipmunk',
+    category: 'Iconic Characters',
+    neuralVoice: 'en-US-JennyNeural',
+    pitch: '+30Hz',
+    rate: '+25%',
+    baseLang: 'en-US',
+    description: 'High-speed squeaky animated cartoon voice',
+    filter: 'asetrate=24000*1.55,atempo=0.65'
   }
 };
 
@@ -170,7 +261,7 @@ export function resolveVoice(input) {
 }
 
 /**
- * Applies audio DSP filters to raw TTS audio buffer using ffmpeg.
+ * Applies audio DSP filters to raw audio buffer using ffmpeg.
  */
 async function applyAudioFilter(inputBuffer, filterString) {
   if (!filterString) return inputBuffer;
@@ -185,7 +276,7 @@ async function applyAudioFilter(inputBuffer, filterString) {
       const timer = setTimeout(() => {
         try { proc.kill(); } catch {}
         reject(new Error('Audio filter timeout'));
-      }, 5000);
+      }, 6000);
 
       proc.on('close', code => {
         clearTimeout(timer);
@@ -210,13 +301,52 @@ async function applyAudioFilter(inputBuffer, filterString) {
   }
 }
 
-/**
- * Generates speech audio buffer for specified text and voice profile.
- */
-export async function generateVoiceAudio(text, voiceOrCode, customLang = 'en') {
-  const voice = typeof voiceOrCode === 'object' ? voiceOrCode : resolveVoice(voiceOrCode);
-  const lang = voice?.baseLang || customLang || 'en';
+let sharedTtsInstance = null;
 
+function getTtsClient() {
+  if (!sharedTtsInstance) {
+    sharedTtsInstance = new MsEdgeTTS();
+  }
+  return sharedTtsInstance;
+}
+
+/**
+ * Synthesizes audio using Microsoft Edge Neural Speech engine.
+ */
+async function generateMsEdgeAudio(text, voice, customLang = 'en') {
+  const tts = getTtsClient();
+  const neuralVoice = voice?.neuralVoice || (customLang === 'en-IN' ? 'en-IN-PrabhatNeural' : 'en-US-JennyNeural');
+  await tts.setMetadata(neuralVoice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+
+  const prosodyOptions = {
+    pitch: voice?.pitch || '+0Hz',
+    rate: voice?.rate || '+0%'
+  };
+
+  const { audioStream } = tts.toStream(text, prosodyOptions);
+  const chunks = [];
+
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('MsEdgeTTS audio stream timeout'));
+    }, 8000);
+
+    audioStream.on('data', chunk => chunks.push(chunk));
+    audioStream.on('end', () => {
+      clearTimeout(timer);
+      resolve(Buffer.concat(chunks));
+    });
+    audioStream.on('error', err => {
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
+}
+
+/**
+ * Secondary fallback using Google Translate TTS.
+ */
+async function generateGoogleTtsAudio(text, lang = 'en') {
   const cleanText = text.slice(0, 200).trim();
   const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=${encodeURIComponent(lang)}&client=tw-ob`;
 
@@ -227,10 +357,27 @@ export async function generateVoiceAudio(text, voiceOrCode, customLang = 'en') {
   });
 
   if (!response.ok) {
-    throw new Error(`TTS API returned ${response.status}`);
+    throw new Error(`Google TTS returned status ${response.status}`);
   }
 
-  const rawBuffer = Buffer.from(await response.arrayBuffer());
+  return Buffer.from(await response.arrayBuffer());
+}
+
+/**
+ * Generates speech audio buffer for specified text and voice profile.
+ */
+export async function generateVoiceAudio(text, voiceOrCode, customLang = 'en') {
+  const voice = typeof voiceOrCode === 'object' ? voiceOrCode : resolveVoice(voiceOrCode);
+  const cleanText = text.slice(0, 500).trim();
+  let rawBuffer = null;
+
+  try {
+    rawBuffer = await generateMsEdgeAudio(cleanText, voice, customLang);
+  } catch (err) {
+    console.warn('[ttsVoiceEngine] Neural synthesis fallback:', err.message);
+    const fallbackLang = voice?.baseLang || customLang || 'en';
+    rawBuffer = await generateGoogleTtsAudio(cleanText, fallbackLang);
+  }
 
   if (voice && voice.filter) {
     return await applyAudioFilter(rawBuffer, voice.filter);
@@ -240,7 +387,7 @@ export async function generateVoiceAudio(text, voiceOrCode, customLang = 'en') {
 }
 
 /**
- * Builds a structured Components V2 container listing all celebrity and character voices.
+ * Builds a structured Components V2 container listing all celebrity and character voices without native emojis.
  */
 export function buildVoiceListContainer(prefix = '!') {
   const categories = {};
@@ -253,7 +400,7 @@ export function buildVoiceListContainer(prefix = '!') {
   for (const [catName, voices] of Object.entries(categories)) {
     let catContent = `### **${catName}**\n`;
     for (const v of voices) {
-      catContent += `-# • **${v.emoji} ${v.name}** (\`${v.id}\`): ${v.description}\n`;
+      catContent += `-# • **${v.name}** (\`${v.id}\`): *${v.description}*\n`;
     }
     sections.push(catContent.trim());
   }
@@ -264,11 +411,11 @@ export function buildVoiceListContainer(prefix = '!') {
       {
         type: 10,
         content:
-          `# Athena Voice Studio // Celebrity & Character Voices | <a:atheNATICK:1557841381630681106>\n` +
-          `-# High-fidelity AI speech synthesis with custom acoustic DSP modeling across famous voices.\n\n` +
-          `> -# **__How to Set Your Voice:__** \`${prefix}tts voice <name>\` (e.g. \`${prefix}tts voice trump\`)\n` +
+          `# Athena Voice Studio // Celebrity & Neural Roster | <a:atheNATICK:1557841381630681106>\n` +
+          `-# High-fidelity neural speech synthesis with custom acoustic DSP modeling across famous personalities.\n\n` +
+          `> -# **__How to Set Your Voice:__** \`${prefix}ttsvoice <name>\` or \`${prefix}tts voice <name>\` (e.g. \`${prefix}ttsvoice trump\`)\n` +
           `> -# **__On-The-Fly Voice Speech:__** \`${prefix}tts <name> <message>\` (e.g. \`${prefix}tts mj Shamone! Hee hee!\`)\n` +
-          `> -# **__Reset to Default:__** \`${prefix}tts voice default\` or \`${prefix}tts lang en\``
+          `> -# **__Reset to Default:__** \`${prefix}ttsvoice default\` or \`${prefix}tts voice default\``
       },
       { type: 14, divider: true },
       {
@@ -278,7 +425,7 @@ export function buildVoiceListContainer(prefix = '!') {
       { type: 14, divider: true },
       {
         type: 10,
-        content: `-# Athena Prime Audio Engine • Low-Latency Real-Time Voice Broadcast`
+        content: `-# Athena Prime Audio Engine • Neural Real-Time Voice Broadcast`
       }
     ]
   };

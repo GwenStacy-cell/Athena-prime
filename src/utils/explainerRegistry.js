@@ -108,7 +108,7 @@ As designed for Athena Prime:
 # Real-Time Security Live Audit & Records (\`!security records\` / \`!security live\`)
 • **Live Memory Threat Stream:** SQLite memory ledger tracking up to 100 recent neutralized hostile incursions across all attack vectors (channel deletes, role creates, admin escalations, rogue bot additions, mass kicks/bans, and rogue invites).
 • **Per-Incident Forensic Profiles:** Records the neutralized vector, perpetrator snowflake ID & tag, countermeasure verdict (\`BAN_APPLIED\`, \`ROLES_STRIPPED\`, \`QUARANTINED\`), execution latency in milliseconds (\`1-3ms execution\`), and automatic rollback repair state.
-• **Components V2 Interactive Telemetry:** Provides interactive pagination controls (◀ / ▶), live SQLite refresh (🔄), clear history (🗑️), and direct transition back to the 28-module defense matrix.`
+• **Components V2 Interactive Telemetry:** Provides interactive pagination controls (Previous / Next), live SQLite refresh, clear history, and direct transition back to the 28-module defense matrix.`
       }
     ]
   },
@@ -989,7 +989,7 @@ Beyond automated message dispatch, Athena Prime supports cross-action synergy:
 ### Dual-Action Emoji Reaction Synergy
 • **Mechanics:** Automatically adds a custom or unicode emoji reaction to the user's triggering message in addition to sending the configured text/embed response.
 • **Direct Command:** \`!trigger react <keyword> <emoji | none>\`
-• **Creation Syntax:** \`!trigger create gg | Well played! | reaction:🏆\`
+• **Creation Syntax:** \`!trigger create gg | Well played! | reaction:<a:atheNATICK:1557841381630681106>\`
 
 ### Staff Alert & Channel Mirroring (Emergency Triggers)
 • **Mechanics:** When specific keywords (e.g., raid, alert, exploit, bug) are detected, Athena simultaneously mirrors an alert with user tag, channel link, and context to a secure staff escalation channel.
@@ -1031,7 +1031,7 @@ export const DETAILED_COMMANDS = {
   - **Audience & Tier Adaptive (\`audience:<newbie|booster|staff>\`):** Personalizes responses based on user tenure, booster status, or staff tier.
 • **Dual-Action Emoji Reaction Synergy (\`reaction:<emoji>\`):** Reacts with custom/unicode emoji on the triggering message while responding.
 • **Staff Mirroring (\`mirror:<#channel>\`):** Escalates emergency keywords directly to staff channels in real time.`,
-    example: '!trigger create rules | Please read our rules in {channel}! | reaction:📜 ghost:15'
+    example: '!trigger create rules | Please read our rules in {channel}! | ghost:15'
   },
 
   whitelist: {
@@ -1230,10 +1230,10 @@ export const DETAILED_COMMANDS = {
   • Countermeasure Verdict: Action executed (e.g. BAN_APPLIED, ROLES_STRIPPED, QUARANTINED) with execution speed (1-3ms execution).
   • Damage Repair & Rollback: State of restored channels, categories, or revoked permissions.
 • **Tactile Control Interface:**
-  • Interactive pagination controls (◀ Prev / Next ▶) to review threat history.
-  • 🔄 Refresh: Instantly syncs with the live SQLite audit ledger.
-  • 🛡️ Firewall Status: One-click shortcut back to the 28-module defense matrix.
-  • 🗑️ Clear History: Authorizes Server Owners to purge memory logs once reviewed.`,
+  • Interactive pagination controls (Prev / Next) to review threat history.
+  • Refresh: Instantly syncs with the live SQLite audit ledger.
+  • Firewall Status: One-click shortcut back to the 28-module defense matrix.
+  • Clear History: Authorizes Server Owners to purge memory logs once reviewed.`,
     example: '!security records'
   },
 

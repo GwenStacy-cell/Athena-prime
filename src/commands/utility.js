@@ -377,7 +377,7 @@ export const commands = [
                     `> • Displays all intercepted threats in real time with relative timestamps (<t:...:R>).\n` +
                     `> • Shows perpetrator tag, user ID, countermeasure verdict (BAN_APPLIED, ROLES_STRIPPED), and strike latency in ms.\n` +
                     `> • Reports automatic channel/category recreation and permission rollbacks.\n` +
-                    `> • Interactive components: Page navigation (◀ / ▶), live Refresh (🔄), and Clear History.`;
+                    `> • Interactive components: Page navigation (Previous / Next), live Refresh, and Clear History.`;
               } else if (targetCmd.name === "trigger" || targetCmd.name === "trig") {
                   descContent = `Interactive server trigger word responder dashboard with synced animated looping GIF HUD, electric progress bar, and 4 advanced automation modules.\n\n` +
                     `> -# **__Synced Looping Animated GIF HUD:__**\n` +
@@ -622,7 +622,7 @@ export const commands = [
             `> • Displays all intercepted threats in real time with relative timestamps (<t:...:R>).\n` +
             `> • Shows perpetrator tag, user ID, countermeasure verdict (BAN_APPLIED, ROLES_STRIPPED), and strike latency in ms.\n` +
             `> • Reports automatic channel/category recreation and permission rollbacks.\n` +
-            `> • Interactive components: Page navigation (◀ / ▶), live Refresh (🔄), and Clear History.`;
+            `> • Interactive components: Page navigation (Previous / Next), live Refresh, and Clear History.`;
         }
 
         const display1 = new TextDisplayBuilder().setContent(

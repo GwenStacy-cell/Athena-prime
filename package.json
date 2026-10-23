@@ -11,6 +11,7 @@
     "postinstall": "npm rebuild canvas better-sqlite3 @discordjs/opus ffmpeg-static || true"
   },
   "dependencies": {
+    "@discordjs/opus": "^0.10.0",
     "@discordjs/voice": "^0.19.2",
     "@fontsource/inter": "^5.2.8",
     "@mrnima/instagram-downloader": "^1.0.0",
@@ -21,6 +22,7 @@
     "canvas": "^3.2.3",
     "chalk": "^5.3.0",
     "cheerio": "^1.2.0",
+    "chess.js": "^1.4.0",
     "cron": "^4.4.0",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
@@ -33,6 +35,7 @@
     "libsodium-wrappers": "^0.8.4",
     "lyrics-finder": "^21.7.0",
     "ms": "^2.1.3",
+    "msedge-tts": "^2.1.0",
     "music-lyrics": "^2.0.2",
     "nekos-best.js": "^6.5.3",
     "node-fetch": "^3.3.2",
@@ -42,9 +45,7 @@
     "rss-parser": "^3.13.0",
     "shoukaku": "^4.3.0",
     "snapsave-media-downloader": "^2.4.1",
-    "tesseract.js": "^7.0.0",
-    "@discordjs/opus": "^0.10.0",
-    "chess.js": "^1.4.0"
+    "tesseract.js": "^7.0.0"
   },
   "allowScripts": {
     "@discordjs/opus": true,
