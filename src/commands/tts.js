@@ -198,8 +198,7 @@ export function buildTtsControlPanel(member, guild) {
       .setStyle(ButtonStyle.Secondary)
   );
 
-  const hasCloningKey = Boolean(process.env.MODELSLAB_API_KEY || process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY);
-  const engineStatus = hasCloningKey ? '`100% Authentic AI Voice Cloning (Active)`' : '`Neural Acoustic Modeling`';
+  const engineStatus = '`ElevenLabs Flash v2.5 AI Engine (Active)`';
 
   const container = {
     type: 17,

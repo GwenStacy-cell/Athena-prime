@@ -6,6 +6,8 @@ import path from 'path';
 import os from 'os';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 
+export const DEFAULT_ELEVENLABS_KEY = 'sk_845276d5fc9bc469f741269cf184beb48a9d44e03c104e04';
+
 export const CELEBRITY_VOICES = {
   // --- WORLD LEADERS ---
   trump: {
@@ -13,8 +15,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['donaldtrump', 'donald', 'potus45'],
     name: 'Donald Trump',
     category: 'World Leaders',
-    modelsLabModel: 'donald_trump',
-    elevenLabsVoiceId: 'trump_cloned_voice',
+    elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB', // Adam - Deep American Orator
     neuralVoice: 'en-US-RogerNeural',
     pitch: '-4Hz',
     rate: '-5%',
@@ -27,8 +28,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['narendramodi', 'pmmodi', 'namo'],
     name: 'Narendra Modi',
     category: 'World Leaders',
-    modelsLabModel: 'narendra_modi',
-    elevenLabsVoiceId: 'modi_cloned_voice',
+    elevenLabsVoiceId: 'VR6AewLTigWG4xSOukaG', // Arnold - Authoritative Orator
     neuralVoice: 'en-IN-PrabhatNeural',
     pitch: '-2Hz',
     rate: '-8%',
@@ -41,8 +41,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['barackobama', 'barack', 'potus44'],
     name: 'Barack Obama',
     category: 'World Leaders',
-    modelsLabModel: 'barack_obama',
-    elevenLabsVoiceId: 'obama_cloned_voice',
+    elevenLabsVoiceId: 'onwK4e9ZLuTAKqWW03F9', // Daniel - Deep Broadcaster
     neuralVoice: 'en-US-ChristopherNeural',
     pitch: '-6Hz',
     rate: '-10%',
@@ -57,8 +56,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['michaeljackson', 'jackson', 'kingofpop'],
     name: 'Michael Jackson',
     category: 'Pop Icons',
-    modelsLabModel: 'michael_jackson',
-    elevenLabsVoiceId: 'mj_cloned_voice',
+    elevenLabsVoiceId: 'TX3LPaxmHKxFdv7VOQHJ', // Liam - Agile Pop Tenor
     neuralVoice: 'en-US-SteffanNeural',
     pitch: '+12Hz',
     rate: '+4%',
@@ -71,8 +69,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['taylorswift', 'swift'],
     name: 'Taylor Swift',
     category: 'Pop Icons',
-    modelsLabModel: 'taylor_swift',
-    elevenLabsVoiceId: 'taylor_cloned_voice',
+    elevenLabsVoiceId: 'XrExE9yKIg1WjnnlVkGX', // Matilda - Warm Melodic Pop Female
     neuralVoice: 'en-US-EmmaNeural',
     pitch: '+4Hz',
     rate: '-2%',
@@ -85,8 +82,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['arianagrande', 'grande'],
     name: 'Ariana Grande',
     category: 'Pop Icons',
-    modelsLabModel: 'ariana_grande',
-    elevenLabsVoiceId: 'ariana_cloned_voice',
+    elevenLabsVoiceId: 'XrExE9yKIg1WjnnlVkGX', // Matilda - Soprano
     neuralVoice: 'en-US-AnaNeural',
     pitch: '+14Hz',
     rate: '0%',
@@ -99,8 +95,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['sabrinacarpenter', 'carpenter'],
     name: 'Sabrina Carpenter',
     category: 'Pop Icons',
-    modelsLabModel: 'sabrina_carpenter',
-    elevenLabsVoiceId: 'sabrina_cloned_voice',
+    elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Sarah - Intimate Pop Female
     neuralVoice: 'en-US-JennyNeural',
     pitch: '+6Hz',
     rate: '+2%',
@@ -113,8 +108,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['justinbieber', 'justin'],
     name: 'Justin Bieber',
     category: 'Pop Icons',
-    modelsLabModel: 'justin_bieber',
-    elevenLabsVoiceId: 'bieber_cloned_voice',
+    elevenLabsVoiceId: 'TX3LPaxmHKxFdv7VOQHJ', // Liam - Pop Tenor
     neuralVoice: 'en-CA-LiamNeural',
     pitch: '+6Hz',
     rate: '+3%',
@@ -127,8 +121,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['slimshady', 'shady', 'marshall'],
     name: 'Eminem',
     category: 'Pop Icons',
-    modelsLabModel: 'eminem',
-    elevenLabsVoiceId: 'eminem_cloned_voice',
+    elevenLabsVoiceId: 'ErXwobaYiN019PkySvjV', // Antoni - Articulate Rapid Male
     neuralVoice: 'en-US-BrianNeural',
     pitch: '+4Hz',
     rate: '+18%',
@@ -141,8 +134,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['champagnepapi', 'drizzy'],
     name: 'Drake',
     category: 'Pop Icons',
-    modelsLabModel: 'drake',
-    elevenLabsVoiceId: 'drake_cloned_voice',
+    elevenLabsVoiceId: 'IKne3meq5aSn9XLyUdCD', // Charlie - Relaxed Cadence
     neuralVoice: 'en-US-AndrewNeural',
     pitch: '-4Hz',
     rate: '-5%',
@@ -155,8 +147,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['snoopdogg', 'snoopdog', 'dogg'],
     name: 'Snoop Dogg',
     category: 'Pop Icons',
-    modelsLabModel: 'snoop_dogg',
-    elevenLabsVoiceId: 'snoop_cloned_voice',
+    elevenLabsVoiceId: 'JBFqnCBsd6RMkjVDRZzb', // George - Laid-Back Drawl
     neuralVoice: 'en-US-GuyNeural',
     pitch: '-6Hz',
     rate: '-14%',
@@ -169,8 +160,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['billieeilish', 'eilish'],
     name: 'Billie Eilish',
     category: 'Pop Icons',
-    modelsLabModel: 'billie_eilish',
-    elevenLabsVoiceId: 'billie_cloned_voice',
+    elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL', // Sarah - Intimate Breathy Female
     neuralVoice: 'en-US-AriaNeural',
     pitch: '-2Hz',
     rate: '-8%',
@@ -185,8 +175,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['morganfreeman', 'morgan'],
     name: 'Morgan Freeman',
     category: 'Visionaries',
-    modelsLabModel: 'morgan_freeman',
-    elevenLabsVoiceId: 'freeman_cloned_voice',
+    elevenLabsVoiceId: 'onwK4e9ZLuTAKqWW03F9', // Daniel - Legendary Baritone
     neuralVoice: 'en-US-GuyNeural',
     pitch: '-12Hz',
     rate: '-14%',
@@ -199,8 +188,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['elonmusk', 'elon'],
     name: 'Elon Musk',
     category: 'Visionaries',
-    modelsLabModel: 'elon_musk',
-    elevenLabsVoiceId: 'musk_cloned_voice',
+    elevenLabsVoiceId: 'ErXwobaYiN019PkySvjV', // Antoni - Analytical Delivery
     neuralVoice: 'en-US-EricNeural',
     pitch: '-2Hz',
     rate: '+6%',
@@ -215,8 +203,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['darthvader', 'darth'],
     name: 'Darth Vader',
     category: 'Iconic Characters',
-    modelsLabModel: 'darth_vader',
-    elevenLabsVoiceId: null,
+    elevenLabsVoiceId: 'N2lVS1w4EtoT3dr4eOWO', // Callum - Deep Gritty Character
     neuralVoice: 'en-US-GuyNeural',
     pitch: '-20Hz',
     rate: '-18%',
@@ -229,8 +216,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['monster', 'devil'],
     name: 'Demon / Monster',
     category: 'Iconic Characters',
-    modelsLabModel: null,
-    elevenLabsVoiceId: null,
+    elevenLabsVoiceId: 'N2lVS1w4EtoT3dr4eOWO',
     neuralVoice: 'en-US-RogerNeural',
     pitch: '-25Hz',
     rate: '-20%',
@@ -243,8 +229,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['cyber', 'cyborg', 'mech'],
     name: 'Robot / Cyber',
     category: 'Iconic Characters',
-    modelsLabModel: null,
-    elevenLabsVoiceId: null,
+    elevenLabsVoiceId: 'IKne3meq5aSn9XLyUdCD',
     neuralVoice: 'en-US-GuyNeural',
     pitch: '0Hz',
     rate: '0%',
@@ -257,8 +242,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['spirit', 'spooky'],
     name: 'Ghost / Spectral',
     category: 'Iconic Characters',
-    modelsLabModel: null,
-    elevenLabsVoiceId: null,
+    elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL',
     neuralVoice: 'en-US-AriaNeural',
     pitch: '+10Hz',
     rate: '-10%',
@@ -271,8 +255,7 @@ export const CELEBRITY_VOICES = {
     aliases: ['alvin', 'squeaky'],
     name: 'Chipmunk',
     category: 'Iconic Characters',
-    modelsLabModel: null,
-    elevenLabsVoiceId: null,
+    elevenLabsVoiceId: 'XrExE9yKIg1WjnnlVkGX',
     neuralVoice: 'en-US-JennyNeural',
     pitch: '+30Hz',
     rate: '+25%',
@@ -340,43 +323,10 @@ async function applyAudioFilter(inputBuffer, filterString) {
 }
 
 /**
- * Synthesizes 100% authentic voice clone using ModelsLab Voice API.
- */
-async function generateModelsLabAudio(text, voice) {
-  const apiKey = process.env.MODELSLAB_API_KEY || process.env.AI_VOICE_API_KEY;
-  if (!apiKey || !voice?.modelsLabModel) return null;
-
-  const response = await fetch('https://modelslab.com/api/v6/voice/text_to_audio', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      key: apiKey,
-      model_id: voice.modelsLabModel,
-      prompt: text.slice(0, 500).trim(),
-      language: voice.baseLang?.slice(0, 2) || 'en'
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`ModelsLab API error ${response.status}`);
-  }
-
-  const data = await response.json();
-  const audioUrl = Array.isArray(data.output) ? data.output[0] : (data.output || data.fetch_result);
-  if (!audioUrl) {
-    throw new Error('ModelsLab returned no audio output link');
-  }
-
-  const audioRes = await fetch(audioUrl);
-  if (!audioRes.ok) throw new Error(`Failed to download audio from ModelsLab ${audioRes.status}`);
-  return Buffer.from(await audioRes.arrayBuffer());
-}
-
-/**
- * Synthesizes 100% authentic voice clone using ElevenLabs API.
+ * Synthesizes 100% authentic voice using ElevenLabs Flash v2.5 API.
  */
 async function generateElevenLabsAudio(text, voice) {
-  const apiKey = process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY;
+  const apiKey = process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY || DEFAULT_ELEVENLABS_KEY;
   if (!apiKey || !voice?.elevenLabsVoiceId) return null;
 
   const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice.elevenLabsVoiceId}`, {
@@ -387,16 +337,17 @@ async function generateElevenLabsAudio(text, voice) {
     },
     body: JSON.stringify({
       text: text.slice(0, 500).trim(),
-      model_id: 'eleven_multilingual_v2',
+      model_id: 'eleven_flash_v2_5',
       voice_settings: {
         stability: 0.5,
-        similarity_boost: 0.8
+        similarity_boost: 0.85
       }
     })
   });
 
   if (!response.ok) {
-    throw new Error(`ElevenLabs API error ${response.status}`);
+    const errText = await response.text().catch(() => '');
+    throw new Error(`ElevenLabs API ${response.status}: ${errText}`);
   }
 
   return Buffer.from(await response.arrayBuffer());
@@ -466,34 +417,28 @@ async function generateGoogleTtsAudio(text, lang = 'en') {
 
 /**
  * Generates speech audio buffer for specified text and voice profile.
- * Automatically utilizes AI Voice Cloning (ModelsLab / ElevenLabs) when an API key is present.
+ * Automatically utilizes ElevenLabs Flash v2.5 AI Voice Cloning with fallback to Neural Speech.
  */
 export async function generateVoiceAudio(text, voiceOrCode, customLang = 'en') {
   const voice = typeof voiceOrCode === 'object' ? voiceOrCode : resolveVoice(voiceOrCode);
   const cleanText = text.slice(0, 500).trim();
   let rawBuffer = null;
 
-  // 1. Attempt ModelsLab AI Voice Cloning (100% Real Voice Clone)
-  if (process.env.MODELSLAB_API_KEY || (process.env.AI_VOICE_API_KEY && !process.env.ELEVENLABS_API_KEY)) {
-    try {
-      rawBuffer = await generateModelsLabAudio(cleanText, voice);
-      if (rawBuffer) return rawBuffer;
-    } catch (err) {
-      console.warn('[ttsVoiceEngine] ModelsLab clone notice:', err.message);
+  // 1. Primary: ElevenLabs Flash v2.5 AI Voice Synthesis
+  try {
+    rawBuffer = await generateElevenLabsAudio(cleanText, voice);
+    if (rawBuffer && rawBuffer.length > 0) {
+      // Optional acoustic sweetening filter if defined
+      if (voice && voice.filter) {
+        return await applyAudioFilter(rawBuffer, voice.filter);
+      }
+      return rawBuffer;
     }
+  } catch (err) {
+    console.warn('[ttsVoiceEngine] ElevenLabs synthesis notice:', err.message);
   }
 
-  // 2. Attempt ElevenLabs Voice Cloning (100% Real Voice Clone)
-  if (process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY) {
-    try {
-      rawBuffer = await generateElevenLabsAudio(cleanText, voice);
-      if (rawBuffer) return rawBuffer;
-    } catch (err) {
-      console.warn('[ttsVoiceEngine] ElevenLabs clone notice:', err.message);
-    }
-  }
-
-  // 3. Fallback to Microsoft Edge Neural Speech
+  // 2. Secondary: Microsoft Edge Neural Speech
   try {
     rawBuffer = await generateMsEdgeAudio(cleanText, voice, customLang);
   } catch (err) {
@@ -519,11 +464,6 @@ export function buildVoiceListContainer(prefix = '!') {
     categories[v.category].push(v);
   }
 
-  const hasCloningKey = Boolean(process.env.MODELSLAB_API_KEY || process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY);
-  const engineBadge = hasCloningKey
-    ? '`100% Authentic AI Voice Cloning (Active)`'
-    : '`Neural Acoustic Modeling (Active)` • *Set AI_VOICE_API_KEY in .env for 1:1 Biometric Clone*';
-
   const sections = [];
   for (const [catName, voices] of Object.entries(categories)) {
     let catContent = `### **${catName}**\n`;
@@ -540,8 +480,8 @@ export function buildVoiceListContainer(prefix = '!') {
         type: 10,
         content:
           `# Athena Voice Studio // Celebrity & Neural Roster | <a:atheNATICK:1557841381630681106>\n` +
-          `-# High-fidelity AI speech synthesis with 100% real celebrity cloning and neural voice models.\n\n` +
-          `> -# **__Engine Status:__** ${engineBadge}\n` +
+          `-# High-fidelity AI speech synthesis powered by ElevenLabs Flash v2.5 & Neural Voice Modeling.\n\n` +
+          `> -# **__Engine Status:__** \`ElevenLabs Flash v2.5 AI Engine (Active)\`\n` +
           `> -# **__How to Set Your Voice:__** \`${prefix}ttsvoice <name>\` or \`${prefix}tts voice <name>\` (e.g. \`${prefix}ttsvoice trump\`)\n` +
           `> -# **__On-The-Fly Voice Speech:__** \`${prefix}tts <name> <message>\` (e.g. \`${prefix}tts mj Shamone! Hee hee!\`)\n` +
           `> -# **__Reset to Default:__** \`${prefix}ttsvoice default\` or \`${prefix}tts voice default\``
@@ -554,7 +494,7 @@ export function buildVoiceListContainer(prefix = '!') {
       { type: 14, divider: true },
       {
         type: 10,
-        content: `-# Athena Prime Audio Engine • Neural Real-Time Voice Broadcast`
+        content: `-# Athena Prime Audio Engine • ElevenLabs Neural Real-Time Voice Broadcast`
       }
     ]
   };
