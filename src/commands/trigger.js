@@ -953,6 +953,7 @@ export function buildTriggerDashboard(guild, page = 0) {
   const triggers = db.getTriggersOnly(guild.id);
   const globalTriggers = db.getGlobalTriggers();
   const config = db.getGuildConfig(guild.id);
+  const prefix = config.prefix || '!';
   const accentHex = config.accentColor || '#5865F2';
   const accentInt = parseInt(accentHex.replace('#', ''), 16);
 
@@ -961,7 +962,7 @@ export function buildTriggerDashboard(guild, page = 0) {
   const currentPage = Math.max(0, Math.min(page, totalPages - 1));
   const pageTriggers = triggers.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
-  let triggersContent = '-# • **No server triggers configured yet.** Click **Create Trigger** below to add one!';
+  let triggersContent = `-# • **No server triggers configured yet.**\n-# • For a simple usual trigger setup, use: \`${prefix}trigger create <match> | <response>\`\n-# • Or click the **Create Trigger** button below to set one up!`;
   if (triggers.length > 0) {
     triggersContent = pageTriggers.map((t, idx) => {
       const globalIdx = currentPage * itemsPerPage + idx + 1;
@@ -988,9 +989,20 @@ export function buildTriggerDashboard(guild, page = 0) {
         `-# • **Active Server Triggers:** **${triggers.length} configured**\n` +
         `-# • **Global Network Replies:** **${globalTriggers.length} active**\n` +
         `-# • **Page:** **${currentPage + 1} of ${totalPages}**\n` +
-        `-# • **Sync Status:** **Synchronized with Auto-Reply Matrix (!ar)**\n` +
+        `-# • **Sync Status:** **Synchronized with Auto-Reply Matrix (${prefix}ar)**\n` +
         `-# • **Removal Access:** **Server Admins / Extra Owner**\n` +
         `-# • **Dynamic Tags:** **Supports {user}, {server}, {count}, etc.**`
+    },
+    { type: 14, divider: true },
+    {
+      type: 10,
+      content:
+        `-# **__Simple & Fast Setup Command__**\n` +
+        `-# • **For simple usual trigger setup, use the command:**\n` +
+        `> \`${prefix}trigger create <match> | <response>\`\n` +
+        `-# • **Example:** \`${prefix}trigger create hello | Hello {user}, welcome to {server}!\`\n` +
+        `-# • **Direct Shortcut:** \`${prefix}trigger <match> | <response>\`\n` +
+        `-# • **Quick Delete:** \`${prefix}trigger delete <match>\` • **List:** \`${prefix}trigger list\``
     },
     { type: 14, divider: true },
     {
@@ -1091,7 +1103,7 @@ export function buildTriggerDashboard(guild, page = 0) {
   containerComps.push({ type: 14, divider: true });
   containerComps.push({
     type: 10,
-    content: '-# Athena Prime Defense Matrix • Trigger Response System'
+    content: `-# Athena Prime Defense Matrix • Trigger Response System • ${prefix}trigger create <match> | <response>`
   });
 
   return {
