@@ -373,6 +373,8 @@ export default {
     }
 
     // --- UNAUTHORIZED NUKE BOT SPAM AUTO-DELETE ---
+    // Only intercepts malicious spam attacks (mass pings @everyone/@here, raid invites, or flood bursts).
+    // Legitimate server bot messages (e.g. Rythm playing music, VC announcements, player embeds) are completely preserved!
     if (message.guild && message.author.bot && message.author.id !== message.client.user.id && !message.webhookId) {
         try {
             const config = db.getGuildConfig(message.guild.id);
@@ -387,27 +389,46 @@ export default {
                     } catch(e) {}
                     
                     if (!authorized) {
-                        await message.delete().catch(() => null);
+                        const content = message.content || '';
+                        const isMassPing = content.includes('@everyone') || content.includes('@here');
+                        const hasInvite = /(?:https?:\/\/)?(?:www\.)?(?:discord\.(?:gg|io|me|li)|discord(?:app)?\.com\/invite)\/[a-zA-Z0-9]+/i.test(content);
                         
-                        if (!message.client.nukeSpamLogs) message.client.nukeSpamLogs = new Set();
-                        if (!message.client.nukeSpamLogs.has(message.author.id)) {
-                            message.client.nukeSpamLogs.add(message.author.id);
-                            setTimeout(() => message.client.nukeSpamLogs.delete(message.author.id), 60000);
+                        // Track rapid-fire flood bursts from unauthorized bots (> 5 messages in 2 seconds)
+                        if (!message.client.botFloodTracker) message.client.botFloodTracker = new Map();
+                        const floodKey = `${message.guild.id}-${message.author.id}`;
+                        const now = Date.now();
+                        const timestamps = (message.client.botFloodTracker.get(floodKey) || []).filter(t => now - t < 2000);
+                        timestamps.push(now);
+                        message.client.botFloodTracker.set(floodKey, timestamps);
+                        const isFlooding = timestamps.length > 5;
+
+                        // ONLY delete if the bot is actually committing malicious spam/raid activity
+                        if (isMassPing || hasInvite || isFlooding) {
+                            await message.delete().catch(() => null);
                             
-                            const embed = cv2.warn(
-                                'ATHENA FIREWALL — UNAUTHORIZED SPAM BLOCKED',
-                                `An unauthorized bot <@${message.author.id}> attempted to spam the server. Athena intercepted and instantly deleted the message.`,
-                                [
-                                    { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
-                                    { name: 'Status', value: '**Message Deleted**', inline: true }
-                                ],
-                                'shield'
-                            );
-                            
-                            // Dynamically import logToSecurityChannel to avoid circular deps if needed
-                            import('../utils/antinuke.js').then(m => {
-                                if (m.logToSecurityChannel) m.logToSecurityChannel(message.guild, embed).catch(()=>{});
-                            }).catch(()=>{});
+                            if (!message.client.nukeSpamLogs) message.client.nukeSpamLogs = new Set();
+                            if (!message.client.nukeSpamLogs.has(message.author.id)) {
+                                message.client.nukeSpamLogs.add(message.author.id);
+                                setTimeout(() => message.client.nukeSpamLogs.delete(message.author.id), 60000);
+                                
+                                const reasonText = isMassPing 
+                                    ? 'Unauthorized Mass Mention (@everyone/@here)' 
+                                    : (hasInvite ? 'Unauthorized Discord Invite Link' : 'Rapid Message Flood Burst (>5 msgs/2s)');
+                                const embed = cv2.warn(
+                                    'ATHENA FIREWALL — UNAUTHORIZED BOT SPAM BLOCKED',
+                                    `An unauthorized bot <@${message.author.id}> attempted malicious spam (${reasonText}). Athena intercepted and instantly deleted the spam message.`,
+                                    [
+                                        { name: 'Channel', value: `<#${message.channel.id}>`, inline: true },
+                                        { name: 'Attack Type', value: `\`${reasonText}\``, inline: true }
+                                    ],
+                                    'shield'
+                                );
+                                
+                                // Dynamically import logToSecurityChannel to avoid circular deps if needed
+                                import('../utils/antinuke.js').then(m => {
+                                    if (m.logToSecurityChannel) m.logToSecurityChannel(message.guild, embed).catch(()=>{});
+                                }).catch(()=>{});
+                            }
                         }
                     }
                 }
@@ -1848,7 +1869,9 @@ export default {
 
     if (!isBotCommand) {
       const serverTriggers = db.getTriggers(guildId);
-      const globalTriggers = db.getGlobalTriggers();
+      const rawGlobalTriggers = db.getGlobalTriggers();
+      // Filter out global triggers that have been disabled specifically for this server
+      const globalTriggers = rawGlobalTriggers.filter(gt => !db.isGlobalTriggerDisabled(guildId, gt.match));
       // Server-specific triggers take precedence over global triggers
       const allTriggers = [...serverTriggers, ...globalTriggers];
       
@@ -1856,11 +1879,31 @@ export default {
         if (!t.match) continue;
         
         if (matchesTrigger(message.content, t.match)) {
-          const autoReplyContainer = buildAutoReplyPreview(message.guild, t, message.member || message.author);
+          if (t.type === 'trigger') {
+            // Direct Trigger Response
+            const { resolvePlaceholders } = await import('../commands/welcome.js');
+            const userOrMember = message.member || message.author;
+            const body = t.content || t.response || '';
+            const resolvedText = resolvePlaceholders(body, userOrMember, message.guild);
 
-          await message.reply({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
-            message.channel.send({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
-          });
+            if (t.heading || t.gif || t.footer) {
+              const triggerContainer = buildAutoReplyPreview(message.guild, t, userOrMember);
+              await message.reply({ components: [triggerContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
+                message.channel.send({ components: [triggerContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+              });
+            } else if (resolvedText) {
+              await message.reply({ content: resolvedText }).catch(() => {
+                message.channel.send({ content: resolvedText }).catch(() => null);
+              });
+            }
+          } else {
+            // Standard Auto-Reply (CV2 accent borderless container)
+            const autoReplyContainer = buildAutoReplyPreview(message.guild, t, message.member || message.author);
+
+            await message.reply({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
+              message.channel.send({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+            });
+          }
           break; // Reply only once per message
         }
       }

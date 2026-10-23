@@ -421,6 +421,12 @@ export default {
     return handleAutoReplyInteractions(interaction);
   }
 
+  // TRIGGER MATRIX INTERACTIONS
+  if (interaction.customId?.startsWith('trig_')) {
+    const { handleTriggerInteractions } = await import('../commands/trigger.js');
+    return handleTriggerInteractions(interaction);
+  }
+
   // --- APP BUILDER ---
   // XP STRING SELECT MENU (Announcement Mode)
       if (interaction.isStringSelectMenu() && interaction.customId === 'xp_mode_select') {

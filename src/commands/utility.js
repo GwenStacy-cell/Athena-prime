@@ -1759,6 +1759,7 @@ export const helpModules = [
     "`!youtube add|remove|list` - Configure YouTube video upload notification alerts `[Extra Owner]`",
     "`!ccmd / !customcmd add <trigger> <reply>` - Create a custom command response `[Extra Owner]`",
     "`!autoreply / !ar` - Custom keyword auto-replies with accent borderless CV2 embeds, GIFs & direct Pinterest links `[Extra Owner]`",
+    "`!trigger / !trig` - Dynamic trigger word responses synced with !ar (remove trigger setup: Bot Owner only) `[Extra Owner / Bot Owner]`",
     "`!rrsetup / !reactionrole` - Interactive Reaction Role builder `[Extra Owner]`",
     "`!giveaway / !gw` - Manage server giveaways `[Extra Owner]`",
     "`!date / !go-on-date @user` - Go on a special interactive date `[Public]`",

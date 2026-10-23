@@ -1196,6 +1196,7 @@ class Database {
       content: triggerData.content || triggerData.response || '',
       gif: triggerData.gif || null,
       footer: triggerData.footer || null,
+      type: triggerData.type || 'ar',
       updatedAt: Date.now()
     };
 
@@ -1244,6 +1245,69 @@ class Database {
     if (!this.cache.triggers) return false;
     this.cache.triggers[guildId] = [];
     this.save();
+    return true;
+  }
+
+  clearAutoReplies(guildId) {
+    if (!this.cache.triggers || !this.cache.triggers[guildId]) return false;
+    this.cache.triggers[guildId] = this.cache.triggers[guildId].filter(t => t.type === 'trigger');
+    this.save();
+    return true;
+  }
+
+  clearTriggersOnly(guildId) {
+    if (!this.cache.triggers || !this.cache.triggers[guildId]) return false;
+    this.cache.triggers[guildId] = this.cache.triggers[guildId].filter(t => t.type !== 'trigger');
+    this.save();
+    return true;
+  }
+
+  getAutoReplies(guildId) {
+    if (!this.cache.triggers || !this.cache.triggers[guildId]) return [];
+    return this.cache.triggers[guildId].filter(t => t.type !== 'trigger');
+  }
+
+  getTriggersOnly(guildId) {
+    if (!this.cache.triggers || !this.cache.triggers[guildId]) return [];
+    return this.cache.triggers[guildId].filter(t => t.type === 'trigger');
+  }
+
+  getAutoReply(guildId, match) {
+    if (!this.cache.triggers || !this.cache.triggers[guildId]) return null;
+    const matchLower = (match || '').trim().toLowerCase();
+    return this.cache.triggers[guildId].find(t => t.match.toLowerCase() === matchLower && t.type !== 'trigger') || null;
+  }
+
+  getTriggerOnly(guildId, match) {
+    if (!this.cache.triggers || !this.cache.triggers[guildId]) return null;
+    const matchLower = (match || '').trim().toLowerCase();
+    return this.cache.triggers[guildId].find(t => t.match.toLowerCase() === matchLower && t.type === 'trigger') || null;
+  }
+
+  isGlobalTriggerDisabled(guildId, match) {
+    const config = this.getGuildConfig(guildId);
+    if (!config || !Array.isArray(config.disabledGlobalTriggers)) return false;
+    const matchLower = (match || '').trim().toLowerCase();
+    return config.disabledGlobalTriggers.some(m => m.toLowerCase() === matchLower);
+  }
+
+  disableGlobalTriggerForGuild(guildId, match) {
+    const config = this.getGuildConfig(guildId);
+    const matchLower = (match || '').trim().toLowerCase();
+    const list = Array.isArray(config?.disabledGlobalTriggers) ? [...config.disabledGlobalTriggers] : [];
+    if (!list.some(m => m.toLowerCase() === matchLower)) {
+      list.push(matchLower);
+      this.updateGuildConfig(guildId, { disabledGlobalTriggers: list });
+    }
+    return true;
+  }
+
+  enableGlobalTriggerForGuild(guildId, match) {
+    const config = this.getGuildConfig(guildId);
+    if (!config || !Array.isArray(config?.disabledGlobalTriggers)) return true;
+    const matchLower = (match || '').trim().toLowerCase();
+    const list = config.disabledGlobalTriggers.filter(m => m.toLowerCase() !== matchLower);
+    this.updateGuildConfig(guildId, { disabledGlobalTriggers: list });
     return true;
   }
 
