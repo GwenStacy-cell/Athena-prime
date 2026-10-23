@@ -869,6 +869,19 @@ export async function handleAutoReplyInteractions(interaction) {
 // ==========================================
 export const pendingTriggerConflicts = new Map();
 
+export function canManageTriggers(guild, userOrMember) {
+  if (!guild || !userOrMember) return false;
+  const userId = userOrMember.id || userOrMember;
+  if (isBotOwnerSync(userId)) return true;
+  if (guild.ownerId === userId) return true;
+  if (db.isExtraOwner(guild.id, userId)) return true;
+  const member = guild.members.cache.get(userId) || (userOrMember.permissions ? userOrMember : null);
+  if (member?.permissions?.has(PermissionFlagsBits.ManageGuild) || member?.permissions?.has(PermissionFlagsBits.Administrator)) {
+    return true;
+  }
+  return false;
+}
+
 export function buildConflictPromptPayload(guild, confKey, conf) {
   const config = db.getGuildConfig(guild.id);
   const accentHex = config.accentColor || '#5865F2';
@@ -976,7 +989,7 @@ export function buildTriggerDashboard(guild, page = 0) {
         `-# • **Global Network Replies:** **${globalTriggers.length} active**\n` +
         `-# • **Page:** **${currentPage + 1} of ${totalPages}**\n` +
         `-# • **Sync Status:** **Synchronized with Auto-Reply Matrix (!ar)**\n` +
-        `-# • **Removal Security:** **Restricted to Bot Owner Only**\n` +
+        `-# • **Removal Access:** **Server Admins / Extra Owner**\n` +
         `-# • **Dynamic Tags:** **Supports {user}, {server}, {count}, etc.**`
     },
     { type: 14, divider: true },
@@ -996,7 +1009,7 @@ export function buildTriggerDashboard(guild, page = 0) {
     { type: 2, custom_id: 'trig_btn_test_modal', label: 'Test / Preview', style: 2 }
   ];
   if (triggers.length > 0) {
-    mainControls.push({ type: 2, custom_id: 'trig_btn_clear_all', label: 'Clear All (Owner Only)', style: 4 });
+    mainControls.push({ type: 2, custom_id: 'trig_btn_clear_all', label: 'Clear All', style: 4 });
   }
 
   containerComps.push({
@@ -1011,7 +1024,7 @@ export function buildTriggerDashboard(guild, page = 0) {
       return {
         type: 2,
         custom_id: `trig_btn_del_${Buffer.from(t.match).toString('base64url')}`,
-        label: `Remove: ${label} (Owner)`,
+        label: `Remove: ${label}`,
         style: 4
       };
     });
@@ -1056,9 +1069,9 @@ export function buildTriggerDashboard(guild, page = 0) {
 
     if (triggers.length > 5) {
       const deleteOptions = triggers.slice(0, 25).map(t => ({
-        label: `Delete: ${t.match} (Owner Only)`.slice(0, 100),
+        label: `Delete: ${t.match}`.slice(0, 100),
         value: t.match.slice(0, 100),
-        description: `Delete trigger "${t.match}" (Bot Owner Required)`.slice(0, 100)
+        description: `Delete trigger "${t.match}"`.slice(0, 100)
       }));
 
       containerComps.push({
@@ -1067,7 +1080,7 @@ export function buildTriggerDashboard(guild, page = 0) {
           {
             type: 3,
             custom_id: 'trig_select_delete',
-            placeholder: 'Or Select any Trigger to Remove (Owner Only)...',
+            placeholder: 'Or Select any Trigger to Remove...',
             options: deleteOptions
           }
         ]
@@ -1194,11 +1207,11 @@ export async function handleTriggerInteractions(interaction) {
 
     // 2. DASHBOARD BUTTONS
     if (interaction.isButton()) {
-      // Direct Delete button for a trigger (BOT OWNER ONLY)
+      // Direct Delete button for a trigger (Server Admins / Extra Owner)
       if (interaction.customId.startsWith('trig_btn_del_')) {
-        if (!isBotOwnerSync(interaction.user.id)) {
+        if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
           return interaction.reply({
-            content: '-# **Access Denied:** Removing trigger setups is restricted to the **Bot Owner only**.\n-# **Security Policy:** Contact the Bot Owner to remove or delete trigger word setups.',
+            content: '-# **Access Denied:** Removing trigger setups requires **Server Admin** or **Extra Owner** permissions.',
             flags: 64
           });
         }
@@ -1231,11 +1244,11 @@ export async function handleTriggerInteractions(interaction) {
         return cv2.respond(interaction, panel, 7);
       }
 
-      // Clear All (BOT OWNER ONLY)
+      // Clear All (Server Admins / Extra Owner)
       if (interaction.customId === 'trig_btn_clear_all') {
-        if (!isBotOwnerSync(interaction.user.id)) {
+        if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
           return interaction.reply({
-            content: '-# **Access Denied:** Clearing trigger setups is restricted to the **Bot Owner only**.\n-# **Security Policy:** Only the Bot Owner can wipe all trigger setups.',
+            content: '-# **Access Denied:** Clearing trigger setups requires **Server Admin** or **Extra Owner** permissions.',
             flags: 64
           });
         }
@@ -1262,6 +1275,12 @@ export async function handleTriggerInteractions(interaction) {
 
       // Create Modal
       if (interaction.customId === 'trig_btn_create') {
+        if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
+          return interaction.reply({
+            content: '-# **Access Denied:** Creating triggers requires **Server Admin** or **Extra Owner** permissions.',
+            flags: 64
+          });
+        }
         const modal = new ModalBuilder().setCustomId('trig_modal_create').setTitle('Create Trigger');
         modal.addComponents(
           new ActionRowBuilder().addComponents(
@@ -1313,6 +1332,12 @@ export async function handleTriggerInteractions(interaction) {
     if (interaction.isStringSelectMenu()) {
       // Select menu to edit
       if (interaction.customId === 'trig_select_edit') {
+        if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
+          return interaction.reply({
+            content: '-# **Access Denied:** Editing triggers requires **Server Admin** or **Extra Owner** permissions.',
+            flags: 64
+          });
+        }
         const match = interaction.values[0];
         const trigger = db.getTriggerOnly(interaction.guild.id, match) || db.getTrigger(interaction.guild.id, match);
         if (!trigger) {
@@ -1368,11 +1393,11 @@ export async function handleTriggerInteractions(interaction) {
         return interaction.showModal(modal);
       }
 
-      // Select menu to delete (BOT OWNER ONLY)
+      // Select menu to delete (Server Admins / Extra Owner)
       if (interaction.customId === 'trig_select_delete') {
-        if (!isBotOwnerSync(interaction.user.id)) {
+        if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
           return interaction.reply({
-            content: '-# **Access Denied:** Removing trigger setups is restricted to the **Bot Owner only**.',
+            content: '-# **Access Denied:** Removing trigger setups requires **Server Admin** or **Extra Owner** permissions.',
             flags: 64
           });
         }
@@ -1387,6 +1412,12 @@ export async function handleTriggerInteractions(interaction) {
     // 4. MODAL SUBMITS
     if (interaction.isModalSubmit()) {
       if (interaction.customId === 'trig_modal_create') {
+        if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
+          return interaction.reply({
+            content: '-# **Access Denied:** Creating triggers requires **Server Admin** or **Extra Owner** permissions.',
+            flags: 64
+          });
+        }
         const match = interaction.fields.getTextInputValue('trig_keyword').trim();
         const content = interaction.fields.getTextInputValue('trig_content').trim();
         const heading = interaction.fields.getTextInputValue('trig_heading')?.trim() || null;
@@ -1426,6 +1457,12 @@ export async function handleTriggerInteractions(interaction) {
       }
 
       if (interaction.customId.startsWith('trig_modal_edit_')) {
+        if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
+          return interaction.reply({
+            content: '-# **Access Denied:** Editing triggers requires **Server Admin** or **Extra Owner** permissions.',
+            flags: 64
+          });
+        }
         const raw = interaction.customId.replace('trig_modal_edit_', '');
         let oldMatch;
         try {
@@ -1807,6 +1844,44 @@ export const triggerCmd = {
   permissions: [PermissionFlagsBits.ManageGuild],
   options: [
     {
+      name: 'create',
+      description: 'Create a new keyword trigger',
+      type: 1, // SUB_COMMAND
+      options: [
+        { name: 'keyword', description: 'Keyword to trigger the response', type: 3, required: true },
+        { name: 'response', description: 'Response text for the trigger', type: 3, required: true },
+        { name: 'heading', description: 'Title heading (optional)', type: 3, required: false },
+        { name: 'gif', description: 'Direct image, GIF or Pinterest URL (optional)', type: 3, required: false },
+        { name: 'footer', description: 'Custom unique footer text (optional)', type: 3, required: false }
+      ]
+    },
+    {
+      name: 'delete',
+      description: 'Delete a trigger word response (Server Admins / Extra Owner)',
+      type: 1, // SUB_COMMAND
+      options: [
+        { name: 'keyword', description: 'Keyword to delete', type: 3, required: true }
+      ]
+    },
+    {
+      name: 'list',
+      description: 'List all active triggers in this server',
+      type: 1 // SUB_COMMAND
+    },
+    {
+      name: 'clear',
+      description: 'Clear all triggers in this server (Server Admins / Extra Owner)',
+      type: 1 // SUB_COMMAND
+    },
+    {
+      name: 'test',
+      description: 'Test/preview a trigger response',
+      type: 1, // SUB_COMMAND
+      options: [
+        { name: 'keyword', description: 'Keyword to test', type: 3, required: true }
+      ]
+    },
+    {
       name: 'dashboard',
       description: 'Open the interactive Trigger Matrix Dashboard',
       type: 1 // SUB_COMMAND
@@ -1825,29 +1900,11 @@ export const triggerCmd = {
     },
     {
       name: 'remove',
-      description: 'Remove a trigger word response (Bot Owner Only)',
+      description: 'Remove a trigger word response (Server Admins / Extra Owner)',
       type: 1, // SUB_COMMAND
       options: [
         { name: 'keyword', description: 'Keyword to remove', type: 3, required: true }
       ]
-    },
-    {
-      name: 'clear',
-      description: 'Clear all triggers in this server (Bot Owner Only)',
-      type: 1 // SUB_COMMAND
-    },
-    {
-      name: 'test',
-      description: 'Test/preview a trigger response',
-      type: 1, // SUB_COMMAND
-      options: [
-        { name: 'keyword', description: 'Keyword to test', type: 3, required: true }
-      ]
-    },
-    {
-      name: 'list',
-      description: 'List all active triggers in this server',
-      type: 1 // SUB_COMMAND
     }
   ],
 
@@ -1858,20 +1915,32 @@ export const triggerCmd = {
     }
 
     const sub = args[0].toLowerCase();
+    const fullText = args.join(' ');
+    const isDirectCreate = fullText.includes('|') && !['add', 'create', 'remove', 'delete', 'del', 'clear', 'clearall', 'list', 'test', 'preview', 'dashboard'].includes(sub);
 
-    if (sub === 'add' || sub === 'create') {
-      const rest = args.slice(1).join(' ');
+    if (sub === 'create' || sub === 'add' || isDirectCreate) {
+      if (!canManageTriggers(message.guild, message.member || message.author)) {
+        return message.reply(makeAccentResponse(
+          message.guild,
+          'Access Denied',
+          'Only **Server Admins**, **Extra Owners**, or the **Server Owner** can create triggers.',
+          false
+        ));
+      }
+
+      const rest = isDirectCreate ? fullText : args.slice(1).join(' ');
       const parts = rest.split('|').map(p => p.trim());
       if (parts.length === 0 || !parts[0] || !parts[1]) {
         return message.reply(makeAccentResponse(
           message.guild,
           'Trigger Usage Guide',
-          '`!trigger add <keyword> | <response> | [heading] | [gif] | [footer]`\n\n' +
-          'Examples:\n' +
-          '-# • `!trigger add hello | Hello {user}, welcome to {server}!`\n' +
-          '-# • `!trigger add rules | Please read our rules in <#123456789> | Server Rules | https://pin.it/... | Staff Team`\n\n' +
+          '`!trigger create <match> | <response>`\n\n' +
+          '**Examples:**\n' +
+          '-# • `!trigger create hello | Hello {user}, welcome to {server}!`\n' +
+          '-# • `!trigger create ping | pong`\n' +
+          '-# • `!trigger hello | Direct shortcut response!`\n\n' +
           '> -# • **Placeholders:** `{user}`, `{server}`, `{count}`\n' +
-          '> -# • **Pinterest:** Supports direct pin.it and pinterest.com links',
+          '> -# • **Commands:** `!trigger delete <match>`, `!trigger list`',
           false
         ));
       }
@@ -1921,18 +1990,18 @@ export const triggerCmd = {
       ));
     }
 
-    if (sub === 'remove' || sub === 'delete' || sub === 'del') {
-      if (!isBotOwnerSync(message.author.id)) {
+    if (sub === 'delete' || sub === 'remove' || sub === 'del') {
+      if (!canManageTriggers(message.guild, message.member || message.author)) {
         return message.reply(makeAccentResponse(
           message.guild,
           'Access Denied',
-          'Removing trigger setups is restricted to the **Bot Owner only**.\n-# **Security Policy:** Contact the Bot Owner to remove or delete trigger word setups.',
+          'Only **Server Admins**, **Extra Owners**, or the **Server Owner** can delete triggers.',
           false
         ));
       }
 
       const match = args.slice(1).join(' ').trim();
-      if (!match) return message.reply(makeAccentResponse(message.guild, 'Usage Error', '`!trigger remove <keyword>`', false));
+      if (!match) return message.reply(makeAccentResponse(message.guild, 'Usage Error', '`!trigger delete <keyword>`', false));
 
       const success = db.removeTrigger(message.guild.id, match);
       if (success) {
@@ -1944,11 +2013,11 @@ export const triggerCmd = {
     }
 
     if (sub === 'clear' || sub === 'clearall') {
-      if (!isBotOwnerSync(message.author.id)) {
+      if (!canManageTriggers(message.guild, message.member || message.author)) {
         return message.reply(makeAccentResponse(
           message.guild,
           'Access Denied',
-          'Clearing trigger setups is restricted to the **Bot Owner only**.\n-# **Security Policy:** Only the Bot Owner can wipe all trigger setups.',
+          'Only **Server Admins**, **Extra Owners**, or the **Server Owner** can clear triggers.',
           false
         ));
       }
@@ -1987,7 +2056,14 @@ export const triggerCmd = {
       return interaction.reply({ ...payload });
     }
 
-    if (sub === 'add') {
+    if (sub === 'create' || sub === 'add') {
+      if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
+        return interaction.reply({
+          content: '-# **Access Denied:** Only **Server Admins**, **Extra Owners**, or the **Server Owner** can create triggers.',
+          flags: 64
+        });
+      }
+
       const match = interaction.options.getString('keyword').trim();
       const content = interaction.options.getString('response').trim();
       const heading = interaction.options.getString('heading')?.trim() || null;
@@ -2029,10 +2105,10 @@ export const triggerCmd = {
       ));
     }
 
-    if (sub === 'remove') {
-      if (!isBotOwnerSync(interaction.user.id)) {
+    if (sub === 'delete' || sub === 'remove') {
+      if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
         return interaction.reply({
-          content: '-# **Access Denied:** Removing trigger setups is restricted to the **Bot Owner only**.',
+          content: '-# **Access Denied:** Only **Server Admins**, **Extra Owners**, or the **Server Owner** can delete triggers.',
           flags: 64
         });
       }
@@ -2048,9 +2124,9 @@ export const triggerCmd = {
     }
 
     if (sub === 'clear') {
-      if (!isBotOwnerSync(interaction.user.id)) {
+      if (!canManageTriggers(interaction.guild, interaction.member || interaction.user)) {
         return interaction.reply({
-          content: '-# **Access Denied:** Clearing trigger setups is restricted to the **Bot Owner only**.',
+          content: '-# **Access Denied:** Only **Server Admins**, **Extra Owners**, or the **Server Owner** can clear triggers.',
           flags: 64
         });
       }
