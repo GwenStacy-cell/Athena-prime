@@ -2840,12 +2840,12 @@ async function buildRaidModeStatusPanel(guild) {
     subtitle: `${guild.name.toUpperCase()} // INTRUSION LOCKDOWN`,
     badge: raidModeActive ? 'LOCKDOWN ENGAGED' : autoShieldActive ? 'AUTO-SHIELD ARMED' : 'STANDBY',
     badgeColor: raidModeActive ? '#ef4444' : autoShieldActive ? '#00f0ff' : '#888888',
-    iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+    iconUrl: guild.iconURL({ extension: 'png', size: 256, forceStatic: true }) || null,
     fallbackInitial: guild.name[0] || 'R',
     current: currentLevel,
     total: 100,
     unit: 'ARMOR LVL',
-    accentColor: raidModeActive ? '#ef4444' : autoShieldActive ? '#00f0ff' : '#00ff88',
+    accentColor: raidModeActive ? '#ef4444' : autoShieldActive ? (config?.accentColor || '#00f0ff') : (config?.accentColor || '#00ff88'),
     metrics: [
       { label: 'BURST', value: `${threshold}/${windowSec}s` },
       { label: 'AUTO-SHIELD', value: autoShieldActive ? 'ON' : 'OFF' },
@@ -3238,12 +3238,12 @@ export async function getSecurityHealthPanel(guild) {
     subtitle: `${guild.name.toUpperCase()} // AUDIT INTEGRITY`,
     badge: totalHealthScore >= 80 ? 'HEALTH: OPTIMAL' : totalHealthScore >= 50 ? 'HEALTH: DEGRADED' : 'HEALTH: CRITICAL',
     badgeColor: totalHealthScore >= 80 ? '#00ff88' : totalHealthScore >= 50 ? '#eab308' : '#ef4444',
-    iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+    iconUrl: guild.iconURL({ extension: 'png', size: 256, forceStatic: true }) || null,
     fallbackInitial: guild.name[0] || 'H',
     current: totalHealthScore,
     total: 100,
     unit: 'HEALTH SCORE',
-    accentColor: totalHealthScore >= 80 ? '#00ff88' : totalHealthScore >= 50 ? '#f97316' : '#ef4444',
+    accentColor: totalHealthScore >= 80 ? (config?.accentColor || '#00ff88') : totalHealthScore >= 50 ? '#f97316' : '#ef4444',
     metrics: [
       { label: 'HEALTH', value: `${totalHealthScore}%` },
       { label: 'LATENCY', value: `${socketLatencyMs}ms` },
@@ -3353,22 +3353,23 @@ export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
   let targetAvatarUrl = null;
   if (type === 'users') {
     const member = await guild.members.fetch(targetId).catch(() => null);
-    targetAvatarUrl = member?.user?.displayAvatarURL ? member.user.displayAvatarURL({ extension: 'png', size: 256 }) : null;
+    targetAvatarUrl = member?.user?.displayAvatarURL ? member.user.displayAvatarURL({ extension: 'png', size: 256, forceStatic: true }) : null;
   } else {
-    targetAvatarUrl = guild.iconURL({ dynamic: true, size: 256 });
+    targetAvatarUrl = guild.iconURL({ extension: 'png', size: 256, forceStatic: true });
   }
 
+  const wlAccessAccent = config?.accentColor || '#00f0ff';
   const bannerAttachment = await generateCommandStatusBanner({
     title: 'WHITELIST ACCESS CLEARANCE',
     subtitle: `${targetName.toUpperCase()} // PERMISSION MATRIX`,
     badge: enabledCount === modulesKeys.length ? 'ALL AUTHORIZED' : `${enabledCount}/${modulesKeys.length} CATEGORIES`,
-    badgeColor: enabledCount > 0 ? '#00f0ff' : '#ef4444',
+    badgeColor: enabledCount > 0 ? wlAccessAccent : '#ef4444',
     iconUrl: targetAvatarUrl,
     fallbackInitial: targetName[0] || 'U',
     current: enabledCount,
     total: modulesKeys.length,
     unit: 'PERMISSIONS',
-    accentColor: '#00f0ff',
+    accentColor: wlAccessAccent,
     metrics: [
       { label: 'CATEGORIES', value: `${enabledCount}/${modulesKeys.length}` },
       { label: 'ACTION LIMIT', value: String(wData.triggerLimit || 0) },
@@ -3491,18 +3492,20 @@ export async function getWhitelistOverviewPanel(guild) {
     `**Roles Whitelisted**\n\n` +
     `${rolesText}`;
 
-  const iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
+  const config = db.getGuildConfig(guild.id);
+  const serverAccent = config?.accentColor || '#00f0ff';
+  const iconUrl = guild.iconURL({ extension: 'png', size: 256, forceStatic: true }) || null;
   const bannerAttachment = await generateCommandStatusBanner({
     title: 'WHITELIST DEFENSE MATRIX',
     subtitle: `${guild.name.toUpperCase()} // SECURITY LEVEL`,
     badge: totalWl > 0 ? `LEVEL ${Math.min(5, Math.ceil(totalWl / 5))}: MAXIMUM ARMOR` : 'LEVEL 0: NONE',
-    badgeColor: totalWl > 0 ? '#00f0ff' : '#ef4444',
+    badgeColor: totalWl > 0 ? serverAccent : '#888888',
     iconUrl,
     fallbackInitial: guild.name[0] || 'W',
     current: totalWl,
     total: 25,
     unit: 'ENTITIES',
-    accentColor: '#00f0ff',
+    accentColor: serverAccent,
     metrics: [
       { label: 'USERS', value: String(userIds.length) },
       { label: 'ROLES', value: String(roleIds.length) },
@@ -4419,17 +4422,18 @@ export async function getSecurityStatusPanel(guild) {
   const memberProgress = renderSleekProgressBar(guild.memberCount || 0, 200, 12);
   const rolePosProgress = renderSleekProgressBar(botPos, Math.max(botPos, maxPos), 12);
 
+  const secAccent = isSecured ? (config?.accentColor || '#00ff88') : '#ef4444';
   const bannerAttachment = await generateCommandStatusBanner({
     title: 'FIREWALL DEFENSE STATUS',
     subtitle: `${guild.name.toUpperCase()} // ANTINUKE ARMOR`,
     badge: isSecured ? 'GOD-TIER FIREWALL ACTIVE' : 'OFFLINE // STANDBY',
-    badgeColor: isSecured ? '#22c55e' : '#ef4444',
-    iconUrl: guild.iconURL({ dynamic: true, size: 256 }),
+    badgeColor: isSecured ? secAccent : '#ef4444',
+    iconUrl: guild.iconURL({ extension: 'png', size: 256, forceStatic: true }),
     fallbackInitial: guild.name[0] || 'S',
     current: activeModulesCount,
     total: totalModules,
     unit: 'SHIELDS ARMED',
-    accentColor: isSecured ? '#22c55e' : '#ef4444',
+    accentColor: secAccent,
     metrics: [
       { label: 'SHIELDS', value: `${activeModulesCount}/${totalModules}` },
       { label: 'MEMBERS', value: `${guild.memberCount || 0}/200` },
@@ -4773,17 +4777,18 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
 
     const configuredCount = [category, role, channel, vc].filter(Boolean).length;
 
+    const qrAccent = configuredCount === 4 ? (updatedConfig?.accentColor || '#00ff88') : configuredCount > 0 ? '#f97316' : '#ef4444';
     const bannerAttachment = await generateCommandStatusBanner({
       title: 'QUARANTINE ENFORCEMENT HUD',
       subtitle: `${guild.name.toUpperCase()} // CONTAINMENT PROTOCOL`,
       badge: configuredCount === 4 ? 'SYSTEM: FULLY ARMED' : configuredCount > 0 ? 'PARTIAL SETUP' : 'SYSTEM UNBOUND',
-      badgeColor: configuredCount === 4 ? '#00ff88' : configuredCount > 0 ? '#eab308' : '#ef4444',
-      iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+      badgeColor: configuredCount === 4 ? qrAccent : '#ef4444',
+      iconUrl: guild.iconURL({ extension: 'png', size: 256, forceStatic: true }) || null,
       fallbackInitial: guild.name[0] || 'Q',
       current: configuredCount,
       total: 4,
       unit: 'COMPONENTS BOUND',
-      accentColor: configuredCount === 4 ? '#00ff88' : configuredCount > 0 ? '#f97316' : '#ef4444',
+      accentColor: qrAccent,
       metrics: [
         { label: 'ROLE', value: role ? 'BOUND' : 'MISSING' },
         { label: 'CATEGORY', value: category ? 'BOUND' : 'MISSING' },
@@ -5432,17 +5437,19 @@ const allMembers = guild.members.cache;
   const botAuditProgress = renderSleekProgressBar(safeBotsCount, totalBotsCount, 14);
   const isOptimal = (unauthorizedBots.length === 0 && highRiskHumans.length === 0 && onboardingDangerousRoles.length === 0);
 
+  const scanConfig = db.getGuildConfig(guild.id);
+  const scanAccent = isOptimal ? (scanConfig?.accentColor || '#00ff88') : '#f97316';
   const bannerAttachment = await generateCommandStatusBanner({
     title: 'SERVER THREAT AUDIT HUD',
     subtitle: `${guild.name.toUpperCase()} // BOT & PERM SCAN`,
     badge: isOptimal ? 'SYSTEM: OPTIMAL' : 'THREATS DETECTED',
-    badgeColor: isOptimal ? '#22c55e' : '#ef4444',
-    iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+    badgeColor: isOptimal ? scanAccent : '#ef4444',
+    iconUrl: guild.iconURL({ extension: 'png', size: 256, forceStatic: true }) || null,
     fallbackInitial: guild.name[0] || 'S',
     current: safeBotsCount,
     total: totalBotsCount,
     unit: 'BOTS VERIFIED',
-    accentColor: isOptimal ? '#22c55e' : '#f97316',
+    accentColor: scanAccent,
     metrics: [
       { label: 'SAFE BOTS', value: `${safeBotsCount}/${allBots.size}` },
       { label: 'RISK USERS', value: String(highRiskHumans.length) },
@@ -5672,17 +5679,18 @@ export async function getAutoModPanel(guild) {
 
   const automodProgress = renderSleekProgressBar(activeFilters, 10, 14);
 
+  const automodAccent = config?.accentColor || (activeFilters >= 8 ? '#00f0ff' : '#a855f7');
   const bannerAttachment = await generateCommandStatusBanner({
     title: 'AUTOMOD HEURISTIC MATRIX',
     subtitle: `${guild.name.toUpperCase()} // FILTER INTEGRITY`,
     badge: activeFilters >= 8 ? 'STATUS: FORTIFIED' : activeFilters >= 4 ? 'STATUS: ACTIVE' : 'STATUS: VULNERABLE',
-    badgeColor: activeFilters >= 8 ? '#00f0ff' : activeFilters >= 4 ? '#eab308' : '#ef4444',
-    iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+    badgeColor: activeFilters >= 8 ? automodAccent : activeFilters >= 4 ? '#eab308' : '#ef4444',
+    iconUrl: guild.iconURL({ extension: 'png', size: 256, forceStatic: true }) || null,
     fallbackInitial: guild.name[0] || 'A',
     current: activeFilters,
     total: 10,
     unit: 'FILTERS ARMED',
-    accentColor: activeFilters >= 8 ? '#00f0ff' : '#a855f7',
+    accentColor: automodAccent,
     metrics: [
       { label: 'ACTIVE', value: `${activeFilters}/10` },
       { label: 'BYPASSES', value: String(Object.keys(bypasses).length) },

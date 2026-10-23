@@ -2679,6 +2679,11 @@ export function buildTopicsDirectoryContainer(prefix = '!') {
       value: 'synced_gif_hud'
     },
     {
+      label: 'AI & Celebrity TTS Voices Engine',
+      description: '14 Celebrity voices, zero-latency DSP filtering & voice channel streaming',
+      value: 'tts_voices'
+    },
+    {
       label: 'Advanced Trigger Systems',
       description: 'Ghost, Bounty XP, Time-variant & Tier-adaptive trigger engines',
       value: 'advanced_triggers'

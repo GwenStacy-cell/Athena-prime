@@ -1026,20 +1026,20 @@ export async function buildTriggerDashboard(guild, page = 0) {
   const currentPage = Math.max(0, Math.min(page, totalPages - 1));
   const pageTriggers = triggers.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
 
-  const iconUrl = guild.iconURL({ dynamic: true, size: 256 }) || null;
+  const iconUrl = guild.iconURL({ extension: 'png', size: 256, forceStatic: true }) || null;
   const progressBar = renderSleekProgressBar(triggers.length, 50, 14);
 
   const bannerAttachment = await generateCommandStatusBanner({
     title: 'TRIGGER RESPONSE MATRIX',
     subtitle: `${guild.name.toUpperCase()} // AUTOMATION SYSTEM`,
     badge: triggers.length > 0 ? `${triggers.length} TRIGGERS ACTIVE` : 'ZERO TRIGGERS',
-    badgeColor: triggers.length > 0 ? '#00f0ff' : '#888888',
+    badgeColor: triggers.length > 0 ? (accentHex || '#00f0ff') : '#888888',
     iconUrl,
     fallbackInitial: guild.name[0] || 'T',
     current: triggers.length,
     total: 50,
     unit: 'SLOTS USED',
-    accentColor: '#00f0ff',
+    accentColor: accentHex || '#00f0ff',
     metrics: [
       { label: 'TRIGGERS', value: `${triggers.length}/50` },
       { label: 'NETWORK', value: `${globalTriggers.length} GLOBAL` },

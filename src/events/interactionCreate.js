@@ -51,6 +51,13 @@ export default {
       } catch (e) { console.error(e); }
     }
 
+    if (interaction.customId && interaction.customId.startsWith('tts_')) {
+      try {
+        const { handleTtsInteraction } = await import('../commands/tts.js');
+        return handleTtsInteraction(interaction);
+      } catch (e) { console.error('[InteractionCreate] TTS interaction error:', e); }
+    }
+
 
     
     // ==========================================

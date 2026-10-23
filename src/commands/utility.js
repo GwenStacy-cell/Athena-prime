@@ -1767,6 +1767,13 @@ export const helpModules = [
     "-# • Roles purchased via shop are fulfilled and audited instantly by Role ID."
   ] },
   { id: 'voice', category: 'VOICE & MEDIA', shortLabel: 'Voice', label: 'Voice Utilities', emoji: 'voice', commands: [
+    "`!tts` - Interactive AI & Celebrity TTS Control Center `[Public]`",
+    "`!tts <message>` - Broadcast Text-to-Speech audio in your voice channel `[Public]`",
+    "`!tts voices` - Explore all 14 Celebrity & Character AI voices `[Public]`",
+    "`!tts voice <name>` - Lock your default voice preference (`trump`, `modi`, `mj`, `taylor`, `ariana`, `sabrina`, `bieber`, etc.) `[Public]`",
+    "`!tts <voice> <msg>` - Speak directly with on-the-fly celebrity voice `[Public]`",
+    "`!tts autovc` - Toggle global Auto-TTS for your VC `[Admin]`",
+    "`!tts stop` - Immediately halt speech playback and clear queue `[Public]`",
     "`!voiceanalytics / !va` - 24-hour diurnal voice activity heatmaps, peak windows & channel analytics `[Staff]`",
     "`!voicerole <@role|ID|Name|disable> / !vcrole` - Auto-assign role in VC for all members & bots `[Extra Owner]`",
     "`!jtcsetup` - Configure Join-to-Create voice channels `[Extra Owner]`",
@@ -1855,10 +1862,13 @@ export const helpModules = [
     "`!news` - Configure automated RSS feeds `[Extra Owner]`",
     "`!shortcuts / !sc enable|disable` - Toggle `a` -> `!avatar`, `b` -> `!banner` shortcuts `[Public]`",
     "`!calculator / !calc` - Interactive button calculator `[Public]`",
+    "`!tts` - Interactive AI & Celebrity TTS Control Center `[Public]`",
     "`!tts <text>` - Broadcast Text-to-Speech audio in voice channel `[Public]`",
-    "`!tts voices` - Interactive directory of Celebrity & Character AI voices `[Public]`",
-    "`!tts voice <name>` - Lock your default voice (`trump`, `mj`, `modi`, `taylor`, `ariana`, `sabrina`, `bieber`) `[Public]`",
+    "`!tts voices` - Interactive directory of 14 Celebrity & Character AI voices `[Public]`",
+    "`!tts voice <name>` - Lock your default voice (`trump`, `modi`, `mj`, `taylor`, `ariana`, `sabrina`, `bieber`) `[Public]`",
     "`!tts <voice> <msg>` - Speak directly with on-the-fly celebrity voice `[Public]`",
+    "`!tts autovc` - Toggle global Auto-TTS for your VC `[Admin]`",
+    "`!tts stop` - Immediately halt speech playback and clear queue `[Public]`",
     "`!qrcode / !qrc <text/link>` - Generate high-resolution QR code `[Public]`",
     "`!steal <emoji/link>` - Steal an emoji to this server `[Extra Owner]`",
     "`!afk [reason]` - Set an AFK status that replies when pinged `[Public]`",
@@ -1943,6 +1953,7 @@ export function buildHelpContainer(client, guildId, moduleId) {
       let topText = `# Hey !!! , I am <@${botId}> ,\n\n`;
       topText += `> <a:z_arrow_pink1:1523082728004653138> **Welcome to Athena Prime A bot which is made for unbypassable security features and community management! View down and see our srv management modules listed below:**\n\n`;
       topText += `> <a:z_arrow_pink1:1523082728004653138> **To set Custom Prefix use <@${botId}> \`${prefix}prefix " your custom prefix "\`**\n\n`;
+      topText += `> <a:z_arrow_pink1:1523082728004653138> **New: Intelligently-Syncable Cyber HUD Animated GIF Banners across commands, plus AI Celebrity Voice Studio (\`${prefix}tts\`)!**\n\n`;
       topText += `> <a:z_arrow_pink1:1523082728004653138> **Hint: For a detailed guide and instruction on any specific command, type \`${prefix}help <command>\` !**`;
 
       rawComponents.push({ type: 10, content: topText });
