@@ -768,10 +768,23 @@ export async function generateProfileCard(member, xpData, statsData, guild) {
   return new AttachmentBuilder(buffer, { name: 'profile_card.png' });
 }
 
+let cachedWarRoomPlate = null;
+async function getWarRoomPlate() {
+  if (!cachedWarRoomPlate) {
+    const platePath = path.resolve('src/assets/hud_war_room_plate.jpg');
+    if (fs.existsSync(platePath)) {
+      try {
+        cachedWarRoomPlate = await loadImage(platePath);
+      } catch {}
+    }
+  }
+  return cachedWarRoomPlate;
+}
+
 /**
  * Generates an ultra-sleek, dynamic Cyber HUD animated looping GIF for Discord commands (Whitelist, Security, Triggers, Automod, etc.)
  * Dynamically draws the server/member icon, title, animated glowing progress bar, status badges, and real-time metrics chips.
- * Modeled after the Hogwarts XP animated rank card pipeline.
+ * Modeled after the 1024x512 Athena Prime Global Defense War Room Command Center.
  */
 export async function generateCommandStatusBanner({
   title = 'SYSTEM MATRIX',
@@ -783,13 +796,13 @@ export async function generateCommandStatusBanner({
   current = 10,
   total = 20,
   unit = 'UNITS',
-  accentColor = '#00f0ff',
+  accentColor = '#00ff88',
   metrics = [],
   attachmentName = 'status_banner.gif',
   animated = true
 }) {
-  const W = 800;
-  const H = 220;
+  const W = 1024;
+  const H = 512;
   const numFrames = animated ? 8 : 1;
   const tempDir = path.resolve(`data/status_gif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
   
@@ -799,7 +812,9 @@ export async function generateCommandStatusBanner({
 
   let firstFrameBuffer = null;
 
-  // Pre-load icon image once
+  // Pre-load base plate and icon
+  const basePlate = await getWarRoomPlate();
+
   let iconImg = null;
   if (iconUrl) {
     try {
@@ -811,16 +826,15 @@ export async function generateCommandStatusBanner({
   const ratio = total > 0 ? clamped / total : 0;
   const pct = Math.round(ratio * 100);
 
-  const barX = 155;
-  const barY = 110;
-  const barW = 590;
-  const barH = 15;
-  const barR = 7;
-  const fillW = Math.max(barR * 2, barW * ratio);
+  const barX = 255;
+  const barY = 202;
+  const barW = 580;
+  const barH = 26;
+  const fillW = Math.max(16, Math.min(barW, barW * ratio));
 
-  const iconCX = 80;
-  const iconCY = 110;
-  const iconR = 48;
+  const iconCX = 138;
+  const iconCY = 177;
+  const iconR = 50;
 
   try {
     for (let f = 0; f < numFrames; f++) {
@@ -828,47 +842,70 @@ export async function generateCommandStatusBanner({
       const canvas = createCanvas(W, H);
       const ctx = canvas.getContext('2d');
 
-      // 1. Deep Cyber Obsidian Gradient Background
-      const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-      bgGrad.addColorStop(0, '#07090e');
-      bgGrad.addColorStop(0.5, '#0e131f');
-      bgGrad.addColorStop(1, '#06080d');
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, W, H);
+      // 1. Draw 1024x512 Base War Room Background
+      if (basePlate) {
+        ctx.drawImage(basePlate, 0, 0, W, H);
+      } else {
+        const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+        bgGrad.addColorStop(0, '#040b08');
+        bgGrad.addColorStop(0.5, '#071610');
+        bgGrad.addColorStop(1, '#020805');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, W, H);
+      }
 
-      // 2. High-Tech Grid Lines
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+      // 2. High-Tech Translucent Cyber Glass HUD Over Center Console
+      const panelGrad = ctx.createLinearGradient(242, 82, 242, 332);
+      panelGrad.addColorStop(0, 'rgba(1, 14, 10, 0.96)');
+      panelGrad.addColorStop(0.5, 'rgba(2, 22, 16, 0.94)');
+      panelGrad.addColorStop(1, 'rgba(1, 12, 8, 0.97)');
+
+      ctx.save();
+      ctx.fillStyle = panelGrad;
+      ctx.beginPath();
+      ctx.roundRect(242, 82, 616, 250, 12);
+      ctx.fill();
+
+      // Fine holographic tactical grid
+      ctx.strokeStyle = 'rgba(0, 255, 136, 0.05)';
       ctx.lineWidth = 1;
-      for (let x = 0; x < W; x += 32) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      for (let x = 242; x < 858; x += 22) {
+        ctx.beginPath(); ctx.moveTo(x, 82); ctx.lineTo(x, 332); ctx.stroke();
       }
-      for (let y = 0; y < H; y += 32) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      }
-
-      // Animated Cyber Sweep Line
-      if (animated) {
-        const sweepY = (f / numFrames) * H;
-        const sweepGrad = ctx.createLinearGradient(0, sweepY - 25, 0, sweepY + 25);
-        sweepGrad.addColorStop(0, 'rgba(0, 240, 255, 0)');
-        sweepGrad.addColorStop(0.5, 'rgba(0, 240, 255, 0.05)');
-        sweepGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
-        ctx.fillStyle = sweepGrad;
-        ctx.fillRect(0, sweepY - 25, W, 50);
+      for (let y = 82; y < 332; y += 22) {
+        ctx.beginPath(); ctx.moveTo(242, y); ctx.lineTo(858, y); ctx.stroke();
       }
 
-      // Dual Cyber Edge Glowing Accents
-      ctx.fillStyle = accentColor;
-      ctx.fillRect(0, 0, 4, H);
-      ctx.fillRect(W - 4, 0, 4, H);
+      // Glowing panel border
+      ctx.strokeStyle = accentColor;
+      ctx.globalAlpha = 0.45;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      ctx.restore();
 
-      // 3. Avatar / Server Icon HUD
-      // Rotating / pulsing HUD reticle
+      // 3. Avatar / Server Icon inside Left Holographic Reticle
       ctx.save();
       ctx.beginPath();
-      const startAngle = phi;
-      const endAngle = phi + Math.PI * 1.5;
-      ctx.arc(iconCX, iconCY, iconR + 6, startAngle, endAngle);
+      ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+
+      if (iconImg) {
+        ctx.drawImage(iconImg, iconCX - iconR, iconCY - iconR, iconR * 2, iconR * 2);
+      } else {
+        ctx.fillStyle = '#01120a';
+        ctx.fillRect(iconCX - iconR, iconCY - iconR, iconR * 2, iconR * 2);
+        ctx.font = 'bold 44px sans-serif';
+        ctx.fillStyle = accentColor;
+        ctx.textAlign = 'center';
+        ctx.fillText((fallbackInitial || 'A')[0].toUpperCase(), iconCX, iconCY + 16);
+      }
+      ctx.restore();
+
+      // Concentric neon glowing border around avatar
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2);
       ctx.strokeStyle = accentColor;
       ctx.lineWidth = 2.5;
       ctx.shadowColor = accentColor;
@@ -876,168 +913,193 @@ export async function generateCommandStatusBanner({
       ctx.stroke();
       ctx.restore();
 
-      // Outer static ring
+      // Outer animated rotating HUD reticle ticks
       ctx.save();
+      ctx.translate(iconCX, iconCY);
+      ctx.rotate(phi);
+      ctx.strokeStyle = accentColor;
+      ctx.globalAlpha = 0.65;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 16]);
       ctx.beginPath();
-      ctx.arc(iconCX, iconCY, iconR + 3, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx.lineWidth = 1;
+      ctx.arc(0, 0, iconR + 6, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.setLineDash([]);
       ctx.restore();
 
-      // Draw Icon or Fallback
-      if (iconImg) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(iconImg, iconCX - iconR, iconCY - iconR, iconR * 2, iconR * 2);
-        ctx.restore();
-      } else {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2);
-        ctx.fillStyle = '#141a29';
-        ctx.fill();
-        ctx.font = 'bold 36px "Montserrat", sans-serif';
-        ctx.fillStyle = accentColor;
-        ctx.textAlign = 'center';
-        ctx.fillText((fallbackInitial || 'A')[0].toUpperCase(), iconCX, iconCY + 13);
-        ctx.restore();
-      }
+      // 4. Subtitle Eyebrow
+      ctx.save();
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillStyle = '#6ee7b7';
+      ctx.fillText(subtitle.toUpperCase(), barX, 114);
 
-      // 4. Header Titles & Subtitle
-      const contentX = barX;
-      
-      // Subtitle / Eyebrow
-      ctx.font = 'bold 11px "Montserrat", sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-      ctx.fillText(subtitle.toUpperCase(), contentX, 42);
-
-      // Main Title
-      ctx.font = 'bold 24px "Montserrat", sans-serif';
+      // 5. Main Title
+      ctx.font = 'bold 26px sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.shadowBlur = 8;
-      ctx.fillText(title.toUpperCase(), contentX, 72);
+      ctx.shadowColor = accentColor;
+      ctx.shadowBlur = 12;
+      ctx.fillText(title.toUpperCase(), barX, 148);
       ctx.shadowBlur = 0;
 
-      // Status Badge Pill
-      const titleW = ctx.measureText(title.toUpperCase()).width;
-      const badgeX = contentX + titleW + 16;
-      const badgeY = 54;
-      if (badgeX + 160 < W && badge) {
-        ctx.font = 'bold 10px "Montserrat", sans-serif';
-        const badgeTextW = ctx.measureText(badge.toUpperCase()).width;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-        rrPath(ctx, badgeX, badgeY, badgeTextW + 16, 20, 10);
+      // 6. Status Badge Pill
+      if (badge) {
+        const titleW = ctx.measureText(title.toUpperCase()).width;
+        const badgeText = `${badge.toUpperCase()} >>>`;
+        ctx.font = 'bold 11px sans-serif';
+        const bTextW = ctx.measureText(badgeText).width;
+        const badgeX = Math.min(barX + titleW + 20, 680);
+        const badgeY = 132;
+
+        ctx.fillStyle = 'rgba(0, 255, 136, 0.12)';
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY - 14, bTextW + 22, 24, 12);
         ctx.fill();
-        ctx.strokeStyle = badgeColor;
-        ctx.lineWidth = 1.2;
-        rrPath(ctx, badgeX, badgeY, badgeTextW + 16, 20, 10);
+        ctx.strokeStyle = badgeColor || accentColor;
+        ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        ctx.fillStyle = badgeColor;
-        ctx.fillText(badge.toUpperCase(), badgeX + 8, badgeY + 14);
+        ctx.fillStyle = badgeColor || accentColor;
+        ctx.fillText(badgeText, badgeX + 11, badgeY + 2);
       }
+      ctx.restore();
 
-      // 5. Sleek Visual Glowing Progress Bar IN the GIF
-      // Track Label
-      ctx.font = 'bold 12px "Montserrat", monospace';
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText(`STATUS PROGRESS: ${clamped}/${total} ${unit}`, barX, barY - 10);
-      ctx.textAlign = 'right';
+      // 7. Status Progress Text
+      ctx.save();
+      ctx.font = 'bold 11px monospace';
+      ctx.fillStyle = '#a7f3d0';
+      ctx.fillText(`STATUS PROGRESS: ${clamped}/${total} ${unit.toUpperCase()}`, barX, barY - 10);
+      ctx.font = 'bold 14px sans-serif';
       ctx.fillStyle = accentColor;
-      ctx.fillText(`${pct}%`, barX + barW, barY - 10);
-      ctx.textAlign = 'left';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${pct}%`, barX + barW, barY - 9);
+      ctx.restore();
 
-      // Dark Track
-      ctx.fillStyle = '#111625';
-      rrPath(ctx, barX, barY, barW, barH, barR);
+      // 8. The Beveled Electric Plasma Wave Progress Bar
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW, barH, 13);
+      ctx.fillStyle = '#010a0e';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-      ctx.lineWidth = 1;
-      rrPath(ctx, barX, barY, barW, barH, barR);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(0, 255, 136, 0.4)';
       ctx.stroke();
 
-      // Glowing Animated Fill
+      // Clip inside bar
+      ctx.clip();
+
       if (ratio > 0) {
-        ctx.save();
-        rrPath(ctx, barX, barY, fillW, barH, barR);
-        ctx.clip();
-        
-        // Fluid light shift gradient
-        const shift = animated ? Math.sin(phi) * 30 : 0;
-        const fillGrad = ctx.createLinearGradient(barX - shift, barY, barX + fillW + shift, barY);
-        fillGrad.addColorStop(0, '#1d4ed8');
-        fillGrad.addColorStop(0.5, accentColor);
+        // Gradient fill
+        const fillGrad = ctx.createLinearGradient(barX, barY, barX + fillW, barY);
+        fillGrad.addColorStop(0, '#0055ff');
+        fillGrad.addColorStop(0.35, '#00d4ff');
+        fillGrad.addColorStop(0.75, accentColor);
         fillGrad.addColorStop(1, '#ffffff');
+
         ctx.fillStyle = fillGrad;
-        ctx.fillRect(barX, barY, fillW, barH);
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, fillW, barH, 13);
+        ctx.fill();
 
-        // Electric lightning energy arc along fill
-        if (animated) {
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          let lx = barX + 6;
-          ctx.moveTo(lx, barY + barH / 2);
-          while (lx < barX + fillW - 6) {
-            lx += 18;
-            const ly = barY + barH / 2 + Math.sin(phi * 2 + lx * 0.1) * 2.5;
-            ctx.lineTo(lx, ly);
-          }
-          ctx.stroke();
+        // Dual Multi-Harmonic Oscillating Electric Sine Waves
+        ctx.lineWidth = 2.4;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.shadowColor = accentColor;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        for (let x = barX; x <= barX + fillW; x += 4) {
+          const relX = x - barX;
+          const y = barY + barH / 2 + Math.sin(relX * 0.05 + phi) * 5.5 + Math.cos(relX * 0.02 - phi) * 2;
+          if (x === barX) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
-        ctx.restore();
+        ctx.stroke();
 
-        // Glowing Plasma Head Orb
-        ctx.save();
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = 'rgba(0, 230, 255, 0.85)';
+        ctx.shadowColor = '#00e5ff';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        for (let x = barX; x <= barX + fillW; x += 4) {
+          const relX = x - barX;
+          const y = barY + barH / 2 + Math.cos(relX * 0.04 - phi * 1.5) * 4.5;
+          if (x === barX) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 9. Pulsing Plasma Head Orb & Lens Flare
+      if (ratio > 0) {
         const headX = barX + fillW;
         const headY = barY + barH / 2;
-        const orbR = 10 + (animated ? Math.sin(phi * 2) * 2 : 0);
-        const orbGrad = ctx.createRadialGradient(headX, headY, 1, headX, headY, orbR);
-        orbGrad.addColorStop(0, '#ffffff');
-        orbGrad.addColorStop(0.4, accentColor);
-        orbGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = orbGrad;
+        const pulseScale = 1 + 0.22 * Math.sin(phi);
+
+        ctx.save();
+        const flareGrad = ctx.createRadialGradient(headX, headY, 1, headX, headY, 16 * pulseScale);
+        flareGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        flareGrad.addColorStop(0.3, accentColor);
+        flareGrad.addColorStop(0.7, 'rgba(0, 212, 255, 0.4)');
+        flareGrad.addColorStop(1, 'rgba(0, 255, 136, 0)');
+
+        ctx.fillStyle = flareGrad;
         ctx.beginPath();
-        ctx.arc(headX, headY, orbR, 0, Math.PI * 2);
+        ctx.arc(headX, headY, 16 * pulseScale, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(headX - 18 * pulseScale, headY);
+        ctx.lineTo(headX + 18 * pulseScale, headY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(headX, headY, 3.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
 
-      // 6. Metrics Chips at Bottom
-      const chipY = 160;
-      let curChipX = contentX;
-      if (Array.isArray(metrics)) {
-        for (const m of metrics) {
-          ctx.font = 'bold 11px "Montserrat", sans-serif';
-          const text = `${m.label}: ${m.value}`;
-          const textW = ctx.measureText(text).width;
-          const chipW = textW + 20;
+      // 10. Metrics Chips below bar
+      const chipList = Array.isArray(metrics) && metrics.length > 0
+        ? metrics.slice(0, 3)
+        : [
+            { label: 'STATUS', value: 'ONLINE' },
+            { label: 'CAPACITY', value: `${clamped}/${total}` },
+            { label: 'ENGINE', value: 'ATHENA' }
+          ];
 
-          ctx.fillStyle = '#131929';
-          rrPath(ctx, curChipX, chipY, chipW, 26, 6);
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-          ctx.lineWidth = 1;
-          rrPath(ctx, curChipX, chipY, chipW, 26, 6);
-          ctx.stroke();
+      let chipX = barX;
+      for (const m of chipList) {
+        ctx.save();
+        ctx.font = 'bold 11px sans-serif';
+        const labelText = `${m.label}: ${m.value}`;
+        const chipW = Math.max(120, ctx.measureText(labelText).width + 24);
+        const chipH = 28;
 
-          ctx.fillStyle = '#cbd5e1';
-          ctx.fillText(text, curChipX + 10, chipY + 17);
+        ctx.fillStyle = 'rgba(1, 24, 16, 0.85)';
+        ctx.beginPath();
+        ctx.roundRect(chipX, 262, chipW, chipH, 6);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0, 255, 136, 0.4)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
 
-          curChipX += chipW + 12;
-        }
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(labelText, chipX + 12, 280);
+        ctx.restore();
+
+        chipX += chipW + 14;
       }
 
-      // Watermark
-      ctx.font = 'bold 9px "Montserrat", monospace';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      // Subtle Watermark
+      ctx.save();
+      ctx.font = 'bold 9px monospace';
+      ctx.fillStyle = 'rgba(0, 255, 136, 0.25)';
       ctx.textAlign = 'right';
-      ctx.fillText('ATHENA PRIME // DEFENSE MATRIX', W - 18, H - 12);
+      ctx.fillText('ATHENA PRIME // DEFENSE MATRIX', barX + barW, 318);
+      ctx.restore();
 
       const frameBuf = canvas.toBuffer('image/png');
       if (f === 0) firstFrameBuffer = frameBuf;

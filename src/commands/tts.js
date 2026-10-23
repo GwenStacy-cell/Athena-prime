@@ -1,9 +1,10 @@
-﻿import { PermissionFlagsBits } from 'discord.js';
+import { PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus, getVoiceConnection } from '@discordjs/voice';
 import fetch from 'node-fetch';
 import db from '../database.js';
 import cv2 from '../cv2.js';
 import { isBotOwnerOrServerOwnerStrict } from '../utils/helpers.js';
+import { generateVoiceAudio, resolveVoice, buildVoiceListContainer } from '../utils/ttsVoiceEngine.js';
 
 // Queue system for guilds: guildId -> { queue: [], player: AudioPlayer, connection: VoiceConnection, isPlaying: boolean, timeout: NodeJS.Timeout }
 const ttsSessions = new Map();
@@ -30,15 +31,10 @@ async function playNext(guildId) {
     session.timeout = null;
   }
 
-  const { text, lang } = session.queue.shift();
+  const { text, lang, voice } = session.queue.shift();
 
   try {
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Google API returned ${response.status}`);
-    
-    // We need to buffer the response for Discord.js voice to read it reliably
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const buffer = await generateVoiceAudio(text, voice, lang);
     
     // Convert buffer to Readable stream using a simple trick
     const { Readable } = await import('stream');
@@ -53,12 +49,13 @@ async function playNext(guildId) {
   }
 }
 
-export async function queueTtsMessage(member, text) {
+export async function queueTtsMessage(member, text, overrideVoice = null) {
   const voiceChannel = member.voice.channel;
   if (!voiceChannel) return false;
 
   const guildId = member.guild.id;
   const prefs = db.getTtsPrefs(member.id);
+  const activeVoice = overrideVoice || prefs.voice || null;
   
   if (!ttsSessions.has(guildId)) {
     const player = createAudioPlayer();
@@ -98,7 +95,7 @@ export async function queueTtsMessage(member, text) {
   const chunks = text.match(/.{1,200}(\s|$)/g) || [text.substring(0, 200)];
   for (const chunk of chunks) {
     if (chunk.trim()) {
-      session.queue.push({ text: chunk.trim(), lang: prefs.lang });
+      session.queue.push({ text: chunk.trim(), lang: prefs.lang, voice: activeVoice });
     }
   }
 
@@ -111,15 +108,43 @@ export async function queueTtsMessage(member, text) {
 export const commands = [
   {
     name: 'tts',
-    description: 'Broadcast spoken text into your voice channel.',
+    description: 'Broadcast spoken text into your voice channel with AI & celebrity voices.',
     category: 'utilities',
     options: [],
     async executePrefix(message, args) {
       if (args.length === 0) {
-        return message.reply(cv2.warn('TTS System Usage', `\`!tts <message>\` - Speak in voice channel\n\`!tts stop\` - Stop current speech\n\`!tts lang <language>\` - Set language (e.g. \`english\`, \`uk\`, \`au\`, \`es\`, \`ja\`)\n\`!tts auto [@user]\` - Lock a user to Auto-TTS\n\`!tts unauto [@user]\` - Disable Auto-TTS\n\`!tts autovc\` - Toggle global Auto-TTS for your VC`));
+        return message.reply(cv2.warn('TTS System Usage', `\`!tts <message>\` - Speak in voice channel\n\`!tts voices\` - Browse all Celebrity & AI voices\n\`!tts voice <name>\` - Set your default voice (e.g. \`trump\`, \`mj\`, \`modi\`, \`taylor\`, \`ariana\`, \`sabrina\`, \`bieber\`)\n\`!tts <voice> <msg>\` - Speak with on-the-fly voice\n\`!tts stop\` - Stop current speech\n\`!tts lang <code>\` - Set language (e.g. \`en\`, \`uk\`, \`au\`, \`es\`, \`ja\`)\n\`!tts auto [@user]\` - Lock a user to Auto-TTS\n\`!tts autovc\` - Toggle global Auto-TTS for your VC`));
       }
 
       const subcommand = args[0]?.toLowerCase();
+
+      if (subcommand === 'voices' || subcommand === 'celebrities' || subcommand === 'listvoices') {
+        const prefix = db.getGuildConfig(message.guild.id)?.prefix || '!';
+        const container = buildVoiceListContainer(prefix);
+        return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      }
+
+      if (subcommand === 'voice' || subcommand === 'setvoice') {
+        const voiceArg = args[1]?.toLowerCase();
+        if (!voiceArg) {
+          const prefix = db.getGuildConfig(message.guild.id)?.prefix || '!';
+          const container = buildVoiceListContainer(prefix);
+          return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
+        }
+
+        if (voiceArg === 'default' || voiceArg === 'none' || voiceArg === 'reset') {
+          db.updateTtsPrefs(message.author.id, { voice: null });
+          return message.reply(cv2.success('TTS Voice Reset | <a:atheNATICK:1557841381630681106>', 'Your speech voice has been reset to standard default delivery.'));
+        }
+
+        const resolved = resolveVoice(voiceArg);
+        if (!resolved) {
+          return message.reply(cv2.warn('Voice Not Found', `Unknown celebrity voice: \`${voiceArg}\`.\nType \`!tts voices\` to explore all available celebrity and character voices!`));
+        }
+
+        db.updateTtsPrefs(message.author.id, { voice: resolved.id, lang: resolved.baseLang });
+        return message.reply(cv2.success('TTS Voice Updated | <a:atheNATICK:1557841381630681106>', `Your voice preference has been locked to **${resolved.emoji} ${resolved.name}**!\nAll future TTS speech will speak in this voice.`));
+      }
 
       if (subcommand === 'stop') {
         if (!message.member.voice.channel) return message.reply(cv2.warn('Error', 'You must be in a voice channel to stop TTS.'));
@@ -176,7 +201,7 @@ export const commands = [
         return message.reply(cv2.success('Auto-TTS VC Enabled', `Anyone who types in chat while inside <#${userVc}> will now have their messages read aloud!`));
       }
 
-      if (subcommand === 'lang' || subcommand === 'voice') {
+      if (subcommand === 'lang') {
         let code = args[1]?.toLowerCase();
         if (!code) return message.reply(cv2.warn('Usage', '`!tts lang <language_code>` (e.g. en, es, fr, ja, uk, au)'));
         
@@ -187,15 +212,25 @@ export const commands = [
         if (code === 'in') code = 'en-IN';
         if (code === 'english') code = 'en';
 
-        db.updateTtsPrefs(message.author.id, { lang: code });
+        db.updateTtsPrefs(message.author.id, { lang: code, voice: null });
         return message.reply(cv2.success('TTS Language Set', `Your speech language has been updated to \`${code}\`.`));
       }
 
-      // Default behavior: Speak the message
-      const text = args.join(' ');
-      if (text.length > 800) return message.reply(cv2.warn('Error', 'Message is too long. Please keep it under 800 characters.'));
+      // Check for on-the-fly voice shortcut (e.g. !tts trump Hello or !tts mj Shamone)
+      const inlineVoice = resolveVoice(args[0]);
+      let textToSpeak = '';
+      let activeVoiceOverride = null;
+
+      if (inlineVoice && args.length > 1) {
+        activeVoiceOverride = inlineVoice.id;
+        textToSpeak = args.slice(1).join(' ');
+      } else {
+        textToSpeak = args.join(' ');
+      }
+
+      if (textToSpeak.length > 800) return message.reply(cv2.warn('Error', 'Message is too long. Please keep it under 800 characters.'));
       
-      const success = await queueTtsMessage(message.member, text);
+      const success = await queueTtsMessage(message.member, textToSpeak, activeVoiceOverride);
       if (!success) {
         return message.reply(cv2.warn('Error', 'You must be in a Voice Channel to use this.'));
       }

@@ -2820,7 +2820,7 @@ export async function handleUnlockdown(guild, moderator, updateProgress) {
   );
 }
 
-function buildRaidModeStatusPanel(guild) {
+async function buildRaidModeStatusPanel(guild) {
   const config = db.getGuildConfig(guild.id);
   const raidModeActive = Boolean(config.raidMode);
   const autoShieldActive = Boolean(config.raidAutoShield);
@@ -2833,11 +2833,37 @@ function buildRaidModeStatusPanel(guild) {
 
   const quarantinedCount = Object.keys(db.getQuarantineData(guild.id) || {}).length;
 
+  const currentLevel = raidModeActive ? 100 : (autoShieldActive ? 50 : 15);
+
+  const bannerAttachment = await generateCommandStatusBanner({
+    title: 'SERVER RAID DEFENSE MATRIX',
+    subtitle: `${guild.name.toUpperCase()} // INTRUSION LOCKDOWN`,
+    badge: raidModeActive ? 'LOCKDOWN ENGAGED' : autoShieldActive ? 'AUTO-SHIELD ARMED' : 'STANDBY',
+    badgeColor: raidModeActive ? '#ef4444' : autoShieldActive ? '#00f0ff' : '#888888',
+    iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+    fallbackInitial: guild.name[0] || 'R',
+    current: currentLevel,
+    total: 100,
+    unit: 'ARMOR LVL',
+    accentColor: raidModeActive ? '#ef4444' : autoShieldActive ? '#00f0ff' : '#00ff88',
+    metrics: [
+      { label: 'BURST', value: `${threshold}/${windowSec}s` },
+      { label: 'AUTO-SHIELD', value: autoShieldActive ? 'ON' : 'OFF' },
+      { label: 'QUARANTINE', value: `${quarantinedCount} ISOLATED` }
+    ],
+    attachmentName: 'raid_banner.gif',
+    animated: true
+  });
+
   return {
     components: [
       {
         type: 17,
         components: [
+          {
+            type: 12,
+            items: [{ media: { url: 'attachment://raid_banner.gif' } }]
+          },
           { type: 10, content: `## Server Raid Defense Matrix | <a:uptime:1552608831060844575>` },
           { type: 14, divider: true },
           {
@@ -2863,6 +2889,7 @@ function buildRaidModeStatusPanel(guild) {
         ]
       }
     ],
+    files: [bannerAttachment],
     flags: MessageFlags.IsComponentsV2
   };
 }
@@ -2874,7 +2901,7 @@ async function handleRaidMode(guild, moderator, mode = 'status', extraArgs = {})
 
   // Status view
   if (normalized === 'status' || normalized === 'info' || normalized === 'view') {
-    return buildRaidModeStatusPanel(guild);
+    return await buildRaidModeStatusPanel(guild);
   }
 
   // Turn ON manual raid mode
@@ -3113,7 +3140,7 @@ async function handleRaidMode(guild, moderator, mode = 'status', extraArgs = {})
     return { components: [container], flags: MessageFlags.IsComponentsV2 };
   }
 
-  return buildRaidModeStatusPanel(guild);
+  return await buildRaidModeStatusPanel(guild);
 }
 
 export async function getSecurityHealthPanel(guild) {
@@ -3136,13 +3163,17 @@ export async function getSecurityHealthPanel(guild) {
   }
 
   let hierarchyStatus = '';
+  let hierarchyScore = 20;
   if (dangerousRolesAbove.length === 0 && rolesAboveAthena.length === 0) {
     hierarchyStatus = '`Optimal (Athena holds absolute highest role)`';
+    hierarchyScore = 20;
   } else if (dangerousRolesAbove.length === 0) {
     hierarchyStatus = `\`Safe (${rolesAboveAthena.length} cosmetic roles above Athena, 0 dangerous)\``;
+    hierarchyScore = 15;
   } else {
     const dangerousNames = dangerousRolesAbove.slice(0, 3).map(r => `\`${r.name}\``).join(', ');
     hierarchyStatus = `\`VULNERABLE (${dangerousRolesAbove.length} dangerous roles above Athena: ${dangerousNames})\``;
+    hierarchyScore = 0;
   }
 
   // 2. Core Bot Permissions Check
@@ -3158,6 +3189,7 @@ export async function getSecurityHealthPanel(guild) {
   ];
 
   const missingPerms = requiredPerms.filter(p => !me.permissions.has(p.flag));
+  const permScore = Math.round(((requiredPerms.length - missingPerms.length) / requiredPerms.length) * 25);
   const permStatus = missingPerms.length === 0
     ? '`Full Operational Clearance (8/8 Core Permissions)`'
     : `\`Degraded (Missing: ${missingPerms.map(p => p.name).join(', ')})\``;
@@ -3177,6 +3209,7 @@ export async function getSecurityHealthPanel(guild) {
   // 4. Persistence Roles Status
   const unbypassableRole = config.unbypassableRoleId ? guild.roles.cache.get(config.unbypassableRoleId) : guild.roles.cache.find(r => r.name === 'Athena Unbypassable');
   const firewallRole = config.firewallRoleId ? guild.roles.cache.get(config.firewallRoleId) : guild.roles.cache.find(r => r.name === 'Athena Firewall');
+  const persistenceScore = (unbypassableRole && firewallRole) ? 20 : 0;
   const persistenceStatus = (unbypassableRole && firewallRole)
     ? '`Triple-Layer Persistence Active & Synced`'
     : '`Degraded (Run !setup persistence)`';
@@ -3196,12 +3229,39 @@ export async function getSecurityHealthPanel(guild) {
   const autoShieldActive = Boolean(config.raidAutoShield);
   const threshold = config.raidJoinThreshold || 8;
   const windowSec = Math.round((config.raidJoinWindowMs || 5000) / 1000);
+  const raidScore = (autoShieldActive ? 15 : 5) + (config.antiNukeEnabled ? 20 : 0);
+
+  const totalHealthScore = Math.min(100, permScore + hierarchyScore + persistenceScore + raidScore);
+
+  const bannerAttachment = await generateCommandStatusBanner({
+    title: 'SECURITY DIAGNOSTICS & HEALTH',
+    subtitle: `${guild.name.toUpperCase()} // AUDIT INTEGRITY`,
+    badge: totalHealthScore >= 80 ? 'HEALTH: OPTIMAL' : totalHealthScore >= 50 ? 'HEALTH: DEGRADED' : 'HEALTH: CRITICAL',
+    badgeColor: totalHealthScore >= 80 ? '#00ff88' : totalHealthScore >= 50 ? '#eab308' : '#ef4444',
+    iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+    fallbackInitial: guild.name[0] || 'H',
+    current: totalHealthScore,
+    total: 100,
+    unit: 'HEALTH SCORE',
+    accentColor: totalHealthScore >= 80 ? '#00ff88' : totalHealthScore >= 50 ? '#f97316' : '#ef4444',
+    metrics: [
+      { label: 'HEALTH', value: `${totalHealthScore}%` },
+      { label: 'LATENCY', value: `${socketLatencyMs}ms` },
+      { label: 'PERMS', value: `${requiredPerms.length - missingPerms.length}/${requiredPerms.length}` }
+    ],
+    attachmentName: 'health_banner.gif',
+    animated: true
+  });
 
   return {
     components: [
       {
         type: 17,
         components: [
+          {
+            type: 12,
+            items: [{ media: { url: 'attachment://health_banner.gif' } }]
+          },
           { type: 10, content: `## Security Diagnostics & Hierarchy Health | <a:atheNATICK:1557841381630681106>` },
           { type: 14, divider: true },
           {
@@ -3229,6 +3289,7 @@ export async function getSecurityHealthPanel(guild) {
         ]
       }
     ],
+    files: [bannerAttachment],
     flags: MessageFlags.IsComponentsV2
   };
 }
@@ -4710,12 +4771,61 @@ async function handleQrManager(guild, moderator, action, roleArg, channelArg) {
       ? (guild.channels.cache.get(updatedConfig.quarantineVcId) || await guild.channels.fetch(updatedConfig.quarantineVcId).catch(() => null))
       : null;
 
-    return cv2.info('Quarantine System Status', 'Current quarantine configuration for this server:', [
-      { name: 'Quarantine Category', value: category ? `\`${category.name}\`` : 'Not Set - run `/qrmanager setup`', inline: false },
-      { name: 'Quarantine Role',    value: role     ? `<@&${role.id}>`       : 'Not Set - run `/qrmanager setup`', inline: false },
-      { name: 'Quarantine Channel', value: channel  ? `<#${channel.id}>`     : 'Not Set - run `/qrmanager setup`', inline: false },
-      { name: 'Quarantine VC',      value: vc       ? `<#${vc.id}>`          : 'Not Set - use `/qrmanager setvc`', inline: false }
-    ]);
+    const configuredCount = [category, role, channel, vc].filter(Boolean).length;
+
+    const bannerAttachment = await generateCommandStatusBanner({
+      title: 'QUARANTINE ENFORCEMENT HUD',
+      subtitle: `${guild.name.toUpperCase()} // CONTAINMENT PROTOCOL`,
+      badge: configuredCount === 4 ? 'SYSTEM: FULLY ARMED' : configuredCount > 0 ? 'PARTIAL SETUP' : 'SYSTEM UNBOUND',
+      badgeColor: configuredCount === 4 ? '#00ff88' : configuredCount > 0 ? '#eab308' : '#ef4444',
+      iconUrl: guild.iconURL({ dynamic: true, size: 256 }) || null,
+      fallbackInitial: guild.name[0] || 'Q',
+      current: configuredCount,
+      total: 4,
+      unit: 'COMPONENTS BOUND',
+      accentColor: configuredCount === 4 ? '#00ff88' : configuredCount > 0 ? '#f97316' : '#ef4444',
+      metrics: [
+        { label: 'ROLE', value: role ? 'BOUND' : 'MISSING' },
+        { label: 'CATEGORY', value: category ? 'BOUND' : 'MISSING' },
+        { label: 'STATUS', value: configuredCount === 4 ? 'ARMED' : 'INCOMPLETE' }
+      ],
+      attachmentName: 'qr_banner.gif',
+      animated: true
+    });
+
+    const statusContainer = {
+      type: 17,
+      components: [
+        {
+          type: 12,
+          items: [{ media: { url: 'attachment://qr_banner.gif' } }]
+        },
+        { type: 10, content: `## Quarantine System Status | <a:uptime:1552608831060844575>` },
+        { type: 14, divider: true },
+        {
+          type: 10,
+          content:
+            `### Containment Infrastructure\n` +
+            `> **Quarantine Category:** ${category ? `\`${category.name}\`` : '`Not Set - run /qrmanager setup`'}\n` +
+            `> **Quarantine Role:** ${role ? `<@&${role.id}>` : '`Not Set - run /qrmanager setup`'}\n` +
+            `> **Quarantine Text Channel:** ${channel ? `<#${channel.id}>` : '`Not Set - run /qrmanager setup`'}\n` +
+            `> **Quarantine Voice Channel:** ${vc ? `<#${vc.id}>` : '`Not Set - use /qrmanager setvc`'}\n\n` +
+            `### Setup Commands\n` +
+            `> -# \`!qrmanager setup\` — Automatically creates and locks containment category, role, and text channel.\n` +
+            `> -# \`!qrmanager setrole <@role>\` — Bind an existing isolation role.\n` +
+            `> -# \`!qrmanager setchannel <#channel>\` — Bind containment log / holding channel.\n` +
+            `> -# \`!qrmanager setvc <#vc>\` — Bind containment voice isolation chamber.`
+        },
+        { type: 14, divider: true },
+        { type: 10, content: `-# **Athena Prime Isolation & Quarantine Security**` }
+      ]
+    };
+
+    return {
+      components: [statusContainer],
+      files: [bannerAttachment],
+      flags: MessageFlags.IsComponentsV2
+    };
   }
 
   return cv2.warn('Unknown Action', 'Valid actions: `setup`, `setrole`, `setcategory`, `setchannel`, `setvc`, `status`');
