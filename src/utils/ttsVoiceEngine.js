@@ -21,7 +21,7 @@ export const CELEBRITY_VOICES = {
     rate: '-5%',
     baseLang: 'en-US',
     description: '45th U.S. President confident, low-mid resonant speech delivery',
-    filter: 'equalizer=f=1200:t=q:w=1.5:g=5,equalizer=f=180:t=q:w=1.5:g=4,acompressor=threshold=-12dB:ratio=3.5:attack=20:release=100'
+    filter: 'equalizer=f=180:t=q:w=1.2:g=7,equalizer=f=1100:t=q:w=1.4:g=6,equalizer=f=2300:t=q:w=1.5:g=3.5,acompressor=threshold=-11dB:ratio=4.5:attack=12:release=75,atempo=0.96'
   },
   modi: {
     id: 'modi',
@@ -34,7 +34,7 @@ export const CELEBRITY_VOICES = {
     rate: '-8%',
     baseLang: 'en-IN',
     description: 'Prime Minister authoritative orator voice with deep resonant cadence',
-    filter: 'equalizer=f=160:t=q:w=2:g=5,equalizer=f=2500:t=q:w=1.5:g=3.5'
+    filter: 'equalizer=f=145:t=q:w=1.8:g=8,equalizer=f=1900:t=q:w=1.2:g=4,acompressor=threshold=-13dB:ratio=3.8:attack=20:release=100,atempo=0.91'
   },
   obama: {
     id: 'obama',
@@ -47,7 +47,7 @@ export const CELEBRITY_VOICES = {
     rate: '-10%',
     baseLang: 'en-US',
     description: '44th U.S. President measured, resonant speech cadence',
-    filter: 'equalizer=f=200:t=q:w=1.5:g=5,equalizer=f=3000:t=q:w=1:g=2'
+    filter: 'equalizer=f=195:t=q:w=1.5:g=6,equalizer=f=3100:t=q:w=1.2:g=3.5,acompressor=threshold=-12dB:ratio=3.2:attack=18:release=90,atempo=0.92'
   },
 
   // --- POP ICONS & SINGERS ---
@@ -62,7 +62,7 @@ export const CELEBRITY_VOICES = {
     rate: '+4%',
     baseLang: 'en-US',
     description: 'King of Pop energetic tenor voice with signature vocal vibrato',
-    filter: 'highpass=f=160,equalizer=f=3500:t=q:w=1:g=6,vibrato=f=6.0:d=0.25'
+    filter: 'asetrate=24000*1.12,atempo=0.89,highpass=f=220,equalizer=f=3800:t=q:w=1:g=8.5,equalizer=f=7500:t=q:w=1.2:g=5,vibrato=f=6.2:d=0.35'
   },
   taylor: {
     id: 'taylor',
@@ -75,7 +75,7 @@ export const CELEBRITY_VOICES = {
     rate: '-2%',
     baseLang: 'en-US',
     description: 'Pop superstar warm acoustic vocal with airy melodic brightness',
-    filter: 'equalizer=f=2800:t=q:w=1.2:g=4,aecho=0.8:0.88:25:0.18'
+    filter: 'equalizer=f=4500:t=q:w=1.2:g=6,equalizer=f=9000:t=q:w=1.5:g=4,acompressor=threshold=-14dB:ratio=2.8:attack=15:release=100,aecho=0.8:0.85:20:0.15'
   },
   ariana: {
     id: 'ariana',
@@ -323,13 +323,15 @@ async function applyAudioFilter(inputBuffer, filterString) {
 }
 
 /**
- * Synthesizes 100% authentic voice using ElevenLabs Flash v2.5 API.
+ * Synthesizes voice audio using ElevenLabs Flash v2.5 API.
  */
 async function generateElevenLabsAudio(text, voice) {
   const apiKey = process.env.ELEVENLABS_API_KEY || process.env.AI_VOICE_API_KEY || DEFAULT_ELEVENLABS_KEY;
-  if (!apiKey || !voice?.elevenLabsVoiceId) return null;
+  if (!apiKey) return null;
 
-  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice.elevenLabsVoiceId}`, {
+  const targetVoiceId = voice?.elevenLabsVoiceId || 'ErXwobaYiN019PkySvjV';
+
+  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${targetVoiceId}`, {
     method: 'POST',
     headers: {
       'xi-api-key': apiKey,
@@ -353,20 +355,11 @@ async function generateElevenLabsAudio(text, voice) {
   return Buffer.from(await response.arrayBuffer());
 }
 
-let sharedTtsInstance = null;
-
-function getTtsClient() {
-  if (!sharedTtsInstance) {
-    sharedTtsInstance = new MsEdgeTTS();
-  }
-  return sharedTtsInstance;
-}
-
 /**
- * Synthesizes audio using Microsoft Edge Neural Speech engine.
+ * Synthesizes audio using Microsoft Edge Neural Speech engine with isolated per-request clients.
  */
 async function generateMsEdgeAudio(text, voice, customLang = 'en') {
-  const tts = getTtsClient();
+  const tts = new MsEdgeTTS();
   const neuralVoice = voice?.neuralVoice || (customLang === 'en-IN' ? 'en-IN-PrabhatNeural' : 'en-US-JennyNeural');
   await tts.setMetadata(neuralVoice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
@@ -381,7 +374,7 @@ async function generateMsEdgeAudio(text, voice, customLang = 'en') {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(new Error('MsEdgeTTS audio stream timeout'));
-    }, 8000);
+    }, 6000);
 
     audioStream.on('data', chunk => chunks.push(chunk));
     audioStream.on('end', () => {
@@ -428,7 +421,6 @@ export async function generateVoiceAudio(text, voiceOrCode, customLang = 'en') {
   try {
     rawBuffer = await generateElevenLabsAudio(cleanText, voice);
     if (rawBuffer && rawBuffer.length > 0) {
-      // Optional acoustic sweetening filter if defined
       if (voice && voice.filter) {
         return await applyAudioFilter(rawBuffer, voice.filter);
       }
@@ -442,12 +434,17 @@ export async function generateVoiceAudio(text, voiceOrCode, customLang = 'en') {
   try {
     rawBuffer = await generateMsEdgeAudio(cleanText, voice, customLang);
   } catch (err) {
-    console.warn('[ttsVoiceEngine] Neural synthesis fallback:', err.message);
+    // Graceful fallback to Google TTS when Edge TTS encounters WebSocket issues
     const fallbackLang = voice?.baseLang || customLang || 'en';
-    rawBuffer = await generateGoogleTtsAudio(cleanText, fallbackLang);
+    try {
+      rawBuffer = await generateGoogleTtsAudio(cleanText, fallbackLang);
+    } catch (gErr) {
+      console.warn('[ttsVoiceEngine] Google TTS fallback error:', gErr.message);
+      throw gErr;
+    }
   }
 
-  if (voice && voice.filter) {
+  if (voice && voice.filter && rawBuffer) {
     return await applyAudioFilter(rawBuffer, voice.filter);
   }
 

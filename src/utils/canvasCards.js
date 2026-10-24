@@ -783,14 +783,15 @@ function parseAccentRgb(hex = '#00f0ff') {
 }
 
 /**
- * Generates an ultra-sleek, intelligently syncable Cyber Glass HUD animated looping GIF.
- * Dynamically harmonizes with the server's accent color and icon, featuring:
- * - 1024x340 true wide cinematic banner aspect ratio.
- * - Multi-layered rotating radar reticle with animated degree tick marks and neon borders.
- * - Dynamic accent aura, holographic grid, and drifting cyber motes.
- * - Beveled electric plasma wave progress bar with dual-harmonic sine waves and pulsing head orb.
- * - Idle charging state when at 0% with glowing beacon.
- * - 3 tactical HUD metric chips.
+ * Generates an ultra-high-definition War-Room Cyber HUD animated GIF or static card.
+ * Modeled after the flagship Athena Prime command center war-room master plate:
+ * - 1024x512 Master Tactical Command Center base plate with holographic 3D globe & consoles.
+ * - Circular Server Icon Reticle with 16 rotating radar ticks, concentric neon rings, and glass sheen.
+ * - Intelligent Server Accent Color Sync (radial wash over globe, holographic displays, and reticle).
+ * - Status Badge Pill with pulsing indicator dot and sequentially animated forward-flowing chevron arrows (>>>).
+ * - Beveled Electric Plasma Progress Bar with dual-harmonic lightning sine waves & pulsing head orb with cross glints.
+ * - 0% State with active breathing locator beacon and charging aura.
+ * - 3 Frosted Tactical Metric Chips with 7-segment hardware gauge telemetry tick meters.
  */
 export async function generateCommandStatusBanner({
   title = 'SYSTEM MATRIX',
@@ -808,7 +809,7 @@ export async function generateCommandStatusBanner({
   animated = true
 }) {
   const W = 1024;
-  const H = 340;
+  const H = 512;
   const numFrames = animated ? 8 : 1;
   const tempDir = path.resolve(`data/status_gif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`);
 
@@ -818,14 +819,25 @@ export async function generateCommandStatusBanner({
 
   let firstFrameBuffer = null;
 
-  // Resolve icon reliably (ensuring PNG format so canvas decodes smoothly)
+  // 1. Resolve War-Room Master Base Plate
+  let plateImg = null;
+  const platePath = path.resolve('src/assets/hud_war_room_plate.jpg');
+  try {
+    if (fs.existsSync(platePath)) {
+      plateImg = await loadImage(platePath);
+    }
+  } catch (err) {
+    console.error('[CommandStatusBanner] Notice: base plate load error, fallback to procedural obsidian:', err.message);
+  }
+
+  // 2. Resolve Server Icon Image Reliably (ensuring PNG format so canvas decodes smoothly)
   let iconImg = null;
   if (iconUrl) {
     try {
       const pngUrl = String(iconUrl).replace(/\.webp(\?.*)?$/i, '.png$1');
       iconImg = await loadImage(pngUrl);
     } catch (err) {
-      console.error('[CommandStatusBanner] Failed to load icon image:', err.message);
+      console.error('[CommandStatusBanner] Notice: Failed to load icon image, using fallback initial:', err.message);
     }
   }
 
@@ -836,25 +848,26 @@ export async function generateCommandStatusBanner({
   const ratio = total > 0 ? clamped / total : 0;
   const pct = Math.round(ratio * 100);
 
-  const iconCX = 150;
-  const iconCY = 170;
-  const iconR = 64;
+  // Canonical Layout Coordinates matching the War-Room Tactical Console
+  const iconCX = 156.5;
+  const iconCY = 182;
+  const iconR = 58;
 
-  const barX = 265;
-  const barY = 172;
-  const barW = 715;
-  const barH = 22;
-  const barR = 11;
+  const barX = 250;
+  const barY = 166;
+  const barW = 525;
+  const barH = 26;
+  const barR = 13;
   const fillW = Math.max(barR * 2, Math.min(barW, barW * ratio));
 
   // Cyber ambient floating energy particles
-  const CYBER_PARTICLES = Array.from({ length: 22 }, (_, i) => ({
-    x: Math.random() * W,
-    y: Math.random() * H,
-    vx: (Math.random() - 0.5) * 1.8,
-    vy: -0.6 - Math.random() * 1.2,
+  const CYBER_PARTICLES = Array.from({ length: 24 }, () => ({
+    x: 200 + Math.random() * 600,
+    y: 80 + Math.random() * 380,
+    vx: (Math.random() - 0.5) * 1.5,
+    vy: -0.8 - Math.random() * 1.2,
     size: 1.2 + Math.random() * 2,
-    alpha: 0.2 + Math.random() * 0.6,
+    alpha: 0.25 + Math.random() * 0.55,
     phase: Math.random() * Math.PI * 2
   }));
 
@@ -864,98 +877,76 @@ export async function generateCommandStatusBanner({
       const canvas = createCanvas(W, H);
       const ctx = canvas.getContext('2d');
 
-      // 1. Deep Obsidian Base Gradient
-      const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-      bgGrad.addColorStop(0, '#040711');
-      bgGrad.addColorStop(0.5, '#08101e');
-      bgGrad.addColorStop(1, '#020409');
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      // 2. Dynamic Server Accent Radial Wash (harmonizes with any server theme)
-      const auraGrad = ctx.createRadialGradient(iconCX, iconCY, 10, iconCX, iconCY, 280);
-      auraGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.24)`);
-      auraGrad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.08)`);
-      auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = auraGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      // Top-Right Ambient Accent Glow
-      const trAura = ctx.createRadialGradient(W - 80, 50, 10, W - 80, 50, 320);
-      trAura.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.12)`);
-      trAura.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = trAura;
-      ctx.fillRect(0, 0, W, H);
-
-      // 3. Holographic Fine Grid
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.04)`;
-      ctx.lineWidth = 1;
-      for (let x = 0; x < W; x += 28) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-      }
-      for (let y = 0; y < H; y += 28) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      }
-
-      // 4. Animated Vertical Cyber Sweep Line
-      if (animated) {
-        const sweepX = (f / numFrames) * W;
-        const sweepGrad = ctx.createLinearGradient(sweepX - 60, 0, sweepX + 60, 0);
-        sweepGrad.addColorStop(0, 'rgba(0,0,0,0)');
-        sweepGrad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.08)`);
-        sweepGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = sweepGrad;
+      // 1. Draw Master War-Room Tactical Console Base Plate
+      if (plateImg) {
+        ctx.drawImage(plateImg, 0, 0, W, H);
+      } else {
+        const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+        bgGrad.addColorStop(0, '#040711');
+        bgGrad.addColorStop(0.5, '#08101e');
+        bgGrad.addColorStop(1, '#020409');
+        ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, W, H);
       }
 
-      // 5. Floating Cyber Motes / Energy Particles
-      for (let i = 0; i < CYBER_PARTICLES.length; i++) {
-        const p = CYBER_PARTICLES[i];
-        const curX = (p.x + p.vx * f * 3 + W) % W;
-        let curY = p.y + p.vy * f * 3;
-        if (curY < 0) curY += H;
-        const alpha = p.alpha * (0.7 + 0.3 * Math.sin(phi + p.phase));
+      // 2. Intelligent Server Accent Radial Wash over Holographic Globe & Telemetry Consoles
+      const globeAura = ctx.createRadialGradient(512, 345, 10, 512, 345, 270);
+      globeAura.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.22)`);
+      globeAura.addColorStop(0.6, `rgba(${r}, ${g}, ${b}, 0.08)`);
+      globeAura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = globeAura;
+      ctx.fillRect(0, 240, W, 272);
+
+      // Top-Left Reticle Ambient Accent Wash
+      const reticleAura = ctx.createRadialGradient(iconCX, iconCY, 10, iconCX, iconCY, 130);
+      reticleAura.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.20)`);
+      reticleAura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = reticleAura;
+      ctx.fillRect(iconCX - 130, iconCY - 130, 260, 260);
+
+      // 3. Clean Dark Cyber Glass Backing over Dynamic Header & Metrics Area
+      // Seamlessly covers placeholder text while retaining the authentic bevels and console aesthetics
+      const glassGrad = ctx.createLinearGradient(barX, 58, barX, 252);
+      glassGrad.addColorStop(0, 'rgba(5, 10, 20, 0.94)');
+      glassGrad.addColorStop(0.5, 'rgba(8, 14, 26, 0.92)');
+      glassGrad.addColorStop(1, 'rgba(4, 8, 16, 0.96)');
+      ctx.fillStyle = glassGrad;
+      ctx.beginPath();
+      ctx.roundRect(barX - 10, 58, barW + 20, 194, 8);
+      ctx.fill();
+
+      // Subtle Glass Panel Accent Border
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.28)`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Tactical Corner Brackets on Glass Surface
+      const bLen = 14;
+      const px = barX - 10;
+      const py = 58;
+      const pw = barW + 20;
+      const ph = 194;
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.65)`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(px, py + bLen); ctx.lineTo(px, py); ctx.lineTo(px + bLen, py); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw - bLen, py); ctx.lineTo(px + pw, py); ctx.lineTo(px + pw, py + bLen); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, py + ph - bLen); ctx.lineTo(px, py + ph); ctx.lineTo(px + bLen, py + ph); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + pw - bLen, py + ph); ctx.lineTo(px + pw, py + ph); ctx.lineTo(px + pw, py + ph - bLen); ctx.stroke();
+
+      // 4. Floating Cyber Energy Motes
+      for (const m of CYBER_PARTICLES) {
+        const curX = (m.x + m.vx * f * 2 + W) % W;
+        let curY = m.y + m.vy * f * 2;
+        if (curY < 60) curY += 400;
+        const alpha = m.alpha * (0.7 + 0.3 * Math.sin(phi + m.phase));
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
         ctx.beginPath();
-        ctx.arc(curX, curY, p.size, 0, Math.PI * 2);
+        ctx.arc(curX, curY, m.size, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 6. Corner Tactical L-Brackets
-      const brLen = 18;
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.45)`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(16, 16 + brLen); ctx.lineTo(16, 16); ctx.lineTo(16 + brLen, 16); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(W - 16 - brLen, 16); ctx.lineTo(W - 16, 16); ctx.lineTo(W - 16, 16 + brLen); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(16, H - 16 - brLen); ctx.lineTo(16, H - 16); ctx.lineTo(16 + brLen, H - 16); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(W - 16 - brLen, H - 16); ctx.lineTo(W - 16, H - 16); ctx.lineTo(W - 16, H - 16 - brLen); ctx.stroke();
-
-      // 7. Left Avatar / Server Icon Reticle Portal
-      // Outer animated rotating radar degree ticks
-      ctx.save();
-      ctx.translate(iconCX, iconCY);
-      ctx.rotate(phi);
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.75)`;
-      ctx.lineWidth = 1.5;
-      for (let i = 0; i < 16; i++) {
-        const angle = (i * Math.PI * 2) / 16;
-        const inner = 74;
-        const outer = i % 4 === 0 ? 84 : 79;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
-        ctx.lineTo(Math.cos(angle) * outer, Math.sin(angle) * outer);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      // Concentric Neon Halo Ring
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.arc(iconCX, iconCY, 69, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Mask and draw Avatar / Server Icon
+      // 5. Left Server Icon / Avatar Reticle Portal
+      // Inner avatar aperture mask
       ctx.save();
       ctx.beginPath();
       ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2);
@@ -966,102 +957,176 @@ export async function generateCommandStatusBanner({
         ctx.drawImage(iconImg, iconCX - iconR, iconCY - iconR, iconR * 2, iconR * 2);
       } else {
         const avGrad = ctx.createLinearGradient(iconCX - iconR, iconCY - iconR, iconCX + iconR, iconCY + iconR);
-        avGrad.addColorStop(0, '#101a2e');
-        avGrad.addColorStop(1, '#080d17');
+        avGrad.addColorStop(0, '#0d1829');
+        avGrad.addColorStop(1, '#050a14');
         ctx.fillStyle = avGrad;
         ctx.fillRect(iconCX - iconR, iconCY - iconR, iconR * 2, iconR * 2);
-        ctx.font = 'bold 44px sans-serif';
+        ctx.font = 'bold 42px sans-serif';
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText((fallbackInitial || 'A')[0].toUpperCase(), iconCX, iconCY);
       }
+
+      // Inner Glass Sheen Highlight Arc
+      const sheenGrad = ctx.createLinearGradient(iconCX - iconR, iconCY - iconR, iconCX + iconR, iconCY);
+      sheenGrad.addColorStop(0, 'rgba(255, 255, 255, 0.28)');
+      sheenGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.05)');
+      sheenGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = sheenGrad;
+      ctx.fillRect(iconCX - iconR, iconCY - iconR, iconR * 2, iconR);
       ctx.restore();
 
-      // Inner glass bezel edge
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.lineWidth = 1.2;
+      // Inner Bezel Ring
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2);
       ctx.stroke();
 
-      // 8. Subtitle & Status Badge
-      ctx.font = 'bold 12px sans-serif';
+      // Concentric Neon Halo Ring
+      const haloPulse = 0.75 + 0.25 * Math.sin(phi * 2);
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${haloPulse})`;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(iconCX, iconCY, iconR + 7, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Outer Animated Rotating Radar Reticle Ticks (16 Ticks)
+      ctx.save();
+      ctx.translate(iconCX, iconCY);
+      ctx.rotate(phi);
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
+      ctx.lineWidth = 1.8;
+      for (let i = 0; i < 16; i++) {
+        const angle = (i * Math.PI * 2) / 16;
+        const inner = iconR + 12;
+        const outer = i % 4 === 0 ? iconR + 21 : iconR + 16;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+        ctx.lineTo(Math.cos(angle) * outer, Math.sin(angle) * outer);
+        ctx.stroke();
+      }
+      // Rotating Radar Sweep Wedge (90 degrees)
+      const sweepArcGrad = ctx.createRadialGradient(0, 0, iconR + 5, 0, 0, iconR + 21);
+      sweepArcGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.25)`);
+      sweepArcGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
+      ctx.fillStyle = sweepArcGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, iconR + 21, 0, Math.PI / 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // 6. Header Subtitle
+      ctx.font = 'bold 11px monospace';
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.95)`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillText(subtitle.toUpperCase(), barX, 62);
+      ctx.fillText(subtitle.toUpperCase(), barX, 82);
 
-      // Status Badge Pill
+      // 7. Status Badge Pill with ANIMATED SEQUENTIAL CHEVRONS (>>>)
       if (badge) {
-        const badgeText = `${badge.toUpperCase()} >>>`;
         ctx.font = 'bold 11px sans-serif';
-        const badgeW = ctx.measureText(badgeText).width + 30;
-        const badgeX = W - 32 - badgeW;
-        const badgeY = 46;
+        const badgeBaseText = badge.toUpperCase();
+        const badgeTextW = ctx.measureText(badgeBaseText).width;
+        const arrowWidth = 36;
+        const badgeW = badgeTextW + arrowWidth + 34;
+        const badgeH = 26;
+        const badgeX = barX + barW - badgeW;
+        const badgeY = 66;
 
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.12)`;
+        // Capsule Background
+        ctx.fillStyle = 'rgba(6, 16, 32, 0.88)';
         ctx.beginPath();
-        ctx.roundRect(badgeX, badgeY, badgeW, 24, 12);
+        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 13);
         ctx.fill();
         ctx.strokeStyle = effectiveBadgeColor;
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        // Glowing pulsing indicator dot in badge
-        const dotPulse = 0.6 + 0.4 * Math.sin(phi * 2);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${dotPulse})`;
+        // Pulsing Glowing Indicator Dot
+        const dotPulse = 0.55 + 0.45 * Math.sin(phi * 2);
+        const dotX = badgeX + 13;
+        const dotY = badgeY + 13;
+        const dotGrad = ctx.createRadialGradient(dotX, dotY, 1, dotX, dotY, 6);
+        dotGrad.addColorStop(0, '#ffffff');
+        dotGrad.addColorStop(0.4, effectiveBadgeColor);
+        dotGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = dotGrad;
         ctx.beginPath();
-        ctx.arc(badgeX + 12, badgeY + 12, 3.5, 0, Math.PI * 2);
+        ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
         ctx.fill();
 
+        // Badge Text
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(badgeText, badgeX + 22, badgeY + 16);
+        ctx.fillText(badgeBaseText, dotX + 10, badgeY + 17);
+
+        // THE ANIMATED CHEVRON ARROWS (>>>)
+        // 3 Chevrons pulsing sequentially forward to animate the arrow
+        const chevStartX = dotX + 10 + badgeTextW + 8;
+        for (let c = 0; c < 3; c++) {
+          const chevPhase = phi - (c * (Math.PI * 2 / 3));
+          const chevIntensity = 0.3 + 0.7 * Math.max(0, Math.sin(chevPhase));
+          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${chevIntensity})`;
+          ctx.lineWidth = 2.0;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+
+          const cx = chevStartX + (c * 8);
+          const cy = badgeY + 13;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - 5);
+          ctx.lineTo(cx + 4, cy);
+          ctx.lineTo(cx, cy + 5);
+          ctx.stroke();
+        }
       }
 
-      // 9. Main Title
-      ctx.font = '900 24px sans-serif';
+      // 8. Main Title
+      ctx.font = '900 23px sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(title.toUpperCase(), barX, 108);
+      ctx.fillText(title.toUpperCase(), barX, 122);
 
-      // 10. Status Progress Text Row
+      // 9. Status Progress Text Row
       ctx.font = 'bold 11px sans-serif';
       ctx.fillStyle = '#94a3b8';
-      ctx.fillText(`STATUS PROGRESS: ${clamped}/${total} ${unit.toUpperCase()}`, barX, 158);
+      ctx.fillText(`STATUS PROGRESS: ${clamped}/${total} ${unit.toUpperCase()}`, barX, 154);
 
-      ctx.font = '900 13px sans-serif';
+      ctx.font = '900 14px sans-serif';
       ctx.fillStyle = accentColor;
       ctx.textAlign = 'right';
-      ctx.fillText(`${pct}%`, barX + barW, 158);
+      ctx.fillText(`${pct}%`, barX + barW, 154);
       ctx.textAlign = 'left';
 
-      // 11. Beveled Electric Plasma Progress Bar
-      // Outer track
-      ctx.fillStyle = 'rgba(6, 14, 26, 0.92)';
+      // 10. Beveled Electric Plasma Progress Bar
+      // Outer Track
+      ctx.fillStyle = 'rgba(5, 12, 24, 0.95)';
       ctx.beginPath();
       ctx.roundRect(barX, barY, barW, barH, barR);
       ctx.fill();
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.45)`;
       ctx.lineWidth = 1.2;
       ctx.stroke();
 
       if (ratio > 0) {
-        // Animated plasma fill
         ctx.save();
         ctx.beginPath();
         ctx.roundRect(barX, barY, fillW, barH, barR);
         ctx.clip();
 
-        const pGrad = ctx.createLinearGradient(barX - (f * 15), barY, barX + fillW + (f * 15), barY);
-        pGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.7)`);
+        // Flowing Electric Plasma Gradient
+        const pGrad = ctx.createLinearGradient(barX - (f * 18), barY, barX + fillW + (f * 18), barY);
+        pGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.75)`);
         pGrad.addColorStop(0.5, '#ffffff');
-        pGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.9)`);
+        pGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.95)`);
         ctx.fillStyle = pGrad;
         ctx.fillRect(barX, barY, fillW, barH);
 
-        // Multi-harmonic sine waves
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.lineWidth = 1.5;
+        // Multi-Harmonic Electric Lightning Sine Waves
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = 1.6;
         ctx.beginPath();
         for (let x = barX; x <= barX + fillW; x += 3) {
           const relX = x - barX;
@@ -1070,38 +1135,59 @@ export async function generateCommandStatusBanner({
           else ctx.lineTo(x, y);
         }
         ctx.stroke();
+
+        // High-Frequency Spark Filament Crackle Wave
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.75)`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (let x = barX; x <= barX + fillW; x += 4) {
+          const relX = x - barX;
+          const y = barY + barH / 2 + Math.sin(relX * 0.12 - phi * 3) * 2.5;
+          if (x === barX) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
         ctx.restore();
 
-        // Pulsing plasma head orb with lens flare
+        // Pulsing Plasma Head Orb Knob with 4-Point Cross Glints
         const headX = barX + fillW;
         const headY = barY + barH / 2;
         const orbPulse = 1 + 0.25 * Math.sin(phi);
-        const orbGrad = ctx.createRadialGradient(headX, headY, 1, headX, headY, 14 * orbPulse);
+
+        const orbGrad = ctx.createRadialGradient(headX, headY, 1, headX, headY, 15 * orbPulse);
         orbGrad.addColorStop(0, '#ffffff');
-        orbGrad.addColorStop(0.3, accentColor);
+        orbGrad.addColorStop(0.35, accentColor);
         orbGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = orbGrad;
         ctx.beginPath();
-        ctx.arc(headX, headY, 14 * orbPulse, 0, Math.PI * 2);
+        ctx.arc(headX, headY, 15 * orbPulse, 0, Math.PI * 2);
         ctx.fill();
+
+        // Cross Glint Flares
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.lineWidth = 1.5;
+        const glintLen = 9 * orbPulse;
+        ctx.beginPath();
+        ctx.moveTo(headX - glintLen, headY); ctx.lineTo(headX + glintLen, headY);
+        ctx.moveTo(headX, headY - glintLen); ctx.lineTo(headX, headY + glintLen);
+        ctx.stroke();
       } else {
-        // Intelligent 0% State: Subtle idle charging aura and base locator beacon
-        const idlePulse = 0.12 + 0.08 * Math.sin(phi * 2);
+        // Intelligent 0% State: Active Breathing Idle Charging Aura & Locator Beacon
+        const idlePulse = 0.14 + 0.09 * Math.sin(phi * 2);
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${idlePulse})`;
         ctx.beginPath();
         ctx.roundRect(barX + 2, barY + 2, barW - 4, barH - 4, barR - 2);
         ctx.fill();
 
-        // Base locator beacon
-        const beaconX = barX + 12;
+        const beaconX = barX + 13;
         const beaconY = barY + barH / 2;
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.7 + 0.3 * Math.sin(phi * 2)})`;
         ctx.beginPath();
-        ctx.arc(beaconX, beaconY, 4, 0, Math.PI * 2);
+        ctx.arc(beaconX, beaconY, 4.5, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 12. Tactical Metric Chips
+      // 11. Tactical Metric Chips with 7-Segment Hardware Gauge Ticks
       const chipList = Array.isArray(metrics) && metrics.length > 0
         ? metrics.slice(0, 3)
         : [
@@ -1110,34 +1196,68 @@ export async function generateCommandStatusBanner({
             { label: 'ENGINE', value: 'ATHENA' }
           ];
 
-      let chipX = barX;
-      for (const m of chipList) {
-        ctx.save();
-        ctx.font = 'bold 11px sans-serif';
-        const labelText = `${m.label}: ${m.value}`;
-        const chipW = Math.max(130, ctx.measureText(labelText).width + 28);
-        const chipH = 28;
+      const chipW = 166;
+      const chipH = 42;
+      const chipGap = 13;
+      for (let i = 0; i < chipList.length; i++) {
+        const m = chipList[i];
+        const cx = barX + i * (chipW + chipGap);
+        const cy = 202;
 
-        ctx.fillStyle = 'rgba(8, 16, 30, 0.85)';
+        // Frosted Capsule Backing
+        ctx.fillStyle = 'rgba(6, 14, 26, 0.9)';
         ctx.beginPath();
-        ctx.roundRect(chipX, 222, chipW, chipH, 6);
+        ctx.roundRect(cx, cy, chipW, chipH, 6);
         ctx.fill();
         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.1;
         ctx.stroke();
 
+        // Chip Header / Label
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.95)`;
+        ctx.fillText(String(m.label || 'METRIC').toUpperCase(), cx + 12, cy + 15);
+
+        // Chip Value
+        ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(labelText, chipX + 14, 240);
-        ctx.restore();
+        ctx.fillText(String(m.value || 'ONLINE'), cx + 12, cy + 28);
 
-        chipX += chipW + 14;
+        // 7-Segment Hardware Gauge Ticks
+        // Deduce active percentage for the gauge
+        let mPct = m.pct;
+        if (mPct === undefined) {
+          const valStr = String(m.value || '').toUpperCase();
+          if (valStr.includes('%')) {
+            const parsed = parseInt(valStr.replace(/[^0-9]/g, ''), 10);
+            mPct = isNaN(parsed) ? ratio : parsed / 100;
+          } else if (valStr.includes('/')) {
+            const [num, den] = valStr.split('/').map(x => parseInt(x.trim(), 10));
+            mPct = (!isNaN(num) && !isNaN(den) && den > 0) ? num / den : ratio;
+          } else if (['ONLINE', 'GUARDED', 'ENABLED', 'ACTIVE', 'ARMED', 'OK', 'SAFE', 'ON'].some(k => valStr.includes(k))) {
+            mPct = 1.0;
+          } else if (['OFF', 'DISABLED', '0 DETECTED', 'NONE', 'STANDBY'].some(k => valStr.includes(k))) {
+            mPct = 0.0;
+          } else {
+            mPct = ratio;
+          }
+        }
+
+        const numSegments = 7;
+        const activeCount = Math.round(Math.max(0, Math.min(1, mPct)) * numSegments);
+        const segW = 6;
+        const segH = 4;
+        const segGap = 3;
+        const segStartX = cx + chipW - 12 - (numSegments * (segW + segGap) - segGap);
+        const segY = cy + 26;
+
+        for (let s = 0; s < numSegments; s++) {
+          const sx = segStartX + s * (segW + segGap);
+          const isActive = s < activeCount;
+          ctx.fillStyle = isActive ? `rgba(${r}, ${g}, ${b}, 0.95)` : `rgba(${r}, ${g}, ${b}, 0.18)`;
+          ctx.fillRect(sx, segY, segW, segH);
+        }
       }
-
-      // 13. Dynamic High-Tech Footer Watermark
-      ctx.font = 'bold 9px monospace';
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
-      ctx.textAlign = 'right';
-      ctx.fillText('ATHENA PRIME // HIGH-ASSURANCE DEFENSE MATRIX • SYNCHRONIZED', barX + barW, 290);
 
       const frameBuf = canvas.toBuffer('image/png');
       if (f === 0) firstFrameBuffer = frameBuf;
