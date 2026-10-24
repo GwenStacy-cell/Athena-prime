@@ -467,15 +467,11 @@ export const commands = [
           }
 
           const components = buildHelpContainer(message.client, message.guild?.id, 'home');
-          reply = await message.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
+          await message.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
         } catch (e) {
           console.error('[Help] Prefix error:', e);
           return;
         }
-        const collector = reply.createMessageComponentCollector({ idle: 120000 });
-        collector.on('collect', async i => {
-          await handleHelpInteraction(i).catch(() => null);
-        });
     },
     async executeSlash(interaction) {
       const cmdArg = interaction.options?.getString?.('command');
@@ -663,17 +659,10 @@ export const commands = [
       let reply;
       try {
         await interaction.reply({ components: [components], flags: MessageFlags.IsComponentsV2 });
-        reply = await interaction.fetchReply();
-        
       } catch (e) {
         console.error('[Help] Slash error:', e);
         return;
       }
-      if (!reply) return; // Prevent crashes if reply is undefined
-      const collector = reply.createMessageComponentCollector({ idle: 120000 });
-      collector.on('collect', async i => {
-        await handleHelpInteraction(i).catch(() => null);
-      });
     }
   },
 
@@ -2184,6 +2173,7 @@ export async function handleHelpInteraction(interaction) {
 
     const newComponents = buildHelpContainer(interaction.client, interaction.guild?.id, targetModuleId);
     await interaction.update({ components: [newComponents], flags: MessageFlags.IsComponentsV2 }).catch(async (err) => {
+      if (err.code === 10062) return;
       console.warn('[Help] Update failed:', err.message);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.deferUpdate().catch(() => null);

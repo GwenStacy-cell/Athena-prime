@@ -240,6 +240,7 @@ export function buildTtsControlPanel(member, guild) {
  * Handles interactions triggered by TTS Control Center components.
  */
 export async function handleTtsInteraction(interaction) {
+  if (interaction.replied || interaction.deferred) return;
   const guild = interaction.guild;
   const member = interaction.member;
   if (!guild || !member) return;
@@ -249,7 +250,7 @@ export async function handleTtsInteraction(interaction) {
     if (selected === 'tts_voice_default') {
       db.updateTtsPrefs(interaction.user.id, { voice: null });
       const updatedPanel = buildTtsControlPanel(member, guild);
-      return interaction.update(updatedPanel);
+      return interaction.update(updatedPanel).catch(() => null);
     }
 
     const voiceId = selected.replace('tts_voice_', '');
@@ -258,7 +259,7 @@ export async function handleTtsInteraction(interaction) {
       db.updateTtsPrefs(interaction.user.id, { voice: resolved.id, lang: resolved.baseLang });
     }
     const updatedPanel = buildTtsControlPanel(member, guild);
-    return interaction.update(updatedPanel);
+    return interaction.update(updatedPanel).catch(() => null);
   }
 
   if (interaction.isButton()) {
@@ -267,7 +268,7 @@ export async function handleTtsInteraction(interaction) {
         return interaction.reply({
           content: '-# <:cross_red:1533860128015519895> You must be in a Voice Channel to speak.',
           flags: MessageFlags.Ephemeral
-        });
+        }).catch(() => null);
       }
 
       const modal = new ModalBuilder()
@@ -283,7 +284,7 @@ export async function handleTtsInteraction(interaction) {
         .setRequired(true);
 
       modal.addComponents(new ActionRowBuilder().addComponents(textInput));
-      return interaction.showModal(modal);
+      return interaction.showModal(modal).catch(() => null);
     }
 
     if (interaction.customId === 'tts_autovc_btn') {
@@ -292,7 +293,7 @@ export async function handleTtsInteraction(interaction) {
         return interaction.reply({
           content: '-# <:cross_red:1533860128015519895> Only Administrators can toggle global Auto-TTS for a Voice Channel.',
           flags: MessageFlags.Ephemeral
-        });
+        }).catch(() => null);
       }
 
       const currentAutoVc = db.getAutoTtsVc(guild.id);
@@ -305,13 +306,13 @@ export async function handleTtsInteraction(interaction) {
           return interaction.reply({
             content: '-# <:cross_red:1533860128015519895> You must be inside a Voice Channel to bind Auto-TTS to it.',
             flags: MessageFlags.Ephemeral
-          });
+          }).catch(() => null);
         }
         db.setAutoTtsVc(guild.id, userVc);
       }
 
       const updatedPanel = buildTtsControlPanel(member, guild);
-      return interaction.update(updatedPanel);
+      return interaction.update(updatedPanel).catch(() => null);
     }
 
     if (interaction.customId === 'tts_stop_btn') {
@@ -323,26 +324,26 @@ export async function handleTtsInteraction(interaction) {
       return interaction.reply({
         content: '-# <a:atheNATICK:1557841381630681106> **TTS Playback Halted** | Queue has been cleared.',
         flags: MessageFlags.Ephemeral
-      });
+      }).catch(() => null);
     }
 
     if (interaction.customId === 'tts_voices_btn') {
       const prefix = db.getGuildConfig(guild.id)?.prefix || '!';
       const container = buildVoiceListContainer(prefix);
-      return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral });
+      return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral }).catch(() => null);
     }
 
     if (interaction.customId === 'tts_reset_btn') {
       db.updateTtsPrefs(interaction.user.id, { voice: null });
       const updatedPanel = buildTtsControlPanel(member, guild);
-      return interaction.update(updatedPanel);
+      return interaction.update(updatedPanel).catch(() => null);
     }
 
     if (interaction.customId === 'tts_close_btn') {
       try {
         await interaction.message.delete();
       } catch {
-        await interaction.update({ content: '-# Control Center Closed.', components: [] });
+        await interaction.update({ content: '-# Control Center Closed.', components: [] }).catch(() => null);
       }
       return;
     }
@@ -354,7 +355,7 @@ export async function handleTtsInteraction(interaction) {
       return interaction.reply({
         content: '-# <:cross_red:1533860128015519895> You must be in a Voice Channel to speak.',
         flags: MessageFlags.Ephemeral
-      });
+      }).catch(() => null);
     }
 
     const prefs = db.getTtsPrefs(member.id);
@@ -364,7 +365,7 @@ export async function handleTtsInteraction(interaction) {
     await interaction.reply({
       content: `-# <a:atheNATICK:1557841381630681106> **Broadcasting to <#${member.voice.channel.id}>** using **${voiceTag}**...`,
       flags: MessageFlags.Ephemeral
-    });
+    }).catch(() => null);
 
     await queueTtsMessage(member, text);
   }
@@ -430,15 +431,7 @@ export const commands = [
         args[0]?.toLowerCase() === 'dashboard'
       ) {
         const panel = buildTtsControlPanel(message.member, message.guild);
-        const reply = await message.reply(panel);
-        const collector = reply.createMessageComponentCollector({ idle: 120000 });
-        collector.on('collect', async i => {
-          try {
-            await handleTtsInteraction(i);
-          } catch (err) {
-            console.error('[TTS Collector] Error:', err);
-          }
-        });
+        await message.reply(panel);
         return;
       }
 
@@ -581,15 +574,7 @@ export const commands = [
       }
 
       const panel = buildTtsControlPanel(interaction.member, interaction.guild);
-      const reply = await interaction.reply(panel);
-      const collector = reply.createMessageComponentCollector({ idle: 120000 });
-      collector.on('collect', async i => {
-        try {
-          await handleTtsInteraction(i);
-        } catch (err) {
-          console.error('[TTS Collector] Error:', err);
-        }
-      });
+      await interaction.reply(panel);
     }
   }
 ];

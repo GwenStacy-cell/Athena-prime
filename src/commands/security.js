@@ -3295,6 +3295,7 @@ export async function getSecurityHealthPanel(guild) {
 }
 
 export async function getWhitelistPanel(guild, targetId, type, view = 'info') {
+  const config = db.getGuildConfig(guild.id);
   const wData = db.getWhitelist(guild.id, targetId, type) || { modules: [], triggerLimit: 0, currentUsage: 0 };
   
   // Try to resolve name

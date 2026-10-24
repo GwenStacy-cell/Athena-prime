@@ -1978,8 +1978,7 @@ export default {
             if (t.heading || t.gif || t.footer || ghostNotice || bountyNotice) {
               const triggerContainer = buildAutoReplyPreview(message.guild, t, userOrMember, {
                 ghostNotice,
-                bountyNotice,
-                includeFeedback: true
+                bountyNotice
               });
               sentMessage = await message.reply({ components: [triggerContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {
                 return message.channel.send({ components: [triggerContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
@@ -1993,8 +1992,7 @@ export default {
             // Standard Auto-Reply (CV2 accent borderless container)
             const autoReplyContainer = buildAutoReplyPreview(message.guild, t, userOrMember, {
               ghostNotice,
-              bountyNotice,
-              includeFeedback: true
+              bountyNotice
             });
 
             sentMessage = await message.reply({ components: [autoReplyContainer], flags: MessageFlags.IsComponentsV2 }).catch(() => {

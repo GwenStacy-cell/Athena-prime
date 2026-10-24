@@ -117,19 +117,6 @@ export function buildAutoReplyPreview(guild, trigger, userOrMember = null, optio
     comps.push({ type: 10, content: `-# **[Auto-Reply Triggered: \`${trigger.match}\`]**` });
   }
 
-  // 5. Optional Feedback Rating Buttons
-  if (options.includeFeedback && trigger.match) {
-    const encodedMatch = Buffer.from(trigger.match).toString('base64url');
-    comps.push({ type: 14, divider: true });
-    comps.push({
-      type: 1,
-      components: [
-        { type: 2, custom_id: `trig_rate_up_${encodedMatch}`, label: `👍 Helpful (${trigger.helpfulCount || 0})`, style: 2 },
-        { type: 2, custom_id: `trig_rate_down_${encodedMatch}`, label: `❓ Need Help (${trigger.unhelpfulCount || 0})`, style: 2 }
-      ]
-    });
-  }
-
   return {
     type: 17,
     accent_color: accentInt,
@@ -1060,13 +1047,12 @@ export async function buildTriggerDashboard(guild, page = 0) {
       const mediaText = t.gif ? 'Attached' : 'None';
 
       const badges = [];
-      if (t.ghost) badges.push(`⏳ ${t.ghost}s Ghost`);
-      if (t.rewardXp) badges.push(`🎉 +${t.rewardXp} XP (${(t.claims || []).length}/${t.maxClaims || '∞'})`);
-      if (t.timeVariant && t.timeVariant !== 'always') badges.push(`⏰ ${t.timeVariant}`);
-      if (t.audience && t.audience !== 'all') badges.push(`👥 ${t.audience}`);
-      if (t.reaction) badges.push(`⭐ React: ${t.reaction}`);
-      if (t.mirrorChannel) badges.push(`🚨 Mirror: <#${t.mirrorChannel}>`);
-      if (t.helpfulCount || t.unhelpfulCount) badges.push(`👍 ${t.helpfulCount || 0} / ❓ ${t.unhelpfulCount || 0}`);
+      if (t.ghost) badges.push(`[Ghost: ${t.ghost}s]`);
+      if (t.rewardXp) badges.push(`[XP: +${t.rewardXp} (${(t.claims || []).length}/${t.maxClaims || '∞'})]`);
+      if (t.timeVariant && t.timeVariant !== 'always') badges.push(`[Time: ${t.timeVariant}]`);
+      if (t.audience && t.audience !== 'all') badges.push(`[Audience: ${t.audience}]`);
+      if (t.reaction) badges.push(`[React: ${t.reaction}]`);
+      if (t.mirrorChannel) badges.push(`[Mirror: <#${t.mirrorChannel}>]`);
       const extraLine = badges.length > 0 ? `\n-# • **Modules:** **${badges.join(' • ')}**` : '';
 
       return (
@@ -2363,7 +2349,7 @@ export const triggerCmd = {
         return message.reply(makeAccentResponse(message.guild, 'Not Found', `No trigger found matching \`${match}\`.`, false));
       }
 
-      const previewContainer = buildAutoReplyPreview(message.guild, trigger, message.member || message.author, { includeFeedback: true });
+      const previewContainer = buildAutoReplyPreview(message.guild, trigger, message.member || message.author);
       return message.reply({ components: [previewContainer], flags: MessageFlags.IsComponentsV2 });
     }
 
@@ -2489,7 +2475,7 @@ export const triggerCmd = {
         return interaction.reply(makeAccentResponse(interaction.guild, 'Not Found', `No trigger found matching \`${keyword}\`.`, false));
       }
 
-      const previewContainer = buildAutoReplyPreview(interaction.guild, trigger, interaction.member || interaction.user, { includeFeedback: true });
+      const previewContainer = buildAutoReplyPreview(interaction.guild, trigger, interaction.member || interaction.user);
       return interaction.reply({ components: [previewContainer], flags: MessageFlags.IsComponentsV2 });
     }
   }
