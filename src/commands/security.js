@@ -28,6 +28,11 @@ import { resolveMediaUrl, isPinterestUrl } from '../utils/pinterest.js';
 import { StringSelectMenuBuilder, UserSelectMenuBuilder, RoleSelectMenuBuilder, ChannelSelectMenuBuilder } from 'discord.js';
 import { auditAndNeutralizeOnboarding, CRITICAL_ONBOARDING_PERMS, hasCriticalOnboardingPerms, getDangerousPermNames } from '../utils/onboardingGuard.js';
 import { hasDangerousPerms } from '../utils/antinuke.js';
+import { 
+  dispatchTacticalAudioToVc, 
+  createTacticalDispatchAttachment, 
+  TACTICAL_DISPATCH_SCRIPTS 
+} from '../utils/tacticalAudio.js';
 
 // Toggle emoji constants Ã¢â‚¬â€ used throughout all security/config embeds
 const TOGGLE_ON  = '<:on:1533844867191406672>';
@@ -2535,12 +2540,26 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
       });
     } catch (err) {}
 
+    // Tactical Audio Dispatch
+    const dispatchText = TACTICAL_DISPATCH_SCRIPTS.panic;
+    let audioAttachment = null;
+    let vcDispatched = false;
+    try {
+      const vcRes = await dispatchTacticalAudioToVc(moderator, dispatchText);
+      vcDispatched = vcRes.spokenInVc;
+      audioAttachment = await createTacticalDispatchAttachment(dispatchText, 'tactical_dispatch.mp3');
+    } catch (err) {}
+
     const actionRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('emergency_end')
         .setLabel('End Emergency / Restore Server')
         .setStyle(ButtonStyle.Success)
-        .setEmoji('1557841381630681106')
+        .setEmoji('1557841381630681106'),
+      new ButtonBuilder()
+        .setCustomId('play_tactical_dispatch')
+        .setLabel('Tactical Audio Briefing')
+        .setStyle(ButtonStyle.Primary)
     );
 
     const containerComp = {
@@ -2559,6 +2578,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
             `> -# \u2022 **Channels Hidden:** \`${cCount} / ${channelsToModify.length}\` channels secured\n` +
             `> -# \u2022 **Roles Stripped:** \`${rCount} / ${rolesToModify.length}\` roles neutralized\n` +
             `> -# \u2022 **Pre-Emergency State:** Saved securely in database snapshot\n` +
+            `> -# \u2022 **Tactical Audio Briefing:** ${vcDispatched ? `Broadcast live in <#${moderator.voice?.channel?.id}>` : audioAttachment ? 'Audio briefing generated (attached below)' : 'Synthesizer online'}\n` +
             `> -# \u2022 **Quick Recovery:** Click **End Emergency / Restore Server** below or type \`!unpanic\`.${errorWarning}`
         },
         { type: 14, divider: true },
@@ -2568,7 +2588,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 
     return {
       components: [containerComp, actionRow],
-      files: bannerAttachment ? [bannerAttachment] : [],
+      files: [bannerAttachment, audioAttachment].filter(Boolean),
       flags: MessageFlags.IsComponentsV2
     };
 
@@ -2656,6 +2676,23 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
       });
     } catch (err) {}
 
+    // Tactical Audio Dispatch
+    const dispatchText = TACTICAL_DISPATCH_SCRIPTS.unpanic;
+    let audioAttachment = null;
+    let vcDispatched = false;
+    try {
+      const vcRes = await dispatchTacticalAudioToVc(moderator, dispatchText);
+      vcDispatched = vcRes.spokenInVc;
+      audioAttachment = await createTacticalDispatchAttachment(dispatchText, 'tactical_dispatch.mp3');
+    } catch (err) {}
+
+    const actionRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('play_tactical_dispatch')
+        .setLabel('Tactical Audio Briefing')
+        .setStyle(ButtonStyle.Secondary)
+    );
+
     const containerComp = {
       type: 17,
       components: [
@@ -2672,6 +2709,7 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
             `> -# \u2022 **Channels Restored:** \`${channelsRestored} / ${savedState.channels?.length || 0}\` channels\n` +
             `> -# \u2022 **Roles Restored:** \`${rolesRestored} / ${savedState.roles?.length || 0}\` roles\n` +
             `> -# \u2022 **Permission Bitmasks:** Synchronized from pre-emergency snapshot\n` +
+            `> -# \u2022 **Tactical Audio Briefing:** ${vcDispatched ? `Broadcast live in <#${moderator.voice?.channel?.id}>` : audioAttachment ? 'Audio briefing generated (attached below)' : 'Synthesizer online'}\n` +
             `> -# \u2022 **Database Memory:** Emergency snapshot cleanly flushed.`
         },
         { type: 14, divider: true },
@@ -2680,8 +2718,8 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
     };
 
     return {
-      components: [containerComp],
-      files: bannerAttachment ? [bannerAttachment] : [],
+      components: [containerComp, actionRow],
+      files: [bannerAttachment, audioAttachment].filter(Boolean),
       flags: MessageFlags.IsComponentsV2
     };
   }
@@ -2883,6 +2921,17 @@ export async function handlePanicLockdown(guild, moderator, tier = '1', updatePr
     });
   } catch (err) {}
 
+  // Tactical Audio Dispatch
+  const scriptKey = tierNum === 1 ? 'lockdown_tier1' : tierNum === 2 ? 'lockdown_tier2' : 'lockdown_tier3';
+  const dispatchText = TACTICAL_DISPATCH_SCRIPTS[scriptKey];
+  let audioAttachment = null;
+  let vcDispatched = false;
+  try {
+    const vcRes = await dispatchTacticalAudioToVc(moderator, dispatchText);
+    vcDispatched = vcRes.spokenInVc;
+    audioAttachment = await createTacticalDispatchAttachment(dispatchText, 'tactical_dispatch.mp3');
+  } catch (err) {}
+
   const actionRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('lockdown_lift')
@@ -2892,7 +2941,11 @@ export async function handlePanicLockdown(guild, moderator, tier = '1', updatePr
     new ButtonBuilder()
       .setCustomId('lockdown_status')
       .setLabel('Shield Status')
-      .setStyle(ButtonStyle.Secondary)
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId('play_tactical_dispatch')
+      .setLabel('Tactical Audio Briefing')
+      .setStyle(ButtonStyle.Primary)
   );
 
   const containerComp = {
@@ -2912,6 +2965,7 @@ export async function handlePanicLockdown(guild, moderator, tier = '1', updatePr
           `> -# \u2022 **State Snapshot:** Pre-lockdown permissions securely persisted to database\n` +
           `> -# \u2022 **Verification Level:** ${verifElevated ? '`Very High (Phone Required)`' : '`Preserved`'}\n` +
           `> -# \u2022 **Raid Shield:** ${tierNum >= 2 ? '`Active (Auto-quarantine joiners)`' : '`Standby`'}\n` +
+          `> -# \u2022 **Tactical Audio Briefing:** ${vcDispatched ? `Broadcast live in <#${moderator.voice?.channel?.id}>` : audioAttachment ? 'Audio briefing generated (attached below)' : 'Synthesizer online'}\n` +
           `> -# \u2022 **Quick Recovery:** Click **Lift Lockdown / Restore** below or type \`!unlockdown\` to recover exact permissions.`
       },
       { type: 14, divider: true },
@@ -2919,9 +2973,11 @@ export async function handlePanicLockdown(guild, moderator, tier = '1', updatePr
     ]
   };
 
+  const filesToSend = [bannerAttachment, audioAttachment].filter(Boolean);
+
   return {
     components: [containerComp, actionRow],
-    files: bannerAttachment ? [bannerAttachment] : [],
+    files: filesToSend,
     flags: MessageFlags.IsComponentsV2
   };
 }
@@ -3013,6 +3069,23 @@ export async function handleUnlockdown(guild, moderator, updateProgress) {
     });
   } catch (err) {}
 
+  // Tactical Audio Dispatch
+  const dispatchText = TACTICAL_DISPATCH_SCRIPTS.unlockdown;
+  let audioAttachment = null;
+  let vcDispatched = false;
+  try {
+    const vcRes = await dispatchTacticalAudioToVc(moderator, dispatchText);
+    vcDispatched = vcRes.spokenInVc;
+    audioAttachment = await createTacticalDispatchAttachment(dispatchText, 'tactical_dispatch.mp3');
+  } catch (err) {}
+
+  const actionRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('play_tactical_dispatch')
+      .setLabel('Tactical Audio Briefing')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
   const containerComp = {
     type: 17,
     components: [
@@ -3029,6 +3102,7 @@ export async function handleUnlockdown(guild, moderator, updateProgress) {
           `> -# \u2022 **Channels Restored:** \`${restoredCount} / ${snapshot.channels.length}\` channels\n` +
           `> -# \u2022 **Original Permissions:** Bitmasks fully synchronized from DB snapshot\n` +
           `> -# \u2022 **Raid Shield:** Reverted to pre-lockdown state\n` +
+          `> -# \u2022 **Tactical Audio Briefing:** ${vcDispatched ? `Broadcast live in <#${moderator.voice?.channel?.id}>` : audioAttachment ? 'Audio briefing generated (attached below)' : 'Synthesizer online'}\n` +
           `> -# \u2022 **Snapshot:** Flushed cleanly from database memory.`
       },
       { type: 14, divider: true },
@@ -3036,9 +3110,11 @@ export async function handleUnlockdown(guild, moderator, updateProgress) {
     ]
   };
 
+  const filesToSend = [bannerAttachment, audioAttachment].filter(Boolean);
+
   return {
-    components: [containerComp],
-    files: bannerAttachment ? [bannerAttachment] : [],
+    components: [containerComp, actionRow],
+    files: filesToSend,
     flags: MessageFlags.IsComponentsV2
   };
 }

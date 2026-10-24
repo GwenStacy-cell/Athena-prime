@@ -262,6 +262,19 @@ export const CELEBRITY_VOICES = {
     baseLang: 'en-US',
     description: 'High-speed squeaky animated cartoon voice',
     filter: 'asetrate=24000*1.55,atempo=0.65'
+  },
+  tactical: {
+    id: 'tactical',
+    aliases: ['athena', 'command', 'military', 'warroom', 'briefing'],
+    name: 'Athena Prime Tactical Dispatch',
+    category: 'Defense Matrix',
+    elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB',
+    neuralVoice: 'en-US-GuyNeural',
+    pitch: '-3Hz',
+    rate: '+3%',
+    baseLang: 'en-US',
+    description: 'High-tech military radio command AI dispatch with comms equalizing',
+    filter: 'highpass=f=280,lowpass=f=3300,equalizer=f=1100:t=q:w=1.2:g=5,acompressor=threshold=-12dB:ratio=4:attack=8:release=60'
   }
 };
 

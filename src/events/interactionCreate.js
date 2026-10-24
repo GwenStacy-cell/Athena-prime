@@ -126,6 +126,30 @@ export default {
       return interaction.editReply({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
     }
 
+    if (interaction.isButton() && interaction.customId === 'play_tactical_dispatch') {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral }).catch(() => null);
+      const { dispatchTacticalAudioToVc, createTacticalDispatchAttachment, TACTICAL_DISPATCH_SCRIPTS } = await import('../utils/tacticalAudio.js');
+      const lockdown = db.getLockdownSnapshot(interaction.guild?.id);
+      const isEmergency = Boolean(db.getEmergencyState(interaction.guild?.id));
+      
+      let script = 'Athena Prime Defense Matrix online. Operational status nominal. All perimeter shields locked and 28 security modules active.';
+      if (isEmergency) script = TACTICAL_DISPATCH_SCRIPTS.panic;
+      else if (lockdown) script = lockdown.tier === 1 ? TACTICAL_DISPATCH_SCRIPTS.lockdown_tier1 : lockdown.tier === 2 ? TACTICAL_DISPATCH_SCRIPTS.lockdown_tier2 : TACTICAL_DISPATCH_SCRIPTS.lockdown_tier3;
+
+      if (interaction.member?.voice?.channel) {
+        await dispatchTacticalAudioToVc(interaction.member, script);
+        return interaction.editReply({
+          content: `### Tactical Audio Briefing | <a:atheNATICK:1557841381630681106>\n> <a:uptime:1552608831060844575> **Broadcasting live defense dispatch to <#${interaction.member.voice.channel.id}>...**\n> -# Script: *"${script}"*`
+        });
+      } else {
+        const audioAtt = await createTacticalDispatchAttachment(script);
+        return interaction.editReply({
+          content: `### Tactical Audio Briefing | <a:atheNATICK:1557841381630681106>\n> <a:uptime:1552608831060844575> **Synthesized Tactical Military Audio Dispatch.**\n> -# Join any Voice Channel to have Athena broadcast this dispatch live on command.\n> -# Script: *"${script}"*`,
+          files: audioAtt ? [audioAtt] : []
+        });
+      }
+    }
+
 
     
     // ==========================================

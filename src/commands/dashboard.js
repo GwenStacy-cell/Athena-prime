@@ -151,20 +151,27 @@ export async function buildDashboardResponse(guild, client, requester = null) {
     new ButtonBuilder().setCustomId('hud_mode_defcon').setLabel('DEFCON Focus').setStyle(ButtonStyle.Secondary)
   );
 
-  // Quick action recovery buttons if lockdown or emergency is active
-  let recoveryRow = null;
+  // Quick action recovery / audio briefing buttons
+  let secondaryRow = null;
   if (lockdown || isEmergency) {
-    recoveryRow = new ActionRowBuilder();
+    secondaryRow = new ActionRowBuilder();
     if (lockdown) {
-      recoveryRow.addComponents(
+      secondaryRow.addComponents(
         new ButtonBuilder().setCustomId('lockdown_lift').setLabel('Lift Lockdown').setStyle(ButtonStyle.Danger)
       );
     }
     if (isEmergency) {
-      recoveryRow.addComponents(
+      secondaryRow.addComponents(
         new ButtonBuilder().setCustomId('emergency_end').setLabel('End Emergency').setStyle(ButtonStyle.Danger)
       );
     }
+    secondaryRow.addComponents(
+      new ButtonBuilder().setCustomId('play_tactical_dispatch').setLabel('Tactical Audio Briefing').setStyle(ButtonStyle.Primary)
+    );
+  } else {
+    secondaryRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('play_tactical_dispatch').setLabel('Tactical Audio Briefing').setStyle(ButtonStyle.Secondary)
+    );
   }
 
   // 6. Build Discord Components V2 Container
@@ -217,14 +224,14 @@ export async function buildDashboardResponse(guild, client, requester = null) {
         `> -# \u2022 \`${prefix}panic\` / \`${prefix}emergency\` \u2014 Instant total server blackout & verification elevation \`[Owner Only]\`\n` +
         `> -# \u2022 \`${prefix}unpanic\` / \`${prefix}endemergency\` \u2014 Lift emergency mode and restore all permissions \`[Owner Only]\`\n` +
         `> -# \u2022 \`${prefix}lockdown <1|2|3>\` \u2014 Ultra-fast batched lockdown (Soft / Medium / Nuclear) \`[Admin]\`\n` +
-        `> -# \u2022 \`${prefix}unlockdown\` \u2014 Instant ~1.2s zero-loss restoration from database bitmask snapshot \`[Admin]\``
+        `> -# \u2022 \`${prefix}unlockdown\` \u2014 Instant ~1.2s zero-loss restoration from database bitmask snapshot \`[Admin]\`\n` +
+        `> -# \u2022 **Tactical Audio Briefing:** Click **[Tactical Audio Briefing]** below to broadcast live military voice dispatch in VC or download audio.`
     },
     { type: 14, divider: true },
     { type: 10, content: `-# **Athena Prime Tactical Command Center \u2022 Unified Operations**` }
   );
 
-  const finalComponents = [{ type: 17, components: containerComponents }, actionRow];
-  if (recoveryRow) finalComponents.push(recoveryRow);
+  const finalComponents = [{ type: 17, components: containerComponents }, actionRow, secondaryRow];
 
   return {
     components: finalComponents,
