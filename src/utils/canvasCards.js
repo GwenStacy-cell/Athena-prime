@@ -819,12 +819,15 @@ export async function generateCommandStatusBanner({
 
   let firstFrameBuffer = null;
 
-  // 1. Resolve War-Room Master Base Plate
+  // 1. Resolve War-Room Clean Master Base Plate
   let plateImg = null;
-  const platePath = path.resolve('src/assets/hud_war_room_plate.jpg');
+  const cleanPlatePath = path.resolve('src/assets/hud_war_room_clean.png');
+  const fallbackPlatePath = path.resolve('src/assets/hud_war_room_plate.jpg');
   try {
-    if (fs.existsSync(platePath)) {
-      plateImg = await loadImage(platePath);
+    if (fs.existsSync(cleanPlatePath)) {
+      plateImg = await loadImage(cleanPlatePath);
+    } else if (fs.existsSync(fallbackPlatePath)) {
+      plateImg = await loadImage(fallbackPlatePath);
     }
   } catch (err) {
     console.error('[CommandStatusBanner] Notice: base plate load error, fallback to procedural obsidian:', err.message);
@@ -848,28 +851,17 @@ export async function generateCommandStatusBanner({
   const ratio = total > 0 ? clamped / total : 0;
   const pct = Math.round(ratio * 100);
 
-  // Canonical Layout Coordinates matching the War-Room Tactical Console
-  const iconCX = 156.5;
-  const iconCY = 182;
+  // Exact 1:1 Pixel Coordinates matching the Reference Console Artwork
+  const iconCX = 166;
+  const iconCY = 155;
   const iconR = 58;
 
-  const barX = 250;
-  const barY = 166;
-  const barW = 525;
-  const barH = 26;
-  const barR = 13;
+  const barX = 246;
+  const barY = 157;
+  const barW = 554;
+  const barH = 22;
+  const barR = 11;
   const fillW = Math.max(barR * 2, Math.min(barW, barW * ratio));
-
-  // Cyber ambient floating energy particles
-  const CYBER_PARTICLES = Array.from({ length: 24 }, () => ({
-    x: 200 + Math.random() * 600,
-    y: 80 + Math.random() * 380,
-    vx: (Math.random() - 0.5) * 1.5,
-    vy: -0.8 - Math.random() * 1.2,
-    size: 1.2 + Math.random() * 2,
-    alpha: 0.25 + Math.random() * 0.55,
-    phase: Math.random() * Math.PI * 2
-  }));
 
   try {
     for (let f = 0; f < numFrames; f++) {
@@ -898,54 +890,13 @@ export async function generateCommandStatusBanner({
       ctx.fillRect(0, 240, W, 272);
 
       // Top-Left Reticle Ambient Accent Wash
-      const reticleAura = ctx.createRadialGradient(iconCX, iconCY, 10, iconCX, iconCY, 130);
-      reticleAura.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.20)`);
+      const reticleAura = ctx.createRadialGradient(iconCX, iconCY, 10, iconCX, iconCY, 120);
+      reticleAura.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.18)`);
       reticleAura.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = reticleAura;
-      ctx.fillRect(iconCX - 130, iconCY - 130, 260, 260);
+      ctx.fillRect(iconCX - 120, iconCY - 120, 240, 240);
 
-      // 3. Clean Dark Cyber Glass Backing over Dynamic Header & Metrics Area
-      // Seamlessly covers placeholder text while retaining the authentic bevels and console aesthetics
-      const glassGrad = ctx.createLinearGradient(barX, 58, barX, 252);
-      glassGrad.addColorStop(0, 'rgba(5, 10, 20, 0.94)');
-      glassGrad.addColorStop(0.5, 'rgba(8, 14, 26, 0.92)');
-      glassGrad.addColorStop(1, 'rgba(4, 8, 16, 0.96)');
-      ctx.fillStyle = glassGrad;
-      ctx.beginPath();
-      ctx.roundRect(barX - 10, 58, barW + 20, 194, 8);
-      ctx.fill();
-
-      // Subtle Glass Panel Accent Border
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.28)`;
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      // Tactical Corner Brackets on Glass Surface
-      const bLen = 14;
-      const px = barX - 10;
-      const py = 58;
-      const pw = barW + 20;
-      const ph = 194;
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.65)`;
-      ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.moveTo(px, py + bLen); ctx.lineTo(px, py); ctx.lineTo(px + bLen, py); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(px + pw - bLen, py); ctx.lineTo(px + pw, py); ctx.lineTo(px + pw, py + bLen); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(px, py + ph - bLen); ctx.lineTo(px, py + ph); ctx.lineTo(px + bLen, py + ph); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(px + pw - bLen, py + ph); ctx.lineTo(px + pw, py + ph); ctx.lineTo(px + pw, py + ph - bLen); ctx.stroke();
-
-      // 4. Floating Cyber Energy Motes
-      for (const m of CYBER_PARTICLES) {
-        const curX = (m.x + m.vx * f * 2 + W) % W;
-        let curY = m.y + m.vy * f * 2;
-        if (curY < 60) curY += 400;
-        const alpha = m.alpha * (0.7 + 0.3 * Math.sin(phi + m.phase));
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(curX, curY, m.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // 5. Left Server Icon / Avatar Reticle Portal
+      // 4. Left Server Icon / Avatar Reticle Portal
       // Inner avatar aperture mask
       ctx.save();
       ctx.beginPath();
@@ -987,9 +938,9 @@ export async function generateCommandStatusBanner({
       // Concentric Neon Halo Ring
       const haloPulse = 0.75 + 0.25 * Math.sin(phi * 2);
       ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${haloPulse})`;
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.arc(iconCX, iconCY, iconR + 7, 0, Math.PI * 2);
+      ctx.arc(iconCX, iconCY, iconR + 9, 0, Math.PI * 2);
       ctx.stroke();
 
       // Outer Animated Rotating Radar Reticle Ticks (16 Ticks)
@@ -1000,116 +951,108 @@ export async function generateCommandStatusBanner({
       ctx.lineWidth = 1.8;
       for (let i = 0; i < 16; i++) {
         const angle = (i * Math.PI * 2) / 16;
-        const inner = iconR + 12;
-        const outer = i % 4 === 0 ? iconR + 21 : iconR + 16;
+        const inner = iconR + 18;
+        const outer = i % 4 === 0 ? iconR + 28 : iconR + 23;
         ctx.beginPath();
         ctx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
         ctx.lineTo(Math.cos(angle) * outer, Math.sin(angle) * outer);
         ctx.stroke();
       }
       // Rotating Radar Sweep Wedge (90 degrees)
-      const sweepArcGrad = ctx.createRadialGradient(0, 0, iconR + 5, 0, 0, iconR + 21);
-      sweepArcGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.25)`);
-      sweepArcGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
+      const sweepArcGrad = ctx.createRadialGradient(0, 0, iconR + 5, 0, 0, iconR + 28);
+      sweepArcGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.22)`);
+      sweepArcGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = sweepArcGrad;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.arc(0, 0, iconR + 21, 0, Math.PI / 2);
+      ctx.arc(0, 0, iconR + 28, 0, Math.PI / 2);
       ctx.closePath();
       ctx.fill();
       ctx.restore();
 
       // 6. Header Subtitle
-      ctx.font = 'bold 11px monospace';
+      ctx.font = 'bold 10px monospace';
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.95)`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillText(subtitle.toUpperCase(), barX, 82);
+      ctx.fillText(subtitle.toUpperCase(), barX, 93);
 
       // 7. Status Badge Pill with ANIMATED SEQUENTIAL CHEVRONS (>>>)
       if (badge) {
-        ctx.font = 'bold 11px sans-serif';
+        ctx.font = 'bold 10px sans-serif';
         const badgeBaseText = badge.toUpperCase();
         const badgeTextW = ctx.measureText(badgeBaseText).width;
-        const arrowWidth = 36;
-        const badgeW = badgeTextW + arrowWidth + 34;
-        const badgeH = 26;
+        const badgeW = badgeTextW + 48;
+        const badgeH = 22;
         const badgeX = barX + barW - badgeW;
-        const badgeY = 66;
+        const badgeY = 78;
 
         // Capsule Background
         ctx.fillStyle = 'rgba(6, 16, 32, 0.88)';
         ctx.beginPath();
-        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 13);
+        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 11);
         ctx.fill();
         ctx.strokeStyle = effectiveBadgeColor;
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
         // Pulsing Glowing Indicator Dot
-        const dotPulse = 0.55 + 0.45 * Math.sin(phi * 2);
-        const dotX = badgeX + 13;
-        const dotY = badgeY + 13;
-        const dotGrad = ctx.createRadialGradient(dotX, dotY, 1, dotX, dotY, 6);
+        const dotX = badgeX + 11;
+        const dotY = badgeY + 11;
+        const dotGrad = ctx.createRadialGradient(dotX, dotY, 1, dotX, dotY, 5);
         dotGrad.addColorStop(0, '#ffffff');
         dotGrad.addColorStop(0.4, effectiveBadgeColor);
         dotGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = dotGrad;
         ctx.beginPath();
-        ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
+        ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
         ctx.fill();
 
         // Badge Text
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(badgeBaseText, dotX + 10, badgeY + 17);
+        ctx.fillText(badgeBaseText, dotX + 10, badgeY + 15);
 
         // THE ANIMATED CHEVRON ARROWS (>>>)
         // 3 Chevrons pulsing sequentially forward to animate the arrow
-        const chevStartX = dotX + 10 + badgeTextW + 8;
+        const chevStartX = dotX + 10 + badgeTextW + 7;
         for (let c = 0; c < 3; c++) {
           const chevPhase = phi - (c * (Math.PI * 2 / 3));
-          const chevIntensity = 0.3 + 0.7 * Math.max(0, Math.sin(chevPhase));
+          const chevIntensity = 0.25 + 0.75 * Math.max(0, Math.sin(chevPhase));
           ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${chevIntensity})`;
-          ctx.lineWidth = 2.0;
+          ctx.lineWidth = 1.8;
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
 
-          const cx = chevStartX + (c * 8);
-          const cy = badgeY + 13;
+          const cx = chevStartX + (c * 6.5);
+          const cy = badgeY + 11;
           ctx.beginPath();
-          ctx.moveTo(cx, cy - 5);
-          ctx.lineTo(cx + 4, cy);
-          ctx.lineTo(cx, cy + 5);
+          ctx.moveTo(cx, cy - 4.5);
+          ctx.lineTo(cx + 3.5, cy);
+          ctx.lineTo(cx, cy + 4.5);
           ctx.stroke();
         }
       }
 
       // 8. Main Title
-      ctx.font = '900 23px sans-serif';
+      ctx.font = '900 21px "Cinzel", "Times New Roman", "Georgia", serif';
+      ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
+      ctx.shadowBlur = 6;
       ctx.fillStyle = '#ffffff';
       ctx.fillText(title.toUpperCase(), barX, 122);
+      ctx.shadowBlur = 0;
 
       // 9. Status Progress Text Row
-      ctx.font = 'bold 11px sans-serif';
+      ctx.font = 'bold 11px monospace';
       ctx.fillStyle = '#94a3b8';
-      ctx.fillText(`STATUS PROGRESS: ${clamped}/${total} ${unit.toUpperCase()}`, barX, 154);
+      ctx.fillText(`STATUS PROGRESS: ${clamped}/${total} ${unit.toUpperCase()}`, barX, 146);
 
-      ctx.font = '900 14px sans-serif';
+      ctx.font = '900 13px monospace';
       ctx.fillStyle = accentColor;
       ctx.textAlign = 'right';
-      ctx.fillText(`${pct}%`, barX + barW, 154);
+      ctx.fillText(`${pct}%`, barX + barW, 146);
       ctx.textAlign = 'left';
 
       // 10. Beveled Electric Plasma Progress Bar
-      // Outer Track
-      ctx.fillStyle = 'rgba(5, 12, 24, 0.95)';
-      ctx.beginPath();
-      ctx.roundRect(barX, barY, barW, barH, barR);
-      ctx.fill();
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.45)`;
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
       if (ratio > 0) {
         ctx.save();
         ctx.beginPath();
@@ -1126,11 +1069,11 @@ export async function generateCommandStatusBanner({
 
         // Multi-Harmonic Electric Lightning Sine Waves
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.lineWidth = 1.6;
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         for (let x = barX; x <= barX + fillW; x += 3) {
           const relX = x - barX;
-          const y = barY + barH / 2 + Math.sin(relX * 0.05 + phi * 2) * 4;
+          const y = barY + barH / 2 + Math.sin(relX * 0.05 + phi * 2) * 3.5;
           if (x === barX) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
@@ -1138,11 +1081,11 @@ export async function generateCommandStatusBanner({
 
         // High-Frequency Spark Filament Crackle Wave
         ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.75)`;
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.1;
         ctx.beginPath();
         for (let x = barX; x <= barX + fillW; x += 4) {
           const relX = x - barX;
-          const y = barY + barH / 2 + Math.sin(relX * 0.12 - phi * 3) * 2.5;
+          const y = barY + barH / 2 + Math.sin(relX * 0.12 - phi * 3) * 2;
           if (x === barX) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
@@ -1152,21 +1095,21 @@ export async function generateCommandStatusBanner({
         // Pulsing Plasma Head Orb Knob with 4-Point Cross Glints
         const headX = barX + fillW;
         const headY = barY + barH / 2;
-        const orbPulse = 1 + 0.25 * Math.sin(phi);
+        const orbPulse = 1 + 0.22 * Math.sin(phi);
 
-        const orbGrad = ctx.createRadialGradient(headX, headY, 1, headX, headY, 15 * orbPulse);
+        const orbGrad = ctx.createRadialGradient(headX, headY, 1, headX, headY, 14 * orbPulse);
         orbGrad.addColorStop(0, '#ffffff');
         orbGrad.addColorStop(0.35, accentColor);
         orbGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = orbGrad;
         ctx.beginPath();
-        ctx.arc(headX, headY, 15 * orbPulse, 0, Math.PI * 2);
+        ctx.arc(headX, headY, 14 * orbPulse, 0, Math.PI * 2);
         ctx.fill();
 
         // Cross Glint Flares
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.lineWidth = 1.5;
-        const glintLen = 9 * orbPulse;
+        ctx.lineWidth = 1.4;
+        const glintLen = 8 * orbPulse;
         ctx.beginPath();
         ctx.moveTo(headX - glintLen, headY); ctx.lineTo(headX + glintLen, headY);
         ctx.moveTo(headX, headY - glintLen); ctx.lineTo(headX, headY + glintLen);
@@ -1196,35 +1139,31 @@ export async function generateCommandStatusBanner({
             { label: 'ENGINE', value: 'ATHENA' }
           ];
 
-      const chipW = 166;
-      const chipH = 42;
-      const chipGap = 13;
-      for (let i = 0; i < chipList.length; i++) {
-        const m = chipList[i];
-        const cx = barX + i * (chipW + chipGap);
-        const cy = 202;
+      const chipSlots = [
+        { x: 257, w: 161 },
+        { x: 440, w: 162 },
+        { x: 626, w: 168 }
+      ];
+      const cy = 193;
+      const ch = 44;
 
-        // Frosted Capsule Backing
-        ctx.fillStyle = 'rgba(6, 14, 26, 0.9)';
-        ctx.beginPath();
-        ctx.roundRect(cx, cy, chipW, chipH, 6);
-        ctx.fill();
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
-        ctx.lineWidth = 1.1;
-        ctx.stroke();
+      for (let i = 0; i < chipList.length && i < chipSlots.length; i++) {
+        const m = chipList[i];
+        const slot = chipSlots[i];
+        const cx = slot.x;
+        const cw = slot.w;
 
         // Chip Header / Label
-        ctx.font = 'bold 10px sans-serif';
+        ctx.font = 'bold 10px monospace';
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.95)`;
-        ctx.fillText(String(m.label || 'METRIC').toUpperCase(), cx + 12, cy + 15);
+        ctx.fillText(String(m.label || 'METRIC').toUpperCase(), cx + 10, cy + 16);
 
         // Chip Value
-        ctx.font = 'bold 11px sans-serif';
+        ctx.font = '900 12px sans-serif';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(String(m.value || 'ONLINE'), cx + 12, cy + 28);
+        ctx.fillText(String(m.value || 'ONLINE'), cx + 10, cy + 32);
 
         // 7-Segment Hardware Gauge Ticks
-        // Deduce active percentage for the gauge
         let mPct = m.pct;
         if (mPct === undefined) {
           const valStr = String(m.value || '').toUpperCase();
@@ -1245,11 +1184,11 @@ export async function generateCommandStatusBanner({
 
         const numSegments = 7;
         const activeCount = Math.round(Math.max(0, Math.min(1, mPct)) * numSegments);
-        const segW = 6;
-        const segH = 4;
+        const segW = 5;
+        const segH = 8;
         const segGap = 3;
-        const segStartX = cx + chipW - 12 - (numSegments * (segW + segGap) - segGap);
-        const segY = cy + 26;
+        const segStartX = cx + cw - 10 - (numSegments * (segW + segGap) - segGap);
+        const segY = cy + 24;
 
         for (let s = 0; s < numSegments; s++) {
           const sx = segStartX + s * (segW + segGap);
@@ -1271,15 +1210,11 @@ export async function generateCommandStatusBanner({
       return new AttachmentBuilder(firstFrameBuffer, { name: attachmentName || 'status_banner.png' });
     }
 
-    // 2-pass FFmpeg Palettegen + Paletteuse for highest fidelity looping GIF
+    // Single-pass FFmpeg Palettegen + Paletteuse with Sierra2_4a dithering for ultra-crisp looping GIF
     const gifOutPath = path.join(tempDir, 'status.gif');
-    const palettePath = path.join(tempDir, 'palette.png');
+    const encodeCmd = `"${ffmpegPath}" -y -framerate 10 -i "${tempDir}/frame_%02d.png" -filter_complex "[0:v] split [a][b];[a] palettegen=reserve_transparent=0 [p];[b][p] paletteuse=dither=sierra2_4a" "${gifOutPath}"`;
 
-    const genPaletteCmd = `"${ffmpegPath}" -y -framerate 10 -i "${tempDir}/frame_%02d.png" -vf "palettegen=stats_mode=diff" "${palettePath}"`;
-    const encodeGifCmd = `"${ffmpegPath}" -y -framerate 10 -i "${tempDir}/frame_%02d.png" -i "${palettePath}" -lavfi "paletteuse=dither=bayer:bayer_scale=3" "${gifOutPath}"`;
-
-    await execPromise(genPaletteCmd);
-    await execPromise(encodeGifCmd);
+    await execPromise(encodeCmd);
 
     const gifBuffer = fs.readFileSync(gifOutPath);
     return new AttachmentBuilder(gifBuffer, { name: attachmentName || 'status_banner.gif' });
