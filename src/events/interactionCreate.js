@@ -2353,25 +2353,50 @@ async function handleSecurityInteractions(interaction, guild) {
       const isBotOwner = isBotOwnerSync(interaction.user.id);
       const isAllowed = isBotOwner || interaction.user.id === guild.ownerId;
       if (!isAllowed) {
-        return interaction.reply({ content: '-# <:cross_red:1533860128015519895> Only the **Server Owner** or **Bot Owner** can engage all security shields.', flags: MessageFlags.Ephemeral });
-      }
-      const maxPos = Math.max(...guild.roles.cache.map(r => r.position));
-      const botMember = guild.members.me || await guild.members.fetch(interaction.client.user.id).catch(() => null);
-      const botPos = botMember?.roles?.highest?.position ?? 0;
-      if (!isBotOwner && botPos < maxPos - 2) {
-        return interaction.reply({ content: `-# <:cross_red:1533860128015519895> **Role Hierarchy Requirement:** Move Athena's role to the top 3 highest roles in Server Settings so she can enforce bulletproof security.`, flags: MessageFlags.Ephemeral });
-      }
-      if (guild.memberCount < 200 && !isBotOwner) {
-        return interaction.reply({ content: `-# <:cross_red:1533860128015519895> Server requires at least **200 members** to activate unbypassable antinuke. (Bot Owners bypass this restriction).`, flags: MessageFlags.Ephemeral });
+        return interaction.reply({ content: '-# Only the **Server Owner** or **Bot Owner** can engage all security shields.', flags: MessageFlags.Ephemeral });
       }
 
       const sec = await import('../commands/security.js');
+      const config = db.getGuildConfig(guild.id);
+      if (config.securityEnabled && config.antiNukeEnabled) {
+        return interaction.reply({ content: '-# Security shields are already enabled on this server. To re-enable or refresh the system, please use `!security disable all` first, and then run `!security enable all` again.', flags: MessageFlags.Ephemeral });
+      }
+
+      const req = sec.checkSecurityRequirements(guild, interaction.user);
+      if (!req.canEnable) {
+        const warningCard = sec.buildSecurityRequirementsWarning(guild, req);
+        return interaction.reply({ ...warningCard, flags: MessageFlags.Ephemeral });
+      }
+
       await interaction.deferUpdate();
-      await sec.runSecurityEnableSequence(guild, async (payload) => {
+      
+      // Step 1: Animated Setup Checklist
+      const success = await sec.runSecurityEnableSequence(guild, async (payload) => {
         await interaction.editReply(payload).catch(() => null);
-      });
-      const updatedStatus = await sec.getSecurityStatusPanel(guild);
-      return interaction.editReply(updatedStatus);
+      }, interaction.user);
+
+      if (!success) return;
+
+      // Step 2: Terms of Service & Security Configuration Guide
+      const tosPanel = await sec.getServerSecurityEnabledPanel();
+      if (interaction.channel) await interaction.channel.send(tosPanel).catch(() => null);
+
+      // Step 3: Interactive Security Dashboard with Action Row Buttons
+      const panel = await sec.getSecureDashboardPanel(guild);
+      if (interaction.channel) await interaction.channel.send(panel).catch(() => null);
+      return;
+    }
+
+    if (customId === 'sec_disable_all_btn') {
+      const isBotOwner = isBotOwnerSync(interaction.user.id);
+      const isAllowed = isBotOwner || interaction.user.id === guild.ownerId;
+      if (!isAllowed) {
+        return interaction.reply({ content: '-# Only the **Server Owner** or **Bot Owner** can disengage security shields.', flags: MessageFlags.Ephemeral });
+      }
+      const sec = await import('../commands/security.js');
+      await interaction.deferReply();
+      const result = await sec.handleSecurityToggleAll(guild, interaction.member, false);
+      return interaction.editReply(result);
     }
 
     
