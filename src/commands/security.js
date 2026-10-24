@@ -402,7 +402,7 @@ export const commands = [
   // --- UNLOCK COMMAND ---
   {
     name: 'unlock',
-    aliases: ['unld', 'unlockchannel'],
+    aliases: ['unlockchannel'],
     slashHidden: true,
     description: 'Unlocks the channel allowing members to send messages.',
     category: 'security',
@@ -2726,34 +2726,203 @@ export async function handleEmergency(guild, moderator, action, updateProgress) 
 }
 
 // ==========================================
+// LOCKDOWN BITMASK CONFIGURATION & HELPERS
+// ==========================================
+const TEXT_TIER1_DENY = 
+  PermissionFlagsBits.SendMessages |
+  PermissionFlagsBits.SendMessagesInThreads |
+  PermissionFlagsBits.CreatePublicThreads |
+  PermissionFlagsBits.CreatePrivateThreads |
+  PermissionFlagsBits.AddReactions;
+
+const VOICE_TIER1_DENY = 
+  PermissionFlagsBits.Speak |
+  PermissionFlagsBits.RequestToSpeak |
+  PermissionFlagsBits.Stream |
+  PermissionFlagsBits.SendVoiceMessages |
+  PermissionFlagsBits.SendMessages;
+
+const TEXT_TIER2_DENY = 
+  TEXT_TIER1_DENY |
+  PermissionFlagsBits.AttachFiles |
+  PermissionFlagsBits.EmbedLinks |
+  PermissionFlagsBits.UseApplicationCommands |
+  PermissionFlagsBits.UseExternalEmojis |
+  PermissionFlagsBits.UseExternalStickers |
+  PermissionFlagsBits.CreateEvents;
+
+const VOICE_TIER2_DENY = 
+  VOICE_TIER1_DENY |
+  PermissionFlagsBits.UseSoundboard |
+  PermissionFlagsBits.UseExternalSounds;
+
+const TIER3_BLACKOUT_DENY = 
+  PermissionFlagsBits.ViewChannel |
+  PermissionFlagsBits.SendMessages |
+  PermissionFlagsBits.Connect |
+  PermissionFlagsBits.Speak;
+
+function getLockdownExemptIds(guild, moderator) {
+  const exempt = new Set();
+  
+  // 1. Bot member & bot roles
+  const botMember = guild.members.me;
+  if (botMember) {
+    exempt.add(botMember.id);
+    botMember.roles.cache.forEach(r => exempt.add(r.id));
+  } else if (guild.client?.user?.id) {
+    exempt.add(guild.client.user.id);
+  }
+
+  // 2. Server Owner & Moderator executing
+  if (guild.ownerId) exempt.add(guild.ownerId);
+  if (moderator?.id) exempt.add(moderator.id);
+
+  // 3. Database configured Extra Owners
+  const extraOwners = db.getExtraOwners?.(guild.id) || [];
+  extraOwners.forEach(id => exempt.add(id));
+
+  // 4. Database configured Auth Roles (admin, mod, staff)
+  const authRoles = db.getAuthRoles(guild.id);
+  if (authRoles) {
+    (authRoles.admin || []).forEach(id => exempt.add(id));
+    (authRoles.mod || []).forEach(id => exempt.add(id));
+    (authRoles.staff || []).forEach(id => exempt.add(id));
+  }
+
+  // 5. Server roles with Administrator or ManageGuild
+  guild.roles.cache.forEach(role => {
+    if (role.permissions.has(PermissionFlagsBits.Administrator) || role.permissions.has(PermissionFlagsBits.ManageGuild)) {
+      exempt.add(role.id);
+    }
+  });
+
+  return exempt;
+}
+
+// ==========================================
 
 async function handleLockdown(guild, channel, moderator, mode) {
   try {
     const modTier = getUserTierName(guild, moderator);
+    const isAuthorizedAdmin = isBotOwnerSync(moderator.id) || moderator.id === guild.ownerId || isExtraOwner(guild.id, moderator.id) || moderator.permissions?.has(PermissionFlagsBits.ManageChannels);
+    if (!isAuthorizedAdmin) {
+      return cv2.danger('Access Denied', 'You lack authorization to manage channel lockdown. Manage Channels permission required.');
+    }
+
     if (mode === 'on') {
-      await channel.permissionOverwrites.edit(guild.roles.everyone, {
-        SendMessages: false
-      });
+      const isVoice = Boolean(channel.isVoiceBased?.() || channel.type === ChannelType.GuildVoice || channel.type === ChannelType.GuildStageVoice);
+      const denyBits = isVoice ? VOICE_TIER1_DENY : TEXT_TIER1_DENY;
+
+      // Save pre-lockdown channel snapshot to DB if not already saved
+      const existingSnap = db.getChannelLockSnapshot(guild.id, channel.id);
+      if (!existingSnap && channel.permissionOverwrites) {
+        const snapOverwrites = channel.permissionOverwrites.cache.map(ow => ({
+          id: ow.id,
+          type: ow.type,
+          allow: ow.allow.bitfield.toString(),
+          deny: ow.deny.bitfield.toString()
+        }));
+        db.saveChannelLockSnapshot(guild.id, channel.id, { overwrites: snapOverwrites, lockedBy: moderator.id });
+      }
+
+      const exemptIds = getLockdownExemptIds(guild, moderator);
+      const everyoneRoleId = guild.roles.everyone.id;
+      let everyoneFound = false;
+      const newOverwrites = [];
+
+      if (channel.permissionOverwrites) {
+        channel.permissionOverwrites.cache.forEach(ow => {
+          const isEveryone = (ow.id === everyoneRoleId || ow.id === guild.id);
+          if (isEveryone) everyoneFound = true;
+
+          if (exemptIds.has(ow.id)) {
+            newOverwrites.push({
+              id: ow.id,
+              type: ow.type,
+              allow: BigInt(ow.allow.bitfield),
+              deny: BigInt(ow.deny.bitfield)
+            });
+          } else {
+            const currentAllow = BigInt(ow.allow.bitfield);
+            const currentDeny = BigInt(ow.deny.bitfield);
+            newOverwrites.push({
+              id: ow.id,
+              type: ow.type,
+              allow: currentAllow & ~denyBits,
+              deny: currentDeny | denyBits
+            });
+          }
+        });
+      }
+
+      if (!everyoneFound) {
+        newOverwrites.push({
+          id: everyoneRoleId,
+          type: 0,
+          allow: 0n,
+          deny: denyBits
+        });
+      }
+
+      // Ensure Athena Bot itself retains view & manage permissions
+      const botMember = guild.members.me;
+      if (botMember && !newOverwrites.some(ow => ow.id === botMember.id)) {
+        newOverwrites.push({
+          id: botMember.id,
+          type: 1,
+          allow: PermissionFlagsBits.ViewChannel | PermissionFlagsBits.ManageChannels | PermissionFlagsBits.SendMessages,
+          deny: 0n
+        });
+      }
+
+      await channel.permissionOverwrites.set(newOverwrites, `Channel Lockdown by ${moderator.user?.tag || moderator.tag || 'Admin'}`);
+
       const lockEmbed = cv2.danger(
-        'Lockdown Activated', 
-        `<a:uptime:1552608831060844575> This channel has been placed under administrative lockdown by **${moderator.user.tag}**. Writing has been disabled.`
+        'Channel Lockdown Activated', 
+        `<a:uptime:1552608831060844575> This channel has been placed under administrative lockdown by **${moderator.user?.tag || moderator.tag}**.\n` +
+        `> -# \u2022 **Channel:** <#${channel.id}>\n` +
+        `> -# \u2022 **Status:** Writing & reactions restricted across all member roles.\n` +
+        `> -# \u2022 **Restoration:** Type \`!unlock\` or \`!lockdown channel\` to lift.`
       );
-      logToSecurityChannel(guild, cv2.log('Channel Locked', `Moderator **${moderator.user.tag}** [${modTier}] locked down channel **#${channel.name}**.`, [], 'warning'));
+      logToSecurityChannel(guild, cv2.log('Channel Locked', `Moderator **${moderator.user?.tag || moderator.tag}** [${modTier}] locked down channel <#${channel.id}>. Non-staff role overwrites neutralized.`, [], 'warning'));
       return lockEmbed;
     } else {
-      await channel.permissionOverwrites.edit(guild.roles.everyone, {
-        SendMessages: null
-      });
+      // mode === 'off'
+      const snapshot = db.getChannelLockSnapshot(guild.id, channel.id);
+      if (snapshot && snapshot.overwrites && snapshot.overwrites.length > 0) {
+        const restoredOverwrites = snapshot.overwrites.map(ow => ({
+          id: ow.id,
+          type: ow.type,
+          allow: BigInt(ow.allow),
+          deny: BigInt(ow.deny)
+        }));
+        await channel.permissionOverwrites.set(restoredOverwrites, `Channel Lockdown Lifted by ${moderator.user?.tag || moderator.tag || 'Admin'}`);
+        db.clearChannelLockSnapshot(guild.id, channel.id);
+      } else {
+        // Fallback restoration
+        await channel.permissionOverwrites.edit(guild.roles.everyone, {
+          SendMessages: null,
+          SendMessagesInThreads: null,
+          CreatePublicThreads: null,
+          CreatePrivateThreads: null,
+          AddReactions: null,
+          Speak: null
+        }).catch(() => null);
+      }
+
       const unlockEmbed = cv2.success(
-        'Lockdown Deactivated', 
-        `<a:uptime:1552608831060844575> Channel lockdown has been lifted by **${moderator.user.tag}**. Permission to write has been restored.`
+        'Channel Lockdown Deactivated', 
+        `<a:uptime:1552608831060844575> Channel lockdown has been lifted by **${moderator.user?.tag || moderator.tag}**.\n` +
+        `> -# \u2022 **Channel:** <#${channel.id}>\n` +
+        `> -# \u2022 **Status:** Member speaking/writing permissions fully restored from pre-lockdown state.`
       );
-      logToSecurityChannel(guild, cv2.log('Channel Unlocked', `Moderator **${moderator.user.tag}** [${modTier}] unlocked channel **#${channel.name}**.`, [], 'success'));
+      logToSecurityChannel(guild, cv2.log('Channel Unlocked', `Moderator **${moderator.user?.tag || moderator.tag}** [${modTier}] unlocked channel <#${channel.id}>. Pre-lockdown permissions restored.`, [], 'success'));
       return unlockEmbed;
     }
   } catch (error) {
     console.error(error);
-    return cv2.danger('<:off:1533844858983157851> Failed', 'Could not modify permissions for this channel.');
+    return cv2.danger('Lockdown Action Failed', `Could not modify permissions for <#${channel.id}>: ${error.message}`);
   }
 }
 
@@ -2825,6 +2994,9 @@ export async function handlePanicLockdown(guild, moderator, tier = '1', updatePr
     db.updateGuildConfig(guild.id, { raidMode: true });
   }
 
+  const exemptIds = getLockdownExemptIds(guild, moderator);
+  const botMember = guild.members.me;
+
   // ULTRA-FAST BATCHED CONCURRENT EXECUTION (Batches of 8 channels)
   let modifiedCount = 0;
   const BATCH_SIZE = 8;
@@ -2832,55 +3004,77 @@ export async function handlePanicLockdown(guild, moderator, tier = '1', updatePr
     const chunk = modifiedChannels.slice(i, i + BATCH_SIZE);
     await Promise.allSettled(chunk.map(async (channel) => {
       try {
+        const isCategory = (channel.type === ChannelType.GuildCategory);
+        const isVoice = Boolean(channel.isVoiceBased?.() || channel.type === ChannelType.GuildVoice || channel.type === ChannelType.GuildStageVoice);
+        const isText = Boolean(channel.isTextBased?.() || channel.type === ChannelType.GuildText || channel.type === ChannelType.GuildAnnouncement || channel.type === ChannelType.GuildForum || channel.type === ChannelType.GuildMedia);
         const isRulesOrPublic = (channel.id === guild.rulesChannelId || channel.id === guild.publicUpdatesChannelId);
+
+        let channelDenyBits = 0n;
         if (tierNum === 1) {
-          if (channel.isTextBased()) {
-            await channel.permissionOverwrites.edit(guild.roles.everyone, {
-              SendMessages: false,
-              SendMessagesInThreads: false,
-              CreatePublicThreads: false,
-              CreatePrivateThreads: false
-            }).catch(() => null);
-          } else if (channel.isVoiceBased()) {
-            await channel.permissionOverwrites.edit(guild.roles.everyone, {
-              Speak: false
-            }).catch(() => null);
-          }
+          if (isCategory) channelDenyBits = TEXT_TIER1_DENY | VOICE_TIER1_DENY;
+          else if (isVoice) channelDenyBits = VOICE_TIER1_DENY;
+          else channelDenyBits = TEXT_TIER1_DENY;
         } else if (tierNum === 2) {
-          if (channel.isTextBased()) {
-            await channel.permissionOverwrites.edit(guild.roles.everyone, {
-              SendMessages: false,
-              SendMessagesInThreads: false,
-              CreatePublicThreads: false,
-              CreatePrivateThreads: false,
-              AddReactions: false,
-              UseApplicationCommands: false,
-              AttachFiles: false,
-              EmbedLinks: false
-            }).catch(() => null);
-          } else if (channel.isVoiceBased()) {
-            await channel.permissionOverwrites.edit(guild.roles.everyone, {
-              Speak: false
-            }).catch(() => null);
-          }
+          if (isCategory) channelDenyBits = TEXT_TIER2_DENY | VOICE_TIER2_DENY;
+          else if (isVoice) channelDenyBits = VOICE_TIER2_DENY;
+          else channelDenyBits = TEXT_TIER2_DENY;
         } else if (tierNum === 3) {
-          if (isRulesOrPublic) {
-            await channel.permissionOverwrites.edit(guild.roles.everyone, {
-              SendMessages: false,
-              AddReactions: false
-            }).catch(() => null);
-          } else if (channel.isTextBased()) {
-            await channel.permissionOverwrites.edit(guild.roles.everyone, {
-              ViewChannel: false,
-              SendMessages: false
-            }).catch(() => null);
-          } else if (channel.isVoiceBased()) {
-            await channel.permissionOverwrites.edit(guild.roles.everyone, {
-              ViewChannel: false,
-              Connect: false
-            }).catch(() => null);
-          }
+          if (isRulesOrPublic) channelDenyBits = TEXT_TIER2_DENY;
+          else channelDenyBits = TIER3_BLACKOUT_DENY;
         }
+
+        const everyoneRoleId = guild.roles.everyone.id;
+        let everyoneFound = false;
+        const newOverwrites = [];
+
+        if (channel.permissionOverwrites) {
+          channel.permissionOverwrites.cache.forEach(ow => {
+            const isEveryone = (ow.id === everyoneRoleId || ow.id === guild.id);
+            if (isEveryone) everyoneFound = true;
+
+            if (exemptIds.has(ow.id)) {
+              // Staff/Admin/Bot overwrite preserved exactly
+              newOverwrites.push({
+                id: ow.id,
+                type: ow.type,
+                allow: BigInt(ow.allow.bitfield),
+                deny: BigInt(ow.deny.bitfield)
+              });
+            } else {
+              // Non-staff role or member overwrite: strip denied perms from allow, add to deny
+              const currentAllow = BigInt(ow.allow.bitfield);
+              const currentDeny = BigInt(ow.deny.bitfield);
+              newOverwrites.push({
+                id: ow.id,
+                type: ow.type,
+                allow: currentAllow & ~channelDenyBits,
+                deny: currentDeny | channelDenyBits
+              });
+            }
+          });
+        }
+
+        if (!everyoneFound) {
+          // If @everyone didn't have an explicit overwrite, add it
+          newOverwrites.push({
+            id: everyoneRoleId,
+            type: 0,
+            allow: 0n,
+            deny: channelDenyBits
+          });
+        }
+
+        // Ensure Athena bot explicitly maintains access so she can lift/manage
+        if (botMember && !newOverwrites.some(ow => ow.id === botMember.id)) {
+          newOverwrites.push({
+            id: botMember.id,
+            type: 1,
+            allow: PermissionFlagsBits.ViewChannel | PermissionFlagsBits.ManageChannels | PermissionFlagsBits.SendMessages,
+            deny: 0n
+          });
+        }
+
+        await channel.permissionOverwrites.set(newOverwrites, `Panic Lockdown ${tierLabel} by ${moderator.user?.tag || moderator.tag || 'Admin'}`);
         modifiedCount++;
       } catch (err) {}
     }));

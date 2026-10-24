@@ -2,15 +2,15 @@ import { AttachmentBuilder } from 'discord.js';
 import { generateVoiceAudio } from './ttsVoiceEngine.js';
 
 export const TACTICAL_DISPATCH_SCRIPTS = {
-  defcon1: 'Attention. DEFCON 1 engaged. Emergency server blackout initiated. Perimeter channels locked and security shield deployed.',
-  panic: 'Attention. Emergency blackout protocol engaged. All public channels have been isolated and verification shields elevated. Server under active defense.',
-  unpanic: 'Emergency blackout resolved. Operations restored to normal parameters.',
-  lockdown_tier1: 'Athena Prime Defense Matrix. Tier 1 soft lockdown engaged. Public messaging and voice speaking channels restricted.',
-  lockdown_tier2: 'Athena Prime Defense Matrix. Tier 2 lockdown engaged. Media attachments and reactions disabled. Server raid mode armed.',
-  lockdown_tier3: 'Athena Prime Defense Matrix. Tier 3 nuclear blackout engaged. All public channels hidden and isolated.',
-  unlockdown: 'Athena Prime Defense Matrix. Perimeter security restored. Channel bitmasks synchronized and operations normal.',
-  raidmode_on: 'Warning. Server raid mode armed. Join velocity thresholds active and incoming accounts quarantined.',
-  security_enable_all: 'Athena Prime Defense Matrix online. All 28 perimeter shields locked and entities secured.'
+  defcon1: 'Commander! Emergency blackout protocol initiated! All public channels have been hidden and isolated, and verification shields are at maximum! Server is under total lockdown defense!',
+  panic: 'Commander! Emergency blackout protocol engaged! All public channels have been isolated and verification shields elevated! Athena Prime is guarding the server!',
+  unpanic: 'Commander! Emergency blackout has been resolved! All channels and roles have been restored to normal operations! Everything is safe now!',
+  lockdown_tier1: 'Commander! Tier 1 soft lockdown engaged! Chat messages and voice communications are now restricted for all members!',
+  lockdown_tier2: 'Commander! Tier 2 lockdown engaged! Media attachments, reactions, and application commands are disabled, and raid mode is armed!',
+  lockdown_tier3: 'Commander! Tier 3 nuclear blackout engaged! Total server darkness deployed, all channels are isolated!',
+  unlockdown: 'Commander! Server lockdown has been lifted! Channel permissions have been restored from database snapshots, and operations are back online!',
+  raidmode_on: 'Warning Commander! Server raid mode armed! Join velocity thresholds are active and incoming accounts are being quarantined!',
+  security_enable_all: 'Athena Prime Defense Matrix online! All perimeter shields locked and 28 security modules armed, Commander!'
 };
 
 /**

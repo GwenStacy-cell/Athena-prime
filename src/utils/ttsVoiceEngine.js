@@ -265,16 +265,16 @@ export const CELEBRITY_VOICES = {
   },
   tactical: {
     id: 'tactical',
-    aliases: ['athena', 'command', 'military', 'warroom', 'briefing'],
-    name: 'Athena Prime Tactical Dispatch',
+    aliases: ['athena', 'command', 'military', 'warroom', 'briefing', 'cute', 'operator'],
+    name: 'Athena Prime Tactical AI (Cute Operator)',
     category: 'Defense Matrix',
-    elevenLabsVoiceId: 'pNInz6obpgDQGcFmaJgB',
-    neuralVoice: 'en-US-GuyNeural',
-    pitch: '-3Hz',
-    rate: '+3%',
+    elevenLabsVoiceId: 'EXAVITQu4vr4xnSDxMaL',
+    neuralVoice: 'en-US-AnaNeural',
+    pitch: '+10Hz',
+    rate: '+5%',
     baseLang: 'en-US',
-    description: 'High-tech military radio command AI dispatch with comms equalizing',
-    filter: 'highpass=f=280,lowpass=f=3300,equalizer=f=1100:t=q:w=1.2:g=5,acompressor=threshold=-12dB:ratio=4:attack=8:release=60'
+    description: 'Cute, energetic high-tech anime tactical AI operator voice with clean communication filter',
+    filter: 'equalizer=f=3200:t=q:w=1.2:g=4,equalizer=f=8000:t=q:w=1.5:g=3,acompressor=threshold=-12dB:ratio=3:attack=10:release=70'
   }
 };
 

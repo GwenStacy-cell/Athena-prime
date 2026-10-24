@@ -75,6 +75,7 @@ const DEFAULT_SCHEMA = {
   shopItems: {},      // guildId -> [ { id, name, price, roleId, description } ]
   userRankThemes: {}, // userId -> themeName ('hogwarts' | 'athena')
   lockdownSnapshots: {}, // guildId -> { tier, timestamp, channels: [], roles: [] }
+  channelLockSnapshots: {}, // `${guildId}-${channelId}` -> { timestamp, overwrites: [] }
   studioTemplates: {},   // guildId -> { templateId -> { id, name, title, description, color, fields, footer } }
   minigamesStats: {},    // guildId -> { userId -> { blackjackWins, rouletteWins, triviaWins, totalWagered, totalWon } }
   voiceAnalytics: {}     // guildId -> { hourly: {}, channels: {}, users: {} }
@@ -174,6 +175,7 @@ class Database {
         this.cache.shopItems      = this.cache.shopItems      || {};
         this.cache.userRankThemes = this.cache.userRankThemes || {};
         this.cache.lockdownSnapshots = this.cache.lockdownSnapshots || {};
+        this.cache.channelLockSnapshots = this.cache.channelLockSnapshots || {};
         this.cache.studioTemplates = this.cache.studioTemplates || {};
         this.cache.minigamesStats = this.cache.minigamesStats || {};
         this.cache.voiceAnalytics = this.cache.voiceAnalytics || {};
@@ -2635,6 +2637,26 @@ class Database {
     if (!this.cache.lockdownSnapshots) this.cache.lockdownSnapshots = {};
     const old = this.cache.lockdownSnapshots[guildId];
     delete this.cache.lockdownSnapshots[guildId];
+    this.save();
+    return old;
+  }
+
+  getChannelLockSnapshot(guildId, channelId) {
+    if (!this.cache.channelLockSnapshots) this.cache.channelLockSnapshots = {};
+    return this.cache.channelLockSnapshots[`${guildId}-${channelId}`] || null;
+  }
+
+  saveChannelLockSnapshot(guildId, channelId, data) {
+    if (!this.cache.channelLockSnapshots) this.cache.channelLockSnapshots = {};
+    this.cache.channelLockSnapshots[`${guildId}-${channelId}`] = { ...data, timestamp: Date.now() };
+    this.save();
+    return this.cache.channelLockSnapshots[`${guildId}-${channelId}`];
+  }
+
+  clearChannelLockSnapshot(guildId, channelId) {
+    if (!this.cache.channelLockSnapshots) this.cache.channelLockSnapshots = {};
+    const old = this.cache.channelLockSnapshots[`${guildId}-${channelId}`];
+    delete this.cache.channelLockSnapshots[`${guildId}-${channelId}`];
     this.save();
     return old;
   }
