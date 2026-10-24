@@ -58,6 +58,66 @@ export default {
       } catch (e) { console.error('[InteractionCreate] TTS interaction error:', e); }
     }
 
+    // ==========================================
+    // DEFENSE MATRIX: LOCKDOWN & EMERGENCY BUTTONS
+    // ==========================================
+    if (interaction.isButton() && (interaction.customId === 'lockdown_lift' || interaction.customId === 'lockdown_status' || interaction.customId === 'emergency_end')) {
+      const { isBotOwnerSync, isExtraOwner } = await import('../utils/helpers.js');
+      const { handleUnlockdown, handleEmergency } = await import('../commands/security.js');
+
+      if (interaction.customId === 'lockdown_lift') {
+        const isAuthorizedAdmin = isBotOwnerSync(interaction.user.id) || 
+          interaction.user.id === interaction.guild?.ownerId || 
+          isExtraOwner(interaction.guild?.id, interaction.user.id) || 
+          interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
+        if (!isAuthorizedAdmin) {
+          return interaction.reply({ content: '-# You lack authorization to lift server panic lockdown. Administrator or higher clearance required.', flags: MessageFlags.Ephemeral });
+        }
+        await interaction.deferUpdate().catch(() => null);
+        const result = await handleUnlockdown(interaction.guild, interaction.member);
+        return interaction.editReply(result).catch(() => null);
+      }
+
+      if (interaction.customId === 'lockdown_status') {
+        const snapshot = db.getLockdownSnapshot(interaction.guild?.id);
+        if (!snapshot) {
+          return interaction.reply({ content: '-# No active panic lockdown snapshot in database. Server is operating under normal defense parameters.', flags: MessageFlags.Ephemeral });
+        }
+        return interaction.reply({
+          content: `### Active Panic Lockdown Audit | <a:uptime:1552608831060844575>\n` +
+            `> **Tier:** \`${snapshot.tierLabel || 'Tier ' + snapshot.tier}\`\n` +
+            `> **Channels Secured:** \`${snapshot.channels?.length || 0} channels\`\n` +
+            `> **Enforcer:** <@${snapshot.moderatorId}>\n` +
+            `> **Raid Shield:** \`${snapshot.preRaidMode ? 'Active' : 'Standby'}\`\n` +
+            `> **Verification Level:** \`${snapshot.preVerifLevel !== undefined ? 'Elevated (Phone Required)' : 'Standard'}\``,
+          flags: MessageFlags.Ephemeral
+        });
+      }
+
+      if (interaction.customId === 'emergency_end') {
+        const isAuthorizedOwner = isBotOwnerSync(interaction.user.id) || interaction.user.id === interaction.guild?.ownerId;
+        if (!isAuthorizedOwner) {
+          return interaction.reply({ content: '-# Only the Server Owner or Bot Owner can resolve Emergency Blackout Mode.', flags: MessageFlags.Ephemeral });
+        }
+        await interaction.deferUpdate().catch(() => null);
+        const result = await handleEmergency(interaction.guild, interaction.member, 'end');
+        return interaction.editReply(result).catch(() => null);
+      }
+    }
+
+    if (interaction.isButton() && (interaction.customId === 'hud_mode_telemetry' || interaction.customId === 'hud_mode_server' || interaction.customId === 'hud_mode_defcon' || interaction.customId === 'hud_mode_omni' || interaction.customId === 'dash_refresh')) {
+      await interaction.deferUpdate().catch(() => null);
+      if (interaction.customId === 'hud_mode_omni' || interaction.customId === 'dash_refresh') {
+        const { buildDashboardResponse } = await import('../commands/dashboard.js');
+        const result = await buildDashboardResponse(interaction.guild, interaction.client, interaction.user);
+        return interaction.editReply(result).catch(() => null);
+      }
+      const { buildHudResponse } = await import('../commands/hud.js');
+      const mode = interaction.customId.replace('hud_mode_', '');
+      const result = await buildHudResponse(interaction.guild, interaction.client, mode, interaction.user);
+      return interaction.editReply(result).catch(() => null);
+    }
+
 
     
     // ==========================================

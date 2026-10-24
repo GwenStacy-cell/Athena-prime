@@ -1,4 +1,6 @@
 import { commands as firewallCmds } from './firewall.js';
+import { commands as hudCmds } from './hud.js';
+import { commands as dashboardCmds } from './dashboard.js';
 ﻿import { commands as shortcutsCmds } from './shortcuts.js';
 import { commands as botvoiceCmds } from './botvoice.js';
 import { commands as authCmds } from './auth.js';
@@ -185,6 +187,8 @@ export const allCommands = [
   ...rateLeaderboardCmds,
   ...adelCmds,
   ...botstatsCmds,
+  ...hudCmds,
+  ...dashboardCmds,
   ...shortcutsCmds,
   ...modmailCmds,
   ...profileCmds,
