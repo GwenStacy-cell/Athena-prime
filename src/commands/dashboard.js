@@ -37,6 +37,7 @@ export const commands = [
 export async function buildDashboardResponse(guild, client, requester = null) {
   const config = guild ? db.getGuildConfig(guild.id) : null;
   const accentColor = config?.accentColor || '#00f0ff';
+  const prefix = config?.prefix || '!';
 
   // 1. Gather Telemetry Data
   const uptime = Math.floor(process.uptime());
@@ -141,9 +142,10 @@ export async function buildDashboardResponse(guild, client, requester = null) {
     animated: true
   }).catch(() => null);
 
-  // 5. Construct Interactive ActionRow
+  // 5. Construct Interactive ActionRow (5 Buttons Max)
   const actionRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('dash_refresh').setLabel('Refresh Matrix').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('dash_defcon_knowmore').setLabel('DEFCON Intel & Guide').setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId('hud_mode_telemetry').setLabel('Telemetry Focus').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('hud_mode_server').setLabel('Server Focus').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId('hud_mode_defcon').setLabel('DEFCON Focus').setStyle(ButtonStyle.Secondary)
@@ -204,13 +206,18 @@ export async function buildDashboardResponse(guild, client, requester = null) {
     {
       type: 10,
       content:
-        `### **III. DEFCON Defense Matrix & Security**\n` +
-        `> -# \u2022 **DEFCON Threat Level:** ${isAlert ? '`DEFCON 1 (Elevated Security Alert)`' : '`DEFCON 5 (Peacetime / Normal)`'}\n` +
-        `> -# \u2022 **Panic Lockdown:** ${lockdown ? `\`Active (${lockdown.tierLabel || 'Tier ' + lockdown.tier})\` \u2022 \`${lockdown.channels?.length || 0} channels locked\`` : '`Standby (Disengaged)`'}\n` +
-        `> -# \u2022 **Anti-Raid Shield:** ${raidActive ? '`Armed (Auto-quarantine active)`' : '`Online (Monitoring)`'}\n` +
-        `> -# \u2022 **Emergency Blackout:** ${isEmergency ? '`Active (Blackout engaged)`' : '`Inactive`'}\n` +
-        `> -# \u2022 **Verification Level:** \`${verifStr}\`\n` +
-        `> -# \u2022 **Security Whitelist:** \`${extraOwnersCount}\` extra owners \u2022 \`${spamPermittedCount}\` bypass entries`
+        `### **III. DEFCON Defense Matrix & Security Posture**\n` +
+        `> -# \u2022 **DEFCON State:** ${isAlert ? '`DEFCON 1 (CRITICAL THREAT ALERT)`' : '`DEFCON 5 (PEACETIME / NOMINAL)`'}\n` +
+        `> -# \u2022 **Emergency Blackout:** ${isEmergency ? '`ENGAGED (Total Server Blackout)`' : '`Standby (Disengaged)`'}\n` +
+        `> -# \u2022 **Panic Lockdown:** ${lockdown ? `\`ENGAGED (${lockdown.tierLabel || 'Tier ' + lockdown.tier})\` \u2022 \`${lockdown.channels?.length || 0} channels locked\`` : '`Standby (Disengaged)`'}\n` +
+        `> -# \u2022 **Anti-Raid Auto-Quarantine:** ${raidActive ? '`ARMED (Isolating Incoming Accounts)`' : '`Standby (Passive Wiretap)`'}\n` +
+        `> -# \u2022 **Gate Verification:** \`${verifStr}\`\n` +
+        `> -# \u2022 **Whitelists & Staff:** \`${extraOwnersCount}\` extra owners \u2022 \`${spamPermittedCount}\` bypass entries\n\n` +
+        `> **Tactical Emergency & Panic Directives:**\n` +
+        `> -# \u2022 \`${prefix}panic\` / \`${prefix}emergency\` \u2014 Instant total server blackout & verification elevation \`[Owner Only]\`\n` +
+        `> -# \u2022 \`${prefix}unpanic\` / \`${prefix}endemergency\` \u2014 Lift emergency mode and restore all permissions \`[Owner Only]\`\n` +
+        `> -# \u2022 \`${prefix}lockdown <1|2|3>\` \u2014 Ultra-fast batched lockdown (Soft / Medium / Nuclear) \`[Admin]\`\n` +
+        `> -# \u2022 \`${prefix}unlockdown\` \u2014 Instant ~1.2s zero-loss restoration from database bitmask snapshot \`[Admin]\``
     },
     { type: 14, divider: true },
     { type: 10, content: `-# **Athena Prime Tactical Command Center \u2022 Unified Operations**` }
@@ -223,5 +230,77 @@ export async function buildDashboardResponse(guild, client, requester = null) {
     components: finalComponents,
     files: bannerAttachment ? [bannerAttachment] : [],
     flags: MessageFlags.IsComponentsV2
+  };
+}
+
+export function buildDefconIntelContainer(prefix = '!') {
+  return {
+    type: 17,
+    components: [
+      { type: 10, content: `## Athena Prime DEFCON Defense Matrix Intel | <a:atheNATICK:1557841381630681106>` },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          `### **What is the DEFCON Defense Matrix?**\n` +
+          `> Athena Prime implements a military-grade 5-tier DEFCON (Defense Readiness Condition) posture system. ` +
+          `It seamlessly bridges automated background zero-day heuristic interception with rapid one-click administrative panic overrides.\n\n` +
+          `> <a:uptime:1552608831060844575> **Operational Architecture:** Event interception fires at raw WebSocket wiretap speeds (<1ms), while batched REST mutations alter channels in parallel chunks without hitting Discord 429 secondary rate limits.`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          `### **The 5 DEFCON Readiness Levels**\n` +
+          `> **DEFCON 5 \u2022 PEACETIME (Normal Operations)**\n` +
+          `> -# \u2022 Standard community operations; all bot sub-systems monitoring in passive standby.\n` +
+          `> -# \u2022 Raw WebSocket wiretap running in background (<1ms processing).\n` +
+          `> -# \u2022 60-second Linked Role audit log cross-examination active.\n\n` +
+          `> **DEFCON 4 \u2022 GUARDED (Elevated Surveillance)**\n` +
+          `> -# \u2022 Passive anomaly heuristics tracking staff velocity; automod strictness raised.\n` +
+          `> -# \u2022 Phishing, token stealer, and fake nitro domain filters active.\n` +
+          `> -# \u2022 Zero-day invite inspection verifies no dangerous permissions on invite links.\n\n` +
+          `> **DEFCON 3 \u2022 ELEVATED (Heightened Raid Alert)**\n` +
+          `> -# \u2022 Join-velocity burst monitoring triggered (default: 8 joins in 5 seconds).\n` +
+          `> -# \u2022 Account age restrictions & anti-alt heuristics active.\n` +
+          `> -# \u2022 Pre-lockdown bitmask snapshotting primed in database memory.\n\n` +
+          `> **DEFCON 2 \u2022 SEVERE (Active Incursion / Raid Mode)**\n` +
+          `> -# \u2022 Server Raid Mode armed (\`${prefix}raidmode on\`).\n` +
+          `> -# \u2022 Verification level elevated to **Very High (Verified Phone Required)**.\n` +
+          `> -# \u2022 Incoming members instantly stripped of roles & isolated in \`.   You Have Been Quarantined\`.\n\n` +
+          `> **DEFCON 1 \u2022 MAXIMUM CRITICAL (Emergency Blackout / Panic Lockdown)**\n` +
+          `> -# \u2022 Triggered via \`${prefix}panic\`, \`${prefix}emergency\`, or \`${prefix}lockdown 3\`.\n` +
+          `> -# \u2022 Total server blackout: all public channels hidden or muted for \`@everyone\`.\n` +
+          `> -# \u2022 Micro-batched parallel REST execution (chunks of 8) completes in **~1.2 seconds**.\n` +
+          `> -# \u2022 Server verification elevated to Phone Required to block attacker alternate accounts.`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          `### **How It Works Under the Hood (Architecture & Mechanics)**\n` +
+          `> -# \u2022 **1. Zero-Loss Bitmask Snapshots:** Before any channel is touched, Athena serializes exact bitmask integers (\`allow\` / \`deny\` BigInts) into database cache. Nothing is lost.\n` +
+          `> -# \u2022 **2. Parallel Batched REST Engine:** Instead of sequential loops taking 20+ seconds, channels are processed in concurrent chunks of 8 using \`Promise.allSettled\`. Lockdown or rollback finishes in **~1.2 seconds**.\n` +
+          `> -# \u2022 **3. Phone Verification Shield:** In DEFCON 1 and Tier 2/3 lockdowns, verification is elevated so attackers cannot bypass channel permissions using unverified alt accounts.`
+      },
+      { type: 14, divider: true },
+      {
+        type: 10,
+        content:
+          `### **Execution & Clearance Manual**\n` +
+          `> **Emergency Activation Commands:**\n` +
+          `> -# \u2022 \`${prefix}panic\` / \`${prefix}emergency\` \u2014 Total server channel blackout & verification elevation \`[Server Owner / Bot Owner]\`\n` +
+          `> -# \u2022 \`${prefix}lockdown 1\` \u2014 Soft lockdown (mutes send & voice speak) \`[Admin / Extra Owner]\`\n` +
+          `> -# \u2022 \`${prefix}lockdown 2\` \u2014 Medium lockdown (mutes send, files, reactions + arms raid mode) \`[Admin / Extra Owner]\`\n` +
+          `> -# \u2022 \`${prefix}lockdown 3\` \u2014 Nuclear lockdown (total server channel blackout) \`[Admin / Extra Owner]\`\n` +
+          `> -# \u2022 \`${prefix}raidmode on\` \u2014 Auto-quarantine incoming joins & phone verification \`[Admin / Extra Owner]\`\n\n` +
+          `> **Recovery & Restoration Commands:**\n` +
+          `> -# \u2022 \`${prefix}unpanic\` / \`${prefix}endemergency\` \u2014 Lifts emergency blackout & restores permissions \`[Server Owner / Bot Owner]\`\n` +
+          `> -# \u2022 \`${prefix}unlockdown\` \u2014 Restores exact channels & bitmasks from database snapshot in ~1.2s \`[Admin / Extra Owner]\`\n` +
+          `> -# \u2022 **Interactive Action Buttons:** \`[Lift Lockdown]\` & \`[End Emergency]\` buttons attached to alert messages allow instant 1-click restoration.`
+      },
+      { type: 14, divider: true },
+      { type: 10, content: `-# **Athena Prime Defense Matrix \u2022 DEFCON Architectural Manual**` }
+    ]
   };
 }

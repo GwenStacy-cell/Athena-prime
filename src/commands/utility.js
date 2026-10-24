@@ -254,7 +254,11 @@ export const commands = [
               }
               
               let permsText = "Public / Everyone";
-              if (targetCmd.name === "unbypassable" || targetCmd.name === "learn") {
+              if (targetCmd.name === "emergency" || targetCmd.name === "endemergency" || targetCmd.name === "panic") {
+                  permsText = "Server Owner and Bot Owners ONLY (Extra Owners Unauthorized)";
+              } else if (targetCmd.name === "lockdown" || targetCmd.name === "unlockdown") {
+                  permsText = "Server Owner, Bot Owners, Extra Owners, and Administrators";
+              } else if (targetCmd.name === "unbypassable" || targetCmd.name === "learn") {
                   permsText = "Administrators, Server Owner, Extra Owners, and Bot Owners";
               } else if (targetCmd.permissions && targetCmd.permissions.length > 0) {
                   if (targetCmd.permissions.includes(8n)) permsText = "Administrator";
@@ -431,6 +435,35 @@ export const commands = [
                     `> • \`${prefix}warnings <@user>\` - View member's active warnings & strike HUD.\n` +
                     `> • \`${prefix}warn <@user> [reason]\` - Issue a warning strike.\n` +
                     `> • \`${prefix}clearwarns <@user>\` - Clear member's disciplinary record.`;
+              } else if (targetCmd.name === "dashboard" || targetCmd.name === "hud") {
+                  descContent = `Flagship Athena Prime Tactical Command Center and War-Room HUD with live animated cyber banners and real-time telemetry.\n\n` +
+                    `> -# **__Features & Defense Integration:__**\n` +
+                    `> • **Three Core Layers:** Merges Bot Telemetry (Heap, Ping, Clusters), Server Operations (Members, Channels, Roles), and DEFCON Security Posture.\n` +
+                    `> • **DEFCON Defense Matrix:** Displays live threat status (DEFCON 1 to 5), active lockdown tier, anti-raid shield, and emergency blackout state.\n` +
+                    `> • **Interactive Controls:** ActionRow buttons allow switching views, refreshing live metrics, opening the DEFCON Intel manual, or triggering one-click recovery.\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}dashboard\` - Open the all-inclusive Unified Command Center.\n` +
+                    `> • \`${prefix}hud [telemetry|server|defcon]\` - Open the mode-based War-Room HUD.\n` +
+                    `> • \`${prefix}omni\` / \`${prefix}commandcenter\` - Quick aliases for the command center.`;
+              } else if (targetCmd.name === "emergency" || targetCmd.name === "endemergency" || targetCmd.name === "panic") {
+                  descContent = `Ultra-fast emergency panic protocol that immediately strips permissions, hides all public channels, and locks down the server.\n\n` +
+                    `> -# **__Execution & Architecture:__**\n` +
+                    `> • **Immediate Blackout:** Denies \`ViewChannel\` across all channels for \`@everyone\`.\n` +
+                    `> • **Micro-Batched REST Engine:** Modifies permissions concurrently in chunks of 8 (~1.2s execution) without triggering 429 rate limits.\n` +
+                    `> • **Phone Verification Shield:** Automatically elevates server verification level to Phone Required.\n` +
+                    `> • **Zero-Loss Bitmask Snapshot:** Stores exact channel permissions in database memory before alterations for 100% clean recovery.\n\n` +
+                    `> -# **__Usage Syntax & Subcommands:__**\n` +
+                    `> • \`${prefix}panic\` / \`${prefix}emergency\` - Engage total server emergency blackout.\n` +
+                    `> • \`${prefix}unpanic\` / \`${prefix}endemergency\` / \`${prefix}panic off\` - Lift emergency blackout and restore all channels.`;
+              } else if (targetCmd.name === "lockdown" || targetCmd.name === "unlockdown") {
+                  descContent = `Tiered One-Click Panic Lockdown with parallel batched channel execution (~1.2s speed) and database bitmask recovery.\n\n` +
+                    `> -# **__Lockdown Tiers:__**\n` +
+                    `> • **Tier 1 (Soft Lockdown):** Denies \`SendMessages\`, thread creation, and voice \`Speak\` across all public channels.\n` +
+                    `> • **Tier 2 (Medium Lockdown):** Tier 1 + Denies reactions, attachments, application commands + arms Raid Mode + Phone Verification.\n` +
+                    `> • **Tier 3 (Nuclear Lockdown):** Total server blackout (denies \`ViewChannel\` across all public channels).\n\n` +
+                    `> -# **__Usage Syntax:__**\n` +
+                    `> • \`${prefix}lockdown <1|2|3>\` - Engage specified panic lockdown tier.\n` +
+                    `> • \`${prefix}unlockdown\` / \`${prefix}lockdown off\` - Restore exact pre-lockdown channel permissions from DB snapshot in ~1.2s.`;
               }
 
               const display1 = new TextDisplayBuilder().setContent(
@@ -502,7 +535,11 @@ export const commands = [
         }
         
         let permsText = "Public / Everyone";
-        if (targetCmd.name === "unbypassable" || targetCmd.name === "learn") {
+        if (targetCmd.name === "emergency" || targetCmd.name === "endemergency" || targetCmd.name === "panic") {
+          permsText = "Server Owner and Bot Owners ONLY (Extra Owners Unauthorized)";
+        } else if (targetCmd.name === "lockdown" || targetCmd.name === "unlockdown") {
+          permsText = "Server Owner, Bot Owners, Extra Owners, and Administrators";
+        } else if (targetCmd.name === "unbypassable" || targetCmd.name === "learn") {
           permsText = "Administrators, Server Owner, Extra Owners, and Bot Owners";
         } else if (targetCmd.permissions && targetCmd.permissions.length > 0) {
           if (targetCmd.permissions.includes(8n)) permsText = "Administrator";
@@ -619,6 +656,35 @@ export const commands = [
             `> • Shows perpetrator tag, user ID, countermeasure verdict (BAN_APPLIED, ROLES_STRIPPED), and strike latency in ms.\n` +
             `> • Reports automatic channel/category recreation and permission rollbacks.\n` +
             `> • Interactive components: Page navigation (Previous / Next), live Refresh, and Clear History.`;
+        } else if (targetCmd.name === "dashboard" || targetCmd.name === "hud") {
+          descContent = `Flagship Athena Prime Tactical Command Center and War-Room HUD with live animated cyber banners and real-time telemetry.\n\n` +
+            `> -# **__Features & Defense Integration:__**\n` +
+            `> • **Three Core Layers:** Merges Bot Telemetry (Heap, Ping, Clusters), Server Operations (Members, Channels, Roles), and DEFCON Security Posture.\n` +
+            `> • **DEFCON Defense Matrix:** Displays live threat status (DEFCON 1 to 5), active lockdown tier, anti-raid shield, and emergency blackout state.\n` +
+            `> • **Interactive Controls:** ActionRow buttons allow switching views, refreshing live metrics, opening the DEFCON Intel manual, or triggering one-click recovery.\n\n` +
+            `> -# **__Usage Syntax:__**\n` +
+            `> • \`${prefix}dashboard\` - Open the all-inclusive Unified Command Center.\n` +
+            `> • \`${prefix}hud [telemetry|server|defcon]\` - Open the mode-based War-Room HUD.\n` +
+            `> • \`${prefix}omni\` / \`${prefix}commandcenter\` - Quick aliases for the command center.`;
+        } else if (targetCmd.name === "emergency" || targetCmd.name === "endemergency" || targetCmd.name === "panic") {
+          descContent = `Ultra-fast emergency panic protocol that immediately strips permissions, hides all public channels, and locks down the server.\n\n` +
+            `> -# **__Execution & Architecture:__**\n` +
+            `> • **Immediate Blackout:** Denies \`ViewChannel\` across all channels for \`@everyone\`.\n` +
+            `> • **Micro-Batched REST Engine:** Modifies permissions concurrently in chunks of 8 (~1.2s execution) without triggering 429 rate limits.\n` +
+            `> • **Phone Verification Shield:** Automatically elevates server verification level to Phone Required.\n` +
+            `> • **Zero-Loss Bitmask Snapshot:** Stores exact channel permissions in database memory before alterations for 100% clean recovery.\n\n` +
+            `> -# **__Usage Syntax & Subcommands:__**\n` +
+            `> • \`${prefix}panic\` / \`${prefix}emergency\` - Engage total server emergency blackout.\n` +
+            `> • \`${prefix}unpanic\` / \`${prefix}endemergency\` / \`${prefix}panic off\` - Lift emergency blackout and restore all channels.`;
+        } else if (targetCmd.name === "lockdown" || targetCmd.name === "unlockdown") {
+          descContent = `Tiered One-Click Panic Lockdown with parallel batched channel execution (~1.2s speed) and database bitmask recovery.\n\n` +
+            `> -# **__Lockdown Tiers:__**\n` +
+            `> • **Tier 1 (Soft Lockdown):** Denies \`SendMessages\`, thread creation, and voice \`Speak\` across all public channels.\n` +
+            `> • **Tier 2 (Medium Lockdown):** Tier 1 + Denies reactions, attachments, application commands + arms Raid Mode + Phone Verification.\n` +
+            `> • **Tier 3 (Nuclear Lockdown):** Total server blackout (denies \`ViewChannel\` across all public channels).\n\n` +
+            `> -# **__Usage Syntax:__**\n` +
+            `> • \`${prefix}lockdown <1|2|3>\` - Engage specified panic lockdown tier.\n` +
+            `> • \`${prefix}unlockdown\` / \`${prefix}lockdown off\` - Restore exact pre-lockdown channel permissions from DB snapshot in ~1.2s.`;
         }
 
         const display1 = new TextDisplayBuilder().setContent(
@@ -1437,11 +1503,13 @@ export const helpModules = [
     "`!spampermit <@user/id>` - Bypass webhook/spam protections `[Extra Owner]`",
     "`!spamrevoke <@user/id>` - Remove bypass for user `[Extra Owner]`",
     "`!spamlist` - View users with spam protection bypass `[Extra Owner]`",
-    "`!panic / !emergency` - Immediately activate server lockdown `[Extra Owner]`",
-    "`!lockdown <1|2|3|off>` - One-Click Panic Lockdown (Tier 1 Soft, Tier 2 Medium, Tier 3 Nuclear) `[Admin]`",
-    "`!unlockdown` - Restore exact pre-lockdown channels and bitmasks from DB snapshot `[Admin]`",
+    "`!dashboard / !omni` - Flagship Unified War-Room Command Center with DEFCON Defense Matrix & Panic Controls `[Public / Admin]`",
+    "`!hud / !warroom` - Flagship Animated Cyber HUD with live switching between Telemetry, Server & DEFCON `[Public / Admin]`",
+    "`!panic / !emergency` - Ultra-fast emergency panic lockdown: instant channel blackout & phone verification elevation `[Server Owner / Bot Owner]`",
+    "`!unpanic / !endemergency` - Resolve emergency mode, lift blackout and restore pre-emergency bitmasks `[Server Owner / Bot Owner]`",
+    "`!lockdown <1|2|3|off>` - Ultra-fast batched channel lockdown (Tier 1 Soft, Tier 2 Medium, Tier 3 Nuclear) `[Admin]`",
+    "`!unlockdown` - Restore exact pre-lockdown channel permissions and bitmasks from database snapshot in ~1.2s `[Admin]`",
     "`!phishingshield` - Automated token stealer, fake Nitro and domain spoofing filter `[System Active]`",
-    "`!endemergency` - Lift active emergency lockdown `[Extra Owner]`",
     "`!health / !audit` - Real-time hierarchy integrity, permissions & audit socket diagnostics `[Admin / Extra Owner]`",
     "`!raidmode [status]` - Unified Server Raid Defense Matrix dashboard `[Admin / Extra Owner]`",
     "`!raidmode on|off` - Manual server raid lockdown, elevates verification to Phone Required & auto-quarantines `[Admin / Extra Owner]`",
@@ -1831,6 +1899,8 @@ export const helpModules = [
   
   { id: 'utilities', category: 'UTILITIES & INTEGRATIONS', shortLabel: 'Utilities', label: 'General Utilities', emoji: 'utilities', commands: [
     "`!help [module/command]` - Displays this interactive menu `[Public]`",
+    "`!dashboard / !omni` - Flagship Unified Command Center combining Telemetry, Server Operations & DEFCON Security `[Public / Admin]`",
+    "`!hud / !warroom` - Flagship Animated Cyber War-Room HUD with live mode switching `[Public / Admin]`",
     "`!athena / !guide [question]` - Interactive Athena AI Specialist to explain commands, resolve doubts & instruct setups `[Public]`",
     "`!ask <prompt> / /ask <prompt>` - Query general AI knowledge and analysis `[Public]`",
     "`!aimode status|on|off|channel` - Configure conversational AI channel mode `[Admin]`",

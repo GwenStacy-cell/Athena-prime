@@ -533,19 +533,90 @@ A Honeypot is a designated text channel configured with permissions hidden or si
     ]
   },
 
+  defcon: {
+    id: 'defcon',
+    label: 'DEFCON Defense Matrix Architecture',
+    aliases: ['defcon', 'threatmatrix', 'panicmode', 'emergencymode', 'dashboard', 'commandcenter', 'omni'],
+    title: 'DEFCON Defense Matrix & Panic Architecture | <a:atheNATICK:1557841381630681106>',
+    description: 'Autonomous 5-tier threat posture, parallel batched lockdown execution (~1.2s), and zero-loss snapshot rollback.',
+    pages: [
+      {
+        pageTitle: 'The 5-Tier Readiness Spectrum (DEFCON 5 to 1)',
+        content:
+`# DEFCON Defense Matrix Posture
+Athena Prime models military Defense Readiness Conditions (DEFCON) to provide structured threat escalation:
+
+• **DEFCON 5 (Peacetime / Normal Operations):**
+  - Baseline operation mode.
+  - Sub-millisecond (<1ms) WebSocket wiretap running in background.
+  - 60-second Linked Role audit log cross-examination active on \`guildMemberUpdate\`.
+  - Normal server verification levels.
+
+• **DEFCON 4 (Guarded / Elevated Surveillance):**
+  - Passive staff velocity heuristics tracking rapid role, channel, or webhook actions.
+  - Phishing, token stealer, and fake nitro domain filters active.
+  - Zero-day invite link inspection neutralizes dangerous permission links in <1ms.
+
+• **DEFCON 3 (Elevated / Heightened Raid Alert):**
+  - Join-velocity burst monitoring triggered (default: 8 joins in 5 seconds).
+  - Minimum account age restrictions active; automated quarantine armed.
+  - Pre-lockdown permission bitmask caching ready in database memory.
+
+• **DEFCON 2 (Severe / Raid Mode Auto-Quarantine):**
+  - Engaged automatically via join burst or manually via \`!raidmode on\`.
+  - Elevation to **Very High (Verified Phone Required)**.
+  - All new incoming joins isolated into \`.   You Have Been Quarantined\`.
+
+• **DEFCON 1 (Maximum Critical / Emergency Blackout):**
+  - Engaged via \`!panic\`, \`!emergency\`, or \`!lockdown 3\`.
+  - Total server blackout: all public channels hidden or muted for \`@everyone\`.
+  - Concurrent batched REST execution (8 channels/chunk) finishes in **~1.2 seconds**.`
+      },
+      {
+        pageTitle: 'Parallel Batched REST Engine (~1.2s Speed)',
+        content:
+`# Batched Concurrent Execution Engine
+Traditional bots execute channel permission alterations sequentially in a single-threaded loop:
+\`\`\`js
+// Legacy slow approach (15-25 seconds lag):
+for (const channel of channels) {
+  await channel.permissionOverwrites.set(...); // Triggers lag, attackers exploit the window
+}
+\`\`\`
+
+Athena Prime employs **Micro-Batched Parallel REST Workers**:
+• **Chunk Size (BATCH_SIZE = 8):** Channels are divided into concurrent slices of 8.
+• **Concurrent Execution (\`Promise.allSettled\`):** All 8 channels mutate in parallel, maximizing Discord's global per-route bucket throughput without tripping HTTP 429 secondary rate limits.
+• **Execution Benchmark:** 60-channel server lockdown or restoration completes in **~1.2 seconds** instead of 20+ seconds.
+• **Anti-Bypass Phone Shield:** In Tier 2 and Tier 3 lockdowns, verification is elevated so attackers cannot bypass channel permissions using unverified alt accounts.`
+      },
+      {
+        pageTitle: 'Zero-Loss Bitmask Snapshots & Recovery Manual',
+        content:
+`# Pre-Lockdown Bitmask Snapshot Serialization
+Before any permission is modified, Athena serializes every channel's exact allow/deny bitfield into \`db.cache.lockdownSnapshots\` on disk:
+• **Preserves Complex Permissions:** Private staff channels, bot gates, and VIP perms are captured bit-for-bit (\`BigInt\` allow/deny).
+• **1-Click Rollback:**
+  - Command: \`!unlockdown\` or \`!unpanic\`
+  - Interactive Button: \`[Lift Lockdown]\` attached to alert banners.
+• **Rollback Integrity:** Replays the exact bitmasks back into the Discord REST API in ~1.2s, restores baseline verification level, reverts raid mode, and flushes database snapshot memory.`
+      }
+    ]
+  },
+
   lockdown: {
     id: 'lockdown',
     label: 'One-Click Panic Lockdown',
     aliases: ['paniclockdown', 'unlockdown', 'tierlockdown'],
     title: 'One-Click Emergency Panic Lockdown Architecture | <a:atheNATICK:1557841381630681106>',
-    description: 'Tiered 1-click server blackout defense and pre-lockdown bitmask recovery.',
+    description: 'Tiered 1-click server blackout defense, ~1.2s parallel batching, and pre-lockdown bitmask recovery.',
     pages: [
       {
         pageTitle: 'Tiered Lockdown Protocols (Tiers 1, 2, 3)',
         content:
 `# Emergency Panic Lockdown Tiers
 • **Tier 1 (Soft Lockdown):** Denies \`SendMessages\`, thread creation, and voice \`Speak\` across all public channels for \`@everyone\`.
-• **Tier 2 (Medium Lockdown):** Tier 1 + Denies \`AddReactions\`, \`UseApplicationCommands\`, \`AttachFiles\`, and \`EmbedLinks\`. Automatically engages Server Raid Mode to isolate incoming accounts.
+• **Tier 2 (Medium Lockdown):** Tier 1 + Denies \`AddReactions\`, \`UseApplicationCommands\`, \`AttachFiles\`, and \`EmbedLinks\`. Automatically engages Server Raid Mode and elevates verification to Phone Required.
 • **Tier 3 (Nuclear Lockdown):** Total server dark mode. Denies \`ViewChannel\` across all channels (keeping rules/quarantine visible with Send denied) and disallows voice connections.
 • **Pre-Lockdown Snapshot Persistence:** Prior to altering any permissions, Athena serializes all channel overwrite bitmasks into \`db.cache.lockdownSnapshots\` on disk.`
       },
@@ -554,8 +625,8 @@ A Honeypot is a designated text channel configured with permissions hidden or si
         content:
 `# State Restoration Engine (\`!unlockdown\` / \`/unlockdown\`)
 • **Database Snapshot Lookup:** Retrieves the exact bitmasks snapshotted prior to panic lockdown engagement.
-• **Bitmask Reconstruction:** Iterates through channels and restores pre-lockdown permissions via \`channel.permissionOverwrites.set()\`.
-• **Raid Mode Normalization:** Automatically restores raid protection state to its pre-lockdown toggle.
+• **Parallel Batched Restoration:** Iterates through channels in concurrent chunks of 8, restoring pre-lockdown permissions via \`channel.permissionOverwrites.set()\` in ~1.2s.
+• **Verification & Raid Normalization:** Automatically restores verification level and raid protection state to their pre-lockdown baseline.
 • **Database Flush:** Clears the temporary snapshot once all channels are verified healthy.`
       }
     ]

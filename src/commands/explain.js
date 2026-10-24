@@ -74,6 +74,10 @@ export const commands = [
       try {
         const focusedValue = interaction.options.getFocused().toLowerCase().trim();
         const choices = [
+          { name: 'DEFCON: 5-Tier Defense Matrix & Batched Panic Architecture', value: 'defcon' },
+          { name: 'Command: !dashboard (All-Inclusive War-Room Command Center)', value: 'defcon' },
+          { name: 'Command: !panic / !emergency (Emergency Server Blackout)', value: 'defcon' },
+          { name: 'Command: !lockdown (Tier 1-3 Batched Channel Lockdown)', value: 'lockdown' },
           { name: 'AI Guide: Neural Architecture & Action Buttons', value: 'athena' },
           { name: 'AI Announcement: Neural Studio & Custom Emojis', value: 'aiannounce' },
           { name: 'Security: Zero-Day & Linked Role Exploits', value: 'security' },

@@ -118,6 +118,14 @@ export default {
       return interaction.editReply(result).catch(() => null);
     }
 
+    if (interaction.isButton() && interaction.customId === 'dash_defcon_knowmore') {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral }).catch(() => null);
+      const { buildDefconIntelContainer } = await import('../commands/dashboard.js');
+      const prefix = interaction.guild?.id ? (db.getGuildConfig(interaction.guild.id)?.prefix || '!') : '!';
+      const container = buildDefconIntelContainer(prefix);
+      return interaction.editReply({ components: [container], flags: MessageFlags.IsComponentsV2 }).catch(() => null);
+    }
+
 
     
     // ==========================================
