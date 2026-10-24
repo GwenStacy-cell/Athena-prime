@@ -836,6 +836,17 @@ const BAR_STARFIELD = Array.from({ length: 32 }, () => ({
  * - 0% State with active breathing locator beacon and charging aura.
  * - 3 Frosted Tactical Metric Chips with 7-segment hardware gauge telemetry tick meters.
  */
+const NATIVE_MAP_LIGHTS = [
+  { x: 77, y: 311, phase: 0.0 },
+  { x: 87, y: 323, phase: 1.5 },
+  { x: 107, y: 301, phase: 0.8 },
+  { x: 139, y: 315, phase: 2.2 },
+  { x: 153, y: 313, phase: 1.1 },
+  { x: 165, y: 327, phase: 2.7 },
+  { x: 189, y: 329, phase: 0.4 },
+  { x: 239, y: 319, phase: 1.9 }
+];
+
 export async function generateCommandStatusBanner({
   title = 'SYSTEM MATRIX',
   subtitle = 'ATHENA PRIME DEFENSE ENGINE',
@@ -850,7 +861,7 @@ export async function generateCommandStatusBanner({
   metrics = [],
   attachmentName = 'status_banner.gif',
   animated = true
-}) {
+} = {}) {
   const W = 1024;
   const H = 512;
   const numFrames = animated ? 8 : 1;
@@ -876,7 +887,14 @@ export async function generateCommandStatusBanner({
     console.error('[CommandStatusBanner] Notice: base plate load error, fallback to procedural obsidian:', err.message);
   }
 
-  // 2. Resolve Server Icon Image Reliably (ensuring PNG format so canvas decodes smoothly)
+  let masterPlateImg = null;
+  try {
+    if (fs.existsSync(fallbackPlatePath)) {
+      masterPlateImg = await loadImage(fallbackPlatePath);
+    }
+  } catch {}
+
+  // 2. Resolve Server Icon Image Reliably
   let iconImg = null;
   if (iconUrl) {
     try {
@@ -894,7 +912,7 @@ export async function generateCommandStatusBanner({
   const ratio = total > 0 ? clamped / total : 0;
   const pct = Math.round(ratio * 100);
 
-  // Exact 1:1 Pixel Coordinates matching the Reference Console Artwork
+  // Exact 1:1 Pixel Coordinates matching Reference Artwork
   const iconCX = 166;
   const iconCY = 155;
   const iconR = 58;
@@ -904,7 +922,100 @@ export async function generateCommandStatusBanner({
   const barW = 554;
   const barH = 22;
   const barR = 11;
-  const fillW = total > 0 && clamped > 0 ? Math.max(46, Math.min(barW, barW * ratio)) : 0;
+  const fillW = total > 0 && clamped > 0 ? Math.max(38, Math.min(barW, Math.round(barW * ratio))) : 0;
+
+  // Pre-process textures
+  const globeCX = 512, globeCY = 309, globeR = 58;
+  const globeSize = globeR * 2;
+  const rotatedGlobeCanvases = [];
+  let barTextureCanvas = null;
+  let flagCanvas = null;
+
+  const flagX = 958, flagY = 68, flagW = 40, flagH = 125;
+
+  if (masterPlateImg) {
+    barTextureCanvas = createCanvas(barW, barH);
+    barTextureCanvas.getContext('2d').drawImage(masterPlateImg, barX, barY, barW, barH, 0, 0, barW, barH);
+
+    flagCanvas = createCanvas(flagW, flagH);
+    flagCanvas.getContext('2d').drawImage(masterPlateImg, flagX, flagY, flagW, flagH, 0, 0, flagW, flagH);
+
+    const globeCanvas = createCanvas(globeSize, globeSize);
+    const gCtx = globeCanvas.getContext('2d');
+    gCtx.drawImage(masterPlateImg, globeCX - globeR, globeCY - globeR, globeSize, globeSize, 0, 0, globeSize, globeSize);
+
+    // Cleanly inpaint bottom ring arc out of rotating sphere texture
+    const gImgData = gCtx.getImageData(0, 0, globeSize, globeSize);
+    const gData = gImgData.data;
+    for (let y = 60; y < globeSize; y++) {
+      for (let x = 0; x < globeSize; x++) {
+        const idx = (y * globeSize + x) * 4;
+        const red = gData[idx], grn = gData[idx+1], blu = gData[idx+2];
+        if (red > 130 && grn > 130 && blu > 120) {
+          const sampleY = Math.max(10, y - 28);
+          const sIdx = (sampleY * globeSize + x) * 4;
+          gData[idx] = Math.round(gData[sIdx] * 0.85);
+          gData[idx+1] = Math.round(gData[sIdx+1] * 0.85);
+          gData[idx+2] = Math.round(gData[sIdx+2] * 0.85);
+        }
+      }
+    }
+    gCtx.putImageData(gImgData, 0, 0);
+    const globeSrcData = gCtx.getImageData(0, 0, globeSize, globeSize).data;
+
+    for (let f = 0; f < numFrames; f++) {
+      const theta = (2 * Math.PI * f) / numFrames;
+      const destCanvas = createCanvas(globeSize, globeSize);
+      const destCtx = destCanvas.getContext('2d');
+      const destImageData = destCtx.createImageData(globeSize, globeSize);
+      const destData = destImageData.data;
+
+      for (let py = 0; py < globeSize; py++) {
+        const yNorm = (py - globeR) / globeR;
+        if (Math.abs(yNorm) >= 1) continue;
+        const lat = Math.asin(yNorm);
+        const cosLat = Math.cos(lat);
+
+        for (let px = 0; px < globeSize; px++) {
+          const xNorm = (px - globeR) / globeR;
+          const dSq = xNorm * xNorm + yNorm * yNorm;
+          if (dSq > 1) continue;
+
+          const zNorm = Math.sqrt(Math.max(0, 1 - dSq));
+          const lon = Math.atan2(xNorm, zNorm);
+
+          let lonRot = lon - theta;
+          while (lonRot > Math.PI) lonRot -= 2 * Math.PI;
+          while (lonRot < -Math.PI) lonRot += 2 * Math.PI;
+
+          const zRot = cosLat * Math.cos(lonRot);
+          let srcX;
+
+          if (zRot >= 0) {
+            srcX = globeR + cosLat * Math.sin(lonRot) * globeR;
+          } else {
+            const lonWrap = lonRot > 0 ? Math.PI - lonRot : -Math.PI - lonRot;
+            srcX = globeR + cosLat * Math.sin(lonWrap) * globeR;
+          }
+
+          const sx = Math.max(0, Math.min(globeSize - 1, Math.round(srcX)));
+          const sy = py;
+
+          const srcIdx = (sy * globeSize + sx) * 4;
+          const destIdx = (py * globeSize + px) * 4;
+
+          const limb = Math.pow(zNorm, 0.35);
+          destData[destIdx] = Math.round(globeSrcData[srcIdx] * (0.85 + 0.15 * limb));
+          destData[destIdx + 1] = Math.round(globeSrcData[srcIdx + 1] * (0.85 + 0.15 * limb));
+          destData[destIdx + 2] = Math.round(globeSrcData[srcIdx + 2] * (0.85 + 0.15 * limb));
+          destData[destIdx + 3] = 255;
+        }
+      }
+
+      destCtx.putImageData(destImageData, 0, 0);
+      rotatedGlobeCanvases.push(destCanvas);
+    }
+  }
 
   try {
     for (let f = 0; f < numFrames; f++) {
@@ -912,7 +1023,7 @@ export async function generateCommandStatusBanner({
       const canvas = createCanvas(W, H);
       const ctx = canvas.getContext('2d');
 
-      // 1. Draw Master War-Room Tactical Console Base Plate
+      // 1. Draw Master Clean Base Plate
       if (plateImg) {
         ctx.drawImage(plateImg, 0, 0, W, H);
       } else {
@@ -925,232 +1036,295 @@ export async function generateCommandStatusBanner({
       }
 
       // ==========================================
-      // 2. LIVE 3D ROTATING HOLOGRAPHIC GLOBE (cx: 512, cy: 345)
+      // 2. LIVE 3D ROTATING GLOBE & STATIC SYNCHRONIZED ORBITAL RINGS
       // ==========================================
-      const globeCX = 512, globeCY = 345, globeR = 64;
-      const pitch = 18 * Math.PI / 180; // 18 degree tilt towards viewer
-
-      // Base emitter hologram cone / light beam
-      const beamPulse = 0.12 + 0.08 * Math.sin(phi * 2);
-      const emitterBeam = ctx.createLinearGradient(globeCX, 415, globeCX, globeCY - globeR);
-      emitterBeam.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${beamPulse * 2.2})`);
-      emitterBeam.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${beamPulse})`);
-      emitterBeam.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = emitterBeam;
-      ctx.beginPath();
-      ctx.moveTo(globeCX - 50, 415);
-      ctx.lineTo(globeCX + 50, 415);
-      ctx.lineTo(globeCX + globeR + 10, globeCY - 20);
-      ctx.lineTo(globeCX - globeR - 10, globeCY - 20);
-      ctx.closePath();
-      ctx.fill();
-
-      // Pedestal Emitter Rings at base (y: 405..415)
-      for (let ring = 0; ring < 2; ring++) {
-        const ringY = 407 + ring * 5;
-        const ringW = 48 - ring * 8;
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.5 + 0.3 * Math.sin(phi * 2 + ring)})`;
-        ctx.lineWidth = 1.4;
-        ctx.beginPath();
-        ctx.ellipse(globeCX, ringY, ringW, 8, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      // Holographic Core Ambient Wash
-      const coreGlow = ctx.createRadialGradient(globeCX, globeCY, 5, globeCX, globeCY, globeR + 15);
-      coreGlow.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.25)`);
-      coreGlow.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, 0.08)`);
-      coreGlow.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = coreGlow;
-      ctx.beginPath();
-      ctx.arc(globeCX, globeCY, globeR + 15, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Rotating 3D Meridians (Longitudes) - 8 lines rotating with phi
-      for (let m = 0; m < 8; m++) {
-        const baseLon = (m * Math.PI) / 4;
-        const currentLon = baseLon + phi;
-
-        ctx.beginPath();
-        let first = true;
-        let isFrontVisible = false;
-
-        for (let lat = -Math.PI / 2; lat <= Math.PI / 2; lat += Math.PI / 16) {
-          const x3d = Math.cos(lat) * Math.sin(currentLon);
-          const y3d = Math.sin(lat);
-          const z3d = Math.cos(lat) * Math.cos(currentLon);
-
-          const yProj = y3d * Math.cos(pitch) - z3d * Math.sin(pitch);
-          const zProj = y3d * Math.sin(pitch) + z3d * Math.cos(pitch);
-
-          const scrX = globeCX + x3d * globeR;
-          const scrY = globeCY - yProj * globeR;
-
-          if (zProj > 0) isFrontVisible = true;
-
-          if (first) {
-            ctx.moveTo(scrX, scrY);
-            first = false;
-          } else {
-            ctx.lineTo(scrX, scrY);
-          }
-        }
-
-        ctx.strokeStyle = isFrontVisible ? `rgba(${r}, ${g}, ${b}, 0.45)` : `rgba(${r}, ${g}, ${b}, 0.12)`;
-        ctx.lineWidth = isFrontVisible ? 1.2 : 0.8;
-        ctx.stroke();
-      }
-
-      // Latitude Parallels
-      const latitudes = [-0.9, -0.45, 0, 0.45, 0.9];
-      for (const lat of latitudes) {
-        const rLat = globeR * Math.cos(lat);
-        const yLat = globeCY - globeR * Math.sin(lat) * Math.cos(pitch);
-        const hLat = rLat * Math.sin(pitch);
-
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${lat === 0 ? 0.55 : 0.30})`;
-        ctx.lineWidth = lat === 0 ? 1.4 : 1.0;
-        ctx.beginPath();
-        ctx.ellipse(globeCX, yLat, rLat, Math.max(2, hLat), 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      // Rotating Continental Landmass Points in 3D
-      for (const node of GLOBE_CONTINENT_NODES) {
-        const curLon = node.lon + phi;
-        const x3d = Math.cos(node.lat) * Math.sin(curLon);
-        const y3d = Math.sin(node.lat);
-        const z3d = Math.cos(node.lat) * Math.cos(curLon);
-
-        const yProj = y3d * Math.cos(pitch) - z3d * Math.sin(pitch);
-        const zProj = y3d * Math.sin(pitch) + z3d * Math.cos(pitch);
-
-        if (zProj > 0) {
-          const scrX = globeCX + x3d * globeR;
-          const scrY = globeCY - yProj * globeR;
-          const dotAlpha = 0.4 + 0.6 * zProj;
-          const dotSize = 1.2 + 1.2 * zProj;
-
-          ctx.fillStyle = `rgba(255, 255, 255, ${dotAlpha})`;
-          ctx.beginPath();
-          ctx.arc(scrX, scrY, dotSize, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${dotAlpha * 0.7})`;
-          ctx.beginPath();
-          ctx.arc(scrX, scrY, dotSize + 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      // 3 Rotating Holographic Orbital Rings with Orbiting Satellites
-      const orbitalRings = [
-        { a: 92, b: 28, rot: -0.35, speed: 1.5, phaseOffset: 0 },
-        { a: 104, b: 32, rot: 0.12, speed: 2.0, phaseOffset: Math.PI / 2 },
-        { a: 88, b: 24, rot: 0.42, speed: 2.5, phaseOffset: Math.PI }
-      ];
-
-      for (let i = 0; i < orbitalRings.length; i++) {
-        const ring = orbitalRings[i];
+      if (rotatedGlobeCanvases.length > f) {
+        // A. Clean 3D rotating globe (no bottom ring rotating on sphere!)
         ctx.save();
-        ctx.translate(globeCX, globeCY);
-        ctx.rotate(ring.rot);
-
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.35 + 0.15 * Math.sin(phi * 2 + i)})`;
-        ctx.lineWidth = 1.1;
         ctx.beginPath();
-        ctx.ellipse(0, 0, ring.a, ring.b, 0, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.arc(globeCX, globeCY, globeR, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(rotatedGlobeCanvases[f], globeCX - globeR, globeCY - globeR);
+        ctx.restore();
 
-        const satAngle = phi * ring.speed + ring.phaseOffset;
-        const satX = ring.a * Math.cos(satAngle);
-        const satY = ring.b * Math.sin(satAngle);
-
-        const satGlow = ctx.createRadialGradient(satX, satY, 1, satX, satY, 6);
-        satGlow.addColorStop(0, '#ffffff');
-        satGlow.addColorStop(0.4, accentColor);
-        satGlow.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = satGlow;
+        // B. Atmospheric Holographic Limb Glow
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const atmoGlow = ctx.createRadialGradient(globeCX, globeCY, globeR * 0.75, globeCX, globeCY, globeR + 3);
+        atmoGlow.addColorStop(0, 'rgba(0,0,0,0)');
+        atmoGlow.addColorStop(0.8, 'rgba(255, 230, 180, 0.22)');
+        atmoGlow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = atmoGlow;
         ctx.beginPath();
-        ctx.arc(satX, satY, 6, 0, Math.PI * 2);
+        ctx.arc(globeCX, globeCY, globeR + 3, 0, Math.PI * 2);
         ctx.fill();
 
+        // C. Static Foreground Orbital Ring Arc (seamlessly aligned with background rings!)
+        ctx.save();
+        ctx.translate(globeCX, globeCY);
+        ctx.rotate(-0.32);
+        ctx.strokeStyle = 'rgba(255, 240, 200, 0.75)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 88, 24, 0, 0, Math.PI);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255, 200, 100, 0.25)';
+        ctx.lineWidth = 3.2;
+        ctx.stroke();
+        ctx.restore();
+
+        // D. Luminous Orbital Energy Flares Gliding Along Rings
+        const r1Angle = phi;
+        const r1x = globeCX + 88 * Math.cos(r1Angle) * Math.cos(-0.32) - 24 * Math.sin(r1Angle) * Math.sin(-0.32);
+        const r1y = globeCY + 88 * Math.cos(r1Angle) * Math.sin(-0.32) + 24 * Math.sin(r1Angle) * Math.cos(-0.32);
+        const f1Grad = ctx.createRadialGradient(r1x, r1y, 1, r1x, r1y, 13);
+        f1Grad.addColorStop(0, '#ffffff');
+        f1Grad.addColorStop(0.35, 'rgba(255, 240, 200, 0.90)');
+        f1Grad.addColorStop(0.7, 'rgba(255, 180, 80, 0.35)');
+        f1Grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = f1Grad;
+        ctx.beginPath();
+        ctx.arc(r1x, r1y, 13, 0, Math.PI * 2);
+        ctx.fill();
+
+        const r2Angle = phi + Math.PI;
+        const r2x = globeCX + 118 * Math.cos(r2Angle) * Math.cos(-0.28) - 32 * Math.sin(r2Angle) * Math.sin(-0.28);
+        const r2y = globeCY + 118 * Math.cos(r2Angle) * Math.sin(-0.28) + 32 * Math.sin(r2Angle) * Math.cos(-0.28);
+        const f2Grad = ctx.createRadialGradient(r2x, r2y, 1, r2x, r2y, 15);
+        f2Grad.addColorStop(0, '#ffffff');
+        f2Grad.addColorStop(0.35, 'rgba(200, 240, 255, 0.85)');
+        f2Grad.addColorStop(0.7, 'rgba(56, 189, 248, 0.35)');
+        f2Grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = f2Grad;
+        ctx.beginPath();
+        ctx.arc(r2x, r2y, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // E. Holographic Projection Base Pulse
+        const basePulse = 0.15 + 0.08 * Math.sin(phi * 2);
+        const pGrad = ctx.createRadialGradient(globeCX, globeCY + globeR + 10, 5, globeCX, globeCY + globeR + 10, 55);
+        pGrad.addColorStop(0, `rgba(255, 240, 200, ${basePulse * 1.5})`);
+        pGrad.addColorStop(0.5, `rgba(255, 190, 100, ${basePulse})`);
+        pGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = pGrad;
+        ctx.beginPath();
+        ctx.arc(globeCX, globeCY + globeR + 10, 55, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       }
 
-      // Outer Globe Reticle Limiting Ring
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.75)`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(globeCX, globeCY, globeR + 1, 0, Math.PI * 2);
-      ctx.stroke();
+      // ==========================================
+      // 3. LIVE NATURALLY FLUTTERING BANNER FLAG
+      // ==========================================
+      if (flagCanvas) {
+        ctx.save();
+        const sliceH = 2;
+        for (let sy = 0; sy < flagH; sy += sliceH) {
+          const windFactor = Math.pow(sy / flagH, 1.4);
+          const waveOffset = Math.sin((sy * 0.06) - phi * 2) * (1.5 * windFactor);
+          ctx.drawImage(flagCanvas, 0, sy, flagW, sliceH, flagX + waveOffset, flagY + sy, flagW, sliceH);
+          if (Math.abs(waveOffset) > 0.6) {
+            ctx.fillStyle = waveOffset > 0 ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.06)';
+            ctx.fillRect(flagX + waveOffset, flagY + sy, flagW, sliceH);
+          }
+        }
+        ctx.restore();
+      }
 
       // ==========================================
-      // 3. GLITTERING TACTICAL WORLD MAP ON BOTTOM-LEFT (x: 60..290, y: 270..375)
+      // 4. MINUTE DETAILED CASCADING WATERFALL (Full Height Cascade x: 955..988, y: 246..392)
       // ==========================================
       ctx.save();
-      for (const [idxA, idxB] of WORLD_MAP_ROUTES) {
-        const nodeA = WORLD_MAP_NODES[idxA];
-        const nodeB = WORLD_MAP_NODES[idxB];
+      ctx.globalCompositeOperation = 'screen';
+      const wfX1 = 955, wfX2 = 988, wfY1 = 246, wfY2 = 392;
+      const wfHeight = wfY2 - wfY1;
 
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.28)`;
-        ctx.lineWidth = 1.0;
-        ctx.beginPath();
-        ctx.moveTo(nodeA.x, nodeA.y);
-        const midX = (nodeA.x + nodeB.x) / 2;
-        const midY = (nodeA.y + nodeB.y) / 2 - 6;
-        ctx.quadraticCurveTo(midX, midY, nodeB.x, nodeB.y);
-        ctx.stroke();
+      for (let col = 0; col < 8; col++) {
+        const streamX = wfX1 + 2 + col * 3.8;
+        const streamSpeed = 6 + (col % 3) * 2;
+        const streamOffset = Math.round((f * streamSpeed + col * 17) % wfHeight);
+        const streamY = wfY1 + streamOffset;
+        const streamLen = 18 + (col % 4) * 6;
 
-        // Traveling Data Packet Mote along the route
-        const t = (phi / (Math.PI * 2) + (idxA * 0.15)) % 1.0;
-        const pktX = (1 - t) * (1 - t) * nodeA.x + 2 * (1 - t) * t * midX + t * t * nodeB.x;
-        const pktY = (1 - t) * (1 - t) * nodeA.y + 2 * (1 - t) * t * midY + t * t * nodeB.y;
-        ctx.fillStyle = '#ffffff';
+        const sGrad = ctx.createLinearGradient(streamX, streamY - streamLen / 2, streamX, streamY + streamLen / 2);
+        sGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+        sGrad.addColorStop(0.4, 'rgba(235, 245, 255, 0.50)');
+        sGrad.addColorStop(0.6, 'rgba(255, 255, 255, 0.70)');
+        sGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = sGrad;
+        ctx.fillRect(streamX - 1, streamY - streamLen / 2, 2.2, streamLen);
+      }
+
+      for (let d = 0; d < 5; d++) {
+        const dx = wfX1 + 4 + d * 6;
+        const dy = wfY1 + ((f * 4 + d * 7) % 14);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
         ctx.beginPath();
-        ctx.arc(pktX, pktY, 1.3, 0, Math.PI * 2);
+        ctx.arc(dx, dy, 1.2, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      for (const node of WORLD_MAP_NODES) {
-        const twinkle = 0.35 + 0.65 * Math.sin(phi * 3 + node.phase);
-        const nodeR = 1.8 + 1.2 * twinkle;
+      for (let s = 0; s < 6; s++) {
+        const foamX = wfX1 + 3 + (s * 5.2);
+        const foamY = wfY2 - 12 + ((f * 3 + s * 7) % 15);
+        const foamR = 2.0 + 1.2 * Math.sin(phi + s);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(foamX, foamY, foamR * 1.5, foamR * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-        if (twinkle > 0.75) {
-          const glintLen = 4 + 3 * twinkle;
-          ctx.strokeStyle = `rgba(255, 255, 255, ${twinkle * 0.8})`;
-          ctx.lineWidth = 1.0;
-          ctx.beginPath();
-          ctx.moveTo(node.x - glintLen, node.y); ctx.lineTo(node.x + glintLen, node.y);
-          ctx.moveTo(node.x, node.y - glintLen); ctx.lineTo(node.x, node.y + glintLen);
-          ctx.stroke();
+      const mistAlpha = 0.12 + 0.06 * Math.sin(phi);
+      const mistGrad = ctx.createRadialGradient(wfX1 + 16, wfY2 - 2, 4, wfX1 + 16, wfY2 - 2, 32);
+      mistGrad.addColorStop(0, `rgba(255, 255, 255, ${mistAlpha * 1.4})`);
+      mistGrad.addColorStop(0.6, `rgba(220, 235, 255, ${mistAlpha * 0.7})`);
+      mistGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = mistGrad;
+      ctx.beginPath();
+      ctx.arc(wfX1 + 16, wfY2 - 2, 32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ==========================================
+      // 5. ULTRA-DETAILED TELEMETRY RADAR (Console 2 - cx: 346, cy: 465)
+      // ==========================================
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      const radCX = 346, radCY = 465;
+      const radRX = 28, radRY = 17;
+
+      ctx.save();
+      ctx.translate(radCX, radCY);
+      ctx.scale(1, radRY / radRX);
+
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.30)';
+      ctx.lineWidth = 0.9;
+      ctx.beginPath(); ctx.arc(0, 0, radRX * 0.38, 0, Math.PI * 2); ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.40)';
+      ctx.beginPath(); ctx.arc(0, 0, radRX * 0.72, 0, Math.PI * 2); ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath(); ctx.arc(0, 0, radRX, 0, Math.PI * 2); ctx.stroke();
+
+      for (let t = 0; t < 12; t++) {
+        const a = (t * Math.PI * 2) / 12;
+        const rInner = t % 3 === 0 ? radRX - 3.5 : radRX - 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * rInner, Math.sin(a) * rInner);
+        ctx.lineTo(Math.cos(a) * radRX, Math.sin(a) * radRX);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-radRX, 0); ctx.lineTo(radRX, 0);
+      ctx.moveTo(0, -radRX); ctx.lineTo(0, radRX);
+      ctx.stroke();
+
+      const sweepAngle = phi;
+      const radSweep = ctx.createRadialGradient(0, 0, 1, 0, 0, radRX);
+      radSweep.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
+      radSweep.addColorStop(0.4, 'rgba(56, 189, 248, 0.35)');
+      radSweep.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = radSweep;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, radRX, sweepAngle - 0.75, sweepAngle);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      const needleX = radCX + radRX * Math.cos(sweepAngle);
+      const needleY = radCY + radRY * Math.sin(sweepAngle);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(radCX, radCY);
+      ctx.lineTo(needleX, needleY);
+      ctx.stroke();
+
+      const blips = [
+        { angle: 2.1, dist: 0.65, label: 'T1' },
+        { angle: 4.8, dist: 0.45, label: 'T2' },
+        { angle: 0.7, dist: 0.82, label: 'T3' }
+      ];
+
+      for (const b of blips) {
+        const bx = radCX + radRX * b.dist * Math.cos(b.angle);
+        const by = radCY + radRY * b.dist * Math.sin(b.angle);
+        let angleDiff = sweepAngle - b.angle;
+        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+        let intensity = 0.2;
+        if (angleDiff >= 0 && angleDiff < 0.9) {
+          intensity = 1.0 - (angleDiff / 0.9) * 0.75;
         }
 
-        const nodeAura = ctx.createRadialGradient(node.x, node.y, 1, node.x, node.y, nodeR + 3);
-        nodeAura.addColorStop(0, '#ffffff');
-        nodeAura.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${twinkle})`);
-        nodeAura.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = nodeAura;
+        ctx.fillStyle = `rgba(56, 189, 248, ${intensity})`;
         ctx.beginPath();
-        ctx.arc(node.x, node.y, nodeR + 3, 0, Math.PI * 2);
+        ctx.arc(bx, by, 1.8 * (intensity > 0.5 ? 1.3 : 1.0), 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#ffffff';
+        if (intensity > 0.6) {
+          ctx.strokeStyle = `rgba(255, 255, 255, ${intensity * 0.8})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      const coreGrad = ctx.createRadialGradient(radCX, radCY, 0.5, radCX, radCY, 4.5);
+      coreGrad.addColorStop(0, '#ffffff');
+      coreGrad.addColorStop(0.5, 'rgba(56, 189, 248, 0.8)');
+      coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(radCX, radCY, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      const c3StartX = 628, c3EndX = 712, c3Y = 462;
+      const pulseRel = (f / numFrames);
+      const pulseX = c3StartX + (c3EndX - c3StartX) * pulseRel;
+      const pulseH = Math.sin(pulseRel * Math.PI) * 8;
+      const pulseY = c3Y - pulseH;
+      const pDotGrad = ctx.createRadialGradient(pulseX, pulseY, 0.5, pulseX, pulseY, 5);
+      pDotGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+      pDotGrad.addColorStop(0.4, 'rgba(56, 189, 248, 0.55)');
+      pDotGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = pDotGrad;
+      ctx.beginPath();
+      ctx.arc(pulseX, pulseY, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ==========================================
+      // 6. GLITTERING NATIVE WORLD MAP LIGHTS
+      // ==========================================
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      for (let i = 0; i < NATIVE_MAP_LIGHTS.length; i++) {
+        const light = NATIVE_MAP_LIGHTS[i];
+        const twinkle = 0.35 + 0.65 * Math.sin(phi * 2.5 + light.phase);
+        const lGrad = ctx.createRadialGradient(light.x, light.y, 0.5, light.x, light.y, 4.5);
+        lGrad.addColorStop(0, '#ffffff');
+        lGrad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${twinkle * 0.9})`);
+        lGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = lGrad;
         ctx.beginPath();
-        ctx.arc(node.x, node.y, nodeR, 0, Math.PI * 2);
+        ctx.arc(light.x, light.y, 4.5, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
 
-      // Top-Left Reticle Ambient Accent Wash
-      const reticleAura = ctx.createRadialGradient(iconCX, iconCY, 10, iconCX, iconCY, 120);
-      reticleAura.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.18)`);
-      reticleAura.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = reticleAura;
-      ctx.fillRect(iconCX - 120, iconCY - 120, 240, 240);
-
-      // 4. Left Server Icon / Avatar Reticle Portal
-      // Inner avatar aperture mask
+      // ==========================================
+      // 7. AVATAR RETICLE (CLEAN - NO ROTATING WEDGE OVER AVATAR)
+      // ==========================================
       ctx.save();
       ctx.beginPath();
       ctx.arc(iconCX, iconCY, iconR, 0, Math.PI * 2);
@@ -1172,7 +1346,7 @@ export async function generateCommandStatusBanner({
         ctx.fillText((fallbackInitial || 'A')[0].toUpperCase(), iconCX, iconCY);
       }
 
-      // Inner Glass Sheen Highlight Arc
+      // Inner Glass Sheen
       const sheenGrad = ctx.createLinearGradient(iconCX - iconR, iconCY - iconR, iconCX + iconR, iconCY);
       sheenGrad.addColorStop(0, 'rgba(255, 255, 255, 0.28)');
       sheenGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.05)');
@@ -1196,7 +1370,7 @@ export async function generateCommandStatusBanner({
       ctx.arc(iconCX, iconCY, iconR + 9, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Outer Animated Rotating Radar Reticle Ticks (16 Ticks)
+      // Outer Rotating Reticle Ticks (16 Ticks)
       ctx.save();
       ctx.translate(iconCX, iconCY);
       ctx.rotate(phi);
@@ -1211,26 +1385,19 @@ export async function generateCommandStatusBanner({
         ctx.lineTo(Math.cos(angle) * outer, Math.sin(angle) * outer);
         ctx.stroke();
       }
-      // Rotating Radar Sweep Wedge (90 degrees)
-      const sweepArcGrad = ctx.createRadialGradient(0, 0, iconR + 5, 0, 0, iconR + 28);
-      sweepArcGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.22)`);
-      sweepArcGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = sweepArcGrad;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.arc(0, 0, iconR + 28, 0, Math.PI / 2);
-      ctx.closePath();
-      ctx.fill();
       ctx.restore();
 
-      // 6. Header Subtitle
+      // ==========================================
+      // 8. HEADER TYPOGRAPHY & BADGE PILL
+      // ==========================================
+      // Subtitle
       ctx.font = 'bold 10px monospace';
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.95)`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
       ctx.fillText(subtitle.toUpperCase(), barX, 93);
 
-      // 7. Status Badge Pill with ANIMATED SEQUENTIAL CHEVRONS (>>>)
+      // Status Badge Pill with ANIMATED CHEVRONS (>>>)
       if (badge) {
         ctx.font = 'bold 10px sans-serif';
         const badgeBaseText = badge.toUpperCase();
@@ -1240,7 +1407,6 @@ export async function generateCommandStatusBanner({
         const badgeX = barX + barW - badgeW;
         const badgeY = 78;
 
-        // Capsule Background
         ctx.fillStyle = 'rgba(6, 16, 32, 0.88)';
         ctx.beginPath();
         ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 11);
@@ -1249,7 +1415,6 @@ export async function generateCommandStatusBanner({
         ctx.lineWidth = 1.2;
         ctx.stroke();
 
-        // Pulsing Glowing Indicator Dot
         const dotX = badgeX + 11;
         const dotY = badgeY + 11;
         const dotGrad = ctx.createRadialGradient(dotX, dotY, 1, dotX, dotY, 5);
@@ -1261,12 +1426,9 @@ export async function generateCommandStatusBanner({
         ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
         ctx.fill();
 
-        // Badge Text
         ctx.fillStyle = '#ffffff';
         ctx.fillText(badgeBaseText, dotX + 10, badgeY + 15);
 
-        // THE ANIMATED CHEVRON ARROWS (>>>)
-        // 3 Chevrons pulsing sequentially forward to animate the arrow
         const chevStartX = dotX + 10 + badgeTextW + 7;
         for (let c = 0; c < 3; c++) {
           const chevPhase = phi - (c * (Math.PI * 2 / 3));
@@ -1286,7 +1448,7 @@ export async function generateCommandStatusBanner({
         }
       }
 
-      // 8. Main Title
+      // Main Title
       ctx.font = '900 21px "Cinzel", "Times New Roman", "Georgia", serif';
       ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
       ctx.shadowBlur = 6;
@@ -1294,7 +1456,7 @@ export async function generateCommandStatusBanner({
       ctx.fillText(title.toUpperCase(), barX, 122);
       ctx.shadowBlur = 0;
 
-      // 9. Status Progress Text Row
+      // Status Progress Text Row
       ctx.font = 'bold 11px monospace';
       ctx.fillStyle = '#94a3b8';
       ctx.fillText(`STATUS PROGRESS: ${clamped}/${total} ${unit.toUpperCase()}`, barX, 146);
@@ -1306,14 +1468,13 @@ export async function generateCommandStatusBanner({
       ctx.textAlign = 'left';
 
       // ==========================================
-      // 10. DEEP SPACE COSMIC PROGRESS BAR (100% Matching Image 2)
+      // 9. SLEEK DEEP SPACE COSMIC PROGRESS BAR
       // ==========================================
       ctx.save();
       ctx.beginPath();
       ctx.roundRect(barX, barY, barW, barH, barR);
       ctx.clip();
 
-      // Track Cosmic Background Void Gradient
       const trackVoidGrad = ctx.createLinearGradient(barX, barY, barX, barY + barH);
       trackVoidGrad.addColorStop(0, '#02050b');
       trackVoidGrad.addColorStop(0.5, '#060d1b');
@@ -1321,207 +1482,144 @@ export async function generateCommandStatusBanner({
       ctx.fillStyle = trackVoidGrad;
       ctx.fillRect(barX, barY, barW, barH);
 
-      // Track Stardust Starfield
-      for (const star of BAR_STARFIELD) {
-        const sx = barX + star.relX * barW;
-        const sy = barY + star.relY * barH;
-        const sAlpha = star.baseAlpha * (0.6 + 0.4 * Math.sin(phi * star.twinkleSpeed + star.phase));
-        ctx.fillStyle = `rgba(200, 230, 255, ${sAlpha})`;
-        ctx.beginPath();
-        ctx.arc(sx, sy, star.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Measurement Grid Rulers (every 10%)
-      for (let tick = 1; tick <= 9; tick++) {
-        const tx = barX + (barW * tick) / 10;
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.22)`;
-        ctx.lineWidth = 1.0;
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
+      ctx.lineWidth = 1.0;
+      for (let tx = barX + 20; tx < barX + barW; tx += 20) {
         ctx.beginPath();
         ctx.moveTo(tx, barY + 3);
-        ctx.lineTo(tx, barY + 7);
-        ctx.moveTo(tx, barY + barH - 7);
         ctx.lineTo(tx, barY + barH - 3);
         ctx.stroke();
       }
 
-      // Faint Ambient Energy Beam across the entire uncharged track
-      const conduitPhase = phi * 2;
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.16)`;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      for (let x = barX; x <= barX + barW; x += 6) {
-        const relX = x - barX;
-        const y = barY + barH / 2 + Math.sin(relX * 0.04 - conduitPhase) * 2;
-        if (x === barX) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      // ACTIVE COSMIC PLASMA FILL (0 to fillW)
       if (ratio > 0 && fillW > 0) {
         ctx.save();
         ctx.beginPath();
         ctx.roundRect(barX, barY, fillW, barH, barR);
         ctx.clip();
 
-        // 1. Deep Galactic Plasma Core Gradient
-        const plasmaGrad = ctx.createLinearGradient(barX - (f * 15), barY, barX + fillW + (f * 15), barY);
-        plasmaGrad.addColorStop(0, '#0a2540');
-        plasmaGrad.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, 0.85)`);
-        plasmaGrad.addColorStop(0.65, '#ffffff');
-        plasmaGrad.addColorStop(0.85, `rgba(${r}, ${g}, ${b}, 0.95)`);
-        plasmaGrad.addColorStop(1, '#ffffff');
-        ctx.fillStyle = plasmaGrad;
+        if (barTextureCanvas) {
+          const flowOffset = Math.round((f * 16) % barW);
+          ctx.drawImage(barTextureCanvas, 0, 0, barW, barH, barX - flowOffset, barY, barW, barH);
+          if (barX - flowOffset + barW < barX + fillW) {
+            ctx.drawImage(barTextureCanvas, 0, 0, barW, barH, barX - flowOffset + barW, barY, barW, barH);
+          }
+        } else {
+          const flowOffset = (f * 18) % 120;
+          const metalGrad = ctx.createLinearGradient(barX - flowOffset, barY, barX + fillW + (120 - flowOffset), barY);
+          metalGrad.addColorStop(0, 'rgba(12, 32, 60, 0.95)');
+          metalGrad.addColorStop(0.25, 'rgba(56, 189, 248, 0.85)');
+          metalGrad.addColorStop(0.48, '#cbd5e1');
+          metalGrad.addColorStop(0.70, '#ffffff');
+          metalGrad.addColorStop(0.85, 'rgba(56, 189, 248, 0.95)');
+          metalGrad.addColorStop(1.0, '#ffffff');
+          ctx.fillStyle = metalGrad;
+          ctx.fillRect(barX, barY, fillW, barH);
+        }
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const energyPulse = 0.6 + 0.4 * Math.sin(phi * 2);
+        const eGrad = ctx.createLinearGradient(barX, barY, barX + fillW, barY);
+        eGrad.addColorStop(0, 'rgba(56, 189, 248, 0.1)');
+        eGrad.addColorStop(0.7, `rgba(255, 255, 255, ${energyPulse * 0.4})`);
+        eGrad.addColorStop(1, 'rgba(255, 255, 255, 0.7)');
+        ctx.fillStyle = eGrad;
         ctx.fillRect(barX, barY, fillW, barH);
 
-        // 2. Cosmic Nebula Plasma Clouds
-        const nebGrad = ctx.createRadialGradient(barX + fillW * 0.6, barY + barH / 2, 2, barX + fillW * 0.6, barY + barH / 2, fillW * 0.7);
-        nebGrad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
-        nebGrad.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.35)`);
-        nebGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = nebGrad;
-        ctx.fillRect(barX, barY, fillW, barH);
-
-        // 3. Primary Multi-Harmonic Electric Lightning Arc
+        const coreY = barY + barH / 2;
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2.0;
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
-        for (let x = barX; x <= barX + fillW; x += 3) {
-          const relX = x - barX;
-          const y = barY + barH / 2 + Math.sin(relX * 0.06 + phi * 2) * 4.5 + Math.cos(relX * 0.12 - phi) * 2;
-          if (x === barX) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
+        ctx.moveTo(barX, coreY);
+        ctx.lineTo(barX + fillW, coreY);
         ctx.stroke();
 
-        // 4. Secondary High-Frequency Spark Crackle Filament
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
-        ctx.lineWidth = 1.3;
-        ctx.beginPath();
-        for (let x = barX; x <= barX + fillW; x += 4) {
-          const relX = x - barX;
-          const y = barY + barH / 2 + Math.sin(relX * 0.15 - phi * 3) * 3;
-          if (x === barX) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-
-        // 5. High-Voltage Vertical Lightning Discharge Arcs
-        for (let branch = 0; branch < 3; branch++) {
-          const bx = barX + ((branch + 1) * fillW) / 4 + Math.sin(phi + branch) * 6;
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
-          ctx.lineWidth = 1.1;
-          ctx.beginPath();
-          ctx.moveTo(bx, barY + 2);
-          ctx.lineTo(bx + (Math.sin(phi * 2 + branch) * 3), barY + barH / 2);
-          ctx.lineTo(bx + (Math.cos(phi * 2 + branch) * 3), barY + barH - 2);
-          ctx.stroke();
-        }
-
-        ctx.restore(); // End active fill clip
+        ctx.restore();
+        ctx.restore();
       } else {
-        // Intelligent 0% State: Active Breathing Idle Charging Aura & Locator Beacon
-        const idlePulse = 0.14 + 0.09 * Math.sin(phi * 2);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${idlePulse})`;
+        const idleAlpha = 0.4 + 0.3 * Math.sin(phi * 2);
+        ctx.fillStyle = `rgba(56, 189, 248, ${idleAlpha})`;
         ctx.beginPath();
-        ctx.roundRect(barX + 2, barY + 2, barW - 4, barH - 4, barR - 2);
-        ctx.fill();
-
-        const beaconX = barX + 13;
-        const beaconY = barY + barH / 2;
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.7 + 0.3 * Math.sin(phi * 2)})`;
-        ctx.beginPath();
-        ctx.arc(beaconX, beaconY, 4.5, 0, Math.PI * 2);
+        ctx.arc(barX + 10, barY + barH / 2, 3, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Glass Sheen Bevel Top Reflection across entire bar
-      const barSheenGrad = ctx.createLinearGradient(barX, barY, barX, barY + barH / 2);
-      barSheenGrad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
-      barSheenGrad.addColorStop(0.6, 'rgba(255, 255, 255, 0.05)');
-      barSheenGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
-      ctx.fillStyle = barSheenGrad;
-      ctx.fillRect(barX, barY, barW, barH / 2);
+      const glassSheen = ctx.createLinearGradient(barX, barY, barX, barY + 7);
+      glassSheen.addColorStop(0, 'rgba(255, 255, 255, 0.40)');
+      glassSheen.addColorStop(0.6, 'rgba(255, 255, 255, 0.08)');
+      glassSheen.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+      ctx.fillStyle = glassSheen;
+      ctx.fillRect(barX, barY, barW, 7);
 
-      ctx.restore(); // End track clip
+      ctx.restore();
 
-      // Outer Track Metallic Neon Border
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.65)`;
-      ctx.lineWidth = 1.3;
+      ctx.strokeStyle = 'rgba(240, 246, 255, 0.85)';
+      ctx.lineWidth = 1.1;
       ctx.beginPath();
       ctx.roundRect(barX, barY, barW, barH, barR);
       ctx.stroke();
 
-      // HYPER-LUMINOUS PLASMA STARBURST HEAD CORONA
+      ctx.strokeStyle = 'rgba(30, 58, 95, 0.65)';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(barX + barR, barY + barH);
+      ctx.lineTo(barX + barW - barR, barY + barH);
+      ctx.stroke();
+
       if (ratio > 0 && fillW > 0) {
         const headX = barX + fillW;
         const headY = barY + barH / 2;
-        const headPulse = 1.0 + 0.22 * Math.sin(phi * 2);
+        const flarePulse = 1.0 + 0.20 * Math.sin(phi * 2);
 
-        // Multi-tier Corona Blast
-        const blastGrad = ctx.createRadialGradient(headX, headY, 1, headX, headY, 18 * headPulse);
-        blastGrad.addColorStop(0, '#ffffff');
-        blastGrad.addColorStop(0.3, '#a5f3fc');
-        blastGrad.addColorStop(0.6, accentColor);
-        blastGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = blastGrad;
-        ctx.beginPath();
-        ctx.arc(headX, headY, 18 * headPulse, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 8-Point Rotating Stellar Cross Glint Flare
         ctx.save();
-        ctx.translate(headX, headY);
-        ctx.rotate(phi);
-        const flareLen1 = 12 * headPulse;
-        const flareLen2 = 7 * headPulse;
+        ctx.globalCompositeOperation = 'screen';
 
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.6;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.moveTo(-flareLen1, 0); ctx.lineTo(flareLen1, 0);
-        ctx.moveTo(0, -flareLen1); ctx.lineTo(0, flareLen1);
+        ctx.moveTo(headX, barY - 3);
+        ctx.lineTo(headX, barY + barH + 3);
         ctx.stroke();
 
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.85)`;
-        ctx.lineWidth = 1.2;
+        const flareW = 24 * flarePulse;
+        const hFlareGrad = ctx.createLinearGradient(headX - flareW, headY, headX + flareW, headY);
+        hFlareGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        hFlareGrad.addColorStop(0.35, 'rgba(56, 189, 248, 0.75)');
+        hFlareGrad.addColorStop(0.5, '#ffffff');
+        hFlareGrad.addColorStop(0.65, 'rgba(56, 189, 248, 0.75)');
+        hFlareGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = hFlareGrad;
+        ctx.fillRect(headX - flareW, headY - 3, flareW * 2, 6);
+
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.moveTo(-flareLen2, -flareLen2); ctx.lineTo(flareLen2, flareLen2);
-        ctx.moveTo(-flareLen2, flareLen2); ctx.lineTo(flareLen2, -flareLen2);
-        ctx.stroke();
+        ctx.moveTo(headX, headY - 4.5);
+        ctx.lineTo(headX + 3, headY);
+        ctx.lineTo(headX, headY + 4.5);
+        ctx.lineTo(headX - 3, headY);
+        ctx.closePath();
+        ctx.fill();
         ctx.restore();
-
-        // Particle Spray shooting forward into track
-        for (let spark = 0; spark < 4; spark++) {
-          const spDist = 8 + (spark * 6) + Math.sin(phi * 3 + spark) * 4;
-          const spX = headX + spDist;
-          const spY = headY + (Math.sin(phi * 4 + spark) * 5);
-          if (spX < barX + barW - 4) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${0.4 + 0.6 * Math.sin(phi * 3 + spark)})`;
-            ctx.beginPath();
-            ctx.arc(spX, spY, 1.2, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
       }
 
-      // 11. Tactical Metric Chips with 7-Segment Hardware Gauge Ticks
-      const chipList = Array.isArray(metrics) && metrics.length > 0
+      // ==========================================
+      // 10. THREE TACTICAL METRIC CHIPS
+      // ==========================================
+      const chipList = (metrics && metrics.length > 0)
         ? metrics.slice(0, 3)
         : [
-            { label: 'STATUS', value: 'ONLINE' },
-            { label: 'CAPACITY', value: `${clamped}/${total}` },
-            { label: 'ENGINE', value: 'ATHENA' }
+            { label: 'USERS', value: '1' },
+            { label: 'ROLES', value: '1' },
+            { label: 'ANTINUKE', value: 'GUARDED' }
           ];
 
       const chipSlots = [
-        { x: 257, w: 161 },
-        { x: 440, w: 162 },
-        { x: 626, w: 168 }
+        { x: 254, w: 168 },
+        { x: 438, w: 168 },
+        { x: 622, w: 178 }
       ];
-      const cy = 193;
-      const ch = 44;
+      const cy = 192;
+      const ch = 48;
 
       for (let i = 0; i < chipList.length && i < chipSlots.length; i++) {
         const m = chipList[i];
@@ -1529,17 +1627,22 @@ export async function generateCommandStatusBanner({
         const cx = slot.x;
         const cw = slot.w;
 
-        // Chip Header / Label
+        ctx.fillStyle = 'rgba(6, 14, 28, 0.85)';
+        ctx.beginPath();
+        ctx.roundRect(cx, cy, cw, ch, 8);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+
         ctx.font = 'bold 10px monospace';
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.95)`;
-        ctx.fillText(String(m.label || 'METRIC').toUpperCase(), cx + 10, cy + 16);
+        ctx.fillText(String(m.label || 'METRIC').toUpperCase(), cx + 12, cy + 18);
 
-        // Chip Value
-        ctx.font = '900 12px sans-serif';
+        ctx.font = '900 13px monospace';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(String(m.value || 'ONLINE'), cx + 10, cy + 32);
+        ctx.fillText(String(m.value || 'ONLINE'), cx + 12, cy + 36);
 
-        // 7-Segment Hardware Gauge Ticks
         let mPct = m.pct;
         if (mPct === undefined) {
           const valStr = String(m.value || '').toUpperCase();
@@ -1558,18 +1661,18 @@ export async function generateCommandStatusBanner({
           }
         }
 
-        const numSegments = 7;
+        const numSegments = 8;
         const activeCount = Math.round(Math.max(0, Math.min(1, mPct)) * numSegments);
-        const segW = 5;
-        const segH = 8;
+        const segW = 6;
+        const segH = 10;
         const segGap = 3;
-        const segStartX = cx + cw - 10 - (numSegments * (segW + segGap) - segGap);
-        const segY = cy + 24;
+        const segStartX = cx + cw - 12 - (numSegments * (segW + segGap) - segGap);
+        const segY = cy + 26;
 
         for (let s = 0; s < numSegments; s++) {
           const sx = segStartX + s * (segW + segGap);
           const isActive = s < activeCount;
-          ctx.fillStyle = isActive ? `rgba(${r}, ${g}, ${b}, 0.95)` : `rgba(${r}, ${g}, ${b}, 0.18)`;
+          ctx.fillStyle = isActive ? `rgba(${r}, ${g}, ${b}, 0.95)` : `rgba(${r}, ${g}, ${b}, 0.20)`;
           ctx.fillRect(sx, segY, segW, segH);
         }
       }
@@ -1586,7 +1689,6 @@ export async function generateCommandStatusBanner({
       return new AttachmentBuilder(firstFrameBuffer, { name: attachmentName || 'status_banner.png' });
     }
 
-    // Single-pass FFmpeg Palettegen + Paletteuse with Sierra2_4a dithering for ultra-crisp looping GIF
     const gifOutPath = path.join(tempDir, 'status.gif');
     const encodeCmd = `"${ffmpegPath}" -y -framerate 10 -i "${tempDir}/frame_%02d.png" -filter_complex "[0:v] split [a][b];[a] palettegen=reserve_transparent=0 [p];[b][p] paletteuse=dither=sierra2_4a" "${gifOutPath}"`;
 
